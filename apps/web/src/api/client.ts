@@ -49,6 +49,55 @@ export interface StreamCallbacks {
 export const MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"] as const;
 export type GeminiModel = typeof MODELS[number];
 
+// ── Recipe save / list ────────────────────────────────────────────────────────
+
+export interface SaveComponent {
+  name: string;
+  yield_note: string;
+  ingredients: string[];
+  steps: string[];
+}
+
+export interface RecipeSaveRequest {
+  title: string;
+  servings: number | null;
+  kcal_per_serving: number | null;
+  thumbnail_url: string | null;
+  creator_handle: string | null;
+  components: SaveComponent[];
+}
+
+export interface RecipeOut {
+  id: string;
+  title: string;
+  servings: number | null;
+  kcal_per_serving: number | null;
+  thumbnail_url: string | null;
+  creator_handle: string | null;
+  components: SaveComponent[];
+  created_at: string;
+}
+
+export async function saveRecipe(data: RecipeSaveRequest): Promise<RecipeOut> {
+  const res = await fetch("/api/recipes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { detail?: unknown };
+    throw new Error(typeof err.detail === "string" ? err.detail : "Failed to save recipe");
+  }
+  return res.json() as Promise<RecipeOut>;
+}
+
+export async function listRecipes(): Promise<RecipeOut[]> {
+  const res = await fetch("/api/recipes", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load recipes");
+  return res.json() as Promise<RecipeOut[]>;
+}
+
 export function streamImport(url: string, model: GeminiModel, callbacks: StreamCallbacks): () => void {
   const source = new EventSource(
     `/api/imports/stream?url=${encodeURIComponent(url)}&model=${encodeURIComponent(model)}`

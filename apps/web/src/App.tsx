@@ -13,6 +13,7 @@ import { AuthProvider } from "./context/AuthContext";
 
 function AppShell() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const navigate = useNavigate();
 
   function openAddRecipe() {
@@ -20,18 +21,22 @@ function AppShell() {
     setModalOpen(true);
   }
 
+  function handleRecipeSaved() {
+    setRefreshKey((k) => k + 1);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="pb-[calc(4.5rem+env(safe-area-inset-bottom))]">
         <Routes>
-          <Route path="/" element={<RecipesPage onAddRecipe={openAddRecipe} />} />
+          <Route path="/" element={<RecipesPage onAddRecipe={openAddRecipe} refreshKey={refreshKey} />} />
           <Route path="/plan" element={<MealPlanPage />} />
           <Route path="/shopping" element={<ShoppingListPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </div>
       <BottomNav onAddRecipe={openAddRecipe} />
-      <AddRecipeModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <AddRecipeModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSaved={handleRecipeSaved} />
     </div>
   );
 }

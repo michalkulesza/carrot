@@ -10,7 +10,7 @@ import {
   RadioGroup,
   Radio,
 } from "@heroui/react";
-import { streamImport, ImportResult, RecipeComponent, StageEvent, GeminiModel, MODELS } from "../api/client";
+import { streamImport, saveRecipe, ImportResult, RecipeComponent, StageEvent, GeminiModel, MODELS } from "../api/client";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,12 +298,14 @@ function EditableRecipeView({
 interface AddRecipeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
-export default function AddRecipeModal({ isOpen, onClose }: AddRecipeModalProps) {
+export default function AddRecipeModal({ isOpen, onClose, onSaved }: AddRecipeModalProps) {
   const [url, setUrl] = useState("https://www.instagram.com/p/DYKxw6XMQgi/");
   const [model, setModel] = useState<GeminiModel>("gemini-2.5-flash-lite");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [progressSteps, setProgressSteps] = useState<StepState[]>([]);
   const [editable, setEditable] = useState<EditableRecipe | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -313,9 +315,33 @@ export default function AddRecipeModal({ isOpen, onClose }: AddRecipeModalProps)
     cancelRef.current?.();
     setUrl("https://www.instagram.com/p/DYKxw6XMQgi/");
     setLoading(false);
+    setSaving(false);
     setProgressSteps([]);
     setEditable(null);
     setError(null);
+  }
+
+  async function handleSave() {
+    if (!editable) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await saveRecipe({
+        title: editable.title,
+        servings: editable.servings !== "" ? Number(editable.servings) : null,
+        kcal_per_serving: editable.kcal !== "" ? Number(editable.kcal) : null,
+        thumbnail_url: editable.thumbnail_url,
+        creator_handle: editable.creator_handle,
+        components: editable.components,
+      });
+      onSaved?.();
+      reset();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save recipe");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function handleClose() {
@@ -417,11 +443,11 @@ export default function AddRecipeModal({ isOpen, onClose }: AddRecipeModalProps)
           )}
         </ModalBody>
         <ModalFooter>
-          <Button variant="light" onPress={handleClose} isDisabled={loading}>
+          <Button variant="light" onPress={handleClose} isDisabled={loading || saving}>
             {parsed ? "Discard" : "Cancel"}
           </Button>
           {parsed ? (
-            <Button color="primary" onPress={handleClose}>
+            <Button color="primary" onPress={handleSave} isLoading={saving}>
               Save
             </Button>
           ) : (
