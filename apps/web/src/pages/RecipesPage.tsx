@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import PageHeader from "../components/PageHeader";
+import RecipeDetailModal from "../components/RecipeDetailModal";
 import { listRecipes, RecipeOut } from "../api/client";
 
 interface RecipesPageProps {
@@ -7,13 +8,16 @@ interface RecipesPageProps {
   refreshKey?: number;
 }
 
-function RecipeCard({ recipe }: { recipe: RecipeOut }) {
+function RecipeCard({ recipe, onClick }: { recipe: RecipeOut; onClick: () => void }) {
   const proxyUrl = recipe.thumbnail_url
     ? `/api/proxy/image?url=${encodeURIComponent(recipe.thumbnail_url)}`
     : null;
 
   return (
-    <div className="flex gap-3 items-start p-3 rounded-xl bg-content1 shadow-sm">
+    <button
+      onClick={onClick}
+      className="flex gap-3 items-start p-3 rounded-xl bg-content1 shadow-sm w-full text-left active:opacity-70 transition-opacity"
+    >
       {proxyUrl && (
         <img
           src={proxyUrl}
@@ -39,13 +43,24 @@ function RecipeCard({ recipe }: { recipe: RecipeOut }) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
 export default function RecipesPage({ onAddRecipe, refreshKey }: RecipesPageProps) {
   const [recipes, setRecipes] = useState<RecipeOut[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<RecipeOut | null>(null);
+
+  function handleUpdated(updated: RecipeOut) {
+    setRecipes((prev) => prev.map((r) => r.id === updated.id ? updated : r));
+    setSelected(updated);
+  }
+
+  function handleDeleted(id: string) {
+    setRecipes((prev) => prev.filter((r) => r.id !== id));
+    setSelected(null);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -77,10 +92,12 @@ export default function RecipesPage({ onAddRecipe, refreshKey }: RecipesPageProp
       ) : (
         <div className="flex flex-col gap-3 px-4 mt-4">
           {recipes.map((r) => (
-            <RecipeCard key={r.id} recipe={r} />
+            <RecipeCard key={r.id} recipe={r} onClick={() => setSelected(r)} />
           ))}
         </div>
       )}
+
+      <RecipeDetailModal recipe={selected} onClose={() => setSelected(null)} onUpdated={handleUpdated} onDeleted={handleDeleted} />
     </>
   );
 }

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +30,48 @@ async def save_recipe(
     await session.commit()
     await session.refresh(recipe)
     return RecipeOut.model_validate(recipe)
+
+
+@router.put("/{recipe_id}", response_model=RecipeOut)
+async def update_recipe(
+    recipe_id: uuid.UUID,
+    body: RecipeSaveRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> RecipeOut:
+    result = await session.execute(
+        select(Recipe).where(Recipe.id == recipe_id, Recipe.user_id == user.id)
+    )
+    recipe = result.scalar_one_or_none()
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    recipe.title = body.title
+    recipe.servings = body.servings
+    recipe.kcal_per_serving = body.kcal_per_serving
+    recipe.thumbnail_url = body.thumbnail_url
+    recipe.creator_handle = body.creator_handle
+    recipe.components = [c.model_dump() for c in body.components]
+
+    await session.commit()
+    await session.refresh(recipe)
+    return RecipeOut.model_validate(recipe)
+
+
+@router.delete("/{recipe_id}", status_code=204)
+async def delete_recipe(
+    recipe_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> None:
+    result = await session.execute(
+        select(Recipe).where(Recipe.id == recipe_id, Recipe.user_id == user.id)
+    )
+    recipe = result.scalar_one_or_none()
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    await session.delete(recipe)
+    await session.commit()
 
 
 @router.get("", response_model=list[RecipeOut])

@@ -92,6 +92,31 @@ export async function saveRecipe(data: RecipeSaveRequest): Promise<RecipeOut> {
   return res.json() as Promise<RecipeOut>;
 }
 
+export async function updateRecipe(id: string, data: RecipeSaveRequest): Promise<RecipeOut> {
+  const res = await fetch(`/api/recipes/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { detail?: unknown };
+    throw new Error(typeof err.detail === "string" ? err.detail : "Failed to update recipe");
+  }
+  return res.json() as Promise<RecipeOut>;
+}
+
+export async function deleteRecipe(id: string): Promise<void> {
+  const res = await fetch(`/api/recipes/${id}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { detail?: unknown };
+    throw new Error(typeof err.detail === "string" ? err.detail : "Failed to delete recipe");
+  }
+}
+
 export async function listRecipes(): Promise<RecipeOut[]> {
   const res = await fetch("/api/recipes", { credentials: "include" });
   if (!res.ok) throw new Error("Failed to load recipes");
