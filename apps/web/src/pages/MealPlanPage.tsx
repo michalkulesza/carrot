@@ -323,7 +323,7 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
           <h1 className="text-xl font-bold">Meal Plan</h1>
         </div>
 
-        <div ref={calendarRef} className="pk-cal pb-2 px-1">
+        <div ref={calendarRef} className="pk-cal px-3 pt-1 pb-4">
           <I18nProvider locale={calendarLocale}>
             <Calendar
               aria-label="Meal plan calendar"
@@ -332,13 +332,13 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
               onFocusChange={handleFocusChange}
               classNames={{
                 base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center",
-                headerWrapper: "px-3 pt-0 pb-2",
-                header: "text-sm font-bold tracking-tight",
-                prevButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                nextButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                gridHeaderCell: "text-[10px] font-semibold uppercase tracking-widest text-default-400 pb-1",
+                headerWrapper: "px-2 pt-0 pb-3",
+                header: "text-base font-bold tracking-tight",
+                prevButton: "w-9 h-9 min-w-0 text-default-500 hover:text-default-800 transition-colors",
+                nextButton: "w-9 h-9 min-w-0 text-default-500 hover:text-default-800 transition-colors",
+                gridHeaderCell: "text-[11px] font-semibold uppercase tracking-widest text-default-400 pb-1",
                 cell: "p-0",
-                cellButton: "w-9 h-9 text-[13px] font-medium mx-auto data-[today=true]:font-bold",
+                cellButton: "w-11 h-11 text-sm font-medium mx-auto data-[today=true]:font-bold",
               }}
             />
           </I18nProvider>
