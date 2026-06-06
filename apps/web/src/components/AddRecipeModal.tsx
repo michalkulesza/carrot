@@ -420,6 +420,20 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved }: AddRecipeMo
         <ModalBody>
           {!parsed && (
             <form id="import-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <div className="flex gap-1.5 flex-wrap">
+                {[
+                  { label: "Web", icon: "🌐" },
+                  { label: "Instagram", icon: "📸" },
+                  { label: "TikTok", icon: "🎵" },
+                ].map(({ label, icon }) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-default-100 text-default-500"
+                  >
+                    {icon} {label}
+                  </span>
+                ))}
+              </div>
               <div className="flex gap-2 items-end">
                 <Input
                   label="Recipe URL"
