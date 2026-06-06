@@ -107,27 +107,29 @@ function DayRow({
   const date = new Date(year, month - 1, day);
   const dayName = SHORT_DAYS[date.getDay()];
   const thumb = proxyUrl(entry?.recipe.thumbnail_url);
-  const highlighted = isToday || isSelected;
-
   return (
     <div
       ref={setRef}
       className={`flex items-center gap-3 py-3 border-b border-divider border-l-[3px] transition-colors ${
-        isSelected
-          ? "border-l-primary bg-primary/10 pl-[13px] pr-4"
-          : "border-l-transparent pl-[13px] pr-4"
-      } ${isToday && !isSelected ? "bg-primary/5" : ""}`}
+        isSelected ? "border-l-primary bg-primary/10" : "border-l-transparent"
+      } ${isToday && !isSelected ? "bg-primary/5" : ""} pl-[13px] pr-4`}
     >
       {/* Date column */}
-      <div className={`w-12 shrink-0 text-center ${highlighted ? "text-primary" : "text-default-500"}`}>
+      <div className={`w-12 shrink-0 text-center ${isToday || isSelected ? "text-primary" : "text-default-500"}`}>
         <p className="text-[10px] font-semibold uppercase tracking-wide">{dayName}</p>
-        <p className={`text-2xl font-bold leading-tight ${highlighted ? "text-primary" : "text-default-800"}`}>
-          {day}
-        </p>
+        {isToday ? (
+          <p className="text-2xl font-bold leading-none flex items-center justify-center mx-auto w-9 h-9 rounded-full bg-primary text-primary-foreground">
+            {day}
+          </p>
+        ) : (
+          <p className={`text-2xl font-bold leading-tight ${isSelected ? "text-primary" : "text-default-800"}`}>
+            {day}
+          </p>
+        )}
       </div>
 
       {/* Vertical divider */}
-      <div className={`w-px self-stretch ${highlighted ? "bg-primary/30" : "bg-divider"}`} />
+      <div className={`w-px self-stretch ${isToday || isSelected ? "bg-primary/30" : "bg-divider"}`} />
 
       {/* Content */}
       {entry ? (
