@@ -3,6 +3,21 @@ import PageHeader from "../components/PageHeader";
 import RecipeDetailModal from "../components/RecipeDetailModal";
 import { RecipeOut, Tag } from "../api/client";
 
+function RecipeThumb({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div className="w-16 h-16 rounded-lg shrink-0 overflow-hidden bg-default-100 relative">
+      {!loaded && <div className="absolute inset-0 animate-pulse bg-default-200" />}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+      />
+    </div>
+  );
+}
+
 interface RecipesPageProps {
   onAddRecipe: () => void;
   recipes: RecipeOut[];
@@ -31,13 +46,7 @@ function RecipeCard({
       onClick={onClick}
       className="flex gap-3 items-start p-3 rounded-xl bg-content1 shadow-sm w-full text-left active:opacity-70 transition-opacity"
     >
-      {proxyUrl && (
-        <img
-          src={proxyUrl}
-          alt={recipe.title}
-          className="w-16 h-16 rounded-lg object-cover shrink-0"
-        />
-      )}
+      {proxyUrl && <RecipeThumb src={proxyUrl} alt={recipe.title} />}
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm leading-snug line-clamp-2">{recipe.title}</p>
         {recipe.creator_handle && (

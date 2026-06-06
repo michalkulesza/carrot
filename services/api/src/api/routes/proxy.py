@@ -41,4 +41,8 @@ async def proxy_image(url: str) -> StreamingResponse:
                 async for chunk in r.aiter_bytes(8192):
                     yield chunk
 
-    return StreamingResponse(stream(), media_type=content_type)
+    return StreamingResponse(
+        stream(),
+        media_type=content_type,
+        headers={"Cache-Control": "public, max-age=86400, immutable"},
+    )
