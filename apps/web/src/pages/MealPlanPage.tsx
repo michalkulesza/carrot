@@ -304,7 +304,7 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
           <h1 className="text-xl font-bold">Meal Plan</h1>
         </div>
 
-        <div ref={calendarRef} className="pk-cal pb-2 px-1">
+        <div ref={calendarRef} className="pk-cal pb-2 px-1 flex justify-center">
           <I18nProvider locale={calendarLocale}>
             <Calendar
               aria-label="Meal plan calendar"
