@@ -1,6 +1,10 @@
+import csv
+import io
+import json
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +13,8 @@ from api.models import Recipe, RecipeOut, RecipeSaveRequest
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
+
+_CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creator_handle", "components"]
 
 
 @router.post("", response_model=RecipeOut, status_code=201)
@@ -83,3 +89,72 @@ async def list_recipes(
         select(Recipe).where(Recipe.user_id == user.id).order_by(Recipe.created_at.desc())
     )
     return [RecipeOut.model_validate(r) for r in result.scalars().all()]
+
+
+@router.get("/export")
+async def export_recipes(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> StreamingResponse:
+    result = await session.execute(
+        select(Recipe).where(Recipe.user_id == user.id).order_by(Recipe.created_at.desc())
+    )
+    recipes = result.scalars().all()
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(_CSV_FIELDS)
+    for r in recipes:
+        writer.writerow([
+            r.title,
+            r.servings if r.servings is not None else "",
+            r.kcal_per_serving if r.kcal_per_serving is not None else "",
+            r.thumbnail_url or "",
+            r.creator_handle or "",
+            json.dumps(r.components),
+        ])
+
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=recipes.csv"},
+    )
+
+
+@router.post("/import")
+async def import_recipes(
+    file: UploadFile = File(...),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> dict:
+    content = await file.read()
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        raise HTTPException(status_code=400, detail="File must be UTF-8 encoded")
+
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames or "title" not in reader.fieldnames:
+        raise HTTPException(status_code=400, detail="Invalid CSV: missing required columns")
+
+    count = 0
+    for row in reader:
+        try:
+            components = json.loads(row.get("components") or "[]")
+        except json.JSONDecodeError:
+            components = []
+
+        recipe = Recipe(
+            user_id=user.id,
+            title=row.get("title") or "Untitled",
+            servings=int(row["servings"]) if row.get("servings") else None,
+            kcal_per_serving=int(row["kcal_per_serving"]) if row.get("kcal_per_serving") else None,
+            thumbnail_url=row.get("thumbnail_url") or None,
+            creator_handle=row.get("creator_handle") or None,
+            components=components,
+        )
+        session.add(recipe)
+        count += 1
+
+    await session.commit()
+    return {"imported": count}
