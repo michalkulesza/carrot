@@ -331,7 +331,7 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
               onChange={handleCalendarChange}
               onFocusChange={handleFocusChange}
               classNames={{
-                base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center",
+                base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center py-[10px]",
                 headerWrapper: "px-3 pt-0 pb-2",
                 header: "text-sm font-bold tracking-tight",
                 prevButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
