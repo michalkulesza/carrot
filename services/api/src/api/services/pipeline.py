@@ -86,11 +86,49 @@ def _is_social_url(url: str) -> bool:
     return "tiktok.com" in url or "instagram.com" in url
 
 
+_NOISE_TAGS = ["script", "style", "nav", "header", "footer", "aside",
+               "iframe", "noscript", "svg", "form", "button"]
+_NOISE_ATTRS = ("comment", "newsletter", "sidebar", "cookie", "popup",
+                "advertisement", "promo", "share", "related", "subscription")
+
+
 def _strip_html(html: str) -> str:
     soup = BeautifulSoup(html, "html.parser")
-    for tag in soup(["script", "style", "nav", "header", "footer", "aside"]):
+
+    for tag in soup(_NOISE_TAGS):
         tag.decompose()
-    return soup.get_text(separator="\n", strip=True)[:8000]
+
+    for el in soup.find_all(True):
+        combined = " ".join(el.get("class") or []).lower() + " " + (el.get("id") or "").lower()
+        if any(p in combined for p in _NOISE_ATTRS):
+            el.decompose()
+
+    # Prefer the most recipe-relevant container over the full body
+    container = (
+        soup.find(class_=lambda c: c and any("recipe" in cls.lower() for cls in c))
+        or soup.find("article")
+        or soup.find("main")
+        or soup.body
+        or soup
+    )
+
+    return container.get_text(separator="\n", strip=True)[:4000]
+
+
+async def _estimate_kcal(recipe: RecipeExtraction, model: str) -> int | None:
+    lines = [f"Recipe: {recipe.title or 'unknown dish'}"]
+    if recipe.servings:
+        lines.append(f"Servings: {recipe.servings}")
+    lines.append("Ingredients:")
+    for comp in recipe.components:
+        for ing in comp.ingredients:
+            lines.append("- " + " ".join(filter(None, [ing.qty, ing.unit, ing.name, ing.note])))
+    try:
+        result = await gemini_svc.extract_recipe("\n".join(lines), source_hint="kcal estimation", model=model)
+        return result.kcal_per_serving
+    except Exception as exc:
+        log.warning("kcal estimation failed: %s", exc)
+        return None
 
 
 async def _try_linked_url(url: str, model: str = "gemini-2.5-flash-lite") -> RecipeExtraction | None:
@@ -154,7 +192,11 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite") -> A
         meta = ImportMetadata(source_url=url, thumbnail_url=thumbnail_url, creator_handle=domain)
 
         jsonld = _extract_jsonld_recipe(html)
-        if jsonld and _is_complete(jsonld) and jsonld.kcal_per_serving is not None:
+        if jsonld and _is_complete(jsonld):
+            if jsonld.kcal_per_serving is None:
+                yield _stage_event("estimating_kcal", "Estimating calories…")
+                kcal = await _estimate_kcal(jsonld, model)
+                jsonld = jsonld.model_copy(update={"kcal_per_serving": kcal})
             yield _done_event(ImportResult(stage=ImportStage.LINK, recipe=jsonld, metadata=meta), cache_key=url)
             return
 
