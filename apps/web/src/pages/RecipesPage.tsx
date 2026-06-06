@@ -112,21 +112,25 @@ export default function RecipesPage({ onAddRecipe, refreshKey, allTags, onTagCre
     <>
       <PageHeader title="Recipes" />
 
-      {filterTag && (
-        <div className="flex items-center gap-2 px-4 mt-3">
-          <span className="text-xs text-default-500">Filtered by:</span>
-          <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-secondary/20 text-secondary-700">
-            {filterTag.name}
-            <button
-              type="button"
-              onClick={() => setFilterTag(null)}
-              className="ml-0.5 text-secondary-400 hover:text-secondary-700"
-              aria-label="Clear filter"
-            >
-              ×
-            </button>
-          </span>
-          <span className="text-xs text-default-400">{displayed.length} recipe{displayed.length !== 1 ? "s" : ""}</span>
+      {allTags.length > 0 && (
+        <div className="flex gap-2 px-4 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+          {allTags.map((tag) => {
+            const active = filterTag?.id === tag.id;
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => setFilterTag(active ? null : tag)}
+                className={`shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${
+                  active
+                    ? "bg-secondary text-white"
+                    : "bg-default-100 text-default-600 hover:bg-default-200"
+                }`}
+              >
+                {tag.name}
+              </button>
+            );
+          })}
         </div>
       )}
 

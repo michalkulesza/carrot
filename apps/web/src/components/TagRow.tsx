@@ -61,6 +61,9 @@ export default function TagRow({ tags, allTags, onAdd, onRemove, onCreateTag }: 
 
   return (
     <div className="flex flex-wrap gap-1.5 items-center" ref={containerRef}>
+      {tags.length === 0 && (
+        <span className="text-xs text-default-400 italic">No tags</span>
+      )}
       {tags.map((tag) => (
         <span
           key={tag.id}
