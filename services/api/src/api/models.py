@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
+from datetime import date as DateType, datetime
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, String, DateTime, Table
+from sqlalchemy import JSON, Boolean, Column, Date, ForeignKey, Integer, String, DateTime, Table, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
@@ -147,3 +147,47 @@ class RecipeOut(BaseModel):
     components: list[Any]
     created_at: datetime
     tags: list[TagOut] = []
+
+
+# ── Meal Plan ─────────────────────────────────────────────────────────────────
+
+class MealPlanEntry(Base):
+    __tablename__ = "meal_plan_entries"
+    __table_args__ = (UniqueConstraint("user_id", "date", name="uq_meal_plan_user_date"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    date: Mapped[DateType] = mapped_column(Date, nullable=False)
+    recipe_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False)
+    recipe: Mapped[Recipe] = relationship("Recipe", lazy="selectin")
+
+
+class MealPlanEntryOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    date: DateType
+    recipe: RecipeOut
+
+
+class MealPlanSetRequest(BaseModel):
+    recipe_id: uuid.UUID
+
+
+# ── User Preferences ──────────────────────────────────────────────────────────
+
+class UserPreferences(Base):
+    __tablename__ = "user_preferences"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    week_start_day: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+
+
+class UserPreferencesOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    week_start_day: int
+
+
+class UserPreferencesUpdate(BaseModel):
+    week_start_day: int

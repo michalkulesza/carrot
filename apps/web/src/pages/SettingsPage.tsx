@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { Avatar, Button } from "@heroui/react";
+import { Avatar, Button, Select, SelectItem } from "@heroui/react";
 import PageHeader from "../components/PageHeader";
-import { exportRecipes, importRecipes, type RecipeStats } from "../api/client";
+import { exportRecipes, importRecipes, updatePreferences, type RecipeStats, type UserPreferences } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 function StatCard({ value, label }: { value: string | number | null; label: string }) {
@@ -15,12 +15,20 @@ function StatCard({ value, label }: { value: string | number | null; label: stri
   );
 }
 
+const WEEK_DAY_OPTIONS = [
+  { key: "1", label: "Monday" },
+  { key: "0", label: "Sunday" },
+  { key: "6", label: "Saturday" },
+];
+
 interface SettingsPageProps {
   stats: RecipeStats | null;
   onStatsRefresh: () => void;
+  preferences: UserPreferences | null;
+  onPreferencesChange: (prefs: UserPreferences) => void;
 }
 
-export default function SettingsPage({ stats, onStatsRefresh }: SettingsPageProps) {
+export default function SettingsPage({ stats, onStatsRefresh, preferences, onPreferencesChange }: SettingsPageProps) {
   const { user, logout } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -106,6 +114,31 @@ export default function SettingsPage({ stats, onStatsRefresh }: SettingsPageProp
             >
               Log out
             </Button>
+          </div>
+        </section>
+
+        {/* Preferences */}
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-default-400">Preferences</h2>
+          <div className="rounded-xl border border-divider p-4">
+            <Select
+              label="Week starts on"
+              size="sm"
+              selectedKeys={[String(preferences?.week_start_day ?? 1)]}
+              onSelectionChange={(keys) => {
+                const key = [...keys][0];
+                if (key !== undefined) {
+                  const day = Number(key);
+                  updatePreferences({ week_start_day: day })
+                    .then(onPreferencesChange)
+                    .catch(() => {});
+                }
+              }}
+            >
+              {WEEK_DAY_OPTIONS.map((opt) => (
+                <SelectItem key={opt.key}>{opt.label}</SelectItem>
+              ))}
+            </Select>
           </div>
         </section>
 

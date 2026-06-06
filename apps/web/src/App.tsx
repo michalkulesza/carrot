@@ -11,7 +11,7 @@ import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { AuthProvider } from "./context/AuthContext";
-import { fetchStats, listRecipes, listTags, RecipeOut, RecipeStats, Tag } from "./api/client";
+import { fetchStats, getPreferences, listRecipes, listTags, RecipeOut, RecipeStats, Tag, UserPreferences } from "./api/client";
 
 function AppShell() {
   const [modalOpen, setModalOpen] = useState(false);
@@ -19,11 +19,13 @@ function AppShell() {
   const [recipes, setRecipes] = useState<RecipeOut[]>([]);
   const [recipesLoading, setRecipesLoading] = useState(true);
   const [stats, setStats] = useState<RecipeStats | null>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     listTags().then(setAllTags).catch(() => {});
     fetchStats().then(setStats).catch(() => null);
+    getPreferences().then(setPreferences).catch(() => null);
     setRecipesLoading(true);
     listRecipes().then(setRecipes).finally(() => setRecipesLoading(false));
   }, []);
@@ -73,11 +75,11 @@ function AppShell() {
               />
             }
           />
-          <Route path="/plan" element={<MealPlanPage />} />
+          <Route path="/plan" element={<MealPlanPage recipes={recipes} preferences={preferences} />} />
           <Route path="/shopping" element={<ShoppingListPage />} />
           <Route
             path="/settings"
-            element={<SettingsPage stats={stats} onStatsRefresh={handleStatsRefresh} />}
+            element={<SettingsPage stats={stats} onStatsRefresh={handleStatsRefresh} preferences={preferences} onPreferencesChange={setPreferences} />}
           />
         </Routes>
       </div>

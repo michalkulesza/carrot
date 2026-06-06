@@ -10,6 +10,8 @@ from api.config import settings
 from api.database import Base, async_session_maker, engine
 from api.models import Tag
 from api.routes.imports import router as imports_router
+from api.routes.meal_plan import router as meal_plan_router
+from api.routes.preferences import router as preferences_router
 from api.routes.proxy import router as proxy_router
 from api.routes.recipes import router as recipes_router
 from api.routes.tags import router as tags_router
@@ -87,6 +89,8 @@ app.add_middleware(
 )
 
 app.include_router(imports_router, prefix="/api")
+app.include_router(meal_plan_router, prefix="/api")
+app.include_router(preferences_router, prefix="/api")
 app.include_router(proxy_router, prefix="/api")
 app.include_router(recipes_router, prefix="/api")
 app.include_router(tags_router, prefix="/api")

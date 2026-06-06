@@ -207,6 +207,62 @@ export async function removeTagFromRecipe(recipeId: string, tagId: string): Prom
   if (!res.ok) throw new Error("Failed to remove tag");
 }
 
+// ── Meal Plan ─────────────────────────────────────────────────────────────────
+
+export interface MealPlanEntry {
+  id: string;
+  date: string; // "YYYY-MM-DD"
+  recipe: RecipeOut;
+}
+
+export async function listMealPlan(month: string): Promise<MealPlanEntry[]> {
+  const res = await fetch(`/api/meal-plan?month=${month}`, { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load meal plan");
+  return res.json() as Promise<MealPlanEntry[]>;
+}
+
+export async function setMealPlanEntry(date: string, recipeId: string): Promise<MealPlanEntry> {
+  const res = await fetch(`/api/meal-plan/${date}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ recipe_id: recipeId }),
+  });
+  if (!res.ok) throw new Error("Failed to set meal plan entry");
+  return res.json() as Promise<MealPlanEntry>;
+}
+
+export async function deleteMealPlanEntry(date: string): Promise<void> {
+  const res = await fetch(`/api/meal-plan/${date}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to delete meal plan entry");
+}
+
+// ── Preferences ───────────────────────────────────────────────────────────────
+
+export interface UserPreferences {
+  week_start_day: number; // 0=Sun 1=Mon 6=Sat
+}
+
+export async function getPreferences(): Promise<UserPreferences> {
+  const res = await fetch("/api/preferences", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load preferences");
+  return res.json() as Promise<UserPreferences>;
+}
+
+export async function updatePreferences(data: UserPreferences): Promise<UserPreferences> {
+  const res = await fetch("/api/preferences", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update preferences");
+  return res.json() as Promise<UserPreferences>;
+}
+
 export function streamImport(url: string, callbacks: StreamCallbacks): () => void {
   const source = new EventSource(
     `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`
