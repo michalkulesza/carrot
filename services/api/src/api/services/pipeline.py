@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from collections.abc import AsyncGenerator
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -64,10 +66,18 @@ def _jsonld_to_extraction(data: dict) -> RecipeExtraction:
         except ValueError:
             pass
 
+    kcal: int | None = None
+    calories_raw = (data.get("nutrition") or {}).get("calories")
+    if calories_raw:
+        m = re.search(r"\d+", str(calories_raw))
+        if m:
+            kcal = int(m.group())
+
     component = RecipeComponent(role="main", ingredients=ingredients, steps=steps)
     return RecipeExtraction(
         title=data.get("name"),
         servings=servings,
+        kcal_per_serving=kcal,
         components=[component] if (ingredients or steps) else [],
     )
 
@@ -140,10 +150,11 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite") -> A
         soup = BeautifulSoup(html, "html.parser")
         og_tag = soup.find("meta", attrs={"property": "og:image"})
         thumbnail_url: str | None = og_tag.get("content") if og_tag else None  # type: ignore[union-attr]
-        meta = ImportMetadata(source_url=url, thumbnail_url=thumbnail_url)
+        domain = urlparse(url).netloc.removeprefix("www.")
+        meta = ImportMetadata(source_url=url, thumbnail_url=thumbnail_url, creator_handle=domain)
 
         jsonld = _extract_jsonld_recipe(html)
-        if jsonld and _is_complete(jsonld):
+        if jsonld and _is_complete(jsonld) and jsonld.kcal_per_serving is not None:
             yield _done_event(ImportResult(stage=ImportStage.LINK, recipe=jsonld, metadata=meta), cache_key=url)
             return
 
