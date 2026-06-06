@@ -11,3 +11,14 @@
     display: none;
   }
 }
+
+/* ── Meal plan calendar: full-width stretch ───────────────────────────────── */
+.pk-cal table {
+  width: 100% !important;
+  table-layout: fixed !important;
+}
+/* Centre each header letter and date number in its equal-width column */
+.pk-cal thead th,
+.pk-cal tbody td {
+  text-align: center;
+}
