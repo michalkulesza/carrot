@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ToastProvider } from "@heroui/react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
 import AddRecipeModal from "./components/AddRecipeModal";
@@ -44,6 +45,7 @@ function AppShell() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ToastProvider placement="bottom-center" />
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

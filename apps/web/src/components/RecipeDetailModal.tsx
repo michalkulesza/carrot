@@ -6,6 +6,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  addToast,
 } from "@heroui/react";
 import { RecipeOut, SaveComponent, deleteRecipe, updateRecipe } from "../api/client";
 
@@ -259,6 +260,7 @@ export default function RecipeDetailModal({
         creator_handle: r.creator_handle,
         components: draft.components,
       });
+      addToast({ title: "Recipe updated", color: "success", timeout: 3000 });
       onUpdated?.(updated);
       setMode("view");
     } catch (err) {
@@ -273,6 +275,7 @@ export default function RecipeDetailModal({
     setError(null);
     try {
       await deleteRecipe(r.id);
+      addToast({ title: "Recipe deleted", color: "danger", timeout: 3000 });
       onDeleted?.(r.id);
       onClose();
     } catch (err) {

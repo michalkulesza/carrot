@@ -7,6 +7,7 @@ import {
   ModalFooter,
   Button,
   Input,
+  addToast,
 } from "@heroui/react";
 import { streamImport, saveRecipe, ImportResult, RecipeComponent, StageEvent } from "../api/client";
 
@@ -354,6 +355,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved }: AddRecipeMo
         creator_handle: editable.creator_handle,
         components: editable.components,
       });
+      addToast({ title: "Recipe saved", color: "success", timeout: 3000 });
       onSaved?.();
       reset();
       onClose();
