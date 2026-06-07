@@ -105,8 +105,8 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Week Meal Planner");
 
-  // 169px ≈ 22.3 Excel character-width units (64px = 8.43 chars)
-  ws.columns = Array(7).fill(null).map(() => ({ width: 22.3 }));
+  // 169px → 24.3 chars (observed: 22.3 renders as 155px, scaled by 169/155)
+  ws.columns = Array(7).fill(null).map(() => ({ width: 24.3 }));
 
   const centerWrap: Partial<ExcelJS.Alignment> = {
     horizontal: "center",
@@ -114,9 +114,9 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
     wrapText: true,
   };
 
-  // Header row
+  // Header row — ExcelJS height is in points; 42px * 72/96 = 31.5pt
   const headerRow = ws.addRow(DAY_HEADERS);
-  headerRow.height = 42;
+  headerRow.height = 31.5;
   headerRow.eachCell((cell) => { cell.alignment = centerWrap; });
 
   // Data rows — one per week
@@ -129,7 +129,7 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
       rowData.push(byDate.get(ds) ?? null);
     }
     const row = ws.addRow(rowData);
-    row.height = 96;
+    row.height = 72; // 96px * 72/96 = 72pt
     row.eachCell({ includeEmpty: true }, (cell) => { cell.alignment = centerWrap; });
   }
 
