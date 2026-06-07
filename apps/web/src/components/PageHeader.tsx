@@ -33,10 +33,13 @@ export default function PageHeader({ title, action }: PageHeaderProps) {
         >
           <h1 className="text-xl font-bold leading-tight truncate">{title}</h1>
           <p
-            className="text-[11px] font-semibold uppercase tracking-wide truncate leading-tight"
+            className="text-[11px] font-semibold uppercase tracking-wide leading-tight flex items-center gap-0.5"
             style={{ color: bandColor ?? undefined }}
           >
-            {activeHousehold ? activeHousehold.name : "Personal Library"}
+            <span className="truncate">{activeHousehold ? activeHousehold.name : "Personal Library"}</span>
+            <svg className="w-3 h-3 shrink-0 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+            </svg>
           </p>
         </button>
         <div className="flex items-center gap-1 shrink-0 ml-2">
