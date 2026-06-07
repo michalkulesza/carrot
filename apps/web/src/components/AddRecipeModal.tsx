@@ -39,6 +39,7 @@ interface EditableRecipe {
   kcal: string;
   thumbnail_url: string | null;
   creator_handle: string | null;
+  source_url: string | null;
   stage: string;
   components: EditableComponent[];
   suggestedTagNames: string[];
@@ -52,6 +53,7 @@ function toEditable(result: ImportResult): EditableRecipe {
     kcal: recipe?.kcal_per_serving?.toString() ?? "",
     thumbnail_url: metadata.thumbnail_url,
     creator_handle: metadata.creator_handle,
+    source_url: metadata.source_url || null,
     stage,
     suggestedTagNames: recipe?.tags ?? [],
     components: (recipe?.components ?? []).map((c: RecipeComponent) => ({
@@ -257,11 +259,26 @@ function EditableRecipeView({
 
       {/* Pills */}
       <div className="flex flex-col gap-2 mb-4">
-        {originalHandle && (
+        {(originalHandle || recipe.source_url) && (
           <div className="flex flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-default-100 text-default-500">
-              By: @{originalHandle}
-            </span>
+            {originalHandle && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-default-100 text-default-500">
+                By: @{originalHandle}
+              </span>
+            )}
+            {recipe.source_url && (
+              <a
+                href={recipe.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-default-100 text-default-500 hover:bg-default-200 hover:text-default-700 transition-colors"
+              >
+                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Source
+              </a>
+            )}
             {isAdapted && (
               <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-success/10 text-success-700 animate-appearance-in">
                 ✎ Adapted by: @{myHandle}
