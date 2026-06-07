@@ -246,12 +246,12 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
   }
   td {
     font-family: 'Roboto', sans-serif;
-    font-size: 11pt;
+    font-size: 9pt;
     color: #434343;
     text-align: center;
     vertical-align: middle;
     padding: 4px;
-    height: 21mm;
+    height: 17mm;
     word-wrap: break-word;
   }
   tr.odd td  { background: #ffffff; }
