@@ -250,7 +250,8 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
     color: #434343;
     text-align: center;
     vertical-align: middle;
-    padding: 10px 4px;
+    padding: 4px;
+    height: 21mm;
     word-wrap: break-word;
   }
   tr.odd td  { background: #ffffff; }
