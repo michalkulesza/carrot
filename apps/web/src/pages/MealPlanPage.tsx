@@ -227,9 +227,11 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
 <style>
   @page { size: A4 portrait; margin: 10mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Roboto', sans-serif; }
+  html, body { height: 277mm; }
+  body { font-family: 'Roboto', sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   table {
     width: 100%;
+    height: 100%;
     border-collapse: collapse;
     border: 1px solid #356854;
     table-layout: fixed;
@@ -241,8 +243,8 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
     font-size: 16pt;
     text-align: center;
     vertical-align: middle;
-    padding: 6px 4px;
-    height: 42px;
+    padding: 4px;
+    height: 15mm;
     word-wrap: break-word;
   }
   td {
@@ -251,8 +253,8 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
     color: #434343;
     text-align: center;
     vertical-align: middle;
-    padding: 6px 4px;
-    height: 96px;
+    padding: 4px;
+    height: calc((277mm - 15mm) / 6);
     word-wrap: break-word;
   }
   tr.odd td  { background: #ffffff; }
