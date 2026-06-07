@@ -48,6 +48,13 @@ export function HouseholdProvider({ children, onContextSwitch }: HouseholdProvid
     }
   }, [user?.id]);
 
+  // Poll for new invitations every 30 seconds
+  useEffect(() => {
+    if (!user) return;
+    const id = setInterval(refetchInvitations, 30_000);
+    return () => clearInterval(id);
+  }, [user?.id, refetchInvitations]);
+
   async function switchHousehold(id: string | null) {
     await apiSwitch(id);
     await refreshUser();
