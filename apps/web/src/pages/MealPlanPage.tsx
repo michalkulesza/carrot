@@ -173,6 +173,108 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
   URL.revokeObjectURL(url);
 }
 
+// ── Print ─────────────────────────────────────────────────────────────────────
+
+function buildWeekRows(entries: MealPlanEntry[], year: number, month: number): (string | null)[][] {
+  const byDate = new Map(entries.map((e) => [e.date, e.recipe.title]));
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+  const weeks: Date[] = [];
+  const startMonday = new Date(firstDay);
+  const dow = startMonday.getDay();
+  startMonday.setDate(startMonday.getDate() + (dow === 0 ? -6 : 1 - dow));
+  for (let d = new Date(startMonday); d <= lastDay; d.setDate(d.getDate() + 7)) {
+    weeks.push(new Date(d));
+  }
+  const rows: (string | null)[][] = [];
+  for (let wi = 0; wi < 6; wi++) {
+    const monday = weeks[wi];
+    const row: (string | null)[] = [];
+    for (let i = 0; i < 7; i++) {
+      if (monday) {
+        const d = new Date(monday);
+        d.setDate(d.getDate() + i);
+        const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        row.push(byDate.get(ds) ?? null);
+      } else {
+        row.push(null);
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
+  const DAY_HEADERS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const rows = buildWeekRows(entries, year, month);
+  const monthName = new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+
+  const headerCells = DAY_HEADERS.map(
+    (d) => `<th>${d}</th>`
+  ).join("");
+
+  const dataRows = rows.map((row, wi) => {
+    const cells = row.map((cell) => `<td>${cell ?? ""}</td>`).join("");
+    return `<tr class="${wi % 2 === 0 ? "odd" : "even"}">${cells}</tr>`;
+  }).join("");
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Meal Plan – ${monthName} ${year}</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Roboto', sans-serif; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #356854;
+    table-layout: fixed;
+  }
+  th {
+    background: #356854;
+    color: #fff;
+    font-family: 'Times New Roman', serif;
+    font-size: 16pt;
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 4px;
+    height: 42px;
+    word-wrap: break-word;
+  }
+  td {
+    font-family: 'Roboto', sans-serif;
+    font-size: 14pt;
+    color: #434343;
+    text-align: center;
+    vertical-align: middle;
+    padding: 6px 4px;
+    height: 96px;
+    word-wrap: break-word;
+  }
+  tr.odd td  { background: #ffffff; }
+  tr.even td { background: #f6f8f9; }
+</style>
+</head>
+<body>
+<table>
+  <thead><tr>${headerCells}</tr></thead>
+  <tbody>${dataRows}</tbody>
+</table>
+<script>window.onload = () => { window.print(); window.onafterprint = () => window.close(); }<\/script>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank");
+  if (win) {
+    win.document.write(html);
+    win.document.close();
+  }
+}
+
 // ── RecipeThumb ───────────────────────────────────────────────────────────────
 
 function RecipeThumb({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
@@ -422,14 +524,24 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
       >
         <div className="flex items-center px-4 h-14 max-w-lg mx-auto">
           <h1 className="text-xl font-bold flex-1">Meal Plan</h1>
-          <Button
-            size="sm"
-            variant="flat"
-            isDisabled={loading || entries.length === 0}
-            onPress={() => void exportMealPlan(entries, viewYear, viewMonth)}
-          >
-            Export as xlsx
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="flat"
+              isDisabled={loading || entries.length === 0}
+              onPress={() => printMealPlan(entries, viewYear, viewMonth)}
+            >
+              Print
+            </Button>
+            <Button
+              size="sm"
+              variant="flat"
+              isDisabled={loading || entries.length === 0}
+              onPress={() => void exportMealPlan(entries, viewYear, viewMonth)}
+            >
+              Export as xlsx
+            </Button>
+          </div>
         </div>
 
         <div ref={calendarRef} className="pk-cal pb-2 px-1">
