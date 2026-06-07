@@ -51,8 +51,7 @@ function parseCellAriaLabel(label: string): string | null {
 function injectDots(container: HTMLElement | null, planned: Set<string>) {
   if (!container) return;
   container.querySelectorAll(".pk-dot").forEach((el) => el.remove());
-  const allBtns = container.querySelectorAll("button[aria-label]");
-  console.log("[dots] planned:", [...planned], "buttons found:", allBtns.length, allBtns.length > 0 ? [...allBtns].map(b => b.getAttribute("aria-label")).slice(0,3) : []);
+  const allBtns = container.querySelectorAll("[role='button'][aria-label], button[aria-label]");
   allBtns.forEach((btn) => {
     const label = btn.getAttribute("aria-label") ?? "";
     const dateStr = parseCellAriaLabel(label);
