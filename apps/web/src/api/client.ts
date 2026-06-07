@@ -149,6 +149,24 @@ export async function listRecipes(): Promise<RecipeOut[]> {
   return res.json() as Promise<RecipeOut[]>;
 }
 
+export async function listPersonalRecipes(): Promise<RecipeOut[]> {
+  const res = await fetch("/api/recipes?personal=true", { credentials: "include" });
+  if (!res.ok) throw new Error("Failed to load personal recipes");
+  return res.json() as Promise<RecipeOut[]>;
+}
+
+export async function linkRecipeToHousehold(id: string): Promise<RecipeOut> {
+  const res = await fetch(`/api/recipes/${id}/link-to-household`, {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { detail?: unknown };
+    throw new Error(typeof err.detail === "string" ? err.detail : "Failed to link recipe");
+  }
+  return res.json() as Promise<RecipeOut>;
+}
+
 export async function exportRecipes(): Promise<void> {
   const res = await fetch("/api/recipes/export", { credentials: "include" });
   if (!res.ok) throw new Error("Export failed");

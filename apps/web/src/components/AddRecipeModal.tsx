@@ -14,8 +14,11 @@ import {
   streamImport,
   saveRecipe,
   createTag,
+  listPersonalRecipes,
+  linkRecipeToHousehold,
   ImportResult,
   RecipeComponent,
+  RecipeOut,
   StageEvent,
   Tag,
 } from "../api/client";
@@ -387,6 +390,15 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
   const [sharedToPersonal, setSharedToPersonal] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef<(() => void) | null>(null);
+  const [personalRecipes, setPersonalRecipes] = useState<RecipeOut[]>([]);
+  const [librarySearch, setLibrarySearch] = useState("");
+  const [linking, setLinking] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && activeHouseholdId) {
+      listPersonalRecipes().then(setPersonalRecipes).catch(() => {});
+    }
+  }, [isOpen, activeHouseholdId]);
 
   function reset() {
     cancelRef.current?.();
@@ -398,6 +410,23 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
     setSelectedTags([]);
     setSharedToPersonal(true);
     setError(null);
+    setLibrarySearch("");
+  }
+
+  async function handleLink(id: string) {
+    setLinking(true);
+    setError(null);
+    try {
+      await linkRecipeToHousehold(id);
+      addToast({ title: "Recipe added to household", color: "success", timeout: 3000 });
+      onSaved?.();
+      reset();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add recipe");
+    } finally {
+      setLinking(false);
+    }
   }
 
   async function handleTagCreate(name: string): Promise<Tag> {
@@ -496,6 +525,56 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
       <ModalContent>
         <ModalHeader>{parsed ? "Edit Recipe" : "Import Recipe"}</ModalHeader>
         <ModalBody>
+          {!parsed && activeHouseholdId && personalRecipes.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-default-400">From Personal Library</p>
+              <Input
+                size="sm"
+                placeholder="Search your recipes…"
+                value={librarySearch}
+                onValueChange={setLibrarySearch}
+                startContent={
+                  <svg className="w-3.5 h-3.5 text-default-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                }
+              />
+              <ul className="max-h-44 overflow-y-auto flex flex-col gap-0.5">
+                {personalRecipes
+                  .filter((r) => r.title.toLowerCase().includes(librarySearch.toLowerCase()))
+                  .map((r) => (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        disabled={linking}
+                        onClick={() => handleLink(r.id)}
+                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-sm hover:bg-default-100 transition-colors disabled:opacity-50"
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {r.thumbnail_url && (
+                            <img
+                              src={`/api/proxy/image?url=${encodeURIComponent(r.thumbnail_url)}`}
+                              className="w-8 h-8 rounded object-cover shrink-0"
+                            />
+                          )}
+                          <span className="truncate font-medium">{r.title}</span>
+                        </div>
+                        <span className="text-xs text-primary shrink-0 font-semibold">Add</span>
+                      </button>
+                    </li>
+                  ))}
+                {personalRecipes.filter((r) => r.title.toLowerCase().includes(librarySearch.toLowerCase())).length === 0 && (
+                  <li className="text-sm text-default-400 px-3 py-2">No matches</li>
+                )}
+              </ul>
+              <div className="flex items-center gap-2 text-xs text-default-400 pt-1">
+                <div className="flex-1 h-px bg-divider" />
+                <span>or import from URL</span>
+                <div className="flex-1 h-px bg-divider" />
+              </div>
+            </div>
+          )}
+
           {!parsed && (
             <form id="import-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="flex gap-1.5 flex-wrap">

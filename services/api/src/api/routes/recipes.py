@@ -173,13 +173,17 @@ async def import_recipes(
 
 @router.get("", response_model=list[RecipeOut])
 async def list_recipes(
+    personal: bool = False,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> list[RecipeOut]:
+    # personal=True forces strict personal scope (household_id IS NULL only)
+    effective_hid = None if personal else household_id
     result = await session.execute(
         select(Recipe)
-        .where(_recipe_filter(user.id, household_id))
+        .where(_recipe_filter(user.id, effective_hid) if not personal
+               else and_(Recipe.user_id == user.id, Recipe.household_id.is_(None)))
         .order_by(Recipe.created_at.desc())
     )
     return [_build_recipe_out(r) for r in result.scalars().all()]
@@ -295,6 +299,32 @@ async def remove_tag_from_recipe(
 
     recipe.tags = [t for t in recipe.tags if t.id != tag_id]
     await session.commit()
+
+
+@router.post("/{recipe_id}/link-to-household", response_model=RecipeOut)
+async def link_recipe_to_household(
+    recipe_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> RecipeOut:
+    if household_id is None:
+        raise HTTPException(status_code=400, detail="Not in a household context")
+    result = await session.execute(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.user_id == user.id,
+            Recipe.household_id.is_(None),
+        )
+    )
+    recipe = result.scalar_one_or_none()
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Personal recipe not found")
+    recipe.household_id = household_id
+    recipe.shared_to_personal = True
+    await session.commit()
+    await session.refresh(recipe)
+    return _build_recipe_out(recipe)
 
 
 @router.delete("/{recipe_id}", status_code=204)
