@@ -36,7 +36,7 @@ export default function PageHeader({ title, action }: PageHeaderProps) {
             className="text-[11px] font-semibold uppercase tracking-wide truncate leading-tight"
             style={{ color: bandColor ?? undefined }}
           >
-            {activeHousehold ? activeHousehold.name : "Personal"}
+            {activeHousehold ? activeHousehold.name : "Personal Library"}
           </p>
         </button>
         <div className="flex items-center gap-1 shrink-0 ml-2">
