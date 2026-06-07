@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import {
   Button,
   Calendar,
@@ -50,7 +51,9 @@ function parseCellAriaLabel(label: string): string | null {
 function injectDots(container: HTMLElement | null, planned: Set<string>) {
   if (!container) return;
   container.querySelectorAll(".pk-dot").forEach((el) => el.remove());
-  container.querySelectorAll('[data-slot="cell-button"]').forEach((btn) => {
+  const allBtns = container.querySelectorAll("button[aria-label]");
+  console.log("[dots] planned:", [...planned], "buttons found:", allBtns.length, allBtns.length > 0 ? [...allBtns].map(b => b.getAttribute("aria-label")).slice(0,3) : []);
+  allBtns.forEach((btn) => {
     const label = btn.getAttribute("aria-label") ?? "";
     const dateStr = parseCellAriaLabel(label);
     if (!dateStr || !planned.has(dateStr)) return;
@@ -80,6 +83,59 @@ const WEEK_START_LOCALE: Record<number, string> = {
 };
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// ── Export ────────────────────────────────────────────────────────────────────
+
+function exportMealPlan(entries: MealPlanEntry[], year: number, month: number) {
+  const DAY_HEADERS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+  // Build a map of date -> recipe title
+  const byDate = new Map(entries.map((e) => [e.date, e.recipe.title]));
+
+  // Find all ISO weeks that overlap with this month
+  // ISO week starts on Monday (day 1)
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+
+  // Collect the Mondays that start each week containing a day in this month
+  const weeks: Date[] = [];
+  const startMonday = new Date(firstDay);
+  const dayOfWeek = startMonday.getDay(); // 0=Sun
+  const offset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  startMonday.setDate(startMonday.getDate() + offset);
+
+  for (let d = new Date(startMonday); d <= lastDay; d.setDate(d.getDate() + 7)) {
+    weeks.push(new Date(d));
+  }
+
+  // Build sheet data: header row + one row per week
+  const rows: (string | null)[][] = [DAY_HEADERS];
+
+  for (const monday of weeks) {
+    const row: (string | null)[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(d.getDate() + i);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      row.push(byDate.get(dateStr) ?? null);
+    }
+    rows.push(row);
+  }
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Column widths (21.25 each, matching reference)
+  ws["!cols"] = Array(7).fill({ wch: 20, wpx: 85 });
+
+  // Row heights: header 31.5pt, data rows 72pt
+  ws["!rows"] = rows.map((_, i) => ({ hpt: i === 0 ? 31.5 : 72 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Week Meal Planner");
+
+  const monthName = new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  XLSX.writeFile(wb, `meal-plan-${year}-${String(month).padStart(2, "0")}-${monthName}.xlsx`);
+}
 
 // ── RecipeThumb ───────────────────────────────────────────────────────────────
 
@@ -329,7 +385,15 @@ export default function MealPlanPage({ recipes, preferences }: MealPlanPageProps
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="flex items-center px-4 h-14 max-w-lg mx-auto">
-          <h1 className="text-xl font-bold">Meal Plan</h1>
+          <h1 className="text-xl font-bold flex-1">Meal Plan</h1>
+          <Button
+            size="sm"
+            variant="flat"
+            isDisabled={loading || entries.length === 0}
+            onPress={() => exportMealPlan(entries, viewYear, viewMonth)}
+          >
+            Export
+          </Button>
         </div>
 
         <div ref={calendarRef} className="pk-cal pb-2 px-1">
