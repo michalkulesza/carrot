@@ -106,7 +106,7 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
   const ws = wb.addWorksheet("Week Meal Planner");
 
   // 169px → 24.3 chars (observed: 22.3 renders as 155px, scaled by 169/155)
-  ws.columns = Array(7).fill(null).map(() => ({ width: 24.74 }));
+  ws.columns = Array(7).fill(null).map(() => ({ width: 24.24 }));
 
   const centerWrap: Partial<ExcelJS.Alignment> = {
     horizontal: "center",
