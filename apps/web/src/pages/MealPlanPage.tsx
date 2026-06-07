@@ -132,7 +132,7 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
   headerRow.eachCell({ includeEmpty: true }, (cell, col) => {
     cell.alignment = centerWrap;
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF356854" } };
-    cell.font = { name: "Times New Roman", size: 12, color: { argb: "FFFFFFFF" } };
+    cell.font = { name: "Times New Roman", size: 16, color: { argb: "FFFFFFFF" } };
     cell.border = outerBorder(1, col);
   });
 
@@ -152,7 +152,7 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
     row.eachCell({ includeEmpty: true }, (cell, col) => {
       cell.alignment = centerWrap;
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
-      cell.font = { name: "Roboto", size: 10.5, color: { argb: "FF434343" } };
+      cell.font = { name: "Roboto", size: 14, color: { argb: "FF434343" } };
       cell.border = outerBorder(wi + 2, col);
     });
   }
