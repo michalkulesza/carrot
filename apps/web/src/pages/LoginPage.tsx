@@ -73,9 +73,14 @@ export default function LoginPage() {
               <div className="flex-1 h-px bg-divider" />
             </div>
 
-            <Button variant="flat" fullWidth onPress={fillDemo}>
-              Use demo account
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="flat" fullWidth onPress={fillDemo}>
+                Use demo account
+              </Button>
+              <Button variant="flat" fullWidth onPress={() => { setEmail("alt@demo.com"); setPassword("demo"); }}>
+                Use demo alt
+              </Button>
+            </div>
 
             <p className="text-center text-sm text-default-500">
               No account?{" "}
