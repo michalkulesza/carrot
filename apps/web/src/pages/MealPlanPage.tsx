@@ -225,7 +225,7 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
 <meta charset="utf-8">
 <title>Meal Plan – ${monthName} ${year}</title>
 <style>
-  @page { size: A4 portrait; margin: 10mm; }
+  @page { size: A4 portrait; margin: 0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Roboto', sans-serif; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   table {
