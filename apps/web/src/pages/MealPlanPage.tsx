@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import ExcelJS from "exceljs";
 import {
   Button,
-  Calendar,
   Input,
   Modal,
   ModalBody,
@@ -11,7 +10,6 @@ import {
   ModalHeader,
   Spinner,
 } from "@heroui/react";
-import { I18nProvider } from "@react-aria/i18n";
 import { CalendarDate, getLocalTimeZone, today } from "@internationalized/date";
 import {
   type MealPlanEntry,
@@ -32,60 +30,6 @@ function proxyUrl(url: string | null | undefined): string | null {
   return `/api/proxy/image?url=${encodeURIComponent(url)}`;
 }
 
-function parseCellAriaLabel(label: string): string | null {
-  // Strip leading prefixes like "Today, " or "Saturday, "
-  let withoutDay = label.replace(/^([A-Za-z]+,\s*)+/, "");
-  // Strip trailing text after the year (e.g. " selected", " unavailable")
-  withoutDay = withoutDay.replace(/(\d{4}).*$/, "$1");
-
-  // en-US: "June 7, 2025"
-  let d = new Date(withoutDay);
-
-  // en-GB: "7 June 2025" — new Date() can't parse this, so reorder manually
-  if (isNaN(d.getTime())) {
-    const gb = withoutDay.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/);
-    if (gb) d = new Date(`${gb[2]} ${gb[1]}, ${gb[3]}`);
-  }
-
-  if (isNaN(d.getTime())) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function injectDots(container: HTMLElement | null, planned: Set<string>) {
-  if (!container) return;
-  container.querySelectorAll(".pk-dot").forEach((el) => el.remove());
-  const allBtns = container.querySelectorAll("[role='button'][aria-label], button[aria-label]");
-  allBtns.forEach((btn) => {
-    const label = btn.getAttribute("aria-label") ?? "";
-    const dateStr = parseCellAriaLabel(label);
-    if (!dateStr || !planned.has(dateStr)) return;
-    const dot = document.createElement("span");
-    dot.className = "pk-dot";
-    Object.assign(dot.style, {
-      position: "absolute",
-      bottom: "3px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      width: "5px",
-      height: "5px",
-      borderRadius: "50%",
-      background: "hsl(var(--heroui-primary))",
-      opacity: "0.85",
-      pointerEvents: "none",
-    });
-    (btn as HTMLElement).style.position = "relative";
-    btn.appendChild(dot);
-  });
-}
-
-const WEEK_START_LOCALE: Record<number, string> = {
-  0: "en-US",  // Sunday
-  1: "en-GB",  // Monday
-  6: "ar-SA",  // Saturday — shows Arabic, best available locale for Sat start
-};
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -530,7 +474,6 @@ interface MealPlanPageProps {
 export default function MealPlanPage({ recipes, preferences, allTags, onTagCreated, onRecipeUpdated, onRecipeDeleted }: MealPlanPageProps) {
   const todayDate = today(getLocalTimeZone());
 
-  const [selectedDate, setSelectedDate] = useState<CalendarDate>(todayDate);
   const [viewYear, setViewYear] = useState(todayDate.year);
   const [viewMonth, setViewMonth] = useState(todayDate.month);
 
@@ -545,7 +488,6 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
   const [busy, setBusy] = useState(false);
 
   const dayRefs = useRef<Map<number, HTMLDivElement>>(new Map());
-  const calendarRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
 
   function scrollToDay(day: number) {
@@ -569,13 +511,6 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
       .catch(() => setEntries([]))
       .finally(() => setLoading(false));
   }, [viewYear, viewMonth]);
-
-  // Inject meal dots into calendar cells after render
-  useEffect(() => {
-    const planned = new Set(entries.map((e) => e.date));
-    const timer = setTimeout(() => injectDots(calendarRef.current, planned), 60);
-    return () => clearTimeout(timer);
-  }, [entries, viewYear, viewMonth, selectedDate]);
 
   // Auto-scroll to today on first load
   useEffect(() => {
@@ -602,26 +537,6 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
     const q = searchQuery.trim().toLowerCase();
     return q ? recipes.filter((r) => r.title.toLowerCase().includes(q)) : recipes;
   }, [recipes, searchQuery]);
-
-  const calendarLocale = WEEK_START_LOCALE[preferences?.week_start_day ?? 1] ?? "en-GB";
-
-  function handleCalendarChange(date: CalendarDate) {
-    setSelectedDate(date);
-    if (date.year !== viewYear || date.month !== viewMonth) {
-      setViewYear(date.year);
-      setViewMonth(date.month);
-    }
-    // Delay gives React time to render the new month's rows before we measure
-    setTimeout(() => scrollToDay(date.day), 150);
-  }
-
-  function handleFocusChange(date: CalendarDate) {
-    if (date.year !== viewYear || date.month !== viewMonth) {
-      setViewYear(date.year);
-      setViewMonth(date.month);
-      setSelectedDate(date);
-    }
-  }
 
   function goToPrevMonth() {
     if (viewMonth === 1) { setViewYear((y) => y - 1); setViewMonth(12); }
@@ -721,31 +636,28 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
         />
       </div>
 
-      {/* ── Mobile: mini calendar + day list ─────────────────────────────────── */}
+      {/* ── Mobile: month nav + day list ─────────────────────────────────────── */}
       <div className="md:hidden">
         <div
           ref={stickyRef}
           className="sticky top-14 z-20 bg-background/95 backdrop-blur-md border-b border-divider"
         >
-          <div ref={calendarRef} className="pk-cal pb-2 px-1">
-            <I18nProvider locale={calendarLocale}>
-              <Calendar
-                aria-label="Meal plan calendar"
-                value={selectedDate}
-                onChange={handleCalendarChange}
-                onFocusChange={handleFocusChange}
-                classNames={{
-                  base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center py-[10px]",
-                  headerWrapper: "px-3 pt-0 pb-2",
-                  header: "text-sm font-bold tracking-tight",
-                  prevButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                  nextButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                  gridHeaderCell: "text-[10px] font-semibold uppercase tracking-widest text-default-400 pb-1",
-                  cell: "p-0",
-                  cellButton: "w-9 h-9 text-[13px] font-medium mx-auto data-[today=true]:font-bold",
-                }}
-              />
-            </I18nProvider>
+          <div className="flex items-center justify-between px-4 py-3">
+            <h2 className="text-base font-semibold">{MONTH_NAMES[viewMonth - 1]} {viewYear}</h2>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={goToToday}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg border border-default-200 active:bg-default-100 transition-colors mr-1"
+              >
+                Today
+              </button>
+              <button onClick={goToPrevMonth} className="p-1.5 rounded-lg active:bg-default-100 transition-colors" aria-label="Previous month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+              </button>
+              <button onClick={goToNextMonth} className="p-1.5 rounded-lg active:bg-default-100 transition-colors" aria-label="Next month">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -762,10 +674,6 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                 day === todayDate.day &&
                 viewMonth === todayDate.month &&
                 viewYear === todayDate.year;
-              const isSelected =
-                day === selectedDate.day &&
-                viewMonth === selectedDate.month &&
-                viewYear === selectedDate.year;
 
               return (
                 <DayRow
@@ -775,7 +683,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                   month={viewMonth}
                   entry={entry}
                   isToday={isToday}
-                  isSelected={isSelected}
+                  isSelected={isToday}
                   setRef={(el) => {
                     if (el) dayRefs.current.set(day, el);
                     else dayRefs.current.delete(day);
