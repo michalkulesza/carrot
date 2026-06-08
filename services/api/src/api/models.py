@@ -106,6 +106,7 @@ class Recipe(Base):
     source_url: Mapped[str | None] = mapped_column(String, nullable=True)
     components: Mapped[list[Any]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=recipe_tags_table, lazy="selectin")
     author: Mapped["User"] = relationship("User", foreign_keys="Recipe.user_id", lazy="selectin")  # type: ignore[name-defined]
 
@@ -213,6 +214,10 @@ class RecipeOut(BaseModel):
     household_id: uuid.UUID | None = None
     shared_to_personal: bool = True
     added_by: str | None = None
+
+
+class RecipeOrderRequest(BaseModel):
+    ids: list[uuid.UUID]
 
 
 # ── Meal Plan ─────────────────────────────────────────────────────────────────

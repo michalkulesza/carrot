@@ -192,6 +192,7 @@ interface RecipeDetailModalProps {
   onClose: () => void;
   onUpdated?: (r: RecipeOut) => void;
   onDeleted?: (id: string) => void;
+  initialMode?: Mode;
 }
 
 export default function RecipeDetailModal({
@@ -201,6 +202,7 @@ export default function RecipeDetailModal({
   onClose,
   onUpdated,
   onDeleted,
+  initialMode,
 }: RecipeDetailModalProps) {
   const { activeHouseholdId } = useHousehold();
   const [mode, setMode] = useState<Mode>("view");
@@ -210,12 +212,14 @@ export default function RecipeDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [showImgInput, setShowImgInput] = useState(false);
   const [imgDraft, setImgDraft] = useState("");
+  const initialModeRef = useRef(initialMode);
+  initialModeRef.current = initialMode;
 
   useEffect(() => {
     if (recipe) {
       setDraft(toEditState(recipe));
       setLocalTags(recipe.tags ?? []);
-      setMode("view");
+      setMode(initialModeRef.current ?? "view");
       setError(null);
     }
   }, [recipe?.id]);

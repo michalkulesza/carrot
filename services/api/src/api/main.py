@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from fastapi_users.exceptions import UserAlreadyExists
 from sqlalchemy import select
 
@@ -71,6 +72,9 @@ async def _seed_default_tags() -> None:
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text(
+            "ALTER TABLE recipes ADD COLUMN IF NOT EXISTS position INTEGER"
+        ))
     await _seed_demo_user()
     await _seed_default_tags()
     yield

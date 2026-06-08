@@ -9,7 +9,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
-from api.models import Recipe, RecipeOut, RecipeSaveRequest, Tag
+from api.models import Recipe, RecipeOrderRequest, RecipeOut, RecipeSaveRequest, Tag
 from api.routes.context import get_active_household_id
 from api.users import User, current_active_user
 
@@ -184,7 +184,7 @@ async def list_recipes(
         select(Recipe)
         .where(_recipe_filter(user.id, effective_hid) if not personal
                else and_(Recipe.user_id == user.id, Recipe.household_id.is_(None)))
-        .order_by(Recipe.created_at.desc())
+        .order_by(Recipe.position.asc().nullslast(), Recipe.created_at.desc())
     )
     return [_build_recipe_out(r) for r in result.scalars().all()]
 
@@ -214,6 +214,23 @@ async def save_recipe(
     await session.commit()
     await session.refresh(recipe)
     return _build_recipe_out(recipe)
+
+
+@router.patch("/order", status_code=204)
+async def reorder_recipes(
+    body: RecipeOrderRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> None:
+    for position, recipe_id in enumerate(body.ids):
+        result = await session.execute(
+            select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
+        )
+        recipe = result.scalar_one_or_none()
+        if recipe is not None:
+            recipe.position = position
+    await session.commit()
 
 
 @router.put("/{recipe_id}", response_model=RecipeOut)

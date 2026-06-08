@@ -179,6 +179,16 @@ export async function exportRecipes(): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+export async function reorderRecipes(ids: string[]): Promise<void> {
+  const res = await fetch("/api/recipes/order", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ ids }),
+  });
+  if (!res.ok) throw new Error("Failed to reorder recipes");
+}
+
 export async function importRecipes(file: File): Promise<{ imported: number }> {
   const form = new FormData();
   form.append("file", file);
