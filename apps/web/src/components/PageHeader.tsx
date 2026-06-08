@@ -16,7 +16,7 @@ export default function PageHeader({ title, action }: PageHeaderProps) {
 
   return (
     <header
-      className={`sticky top-0 z-30 backdrop-blur-md border-b ${
+      className={`sticky top-0 z-30 backdrop-blur-md border-b md:rounded-t-xl ${
         bandColor ? "border-divider" : "bg-background/80 border-divider"
       }`}
       style={
