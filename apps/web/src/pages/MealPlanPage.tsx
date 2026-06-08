@@ -88,6 +88,7 @@ const WEEK_START_LOCALE: Record<number, string> = {
 };
 
 const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
@@ -378,6 +379,143 @@ function DayRow({
   );
 }
 
+// ── DesktopCalendar ───────────────────────────────────────────────────────────
+
+function DesktopCalendar({
+  viewYear, viewMonth, entriesByDate, loading, todayDate, weekStart,
+  onPrev, onNext, onToday, onCellClick,
+}: {
+  viewYear: number;
+  viewMonth: number;
+  entriesByDate: Map<string, MealPlanEntry>;
+  loading: boolean;
+  todayDate: CalendarDate;
+  weekStart: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onToday: () => void;
+  onCellClick: (dateStr: string, entry?: MealPlanEntry) => void;
+}) {
+  const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
+  const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay();
+  const startPad = (firstDow - weekStart + 7) % 7;
+  const dayHeaders = Array.from({ length: 7 }, (_, i) => SHORT_DAYS[(weekStart + i) % 7]);
+
+  type Cell = { dateStr: string; day: number; isCurrentMonth: boolean; isToday: boolean };
+  const cells: Cell[] = [];
+
+  // Prev month padding
+  const prevMonthDays = new Date(viewYear, viewMonth - 1, 0).getDate();
+  for (let i = startPad - 1; i >= 0; i--) {
+    const day = prevMonthDays - i;
+    const m = viewMonth === 1 ? 12 : viewMonth - 1;
+    const y = viewMonth === 1 ? viewYear - 1 : viewYear;
+    cells.push({ dateStr: `${y}-${String(m).padStart(2, "0")}-${String(day).padStart(2, "0")}`, day, isCurrentMonth: false, isToday: false });
+  }
+
+  // Current month days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const isToday = day === todayDate.day && viewMonth === todayDate.month && viewYear === todayDate.year;
+    cells.push({ dateStr, day, isCurrentMonth: true, isToday });
+  }
+
+  // Next month padding to complete last row
+  let nd = 1;
+  while (cells.length % 7 !== 0) {
+    const m = viewMonth === 12 ? 1 : viewMonth + 1;
+    const y = viewMonth === 12 ? viewYear + 1 : viewYear;
+    cells.push({ dateStr: `${y}-${String(m).padStart(2, "0")}-${String(nd).padStart(2, "0")}`, day: nd++, isCurrentMonth: false, isToday: false });
+  }
+
+  return (
+    <div className="flex flex-col gap-4 p-4 pb-24">
+      {/* Navigation */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold">{MONTH_NAMES[viewMonth - 1]} {viewYear}</h2>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onToday}
+            className="px-3 py-1.5 text-sm font-medium rounded-lg border border-default-200 hover:bg-default-100 transition-colors"
+          >
+            Today
+          </button>
+          <div className="flex">
+            <button
+              onClick={onPrev}
+              className="p-1.5 rounded-l-lg border border-default-200 hover:bg-default-100 transition-colors"
+              aria-label="Previous month"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
+            </button>
+            <button
+              onClick={onNext}
+              className="p-1.5 rounded-r-lg border border-l-0 border-default-200 hover:bg-default-100 transition-colors"
+              aria-label="Next month"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 18l6-6-6-6" /></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-7 border-l border-t border-divider rounded-xl overflow-hidden">
+        {/* Day headers */}
+        {dayHeaders.map((h) => (
+          <div key={h} className="border-r border-b border-divider bg-default-50 py-2.5 text-center text-xs font-semibold uppercase tracking-wide text-default-400">
+            {h}
+          </div>
+        ))}
+
+        {/* Day cells */}
+        {loading ? (
+          <div className="col-span-7 flex items-center justify-center h-48">
+            <Spinner />
+          </div>
+        ) : cells.map(({ dateStr, day, isCurrentMonth, isToday }) => {
+          const entry = entriesByDate.get(dateStr);
+          const thumb = proxyUrl(entry?.recipe.thumbnail_url);
+          return (
+            <button
+              key={dateStr}
+              onClick={() => onCellClick(dateStr, entry)}
+              className={`border-r border-b border-divider p-2 text-left min-h-[110px] transition-colors group ${
+                isCurrentMonth ? "bg-background hover:bg-primary/5" : "bg-default-50/50"
+              }`}
+            >
+              <span className={`text-sm font-medium inline-flex items-center justify-center w-7 h-7 rounded-full ${
+                isToday
+                  ? "bg-primary text-primary-foreground font-bold"
+                  : isCurrentMonth
+                  ? "text-default-700"
+                  : "text-default-300"
+              }`}>
+                {day}
+              </span>
+              {entry ? (
+                <div className="mt-1.5 flex items-center gap-1.5 rounded-md bg-primary/10 px-1.5 py-1 overflow-hidden">
+                  {thumb && (
+                    <RecipeThumb src={thumb} alt={entry.recipe.title} className="w-5 h-5 rounded shrink-0" />
+                  )}
+                  <span className="text-xs font-medium text-primary truncate">{entry.recipe.title}</span>
+                </div>
+              ) : isCurrentMonth ? (
+                <div className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-default-300 text-xs">
+                  <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add
+                </div>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── MealPlanPage ──────────────────────────────────────────────────────────────
 
 interface MealPlanPageProps {
@@ -485,6 +623,23 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
     }
   }
 
+  function goToPrevMonth() {
+    if (viewMonth === 1) { setViewYear((y) => y - 1); setViewMonth(12); }
+    else setViewMonth((m) => m - 1);
+  }
+  function goToNextMonth() {
+    if (viewMonth === 12) { setViewYear((y) => y + 1); setViewMonth(1); }
+    else setViewMonth((m) => m + 1);
+  }
+  function goToToday() {
+    setViewYear(todayDate.year);
+    setViewMonth(todayDate.month);
+  }
+  function handleCellClick(dateStr: string, entry?: MealPlanEntry) {
+    if (entry) setActionEntry(entry);
+    else openPicker(dateStr);
+  }
+
   function openPicker(dateStr: string) {
     setTargetDate(dateStr);
     setSearchQuery("");
@@ -550,71 +705,88 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
         }
       />
 
-      {/* ── Sticky calendar ──────────────────────────────────────────────────── */}
-      <div
-        ref={stickyRef}
-        className="sticky top-14 z-20 bg-background/95 backdrop-blur-md border-b border-divider"
-      >
-        <div ref={calendarRef} className="pk-cal pb-2 px-1">
-          <I18nProvider locale={calendarLocale}>
-            <Calendar
-              aria-label="Meal plan calendar"
-              value={selectedDate}
-              onChange={handleCalendarChange}
-              onFocusChange={handleFocusChange}
-              classNames={{
-                base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center py-[10px]",
-                headerWrapper: "px-3 pt-0 pb-2",
-                header: "text-sm font-bold tracking-tight",
-                prevButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                nextButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
-                gridHeaderCell: "text-[10px] font-semibold uppercase tracking-widest text-default-400 pb-1",
-                cell: "p-0",
-                cellButton: "w-9 h-9 text-[13px] font-medium mx-auto data-[today=true]:font-bold",
-              }}
-            />
-          </I18nProvider>
-        </div>
+      {/* ── Desktop: full monthly grid ───────────────────────────────────────── */}
+      <div className="hidden md:block">
+        <DesktopCalendar
+          viewYear={viewYear}
+          viewMonth={viewMonth}
+          entriesByDate={entriesByDate}
+          loading={loading}
+          todayDate={todayDate}
+          weekStart={preferences?.week_start_day ?? 1}
+          onPrev={goToPrevMonth}
+          onNext={goToNextMonth}
+          onToday={goToToday}
+          onCellClick={handleCellClick}
+        />
       </div>
 
-      {/* ── Day list ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1">
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <Spinner size="lg" />
-          </div>
-        ) : (
-          Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-            const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const entry = entriesByDate.get(dateStr);
-            const isToday =
-              day === todayDate.day &&
-              viewMonth === todayDate.month &&
-              viewYear === todayDate.year;
-            const isSelected =
-              day === selectedDate.day &&
-              viewMonth === selectedDate.month &&
-              viewYear === selectedDate.year;
-
-            return (
-              <DayRow
-                key={dateStr}
-                day={day}
-                year={viewYear}
-                month={viewMonth}
-                entry={entry}
-                isToday={isToday}
-                isSelected={isSelected}
-                setRef={(el) => {
-                  if (el) dayRefs.current.set(day, el);
-                  else dayRefs.current.delete(day);
+      {/* ── Mobile: mini calendar + day list ─────────────────────────────────── */}
+      <div className="md:hidden">
+        <div
+          ref={stickyRef}
+          className="sticky top-14 z-20 bg-background/95 backdrop-blur-md border-b border-divider"
+        >
+          <div ref={calendarRef} className="pk-cal pb-2 px-1">
+            <I18nProvider locale={calendarLocale}>
+              <Calendar
+                aria-label="Meal plan calendar"
+                value={selectedDate}
+                onChange={handleCalendarChange}
+                onFocusChange={handleFocusChange}
+                classNames={{
+                  base: "shadow-none w-full max-w-none bg-transparent rounded-none flex flex-col items-center py-[10px]",
+                  headerWrapper: "px-3 pt-0 pb-2",
+                  header: "text-sm font-bold tracking-tight",
+                  prevButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
+                  nextButton: "w-8 h-8 min-w-0 text-default-500 hover:text-default-800 transition-colors",
+                  gridHeaderCell: "text-[10px] font-semibold uppercase tracking-widest text-default-400 pb-1",
+                  cell: "p-0",
+                  cellButton: "w-9 h-9 text-[13px] font-medium mx-auto data-[today=true]:font-bold",
                 }}
-                onAdd={() => openPicker(dateStr)}
-                onTap={() => entry && setActionEntry(entry)}
               />
-            );
-          })
-        )}
+            </I18nProvider>
+          </div>
+        </div>
+
+        <div>
+          {loading ? (
+            <div className="flex justify-center py-16">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+              const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+              const entry = entriesByDate.get(dateStr);
+              const isToday =
+                day === todayDate.day &&
+                viewMonth === todayDate.month &&
+                viewYear === todayDate.year;
+              const isSelected =
+                day === selectedDate.day &&
+                viewMonth === selectedDate.month &&
+                viewYear === selectedDate.year;
+
+              return (
+                <DayRow
+                  key={dateStr}
+                  day={day}
+                  year={viewYear}
+                  month={viewMonth}
+                  entry={entry}
+                  isToday={isToday}
+                  isSelected={isSelected}
+                  setRef={(el) => {
+                    if (el) dayRefs.current.set(day, el);
+                    else dayRefs.current.delete(day);
+                  }}
+                  onAdd={() => openPicker(dateStr)}
+                  onTap={() => entry && setActionEntry(entry)}
+                />
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* ── Recipe picker modal ───────────────────────────────────────────────── */}
