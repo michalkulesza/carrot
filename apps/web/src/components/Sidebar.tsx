@@ -41,59 +41,107 @@ function GearIcon() {
   );
 }
 
-const navItem = (isActive: boolean) =>
-  `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-    isActive ? "bg-primary/10 text-primary" : "text-default-600 hover:bg-default-100"
-  }`;
+function PanelIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="18" rx="2" />
+      <path d="M9 3v18" />
+    </svg>
+  );
+}
+
+const navItems = [
+  { to: "/", end: true, label: "Recipes", Icon: BookIcon },
+  { to: "/plan", end: false, label: "Meal Plan", Icon: CalendarIcon },
+  { to: "/shopping", end: false, label: "Shopping", Icon: CartIcon },
+  { to: "/settings", end: false, label: "Settings", Icon: GearIcon },
+];
 
 export default function Sidebar() {
   const { activeHousehold } = useHousehold();
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const bandColor = activeHousehold?.color ?? null;
 
+  const navLink = (isActive: boolean) =>
+    `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+      collapsed ? "justify-center" : ""
+    } ${
+      isActive
+        ? "bg-primary/10 text-primary"
+        : "text-default-600 hover:bg-default-200/60 hover:text-default-900"
+    }`;
+
   return (
-    <aside className="hidden md:flex flex-col w-60 shrink-0 sticky top-0 h-screen py-6 px-4">
-      <div className="px-2 mb-6">
-        <span className="text-xl font-bold">PlateKeeper</span>
+    <aside
+      className={`hidden md:flex flex-col shrink-0 sticky top-0 h-screen py-4 px-3 transition-[width] duration-200 overflow-hidden ${
+        collapsed ? "w-[72px]" : "w-60"
+      }`}
+    >
+      {/* Header: logo + toggle */}
+      <div className={`flex items-center mb-5 ${collapsed ? "justify-center" : "justify-between px-1"}`}>
+        {!collapsed && (
+          <span className="text-lg font-bold tracking-tight">PlateKeeper</span>
+        )}
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          className="p-1.5 rounded-lg text-default-500 hover:bg-default-200/60 hover:text-default-900 transition-colors shrink-0"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <PanelIcon />
+        </button>
       </div>
 
+      {/* Household switcher */}
       <button
         type="button"
         onClick={() => setSwitcherOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-default-100 transition-colors mb-4 text-left w-full"
+        title={collapsed ? (activeHousehold?.name ?? "Personal Library") : undefined}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-default-200/60 transition-colors mb-3 w-full text-left ${
+          collapsed ? "justify-center" : ""
+        }`}
       >
         <span
-          className="w-2 h-2 rounded-full shrink-0"
-          style={bandColor ? { backgroundColor: bandColor } : { border: "1.5px solid currentColor", display: "inline-block" }}
+          className="shrink-0 rounded-full"
+          style={
+            bandColor
+              ? { width: 8, height: 8, backgroundColor: bandColor }
+              : { width: 8, height: 8, border: "1.5px solid currentColor", display: "inline-block", borderRadius: "50%" }
+          }
         />
-        <span
-          className="text-xs font-semibold uppercase tracking-wide truncate"
-          style={{ color: bandColor ?? undefined }}
-        >
-          {activeHousehold ? activeHousehold.name : "Personal Library"}
-        </span>
-        <svg className="w-3 h-3 shrink-0 opacity-60 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-        </svg>
+        {!collapsed && (
+          <>
+            <span
+              className="text-xs font-semibold uppercase tracking-wide truncate"
+              style={{ color: bandColor ?? undefined }}
+            >
+              {activeHousehold ? activeHousehold.name : "Personal Library"}
+            </span>
+            <svg className="w-3 h-3 shrink-0 opacity-50 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+            </svg>
+          </>
+        )}
       </button>
 
-      <nav className="flex flex-col gap-1">
-        <NavLink to="/" end className={({ isActive }) => navItem(isActive)}>
-          <BookIcon />
-          Recipes
-        </NavLink>
-        <NavLink to="/plan" className={({ isActive }) => navItem(isActive)}>
-          <CalendarIcon />
-          Meal Plan
-        </NavLink>
-        <NavLink to="/shopping" className={({ isActive }) => navItem(isActive)}>
-          <CartIcon />
-          Shopping
-        </NavLink>
-        <NavLink to="/settings" className={({ isActive }) => navItem(isActive)}>
-          <GearIcon />
-          Settings
-        </NavLink>
+      {/* Divider */}
+      <div className="h-px bg-default-200 mx-1 mb-3" />
+
+      {/* Nav links */}
+      <nav className="flex flex-col gap-0.5 flex-1">
+        {navItems.map(({ to, end, label, Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            title={collapsed ? label : undefined}
+            className={({ isActive }) => navLink(isActive)}
+          >
+            <Icon />
+            {!collapsed && <span className="truncate">{label}</span>}
+          </NavLink>
+        ))}
       </nav>
 
       <HouseholdSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />

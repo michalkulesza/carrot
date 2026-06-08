@@ -75,11 +75,11 @@ function AppShell() {
 
   return (
     <HouseholdProvider onContextSwitch={handleContextSwitch}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background md:bg-default-100">
         {/* Centered max-width container — flex row on desktop, block on mobile */}
         <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
           <Sidebar />
-          <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm md:overflow-hidden">
             <Routes>
               <Route
                 path="/"
