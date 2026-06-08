@@ -70,7 +70,7 @@ export default function BottomNav({ onAddRecipe }: BottomNavProps) {
             className="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center text-2xl active:scale-95 transition-transform"
             aria-label="Add recipe"
           >
-            +
+            <span className="-translate-y-[2px] inline-block">+</span>
           </button>
           <span className="text-xs text-zinc-400 mt-1">Add</span>
         </div>
