@@ -6,9 +6,10 @@ import { useHousehold } from "../context/HouseholdContext";
 interface PageHeaderProps {
   title: string;
   action?: React.ReactNode;
+  searchSlot?: React.ReactNode;
 }
 
-export default function PageHeader({ title, action }: PageHeaderProps) {
+export default function PageHeader({ title, action, searchSlot }: PageHeaderProps) {
   const { activeHousehold } = useHousehold();
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -43,9 +44,12 @@ export default function PageHeader({ title, action }: PageHeaderProps) {
             </svg>
           </p>
         </button>
-        {/* Desktop: static title only */}
-        <h1 className="hidden md:block text-xl font-bold leading-tight truncate flex-1 min-w-0">{title}</h1>
-        <div className="flex items-center gap-1 shrink-0 ml-2">
+        {/* Desktop: static title + optional search slot */}
+        <h1 className="hidden md:block text-xl font-bold leading-tight truncate shrink-0">{title}</h1>
+        {searchSlot && (
+          <div className="hidden md:flex flex-1 mx-4 max-w-sm">{searchSlot}</div>
+        )}
+        <div className={`flex items-center gap-1 shrink-0 ${searchSlot ? "" : "md:ml-auto"} ml-2`}>
           {action}
           <BellPopover />
         </div>

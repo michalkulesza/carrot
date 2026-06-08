@@ -185,12 +185,15 @@ export default function RecipesPage({
   const [selected, setSelected] = useState<RecipeOut | null>(null);
   const [openInEdit, setOpenInEdit] = useState(false);
   const [filterTag, setFilterTag] = useState<Tag | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<RecipeOut | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const displayed = filterTag
-    ? recipes.filter((r) => r.tags.some((t) => t.id === filterTag.id))
-    : recipes;
+  const displayed = recipes.filter((r) => {
+    const matchesTag = !filterTag || r.tags.some((t) => t.id === filterTag.id);
+    const matchesSearch = !searchQuery || r.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTag && matchesSearch;
+  });
 
   function openView(recipe: RecipeOut) {
     setOpenInEdit(false);
@@ -227,9 +230,37 @@ export default function RecipesPage({
     }
   }
 
+  const searchInput = (
+    <div className="relative flex items-center w-full">
+      <svg className="absolute left-3 w-4 h-4 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+      </svg>
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search recipes…"
+        className="w-full pl-9 pr-8 py-2 text-sm rounded-full bg-zinc-100 border-0 focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-zinc-400"
+      />
+      {searchQuery && (
+        <button
+          type="button"
+          onClick={() => setSearchQuery("")}
+          className="absolute right-3 text-zinc-400 hover:text-zinc-600 transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <PageHeader title="Recipes" />
+      <PageHeader title="Recipes" searchSlot={searchInput} />
+
+      <div className="md:hidden px-4 mt-3">{searchInput}</div>
 
       {allTags.length > 0 && (
         <div className="flex gap-2 px-4 mt-3 overflow-x-auto pb-1 scrollbar-hide">
@@ -289,9 +320,12 @@ export default function RecipesPage({
         </div>
       ) : displayed.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-zinc-400 px-4 text-center">
-          <p className="text-lg">No recipes with this tag.</p>
-          <button onClick={() => setFilterTag(null)} className="text-sm text-primary mt-1">
-            Clear filter
+          <p className="text-lg">No recipes match your filters.</p>
+          <button
+            onClick={() => { setFilterTag(null); setSearchQuery(""); }}
+            className="text-sm text-primary mt-1"
+          >
+            Clear filters
           </button>
         </div>
       ) : (
