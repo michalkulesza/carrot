@@ -22,7 +22,7 @@ export default function HouseholdSwitcher({ isOpen, onClose }: HouseholdSwitcher
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} size="sm" classNames={{ base: "!rounded-xl overflow-hidden" }}>
       <ModalContent>
         <ModalHeader className="pb-2">Switch context</ModalHeader>
         <ModalBody className="px-2 pb-4">

@@ -350,14 +350,14 @@ export default function RecipeDetailModal({
   }
 
   return (
-    <Modal isOpen={!!recipe} onClose={handleClose} size="lg" scrollBehavior="inside">
+    <Modal isOpen={!!recipe} onClose={handleClose} size="lg" scrollBehavior="inside" classNames={{ base: "!rounded-xl overflow-hidden" }}>
       <ModalContent>
         {/* ── Sticky header ── */}
         <ModalHeader className="flex-col gap-0 p-0">
 
           {/* Hero image (or solid colour in edit/confirm mode) */}
           {proxyUrl ? (
-            <div className="relative w-full h-48 shrink-0 overflow-hidden">
+            <div className="relative w-full h-48 shrink-0">
               <img src={proxyUrl} alt={r.title} className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 

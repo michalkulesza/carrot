@@ -521,7 +521,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
   const parsed = editable !== null;
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg" scrollBehavior="inside">
+    <Modal isOpen={isOpen} onClose={handleClose} size="lg" scrollBehavior="inside" classNames={{ base: "!rounded-xl overflow-hidden" }}>
       <ModalContent>
         <ModalHeader>{parsed ? "Edit Recipe" : "Import Recipe"}</ModalHeader>
         <ModalBody>
