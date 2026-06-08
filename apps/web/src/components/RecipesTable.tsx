@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   closestCenter,
@@ -76,7 +77,7 @@ function ThumbCell({ url, title }: { url: string | null; title: string }) {
           className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         />
       ) : (
-        <div className="w-full h-full bg-zinc-100 flex items-center justify-center text-zinc-300 text-lg">
+        <div className="w-full h-full flex items-center justify-center text-zinc-200 text-xl">
           🍽
         </div>
       )}
@@ -84,6 +85,7 @@ function ThumbCell({ url, title }: { url: string | null; title: string }) {
   );
 }
 
+// Portal-based dropdown — renders into document.body so overflow:hidden can't clip it
 function RowMenu({
   onView,
   onEdit,
@@ -94,50 +96,69 @@ function RowMenu({
   onDelete: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  function openMenu(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    setOpen(true);
+  }
 
   useEffect(() => {
     if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    function onPointerDown(e: PointerEvent) {
+      if (
+        menuRef.current?.contains(e.target as Node) ||
+        triggerRef.current?.contains(e.target as Node)
+      ) return;
+      setOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   return (
-    <div ref={ref} className="relative flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        onClick={openMenu}
         className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors text-base leading-none"
         aria-label="Row actions"
       >
         ⋯
       </button>
-      {open && (
-        <div className="absolute right-0 top-8 z-50 w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1 overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999 }}
+          className="w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onView(); }}
+            onClick={() => { setOpen(false); onView(); }}
           >
             View
           </button>
           <button
             className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onEdit(); }}
+            onClick={() => { setOpen(false); onEdit(); }}
           >
             Edit
           </button>
           <button
             className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
-            onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(); }}
+            onClick={() => { setOpen(false); onDelete(); }}
           >
             Delete
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -146,7 +167,6 @@ function RowMenu({
 function SortableRow({
   recipe,
   showAddedBy,
-  dragEnabled,
   cols,
   onView,
   onEdit,
@@ -154,15 +174,14 @@ function SortableRow({
 }: {
   recipe: RecipeOut;
   showAddedBy: boolean;
-  dragEnabled: boolean;
   cols: string;
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  // Both attributes and listeners go on the grip button (correct drag-handle pattern)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: recipe.id,
-    disabled: !dragEnabled,
   });
 
   return (
@@ -173,18 +192,20 @@ function SortableRow({
         transition,
         gridTemplateColumns: cols,
       }}
-      {...attributes}
-      className={`grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? "opacity-50 shadow-md z-10 relative bg-zinc-50" : ""}`}
+      className={`grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? "opacity-50 z-10 relative" : ""}`}
       onClick={onView}
     >
-      {/* Drag handle */}
-      <div
-        {...(dragEnabled ? listeners : {})}
+      {/* Grip — both listeners and attributes live here */}
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
         onClick={(e) => e.stopPropagation()}
-        className={`flex items-center justify-center ${dragEnabled ? "cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-500" : "text-zinc-200 cursor-default"} transition-colors`}
+        className="flex items-center justify-center w-full h-8 cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-500 transition-colors rounded"
+        aria-label="Drag to reorder"
       >
         <GripIcon />
-      </div>
+      </button>
 
       {/* Thumbnail */}
       <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
@@ -211,7 +232,7 @@ function SortableRow({
         {recipe.creator_handle ? `@${recipe.creator_handle}` : <span className="text-zinc-300">—</span>}
       </div>
 
-      {/* Added by (household only) */}
+      {/* Added by */}
       {showAddedBy && (
         <div className="text-sm text-zinc-500 truncate">
           {recipe.added_by ?? <span className="text-zinc-300">—</span>}
@@ -262,18 +283,18 @@ export default function RecipesTable({
   onEdit,
   onDelete,
 }: RecipesTableProps) {
-  const [sort, setSort] = useState<Sort>({ field: "created_at", dir: "desc" });
+  // Start with no column sort so drag works immediately
+  const [sort, setSort] = useState<Sort>(null);
   const [localRows, setLocalRows] = useState<RecipeOut[]>(recipes);
 
+  // Merge external recipe updates (edits, deletes, adds) without losing drag order
   useEffect(() => {
     setLocalRows((prev) => {
-      const recipeMap = new Map(recipes.map((r) => [r.id, r]));
-      const updated = prev
-        .filter((r) => recipeMap.has(r.id))
-        .map((r) => recipeMap.get(r.id)!);
+      const map = new Map(recipes.map((r) => [r.id, r]));
+      const updated = prev.filter((r) => map.has(r.id)).map((r) => map.get(r.id)!);
       const prevIds = new Set(prev.map((r) => r.id));
-      const newOnes = recipes.filter((r) => !prevIds.has(r.id));
-      return [...newOnes, ...updated];
+      const added = recipes.filter((r) => !prevIds.has(r.id));
+      return [...added, ...updated];
     });
   }, [recipes]);
 
@@ -284,41 +305,31 @@ export default function RecipesTable({
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (!over || active.id === over.id || sort !== null) return;
-    setLocalRows((rows) => {
-      const oldIndex = rows.findIndex((r) => r.id === active.id);
-      const newIndex = rows.findIndex((r) => r.id === over.id);
-      const reordered = arrayMove(rows, oldIndex, newIndex);
-      reorderRecipes(reordered.map((r) => r.id)).catch(() => {});
-      return reordered;
-    });
+    if (!over || active.id === over.id) return;
+    // Drag operates on whatever is currently displayed (sorted or not)
+    const source = sort ? applySortRows(localRows, sort) : localRows;
+    const oldIdx = source.findIndex((r) => r.id === active.id);
+    const newIdx = source.findIndex((r) => r.id === over.id);
+    const reordered = arrayMove(source, oldIdx, newIdx);
+    setLocalRows(reordered);
+    setSort(null); // dragging always clears column sort → manual mode
+    reorderRecipes(reordered.map((r) => r.id)).catch(() => {});
   }
 
   function toggleSort(field: SortField) {
     setSort((prev) => {
-      if (prev?.field === field) {
-        return { field, dir: prev.dir === "asc" ? "desc" : "asc" };
-      }
+      if (prev?.field === field) return { field, dir: prev.dir === "asc" ? "desc" : "asc" };
       return { field, dir: field === "created_at" ? "desc" : "asc" };
     });
   }
 
-  const dragEnabled = sort === null;
-  const displayed = applySortRows(localRows, sort);
+  const displayed = sort ? applySortRows(localRows, sort) : localRows;
 
   const cols = showAddedBy
     ? "2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 8rem 6.5rem 2.5rem"
     : "2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 6.5rem 2.5rem";
 
-  function HeaderCell({
-    label,
-    field,
-    align = "left",
-  }: {
-    label: string;
-    field: SortField;
-    align?: "left" | "right";
-  }) {
+  function ColHeader({ label, field, align = "left" }: { label: string; field: SortField; align?: "left" | "right" }) {
     const active = sort?.field === field;
     return (
       <button
@@ -334,48 +345,34 @@ export default function RecipesTable({
 
   return (
     <div className="px-4 mt-4 pb-6">
-      <div className="rounded-xl bg-white shadow-sm overflow-hidden border border-zinc-100">
-        {/* Header row */}
+      {/* No overflow-hidden on the outer wrapper — overflow is handled per-cell */}
+      <div className="rounded-xl bg-white shadow-sm border border-zinc-100">
+        {/* Header */}
         <div
-          className="grid items-center gap-2 px-2 py-2.5 border-b-2 border-zinc-100 bg-zinc-50/80"
+          className="grid items-center gap-2 px-2 py-2.5 border-b-2 border-zinc-100 bg-zinc-50/80 rounded-t-xl"
           style={{ gridTemplateColumns: cols }}
         >
-          {/* drag-handle col — non-interactive header placeholder */}
-          <div
-            title={dragEnabled ? "Drag to reorder" : "Clear column sort to enable drag"}
-            className="flex items-center justify-center text-zinc-300"
-          >
+          <div className="flex items-center justify-center text-zinc-300" title="Drag rows to reorder">
             <GripIcon />
           </div>
-          {/* thumb col */}
           <div />
-          <HeaderCell label="Title" field="title" />
-          <div className="flex justify-end">
-            <HeaderCell label="Servings" field="servings" align="right" />
-          </div>
-          <div className="flex justify-end">
-            <HeaderCell label="Kcal" field="kcal_per_serving" align="right" />
-          </div>
-          <HeaderCell label="Author" field="creator_handle" />
-          {showAddedBy && <HeaderCell label="Added by" field="added_by" />}
-          <HeaderCell label="Added" field="created_at" />
-          {/* actions col */}
+          <ColHeader label="Title" field="title" />
+          <div className="flex justify-end"><ColHeader label="Servings" field="servings" align="right" /></div>
+          <div className="flex justify-end"><ColHeader label="Kcal" field="kcal_per_serving" align="right" /></div>
+          <ColHeader label="Author" field="creator_handle" />
+          {showAddedBy && <ColHeader label="Added by" field="added_by" />}
+          <ColHeader label="Added" field="created_at" />
           <div />
         </div>
 
-        {/* Sortable rows */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        {/* Rows */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={displayed.map((r) => r.id)} strategy={verticalListSortingStrategy}>
             {displayed.map((recipe) => (
               <SortableRow
                 key={recipe.id}
                 recipe={recipe}
                 showAddedBy={showAddedBy}
-                dragEnabled={dragEnabled}
                 cols={cols}
                 onView={() => onView(recipe)}
                 onEdit={() => onEdit(recipe)}
