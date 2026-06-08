@@ -228,11 +228,9 @@ export default function RecipesPage({
 
   const q = searchQuery.trim().toLowerCase();
   const titleMatches = q ? recipes.filter((r) => r.title.toLowerCase().includes(q)) : [];
-  const titleMatchIds = new Set(titleMatches.map((r) => r.id));
   const ingredientMatches: { recipe: RecipeOut; matchedIngredient: string }[] = [];
   if (q) {
     for (const recipe of recipes) {
-      if (titleMatchIds.has(recipe.id)) continue;
       for (const component of recipe.components) {
         const match = component.ingredients.find((ing) =>
           ing.toLowerCase().includes(q)
