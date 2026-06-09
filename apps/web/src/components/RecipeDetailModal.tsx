@@ -562,7 +562,7 @@ export default function RecipeDetailModal({
     <Modal isOpen={!!recipe} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <ModalBackdrop isDismissable>
         <ModalContainer size="lg" scroll="inside" className="!rounded-xl overflow-hidden">
-          <ModalDialog className="!p-0 max-h-[min(100vw,700px)]">
+          <ModalDialog className="!p-0 max-h-dvh sm:max-h-[700px]">
             {/* ── Sticky header ── */}
             <ModalHeader className="flex-col gap-0 p-0">
 
