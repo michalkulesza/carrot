@@ -625,7 +625,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                     .then(onPreferencesChange)
                     .catch(() => {});
                 }}
-                className="px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-800 focus:outline-none focus:ring-2 focus:ring-primary/30"
               >
                 {WEEK_DAY_OPTIONS.map((opt) => (
                   <option key={opt.key} value={opt.key}>{opt.label}</option>
