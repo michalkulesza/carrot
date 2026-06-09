@@ -562,7 +562,7 @@ export default function RecipeDetailModal({
     <Modal isOpen={!!recipe} onOpenChange={(open) => { if (!open) handleClose(); }}>
       <ModalBackdrop isDismissable>
         <ModalContainer size="lg" scroll="inside" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
+          <ModalDialog className="!p-0 max-h-[min(100vw,700px)]">
             {/* ── Sticky header ── */}
             <ModalHeader className="flex-col gap-0 p-0">
 
@@ -752,7 +752,7 @@ export default function RecipeDetailModal({
             </ModalHeader>
 
             {/* ── Scrollable body ── */}
-            <ModalBody>
+            <ModalBody className="!px-5 !pb-5 !pt-0">
               {error && (
                 <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mb-3">
                   {error}
@@ -781,7 +781,7 @@ export default function RecipeDetailModal({
                   ))}
             </ModalBody>
 
-            <ModalFooter className="flex-col gap-2 items-stretch">
+            <ModalFooter className="flex-col gap-2 items-stretch px-5 pb-5 pt-3">
               {mode === "editing" && r.household_id && (
                 <div className="flex items-center justify-between px-1">
                   <span className="text-sm text-zinc-600">Also in my private recipes</span>
