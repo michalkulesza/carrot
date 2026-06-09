@@ -50,7 +50,11 @@ function AllergenPopover({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const isActive = flag.allergen && activeAllergens.map((a) => a.toLowerCase()).includes(flag.allergen.toLowerCase());
+  const isActive = flag.allergen && activeAllergens.some((a) => {
+    const fa = flag.allergen!.toLowerCase();
+    const la = a.toLowerCase();
+    return fa === la || fa.includes(la) || la.includes(fa);
+  });
   if (!isActive) return null;
 
   return (
@@ -765,7 +769,9 @@ export default function RecipeDetailModal({
                     size="sm"
                     isSelected={draft?.shared_to_personal ?? true}
                     onChange={(v) => setDraft((d) => d ? { ...d, shared_to_personal: v } : d)}
-                  />
+                  >
+                    <Switch.Control><Switch.Thumb /></Switch.Control>
+                  </Switch>
                 </div>
               )}
               <div className="flex justify-end gap-2">

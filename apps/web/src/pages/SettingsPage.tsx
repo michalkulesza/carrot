@@ -645,7 +645,9 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                     .then(onPreferencesChange)
                     .catch(() => {});
                 }}
-              />
+              >
+                <Switch.Control><Switch.Thumb /></Switch.Control>
+              </Switch>
             </div>
           </div>
         </section>

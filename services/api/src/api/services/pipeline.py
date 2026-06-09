@@ -151,11 +151,12 @@ def _done_event(result: ImportResult, cache_key: str | None = None) -> dict[str,
 
 
 async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", available_tags: list[str] | None = None, allergens: list[str] | None = None) -> AsyncGenerator[dict[str, Any], None]:
-    cached = cache_svc.get(url)
-    if cached is not None:
-        log.debug("Cache hit for %s", url)
-        yield _done_event(cached)
-        return
+    if not allergens:
+        cached = cache_svc.get(url)
+        if cached is not None:
+            log.debug("Cache hit for %s", url)
+            yield _done_event(cached)
+            return
 
     if not _is_social_url(url):
         yield _stage_event("fetching_page", "Fetching recipe page…")
