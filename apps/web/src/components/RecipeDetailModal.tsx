@@ -86,7 +86,7 @@ function AllergenPopover({
         <div
           ref={panelRef}
           style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] text-sm"
+          className="bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] max-w-[330px] text-sm"
         >
           {flag.substitute_applied && flag.original_display ? (
             <>
