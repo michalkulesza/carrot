@@ -10,6 +10,34 @@ import {
 
 const STORAGE_KEY = "pk-timers";
 
+// Debug: cap all timers to this many seconds (0 = disabled)
+const DEBUG_MAX_SECONDS = 5;
+
+// Module-level SW registration — set once when the SW becomes active
+let _swReg: ServiceWorkerRegistration | null = null;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.ready.then((reg) => { _swReg = reg; }).catch(() => {});
+}
+
+async function showNotif(
+  title: string,
+  body: string,
+  tag: string,
+  opts: NotificationOptions & { renotify?: boolean } = {}
+) {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  const fullOpts = { body, tag, icon: "/icon-192.png", ...opts } as NotificationOptions;
+  if (_swReg) {
+    await _swReg.showNotification(title, fullOpts);
+  } else {
+    new Notification(title, fullOpts);
+  }
+}
+
+function closeNotif(tag: string) {
+  _swReg?.getNotifications({ tag }).then((list) => list.forEach((n) => n.close())).catch(() => {});
+}
+
 export interface TimerEntry {
   id: string;
   recipeId: string;
@@ -99,12 +127,18 @@ export function parseDurationSeconds(text: string): number | null {
   return null;
 }
 
-function fireNotification(recipeTitle: string, stepText: string) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
-  new Notification(`Timer done — ${recipeTitle}`, {
-    body: stepText.length > 80 ? stepText.slice(0, 77) + "…" : stepText,
-    icon: "/icon-192.png",
-  });
+function fireTimerDone(t: TimerEntry) {
+  const body = t.stepText.length > 80 ? t.stepText.slice(0, 77) + "…" : t.stepText;
+  showNotif(`✓ Done — ${t.recipeTitle}`, body, `timer-${t.id}`, { renotify: true });
+}
+
+function fireTimerStart(t: TimerEntry) {
+  showNotif(
+    `⏱ ${t.recipeTitle}`,
+    `Step ${t.stepIndex + 1} · ${formatDurationLabel(t.totalSeconds)}`,
+    `timer-${t.id}`,
+    { silent: true }
+  );
 }
 
 function saveToStorage(timers: Map<string, TimerEntry>) {
@@ -160,7 +194,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (firedExpiredRef.current) return;
     firedExpiredRef.current = true;
-    resumeInfo?.expired.forEach((t) => fireNotification(t.recipeTitle, t.stepText));
+    resumeInfo?.expired.forEach((t) => fireTimerDone(t));
   }, []);
 
   // Persist on every change
@@ -182,7 +216,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           if (getRemainingSeconds(t) === 0) {
             next.set(tid, { ...t, status: "done", remainingAtStart: 0, startedAt: null });
             changed = true;
-            fireNotification(t.recipeTitle, t.stepText);
+            fireTimerDone(t);
             setTimeout(() => {
               setTimers((m) => { const n = new Map(m); n.delete(tid); return n; });
             }, 5000);
@@ -244,16 +278,18 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       if (typeof Notification !== "undefined" && Notification.permission === "default") {
         Notification.requestPermission();
       }
-      setTimers((prev) => {
-        const next = new Map(prev);
-        next.set(params.id, {
-          ...params,
-          remainingAtStart: params.totalSeconds,
-          startedAt: Date.now(),
-          status: "running",
-        });
-        return next;
-      });
+      const totalSeconds = DEBUG_MAX_SECONDS > 0
+        ? Math.min(params.totalSeconds, DEBUG_MAX_SECONDS)
+        : params.totalSeconds;
+      const entry: TimerEntry = {
+        ...params,
+        totalSeconds,
+        remainingAtStart: totalSeconds,
+        startedAt: Date.now(),
+        status: "running",
+      };
+      setTimers((prev) => { const n = new Map(prev); n.set(entry.id, entry); return n; });
+      fireTimerStart(entry);
     },
     []
   );
@@ -280,6 +316,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   const cancelTimer = useCallback((id: string) => {
     setTimers((prev) => { const n = new Map(prev); n.delete(id); return n; });
+    closeNotif(`timer-${id}`);
   }, []);
 
   const confirmResume = useCallback(() => {
