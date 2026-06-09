@@ -283,8 +283,7 @@ export default function RecipesTable({
   onEdit,
   onDelete,
 }: RecipesTableProps) {
-  // Start with no column sort so drag works immediately
-  const [sort, setSort] = useState<Sort>(null);
+  const [sort, setSort] = useState<Sort>({ field: "created_at", dir: "desc" });
   const [localRows, setLocalRows] = useState<RecipeOut[]>(recipes);
 
   // Merge external recipe updates (edits, deletes, adds) without losing drag order
