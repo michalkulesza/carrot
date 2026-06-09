@@ -190,6 +190,47 @@ function EditLine({
   );
 }
 
+// ── Screen Wake Lock hook ─────────────────────────────────────────────────────
+
+function useScreenWakeLock() {
+  const [active, setActive] = useState(() => sessionStorage.getItem("wakelock-enabled") === "1");
+  const sentinelRef = useRef<WakeLockSentinel | null>(null);
+
+  useEffect(() => {
+    sessionStorage.setItem("wakelock-enabled", active ? "1" : "0");
+
+    if (!active) {
+      sentinelRef.current?.release().catch(() => {});
+      sentinelRef.current = null;
+      return;
+    }
+
+    let stale = false;
+    navigator.wakeLock?.request("screen").then((s) => {
+      if (stale) { s.release(); return; }
+      sentinelRef.current = s;
+    }).catch(() => {});
+
+    return () => {
+      stale = true;
+      sentinelRef.current?.release().catch(() => {});
+      sentinelRef.current = null;
+    };
+  }, [active]);
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible" && active && !sentinelRef.current) {
+        navigator.wakeLock?.request("screen").then((s) => { sentinelRef.current = s; }).catch(() => {});
+      }
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [active]);
+
+  return { active, toggle: () => setActive((v) => !v), release: () => setActive(false) };
+}
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type Mode = "view" | "editing" | "confirming";
@@ -352,6 +393,7 @@ export default function RecipeDetailModal({
   activeAllergens = [],
 }: RecipeDetailModalProps) {
   const { activeHouseholdId } = useHousehold();
+  const wakeLock = useScreenWakeLock();
   const [mode, setMode] = useState<Mode>("view");
   const [draft, setDraft] = useState<EditState | null>(null);
   const [localTags, setLocalTags] = useState<Tag[]>([]);
@@ -573,6 +615,7 @@ export default function RecipeDetailModal({
   }
 
   function handleClose() {
+    wakeLock.release();
     setMode("view");
     setError(null);
     onClose();
@@ -752,6 +795,23 @@ export default function RecipeDetailModal({
                   <Button size="sm" variant="danger-soft" onPress={() => setMode("confirming")}>
                     Remove
                   </Button>
+                  {"wakeLock" in navigator && (
+                    <button
+                      type="button"
+                      title={wakeLock.active ? "Screen always-on: tap to disable" : "Keep screen on while reading"}
+                      onClick={wakeLock.toggle}
+                      className={`ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                        wakeLock.active
+                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                          : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                        <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.06ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.061 1.06l1.06 1.06Z" />
+                      </svg>
+                      {wakeLock.active ? "Screen on" : "Keep on"}
+                    </button>
+                  )}
                 </div>
               )}
               {mode === "editing" && (

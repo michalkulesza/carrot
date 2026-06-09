@@ -25,10 +25,9 @@ Detect duration patterns in step text ("bake for 30 minutes", "simmer 10 min").
 Surface a tap-to-start countdown timer inline in the step card.
 Multiple concurrent timers allowed (one per step). Fires a notification when done.
 
-### Always-on display
-Extend cooking mode's Screen Wake Lock to a dedicated "always-on" toggle
-accessible outside of cooking mode (e.g. while browsing the recipe before starting).
-Persist the preference per-session; auto-release on app background.
+### ~~Always-on display~~ ✓ done
+Screen Wake Lock toggle in the recipe detail modal action bar (view mode).
+Amber sun button keeps the screen on while reading; auto-releases on modal close and re-acquires on tab focus. Preference persisted in `sessionStorage`.
 
 ---
 
