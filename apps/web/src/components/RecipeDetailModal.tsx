@@ -153,54 +153,6 @@ function AllergenPopover({
   );
 }
 
-// ── Markdown-lite renderer ────────────────────────────────────────────────────
-
-function MarkdownLite({ text }: { text: string }) {
-  function parseLine(line: string): React.ReactNode[] {
-    const parts: React.ReactNode[] = [];
-    const regex = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
-    let last = 0;
-    let m: RegExpExecArray | null;
-    let idx = 0;
-    while ((m = regex.exec(line)) !== null) {
-      if (m.index > last) parts.push(line.slice(last, m.index));
-      const raw = m[0];
-      if (raw.startsWith("**")) parts.push(<strong key={idx++}>{raw.slice(2, -2)}</strong>);
-      else parts.push(<em key={idx++}>{raw.slice(1, -1)}</em>);
-      last = m.index + raw.length;
-    }
-    if (last < line.length) parts.push(line.slice(last));
-    return parts;
-  }
-
-  const lines = text.split("\n");
-  const nodes: React.ReactNode[] = [];
-  let listItems: React.ReactNode[] = [];
-
-  function flushList() {
-    if (listItems.length > 0) {
-      nodes.push(<ul key={`ul-${nodes.length}`} className="list-disc list-inside space-y-0.5">{listItems}</ul>);
-      listItems = [];
-    }
-  }
-
-  lines.forEach((line, i) => {
-    if (/^[-*] /.test(line)) {
-      listItems.push(<li key={i}>{parseLine(line.slice(2))}</li>);
-    } else {
-      flushList();
-      if (line.trim() === "") {
-        nodes.push(<div key={i} className="h-1.5" />);
-      } else {
-        nodes.push(<p key={i}>{parseLine(line)}</p>);
-      }
-    }
-  });
-  flushList();
-
-  return <div className="text-sm text-zinc-700 space-y-1 leading-relaxed">{nodes}</div>;
-}
-
 // ── EditLine ──────────────────────────────────────────────────────────────────
 
 function EditLine({
@@ -295,7 +247,6 @@ interface EditState {
   servings: string;
   kcal: string;
   thumbnail_url: string | null;
-  notes: string;
   components: SaveComponent[];
   shared_to_personal: boolean;
 }
@@ -306,7 +257,6 @@ function toEditState(r: RecipeOut): EditState {
     servings: r.servings?.toString() ?? "",
     kcal: r.kcal_per_serving?.toString() ?? "",
     thumbnail_url: r.thumbnail_url,
-    notes: r.notes ?? "",
     components: (r.components as SaveComponent[]).map((c) => ({
       ...c,
       ingredients: [...c.ingredients],
@@ -544,6 +494,9 @@ export default function RecipeDetailModal({
   const [error, setError] = useState<string | null>(null);
   const [showImgInput, setShowImgInput] = useState(false);
   const [imgDraft, setImgDraft] = useState("");
+  const [localNotes, setLocalNotes] = useState(recipe?.notes ?? "");
+  const [notesSaving, setNotesSaving] = useState(false);
+  const savedNotesRef = useRef(recipe?.notes ?? "");
   const initialModeRef = useRef(initialMode);
   initialModeRef.current = initialMode;
 
@@ -551,6 +504,8 @@ export default function RecipeDetailModal({
     if (recipe) {
       setDraft(toEditState(recipe));
       setLocalTags(recipe.tags ?? []);
+      setLocalNotes(recipe.notes ?? "");
+      savedNotesRef.current = recipe.notes ?? "";
       setMode(initialModeRef.current ?? "view");
       setError(null);
     }
@@ -646,6 +601,32 @@ export default function RecipeDetailModal({
     return tag;
   }
 
+  async function handleNotesSave() {
+    const trimmed = localNotes.trim();
+    if (trimmed === savedNotesRef.current.trim()) return;
+    setNotesSaving(true);
+    try {
+      const updated = await updateRecipe(r.id, {
+        title: r.title,
+        servings: r.servings,
+        kcal_per_serving: r.kcal_per_serving,
+        thumbnail_url: r.thumbnail_url,
+        creator_handle: r.creator_handle,
+        source_url: r.source_url,
+        notes: trimmed || null,
+        components: r.components as SaveComponent[],
+        tag_ids: localTags.map((t) => t.id),
+        shared_to_personal: r.shared_to_personal,
+      });
+      savedNotesRef.current = trimmed;
+      onUpdated?.(updated);
+    } catch {
+      // silent — user can retry by editing again
+    } finally {
+      setNotesSaving(false);
+    }
+  }
+
   async function handleSave() {
     if (!draft) return;
     setBusy(true);
@@ -658,7 +639,7 @@ export default function RecipeDetailModal({
         thumbnail_url: draft.thumbnail_url,
         creator_handle: r.creator_handle,
         source_url: r.source_url,
-        notes: draft.notes.trim() || null,
+        notes: localNotes.trim() || null,
         components: draft.components,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: draft.shared_to_personal,
@@ -700,7 +681,7 @@ export default function RecipeDetailModal({
         thumbnail_url: r.thumbnail_url,
         creator_handle: r.creator_handle,
         source_url: r.source_url,
-        notes: r.notes,
+        notes: localNotes.trim() || null,
         components: newComponents,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: r.shared_to_personal,
@@ -739,7 +720,7 @@ export default function RecipeDetailModal({
         thumbnail_url: r.thumbnail_url,
         creator_handle: r.creator_handle,
         source_url: r.source_url,
-        notes: r.notes,
+        notes: localNotes.trim() || null,
         components: newComponents,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: r.shared_to_personal,
@@ -1027,25 +1008,22 @@ export default function RecipeDetailModal({
                     />
                   ))}
 
-              {/* Notes section */}
-              {mode === "editing" ? (
-                <div className="mt-2 pt-4 border-t border-zinc-100">
-                  <p className="text-xs font-semibold uppercase text-zinc-400 mb-1.5">Notes</p>
-                  <textarea
-                    value={draft.notes}
-                    onChange={(e) => setDraft((d) => d ? { ...d, notes: e.target.value } : d)}
-                    placeholder="Add private notes… (supports **bold** and *italic*)"
-                    rows={3}
-                    className="w-full text-sm bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary resize-none leading-relaxed placeholder:text-zinc-400"
-                    style={{ minHeight: "4rem", fieldSizing: "content" } as React.CSSProperties}
-                  />
-                </div>
-              ) : r.notes ? (
-                <div className="mt-2 pt-4 border-t border-zinc-100">
-                  <p className="text-xs font-semibold uppercase text-zinc-400 mb-1.5">Notes</p>
-                  <MarkdownLite text={r.notes} />
-                </div>
-              ) : null}
+              {/* Notes — always editable, auto-saved on blur */}
+              <div className="mt-2 pt-4 border-t border-zinc-100">
+                <p className="text-xs font-semibold uppercase text-zinc-400 mb-1.5">
+                  Notes
+                  {notesSaving && <span className="ml-2 font-normal normal-case text-zinc-400">Saving…</span>}
+                </p>
+                <textarea
+                  value={localNotes}
+                  onChange={(e) => setLocalNotes(e.target.value)}
+                  onBlur={handleNotesSave}
+                  placeholder="Add private notes…"
+                  rows={3}
+                  className="w-full text-sm bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary resize-none leading-relaxed placeholder:text-zinc-400"
+                  style={{ minHeight: "4rem", fieldSizing: "content" } as React.CSSProperties}
+                />
+              </div>
             </ModalBody>
 
             <ModalFooter className="flex-col gap-2 items-stretch px-5 pb-5 pt-3">
