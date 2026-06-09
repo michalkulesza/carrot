@@ -159,7 +159,7 @@ function AllergenSection({
       <p className="text-xs text-zinc-400">{scopeLabel}</p>
 
       <div className="flex flex-col divide-y divide-zinc-100">
-        <Disclosure defaultExpanded>
+        <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
               Allergens
@@ -173,7 +173,7 @@ function AllergenSection({
           </Disclosure.Content>
         </Disclosure>
 
-        <Disclosure defaultExpanded>
+        <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
               Intolerances
