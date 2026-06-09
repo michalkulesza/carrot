@@ -54,11 +54,12 @@ and suggest a substitute.
 For each ingredient return (in the same order):
 - allergen: the exact allergen name from the provided list if found, else null
 - substitute: the full replacement ingredient text. Replace the allergen
-  ingredient name with the best allergen-free substitute and adjust the
-  quantity/weight if the substitute has a meaningfully different density or
-  typical usage amount (e.g. if a weight annotation like "(95g)" would be
-  inaccurate for the substitute, correct it). Keep all other modifiers and
-  notes. For example: "⅓ cup (95g) smooth peanut butter" → "⅓ cup (90g) tahini".
+  ingredient name with the best allergen-free substitute and adjust ALL
+  measurements (volume, weight, count) to the correct amount for that
+  substitute to achieve the same culinary result — do not blindly copy
+  numbers from the original. Keep all other modifiers and notes.
+  For example: "⅓ cup (95g) smooth peanut butter" → "¼ cup (60g) tahini"
+  if tahini is stronger and less is needed.
   If no allergen found, return null.
 
 Return exactly as many entries as there are input ingredients, in the same order.
