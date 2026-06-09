@@ -94,10 +94,14 @@ function AllergenPopover({
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 text-xs font-medium whitespace-nowrap"
-        title={`Contains ${flag.allergen}`}
+        className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium whitespace-nowrap ${
+          flag.substitute_applied
+            ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+            : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+        }`}
+        title={flag.substitute_applied ? "Substitute applied" : `Contains ${flag.allergen}`}
       >
-        ⚠ {flag.allergen}
+        {flag.substitute_applied ? "✓" : `⚠ ${flag.allergen}`}
       </button>
       {open && (
         <div
