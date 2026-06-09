@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Button, Popover, PopoverContent, PopoverDialog, toast } from "@heroui/react";
+import { useNavigate } from "react-router-dom";
 import { acceptInvitation, declineInvitation } from "../api/client";
 import { useHousehold } from "../context/HouseholdContext";
-import { useTimers, getRemainingSeconds, formatCountdown } from "../context/TimerContext";
+import { useTimers, getRemainingSeconds, formatCountdown, formatDurationLabel } from "../context/TimerContext";
 
 export default function BellPopover() {
   const { invitations, refetchInvitations, refetchHouseholds } = useHousehold();
-  const { timers, pauseTimer, resumeTimer, cancelTimer } = useTimers();
+  const { timers, pauseTimer, resumeTimer, cancelTimer, timerHistory, dismissHistoryItem, clearHistory } = useTimers();
+  const navigate = useNavigate();
   const [busy, setBusy] = useState<string | null>(null);
 
   const timerList = [...timers.values()];
-  const count = invitations.length + timerList.length;
+  const count = invitations.length + timerList.length + timerHistory.length;
 
   async function handleAccept(id: string) {
     setBusy(id);
@@ -106,6 +108,52 @@ export default function BellPopover() {
                   </div>
                 </li>
               ))}
+              {timerHistory.length > 0 && (
+                <>
+                  <li className="px-4 py-2 flex items-center justify-between bg-zinc-50">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400">Timer history</span>
+                    <button
+                      type="button"
+                      onClick={clearHistory}
+                      className="text-[10px] font-medium text-zinc-400 hover:text-zinc-600 transition-colors"
+                    >
+                      Clear all
+                    </button>
+                  </li>
+                  {timerHistory.map((t) => (
+                    <li key={`hist-${t.id}`} className="px-4 py-3 flex flex-col gap-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-500 mb-0.5">Timer done</p>
+                          <p className="text-sm font-medium truncate">{t.recipeTitle}</p>
+                          <p className="text-xs text-zinc-400 truncate">
+                            Step {t.stepIndex + 1} · {formatDurationLabel(t.totalSeconds)}
+                          </p>
+                          <p className="text-xs text-zinc-400 truncate">
+                            {t.stepText.length > 45 ? t.stepText.slice(0, 42) + "…" : t.stepText}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => dismissHistoryItem(t.id)}
+                          className="shrink-0 text-zinc-300 hover:text-zinc-500 transition-colors mt-0.5 text-base leading-none"
+                          aria-label="Dismiss"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="w-full"
+                        onPress={() => navigate(`/?recipe=${t.recipeId}&step=${t.componentIndex}-${t.stepIndex}`)}
+                      >
+                        Go to step ↗
+                      </Button>
+                    </li>
+                  ))}
+                </>
+              )}
             </ul>
           )}
         </PopoverDialog>

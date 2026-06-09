@@ -60,6 +60,7 @@ interface TimerContextValue {
   timers: Map<string, TimerEntry>;
   resumeInfo: ResumeInfo | null;
   expiredQueue: TimerEntry[];
+  timerHistory: TimerEntry[];
   hasRunningTimers: boolean;
   wakeLockTimersEnabled: boolean;
   setWakeLockTimersEnabled: (v: boolean) => void;
@@ -70,6 +71,8 @@ interface TimerContextValue {
   confirmResume: () => void;
   confirmClear: () => void;
   dismissExpired: () => void;
+  dismissHistoryItem: (id: string) => void;
+  clearHistory: () => void;
 }
 
 const TimerContext = createContext<TimerContextValue | null>(null);
@@ -191,6 +194,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(() => loadFromStorage().initialTimers);
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(() => loadFromStorage().resumeInfo);
   const [expiredQueue, setExpiredQueue] = useState<TimerEntry[]>([]);
+  const [timerHistory, setTimerHistory] = useState<TimerEntry[]>([]);
   const [wakeLockTimersEnabled, setWakeLockTimersEnabledState] = useState(
     () => localStorage.getItem("wakelock-timers") !== "0"
   );
@@ -206,6 +210,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     if (resumeInfo?.expired.length) {
       resumeInfo.expired.forEach((t) => fireTimerDone(t));
       setExpiredQueue(resumeInfo.expired);
+      setTimerHistory((prev) => [...prev, ...resumeInfo.expired]);
     }
   }, []);
 
@@ -245,6 +250,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       processedDoneRef.current.add(id);
       fireTimerDone(t);
       setExpiredQueue((prev) => [...prev, t]);
+      setTimerHistory((prev) => [...prev, t]);
       setTimeout(() => {
         setTimers((m) => { const n = new Map(m); n.delete(id); return n; });
         processedDoneRef.current.delete(id);
@@ -355,12 +361,21 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setExpiredQueue([]);
   }, []);
 
+  const dismissHistoryItem = useCallback((id: string) => {
+    setTimerHistory((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const clearHistory = useCallback(() => {
+    setTimerHistory([]);
+  }, []);
+
   return (
     <TimerContext.Provider
       value={{
         timers,
         resumeInfo,
         expiredQueue,
+        timerHistory,
         hasRunningTimers,
         wakeLockTimersEnabled,
         setWakeLockTimersEnabled,
@@ -371,6 +386,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         confirmResume,
         confirmClear,
         dismissExpired,
+        dismissHistoryItem,
+        clearHistory,
       }}
     >
       {children}
