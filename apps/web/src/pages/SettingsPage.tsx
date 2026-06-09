@@ -630,13 +630,30 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
         {/* Allergies & Intolerances */}
         <section className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Allergies & Intolerances</h2>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <AllergenSection
               key={activeHouseholdId ?? "personal"}
               allergens={currentAllergens}
               scopeLabel={allergenScopeLabel}
               onSave={handleSaveAllergens}
             />
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
+              <div>
+                <p className="text-sm font-medium">Auto-apply substitutes</p>
+                <p className="text-xs text-zinc-400">Automatically replace flagged ingredients when importing</p>
+              </div>
+              <Switch
+                size="sm"
+                isSelected={preferences?.auto_substitute ?? false}
+                onChange={(v) => {
+                  updatePreferences({ auto_substitute: v })
+                    .then(onPreferencesChange)
+                    .catch(() => {});
+                }}
+              >
+                <Switch.Control><Switch.Thumb /></Switch.Control>
+              </Switch>
+            </div>
           </div>
         </section>
 
@@ -658,7 +675,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
         {/* Preferences */}
         <section className="flex flex-col gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Preferences</h2>
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
+          <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium">Week starts on</label>
               <Select
@@ -682,23 +699,6 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                   </ListBox>
                 </Select.Popover>
               </Select>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-medium">Auto-apply substitutes</p>
-                <p className="text-xs text-zinc-400">Automatically replace flagged ingredients when importing</p>
-              </div>
-              <Switch
-                size="sm"
-                isSelected={preferences?.auto_substitute ?? false}
-                onChange={(v) => {
-                  updatePreferences({ auto_substitute: v })
-                    .then(onPreferencesChange)
-                    .catch(() => {});
-                }}
-              >
-                <Switch.Control><Switch.Thumb /></Switch.Control>
-              </Switch>
             </div>
           </div>
         </section>
