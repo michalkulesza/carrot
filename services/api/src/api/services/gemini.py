@@ -17,12 +17,17 @@ log = logging.getLogger(__name__)
 _DEFAULT_MODEL = "gemini-2.5-flash"
 
 _T = TypeVar("_T")
-_RETRY_DELAYS = (1, 2, 4, 8)  # seconds between attempts
+
+
+def _retry_delays():
+    for d in (1, 2, 4):
+        yield d
+    while True:
+        yield 8
 
 
 async def _with_retry(fn: Callable[[], _T]) -> _T:
-    last_exc: Exception | None = None
-    for i, delay in enumerate((*_RETRY_DELAYS, None)):
+    for attempt, delay in enumerate(_retry_delays(), start=1):
         try:
             return fn()
         except Exception as exc:
@@ -30,12 +35,8 @@ async def _with_retry(fn: Callable[[], _T]) -> _T:
             is_transient = "503" in msg or "UNAVAILABLE" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg
             if not is_transient:
                 raise
-            last_exc = exc
-            if delay is None:
-                break
-            log.warning("Gemini transient error (attempt %d/%d), retrying in %ds: %s", i + 1, len(_RETRY_DELAYS) + 1, delay, msg[:120])
+            log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
             await asyncio.sleep(delay)
-    raise last_exc  # type: ignore[misc]
 
 _SYSTEM = """\
 You are a recipe extraction assistant. Given text from a social media caption,
