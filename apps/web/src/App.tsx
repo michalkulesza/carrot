@@ -30,8 +30,8 @@ function ExpiredTimersModal() {
   return (
     <Modal isOpen onOpenChange={(open) => { if (!open) dismissExpired(); }}>
       <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
+        <ModalContainer size="sm" scroll="inside" className="!rounded-xl overflow-hidden">
+          <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[600px]">
             <ModalHeader>
               {expiredQueue.length === 1 ? "Timer done" : `${expiredQueue.length} timers done`}
             </ModalHeader>
