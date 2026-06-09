@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Modal, ModalBackdrop, ModalBody, ModalContainer, ModalDialog, ModalFooter, ModalHeader, Switch, toast } from "@heroui/react";
+import { Button, ListBox, ListBoxItem, Modal, ModalBackdrop, ModalBody, ModalContainer, ModalDialog, ModalFooter, ModalHeader, Select, Switch, toast } from "@heroui/react";
 import PageHeader from "../components/PageHeader";
 import {
   exportRecipes, importRecipes, updatePreferences, updateHouseholdAllergens, streamReanalyze,
@@ -615,22 +615,28 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
           <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Preferences</h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium" htmlFor="week-start">Week starts on</label>
-              <select
-                id="week-start"
-                value={String(preferences?.week_start_day ?? 1)}
-                onChange={(e) => {
-                  const day = Number(e.target.value);
-                  updatePreferences({ week_start_day: day })
+              <label className="text-sm font-medium">Week starts on</label>
+              <Select
+                selectedKey={String(preferences?.week_start_day ?? 1)}
+                onSelectionChange={(key) => {
+                  updatePreferences({ week_start_day: Number(key) })
                     .then(onPreferencesChange)
                     .catch(() => {});
                 }}
-                className="px-3 py-2 text-sm rounded-lg border border-zinc-200 bg-white text-zinc-800 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                aria-label="Week starts on"
               >
-                {WEEK_DAY_OPTIONS.map((opt) => (
-                  <option key={opt.key} value={opt.key}>{opt.label}</option>
-                ))}
-              </select>
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {WEEK_DAY_OPTIONS.map((opt) => (
+                      <ListBoxItem key={opt.key} id={String(opt.key)}>{opt.label}</ListBoxItem>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
             </div>
             <div className="flex items-center justify-between gap-2">
               <div>
