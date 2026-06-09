@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Button, Popover, PopoverContent, PopoverDialog, toast } from "@heroui/react";
 import { acceptInvitation, declineInvitation } from "../api/client";
 import { useHousehold } from "../context/HouseholdContext";
+import { useTimers, getRemainingSeconds, formatCountdown } from "../context/TimerContext";
 
 export default function BellPopover() {
   const { invitations, refetchInvitations, refetchHouseholds } = useHousehold();
+  const { timers, pauseTimer, resumeTimer, cancelTimer } = useTimers();
   const [busy, setBusy] = useState<string | null>(null);
 
-  const count = invitations.length;
+  const timerList = [...timers.values()];
+  const count = invitations.length + timerList.length;
 
   async function handleAccept(id: string) {
     setBusy(id);
@@ -50,10 +53,40 @@ export default function BellPopover() {
       </Button>
       <PopoverContent className="p-0 w-80" placement="bottom end">
         <PopoverDialog>
-          {invitations.length === 0 ? (
+          {count === 0 ? (
             <div className="px-4 py-6 text-center text-sm text-zinc-400">No notifications</div>
           ) : (
-            <ul className="divide-y divide-zinc-200 max-h-80 overflow-y-auto">
+            <ul className="divide-y divide-zinc-100 max-h-96 overflow-y-auto">
+              {timerList.map((t) => {
+                const remaining = getRemainingSeconds(t);
+                const isRunning = t.status === "running";
+                return (
+                  <li key={t.id} className="px-4 py-3 flex flex-col gap-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={`text-[10px] font-semibold uppercase tracking-wide mb-0.5 ${isRunning ? "text-amber-500" : "text-zinc-400"}`}>
+                          {isRunning ? "Timer running" : "Timer paused"}
+                        </p>
+                        <p className="text-sm font-medium truncate">{t.recipeTitle}</p>
+                        <p className="text-xs text-zinc-400 truncate">
+                          Step {t.stepIndex + 1}: {t.stepText.length > 45 ? t.stepText.slice(0, 42) + "…" : t.stepText}
+                        </p>
+                      </div>
+                      <span className={`font-mono text-sm font-bold tabular-nums shrink-0 pt-4 ${isRunning ? "text-amber-600" : "text-zinc-400"}`}>
+                        {t.status === "done" ? "Done ✓" : formatCountdown(remaining)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      {isRunning ? (
+                        <Button size="sm" variant="secondary" onPress={() => pauseTimer(t.id)}>Pause</Button>
+                      ) : (
+                        <Button size="sm" variant="secondary" onPress={() => resumeTimer(t.id)}>Resume</Button>
+                      )}
+                      <Button size="sm" variant="danger-soft" onPress={() => cancelTimer(t.id)}>Cancel</Button>
+                    </div>
+                  </li>
+                );
+              })}
               {invitations.map((inv) => (
                 <li key={inv.id} className="px-4 py-3 flex flex-col gap-2">
                   <div>
@@ -64,20 +97,10 @@ export default function BellPopover() {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      isDisabled={busy === inv.id}
-                      onPress={() => handleAccept(inv.id)}
-                    >
+                    <Button size="sm" variant="primary" isDisabled={busy === inv.id} onPress={() => handleAccept(inv.id)}>
                       Accept
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      isDisabled={busy === inv.id}
-                      onPress={() => handleDecline(inv.id)}
-                    >
+                    <Button size="sm" variant="secondary" isDisabled={busy === inv.id} onPress={() => handleDecline(inv.id)}>
                       Decline
                     </Button>
                   </div>
