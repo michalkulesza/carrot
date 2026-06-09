@@ -50,16 +50,14 @@ export default function BellPopover() {
       </Button>
       <PopoverContent className="p-0 w-80" placement="bottom end">
         <PopoverDialog>
-          <div className="px-4 py-3 border-b border-zinc-200">
-            <p className="font-semibold text-sm">Invitations</p>
-          </div>
           {invitations.length === 0 ? (
-            <div className="px-4 py-6 text-center text-sm text-zinc-400">No pending invitations</div>
+            <div className="px-4 py-6 text-center text-sm text-zinc-400">No notifications</div>
           ) : (
             <ul className="divide-y divide-zinc-200 max-h-80 overflow-y-auto">
               {invitations.map((inv) => (
                 <li key={inv.id} className="px-4 py-3 flex flex-col gap-2">
                   <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 mb-0.5">Household invitation</p>
                     <p className="text-sm font-medium">{inv.household_name}</p>
                     <p className="text-xs text-zinc-400">
                       From {inv.invited_by_nickname || inv.invited_by_email}
