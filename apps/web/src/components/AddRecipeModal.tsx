@@ -121,13 +121,13 @@ function AllergenPopover({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-amber-500 hover:text-amber-600 text-xs leading-none mt-1"
+        className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 text-xs font-medium whitespace-nowrap"
         title={`Contains ${flag.allergen}`}
       >
-        ⚠️
+        ⚠ {flag.allergen}
       </button>
       {open && (
-        <div className="absolute left-0 top-6 z-50 bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] text-sm">
+        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] text-sm">
           {flag.substitute_applied && flag.original_display ? (
             <>
               <p className="text-zinc-600 mb-2">
@@ -477,6 +477,7 @@ function EditableRecipeView({
                   return (
                     <li key={ii} className="flex items-start gap-2 text-sm">
                       <span className="text-zinc-300 mt-1.5 shrink-0">·</span>
+                      <EditLine value={ing} onChange={(v) => setIngredient(ci, ii, v)} className="flex-1" />
                       {flag && (
                         <AllergenPopover
                           flag={flag}
@@ -485,7 +486,6 @@ function EditableRecipeView({
                           onRestore={() => handleRestore(ci, ii)}
                         />
                       )}
-                      <EditLine value={ing} onChange={(v) => setIngredient(ci, ii, v)} />
                     </li>
                   );
                 })}
