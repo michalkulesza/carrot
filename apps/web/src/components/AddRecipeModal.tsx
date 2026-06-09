@@ -278,11 +278,8 @@ function EditableRecipeView({
     const flag = comp.ingredient_flags[ii];
     if (!flag?.substitute) return;
     const originalDisplay = comp.ingredients[ii];
-    const replaced = flag.ingredient_name
-      ? originalDisplay.replace(flag.ingredient_name, flag.substitute!)
-      : flag.substitute!;
     const newIngredients = comp.ingredients.map((ing, idx) =>
-      idx === ii ? replaced : ing
+      idx === ii ? flag.substitute! : ing
     );
     const newFlags = comp.ingredient_flags.map((f, idx) =>
       idx === ii

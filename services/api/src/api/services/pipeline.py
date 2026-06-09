@@ -150,13 +150,18 @@ def _done_event(result: ImportResult, cache_key: str | None = None) -> dict[str,
     return {"type": "done", "result": result.model_dump()}
 
 
+def _ingredient_display(ing: Ingredient) -> str:
+    parts = [p for p in [ing.qty, ing.unit, ing.name, f"({ing.note})" if ing.note else None] if p]
+    return " ".join(parts) if parts else ing.name
+
+
 async def _with_allergens(result: ImportResult, allergens: list[str] | None) -> ImportResult:
     """Attach allergen flags to a successfully extracted recipe."""
     if not allergens or not result.recipe:
         return result
     updated = []
     for component in result.recipe.components:
-        names = [i.name for i in component.ingredients]
+        names = [_ingredient_display(i) for i in component.ingredients]
         flags = await gemini_svc.analyze_allergens(names, allergens)
         new_ingredients = [
             ing.model_copy(update={"allergen": f.allergen, "substitute": f.substitute})

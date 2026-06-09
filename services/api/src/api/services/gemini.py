@@ -53,7 +53,11 @@ and suggest a substitute.
 
 For each ingredient return (in the same order):
 - allergen: the exact allergen name from the provided list if found, else null
-- substitute: a single best substitute ingredient (just the name, no qty/unit), else null
+- substitute: the full replacement ingredient text, keeping the exact same
+  quantity, unit, and any other modifiers/notes from the original, but replacing
+  only the allergen ingredient name with the best allergen-free substitute.
+  For example: "⅓ cup (95g) smooth peanut butter" → "⅓ cup (95g) almond butter".
+  If no allergen found, return null.
 
 Return exactly as many entries as there are input ingredients, in the same order.
 """
