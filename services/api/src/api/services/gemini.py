@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+from typing import Callable, TypeVar
 
 from google import genai
 from google.genai import types
@@ -13,6 +15,27 @@ from api.models import RecipeExtraction
 log = logging.getLogger(__name__)
 
 _DEFAULT_MODEL = "gemini-2.5-flash"
+
+_T = TypeVar("_T")
+_RETRY_DELAYS = (1, 2, 4, 8)  # seconds between attempts
+
+
+async def _with_retry(fn: Callable[[], _T]) -> _T:
+    last_exc: Exception | None = None
+    for i, delay in enumerate((*_RETRY_DELAYS, None)):
+        try:
+            return fn()
+        except Exception as exc:
+            msg = str(exc)
+            is_transient = "503" in msg or "UNAVAILABLE" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg
+            if not is_transient:
+                raise
+            last_exc = exc
+            if delay is None:
+                break
+            log.warning("Gemini transient error (attempt %d/%d), retrying in %ds: %s", i + 1, len(_RETRY_DELAYS) + 1, delay, msg[:120])
+            await asyncio.sleep(delay)
+    raise last_exc  # type: ignore[misc]
 
 _SYSTEM = """\
 You are a recipe extraction assistant. Given text from a social media caption,
@@ -88,7 +111,7 @@ async def extract_recipe(
     prompt = "\n\n".join(parts)
 
     client = _build_client()
-    response = client.models.generate_content(
+    response = await _with_retry(lambda: client.models.generate_content(
         model=model,
         contents=prompt,
         config=types.GenerateContentConfig(
@@ -96,7 +119,7 @@ async def extract_recipe(
             response_mime_type="application/json",
             response_schema=RecipeExtraction,
         ),
-    )
+    ))
 
     raw = response.text
     log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
@@ -125,7 +148,7 @@ async def analyze_allergens(
     prompt = f"Allergens to check: {', '.join(allergens)}\n\nIngredients:\n{numbered}"
 
     client = _build_client()
-    response = client.models.generate_content(
+    response = await _with_retry(lambda: client.models.generate_content(
         model=model,
         contents=prompt,
         config=types.GenerateContentConfig(
@@ -133,7 +156,7 @@ async def analyze_allergens(
             response_mime_type="application/json",
             response_schema=_AllergenAnalysisResult,
         ),
-    )
+    ))
 
     raw = response.text
     log.debug("Gemini allergen analysis raw: %s", raw[:500])
