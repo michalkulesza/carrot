@@ -13,8 +13,43 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { HouseholdProvider } from "./context/HouseholdContext";
-import { TimerProvider, useTimers, formatCountdown } from "./context/TimerContext";
+import { TimerProvider, useTimers, formatCountdown, formatDurationLabel } from "./context/TimerContext";
 import { fetchStats, getPreferences, listRecipes, listTags, RecipeOut, RecipeStats, Tag, UserPreferences } from "./api/client";
+
+function ExpiredTimersModal() {
+  const { expiredQueue, dismissExpired } = useTimers();
+  if (expiredQueue.length === 0) return null;
+  return (
+    <Modal isOpen onOpenChange={(open) => { if (!open) dismissExpired(); }}>
+      <ModalBackdrop isDismissable>
+        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+          <ModalDialog>
+            <ModalHeader>
+              {expiredQueue.length === 1 ? "Timer done" : `${expiredQueue.length} timers done`}
+            </ModalHeader>
+            <ModalBody className="flex flex-col gap-3">
+              {expiredQueue.map((t) => (
+                <div key={t.id} className="flex items-start gap-3">
+                  <span className="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">✓</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-zinc-800 leading-snug">{t.recipeTitle}</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Step {t.stepIndex + 1} · {formatDurationLabel(t.totalSeconds)}
+                    </p>
+                    <p className="text-xs text-zinc-400 mt-0.5 leading-snug line-clamp-2">{t.stepText}</p>
+                  </div>
+                </div>
+              ))}
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="primary" onPress={dismissExpired}>OK</Button>
+            </ModalFooter>
+          </ModalDialog>
+        </ModalContainer>
+      </ModalBackdrop>
+    </Modal>
+  );
+}
 
 function ResumeTimersModal() {
   const { resumeInfo, confirmResume, confirmClear } = useTimers();
@@ -175,6 +210,7 @@ function AppShell() {
           preferences={preferences}
         />
         <ResumeTimersModal />
+        <ExpiredTimersModal />
       </div>
     </HouseholdProvider>
     </TimerProvider>
