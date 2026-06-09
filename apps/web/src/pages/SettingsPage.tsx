@@ -31,17 +31,17 @@ const PRESET_COLORS = [
 ];
 
 const ALLERGENS = [
-  { key: "gluten",      label: "Gluten-containing cereals", description: "wheat, rye, barley, oats" },
-  { key: "crustaceans", label: "Crustaceans",               description: "shrimp, crab, lobster" },
   { key: "eggs",        label: "Eggs" },
   { key: "fish",        label: "Fish" },
   { key: "peanuts",     label: "Peanuts" },
   { key: "soybeans",    label: "Soy" },
   { key: "milk",        label: "Milk (dairy)" },
+  { key: "sesame",      label: "Sesame" },
+  { key: "gluten",      label: "Gluten-containing cereals", description: "wheat, rye, barley, oats" },
+  { key: "crustaceans", label: "Crustaceans",               description: "shrimp, crab, lobster" },
   { key: "tree nuts",   label: "Tree nuts",                 description: "almonds, cashews, walnuts, etc." },
   { key: "celery",      label: "Celery",                    description: "stalks, seeds, celeriac" },
   { key: "mustard",     label: "Mustard",                   description: "seeds, leaves, oil" },
-  { key: "sesame",      label: "Sesame" },
   { key: "sulphites",   label: "Sulphur dioxide / sulphites", description: ">10 mg/kg" },
   { key: "lupin",       label: "Lupin",                     description: "flour and seeds" },
   { key: "molluscs",    label: "Molluscs",                  description: "squid, oyster, mussel" },
