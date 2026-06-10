@@ -19,7 +19,7 @@ async def get_preferences(
     )
     prefs = result.scalar_one_or_none()
     if prefs is None:
-        return UserPreferencesOut(week_start_day=1, auto_substitute=False, personal_allergens=None)
+        return UserPreferencesOut(week_start_day=1, auto_substitute=False, personal_allergens=None, language="en")
     return UserPreferencesOut.model_validate(prefs)
 
 
@@ -39,6 +39,7 @@ async def update_preferences(
             week_start_day=body.week_start_day if body.week_start_day is not None else 1,
             auto_substitute=body.auto_substitute if body.auto_substitute is not None else False,
             personal_allergens=body.personal_allergens,
+            language=body.language if body.language is not None else "en",
         )
         session.add(prefs)
     else:
@@ -48,6 +49,8 @@ async def update_preferences(
             prefs.auto_substitute = body.auto_substitute
         if body.personal_allergens is not None:
             prefs.personal_allergens = body.personal_allergens
+        if body.language is not None:
+            prefs.language = body.language
 
     await session.commit()
     await session.refresh(prefs)

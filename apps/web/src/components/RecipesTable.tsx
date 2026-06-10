@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import i18n from "../i18n";
 import { createPortal } from "react-dom";
 import {
   DndContext,
@@ -56,7 +57,7 @@ function SortIndicator({ field, sort }: { field: SortField; sort: Sort }) {
 }
 
 function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString(i18n.language, {
     month: "short",
     day: "numeric",
     year: "numeric",

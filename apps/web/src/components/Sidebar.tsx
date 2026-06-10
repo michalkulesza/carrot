@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import HouseholdSwitcher from "./HouseholdSwitcher";
 import { useHousehold } from "../context/HouseholdContext";
 
@@ -50,15 +51,9 @@ function PanelIcon() {
   );
 }
 
-const navItems = [
-  { to: "/", end: true, label: "Recipes", Icon: BookIcon },
-  { to: "/plan", end: false, label: "Meal Plan", Icon: CalendarIcon },
-  { to: "/shopping", end: false, label: "Shopping", Icon: CartIcon },
-  { to: "/settings", end: false, label: "Settings", Icon: GearIcon },
-];
-
 export default function Sidebar() {
   const { activeHousehold } = useHousehold();
+  const { t } = useTranslation();
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const bandColor = activeHousehold?.color ?? null;
@@ -87,7 +82,7 @@ export default function Sidebar() {
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className="p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-200/60 hover:text-zinc-900 transition-colors shrink-0"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("nav.expandSidebar", { defaultValue: "Expand sidebar" }) : t("nav.collapseSidebar", { defaultValue: "Collapse sidebar" })}
         >
           <PanelIcon />
         </button>
@@ -97,7 +92,7 @@ export default function Sidebar() {
       <button
         type="button"
         onClick={() => setSwitcherOpen(true)}
-        title={collapsed ? (activeHousehold?.name ?? "Personal Library") : undefined}
+        title={collapsed ? (activeHousehold?.name ?? t("nav.personalLibrary")) : undefined}
         className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-zinc-200/60 transition-colors mb-3 w-full text-left ${
           collapsed ? "justify-center" : ""
         }`}
@@ -116,7 +111,7 @@ export default function Sidebar() {
               className="text-xs font-semibold uppercase tracking-wide truncate"
               style={{ color: bandColor ?? undefined }}
             >
-              {activeHousehold ? activeHousehold.name : "Personal Library"}
+              {activeHousehold ? activeHousehold.name : t("nav.personalLibrary")}
             </span>
             <svg className="w-3 h-3 shrink-0 opacity-50 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -130,18 +125,26 @@ export default function Sidebar() {
 
       {/* Nav links */}
       <nav className="flex flex-col gap-0.5 flex-1">
-        {navItems.map(({ to, end, label, Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            title={collapsed ? label : undefined}
-            className={({ isActive }) => navLink(isActive)}
-          >
-            <Icon />
-            {!collapsed && <span className="truncate">{label}</span>}
-          </NavLink>
-        ))}
+        {[
+          { to: "/", end: true, labelKey: "nav.recipes", Icon: BookIcon },
+          { to: "/plan", end: false, labelKey: "nav.mealPlan", Icon: CalendarIcon },
+          { to: "/shopping", end: false, labelKey: "nav.shopping", Icon: CartIcon },
+          { to: "/settings", end: false, labelKey: "nav.settings", Icon: GearIcon },
+        ].map(({ to, end, labelKey, Icon }) => {
+          const label = t(labelKey);
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              title={collapsed ? label : undefined}
+              className={({ isActive }) => navLink(isActive)}
+            >
+              <Icon />
+              {!collapsed && <span className="truncate">{label}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <HouseholdSwitcher isOpen={switcherOpen} onClose={() => setSwitcherOpen(false)} />

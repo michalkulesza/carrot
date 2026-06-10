@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Description, Disclosure, Label, ListBox, ListBoxItem, Modal, ModalBackdrop, ModalBody, ModalContainer, ModalDialog, ModalFooter, ModalHeader, Select, Switch, toast } from "@heroui/react";
 import { useTimers, getRemainingSeconds, formatCountdown } from "../context/TimerContext";
 import PageHeader from "../components/PageHeader";
@@ -22,43 +23,24 @@ function StatCard({ value, label }: { value: string | number | null; label: stri
 }
 
 const WEEK_DAY_OPTIONS = [
-  { key: "1", label: "Monday" },
-  { key: "0", label: "Sunday" },
-  { key: "6", label: "Saturday" },
+  { key: "1", labelKey: "settings.monday" },
+  { key: "0", labelKey: "settings.sunday" },
+  { key: "6", labelKey: "settings.saturday" },
 ];
 
 const PRESET_COLORS = [
   "#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#22c55e", "#ef4444", "#8b5cf6", "#06b6d4",
 ];
 
-const ALLERGENS = [
-  { key: "gluten",      label: "Gluten-containing cereals", description: "wheat, rye, barley, oats" },
-  { key: "crustaceans", label: "Crustaceans",               description: "shrimp, crab, lobster" },
-  { key: "tree nuts",   label: "Tree nuts",                 description: "almonds, cashews, walnuts, etc." },
-  { key: "celery",      label: "Celery",                    description: "stalks, seeds, celeriac" },
-  { key: "mustard",     label: "Mustard",                   description: "seeds, leaves, oil" },
-  { key: "sulphites",   label: "Sulphur dioxide / sulphites", description: ">10 mg/kg" },
-  { key: "lupin",       label: "Lupin",                     description: "flour and seeds" },
-  { key: "molluscs",    label: "Molluscs",                  description: "squid, oyster, mussel" },
-  { key: "eggs",        label: "Eggs" },
-  { key: "fish",        label: "Fish" },
-  { key: "peanuts",     label: "Peanuts" },
-  { key: "soybeans",    label: "Soy" },
-  { key: "milk",        label: "Milk (dairy)" },
-  { key: "sesame",      label: "Sesame" },
+const ALLERGEN_KEYS = [
+  "gluten", "crustaceans", "tree nuts", "celery", "mustard",
+  "sulphites", "lupin", "molluscs", "eggs", "fish",
+  "peanuts", "soybeans", "milk", "sesame",
 ];
 
-const INTOLERANCES = [
-  { key: "lactose",             label: "Lactose",       description: "milk sugar, affects ~65% of adults globally" },
-  { key: "ncgs",                label: "Gluten / NCGS", description: "non-coeliac gluten sensitivity" },
-  { key: "fructose",            label: "Fructose",      description: "fruit sugar malabsorption" },
-  { key: "histamine",           label: "Histamine",     description: "found in aged cheese, wine, cured fish" },
-  { key: "fodmap",              label: "FODMAPs",       description: "fermentable carbs, linked to IBS" },
-  { key: "caffeine",            label: "Caffeine",      description: "slow metabolisers" },
-  { key: "sulphite-sensitivity",label: "Sulphites",     description: "wine, dried fruit, triggers asthma in some" },
-  { key: "sorbitol",            label: "Sorbitol",      description: 'sugar alcohol found in "diet" foods' },
-  { key: "salicylates",         label: "Salicylates",   description: "natural plant compound" },
-  { key: "msg",                 label: "MSG",           description: "glutamate sensitivity" },
+const INTOLERANCE_KEYS = [
+  "lactose", "ncgs", "fructose", "histamine", "fodmap",
+  "caffeine", "sulphite-sensitivity", "sorbitol", "salicylates", "msg",
 ];
 
 interface SettingsPageProps {
@@ -79,6 +61,7 @@ function AllergenSection({
   scopeLabel: string;
   onSave: (data: AllergenData) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [predefined, setPredefined] = useState<string[]>(allergens.predefined ?? []);
   const [custom, setCustom] = useState<string[]>(allergens.custom ?? []);
   const [tagInput, setTagInput] = useState("");
@@ -108,9 +91,9 @@ function AllergenSection({
     setSaving(true);
     try {
       await onSave({ predefined, custom });
-      toast.success("Allergens saved", { timeout: 2000 });
+      toast.success(t("settings.allergensSaved"), { timeout: 2000 });
     } catch (e) {
-      toast.danger(e instanceof Error ? e.message : "Failed to save", { timeout: 3000 });
+      toast.danger(e instanceof Error ? e.message : t("settings.failedToSave"), { timeout: 3000 });
     } finally {
       setSaving(false);
     }
@@ -125,7 +108,7 @@ function AllergenSection({
       onComplete: (analyzed) => {
         setReanalyzing(false);
         setReanalyzeProgress(null);
-        toast.success(`Re-analyzed ${analyzed} recipe${analyzed !== 1 ? "s" : ""}`, { timeout: 3000 });
+        toast.success(t("settings.reanalyzedRecipes", { count: analyzed }), { timeout: 3000 });
       },
       onError: (msg) => {
         setReanalyzing(false);
@@ -135,22 +118,27 @@ function AllergenSection({
     });
   }
 
-  function CheckboxGroup({ items }: { items: { key: string; label: string; description?: string }[] }) {
+  function CheckboxGroup({ keys, namespace }: { keys: string[]; namespace: "allergens" | "intolerances" }) {
+    const iKey = (k: string) => k.replace(/[- ]/g, "_");
     return (
       <div className="flex flex-col gap-3 pt-1">
-        {items.map(({ key, label, description }) => (
-          <Checkbox
-            key={key}
-            isSelected={predefined.includes(key)}
-            onChange={() => togglePredefined(key)}
-          >
-            <Checkbox.Control><Checkbox.Indicator /></Checkbox.Control>
-            <Checkbox.Content>
-              <Label>{label}</Label>
-              {description && <Description>{description}</Description>}
-            </Checkbox.Content>
-          </Checkbox>
-        ))}
+        {keys.map((key) => {
+          const k = iKey(key);
+          const desc = t(`${namespace}.${k}_desc`, { defaultValue: "" });
+          return (
+            <Checkbox
+              key={key}
+              isSelected={predefined.includes(key)}
+              onChange={() => togglePredefined(key)}
+            >
+              <Checkbox.Control><Checkbox.Indicator /></Checkbox.Control>
+              <Checkbox.Content>
+                <Label>{t(`${namespace}.${k}`)}</Label>
+                {desc && <Description>{desc}</Description>}
+              </Checkbox.Content>
+            </Checkbox>
+          );
+        })}
       </div>
     );
   }
@@ -163,13 +151,13 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              Allergens
+              {t("settings.allergens")}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
           <Disclosure.Content>
             <Disclosure.Body className="pb-3">
-              <CheckboxGroup items={ALLERGENS} />
+              <CheckboxGroup keys={ALLERGEN_KEYS} namespace="allergens" />
             </Disclosure.Body>
           </Disclosure.Content>
         </Disclosure>
@@ -177,13 +165,13 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              Intolerances
+              {t("settings.intolerances")}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
           <Disclosure.Content>
             <Disclosure.Body className="pb-3">
-              <CheckboxGroup items={INTOLERANCES} />
+              <CheckboxGroup keys={INTOLERANCE_KEYS} namespace="intolerances" />
             </Disclosure.Body>
           </Disclosure.Content>
         </Disclosure>
@@ -191,7 +179,7 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              Custom
+              {t("settings.custom")}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
@@ -200,13 +188,13 @@ function AllergenSection({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="e.g. nightshades"
+                  placeholder={t("settings.customPlaceholder")}
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
                   className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
-                <Button size="sm" variant="secondary" onPress={addCustomTag}>Add</Button>
+                <Button size="sm" variant="secondary" onPress={addCustomTag}>{t("common.add")}</Button>
               </div>
               {custom.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -225,14 +213,14 @@ function AllergenSection({
 
       <div className="flex gap-2 flex-wrap">
         <Button size="sm" variant="primary" onPress={handleSave} isDisabled={saving}>
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("common.saving") : t("common.save")}
         </Button>
         <Button size="sm" variant="secondary" onPress={handleReanalyze} isDisabled={reanalyzing}>
           {reanalyzing
             ? reanalyzeProgress && reanalyzeProgress.total > 0
-              ? `Analyzing… ${reanalyzeProgress.done}/${reanalyzeProgress.total}`
-              : "Starting…"
-            : "Re-analyze recipes"}
+              ? t("settings.analyzingProgress", { done: reanalyzeProgress.done, total: reanalyzeProgress.total })
+              : t("settings.starting")
+            : t("settings.reAnalyzeRecipes")}
         </Button>
       </div>
     </div>
@@ -246,6 +234,7 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
   onClose: () => void;
   onCreated: () => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [color, setColor] = useState(PRESET_COLORS[0]);
   const [busy, setBusy] = useState(false);
@@ -256,7 +245,7 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
     setError(null);
     try {
       await createHousehold(name.trim() || undefined, color);
-      toast.success("Household created", { timeout: 3000 });
+      toast.success(t("settings.householdCreated"), { timeout: 3000 });
       setName("");
       setColor(PRESET_COLORS[0]);
       onCreated();
@@ -273,21 +262,21 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
-            <ModalHeader>New household</ModalHeader>
+            <ModalHeader>{t("settings.newHouseholdTitle")}</ModalHeader>
             <ModalBody className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="household-name">Name (optional)</label>
+                <label className="text-sm font-medium" htmlFor="household-name">{t("settings.householdNameOptional")}</label>
                 <input
                   id="household-name"
                   type="text"
-                  placeholder="My household"
+                  placeholder={t("settings.householdNamePlaceholder")}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
               <div>
-                <p className="text-sm font-medium mb-2">Color</p>
+                <p className="text-sm font-medium mb-2">{t("settings.colorLabel")}</p>
                 <div className="flex gap-2 flex-wrap">
                   {PRESET_COLORS.map((c) => (
                     <button
@@ -307,8 +296,8 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
               {error && <p className="text-sm text-danger">{error}</p>}
             </ModalBody>
             <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>Cancel</Button>
-              <Button variant="primary" onPress={handleCreate} isDisabled={busy}>Create</Button>
+              <Button variant="tertiary" onPress={onClose}>{t("common.cancel")}</Button>
+              <Button variant="primary" onPress={handleCreate} isDisabled={busy}>{t("common.create")}</Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
@@ -325,6 +314,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { t } = useTranslation();
   const [members, setMembers] = useState<MemberOut[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [name, setName] = useState(household.name);
@@ -359,7 +349,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
     setError(null);
     try {
       await updateHousehold(household.id, { name: name.trim() || household.name, color });
-      toast.success("Saved", { timeout: 2000 });
+      toast.success(t("settings.saved"), { timeout: 2000 });
       onChanged();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
@@ -374,7 +364,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
     setError(null);
     try {
       await inviteUser(household.id, inviteEmail.trim());
-      toast.success("Invitation sent", { timeout: 3000 });
+      toast.success(t("settings.invitationSent"), { timeout: 3000 });
       setInviteEmail("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to invite");
@@ -387,7 +377,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
     setLeaving(true);
     try {
       await leaveHousehold(household.id);
-      toast("Left household", { timeout: 3000 });
+      toast(t("settings.leftHousehold"), { timeout: 3000 });
       onChanged();
       onClose();
     } catch (e) {
@@ -401,11 +391,11 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
-            <ModalHeader>Manage household</ModalHeader>
+            <ModalHeader>{t("settings.manageHousehold")}</ModalHeader>
             <ModalBody className="flex flex-col gap-5">
               {/* Rename */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Name</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.nameLabel")}</p>
                 <input
                   type="text"
                   value={name}
@@ -416,7 +406,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
 
               {/* Recolor */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Color</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.colorLabel")}</p>
                 <div className="flex gap-2 flex-wrap">
                   {PRESET_COLORS.map((c) => (
                     <button
@@ -435,14 +425,14 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
               </div>
 
               <Button size="sm" variant="secondary" onPress={handleSave} isDisabled={saving}>
-                Save changes
+                {t("settings.saveChanges")}
               </Button>
 
               {/* Members */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Members</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.members")}</p>
                 {membersLoading ? (
-                  <p className="text-sm text-zinc-400">Loading…</p>
+                  <p className="text-sm text-zinc-400">{t("common.loading")}</p>
                 ) : (
                   <ul className="flex flex-col gap-1">
                     {members.map((m) => (
@@ -459,17 +449,17 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
 
               {/* Invite */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Invite by email</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.inviteByEmail")}</p>
                 <div className="flex gap-2">
                   <input
                     type="email"
-                    placeholder="user@example.com"
+                    placeholder={t("settings.inviteEmailPlaceholder")}
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                   <Button size="sm" variant="secondary" isDisabled={inviting} onPress={handleInvite}>
-                    Invite
+                    {t("common.invite")}
                   </Button>
                 </div>
               </div>
@@ -480,23 +470,23 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
               <div className="border-t border-zinc-200 pt-3">
                 {!confirmLeave ? (
                   <Button size="sm" variant="danger-soft" onPress={() => setConfirmLeave(true)}>
-                    Leave household
+                    {t("settings.leaveHousehold")}
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-danger font-medium">Are you sure?</span>
+                    <span className="text-sm text-danger font-medium">{t("settings.areYouSure")}</span>
                     <Button size="sm" variant="danger" isDisabled={leaving} onPress={handleLeave}>
-                      Leave
+                      {t("settings.leaveHousehold")}
                     </Button>
                     <Button size="sm" variant="tertiary" onPress={() => setConfirmLeave(false)}>
-                      Cancel
+                      {t("common.cancel")}
                     </Button>
                   </div>
                 )}
               </div>
             </ModalBody>
             <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>Close</Button>
+              <Button variant="tertiary" onPress={onClose}>{t("common.close")}</Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
@@ -509,52 +499,53 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
 
 function TimerSettingsSection() {
   const { timers, pauseTimer, resumeTimer, cancelTimer, wakeLockTimersEnabled, setWakeLockTimersEnabled } = useTimers();
+  const { t } = useTranslation();
   const timerList = [...timers.values()];
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Timers</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.timers")}</h2>
       <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
         {timerList.length > 0 ? (
           <div className="flex flex-col divide-y divide-zinc-100">
-            {timerList.map((t) => {
-              const remaining = getRemainingSeconds(t);
+            {timerList.map((timer) => {
+              const remaining = getRemainingSeconds(timer);
               return (
-                <div key={t.id} className="flex items-center gap-3 py-2.5">
+                <div key={timer.id} className="flex items-center gap-3 py-2.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{t.recipeTitle}</p>
+                    <p className="text-sm font-medium truncate">{timer.recipeTitle}</p>
                     <p className="text-xs text-zinc-400 truncate">
-                      Step {t.stepIndex + 1}: {t.stepText.length > 55 ? t.stepText.slice(0, 52) + "…" : t.stepText}
+                      {t("common.step")} {timer.stepIndex + 1}: {timer.stepText.length > 55 ? timer.stepText.slice(0, 52) + "…" : timer.stepText}
                     </p>
                   </div>
                   <span className={`font-mono text-sm font-semibold tabular-nums shrink-0 ${
-                    t.status === "done" ? "text-emerald-600" :
-                    t.status === "paused" ? "text-zinc-400" : "text-amber-600"
+                    timer.status === "done" ? "text-emerald-600" :
+                    timer.status === "paused" ? "text-zinc-400" : "text-amber-600"
                   }`}>
-                    {t.status === "done" ? "Done ✓" : formatCountdown(remaining)}
+                    {timer.status === "done" ? t("common.doneCheck") : formatCountdown(remaining)}
                   </span>
                   <div className="flex gap-0.5 shrink-0">
-                    {t.status === "running" && (
+                    {timer.status === "running" && (
                       <button
                         type="button"
-                        onClick={() => pauseTimer(t.id)}
+                        onClick={() => pauseTimer(timer.id)}
                         className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
-                        title="Pause"
+                        title={t("common.pause")}
                       >⏸</button>
                     )}
-                    {t.status === "paused" && (
+                    {timer.status === "paused" && (
                       <button
                         type="button"
-                        onClick={() => resumeTimer(t.id)}
+                        onClick={() => resumeTimer(timer.id)}
                         className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-amber-600"
-                        title="Resume"
+                        title={t("common.resume")}
                       >▶</button>
                     )}
                     <button
                       type="button"
-                      onClick={() => cancelTimer(t.id)}
+                      onClick={() => cancelTimer(timer.id)}
                       className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-danger"
-                      title="Cancel"
+                      title={t("common.cancel")}
                     >✕</button>
                   </div>
                 </div>
@@ -562,14 +553,14 @@ function TimerSettingsSection() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">No timers running.</p>
+          <p className="text-sm text-zinc-400">{t("timers.noTimers")}</p>
         )}
 
         {"wakeLock" in navigator && (
           <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
             <div>
-              <p className="text-sm font-medium">Keep screen on while a timer is running</p>
-              <p className="text-xs text-zinc-400">Prevent screen from sleeping during cooking</p>
+              <p className="text-sm font-medium">{t("timers.keepScreenOn")}</p>
+              <p className="text-xs text-zinc-400">{t("timers.keepScreenOnDesc")}</p>
             </div>
             <Switch
               size="sm"
@@ -590,6 +581,7 @@ function TimerSettingsSection() {
 export default function SettingsPage({ stats, onStatsRefresh, preferences, onPreferencesChange }: SettingsPageProps) {
   const { user, logout } = useAuth();
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold();
+  const { t, i18n } = useTranslation();
   const [wakeLockDefault, setWakeLockDefault] = useState(() => localStorage.getItem("wakelock-default") === "1");
   const [loggingOut, setLoggingOut] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -627,7 +619,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
     setError(null);
     try {
       const { imported } = await importRecipes(file);
-      setImportResult(`Imported ${imported} recipe${imported !== 1 ? "s" : ""}`);
+      setImportResult(t("settings.importedRecipes", { count: imported }));
       onStatsRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
@@ -648,8 +640,8 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
   }
 
   const allergenScopeLabel = activeHousehold
-    ? `Applied to ${activeHousehold.name}`
-    : "Applied to your personal recipes";
+    ? t("settings.householdScope", { name: activeHousehold.name })
+    : t("settings.personalScope");
 
   const currentAllergens: { predefined: string[]; custom: string[] } = activeHousehold?.allergens
     ?? preferences?.personal_allergens
@@ -657,7 +649,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader title={t("settings.title")} />
       <div className="px-4 py-6 flex flex-col gap-6">
 
         {/* Profile */}
@@ -675,21 +667,21 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Stats */}
         <div className="flex gap-2">
-          <StatCard value={stats?.total_recipes ?? null} label="Recipes" />
-          <StatCard value={stats?.total_ingredients ?? null} label="Ingredients" />
-          <StatCard value={stats?.avg_kcal ?? null} label="Avg kcal" />
+          <StatCard value={stats?.total_recipes ?? null} label={t("settings.recipesLabel")} />
+          <StatCard value={stats?.total_ingredients ?? null} label={t("settings.ingredientsLabel")} />
+          <StatCard value={stats?.avg_kcal ?? null} label={t("settings.avgKcal")} />
         </div>
 
         {/* Households */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Households</h2>
-            <Button size="sm" variant="secondary" onPress={() => setCreateOpen(true)}>+ New</Button>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.households")}</h2>
+            <Button size="sm" variant="secondary" onPress={() => setCreateOpen(true)}>{t("settings.newHousehold")}</Button>
           </div>
 
           {households.length === 0 ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-400">
-              No households yet. Create one to share recipes with others.
+              {t("settings.noHouseholds")}
             </div>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -705,7 +697,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{h.name}</p>
                     {h.id === activeHouseholdId && (
-                      <p className="text-xs text-primary">Active</p>
+                      <p className="text-xs text-primary">{t("settings.active")}</p>
                     )}
                   </div>
                   <Button
@@ -713,7 +705,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                     variant="secondary"
                     onPress={() => setManagingHousehold(h)}
                   >
-                    Manage
+                    {t("settings.manage")}
                   </Button>
                 </li>
               ))}
@@ -723,7 +715,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Allergies & Intolerances */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Allergies & Intolerances</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.allergiesIntolerances")}</h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <AllergenSection
               key={activeHouseholdId ?? "personal"}
@@ -733,8 +725,8 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
             />
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
               <div>
-                <p className="text-sm font-medium">Auto-apply substitutes</p>
-                <p className="text-xs text-zinc-400">Automatically replace flagged ingredients when importing</p>
+                <p className="text-sm font-medium">{t("settings.autoApplySubstitutes")}</p>
+                <p className="text-xs text-zinc-400">{t("settings.autoApplySubstitutesDesc")}</p>
               </div>
               <Switch
                 size="sm"
@@ -753,7 +745,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Account */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Account</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.account")}</h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <Button
               size="sm"
@@ -761,17 +753,17 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
               onPress={handleLogout}
               isDisabled={loggingOut}
             >
-              {loggingOut ? "Logging out…" : "Log out"}
+              {loggingOut ? t("settings.loggingOut") : t("settings.logOut")}
             </Button>
           </div>
         </section>
 
         {/* Preferences */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Preferences</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.preferences")}</h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">Week starts on</label>
+              <label className="text-sm font-medium">{t("settings.weekStartsOn")}</label>
               <Select
                 selectedKey={String(preferences?.week_start_day ?? 1)}
                 onSelectionChange={(key) => {
@@ -779,7 +771,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                     .then(onPreferencesChange)
                     .catch(() => {});
                 }}
-                aria-label="Week starts on"
+                aria-label={t("settings.weekStartsOn")}
               >
                 <Select.Trigger>
                   <Select.Value />
@@ -788,7 +780,33 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                 <Select.Popover>
                   <ListBox>
                     {WEEK_DAY_OPTIONS.map((opt) => (
-                      <ListBoxItem key={opt.key} id={String(opt.key)}>{opt.label}</ListBoxItem>
+                      <ListBoxItem key={opt.key} id={String(opt.key)}>{t(opt.labelKey)}</ListBoxItem>
+                    ))}
+                  </ListBox>
+                </Select.Popover>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium">{t("settings.language")}</label>
+              <Select
+                selectedKey={preferences?.language ?? i18n.language}
+                onSelectionChange={(key) => {
+                  const lang = String(key);
+                  i18n.changeLanguage(lang);
+                  updatePreferences({ language: lang })
+                    .then(onPreferencesChange)
+                    .catch(() => {});
+                }}
+                aria-label={t("settings.language")}
+              >
+                <Select.Trigger>
+                  <Select.Value />
+                  <Select.Indicator />
+                </Select.Trigger>
+                <Select.Popover>
+                  <ListBox>
+                    {(["en", "de", "pl", "fr", "es"] as const).map((code) => (
+                      <ListBoxItem key={code} id={code}>{t(`languages.${code}`)}</ListBoxItem>
                     ))}
                   </ListBox>
                 </Select.Popover>
@@ -797,8 +815,8 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
             {"wakeLock" in navigator && (
               <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
                 <div>
-                  <p className="text-sm font-medium">Keep screen on by default</p>
-                  <p className="text-xs text-zinc-400">Screen stays awake whenever you open a recipe</p>
+                  <p className="text-sm font-medium">{t("settings.keepScreenOnDefault")}</p>
+                  <p className="text-xs text-zinc-400">{t("settings.keepScreenOnDefaultDesc")}</p>
                 </div>
                 <Switch
                   size="sm"
@@ -819,22 +837,22 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Data */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Data</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.data")}</h2>
 
           <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-medium">Export recipes</p>
-            <p className="text-xs text-zinc-400">Download all your recipes as a CSV file.</p>
+            <p className="text-sm font-medium">{t("settings.exportRecipes")}</p>
+            <p className="text-xs text-zinc-400">{t("settings.exportDesc")}</p>
             <Button size="sm" variant="secondary" onPress={handleExport} isDisabled={exporting} className="self-start">
-              {exporting ? "Exporting…" : "Export CSV"}
+              {exporting ? t("settings.exporting") : t("settings.exportCSV")}
             </Button>
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-medium">Import recipes</p>
-            <p className="text-xs text-zinc-400">Import recipes from a previously exported CSV file.</p>
+            <p className="text-sm font-medium">{t("settings.importRecipes")}</p>
+            <p className="text-xs text-zinc-400">{t("settings.importDesc")}</p>
             <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
             <Button size="sm" variant="secondary" onPress={() => fileRef.current?.click()} isDisabled={importing} className="self-start">
-              {importing ? "Importing…" : "Choose CSV…"}
+              {importing ? t("settings.importing") : t("settings.chooseCSV")}
             </Button>
             {importResult && <p className="text-xs text-success font-medium">{importResult}</p>}
           </div>

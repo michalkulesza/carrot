@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n";
 import ExcelJS from "exceljs";
 import {
   Button,
@@ -33,8 +35,13 @@ function proxyUrl(url: string | null | undefined): string | null {
 }
 
 
-const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+function shortDayName(dayIndex: number, locale: string): string {
+  return new Date(2024, 0, 7 + dayIndex).toLocaleDateString(locale, { weekday: "short" });
+}
+
+function longMonthName(year: number, month: number, locale: string): string {
+  return new Date(year, month - 1, 1).toLocaleDateString(locale, { month: "long" });
+}
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
@@ -114,7 +121,7 @@ async function exportMealPlan(entries: MealPlanEntry[], year: number, month: num
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  const monthName = new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  const monthName = new Date(year, month - 1, 1).toLocaleString(i18n.language, { month: "long" });
   a.href = url;
   a.download = `meal-plan-${year}-${String(month).padStart(2, "0")}-${monthName}.xlsx`;
   a.click();
@@ -156,7 +163,7 @@ function buildWeekRows(entries: MealPlanEntry[], year: number, month: number): (
 function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
   const DAY_HEADERS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const rows = buildWeekRows(entries, year, month);
-  const monthName = new Date(year, month - 1, 1).toLocaleString("en-US", { month: "long" });
+  const monthName = new Date(year, month - 1, 1).toLocaleString(i18n.language, { month: "long" });
 
   const headerCells = DAY_HEADERS.map(
     (d) => `<th>${d}</th>`
@@ -242,11 +249,12 @@ function RecipeThumb({ src, alt, className = "" }: { src: string; alt: string; c
 // ── DayRow ────────────────────────────────────────────────────────────────────
 
 function DayRow({
-  day, year, month, entry, isToday, isSelected, setRef, onAdd, onTap,
+  day, year, month, locale, entry, isToday, isSelected, setRef, onAdd, onTap,
 }: {
   day: number;
   year: number;
   month: number;
+  locale: string;
   entry?: MealPlanEntry;
   isToday: boolean;
   isSelected: boolean;
@@ -254,8 +262,9 @@ function DayRow({
   onAdd: () => void;
   onTap: () => void;
 }) {
+  const { t } = useTranslation();
   const date = new Date(year, month - 1, day);
-  const dayName = SHORT_DAYS[date.getDay()];
+  const dayName = shortDayName(date.getDay(), locale);
   const thumb = proxyUrl(entry?.recipe.thumbnail_url);
   return (
     <div
@@ -314,7 +323,7 @@ function DayRow({
           <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span>Add a dish</span>
+          <span>{t("mealPlan.addDish")}</span>
         </button>
       )}
     </div>
@@ -324,11 +333,12 @@ function DayRow({
 // ── DesktopCalendar ───────────────────────────────────────────────────────────
 
 function DesktopCalendar({
-  viewYear, viewMonth, entriesByDate, loading, todayDate, weekStart,
+  viewYear, viewMonth, locale, entriesByDate, loading, todayDate, weekStart,
   onPrev, onNext, onToday, onCellClick,
 }: {
   viewYear: number;
   viewMonth: number;
+  locale: string;
   entriesByDate: Map<string, MealPlanEntry>;
   loading: boolean;
   todayDate: CalendarDate;
@@ -338,10 +348,11 @@ function DesktopCalendar({
   onToday: () => void;
   onCellClick: (dateStr: string, entry?: MealPlanEntry) => void;
 }) {
+  const { t } = useTranslation();
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate();
   const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay();
   const startPad = (firstDow - weekStart + 7) % 7;
-  const dayHeaders = Array.from({ length: 7 }, (_, i) => SHORT_DAYS[(weekStart + i) % 7]);
+  const dayHeaders = Array.from({ length: 7 }, (_, i) => shortDayName((weekStart + i) % 7, locale));
 
   type Cell = { dateStr: string; day: number; isCurrentMonth: boolean; isToday: boolean };
   const cells: Cell[] = [];
@@ -371,13 +382,13 @@ function DesktopCalendar({
     <div className="flex flex-col gap-4 p-4 pb-24">
       {/* Navigation */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">{MONTH_NAMES[viewMonth - 1]} {viewYear}</h2>
+        <h2 className="text-lg font-bold">{longMonthName(viewYear, viewMonth, locale)} {viewYear}</h2>
         <div className="flex items-center gap-2">
           <button
             onClick={onToday}
             className="px-3 py-1.5 text-sm font-medium rounded-lg border border-zinc-200 hover:bg-zinc-100 transition-colors"
           >
-            Today
+            {t("mealPlan.today")}
           </button>
           <div className="flex">
             <button
@@ -444,7 +455,7 @@ function DesktopCalendar({
                   <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Add
+                  {t("common.add")}
                 </div>
               ) : null}
             </button>
@@ -468,6 +479,8 @@ interface MealPlanPageProps {
 
 export default function MealPlanPage({ recipes, preferences, allTags, onTagCreated, onRecipeUpdated, onRecipeDeleted }: MealPlanPageProps) {
   const { activeHousehold } = useHousehold();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const activeAllergens: string[] = activeHousehold?.allergens
     ? [...(activeHousehold.allergens.predefined ?? []), ...(activeHousehold.allergens.custom ?? [])]
     : preferences?.personal_allergens
@@ -597,7 +610,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
 
       {/* ── Page header ──────────────────────────────────────────────────────── */}
       <PageHeader
-        title="Meal Plan"
+        title={t("mealPlan.title")}
         action={
           <div className="flex gap-2">
             <Button
@@ -606,7 +619,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
               isDisabled={loading || entries.length === 0}
               onPress={() => printMealPlan(entries, viewYear, viewMonth)}
             >
-              Print
+              {t("mealPlan.print")}
             </Button>
             <Button
               size="sm"
@@ -614,7 +627,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
               isDisabled={loading || entries.length === 0}
               onPress={() => void exportMealPlan(entries, viewYear, viewMonth)}
             >
-              Export as xlsx
+              {t("mealPlan.exportXlsx")}
             </Button>
           </div>
         }
@@ -625,6 +638,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
         <DesktopCalendar
           viewYear={viewYear}
           viewMonth={viewMonth}
+          locale={locale}
           entriesByDate={entriesByDate}
           loading={loading}
           todayDate={todayDate}
@@ -643,13 +657,13 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
           className="sticky top-14 z-20 bg-background/95 backdrop-blur-md border-b border-zinc-200"
         >
           <div className="flex items-center justify-between px-4 py-3">
-            <h2 className="text-base font-semibold">{MONTH_NAMES[viewMonth - 1]} {viewYear}</h2>
+            <h2 className="text-base font-semibold">{longMonthName(viewYear, viewMonth, locale)} {viewYear}</h2>
             <div className="flex items-center gap-1">
               <button
                 onClick={goToToday}
                 className="px-2.5 py-1 text-xs font-medium rounded-lg border border-zinc-200 active:bg-zinc-100 transition-colors mr-1"
               >
-                Today
+                {t("mealPlan.today")}
               </button>
               <button onClick={goToPrevMonth} className="p-1.5 rounded-lg active:bg-zinc-100 transition-colors" aria-label="Previous month">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6" /></svg>
@@ -681,6 +695,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                   day={day}
                   year={viewYear}
                   month={viewMonth}
+                  locale={locale}
                   entry={entry}
                   isToday={isToday}
                   isSelected={isToday}
@@ -706,14 +721,14 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
           <ModalContainer scroll="inside" size="lg" className="!rounded-xl overflow-hidden">
             <ModalDialog>
               <ModalHeader className="flex flex-col gap-3 pb-0">
-                <span className="text-lg">Choose a dish</span>
+                <span className="text-lg">{t("mealPlan.chooseDish")}</span>
                 <div className="relative">
                   <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                   </svg>
                   <input
                     type="text"
-                    placeholder="Search recipes…"
+                    placeholder={t("mealPlan.searchRecipes")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     autoFocus
@@ -724,10 +739,10 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
               <ModalBody className="pt-2 px-0">
                 {recipes.length === 0 ? (
                   <p className="text-center text-zinc-400 py-12 px-4">
-                    No recipes yet. Add some from the Recipes tab first.
+                    {t("mealPlan.noRecipesYet")}
                   </p>
                 ) : filteredRecipes.length === 0 ? (
-                  <p className="text-center text-zinc-400 py-12">No recipes match your search.</p>
+                  <p className="text-center text-zinc-400 py-12">{t("mealPlan.noRecipesMatch")}</p>
                 ) : (
                   <div>
                     {filteredRecipes.map((recipe) => {
@@ -803,7 +818,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                         className="!rounded-lg"
                         onPress={() => setViewRecipe(actionEntry.recipe)}
                       >
-                        View recipe
+                        {t("mealPlan.viewRecipe")}
                       </Button>
                       <Button
                         variant="secondary"
@@ -811,7 +826,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                         className="!rounded-lg"
                         onPress={() => openPicker(actionEntry.date)}
                       >
-                        Change recipe
+                        {t("mealPlan.changeRecipe")}
                       </Button>
                       <Button
                         variant="danger-soft"
@@ -820,7 +835,7 @@ export default function MealPlanPage({ recipes, preferences, allTags, onTagCreat
                         isDisabled={busy}
                         onPress={handleRemove}
                       >
-                        Remove from plan
+                        {t("mealPlan.removeFromPlan")}
                       </Button>
                     </div>
                   </ModalBody>

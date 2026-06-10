@@ -299,6 +299,7 @@ export interface UserPreferences {
   week_start_day: number; // 0=Sun 1=Mon 6=Sat
   auto_substitute: boolean;
   personal_allergens: AllergenData | null;
+  language: string;
 }
 
 export async function getPreferences(): Promise<UserPreferences> {

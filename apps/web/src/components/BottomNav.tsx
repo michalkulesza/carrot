@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 interface BottomNavProps {
   onAddRecipe: () => void;
@@ -46,6 +47,7 @@ const active = "text-primary flex flex-col items-center gap-0.5 flex-1 pt-3 pb-2
 const idle   = "text-zinc-400 flex flex-col items-center gap-0.5 flex-1 pt-3 pb-2 text-xs";
 
 export default function BottomNav({ onAddRecipe }: BottomNavProps) {
+  const { t } = useTranslation();
   return (
     <nav
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-100"
@@ -55,12 +57,12 @@ export default function BottomNav({ onAddRecipe }: BottomNavProps) {
 
         <NavLink to="/" end className={({ isActive }) => isActive ? active : idle}>
           <BookIcon />
-          <span>Recipes</span>
+          <span>{t("nav.recipes")}</span>
         </NavLink>
 
         <NavLink to="/plan" className={({ isActive }) => isActive ? active : idle}>
           <CalendarIcon />
-          <span>Meal Plan</span>
+          <span>{t("nav.mealPlan")}</span>
         </NavLink>
 
         {/* Centre FAB */}
@@ -68,24 +70,24 @@ export default function BottomNav({ onAddRecipe }: BottomNavProps) {
           <button
             onClick={onAddRecipe}
             className="w-14 h-14 rounded-full bg-primary text-white shadow-lg flex items-center justify-center text-2xl active:scale-95 transition-transform"
-            aria-label="Add recipe"
+            aria-label={t("nav.addRecipe")}
           >
             <svg width="20" height="20" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="11" y1="3" x2="11" y2="19" />
               <line x1="3" y1="11" x2="19" y2="11" />
             </svg>
           </button>
-          <span className="text-xs text-zinc-400 mt-1">Add</span>
+          <span className="text-xs text-zinc-400 mt-1">{t("nav.addRecipe")}</span>
         </div>
 
         <NavLink to="/shopping" className={({ isActive }) => isActive ? active : idle}>
           <CartIcon />
-          <span>Shopping</span>
+          <span>{t("nav.shopping")}</span>
         </NavLink>
 
         <NavLink to="/settings" className={({ isActive }) => isActive ? active : idle}>
           <GearIcon />
-          <span>Settings</span>
+          <span>{t("nav.settings")}</span>
         </NavLink>
 
       </div>

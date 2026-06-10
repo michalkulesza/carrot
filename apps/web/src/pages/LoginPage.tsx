@@ -1,10 +1,13 @@
 import { type FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Card, CardContent } from "@heroui/react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,20 +34,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+    <div className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
+      <LanguageSwitcher />
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">PlateKeeper</h1>
-          <p className="text-zinc-500 mt-1 text-sm">Your personal recipe library</p>
+          <p className="text-zinc-500 mt-1 text-sm">{t("auth.tagline")}</p>
         </div>
 
         <Card>
           <CardContent className="flex flex-col gap-4 p-6">
-            <h2 className="text-xl font-semibold">Sign in</h2>
+            <h2 className="text-xl font-semibold">{t("auth.signIn")}</h2>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="email">Email</label>
+                <label className="text-sm font-medium" htmlFor="email">{t("auth.email")}</label>
                 <input
                   id="email"
                   type="email"
@@ -56,7 +60,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="password">Password</label>
+                <label className="text-sm font-medium" htmlFor="password">{t("auth.password")}</label>
                 <input
                   id="password"
                   type="password"
@@ -71,7 +75,7 @@ export default function LoginPage() {
               {error && <p className="text-danger text-sm">{error}</p>}
 
               <Button variant="primary" type="submit" isDisabled={loading} fullWidth>
-                {loading ? "Signing in…" : "Sign in"}
+                {loading ? t("auth.signingIn") : t("auth.signIn")}
               </Button>
             </form>
 
@@ -83,17 +87,17 @@ export default function LoginPage() {
 
             <div className="flex gap-2">
               <Button variant="secondary" fullWidth onPress={fillDemo}>
-                Use demo account
+                {t("auth.demoAccount")}
               </Button>
               <Button variant="secondary" fullWidth onPress={() => { setEmail("alt@demo.com"); setPassword("demo"); }}>
-                Use demo alt
+                {t("auth.demoAlt")}
               </Button>
             </div>
 
             <p className="text-center text-sm text-zinc-500">
-              No account?{" "}
+              {t("auth.noAccount")}{" "}
               <Link to="/register" className="text-primary font-medium">
-                Create one
+                {t("auth.createOne")}
               </Link>
             </p>
           </CardContent>

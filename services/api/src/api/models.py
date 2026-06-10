@@ -302,6 +302,7 @@ class UserPreferences(Base):
     week_start_day: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     auto_substitute: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     personal_allergens: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
 
 
 class UserPreferencesOut(BaseModel):
@@ -310,9 +311,11 @@ class UserPreferencesOut(BaseModel):
     week_start_day: int
     auto_substitute: bool = False
     personal_allergens: dict | None = None
+    language: str = "en"
 
 
 class UserPreferencesUpdate(BaseModel):
     week_start_day: int | None = None
     auto_substitute: bool | None = None
     personal_allergens: dict | None = None
+    language: str | None = None

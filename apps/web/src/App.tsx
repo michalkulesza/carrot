@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Modal, ModalBackdrop, ModalBody, ModalContainer, ModalDialog, ModalFooter, ModalHeader, ToastProvider } from "@heroui/react";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import i18n from "./i18n";
 import BottomNav from "./components/BottomNav";
 import Sidebar from "./components/Sidebar";
 import AddRecipeModal from "./components/AddRecipeModal";
@@ -19,13 +21,14 @@ import { fetchStats, getPreferences, listRecipes, listTags, RecipeOut, RecipeSta
 
 function ExpiredTimersModal() {
   const { expiredQueue, dismissExpired } = useTimers();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   if (expiredQueue.length === 0) return null;
 
-  function goToStep(t: TimerEntry) {
+  function goToStep(timer: TimerEntry) {
     dismissExpired();
-    navigate(`/?recipe=${t.recipeId}&step=${t.componentIndex}-${t.stepIndex}`);
+    navigate(`/?recipe=${timer.recipeId}&step=${timer.componentIndex}-${timer.stepIndex}`);
   }
 
   return (
@@ -34,29 +37,29 @@ function ExpiredTimersModal() {
         <ModalContainer size="sm" scroll="inside" className="!rounded-xl overflow-hidden">
           <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[600px]">
             <ModalHeader>
-              {expiredQueue.length === 1 ? "Timer done" : `${expiredQueue.length} timers done`}
+              {t("timers.timerDone", { count: expiredQueue.length })}
             </ModalHeader>
             <ModalBody className="flex flex-col gap-3">
-              {expiredQueue.map((t) => (
-                <div key={t.id} className="flex flex-col gap-2 rounded-xl bg-zinc-50 p-3">
+              {expiredQueue.map((timer) => (
+                <div key={timer.id} className="flex flex-col gap-2 rounded-xl bg-zinc-50 p-3">
                   <div className="flex items-start gap-2.5">
                     <span className="shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold mt-0.5">✓</span>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-zinc-800 leading-snug">{t.recipeTitle}</p>
+                      <p className="text-sm font-semibold text-zinc-800 leading-snug">{timer.recipeTitle}</p>
                       <p className="text-xs text-zinc-500 mt-0.5">
-                        Step {t.stepIndex + 1} · {formatDurationLabel(t.totalSeconds)}
+                        {t("common.step")} {timer.stepIndex + 1} · {formatDurationLabel(timer.totalSeconds)}
                       </p>
-                      <p className="text-xs text-zinc-400 mt-0.5 leading-snug line-clamp-2">{t.stepText}</p>
+                      <p className="text-xs text-zinc-400 mt-0.5 leading-snug line-clamp-2">{timer.stepText}</p>
                     </div>
                   </div>
-                  <Button variant="secondary" size="sm" className="w-full" onPress={() => goToStep(t)}>
-                    Go to step ↗
+                  <Button variant="secondary" size="sm" className="w-full" onPress={() => goToStep(timer)}>
+                    {t("common.goToStep")}
                   </Button>
                 </div>
               ))}
             </ModalBody>
             <ModalFooter>
-              <Button variant="primary" onPress={dismissExpired}>OK</Button>
+              <Button variant="primary" onPress={dismissExpired}>{t("common.ok")}</Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
@@ -67,6 +70,7 @@ function ExpiredTimersModal() {
 
 function ResumeTimersModal() {
   const { resumeInfo, confirmResume, confirmClear } = useTimers();
+  const { t } = useTranslation();
   if (!resumeInfo) return null;
   const { interrupted, expired } = resumeInfo;
   return (
@@ -74,33 +78,33 @@ function ResumeTimersModal() {
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
-            <ModalHeader>Timers are running</ModalHeader>
+            <ModalHeader>{t("timers.running")}</ModalHeader>
             <ModalBody className="flex flex-col gap-4">
               {interrupted.length > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">Resumed automatically</p>
-                  {interrupted.map((t) => (
-                    <div key={t.id} className="flex items-center justify-between text-sm text-zinc-600">
-                      <span><span className="font-medium">{t.recipeTitle}</span> — Step {t.stepIndex + 1}</span>
-                      <span className="font-mono text-xs tabular-nums text-zinc-400">{formatCountdown(t.remainingAtStart)}</span>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">{t("timers.resumedAutomatically")}</p>
+                  {interrupted.map((timer) => (
+                    <div key={timer.id} className="flex items-center justify-between text-sm text-zinc-600">
+                      <span><span className="font-medium">{timer.recipeTitle}</span> — {t("common.step")} {timer.stepIndex + 1}</span>
+                      <span className="font-mono text-xs tabular-nums text-zinc-400">{formatCountdown(timer.remainingAtStart)}</span>
                     </div>
                   ))}
                 </div>
               )}
               {expired.length > 0 && (
                 <div className="flex flex-col gap-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">Finished while you were away</p>
-                  {expired.map((t) => (
-                    <p key={t.id} className="text-sm text-zinc-600">
-                      <span className="font-medium">{t.recipeTitle}</span> — Step {t.stepIndex + 1}
+                  <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{t("timers.finishedWhileAway")}</p>
+                  {expired.map((timer) => (
+                    <p key={timer.id} className="text-sm text-zinc-600">
+                      <span className="font-medium">{timer.recipeTitle}</span> — {t("common.step")} {timer.stepIndex + 1}
                     </p>
                   ))}
                 </div>
               )}
             </ModalBody>
             <ModalFooter>
-              <Button variant="tertiary" onPress={confirmClear}>Clear all</Button>
-              <Button variant="primary" onPress={confirmResume}>OK</Button>
+              <Button variant="tertiary" onPress={confirmClear}>{t("common.clearAll")}</Button>
+              <Button variant="primary" onPress={confirmResume}>{t("common.ok")}</Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
@@ -133,7 +137,10 @@ function AppShell() {
 
   // Separate effect so preferences don't re-fetch on context switch
   useEffect(() => {
-    getPreferences().then(setPreferences).catch(() => null);
+    getPreferences().then((prefs) => {
+      setPreferences(prefs);
+      if (prefs.language) i18n.changeLanguage(prefs.language);
+    }).catch(() => null);
   }, []);
 
   const handleContextSwitch = useCallback(() => {
