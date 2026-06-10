@@ -178,11 +178,11 @@ function AppShell() {
     <NotificationHistoryProvider>
     <TimerProvider>
     <HouseholdProvider onContextSwitch={handleContextSwitch}>
-      <div className="h-dvh overflow-hidden bg-background md:bg-zinc-100">
+      <div className="min-h-screen bg-background md:bg-zinc-100">
         {/* Centered max-width container — flex row on desktop, block on mobile */}
-        <div className="h-full md:max-w-7xl md:mx-auto md:flex">
+        <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
           <Sidebar />
-          <div className="h-full flex-1 min-w-0 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
+          <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
             <Routes>
               <Route
                 path="/"
