@@ -280,6 +280,12 @@ function serializeIngredient(ing: StructuredIngredient): string {
     .join(' ')
 }
 
+function displayIngredient(s: string, t: (key: string, opts: { defaultValue: string }) => string): string {
+  const parsed = parseIngredient(s)
+  if (!parsed.unit) return s
+  return serializeIngredient({ ...parsed, unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }) })
+}
+
 function IngredientEditor({
   value,
   onChange,
@@ -551,7 +557,7 @@ function ViewComponent({
               return (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <span className="text-zinc-300 mt-1 shrink-0">·</span>
-                  <span className="flex-1">{ing}</span>
+                  <span className="flex-1">{displayIngredient(ing, t)}</span>
                   {flag && (
                     <AllergenPopover
                       flag={flag}
