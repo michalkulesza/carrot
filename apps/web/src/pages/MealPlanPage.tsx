@@ -13,34 +13,27 @@ import {
   Spinner,
 } from '@heroui/react'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import {
-  type MealPlanEntry,
-  type RecipeOut,
-  type Tag,
-  type UserPreferences,
-  deleteMealPlanEntry,
-  listMealPlan,
-  setMealPlanEntry,
-} from '../api/client'
+import type { MealPlanEntry, RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
+import { deleteMealPlanEntry, listMealPlan, setMealPlanEntry } from '../api/client'
 import RecipeDetailModal from '../components/RecipeDetailModal'
 import PageHeader from '../components/PageHeader'
 import { useHousehold } from '../context/HouseholdContext'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function proxyUrl(url: string | null | undefined): string | null {
+const proxyUrl = (url: string | null | undefined): string | null => {
   if (!url) return null
 
   return `/api/proxy/image?url=${encodeURIComponent(url)}`
 }
 
-function shortDayName(dayIndex: number, locale: string): string {
+const shortDayName = (dayIndex: number, locale: string): string => {
   return new Date(2024, 0, 7 + dayIndex).toLocaleDateString(locale, {
     weekday: 'short',
   })
 }
 
-function longMonthName(year: number, month: number, locale: string): string {
+const longMonthName = (year: number, month: number, locale: string): string => {
   return new Date(year, month - 1, 1).toLocaleDateString(locale, {
     month: 'long',
   })
@@ -48,11 +41,11 @@ function longMonthName(year: number, month: number, locale: string): string {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-async function exportMealPlan(
+const exportMealPlan = async (
   entries: MealPlanEntry[],
   year: number,
   month: number
-) {
+) => {
   const DAY_HEADERS = [
     'Monday',
     'Tuesday',
@@ -99,10 +92,10 @@ async function exportMealPlan(
   const ROW_COUNT = 6
   const totalRows = 1 + ROW_COUNT
 
-  function outerBorder(
+  const outerBorder = (
     rowIdx: number,
     colIdx: number
-  ): Partial<ExcelJS.Borders> {
+  ): Partial<ExcelJS.Borders> => {
     return {
       top: rowIdx === 1 ? borderEdge : undefined,
       bottom: rowIdx === totalRows ? borderEdge : undefined,
@@ -173,11 +166,11 @@ async function exportMealPlan(
 
 // ── Print ─────────────────────────────────────────────────────────────────────
 
-function buildWeekRows(
+const buildWeekRows = (
   entries: MealPlanEntry[],
   year: number,
   month: number
-): (string | null)[][] {
+): (string | null)[][] => {
   const byDate = new Map(entries.map((e) => [e.date, e.recipe.title]))
   const firstDay = new Date(year, month - 1, 1)
   const lastDay = new Date(year, month, 0)
@@ -212,7 +205,7 @@ function buildWeekRows(
   return rows
 }
 
-function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
+const printMealPlan = (entries: MealPlanEntry[], year: number, month: number) => {
   const DAY_HEADERS = [
     'Monday',
     'Tuesday',
@@ -294,7 +287,7 @@ function printMealPlan(entries: MealPlanEntry[], year: number, month: number) {
 
 // ── RecipeThumb ───────────────────────────────────────────────────────────────
 
-function RecipeThumb({
+const RecipeThumb = ({
   src,
   alt,
   className = '',
@@ -302,7 +295,7 @@ function RecipeThumb({
   src: string
   alt: string
   className?: string
-}) {
+}) => {
   const [loaded, setLoaded] = useState(false)
 
   return (
@@ -322,7 +315,7 @@ function RecipeThumb({
 
 // ── DayRow ────────────────────────────────────────────────────────────────────
 
-function DayRow({
+const DayRow = ({
   day,
   year,
   month,
@@ -344,7 +337,7 @@ function DayRow({
   setRef: (el: HTMLDivElement | null) => void
   onAdd: () => void
   onTap: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const date = new Date(year, month - 1, day)
   const dayName = shortDayName(date.getDay(), locale)
@@ -450,7 +443,7 @@ function DayRow({
 
 // ── DesktopCalendar ───────────────────────────────────────────────────────────
 
-function DesktopCalendar({
+const DesktopCalendar = ({
   viewYear,
   viewMonth,
   locale,
@@ -474,7 +467,7 @@ function DesktopCalendar({
   onNext: () => void
   onToday: () => void
   onCellClick: (dateStr: string, entry?: MealPlanEntry) => void
-}) {
+}) => {
   const { t } = useTranslation()
   const daysInMonth = new Date(viewYear, viewMonth, 0).getDate()
   const firstDow = new Date(viewYear, viewMonth - 1, 1).getDay()
@@ -670,14 +663,14 @@ interface MealPlanPageProps {
   onRecipeDeleted?: (id: string) => void
 }
 
-export default function MealPlanPage({
+const MealPlanPage = ({
   recipes,
   preferences,
   allTags,
   onTagCreated,
   onRecipeUpdated,
   onRecipeDeleted,
-}: MealPlanPageProps) {
+}: MealPlanPageProps) => {
   const { activeHousehold } = useHousehold()
   const { t, i18n } = useTranslation()
   const locale = i18n.language
@@ -711,7 +704,7 @@ export default function MealPlanPage({
   const dayRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const stickyRef = useRef<HTMLDivElement>(null)
 
-  function scrollToDay(day: number) {
+  const scrollToDay = (day: number) => {
     const el = dayRefs.current.get(day)
     if (!el) return
     const stickyBottom = stickyRef.current?.getBoundingClientRect().bottom ?? 0
@@ -764,35 +757,35 @@ export default function MealPlanPage({
       : recipes
   }, [recipes, searchQuery])
 
-  function goToPrevMonth() {
+  const goToPrevMonth = () => {
     if (viewMonth === 1) {
       setViewYear((y) => y - 1)
       setViewMonth(12)
     } else setViewMonth((m) => m - 1)
   }
-  function goToNextMonth() {
+  const goToNextMonth = () => {
     if (viewMonth === 12) {
       setViewYear((y) => y + 1)
       setViewMonth(1)
     } else setViewMonth((m) => m + 1)
   }
-  function goToToday() {
+  const goToToday = () => {
     setViewYear(todayDate.year)
     setViewMonth(todayDate.month)
   }
-  function handleCellClick(dateStr: string, entry?: MealPlanEntry) {
+  const handleCellClick = (dateStr: string, entry?: MealPlanEntry) => {
     if (entry) setActionEntry(entry)
     else openPicker(dateStr)
   }
 
-  function openPicker(dateStr: string) {
+  const openPicker = (dateStr: string) => {
     setTargetDate(dateStr)
     setSearchQuery('')
     setPickerOpen(true)
     setActionEntry(null)
   }
 
-  async function handleAssign(recipe: RecipeOut) {
+  const handleAssign = async (recipe: RecipeOut) => {
     if (!targetDate) return
     setBusy(true)
     try {
@@ -813,7 +806,7 @@ export default function MealPlanPage({
     }
   }
 
-  async function handleRemove() {
+  const handleRemove = async () => {
     if (!actionEntry) return
     setBusy(true)
     try {
@@ -1146,3 +1139,5 @@ export default function MealPlanPage({
     </div>
   )
 }
+
+export default MealPlanPage

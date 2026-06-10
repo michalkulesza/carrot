@@ -13,13 +13,14 @@ import {
 import PageHeader from '../components/PageHeader'
 import RecipeDetailModal from '../components/RecipeDetailModal'
 import RecipesTable from '../components/RecipesTable'
-import { RecipeOut, Tag, UserPreferences, deleteRecipe, toggleFavourite } from '../api/client'
+import type { RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
+import { deleteRecipe, toggleFavourite } from '../api/client'
 import { useHousehold } from '../context/HouseholdContext'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { tTag } from '../utils/tagUtils'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 
-function RecipeThumb({ src, alt }: { src: string; alt: string }) {
+const RecipeThumb = ({ src, alt }: { src: string; alt: string }) => {
   const [loaded, setLoaded] = useState(false)
 
   return (
@@ -37,7 +38,7 @@ function RecipeThumb({ src, alt }: { src: string; alt: string }) {
   )
 }
 
-function CardMenu({
+const CardMenu = ({
   onView,
   onEdit,
   onDelete,
@@ -45,14 +46,14 @@ function CardMenu({
   onView: () => void
   onEdit: () => void
   onDelete: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
-    function handleClick(e: MouseEvent) {
+    const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false)
       }
@@ -123,7 +124,7 @@ interface RecipesPageProps {
   preferences: UserPreferences | null
 }
 
-function RecipeCard({
+const RecipeCard = ({
   recipe,
   onView,
   onEdit,
@@ -137,7 +138,7 @@ function RecipeCard({
   onDelete: () => void
   onTagClick: (tag: Tag) => void
   onToggleFavourite: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const proxyUrl = recipe.thumbnail_url
     ? `/api/proxy/image?url=${encodeURIComponent(recipe.thumbnail_url)}`
@@ -223,7 +224,7 @@ function RecipeCard({
   )
 }
 
-function SearchResultItem({
+const SearchResultItem = ({
   recipe,
   matchedIngredient,
   onClick,
@@ -231,7 +232,7 @@ function SearchResultItem({
   recipe: RecipeOut
   matchedIngredient?: string
   onClick: () => void
-}) {
+}) => {
   const proxyUrl = recipe.thumbnail_url
     ? `/api/proxy/image?url=${encodeURIComponent(recipe.thumbnail_url)}`
     : null
@@ -263,7 +264,7 @@ function SearchResultItem({
   )
 }
 
-export default function RecipesPage({
+const RecipesPage = ({
   recipes,
   loading,
   allTags,
@@ -271,7 +272,7 @@ export default function RecipesPage({
   onRecipeUpdated,
   onRecipeDeleted,
   preferences,
-}: RecipesPageProps) {
+}: RecipesPageProps) => {
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -376,22 +377,22 @@ export default function RecipesPage({
     }
   }
 
-  function openView(recipe: RecipeOut) {
+  const openView = (recipe: RecipeOut) => {
     setOpenInEdit(false)
     setSelected(recipe)
   }
 
-  function openEdit(recipe: RecipeOut) {
+  const openEdit = (recipe: RecipeOut) => {
     setOpenInEdit(true)
     setSelected(recipe)
   }
 
-  function handleUpdated(updated: RecipeOut) {
+  const handleUpdated = (updated: RecipeOut) => {
     onRecipeUpdated(updated)
     setSelected(updated)
   }
 
-  function handleModalDeleted(id: string) {
+  const handleModalDeleted = (id: string) => {
     onRecipeDeleted(id)
     setSelected(null)
   }
@@ -707,3 +708,5 @@ export default function RecipesPage({
     </>
   )
 }
+
+export default RecipesPage

@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Routes, Route, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import i18n from '../i18n'
 import BottomNav from './BottomNav'
 import Sidebar from './Sidebar'
@@ -14,92 +15,70 @@ import { useAuth } from '../context/AuthContext'
 import { HouseholdProvider } from '../context/HouseholdContext'
 import { TimerProvider } from '../context/TimerContext'
 import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
-import {
-  fetchStats,
-  getPreferences,
-  listRecipes,
-  listTags,
-  type RecipeOut,
-  type RecipeStats,
-  type Tag,
-  type UserPreferences,
-} from '../api/client'
+import { useRecipes, useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
+import { useTags } from '@platekeeper/shared/hooks/useTags'
+import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
+import type { RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
 
 const AppShell = () => {
   const { user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
-  const [allTags, setAllTags] = useState<Tag[]>([])
-  const [recipes, setRecipes] = useState<RecipeOut[]>([])
-  const [recipesLoading, setRecipesLoading] = useState(true)
-  const [stats, setStats] = useState<RecipeStats | null>(null)
-  const [preferences, setPreferences] = useState<UserPreferences | null>(null)
   const navigate = useNavigate()
+  const qc = useQueryClient()
 
-  const refetchAll = useCallback(() => {
-    listTags()
-      .then(setAllTags)
-      .catch(() => {})
-    fetchStats()
-      .then(setStats)
-      .catch(() => null)
-    setRecipesLoading(true)
-    listRecipes()
-      .then(setRecipes)
-      .finally(() => setRecipesLoading(false))
-  }, [])
+  const { recipes, isLoading: recipesLoading } = useRecipes()
+  const { tags: allTags } = useTags()
+  const { data: statsData } = useRecipeStats()
+  const stats = statsData ?? null
+  const { preferences } = usePreferences()
 
+  // Sync language from preferences on first load
   useEffect(() => {
-    refetchAll()
-    getPreferences()
-      .then(setPreferences)
-      .catch(() => null)
-  }, [user?.active_household_id, refetchAll])
+    if (preferences?.language) void i18n.changeLanguage(preferences.language)
+  }, [preferences?.language])
 
-  // Separate effect so preferences don't re-fetch on context switch
+  // Invalidate all data when active household changes
+  const prevHouseholdId = useRef(user?.active_household_id)
   useEffect(() => {
-    getPreferences()
-      .then((prefs) => {
-        setPreferences(prefs)
-        if (prefs.language) i18n.changeLanguage(prefs.language)
-      })
-      .catch(() => null)
-  }, [])
+    if (prevHouseholdId.current === user?.active_household_id) return
+    prevHouseholdId.current = user?.active_household_id
+    void qc.invalidateQueries({ queryKey: ['recipes'] })
+    void qc.invalidateQueries({ queryKey: ['tags'] })
+    void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+    void qc.invalidateQueries({ queryKey: ['preferences'] })
+  }, [user?.active_household_id, qc])
 
-  const handleContextSwitch = useCallback(() => {
-    refetchAll()
-  }, [refetchAll])
-
-  const handleTagCreated = (tag: Tag) => {
-    setAllTags((prev) =>
-      [...prev, tag].sort((a, b) => a.name.localeCompare(b.name))
+  const handleTagCreated = useCallback((tag: Tag) => {
+    qc.setQueryData<Tag[]>(['tags'], (old = []) =>
+      [...old, tag].sort((a, b) => a.name.localeCompare(b.name))
     )
-  }
+  }, [qc])
 
-  const handleRecipeUpdated = (updated: RecipeOut) => {
-    setRecipes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
-  }
+  const handleRecipeUpdated = useCallback((updated: RecipeOut) => {
+    qc.setQueryData<RecipeOut[]>(['recipes'], (old = []) =>
+      old.map((r) => (r.id === updated.id ? updated : r))
+    )
+  }, [qc])
 
-  const handleRecipeDeleted = (id: string) => {
-    setRecipes((prev) => prev.filter((r) => r.id !== id))
-    fetchStats()
-      .then(setStats)
-      .catch(() => null)
-  }
+  const handleRecipeDeleted = useCallback((id: string) => {
+    qc.setQueryData<RecipeOut[]>(['recipes'], (old = []) =>
+      old.filter((r) => r.id !== id)
+    )
+    void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+  }, [qc])
 
-  const handleRecipeSaved = () => {
-    listRecipes()
-      .then(setRecipes)
-      .catch(() => null)
-    fetchStats()
-      .then(setStats)
-      .catch(() => null)
-  }
+  const handleRecipeSaved = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['recipes'] })
+    void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+  }, [qc])
 
-  const handleStatsRefresh = () => {
-    fetchStats()
-      .then(setStats)
-      .catch(() => null)
-  }
+  const handleStatsRefresh = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+  }, [qc])
+
+  const handlePreferencesChange = useCallback((prefs: UserPreferences) => {
+    qc.setQueryData(['preferences'], prefs)
+  }, [qc])
 
   const openAddRecipe = useCallback(() => {
     navigate('/')
@@ -111,7 +90,7 @@ const AppShell = () => {
   return (
     <NotificationHistoryProvider>
       <TimerProvider>
-        <HouseholdProvider onContextSwitch={handleContextSwitch}>
+        <HouseholdProvider>
           <div className="min-h-screen bg-background md:bg-zinc-100">
             {/* Centered max-width container — flex row on desktop, block on mobile */}
             <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
@@ -153,7 +132,7 @@ const AppShell = () => {
                         stats={stats}
                         onStatsRefresh={handleStatsRefresh}
                         preferences={preferences}
-                        onPreferencesChange={setPreferences}
+                        onPreferencesChange={handlePreferencesChange}
                       />
                     }
                   />

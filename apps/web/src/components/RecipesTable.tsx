@@ -19,7 +19,8 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { RecipeOut, reorderRecipes, toggleFavourite } from '../api/client'
+import type { RecipeOut } from '@platekeeper/shared/types'
+import { reorderRecipes, toggleFavourite } from '../api/client'
 
 type SortField =
   | 'title'
@@ -31,8 +32,8 @@ type SortField =
 type SortDir = 'asc' | 'desc'
 type Sort = { field: SortField; dir: SortDir } | null
 
-function StarIcon({ filled }: { filled: boolean }) {
-  return filled ? (
+const StarIcon = ({ filled }: { filled: boolean }) =>
+  filled ? (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
@@ -41,7 +42,6 @@ function StarIcon({ filled }: { filled: boolean }) {
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   )
-}
 
 interface RecipesTableProps {
   recipes: RecipeOut[]
@@ -52,26 +52,24 @@ interface RecipesTableProps {
   onToggleFavourite: (recipe: RecipeOut) => void
 }
 
-function GripIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 14 14"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <circle cx="4" cy="3.5" r="1.2" />
-      <circle cx="10" cy="3.5" r="1.2" />
-      <circle cx="4" cy="7" r="1.2" />
-      <circle cx="10" cy="7" r="1.2" />
-      <circle cx="4" cy="10.5" r="1.2" />
-      <circle cx="10" cy="10.5" r="1.2" />
-    </svg>
-  )
-}
+const GripIcon = () => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 14 14"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <circle cx="4" cy="3.5" r="1.2" />
+    <circle cx="10" cy="3.5" r="1.2" />
+    <circle cx="4" cy="7" r="1.2" />
+    <circle cx="10" cy="7" r="1.2" />
+    <circle cx="4" cy="10.5" r="1.2" />
+    <circle cx="10" cy="10.5" r="1.2" />
+  </svg>
+)
 
-function SortIndicator({ field, sort }: { field: SortField; sort: Sort }) {
+const SortIndicator = ({ field, sort }: { field: SortField; sort: Sort }) => {
   if (!sort || sort.field !== field) {
     return <span className="ml-1 text-zinc-300 text-[10px]">↕</span>
   }
@@ -83,7 +81,7 @@ function SortIndicator({ field, sort }: { field: SortField; sort: Sort }) {
   )
 }
 
-function ColHeader({
+const ColHeader = ({
   label,
   field,
   sort,
@@ -95,7 +93,7 @@ function ColHeader({
   sort: Sort
   onToggleSort: (field: SortField) => void
   align?: 'left' | 'right'
-}) {
+}) => {
   const active = sort?.field === field
 
   return (
@@ -110,15 +108,14 @@ function ColHeader({
   )
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(i18n.language, {
+const formatDate = (iso: string): string =>
+  new Date(iso).toLocaleDateString(i18n.language, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   })
-}
 
-function ThumbCell({ url, title }: { url: string | null; title: string }) {
+const ThumbCell = ({ url, title }: { url: string | null; title: string }) => {
   const [loaded, setLoaded] = useState(false)
   const proxyUrl = url
     ? `/api/proxy/image?url=${encodeURIComponent(url)}`
@@ -146,7 +143,7 @@ function ThumbCell({ url, title }: { url: string | null; title: string }) {
 }
 
 // Portal-based dropdown — renders into document.body so overflow:hidden can't clip it
-function RowMenu({
+const RowMenu = ({
   onView,
   onEdit,
   onDelete,
@@ -154,14 +151,14 @@ function RowMenu({
   onView: () => void
   onEdit: () => void
   onDelete: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, right: 0 })
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  function openMenu(e: React.MouseEvent) {
+  const openMenu = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!triggerRef.current) return
     const rect = triggerRef.current.getBoundingClientRect()
@@ -171,7 +168,7 @@ function RowMenu({
 
   useEffect(() => {
     if (!open) return
-    function onPointerDown(e: PointerEvent) {
+    const onPointerDown = (e: PointerEvent) => {
       if (
         menuRef.current?.contains(e.target as Node) ||
         triggerRef.current?.contains(e.target as Node)
@@ -242,7 +239,7 @@ function RowMenu({
   )
 }
 
-function SortableRow({
+const SortableRow = ({
   recipe,
   showAddedBy,
   cols,
@@ -258,7 +255,7 @@ function SortableRow({
   onEdit: () => void
   onDelete: () => void
   onToggleFavourite: () => void
-}) {
+}) => {
   // Both attributes and listeners go on the grip button (correct drag-handle pattern)
   const {
     attributes,
@@ -369,10 +366,10 @@ function SortableRow({
   )
 }
 
-function getSortValue(
+const getSortValue = (
   recipe: RecipeOut,
   field: SortField
-): string | number | null {
+): string | number | null => {
   switch (field) {
     case 'title':
       return recipe.title.toLowerCase()
@@ -389,7 +386,7 @@ function getSortValue(
   }
 }
 
-function applySortRows(rows: RecipeOut[], sort: Sort): RecipeOut[] {
+const applySortRows = (rows: RecipeOut[], sort: Sort): RecipeOut[] => {
   if (!sort) return rows
 
   return [...rows].sort((a, b) => {
@@ -404,14 +401,14 @@ function applySortRows(rows: RecipeOut[], sort: Sort): RecipeOut[] {
   })
 }
 
-export default function RecipesTable({
+const RecipesTable = ({
   recipes,
   showAddedBy,
   onView,
   onEdit,
   onDelete,
   onToggleFavourite,
-}: RecipesTableProps) {
+}: RecipesTableProps) => {
   const { t } = useTranslation()
   const [sort, setSort] = useState<Sort>({ field: 'created_at', dir: 'desc' })
   const [localRows, setLocalRows] = useState<RecipeOut[]>(recipes)
@@ -435,7 +432,7 @@ export default function RecipesTable({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  function handleDragEnd(event: DragEndEvent) {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
     if (!over || active.id === over.id) return
     // Drag operates on whatever is currently displayed (sorted or not)
@@ -448,7 +445,7 @@ export default function RecipesTable({
     reorderRecipes(reordered.map((r) => r.id)).catch(() => {})
   }
 
-  function toggleSort(field: SortField) {
+  const toggleSort = (field: SortField) => {
     setSort((prev) => {
       if (prev?.field === field)
         return { field, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
@@ -558,3 +555,5 @@ export default function RecipesTable({
     </div>
   )
 }
+
+export default RecipesTable

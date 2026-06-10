@@ -25,6 +25,7 @@ import {
   formatCountdown,
 } from '../context/TimerContext'
 import PageHeader from '../components/PageHeader'
+import type { AllergenData, RecipeStats, UserPreferences, MemberOut, HouseholdOut } from '@platekeeper/shared/types'
 import {
   exportRecipes,
   importRecipes,
@@ -36,22 +37,17 @@ import {
   listMembers,
   updateHousehold,
   inviteUser,
-  type AllergenData,
-  type RecipeStats,
-  type UserPreferences,
-  type MemberOut,
-  type HouseholdOut,
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
 
-function StatCard({
+const StatCard = ({
   value,
   label,
 }: {
   value: string | number | null
   label: string
-}) {
+}) => {
   return (
     <div className="flex-1 flex flex-col items-center gap-1 rounded-xl bg-zinc-50 py-4 px-2">
       <span className="text-2xl font-bold text-zinc-800">{value ?? '—'}</span>
@@ -114,7 +110,7 @@ interface SettingsPageProps {
   onPreferencesChange: (prefs: UserPreferences) => void
 }
 
-function CheckboxGroup({
+const CheckboxGroup = ({
   keys,
   namespace,
   predefined,
@@ -124,7 +120,7 @@ function CheckboxGroup({
   namespace: 'allergens' | 'intolerances'
   predefined: string[]
   onToggle: (key: string) => void
-}) {
+}) => {
   const { t } = useTranslation()
   const iKey = (k: string) => k.replace(/[- ]/g, '_')
 
@@ -156,7 +152,7 @@ function CheckboxGroup({
 
 // ── Allergen section ──────────────────────────────────────────────────────────
 
-function AllergenSection({
+const AllergenSection = ({
   allergens,
   scopeLabel,
   onSave,
@@ -164,7 +160,7 @@ function AllergenSection({
   allergens: AllergenData
   scopeLabel: string
   onSave: (data: AllergenData) => Promise<void>
-}) {
+}) => {
   const { t } = useTranslation()
   const [predefined, setPredefined] = useState<string[]>(
     allergens.predefined ?? []
@@ -178,13 +174,13 @@ function AllergenSection({
     total: number
   } | null>(null)
 
-  function togglePredefined(key: string) {
+  const togglePredefined = (key: string) => {
     setPredefined((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     )
   }
 
-  function addCustomTag() {
+  const addCustomTag = () => {
     const tag = tagInput.trim().toLowerCase()
     if (tag && !custom.includes(tag)) {
       setCustom((prev) => [...prev, tag])
@@ -192,11 +188,11 @@ function AllergenSection({
     setTagInput('')
   }
 
-  function removeCustomTag(tag: string) {
+  const removeCustomTag = (tag: string) => {
     setCustom((prev) => prev.filter((t) => t !== tag))
   }
 
-  async function handleSave() {
+  const handleSave = async () => {
     setSaving(true)
     try {
       await onSave({ predefined, custom })
@@ -211,7 +207,7 @@ function AllergenSection({
     }
   }
 
-  function handleReanalyze() {
+  const handleReanalyze = () => {
     setReanalyzing(true)
     setReanalyzeProgress({ done: 0, total: 0 })
     streamReanalyze({
@@ -357,7 +353,7 @@ function AllergenSection({
 
 // ── Create Household modal ────────────────────────────────────────────────────
 
-function CreateHouseholdModal({
+const CreateHouseholdModal = ({
   isOpen,
   onClose,
   onCreated,
@@ -365,14 +361,14 @@ function CreateHouseholdModal({
   isOpen: boolean
   onClose: () => void
   onCreated: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleCreate() {
+  const handleCreate = async () => {
     setBusy(true)
     setError(null)
     try {
@@ -457,7 +453,7 @@ function CreateHouseholdModal({
 
 // ── Manage Household modal ────────────────────────────────────────────────────
 
-function ManageHouseholdModal({
+const ManageHouseholdModal = ({
   household,
   isOpen,
   onClose,
@@ -467,7 +463,7 @@ function ManageHouseholdModal({
   isOpen: boolean
   onClose: () => void
   onChanged: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [members, setMembers] = useState<MemberOut[]>([])
   const [membersLoading, setMembersLoading] = useState(false)
@@ -480,7 +476,7 @@ function ManageHouseholdModal({
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function loadMembers() {
+  const loadMembers = async () => {
     setMembersLoading(true)
     try {
       const m = await listMembers(household.id)
@@ -492,7 +488,7 @@ function ManageHouseholdModal({
     }
   }
 
-  function handleOpen() {
+  const handleOpen = () => {
     setName(household.name)
     setColor(household.color)
     setInviteEmail('')
@@ -501,7 +497,7 @@ function ManageHouseholdModal({
     loadMembers()
   }
 
-  async function handleSave() {
+  const handleSave = async () => {
     setSaving(true)
     setError(null)
     try {
@@ -518,7 +514,7 @@ function ManageHouseholdModal({
     }
   }
 
-  async function handleInvite() {
+  const handleInvite = async () => {
     if (!inviteEmail.trim()) return
     setBusy(true)
     setError(null)
@@ -533,7 +529,7 @@ function ManageHouseholdModal({
     }
   }
 
-  async function handleLeave() {
+  const handleLeave = async () => {
     setLeaving(true)
     try {
       await leaveHousehold(household.id)
@@ -703,7 +699,7 @@ function ManageHouseholdModal({
 
 // ── Timer settings section ────────────────────────────────────────────────────
 
-function TimerSettingsSection() {
+const TimerSettingsSection = () => {
   const {
     timers,
     pauseTimer,
@@ -816,12 +812,12 @@ function TimerSettingsSection() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage({
+const SettingsPage = ({
   stats,
   onStatsRefresh,
   preferences,
   onPreferencesChange,
-}: SettingsPageProps) {
+}: SettingsPageProps) => {
   const { user, logout } = useAuth()
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold()
@@ -841,12 +837,12 @@ export default function SettingsPage({
 
   const displayName = user?.nickname || user?.email || ''
 
-  async function handleLogout() {
+  const handleLogout = async () => {
     setLoggingOut(true)
     await logout()
   }
 
-  async function handleExport() {
+  const handleExport = async () => {
     setExporting(true)
     setError(null)
     try {
@@ -858,7 +854,7 @@ export default function SettingsPage({
     }
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     setImporting(true)
@@ -876,10 +872,10 @@ export default function SettingsPage({
     }
   }
 
-  async function handleSaveAllergens(data: {
+  const handleSaveAllergens = async (data: {
     predefined: string[]
     custom: string[]
-  }) {
+  }) => {
     if (activeHousehold) {
       await updateHouseholdAllergens(activeHousehold.id, data)
       refetchHouseholds()
@@ -1229,3 +1225,5 @@ export default function SettingsPage({
     </>
   )
 }
+
+export default SettingsPage

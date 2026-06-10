@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Tag } from '../api/client'
-import { tTag } from '../utils/tagUtils'
+import type { Tag } from '@platekeeper/shared/types'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 
 interface TagRowProps {
   tags: Tag[]
@@ -11,13 +11,13 @@ interface TagRowProps {
   onCreateTag?: (name: string) => Promise<Tag>
 }
 
-export default function TagRow({
+const TagRow = ({
   tags,
   allTags,
   onAdd,
   onRemove,
   onCreateTag,
-}: TagRowProps) {
+}: TagRowProps) => {
   const { t } = useTranslation()
   const [pickerOpen, setPickerOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -39,7 +39,7 @@ export default function TagRow({
   const canCreate = !!onCreateTag && trimmedSearch.length > 0 && !exactMatch
 
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    const handler = (e: MouseEvent) => {
       if (
         containerRef.current &&
         !containerRef.current.contains(e.target as Node)
@@ -57,7 +57,7 @@ export default function TagRow({
     if (pickerOpen) inputRef.current?.focus()
   }, [pickerOpen])
 
-  async function handleCreate() {
+  const handleCreate = async () => {
     if (!onCreateTag || !trimmedSearch) return
     setCreating(true)
     try {
@@ -70,7 +70,7 @@ export default function TagRow({
     }
   }
 
-  function handleAddTag(tag: Tag) {
+  const handleAddTag = (tag: Tag) => {
     onAdd(tag)
     setPickerOpen(false)
     setSearch('')
@@ -167,3 +167,5 @@ export default function TagRow({
     </div>
   )
 }
+
+export default TagRow

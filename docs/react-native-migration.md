@@ -91,7 +91,7 @@ Move to `packages/shared/src/utils/`:
 
 Copy all 5 locale JSON files (`en`, `pl`, `de`, `fr`, `es`) to `packages/shared/src/locales/`. Move `i18n.ts` initialisation logic to a factory in `packages/shared/src/i18n.ts` so both apps can set it up with the same translations.
 
-### 1.7 Update web imports + verify
+### 1.7 Update web imports + verify ✅
 
 - Update all `apps/web` imports to reference `@platekeeper/shared`.
 - Run the web app and exercise every page — no regressions.

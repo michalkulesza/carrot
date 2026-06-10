@@ -20,12 +20,14 @@ import {
   Switch,
   toast,
 } from '@heroui/react'
-import {
+import type {
   AllergenFlag,
   RecipeOut,
   SaveComponent,
   StepIngredientRef,
   Tag,
+} from '@platekeeper/shared/types'
+import {
   UNITS,
   addTagToRecipe,
   createTag,
@@ -37,7 +39,7 @@ import TagRow from './TagRow'
 
 // ── Allergen popover ──────────────────────────────────────────────────────────
 
-function AllergenPopover({
+const AllergenPopover = ({
   flag,
   activeAllergens,
   onReplace,
@@ -47,7 +49,7 @@ function AllergenPopover({
   activeAllergens: string[]
   onReplace: () => void
   onRestore: () => void
-}) {
+}) => {
   const [open, setOpen] = useState(false)
   const [above, setAbove] = useState(false)
   const [pos, setPos] = useState({ vertical: 0, right: 0 })
@@ -56,7 +58,7 @@ function AllergenPopover({
 
   useEffect(() => {
     if (!open) return
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         panelRef.current &&
         !panelRef.current.contains(e.target as Node) &&
@@ -65,7 +67,7 @@ function AllergenPopover({
       )
         setOpen(false)
     }
-    function handleScroll() {
+    const handleScroll = () => {
       setOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -87,7 +89,7 @@ function AllergenPopover({
     })
   if (!isActive) return null
 
-  function handleOpen() {
+  const handleOpen = () => {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       const showAbove = r.top > window.innerHeight / 2
@@ -199,7 +201,7 @@ function AllergenPopover({
 
 // ── EditLine ──────────────────────────────────────────────────────────────────
 
-function EditLine({
+const EditLine = ({
   value,
   onChange,
   className = '',
@@ -209,7 +211,7 @@ function EditLine({
   onChange: (v: string) => void
   className?: string
   multiline?: boolean
-}) {
+}) => {
   const base =
     'w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none'
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -252,7 +254,7 @@ interface StructuredIngredient {
   note: string
 }
 
-function parseIngredient(s: string): StructuredIngredient {
+const parseIngredient = (s: string): StructuredIngredient => {
   const trimmed = s.trim()
   if (!trimmed) return { qty: '', unit: '', name: '', note: '' }
   let rest = trimmed
@@ -275,31 +277,31 @@ function parseIngredient(s: string): StructuredIngredient {
   return { qty, unit, name: parts.slice(idx).join(' '), note }
 }
 
-function serializeIngredient(ing: StructuredIngredient): string {
+const serializeIngredient = (ing: StructuredIngredient): string => {
   return [ing.qty, ing.unit, ing.name, ing.note ? `(${ing.note})` : '']
     .filter(Boolean)
     .join(' ')
 }
 
-function displayIngredient(s: string, t: (key: string, opts: { defaultValue: string }) => string): string {
+const displayIngredient = (s: string, t: (key: string, opts: { defaultValue: string }) => string): string => {
   const parsed = parseIngredient(s)
   if (!parsed.unit) return s
   return serializeIngredient({ ...parsed, unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }) })
 }
 
-function IngredientEditor({
+const IngredientEditor = ({
   value,
   onChange,
 }: {
   value: string
   onChange: (v: string) => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [parts, setParts] = useState<StructuredIngredient>(() => parseIngredient(value))
   const inputBase =
     'bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors text-sm'
 
-  function update(field: keyof StructuredIngredient, val: string) {
+  const update = (field: keyof StructuredIngredient, val: string) => {
     const next = { ...parts, [field]: val }
     setParts(next)
     onChange(serializeIngredient(next))
@@ -349,7 +351,7 @@ function IngredientEditor({
 
 // ── Screen Wake Lock hook ─────────────────────────────────────────────────────
 
-function useScreenWakeLock() {
+const useScreenWakeLock = () => {
   const [active, setActive] = useState(
     () => localStorage.getItem('wakelock-default') === '1'
   )
@@ -384,7 +386,7 @@ function useScreenWakeLock() {
   }, [active])
 
   useEffect(() => {
-    function onVisible() {
+    const onVisible = () => {
       if (
         document.visibilityState === 'visible' &&
         active &&
@@ -423,7 +425,7 @@ interface EditState {
   shared_to_personal: boolean
 }
 
-function toEditState(r: RecipeOut): EditState {
+const toEditState = (r: RecipeOut): EditState => {
   return {
     title: r.title,
     servings: r.servings?.toString() ?? '',
@@ -443,7 +445,7 @@ function toEditState(r: RecipeOut): EditState {
 
 // ── Step timer chip ───────────────────────────────────────────────────────────
 
-function StepTimerChip({
+const StepTimerChip = ({
   timerId,
   totalSeconds,
   stepText,
@@ -459,7 +461,7 @@ function StepTimerChip({
   recipeTitle: string
   componentIndex: number
   stepIndex: number
-}) {
+}) => {
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers()
   const timer: TimerEntry | undefined = timers.get(timerId)
 
@@ -518,13 +520,13 @@ function StepTimerChip({
 
 // ── Ingredient pill ───────────────────────────────────────────────────────────
 
-function IngredientPill({
+const IngredientPill = ({
   mention,
   ingredientText,
 }: {
   mention: string
   ingredientText: string
-}) {
+}) => {
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, left: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -532,7 +534,7 @@ function IngredientPill({
 
   useEffect(() => {
     if (!open) return
-    function handleClickOutside(e: MouseEvent) {
+    const handleClickOutside = (e: MouseEvent) => {
       if (
         panelRef.current &&
         !panelRef.current.contains(e.target as Node) &&
@@ -545,7 +547,7 @@ function IngredientPill({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
-  function handleOpen() {
+  const handleOpen = () => {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect()
       const showAbove = r.top > window.innerHeight / 2
@@ -589,7 +591,7 @@ function IngredientPill({
 
 // ── Step text with inline pills ───────────────────────────────────────────────
 
-function StepText({
+const StepText = ({
   step,
   stepRefs,
   ingredients,
@@ -607,7 +609,7 @@ function StepText({
   recipeTitle: string
   componentIndex: number
   stepIndex: number
-}) {
+}) => {
   const { t } = useTranslation()
 
   interface Span {
@@ -684,7 +686,7 @@ function StepText({
 
 // ── View: component section ───────────────────────────────────────────────────
 
-function ViewComponent({
+const ViewComponent = ({
   comp,
   single,
   activeAllergens,
@@ -702,7 +704,7 @@ function ViewComponent({
   recipeId: string
   recipeTitle: string
   componentIndex: number
-}) {
+}) => {
   const { t } = useTranslation()
 
   // Client-side fallback: when AI matching wasn't run, do simple name matching
@@ -816,7 +818,7 @@ function ViewComponent({
 
 // ── Edit: component section ───────────────────────────────────────────────────
 
-function EditComponent({
+const EditComponent = ({
   comp,
   single,
   onIngredientChange,
@@ -826,7 +828,7 @@ function EditComponent({
   single: boolean
   onIngredientChange: (ii: number, val: string) => void
   onStepChange: (si: number, val: string) => void
-}) {
+}) => {
   const { t } = useTranslation()
 
   return (
@@ -894,7 +896,7 @@ interface RecipeDetailModalProps {
   scrollToStep?: { componentIndex: number; stepIndex: number } | null
 }
 
-export default function RecipeDetailModal({
+const RecipeDetailModal = ({
   recipe,
   allTags,
   onTagCreated,
@@ -904,7 +906,7 @@ export default function RecipeDetailModal({
   initialMode,
   activeAllergens = [],
   scrollToStep,
-}: RecipeDetailModalProps) {
+}: RecipeDetailModalProps) => {
   const { t } = useTranslation()
   const wakeLock = useScreenWakeLock()
   const [mode, setMode] = useState<Mode>('view')
@@ -953,12 +955,12 @@ export default function RecipeDetailModal({
     ? `/api/proxy/image?url=${encodeURIComponent(displayThumb)}`
     : null
 
-  function openImgEditor() {
+  const openImgEditor = () => {
     setImgDraft(draft?.thumbnail_url ?? '')
     setShowImgInput(true)
   }
 
-  function commitImg() {
+  const commitImg = () => {
     const trimmed = imgDraft.trim()
     setDraft((d) => (d ? { ...d, thumbnail_url: trimmed || null } : d))
     setShowImgInput(false)
@@ -975,7 +977,7 @@ export default function RecipeDetailModal({
         ? 'bg-danger-100 transition-colors duration-200'
         : 'transition-colors duration-200'
 
-  function setIngredient(ci: number, ii: number, val: string) {
+  const setIngredient = (ci: number, ii: number, val: string) => {
     setDraft((d) => {
       if (!d) return d
       const comps = d.components.map((c, ci2) =>
@@ -993,7 +995,7 @@ export default function RecipeDetailModal({
     })
   }
 
-  function setStep(ci: number, si: number, val: string) {
+  const setStep = (ci: number, si: number, val: string) => {
     setDraft((d) => {
       if (!d) return d
       const comps = d.components.map((c, ci2) =>
@@ -1006,7 +1008,7 @@ export default function RecipeDetailModal({
     })
   }
 
-  async function handleTagAdd(tag: Tag) {
+  const handleTagAdd = async (tag: Tag) => {
     setLocalTags((prev) => [...prev, tag])
     try {
       await addTagToRecipe(r.id, tag.id)
@@ -1015,7 +1017,7 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleTagRemove(tagId: string) {
+  const handleTagRemove = async (tagId: string) => {
     setLocalTags((prev) => prev.filter((t) => t.id !== tagId))
     try {
       await removeTagFromRecipe(r.id, tagId)
@@ -1025,14 +1027,14 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleTagCreate(name: string): Promise<Tag> {
+  const handleTagCreate = async (name: string): Promise<Tag> => {
     const tag = await createTag(name)
     onTagCreated(tag)
 
     return tag
   }
 
-  async function handleNotesSave() {
+  const handleNotesSave = async () => {
     const trimmed = localNotes.trim()
     if (trimmed === savedNotesRef.current.trim()) return
     setNotesSaving(true)
@@ -1058,7 +1060,7 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleSave() {
+  const handleSave = async () => {
     if (!draft) return
     setBusy(true)
     setError(null)
@@ -1085,7 +1087,7 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleReplaceIngredient(ci: number, ii: number) {
+  const handleReplaceIngredient = async (ci: number, ii: number) => {
     const comp = (r.components as SaveComponent[])[ci]
     const flag = comp.ingredient_flags?.[ii]
     if (!flag?.substitute) return
@@ -1132,7 +1134,7 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleRestoreIngredient(ci: number, ii: number) {
+  const handleRestoreIngredient = async (ci: number, ii: number) => {
     const comp = (r.components as SaveComponent[])[ci]
     const flag = comp.ingredient_flags?.[ii]
     if (!flag?.original_display) return
@@ -1175,7 +1177,7 @@ export default function RecipeDetailModal({
     }
   }
 
-  async function handleDelete() {
+  const handleDelete = async () => {
     setBusy(true)
     setError(null)
     try {
@@ -1191,14 +1193,14 @@ export default function RecipeDetailModal({
     }
   }
 
-  function cancelMode() {
+  const cancelMode = () => {
     if (mode === 'editing') setDraft(toEditState(r))
     setMode('view')
     setShowImgInput(false)
     setError(null)
   }
 
-  function handleClose() {
+  const handleClose = () => {
     wakeLock.release()
     setMode('view')
     setError(null)
@@ -1630,3 +1632,5 @@ export default function RecipeDetailModal({
     </Modal>
   )
 }
+
+export default RecipeDetailModal

@@ -75,3 +75,4 @@ upgrade popups
 recipe builder
 photo support
 text support
+when Something went wrong page don't show details in production build

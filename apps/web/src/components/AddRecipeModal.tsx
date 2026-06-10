@@ -12,12 +12,7 @@ import {
   Switch,
   toast,
 } from '@heroui/react'
-import {
-  streamImport,
-  saveRecipe,
-  createTag,
-  listPersonalRecipes,
-  linkRecipeToHousehold,
+import type {
   AllergenFlag,
   ImportResult,
   RecipeComponent,
@@ -26,6 +21,13 @@ import {
   StepIngredientRef,
   Tag,
   UserPreferences,
+} from '@platekeeper/shared/types'
+import {
+  streamImport,
+  saveRecipe,
+  createTag,
+  listPersonalRecipes,
+  linkRecipeToHousehold,
   UNITS,
 } from '../api/client'
 import TagRow from './TagRow'
@@ -44,7 +46,7 @@ interface StructuredIngredient {
   note: string
 }
 
-function parseIngredient(s: string): StructuredIngredient {
+const parseIngredient = (s: string): StructuredIngredient => {
   const trimmed = s.trim()
   if (!trimmed) return { qty: '', unit: '', name: '', note: '' }
   let rest = trimmed
@@ -67,7 +69,7 @@ function parseIngredient(s: string): StructuredIngredient {
   return { qty, unit, name: parts.slice(idx).join(' '), note }
 }
 
-function serializeIngredient(ing: StructuredIngredient): string {
+const serializeIngredient = (ing: StructuredIngredient): string => {
   return [ing.qty, ing.unit, ing.name, ing.note ? `(${ing.note})` : '']
     .filter(Boolean)
     .join(' ')
@@ -94,10 +96,10 @@ interface EditableRecipe {
   suggestedTagNames: string[]
 }
 
-function toEditable(
+const toEditable = (
   result: ImportResult,
   autoSubstitute: boolean
-): EditableRecipe {
+): EditableRecipe => {
   const { recipe, metadata, stage } = result
 
   return {
@@ -156,7 +158,7 @@ function toEditable(
 
 // ── Allergen popover ──────────────────────────────────────────────────────────
 
-function AllergenPopover({
+const AllergenPopover = ({
   flag,
   activeAllergens,
   onReplace,
@@ -166,14 +168,14 @@ function AllergenPopover({
   activeAllergens: string[]
   onReplace: () => void
   onRestore: () => void
-}) {
+}) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
-    function handleClick(e: MouseEvent) {
+    const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     document.addEventListener('mousedown', handleClick)
@@ -268,7 +270,7 @@ function AllergenPopover({
 
 // ── Progress list ────────────────────────────────────────────────────────────
 
-function ProgressList({ steps }: { steps: StepState[] }) {
+const ProgressList = ({ steps }: { steps: StepState[] }) => {
   if (steps.length === 0) return null
 
   return (
@@ -294,7 +296,7 @@ function ProgressList({ steps }: { steps: StepState[] }) {
 
 // ── Inline editable text field ────────────────────────────────────────────────
 
-function EditLine({
+const EditLine = ({
   value,
   onChange,
   className = '',
@@ -304,7 +306,7 @@ function EditLine({
   onChange: (v: string) => void
   className?: string
   multiline?: boolean
-}) {
+}) => {
   const base =
     'w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none overflow-hidden'
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -340,18 +342,18 @@ function EditLine({
 
 // ── Structured ingredient editor ──────────────────────────────────────────────
 
-function IngredientEditor({
+const IngredientEditor = ({
   value,
   onChange,
 }: {
   value: StructuredIngredient
   onChange: (v: StructuredIngredient) => void
-}) {
+}) => {
   const { t } = useTranslation()
   const inputBase =
     'bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors text-sm'
 
-  function update(field: keyof StructuredIngredient, val: string) {
+  const update = (field: keyof StructuredIngredient, val: string) => {
     onChange({ ...value, [field]: val })
   }
 
@@ -401,7 +403,7 @@ function IngredientEditor({
 
 const currentUsername = () => localStorage.getItem('pk_username') || 'you'
 
-function EditableRecipeView({
+const EditableRecipeView = ({
   recipe,
   selectedTags,
   allTags,
@@ -419,23 +421,23 @@ function EditableRecipeView({
   onTagAdd: (tag: Tag) => void
   onTagRemove: (tagId: string) => void
   onTagCreate: (name: string) => Promise<Tag>
-}) {
+}) => {
   const { t } = useTranslation()
   const [isAdapted, setIsAdapted] = useState(false)
   const [showImgInput, setShowImgInput] = useState(false)
   const [imgDraft, setImgDraft] = useState('')
 
-  function setTitle(title: string) {
+  const setTitle = (title: string) => {
     onChange({ ...recipe, title })
   }
-  function setServings(servings: string) {
+  const setServings = (servings: string) => {
     onChange({ ...recipe, servings })
   }
-  function setKcal(kcal: string) {
+  const setKcal = (kcal: string) => {
     onChange({ ...recipe, kcal })
   }
 
-  function setIngredient(ci: number, ii: number, val: StructuredIngredient) {
+  const setIngredient = (ci: number, ii: number, val: StructuredIngredient) => {
     setIsAdapted(true)
     const components = recipe.components.map((c, ci2) =>
       ci2 !== ci
@@ -450,7 +452,7 @@ function EditableRecipeView({
     onChange({ ...recipe, components })
   }
 
-  function handleReplace(ci: number, ii: number) {
+  const handleReplace = (ci: number, ii: number) => {
     const comp = recipe.components[ci]
     const flag = comp.ingredient_flags[ii]
     if (!flag?.substitute) return
@@ -471,7 +473,7 @@ function EditableRecipeView({
     onChange({ ...recipe, components })
   }
 
-  function handleRestore(ci: number, ii: number) {
+  const handleRestore = (ci: number, ii: number) => {
     const comp = recipe.components[ci]
     const flag = comp.ingredient_flags[ii]
     if (!flag?.original_display) return
@@ -491,7 +493,7 @@ function EditableRecipeView({
     onChange({ ...recipe, components })
   }
 
-  function setStep(ci: number, si: number, val: string) {
+  const setStep = (ci: number, si: number, val: string) => {
     setIsAdapted(true)
     const components = recipe.components.map((c, ci2) =>
       ci2 !== ci
@@ -504,12 +506,12 @@ function EditableRecipeView({
     onChange({ ...recipe, components })
   }
 
-  function openImgEditor() {
+  const openImgEditor = () => {
     setImgDraft(recipe.thumbnail_url ?? '')
     setShowImgInput(true)
   }
 
-  function commitImg() {
+  const commitImg = () => {
     const trimmed = imgDraft.trim()
     onChange({ ...recipe, thumbnail_url: trimmed || null })
     setShowImgInput(false)
@@ -745,14 +747,14 @@ interface AddRecipeModalProps {
   preferences: UserPreferences | null
 }
 
-export default function AddRecipeModal({
+const AddRecipeModal = ({
   isOpen,
   onClose,
   onSaved,
   allTags,
   onTagCreated,
   preferences,
-}: AddRecipeModalProps) {
+}: AddRecipeModalProps) => {
   const { t } = useTranslation()
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const [url, setUrl] = useState('')
@@ -790,7 +792,7 @@ export default function AddRecipeModal({
     }
   }, [isOpen, activeHouseholdId])
 
-  function reset() {
+  const reset = () => {
     cancelRef.current?.()
     setUrl('')
     setLoading(false)
@@ -868,7 +870,7 @@ export default function AddRecipeModal({
     }
   }
 
-  function handleClose() {
+  const handleClose = () => {
     reset()
     onClose()
   }
@@ -882,7 +884,7 @@ export default function AddRecipeModal({
     }
   }
 
-  function handleSubmit(e: FormEvent) {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     cancelRef.current?.()
     setLoading(true)
@@ -1150,3 +1152,5 @@ export default function AddRecipeModal({
     </Modal>
   )
 }
+
+export default AddRecipeModal
