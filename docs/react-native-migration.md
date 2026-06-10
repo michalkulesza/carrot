@@ -87,7 +87,7 @@ Move to `packages/shared/src/utils/`:
 - `apps/web/src/utils/tagUtils.ts` → `shared/src/utils/tagUtils.ts`
 - Timer utilities from `TimerContext.tsx`: `parseDurationSeconds`, `parseDurationMatch`, `formatCountdown`, `formatDurationLabel` — these are pure functions with zero platform dependencies.
 
-### 1.6 Move locales
+### 1.6 Move locales ✅
 
 Copy all 5 locale JSON files (`en`, `pl`, `de`, `fr`, `es`) to `packages/shared/src/locales/`. Move `i18n.ts` initialisation logic to a factory in `packages/shared/src/i18n.ts` so both apps can set it up with the same translations.
 
