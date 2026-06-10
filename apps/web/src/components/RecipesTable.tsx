@@ -264,7 +264,7 @@ function SortableRow({
         transition,
         gridTemplateColumns: cols,
       }}
-      className={`grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`}
+      className={`group grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`}
       onClick={onView}
     >
       {/* Grip — both listeners and attributes live here */}
@@ -284,15 +284,15 @@ function SortableRow({
         <ThumbCell url={recipe.thumbnail_url} title={recipe.title} />
       </div>
 
-      {/* Title */}
-      <div className="min-w-0">
+      {/* Title — sticky left */}
+      <div className="min-w-0 sticky left-0 z-[1] bg-white group-hover:bg-zinc-50 transition-colors overflow-hidden shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] pr-1">
         <p className="font-medium text-sm leading-snug line-clamp-2">
           {recipe.title}
         </p>
       </div>
 
       {/* Servings */}
-      <div className="text-sm text-zinc-600 text-right tabular-nums pr-2">
+      <div className="text-sm text-zinc-600 text-right tabular-nums pr-2 overflow-hidden">
         {recipe.servings != null ? (
           recipe.servings
         ) : (
@@ -301,7 +301,7 @@ function SortableRow({
       </div>
 
       {/* Kcal */}
-      <div className="text-sm text-zinc-600 text-right tabular-nums pr-2">
+      <div className="text-sm text-zinc-600 text-right tabular-nums pr-2 overflow-hidden">
         {recipe.kcal_per_serving != null ? (
           recipe.kcal_per_serving
         ) : (
@@ -310,7 +310,7 @@ function SortableRow({
       </div>
 
       {/* Author */}
-      <div className="text-sm text-zinc-500 truncate">
+      <div className="text-sm text-zinc-500 truncate overflow-hidden">
         {recipe.creator_handle ? (
           `@${recipe.creator_handle}`
         ) : (
@@ -320,18 +320,21 @@ function SortableRow({
 
       {/* Added by */}
       {showAddedBy && (
-        <div className="text-sm text-zinc-500 truncate">
+        <div className="text-sm text-zinc-500 truncate overflow-hidden">
           {recipe.added_by ?? <span className="text-zinc-300">—</span>}
         </div>
       )}
 
       {/* Added date */}
-      <div className="text-xs text-zinc-400 whitespace-nowrap">
+      <div className="text-xs text-zinc-400 whitespace-nowrap overflow-hidden">
         {formatDate(recipe.created_at)}
       </div>
 
-      {/* ⋯ menu */}
-      <div onClick={(e) => e.stopPropagation()}>
+      {/* ⋯ menu — sticky right */}
+      <div
+        className="sticky right-0 z-[1] bg-white group-hover:bg-zinc-50 transition-colors shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <RowMenu onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </div>
     </div>
@@ -428,95 +431,101 @@ export default function RecipesTable({
   const displayed = sort ? applySortRows(localRows, sort) : localRows
 
   const cols = showAddedBy
-    ? '2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 8rem 6.5rem 2.5rem'
-    : '2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 6.5rem 2.5rem'
+    ? '32px 56px minmax(135px,1fr) 135px 135px 135px 135px 135px 40px'
+    : '32px 56px minmax(135px,1fr) 135px 135px 135px 135px 40px'
 
   return (
     <div className="px-4 mt-4 pb-6">
-      {/* No overflow-hidden on the outer wrapper — overflow is handled per-cell */}
-      <div className="rounded-xl bg-white shadow-sm border border-zinc-100">
-        {/* Header */}
-        <div
-          className="grid items-center gap-2 px-2 py-2.5 border-b-2 border-zinc-100 bg-zinc-50/80 rounded-t-xl"
-          style={{ gridTemplateColumns: cols }}
-        >
+      <div className="rounded-xl bg-white shadow-sm border border-zinc-100 overflow-hidden">
+        {/* Horizontal scroll container — sticky children anchor to this viewport */}
+        <div className="overflow-x-auto">
+          {/* Header */}
           <div
-            className="flex items-center justify-center text-zinc-300"
-            title="Drag rows to reorder"
+            className="grid items-center gap-2 px-2 py-2.5 border-b-2 border-zinc-100 bg-zinc-50 rounded-t-xl"
+            style={{ gridTemplateColumns: cols }}
           >
-            <GripIcon />
-          </div>
-          <div />
-          <ColHeader
-            label={t('recipes.colTitle')}
-            field="title"
-            sort={sort}
-            onToggleSort={toggleSort}
-          />
-          <div className="flex justify-end">
-            <ColHeader
-              label={t('recipes.colServings')}
-              field="servings"
-              sort={sort}
-              onToggleSort={toggleSort}
-              align="right"
-            />
-          </div>
-          <div className="flex justify-end">
-            <ColHeader
-              label={t('recipes.colKcal')}
-              field="kcal_per_serving"
-              sort={sort}
-              onToggleSort={toggleSort}
-              align="right"
-            />
-          </div>
-          <ColHeader
-            label={t('recipes.colAuthor')}
-            field="creator_handle"
-            sort={sort}
-            onToggleSort={toggleSort}
-          />
-          {showAddedBy && (
-            <ColHeader
-              label={t('recipes.colAddedBy')}
-              field="added_by"
-              sort={sort}
-              onToggleSort={toggleSort}
-            />
-          )}
-          <ColHeader
-            label={t('recipes.colAdded')}
-            field="created_at"
-            sort={sort}
-            onToggleSort={toggleSort}
-          />
-          <div />
-        </div>
-
-        {/* Rows */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={displayed.map((r) => r.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {displayed.map((recipe) => (
-              <SortableRow
-                key={recipe.id}
-                recipe={recipe}
-                showAddedBy={showAddedBy}
-                cols={cols}
-                onView={() => onView(recipe)}
-                onEdit={() => onEdit(recipe)}
-                onDelete={() => onDelete(recipe)}
+            <div
+              className="flex items-center justify-center text-zinc-300"
+              title="Drag rows to reorder"
+            >
+              <GripIcon />
+            </div>
+            <div />
+            {/* Sticky name column */}
+            <div className="sticky left-0 z-[1] bg-zinc-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]">
+              <ColHeader
+                label={t('recipes.colTitle')}
+                field="title"
+                sort={sort}
+                onToggleSort={toggleSort}
               />
-            ))}
-          </SortableContext>
-        </DndContext>
+            </div>
+            <div className="flex justify-end">
+              <ColHeader
+                label={t('recipes.colServings')}
+                field="servings"
+                sort={sort}
+                onToggleSort={toggleSort}
+                align="right"
+              />
+            </div>
+            <div className="flex justify-end">
+              <ColHeader
+                label={t('recipes.colKcal')}
+                field="kcal_per_serving"
+                sort={sort}
+                onToggleSort={toggleSort}
+                align="right"
+              />
+            </div>
+            <ColHeader
+              label={t('recipes.colAuthor')}
+              field="creator_handle"
+              sort={sort}
+              onToggleSort={toggleSort}
+            />
+            {showAddedBy && (
+              <ColHeader
+                label={t('recipes.colAddedBy')}
+                field="added_by"
+                sort={sort}
+                onToggleSort={toggleSort}
+              />
+            )}
+            <ColHeader
+              label={t('recipes.colAdded')}
+              field="created_at"
+              sort={sort}
+              onToggleSort={toggleSort}
+            />
+            {/* Sticky dots column */}
+            <div className="sticky right-0 z-[1] bg-zinc-50 shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]" />
+          </div>
+
+          {/* Rows */}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={displayed.map((r) => r.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {displayed.map((recipe) => (
+                <SortableRow
+                  key={recipe.id}
+                  recipe={recipe}
+                  showAddedBy={showAddedBy}
+                  cols={cols}
+                  onView={() => onView(recipe)}
+                  onEdit={() => onEdit(recipe)}
+                  onDelete={() => onDelete(recipe)}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
       </div>
     </div>
   )
