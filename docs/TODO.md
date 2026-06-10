@@ -34,7 +34,7 @@ Amber sun button keeps the screen on while reading; auto-releases on modal close
 
 ## Discovery & Social
 
-### Languages
+### ~~Languages~~ ✓ done
 Recipes stored in source language (already per PLAN.md).
 Add a language tag on each recipe group; filter library by language.
 UI stays English-only at MVP — no i18n framework yet.
@@ -65,7 +65,13 @@ Consider: run estimation at import time via Gemini structured output rather than
 
 
 
-FAVOURITE RECIPES, STAR + TABLE
-table name always visible
-table overflow hide
-table allow for horizotnal scroll, ther dots on the right always visible
+FAVOURITE RECIPES, STAR + TABLE - done
+
+Most popular imports with fgilters
+recipe builder
+photo support
+text support
+plans free/paid
+limits
+upgrade popups
+in steps use values from ingridients on tap, add iconafter ingridient
