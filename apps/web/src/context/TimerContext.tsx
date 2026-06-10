@@ -11,9 +11,6 @@ import { useNotificationHistory } from './NotificationHistoryContext'
 
 const STORAGE_KEY = 'pk-timers'
 
-// Debug: cap all timers to this many seconds (0 = disabled)
-const DEBUG_MAX_SECONDS = 5
-
 // Module-level SW registration — set once when the SW becomes active
 let _swReg: ServiceWorkerRegistration | null = null
 if ('serviceWorker' in navigator) {
@@ -444,14 +441,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       ) {
         Notification.requestPermission()
       }
-      const totalSeconds =
-        DEBUG_MAX_SECONDS > 0
-          ? Math.min(params.totalSeconds, DEBUG_MAX_SECONDS)
-          : params.totalSeconds
       const entry: TimerEntry = {
         ...params,
-        totalSeconds,
-        remainingAtStart: totalSeconds,
+        remainingAtStart: params.totalSeconds,
         startedAt: Date.now(),
         status: 'running',
       }
