@@ -11,6 +11,7 @@ from api.config import settings
 from api.database import Base, async_session_maker, engine
 from api.models import Tag
 from api.routes.allergens import router as allergens_router
+from api.routes.export import router as export_router
 from api.routes.households import router as households_router
 from api.routes.imports import router as imports_router
 from api.routes.meal_plan import router as meal_plan_router
@@ -96,6 +97,7 @@ app.add_middleware(
 )
 
 app.include_router(allergens_router, prefix="/api")
+app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
 app.include_router(imports_router, prefix="/api")
 app.include_router(meal_plan_router, prefix="/api")

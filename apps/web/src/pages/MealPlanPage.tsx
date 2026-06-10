@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
-import ExcelJS from 'exceljs'
 import {
   Button,
   Modal,
@@ -41,125 +40,18 @@ const longMonthName = (year: number, month: number, locale: string): string => {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
-const exportMealPlan = async (
-  entries: MealPlanEntry[],
-  year: number,
-  month: number
-) => {
-  const DAY_HEADERS = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ]
-
-  const byDate = new Map(entries.map((e) => [e.date, e.recipe.title]))
-
-  const firstDay = new Date(year, month - 1, 1)
-  const lastDay = new Date(year, month, 0)
-  const weeks: Date[] = []
-  const startMonday = new Date(firstDay)
-  const dow = startMonday.getDay()
-  startMonday.setDate(startMonday.getDate() + (dow === 0 ? -6 : 1 - dow))
-  for (
-    let d = new Date(startMonday);
-    d <= lastDay;
-    d.setDate(d.getDate() + 7)
-  ) {
-    weeks.push(new Date(d))
-  }
-
-  const wb = new ExcelJS.Workbook()
-  const ws = wb.addWorksheet('Week Meal Planner')
-
-  ws.columns = Array(7)
-    .fill(null)
-    .map(() => ({ width: 24.24 }))
-
-  const centerWrap: Partial<ExcelJS.Alignment> = {
-    horizontal: 'center',
-    vertical: 'middle',
-    wrapText: true,
-  }
-
-  const borderEdge: Partial<ExcelJS.Border> = {
-    style: 'thin',
-    color: { argb: 'FF356854' },
-  }
-  const ROW_COUNT = 6
-  const totalRows = 1 + ROW_COUNT
-
-  const outerBorder = (
-    rowIdx: number,
-    colIdx: number
-  ): Partial<ExcelJS.Borders> => {
-    return {
-      top: rowIdx === 1 ? borderEdge : undefined,
-      bottom: rowIdx === totalRows ? borderEdge : undefined,
-      left: colIdx === 1 ? borderEdge : undefined,
-      right: colIdx === 7 ? borderEdge : undefined,
-    }
-  }
-
-  const headerRow = ws.addRow(DAY_HEADERS)
-  headerRow.height = 31.22
-  headerRow.eachCell({ includeEmpty: true }, (cell, col) => {
-    cell.alignment = centerWrap
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF356854' },
-    }
-    cell.font = {
-      name: 'Times New Roman',
-      size: 16,
-      color: { argb: 'FFFFFFFF' },
-    }
-    cell.border = outerBorder(1, col)
-  })
-
-  for (let wi = 0; wi < ROW_COUNT; wi++) {
-    const monday = weeks[wi]
-    const rowData: (string | null)[] = []
-    for (let i = 0; i < 7; i++) {
-      if (monday) {
-        const d = new Date(monday)
-        d.setDate(d.getDate() + i)
-        const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-        rowData.push(byDate.get(ds) ?? null)
-      } else {
-        rowData.push(null)
-      }
-    }
-    const row = ws.addRow(rowData)
-    row.height = 71.38
-    const bgColor = wi % 2 === 0 ? 'FFFFFFFF' : 'FFF6F8F9'
-    row.eachCell({ includeEmpty: true }, (cell, col) => {
-      cell.alignment = centerWrap
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: bgColor },
-      }
-      cell.font = { name: 'Roboto', size: 14, color: { argb: 'FF434343' } }
-      cell.border = outerBorder(wi + 2, col)
-    })
-  }
-
-  const buffer = await wb.xlsx.writeBuffer()
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  })
+const exportMealPlan = async (year: number, month: number) => {
+  const monthStr = `${year}-${String(month).padStart(2, '0')}`
+  const res = await fetch(`/api/export/meal-plan.xlsx?month=${monthStr}`)
+  if (!res.ok) return
+  const blob = await res.blob()
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   const monthName = new Date(year, month - 1, 1).toLocaleString(i18n.language, {
     month: 'long',
   })
   a.href = url
-  a.download = `meal-plan-${year}-${String(month).padStart(2, '0')}-${monthName}.xlsx`
+  a.download = `meal-plan-${monthStr}-${monthName}.xlsx`
   a.click()
   URL.revokeObjectURL(url)
 }
@@ -837,7 +729,7 @@ const MealPlanPage = ({
               size="sm"
               variant="secondary"
               isDisabled={loading || entries.length === 0}
-              onPress={() => void exportMealPlan(entries, viewYear, viewMonth)}
+              onPress={() => void exportMealPlan(viewYear, viewMonth)}
             >
               {t('mealPlan.exportXlsx')}
             </Button>
