@@ -1,0 +1,27 @@
+{
+  "name": "@platekeeper/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./types": "./src/types.ts",
+    "./api/*": "./src/api/*.ts",
+    "./hooks/*": "./src/hooks/*.ts",
+    "./utils/*": "./src/utils/*.ts",
+    "./i18n": "./src/i18n.ts",
+    "./locales/*": "./src/locales/*.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "i18next": "^26.0.0",
+    "react": "^19.0.0",
+    "react-i18next": "^17.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "~5.7.2"
+  }
+}
