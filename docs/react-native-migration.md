@@ -98,17 +98,17 @@ Copy all 5 locale JSON files (`en`, `pl`, `de`, `fr`, `es`) to `packages/shared/
 
 ---
 
-## Phase 2 — Move xlsx/PDF export to FastAPI
+## Phase 2 — Move xlsx/PDF export to FastAPI ✅
 
 Goal: remove `exceljs` from the frontend; both web and mobile download a file from an API endpoint.
 
-### 2.1 Add Python dependencies
+### 2.1 Add Python dependencies ✅
 
 Add to `services/api`:
 - `openpyxl` — xlsx generation (port the meal plan grid from ExcelJS)
 - `reportlab` or `weasyprint` — PDF generation
 
-### 2.2 Add export endpoints
+### 2.2 Add export endpoints ✅
 
 ```
 GET /api/export/meal-plan.xlsx?month=YYYY-MM   → returns .xlsx file
@@ -123,15 +123,15 @@ Both endpoints:
 
 The xlsx output should reproduce the current styled grid (header row, alternating row colours, fonts, borders) using `openpyxl`.
 
-### 2.3 Update web MealPlanPage
+### 2.3 Update web MealPlanPage ✅
 
 Replace the client-side ExcelJS export function in `MealPlanPage.tsx` with a fetch to the new endpoint and a browser download trigger. Remove the `exceljs` import.
 
-### 2.4 Remove exceljs
+### 2.4 Remove exceljs ✅
 
 Remove `exceljs` from `apps/web/package.json` and run `pnpm install`.
 
-### 2.5 Verify
+### 2.5 Verify ✅
 
 Download xlsx and PDF from the web app — check formatting matches the current output.
 
