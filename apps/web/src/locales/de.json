@@ -41,6 +41,8 @@
     "failedToDelete": "Rezept konnte nicht gelöscht werden",
     "deleteTitle": "Rezept löschen?",
     "deleteConfirm": "{{title}} wird dauerhaft entfernt.",
+    "filterFavourites": "Favoriten",
+    "noFavourites": "Noch keine Favoriten.",
     "colTitle": "Titel",
     "colServings": "Portionen",
     "colKcal": "Kcal",

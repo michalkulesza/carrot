@@ -41,6 +41,8 @@
     "failedToDelete": "Échec de la suppression",
     "deleteTitle": "Supprimer la recette ?",
     "deleteConfirm": "{{title}} sera définitivement supprimée.",
+    "filterFavourites": "Favoris",
+    "noFavourites": "Aucun favori pour l'instant.",
     "colTitle": "Titre",
     "colServings": "Portions",
     "colKcal": "Kcal",

@@ -43,6 +43,8 @@
     "failedToDelete": "Nie udało się usunąć przepisu",
     "deleteTitle": "Usunąć przepis?",
     "deleteConfirm": "{{title}} zostanie trwale usunięty.",
+    "filterFavourites": "Ulubione",
+    "noFavourites": "Brak ulubionych.",
     "colTitle": "Tytuł",
     "colServings": "Porcje",
     "colKcal": "Kcal",

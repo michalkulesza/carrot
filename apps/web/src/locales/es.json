@@ -37,6 +37,8 @@
     "failedToDelete": "Error al eliminar la receta",
     "deleteTitle": "¿Eliminar receta?",
     "deleteConfirm": "{{title}} se eliminará permanentemente.",
+    "filterFavourites": "Favoritos",
+    "noFavourites": "Aún no hay favoritos.",
     "colTitle": "Título",
     "colServings": "Raciones",
     "colKcal": "Kcal",

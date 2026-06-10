@@ -44,6 +44,8 @@
     "failedToDelete": "Failed to delete recipe",
     "deleteTitle": "Delete recipe?",
     "deleteConfirm": "{{title}} will be permanently removed.",
+    "filterFavourites": "Favourites",
+    "noFavourites": "No favourites yet.",
     "colTitle": "Title",
     "colServings": "Servings",
     "colKcal": "Kcal",
