@@ -63,15 +63,15 @@ Consider: run estimation at import time via Gemini structured output rather than
 - `(?)` = uncertain whether to build; needs spike or decision before scheduling
 - Items here are **not** ordered by priority
 
-
+/backgrou
 
 FAVOURITE RECIPES, STAR + TABLE - done
+in steps use values from ingridients on tap, add iconafter ingridient - done
 
 Most popular imports with fgilters
-recipe builder
-photo support
-text support
 plans free/paid
 limits
 upgrade popups
-in steps use values from ingridients on tap, add iconafter ingridient
+recipe builder
+photo support
+text support

@@ -41,7 +41,7 @@ Extract all TypeScript interfaces and types from `apps/web/src/api/client.ts` in
 - `ImportResult`, `ImportMetadata`, `ImportStage`, `StageEvent`, `StreamCallbacks`
 - `AuthUser`, `RegisterData`
 
-### 1.3 Build a configurable API client
+### 1.3 Build a configurable API client ✅
 
 The web uses relative URLs + cookies. Mobile needs absolute URLs + Bearer token. Create an API client factory:
 

@@ -1,5 +1,6 @@
 # Misc
 - After each successful task make a commit with a message. If not sure if feature is fully completed, ask user.
+- When implementing a plan from .md include that file in the commit
 
 # Code conventions
 
