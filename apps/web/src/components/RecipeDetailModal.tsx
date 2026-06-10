@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react'
 import {
   useTimers,
   getRemainingSeconds,
@@ -6,7 +6,7 @@ import {
   formatCountdown,
   formatDurationLabel,
   type TimerEntry,
-} from "../context/TimerContext";
+} from '../context/TimerContext'
 import {
   Modal,
   ModalBackdrop,
@@ -18,7 +18,7 @@ import {
   Button,
   Switch,
   toast,
-} from "@heroui/react";
+} from '@heroui/react'
 import {
   AllergenFlag,
   RecipeOut,
@@ -29,9 +29,8 @@ import {
   deleteRecipe,
   removeTagFromRecipe,
   updateRecipe,
-} from "../api/client";
-import TagRow from "./TagRow";
-import { useHousehold } from "../context/HouseholdContext";
+} from '../api/client'
+import TagRow from './TagRow'
 
 // ── Allergen popover ──────────────────────────────────────────────────────────
 
@@ -41,60 +40,69 @@ function AllergenPopover({
   onReplace,
   onRestore,
 }: {
-  flag: AllergenFlag;
-  activeAllergens: string[];
-  onReplace: () => void;
-  onRestore: () => void;
+  flag: AllergenFlag
+  activeAllergens: string[]
+  onReplace: () => void
+  onRestore: () => void
 }) {
-  const [open, setOpen] = useState(false);
-  const [above, setAbove] = useState(false);
-  const [pos, setPos] = useState({ vertical: 0, right: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false)
+  const [above, setAbove] = useState(false)
+  const [pos, setPos] = useState({ vertical: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     function handleClickOutside(e: MouseEvent) {
       if (
-        panelRef.current && !panelRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) setOpen(false);
+        panelRef.current &&
+        !panelRef.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      )
+        setOpen(false)
     }
-    function handleScroll() { setOpen(false); }
-    document.addEventListener("mousedown", handleClickOutside);
-    window.addEventListener("scroll", handleScroll, { capture: true });
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll, { capture: true });
-    };
-  }, [open]);
+    function handleScroll() {
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    window.addEventListener('scroll', handleScroll, { capture: true })
 
-  const isActive = flag.allergen && activeAllergens.some((a) => {
-    const fa = flag.allergen!.toLowerCase();
-    const la = a.toLowerCase();
-    return fa === la || fa.includes(la) || la.includes(fa);
-  });
-  if (!isActive) return null;
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      window.removeEventListener('scroll', handleScroll, { capture: true })
+    }
+  }, [open])
+
+  const isActive =
+    flag.allergen &&
+    activeAllergens.some((a) => {
+      const fa = flag.allergen!.toLowerCase()
+      const la = a.toLowerCase()
+
+      return fa === la || fa.includes(la) || la.includes(fa)
+    })
+  if (!isActive) return null
 
   function handleOpen() {
     if (btnRef.current) {
-      const r = btnRef.current.getBoundingClientRect();
-      const showAbove = r.top > window.innerHeight / 2;
-      setAbove(showAbove);
+      const r = btnRef.current.getBoundingClientRect()
+      const showAbove = r.top > window.innerHeight / 2
+      setAbove(showAbove)
       setPos({
         vertical: showAbove ? window.innerHeight - r.top + 4 : r.bottom + 4,
         right: window.innerWidth - r.right,
-      });
+      })
     }
-    setOpen((v) => !v);
+    setOpen((v) => !v)
   }
 
   const panelStyle: React.CSSProperties = {
-    position: "fixed",
+    position: 'fixed',
     right: pos.right,
     zIndex: 9999,
     ...(above ? { bottom: pos.vertical } : { top: pos.vertical }),
-  };
+  }
 
   return (
     <div className="shrink-0">
@@ -104,12 +112,16 @@ function AllergenPopover({
         onClick={handleOpen}
         className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium whitespace-nowrap ${
           flag.substitute_applied
-            ? "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-            : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+            : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
         }`}
-        title={flag.substitute_applied ? "Substitute applied" : `Contains ${flag.allergen}`}
+        title={
+          flag.substitute_applied
+            ? 'Substitute applied'
+            : `Contains ${flag.allergen}`
+        }
       >
-        {flag.substitute_applied ? "✓" : `⚠ ${flag.allergen}`}
+        {flag.substitute_applied ? '✓' : `⚠ ${flag.allergen}`}
       </button>
       {open && (
         <div
@@ -120,37 +132,64 @@ function AllergenPopover({
           {flag.substitute_applied && flag.original_display ? (
             <>
               <p className="text-zinc-600 mb-2">
-                Originally <strong className="text-zinc-800">{flag.original_display}</strong>,
-                replaced with <strong className="text-zinc-800">{flag.substitute}</strong> due to {flag.allergen}.
+                Originally{' '}
+                <strong className="text-zinc-800">
+                  {flag.original_display}
+                </strong>
+                , replaced with{' '}
+                <strong className="text-zinc-800">{flag.substitute}</strong> due
+                to {flag.allergen}.
               </p>
-              <Button size="sm" variant="secondary" onPress={() => { onRestore(); setOpen(false); }}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onPress={() => {
+                  onRestore()
+                  setOpen(false)
+                }}
+              >
                 Restore original
               </Button>
             </>
           ) : flag.substitute ? (
             <>
               <p className="text-zinc-600 mb-2">
-                Contains <strong className="text-zinc-800">{flag.allergen}</strong>.
-                Suggested substitute: <strong className="text-zinc-800">{flag.substitute}</strong>.
+                Contains{' '}
+                <strong className="text-zinc-800">{flag.allergen}</strong>.
+                Suggested substitute:{' '}
+                <strong className="text-zinc-800">{flag.substitute}</strong>.
               </p>
               <div className="flex gap-2">
-                <Button size="sm" variant="primary" onPress={() => { onReplace(); setOpen(false); }}>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={() => {
+                    onReplace()
+                    setOpen(false)
+                  }}
+                >
                   Replace
                 </Button>
-                <Button size="sm" variant="tertiary" onPress={() => setOpen(false)}>
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  onPress={() => setOpen(false)}
+                >
                   Keep original
                 </Button>
               </div>
             </>
           ) : (
             <p className="text-zinc-600">
-              Contains <strong className="text-zinc-800">{flag.allergen}</strong>. No substitute available.
+              Contains{' '}
+              <strong className="text-zinc-800">{flag.allergen}</strong>. No
+              substitute available.
             </p>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ── EditLine ──────────────────────────────────────────────────────────────────
@@ -158,24 +197,24 @@ function AllergenPopover({
 function EditLine({
   value,
   onChange,
-  className = "",
+  className = '',
   multiline = false,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  multiline?: boolean;
+  value: string
+  onChange: (v: string) => void
+  className?: string
+  multiline?: boolean
 }) {
   const base =
-    "w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none";
-  const ref = useRef<HTMLTextAreaElement>(null);
+    'w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none'
+  const ref = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.style.height = "auto";
-      ref.current.style.height = `${ref.current.scrollHeight}px`;
+      ref.current.style.height = 'auto'
+      ref.current.style.height = `${ref.current.scrollHeight}px`
     }
-  }, [value]);
+  }, [value])
 
   if (multiline) {
     return (
@@ -186,8 +225,9 @@ function EditLine({
         onChange={(e) => onChange(e.target.value)}
         className={`${base} overflow-hidden ${className}`}
       />
-    );
+    )
   }
+
   return (
     <input
       type="text"
@@ -195,76 +235,101 @@ function EditLine({
       onChange={(e) => onChange(e.target.value)}
       className={`${base} ${className}`}
     />
-  );
+  )
 }
 
 // ── Screen Wake Lock hook ─────────────────────────────────────────────────────
 
 function useScreenWakeLock() {
-  const [active, setActive] = useState(() => localStorage.getItem("wakelock-default") === "1");
-  const sentinelRef = useRef<WakeLockSentinel | null>(null);
+  const [active, setActive] = useState(
+    () => localStorage.getItem('wakelock-default') === '1'
+  )
+  const sentinelRef = useRef<WakeLockSentinel | null>(null)
 
   useEffect(() => {
-
     if (!active) {
-      sentinelRef.current?.release().catch(() => {});
-      sentinelRef.current = null;
-      return;
+      sentinelRef.current?.release().catch(() => {})
+      sentinelRef.current = null
+
+      return
     }
 
-    let stale = false;
-    navigator.wakeLock?.request("screen").then((s) => {
-      if (stale) { s.release(); return; }
-      sentinelRef.current = s;
-    }).catch(() => {});
+    let stale = false
+    navigator.wakeLock
+      ?.request('screen')
+      .then((s) => {
+        if (stale) {
+          s.release()
+
+          return
+        }
+        sentinelRef.current = s
+      })
+      .catch(() => {})
 
     return () => {
-      stale = true;
-      sentinelRef.current?.release().catch(() => {});
-      sentinelRef.current = null;
-    };
-  }, [active]);
+      stale = true
+      sentinelRef.current?.release().catch(() => {})
+      sentinelRef.current = null
+    }
+  }, [active])
 
   useEffect(() => {
     function onVisible() {
-      if (document.visibilityState === "visible" && active && !sentinelRef.current) {
-        navigator.wakeLock?.request("screen").then((s) => { sentinelRef.current = s; }).catch(() => {});
+      if (
+        document.visibilityState === 'visible' &&
+        active &&
+        !sentinelRef.current
+      ) {
+        navigator.wakeLock
+          ?.request('screen')
+          .then((s) => {
+            sentinelRef.current = s
+          })
+          .catch(() => {})
       }
     }
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [active]);
+    document.addEventListener('visibilitychange', onVisible)
 
-  return { active, toggle: () => setActive((v) => !v), release: () => setActive(false) };
+    return () => document.removeEventListener('visibilitychange', onVisible)
+  }, [active])
+
+  return {
+    active,
+    toggle: () => setActive((v) => !v),
+    release: () => setActive(false),
+  }
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = "view" | "editing" | "confirming";
+type Mode = 'view' | 'editing' | 'confirming'
 
 interface EditState {
-  title: string;
-  servings: string;
-  kcal: string;
-  thumbnail_url: string | null;
-  components: SaveComponent[];
-  shared_to_personal: boolean;
+  title: string
+  servings: string
+  kcal: string
+  thumbnail_url: string | null
+  components: SaveComponent[]
+  shared_to_personal: boolean
 }
 
 function toEditState(r: RecipeOut): EditState {
   return {
     title: r.title,
-    servings: r.servings?.toString() ?? "",
-    kcal: r.kcal_per_serving?.toString() ?? "",
+    servings: r.servings?.toString() ?? '',
+    kcal: r.kcal_per_serving?.toString() ?? '',
     thumbnail_url: r.thumbnail_url,
     components: (r.components as SaveComponent[]).map((c) => ({
       ...c,
       ingredients: [...c.ingredients],
       steps: [...c.steps],
-      ingredient_flags: c.ingredient_flags ? [...c.ingredient_flags] : undefined,
+      ingredient_flags: c.ingredient_flags
+        ? [...c.ingredient_flags]
+        : undefined,
     })),
     shared_to_personal: r.shared_to_personal ?? true,
-  };
+  }
 }
 
 // ── Step timer chip ───────────────────────────────────────────────────────────
@@ -278,56 +343,66 @@ function StepTimerChip({
   componentIndex,
   stepIndex,
 }: {
-  timerId: string;
-  totalSeconds: number;
-  stepText: string;
-  recipeId: string;
-  recipeTitle: string;
-  componentIndex: number;
-  stepIndex: number;
+  timerId: string
+  totalSeconds: number
+  stepText: string
+  recipeId: string
+  recipeTitle: string
+  componentIndex: number
+  stepIndex: number
 }) {
-  const { timers, startTimer, pauseTimer, resumeTimer } = useTimers();
-  const timer: TimerEntry | undefined = timers.get(timerId);
+  const { timers, startTimer, pauseTimer, resumeTimer } = useTimers()
+  const timer: TimerEntry | undefined = timers.get(timerId)
 
   if (!timer) {
     return (
       <button
         type="button"
-        onClick={() => startTimer({ id: timerId, recipeId, recipeTitle, componentIndex, stepIndex, stepText, totalSeconds })}
+        onClick={() =>
+          startTimer({
+            id: timerId,
+            recipeId,
+            recipeTitle,
+            componentIndex,
+            stepIndex,
+            stepText,
+            totalSeconds,
+          })
+        }
         className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-100 hover:bg-amber-50 hover:text-amber-700 text-zinc-500 text-xs font-medium transition-colors"
         title="Start timer"
       >
         ⏱ {formatDurationLabel(totalSeconds)}
       </button>
-    );
+    )
   }
 
-  const remaining = getRemainingSeconds(timer);
-  const isRunning = timer.status === "running";
+  const remaining = getRemainingSeconds(timer)
+  const isRunning = timer.status === 'running'
 
   // Show done as soon as remaining hits 0, even before the tick confirms status
-  if (timer.status === "done" || remaining === 0) {
+  if (timer.status === 'done' || remaining === 0) {
     return (
       <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-xs font-medium">
         ✓ Done
       </span>
-    );
+    )
   }
 
   return (
     <button
       type="button"
-      onClick={() => isRunning ? pauseTimer(timerId) : resumeTimer(timerId)}
+      onClick={() => (isRunning ? pauseTimer(timerId) : resumeTimer(timerId))}
       className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium font-mono transition-colors ${
         isRunning
-          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-          : "bg-zinc-100 text-zinc-500 hover:bg-amber-50 hover:text-amber-700"
+          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+          : 'bg-zinc-100 text-zinc-500 hover:bg-amber-50 hover:text-amber-700'
       }`}
-      title={isRunning ? "Pause timer" : "Resume timer"}
+      title={isRunning ? 'Pause timer' : 'Resume timer'}
     >
-      ⏱ {formatCountdown(remaining)} {isRunning ? "⏸" : "▶"}
+      ⏱ {formatCountdown(remaining)} {isRunning ? '⏸' : '▶'}
     </button>
-  );
+  )
 }
 
 // ── View: component section ───────────────────────────────────────────────────
@@ -342,26 +417,31 @@ function ViewComponent({
   recipeTitle,
   componentIndex,
 }: {
-  comp: SaveComponent;
-  single: boolean;
-  activeAllergens: string[];
-  onReplaceIngredient: (ii: number) => void;
-  onRestoreIngredient: (ii: number) => void;
-  recipeId: string;
-  recipeTitle: string;
-  componentIndex: number;
+  comp: SaveComponent
+  single: boolean
+  activeAllergens: string[]
+  onReplaceIngredient: (ii: number) => void
+  onRestoreIngredient: (ii: number) => void
+  recipeId: string
+  recipeTitle: string
+  componentIndex: number
 }) {
   return (
     <div className="mb-5">
       {!single && (
-        <h3 className="text-sm font-semibold text-zinc-600 mb-2">{comp.name}</h3>
+        <h3 className="text-sm font-semibold text-zinc-600 mb-2">
+          {comp.name}
+        </h3>
       )}
       {comp.ingredients.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Ingredients</p>
+          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+            Ingredients
+          </p>
           <ul className="space-y-1 mb-3">
             {comp.ingredients.map((ing, i) => {
-              const flag = comp.ingredient_flags?.[i];
+              const flag = comp.ingredient_flags?.[i]
+
               return (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <span className="text-zinc-300 mt-1 shrink-0">·</span>
@@ -375,21 +455,30 @@ function ViewComponent({
                     />
                   )}
                 </li>
-              );
+              )
             })}
           </ul>
         </>
       )}
       {comp.steps.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Steps</p>
+          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+            Steps
+          </p>
           <ol className="space-y-2">
             {comp.steps.map((step, i) => {
-              const durationSeconds = parseDurationSeconds(step);
-              const timerId = `${recipeId}-c${componentIndex}-s${i}`;
+              const durationSeconds = parseDurationSeconds(step)
+              const timerId = `${recipeId}-c${componentIndex}-s${i}`
+
               return (
-                <li key={i} id={`timer-step-${componentIndex}-${i}`} className="flex items-start gap-2 text-sm transition-colors duration-300">
-                  <span className="text-zinc-400 font-medium shrink-0">{i + 1}.</span>
+                <li
+                  key={i}
+                  id={`timer-step-${componentIndex}-${i}`}
+                  className="flex items-start gap-2 text-sm transition-colors duration-300"
+                >
+                  <span className="text-zinc-400 font-medium shrink-0">
+                    {i + 1}.
+                  </span>
                   <span className="flex-1">{step}</span>
                   {durationSeconds !== null && (
                     <StepTimerChip
@@ -403,13 +492,13 @@ function ViewComponent({
                     />
                   )}
                 </li>
-              );
+              )
             })}
           </ol>
         </>
       )}
     </div>
-  );
+  )
 }
 
 // ── Edit: component section ───────────────────────────────────────────────────
@@ -420,24 +509,31 @@ function EditComponent({
   onIngredientChange,
   onStepChange,
 }: {
-  comp: SaveComponent;
-  single: boolean;
-  onIngredientChange: (ii: number, val: string) => void;
-  onStepChange: (si: number, val: string) => void;
+  comp: SaveComponent
+  single: boolean
+  onIngredientChange: (ii: number, val: string) => void
+  onStepChange: (si: number, val: string) => void
 }) {
   return (
     <div className="mb-5">
       {!single && (
-        <h3 className="text-sm font-semibold text-zinc-600 mb-2">{comp.name}</h3>
+        <h3 className="text-sm font-semibold text-zinc-600 mb-2">
+          {comp.name}
+        </h3>
       )}
       {comp.ingredients.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Ingredients</p>
+          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+            Ingredients
+          </p>
           <ul className="space-y-1 mb-3">
             {comp.ingredients.map((ing, ii) => (
               <li key={ii} className="flex items-start gap-2 text-sm">
                 <span className="text-zinc-300 mt-1.5 shrink-0">·</span>
-                <EditLine value={ing} onChange={(v) => onIngredientChange(ii, v)} />
+                <EditLine
+                  value={ing}
+                  onChange={(v) => onIngredientChange(ii, v)}
+                />
               </li>
             ))}
           </ul>
@@ -445,33 +541,41 @@ function EditComponent({
       )}
       {comp.steps.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Steps</p>
+          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+            Steps
+          </p>
           <ol className="space-y-2">
             {comp.steps.map((step, si) => (
               <li key={si} className="flex items-start gap-2 text-sm">
-                <span className="text-zinc-400 font-medium shrink-0">{si + 1}.</span>
-                <EditLine value={step} onChange={(v) => onStepChange(si, v)} multiline />
+                <span className="text-zinc-400 font-medium shrink-0">
+                  {si + 1}.
+                </span>
+                <EditLine
+                  value={step}
+                  onChange={(v) => onStepChange(si, v)}
+                  multiline
+                />
               </li>
             ))}
           </ol>
         </>
       )}
     </div>
-  );
+  )
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
 interface RecipeDetailModalProps {
-  recipe: RecipeOut | null;
-  allTags: Tag[];
-  onTagCreated: (tag: Tag) => void;
-  onClose: () => void;
-  onUpdated?: (r: RecipeOut) => void;
-  onDeleted?: (id: string) => void;
-  initialMode?: Mode;
-  activeAllergens?: string[];
-  scrollToStep?: { componentIndex: number; stepIndex: number } | null;
+  recipe: RecipeOut | null
+  allTags: Tag[]
+  onTagCreated: (tag: Tag) => void
+  onClose: () => void
+  onUpdated?: (r: RecipeOut) => void
+  onDeleted?: (id: string) => void
+  initialMode?: Mode
+  activeAllergens?: string[]
+  scrollToStep?: { componentIndex: number; stepIndex: number } | null
 }
 
 export default function RecipeDetailModal({
@@ -485,126 +589,136 @@ export default function RecipeDetailModal({
   activeAllergens = [],
   scrollToStep,
 }: RecipeDetailModalProps) {
-  const { activeHouseholdId } = useHousehold();
-  const wakeLock = useScreenWakeLock();
-  const [mode, setMode] = useState<Mode>("view");
-  const [draft, setDraft] = useState<EditState | null>(null);
-  const [localTags, setLocalTags] = useState<Tag[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showImgInput, setShowImgInput] = useState(false);
-  const [imgDraft, setImgDraft] = useState("");
-  const [localNotes, setLocalNotes] = useState(recipe?.notes ?? "");
-  const [notesSaving, setNotesSaving] = useState(false);
-  const savedNotesRef = useRef(recipe?.notes ?? "");
-  const initialModeRef = useRef(initialMode);
-  initialModeRef.current = initialMode;
+  const wakeLock = useScreenWakeLock()
+  const [mode, setMode] = useState<Mode>('view')
+  const [draft, setDraft] = useState<EditState | null>(null)
+  const [localTags, setLocalTags] = useState<Tag[]>([])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [showImgInput, setShowImgInput] = useState(false)
+  const [imgDraft, setImgDraft] = useState('')
+  const [localNotes, setLocalNotes] = useState(recipe?.notes ?? '')
+  const [notesSaving, setNotesSaving] = useState(false)
+  const savedNotesRef = useRef(recipe?.notes ?? '')
 
   useEffect(() => {
     if (recipe) {
-      setDraft(toEditState(recipe));
-      setLocalTags(recipe.tags ?? []);
-      setLocalNotes(recipe.notes ?? "");
-      savedNotesRef.current = recipe.notes ?? "";
-      setMode(initialModeRef.current ?? "view");
-      setError(null);
+      setDraft(toEditState(recipe))
+      setLocalTags(recipe.tags ?? [])
+      setLocalNotes(recipe.notes ?? '')
+      savedNotesRef.current = recipe.notes ?? ''
+      setMode(initialMode ?? 'view')
+      setError(null)
     }
-  }, [recipe?.id]);
+  }, [recipe?.id, initialMode])
 
   // Scroll to target step after modal opens (wait for open animation)
   useEffect(() => {
-    if (!recipe || !scrollToStep) return;
+    if (!recipe || !scrollToStep) return
     const timer = setTimeout(() => {
       const el = document.getElementById(
         `timer-step-${scrollToStep.componentIndex}-${scrollToStep.stepIndex}`
-      );
-      el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      el?.classList.add("recipe-step-highlight");
-      setTimeout(() => el?.classList.remove("recipe-step-highlight"), 1800);
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [recipe?.id, scrollToStep]);
+      )
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      el?.classList.add('recipe-step-highlight')
+      setTimeout(() => el?.classList.remove('recipe-step-highlight'), 1800)
+    }, 250)
 
-  if (!recipe || !draft) return null;
-  const r = recipe;
+    return () => clearTimeout(timer)
+  }, [recipe?.id, scrollToStep])
 
-  const displayThumb = mode === "editing" ? draft.thumbnail_url : r.thumbnail_url;
+  if (!recipe || !draft) return null
+  const r = recipe
+
+  const displayThumb =
+    mode === 'editing' ? draft.thumbnail_url : r.thumbnail_url
   const proxyUrl = displayThumb
     ? `/api/proxy/image?url=${encodeURIComponent(displayThumb)}`
-    : null;
+    : null
 
   function openImgEditor() {
-    setImgDraft(draft?.thumbnail_url ?? "");
-    setShowImgInput(true);
+    setImgDraft(draft?.thumbnail_url ?? '')
+    setShowImgInput(true)
   }
 
   function commitImg() {
-    const trimmed = imgDraft.trim();
-    setDraft((d) => (d ? { ...d, thumbnail_url: trimmed || null } : d));
-    setShowImgInput(false);
+    const trimmed = imgDraft.trim()
+    setDraft((d) => (d ? { ...d, thumbnail_url: trimmed || null } : d))
+    setShowImgInput(false)
   }
 
-  const components = mode === "editing" ? draft.components : (r.components as SaveComponent[]);
-  const single = components.length === 1;
+  const components =
+    mode === 'editing' ? draft.components : (r.components as SaveComponent[])
+  const single = components.length === 1
 
   const headerBg =
-    mode === "editing"
-      ? "bg-warning-100 transition-colors duration-200"
-      : mode === "confirming"
-      ? "bg-danger-100 transition-colors duration-200"
-      : "transition-colors duration-200";
+    mode === 'editing'
+      ? 'bg-warning-100 transition-colors duration-200'
+      : mode === 'confirming'
+        ? 'bg-danger-100 transition-colors duration-200'
+        : 'transition-colors duration-200'
 
   function setIngredient(ci: number, ii: number, val: string) {
     setDraft((d) => {
-      if (!d) return d;
+      if (!d) return d
       const comps = d.components.map((c, ci2) =>
         ci2 !== ci
           ? c
-          : { ...c, ingredients: c.ingredients.map((v, ii2) => (ii2 === ii ? val : v)) }
-      );
-      return { ...d, components: comps };
-    });
+          : {
+              ...c,
+              ingredients: c.ingredients.map((v, ii2) =>
+                ii2 === ii ? val : v
+              ),
+            }
+      )
+
+      return { ...d, components: comps }
+    })
   }
 
   function setStep(ci: number, si: number, val: string) {
     setDraft((d) => {
-      if (!d) return d;
+      if (!d) return d
       const comps = d.components.map((c, ci2) =>
-        ci2 !== ci ? c : { ...c, steps: c.steps.map((s, si2) => (si2 === si ? val : s)) }
-      );
-      return { ...d, components: comps };
-    });
+        ci2 !== ci
+          ? c
+          : { ...c, steps: c.steps.map((s, si2) => (si2 === si ? val : s)) }
+      )
+
+      return { ...d, components: comps }
+    })
   }
 
   async function handleTagAdd(tag: Tag) {
-    setLocalTags((prev) => [...prev, tag]);
+    setLocalTags((prev) => [...prev, tag])
     try {
-      await addTagToRecipe(r.id, tag.id);
+      await addTagToRecipe(r.id, tag.id)
     } catch {
-      setLocalTags((prev) => prev.filter((t) => t.id !== tag.id));
+      setLocalTags((prev) => prev.filter((t) => t.id !== tag.id))
     }
   }
 
   async function handleTagRemove(tagId: string) {
-    setLocalTags((prev) => prev.filter((t) => t.id !== tagId));
+    setLocalTags((prev) => prev.filter((t) => t.id !== tagId))
     try {
-      await removeTagFromRecipe(r.id, tagId);
+      await removeTagFromRecipe(r.id, tagId)
     } catch {
-      const removed = allTags.find((t) => t.id === tagId);
-      if (removed) setLocalTags((prev) => [...prev, removed]);
+      const removed = allTags.find((t) => t.id === tagId)
+      if (removed) setLocalTags((prev) => [...prev, removed])
     }
   }
 
   async function handleTagCreate(name: string): Promise<Tag> {
-    const tag = await createTag(name);
-    onTagCreated(tag);
-    return tag;
+    const tag = await createTag(name)
+    onTagCreated(tag)
+
+    return tag
   }
 
   async function handleNotesSave() {
-    const trimmed = localNotes.trim();
-    if (trimmed === savedNotesRef.current.trim()) return;
-    setNotesSaving(true);
+    const trimmed = localNotes.trim()
+    if (trimmed === savedNotesRef.current.trim()) return
+    setNotesSaving(true)
     try {
       const updated = await updateRecipe(r.id, {
         title: r.title,
@@ -617,25 +731,25 @@ export default function RecipeDetailModal({
         components: r.components as SaveComponent[],
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: r.shared_to_personal,
-      });
-      savedNotesRef.current = trimmed;
-      onUpdated?.(updated);
+      })
+      savedNotesRef.current = trimmed
+      onUpdated?.(updated)
     } catch {
       // silent — user can retry by editing again
     } finally {
-      setNotesSaving(false);
+      setNotesSaving(false)
     }
   }
 
   async function handleSave() {
-    if (!draft) return;
-    setBusy(true);
-    setError(null);
+    if (!draft) return
+    setBusy(true)
+    setError(null)
     try {
       const updated = await updateRecipe(r.id, {
         title: draft.title,
-        servings: draft.servings !== "" ? Number(draft.servings) : null,
-        kcal_per_serving: draft.kcal !== "" ? Number(draft.kcal) : null,
+        servings: draft.servings !== '' ? Number(draft.servings) : null,
+        kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
         thumbnail_url: draft.thumbnail_url,
         creator_handle: r.creator_handle,
         source_url: r.source_url,
@@ -643,35 +757,40 @@ export default function RecipeDetailModal({
         components: draft.components,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: draft.shared_to_personal,
-      });
-      toast.success("Recipe updated", { timeout: 3000 });
-      onUpdated?.(updated);
-      setMode("view");
+      })
+      toast.success('Recipe updated', { timeout: 3000 })
+      onUpdated?.(updated)
+      setMode('view')
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      setError(err instanceof Error ? err.message : 'Failed to save')
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
   }
 
   async function handleReplaceIngredient(ci: number, ii: number) {
-    const comp = (r.components as SaveComponent[])[ci];
-    const flag = comp.ingredient_flags?.[ii];
-    if (!flag?.substitute) return;
-    const originalDisplay = comp.ingredients[ii];
+    const comp = (r.components as SaveComponent[])[ci]
+    const flag = comp.ingredient_flags?.[ii]
+    if (!flag?.substitute) return
+    const originalDisplay = comp.ingredients[ii]
 
     const newComponents = (r.components as SaveComponent[]).map((c, cIdx) => {
-      if (cIdx !== ci) return c;
+      if (cIdx !== ci) return c
       const newIngredients = c.ingredients.map((ing, iIdx) =>
         iIdx === ii ? flag.substitute! : ing
-      );
+      )
       const newFlags = (c.ingredient_flags ?? []).map((f, fIdx) =>
         fIdx === ii
-          ? { ...f, substitute_applied: true, original_display: originalDisplay }
+          ? {
+              ...f,
+              substitute_applied: true,
+              original_display: originalDisplay,
+            }
           : f
-      );
-      return { ...c, ingredients: newIngredients, ingredient_flags: newFlags };
-    });
+      )
+
+      return { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
+    })
 
     try {
       const updated = await updateRecipe(r.id, {
@@ -685,32 +804,36 @@ export default function RecipeDetailModal({
         components: newComponents,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: r.shared_to_personal,
-      });
-      onUpdated?.(updated);
-      setDraft(toEditState(updated));
+      })
+      onUpdated?.(updated)
+      setDraft(toEditState(updated))
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : "Failed to apply substitute", { timeout: 3000 });
+      toast.danger(
+        err instanceof Error ? err.message : 'Failed to apply substitute',
+        { timeout: 3000 }
+      )
     }
   }
 
   async function handleRestoreIngredient(ci: number, ii: number) {
-    const comp = (r.components as SaveComponent[])[ci];
-    const flag = comp.ingredient_flags?.[ii];
-    if (!flag?.original_display) return;
-    const originalDisplay = flag.original_display;
+    const comp = (r.components as SaveComponent[])[ci]
+    const flag = comp.ingredient_flags?.[ii]
+    if (!flag?.original_display) return
+    const originalDisplay = flag.original_display
 
     const newComponents = (r.components as SaveComponent[]).map((c, cIdx) => {
-      if (cIdx !== ci) return c;
+      if (cIdx !== ci) return c
       const newIngredients = c.ingredients.map((ing, iIdx) =>
         iIdx === ii ? originalDisplay : ing
-      );
+      )
       const newFlags = (c.ingredient_flags ?? []).map((f, fIdx) =>
         fIdx === ii
           ? { ...f, substitute_applied: false, original_display: null }
           : f
-      );
-      return { ...c, ingredients: newIngredients, ingredient_flags: newFlags };
-    });
+      )
+
+      return { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
+    })
 
     try {
       const updated = await updateRecipe(r.id, {
@@ -724,60 +847,75 @@ export default function RecipeDetailModal({
         components: newComponents,
         tag_ids: localTags.map((t) => t.id),
         shared_to_personal: r.shared_to_personal,
-      });
-      onUpdated?.(updated);
-      setDraft(toEditState(updated));
+      })
+      onUpdated?.(updated)
+      setDraft(toEditState(updated))
     } catch (err) {
-      toast.danger(err instanceof Error ? err.message : "Failed to restore ingredient", { timeout: 3000 });
+      toast.danger(
+        err instanceof Error ? err.message : 'Failed to restore ingredient',
+        { timeout: 3000 }
+      )
     }
   }
 
   async function handleDelete() {
-    setBusy(true);
-    setError(null);
+    setBusy(true)
+    setError(null)
     try {
-      await deleteRecipe(r.id);
-      toast.danger("Recipe deleted", { timeout: 3000 });
-      onDeleted?.(r.id);
-      onClose();
+      await deleteRecipe(r.id)
+      toast.danger('Recipe deleted', { timeout: 3000 })
+      onDeleted?.(r.id)
+      onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
-      setMode("view");
+      setError(err instanceof Error ? err.message : 'Failed to delete')
+      setMode('view')
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
   }
 
   function cancelMode() {
-    if (mode === "editing") setDraft(toEditState(r));
-    setMode("view");
-    setShowImgInput(false);
-    setError(null);
+    if (mode === 'editing') setDraft(toEditState(r))
+    setMode('view')
+    setShowImgInput(false)
+    setError(null)
   }
 
   function handleClose() {
-    wakeLock.release();
-    setMode("view");
-    setError(null);
-    onClose();
+    wakeLock.release()
+    setMode('view')
+    setError(null)
+    onClose()
   }
 
   return (
-    <Modal isOpen={!!recipe} onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Modal
+      isOpen={!!recipe}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
+      }}
+    >
       <ModalBackdrop isDismissable>
-        <ModalContainer size="lg" scroll="inside" className="!rounded-xl overflow-hidden">
+        <ModalContainer
+          size="lg"
+          scroll="inside"
+          className="!rounded-xl overflow-hidden"
+        >
           <ModalDialog className="!p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[700px]">
             {/* ── Sticky header ── */}
             <ModalHeader className="flex-col gap-0 p-0">
-
               {/* Hero image (or solid colour in edit/confirm mode) */}
               {proxyUrl ? (
                 <div className="relative w-full h-48 shrink-0">
-                  <img src={proxyUrl} alt={r.title} className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    src={proxyUrl}
+                    alt={r.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
                   {/* Edit-image button (editing only) */}
-                  {mode === "editing" && (
+                  {mode === 'editing' && (
                     <button
                       type="button"
                       onClick={openImgEditor}
@@ -789,48 +927,64 @@ export default function RecipeDetailModal({
 
                   {/* Title + author over gradient */}
                   <div className="absolute bottom-0 inset-x-0 px-5 pb-4 pt-8">
-                    {mode === "editing" ? (
+                    {mode === 'editing' ? (
                       <EditLine
                         value={draft.title}
-                        onChange={(v) => setDraft((d) => (d ? { ...d, title: v } : d))}
+                        onChange={(v) =>
+                          setDraft((d) => (d ? { ...d, title: v } : d))
+                        }
                         className="text-xl font-bold text-white leading-snug placeholder:text-white/50"
                         multiline
                       />
                     ) : (
-                      <h2 className="text-xl font-bold text-white leading-snug">{r.title}</h2>
+                      <h2 className="text-xl font-bold text-white leading-snug">
+                        {r.title}
+                      </h2>
                     )}
                     {r.creator_handle && (
-                      <p className="text-sm text-white/75 mt-0.5">@{r.creator_handle}</p>
+                      <p className="text-sm text-white/75 mt-0.5">
+                        @{r.creator_handle}
+                      </p>
                     )}
                     {r.household_id && r.added_by && (
-                      <p className="text-xs text-white/60 mt-0.5">Added by {r.added_by}</p>
+                      <p className="text-xs text-white/60 mt-0.5">
+                        Added by {r.added_by}
+                      </p>
                     )}
                   </div>
                 </div>
               ) : (
                 /* No image: plain title block */
                 <div className={`px-5 pt-5 pb-1 ${headerBg}`}>
-                  {mode === "editing" ? (
+                  {mode === 'editing' ? (
                     <EditLine
                       value={draft.title}
-                      onChange={(v) => setDraft((d) => (d ? { ...d, title: v } : d))}
+                      onChange={(v) =>
+                        setDraft((d) => (d ? { ...d, title: v } : d))
+                      }
                       className="text-xl font-bold leading-snug"
                       multiline
                     />
                   ) : (
-                    <h2 className="text-xl font-bold leading-snug">{r.title}</h2>
+                    <h2 className="text-xl font-bold leading-snug">
+                      {r.title}
+                    </h2>
                   )}
                   {r.creator_handle && (
-                    <p className="text-sm text-zinc-500 mt-0.5">@{r.creator_handle}</p>
+                    <p className="text-sm text-zinc-500 mt-0.5">
+                      @{r.creator_handle}
+                    </p>
                   )}
                   {r.household_id && r.added_by && (
-                    <p className="text-xs text-zinc-400 mt-0.5">Added by {r.added_by}</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Added by {r.added_by}
+                    </p>
                   )}
                 </div>
               )}
 
               {/* Image URL input */}
-              {mode === "editing" && showImgInput && (
+              {mode === 'editing' && showImgInput && (
                 <div className={`px-5 pt-2 ${headerBg}`}>
                   <input
                     type="url"
@@ -838,8 +992,11 @@ export default function RecipeDetailModal({
                     onChange={(e) => setImgDraft(e.target.value)}
                     onBlur={commitImg}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") { e.preventDefault(); commitImg(); }
-                      if (e.key === "Escape") setShowImgInput(false);
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        commitImg()
+                      }
+                      if (e.key === 'Escape') setShowImgInput(false)
                     }}
                     placeholder="Image URL"
                     autoFocus
@@ -850,130 +1007,176 @@ export default function RecipeDetailModal({
 
               {/* Metadata: tags, pills, actions */}
               <div className={`px-5 pt-3 pb-3 flex flex-col gap-2 ${headerBg}`}>
+                {/* Tags — always visible */}
+                <TagRow
+                  tags={localTags}
+                  allTags={allTags}
+                  onAdd={handleTagAdd}
+                  onRemove={handleTagRemove}
+                  onCreateTag={handleTagCreate}
+                />
 
-              {/* Tags — always visible */}
-              <TagRow
-                tags={localTags}
-                allTags={allTags}
-                onAdd={handleTagAdd}
-                onRemove={handleTagRemove}
-                onCreateTag={handleTagCreate}
-              />
+                {/* Serves / kcal / source pills */}
+                {(draft.servings !== '' ||
+                  draft.kcal !== '' ||
+                  r.servings != null ||
+                  r.kcal_per_serving != null ||
+                  r.source_url) && (
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {mode === 'editing' ? (
+                      <>
+                        <label className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium pl-3 pr-2 py-1.5 rounded-full cursor-text">
+                          <span>Serves</span>
+                          <input
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={draft.servings}
+                            onChange={(e) =>
+                              setDraft((d) =>
+                                d
+                                  ? {
+                                      ...d,
+                                      servings: String(
+                                        Math.min(
+                                          99,
+                                          Math.max(1, Number(e.target.value))
+                                        )
+                                      ),
+                                    }
+                                  : d
+                              )
+                            }
+                            className="w-[2.2ch] bg-transparent text-primary font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                        </label>
+                        <label className="flex items-center gap-1.5 bg-warning/10 text-warning-700 text-xs font-medium pl-2 pr-3 py-1.5 rounded-full cursor-text">
+                          <input
+                            type="number"
+                            min={1}
+                            max={9999}
+                            value={draft.kcal}
+                            onChange={(e) =>
+                              setDraft((d) =>
+                                d
+                                  ? {
+                                      ...d,
+                                      kcal: String(
+                                        Math.min(
+                                          9999,
+                                          Math.max(1, Number(e.target.value))
+                                        )
+                                      ),
+                                    }
+                                  : d
+                              )
+                            }
+                            className="w-[3.8ch] bg-transparent text-warning-700 font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          />
+                          <span>kcal / serving</span>
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        {r.servings != null && (
+                          <span className="text-xs text-primary font-medium bg-primary/10 px-3 py-1.5 rounded-full">
+                            Serves {r.servings}
+                          </span>
+                        )}
+                        {r.kcal_per_serving != null && (
+                          <span className="text-xs text-warning-700 font-medium bg-warning/10 px-3 py-1.5 rounded-full">
+                            {r.kcal_per_serving} kcal / serving
+                          </span>
+                        )}
+                      </>
+                    )}
+                    {r.source_url && (
+                      <a
+                        href={r.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition-colors"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-3.5 h-3.5"
+                        >
+                          <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
+                          <path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" />
+                        </svg>
+                        Source
+                      </a>
+                    )}
+                  </div>
+                )}
 
-              {/* Serves / kcal / source pills */}
-              {(draft.servings !== "" || draft.kcal !== "" || r.servings != null || r.kcal_per_serving != null || r.source_url) && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  {mode === "editing" ? (
-                    <>
-                      <label className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium pl-3 pr-2 py-1.5 rounded-full cursor-text">
-                        <span>Serves</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={99}
-                          value={draft.servings}
-                          onChange={(e) =>
-                            setDraft((d) =>
-                              d ? { ...d, servings: String(Math.min(99, Math.max(1, Number(e.target.value)))) } : d
-                            )
-                          }
-                          className="w-[2.2ch] bg-transparent text-primary font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                        />
-                      </label>
-                      <label className="flex items-center gap-1.5 bg-warning/10 text-warning-700 text-xs font-medium pl-2 pr-3 py-1.5 rounded-full cursor-text">
-                        <input
-                          type="number"
-                          min={1}
-                          max={9999}
-                          value={draft.kcal}
-                          onChange={(e) =>
-                            setDraft((d) =>
-                              d ? { ...d, kcal: String(Math.min(9999, Math.max(1, Number(e.target.value)))) } : d
-                            )
-                          }
-                          className="w-[3.8ch] bg-transparent text-warning-700 font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                        />
-                        <span>kcal / serving</span>
-                      </label>
-                    </>
-                  ) : (
-                    <>
-                      {r.servings != null && (
-                        <span className="text-xs text-primary font-medium bg-primary/10 px-3 py-1.5 rounded-full">
-                          Serves {r.servings}
-                        </span>
-                      )}
-                      {r.kcal_per_serving != null && (
-                        <span className="text-xs text-warning-700 font-medium bg-warning/10 px-3 py-1.5 rounded-full">
-                          {r.kcal_per_serving} kcal / serving
-                        </span>
-                      )}
-                    </>
-                  )}
-                  {r.source_url && (
-                    <a
-                      href={r.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-600 transition-colors"
+                {/* Action bar */}
+                {mode === 'view' && (
+                  <div className="flex gap-2 pt-0.5 items-center">
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onPress={() => setMode('editing')}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                        <path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" />
-                        <path d="M11.603 7.963a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" />
-                      </svg>
-                      Source
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Action bar */}
-              {mode === "view" && (
-                <div className="flex gap-2 pt-0.5 items-center">
-                  <Button size="sm" variant="secondary" onPress={() => setMode("editing")}>
-                    Edit
-                  </Button>
-                  <Button size="sm" variant="danger-soft" onPress={() => setMode("confirming")}>
-                    Remove
-                  </Button>
-                  {"wakeLock" in navigator && (
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger-soft"
+                      onPress={() => setMode('confirming')}
+                    >
+                      Remove
+                    </Button>
+                    {'wakeLock' in navigator && (
+                      <button
+                        type="button"
+                        title={
+                          wakeLock.active
+                            ? 'Screen always-on: tap to disable'
+                            : 'Keep screen on while reading'
+                        }
+                        onClick={wakeLock.toggle}
+                        className={`ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                          wakeLock.active
+                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                            : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
+                        }`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                          className="w-3.5 h-3.5"
+                        >
+                          <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.06ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.061 1.06l1.06 1.06Z" />
+                        </svg>
+                        {wakeLock.active ? 'Screen on' : 'Keep on'}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {mode === 'editing' && (
+                  <div className="flex items-center gap-2 pt-0.5">
                     <button
                       type="button"
-                      title={wakeLock.active ? "Screen always-on: tap to disable" : "Keep screen on while reading"}
-                      onClick={wakeLock.toggle}
-                      className={`ml-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
-                        wakeLock.active
-                          ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                          : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200"
-                      }`}
+                      onClick={cancelMode}
+                      className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning text-warning-foreground hover:bg-warning-400 transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                        <path d="M10 2a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 2ZM10 15a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 10 15ZM10 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM15.657 5.404a.75.75 0 1 0-1.06-1.06l-1.061 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM6.464 14.596a.75.75 0 1 0-1.06-1.06l-1.06 1.06a.75.75 0 0 0 1.06 1.06l1.06-1.06ZM18 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 18 10ZM5 10a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 5 10ZM14.596 15.657a.75.75 0 0 0 1.06-1.06l-1.06-1.061a.75.75 0 1 0-1.06 1.06l1.06 1.06ZM5.404 6.464a.75.75 0 0 0 1.06-1.06l-1.06-1.06a.75.75 0 1 0-1.061 1.06l1.06 1.06Z" />
-                      </svg>
-                      {wakeLock.active ? "Screen on" : "Keep on"}
+                      ✎ Editing — tap to cancel
                     </button>
-                  )}
-                </div>
-              )}
-              {mode === "editing" && (
-                <div className="flex items-center gap-2 pt-0.5">
-                  <button
-                    type="button"
-                    onClick={cancelMode}
-                    className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-warning text-warning-foreground hover:bg-warning-400 transition-colors"
-                  >
-                    ✎ Editing — tap to cancel
-                  </button>
-                </div>
-              )}
-              {mode === "confirming" && (
-                <div className="flex items-center gap-2 pt-0.5">
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-danger text-danger-foreground">
-                    Delete this recipe?
-                  </span>
-                </div>
-              )}
-              </div>{/* end metadata block */}
+                  </div>
+                )}
+                {mode === 'confirming' && (
+                  <div className="flex items-center gap-2 pt-0.5">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-danger text-danger-foreground">
+                      Delete this recipe?
+                    </span>
+                  </div>
+                )}
+              </div>
+              {/* end metadata block */}
             </ModalHeader>
 
             {/* ── Scrollable body ── */}
@@ -984,13 +1187,15 @@ export default function RecipeDetailModal({
                 </div>
               )}
 
-              {mode === "editing"
+              {mode === 'editing'
                 ? components.map((comp, ci) => (
                     <EditComponent
                       key={ci}
                       comp={comp}
                       single={single}
-                      onIngredientChange={(ii, val) => setIngredient(ci, ii, val)}
+                      onIngredientChange={(ii, val) =>
+                        setIngredient(ci, ii, val)
+                      }
                       onStepChange={(si, val) => setStep(ci, si, val)}
                     />
                   ))
@@ -1000,8 +1205,12 @@ export default function RecipeDetailModal({
                       comp={comp as SaveComponent}
                       single={single}
                       activeAllergens={activeAllergens}
-                      onReplaceIngredient={(ii) => handleReplaceIngredient(ci, ii)}
-                      onRestoreIngredient={(ii) => handleRestoreIngredient(ci, ii)}
+                      onReplaceIngredient={(ii) =>
+                        handleReplaceIngredient(ci, ii)
+                      }
+                      onRestoreIngredient={(ii) =>
+                        handleRestoreIngredient(ci, ii)
+                      }
                       recipeId={r.id}
                       recipeTitle={r.title}
                       componentIndex={ci}
@@ -1012,7 +1221,11 @@ export default function RecipeDetailModal({
               <div className="mt-2 pt-4 border-t border-zinc-100">
                 <p className="text-xs font-semibold uppercase text-zinc-400 mb-1.5">
                   Notes
-                  {notesSaving && <span className="ml-2 font-normal normal-case text-zinc-400">Saving…</span>}
+                  {notesSaving && (
+                    <span className="ml-2 font-normal normal-case text-zinc-400">
+                      Saving…
+                    </span>
+                  )}
                 </p>
                 <textarea
                   value={localNotes}
@@ -1021,45 +1234,82 @@ export default function RecipeDetailModal({
                   placeholder="Add private notes…"
                   rows={3}
                   className="w-full text-sm bg-zinc-50 border border-zinc-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary resize-none leading-relaxed placeholder:text-zinc-400"
-                  style={{ minHeight: "4rem", fieldSizing: "content" } as React.CSSProperties}
+                  style={
+                    {
+                      minHeight: '4rem',
+                      fieldSizing: 'content',
+                    } as React.CSSProperties
+                  }
                 />
               </div>
             </ModalBody>
 
             <ModalFooter className="flex-col gap-2 items-stretch px-5 pb-5 pt-3">
-              {mode === "editing" && r.household_id && (
+              {mode === 'editing' && r.household_id && (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-sm text-zinc-600">Also in my private recipes</span>
+                  <span className="text-sm text-zinc-600">
+                    Also in my private recipes
+                  </span>
                   <Switch
                     size="sm"
                     isSelected={draft?.shared_to_personal ?? true}
-                    onChange={(v) => setDraft((d) => d ? { ...d, shared_to_personal: v } : d)}
+                    onChange={(v) =>
+                      setDraft((d) => (d ? { ...d, shared_to_personal: v } : d))
+                    }
                   >
-                    <Switch.Control><Switch.Thumb /></Switch.Control>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
                   </Switch>
                 </div>
               )}
               <div className="flex justify-end gap-2">
-              {mode === "editing" && (
-                <>
-                  <Button variant="tertiary" onPress={cancelMode} isDisabled={busy}>Cancel</Button>
-                  <Button variant="primary" onPress={handleSave} isDisabled={busy}>Save</Button>
-                </>
-              )}
-              {mode === "confirming" && (
-                <>
-                  <Button variant="tertiary" onPress={cancelMode} isDisabled={busy}>Cancel</Button>
-                  <Button variant="danger" onPress={handleDelete} isDisabled={busy}>Delete</Button>
-                </>
-              )}
-              {mode === "view" && (
-                <Button variant="tertiary" onPress={handleClose}>Close</Button>
-              )}
+                {mode === 'editing' && (
+                  <>
+                    <Button
+                      variant="tertiary"
+                      onPress={cancelMode}
+                      isDisabled={busy}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="primary"
+                      onPress={handleSave}
+                      isDisabled={busy}
+                    >
+                      Save
+                    </Button>
+                  </>
+                )}
+                {mode === 'confirming' && (
+                  <>
+                    <Button
+                      variant="tertiary"
+                      onPress={cancelMode}
+                      isDisabled={busy}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onPress={handleDelete}
+                      isDisabled={busy}
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
+                {mode === 'view' && (
+                  <Button variant="tertiary" onPress={handleClose}>
+                    Close
+                  </Button>
+                )}
               </div>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
       </ModalBackdrop>
     </Modal>
-  );
+  )
 }

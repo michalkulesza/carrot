@@ -1,36 +1,36 @@
-import { type FormEvent, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button, Card, CardContent } from "@heroui/react";
-import { useTranslation } from "react-i18next";
-import { useAuth } from "../context/AuthContext";
-import LanguageSwitcher from "../components/LanguageSwitcher";
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Button, Card, CardContent } from '@heroui/react'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../context/AuthContext'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 
 export default function LoginPage() {
-  const { login } = useAuth();
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const { login } = useAuth()
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
     try {
-      await login(email, password);
-      navigate("/", { replace: true });
+      await login(email, password)
+      navigate('/', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed.");
+      setError(err instanceof Error ? err.message : 'Login failed.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   function fillDemo() {
-    setEmail("demo@demo.com");
-    setPassword("demo");
+    setEmail('demo@demo.com')
+    setPassword('demo')
   }
 
   return (
@@ -39,16 +39,18 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">PlateKeeper</h1>
-          <p className="text-zinc-500 mt-1 text-sm">{t("auth.tagline")}</p>
+          <p className="text-zinc-500 mt-1 text-sm">{t('auth.tagline')}</p>
         </div>
 
         <Card>
           <CardContent className="flex flex-col gap-4 p-6">
-            <h2 className="text-xl font-semibold">{t("auth.signIn")}</h2>
+            <h2 className="text-xl font-semibold">{t('auth.signIn')}</h2>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="email">{t("auth.email")}</label>
+                <label className="text-sm font-medium" htmlFor="email">
+                  {t('auth.email')}
+                </label>
                 <input
                   id="email"
                   type="email"
@@ -60,7 +62,9 @@ export default function LoginPage() {
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="password">{t("auth.password")}</label>
+                <label className="text-sm font-medium" htmlFor="password">
+                  {t('auth.password')}
+                </label>
                 <input
                   id="password"
                   type="password"
@@ -74,8 +78,13 @@ export default function LoginPage() {
 
               {error && <p className="text-danger text-sm">{error}</p>}
 
-              <Button variant="primary" type="submit" isDisabled={loading} fullWidth>
-                {loading ? t("auth.signingIn") : t("auth.signIn")}
+              <Button
+                variant="primary"
+                type="submit"
+                isDisabled={loading}
+                fullWidth
+              >
+                {loading ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
             </form>
 
@@ -87,22 +96,29 @@ export default function LoginPage() {
 
             <div className="flex gap-2">
               <Button variant="secondary" fullWidth onPress={fillDemo}>
-                {t("auth.demoAccount")}
+                {t('auth.demoAccount')}
               </Button>
-              <Button variant="secondary" fullWidth onPress={() => { setEmail("alt@demo.com"); setPassword("demo"); }}>
-                {t("auth.demoAlt")}
+              <Button
+                variant="secondary"
+                fullWidth
+                onPress={() => {
+                  setEmail('alt@demo.com')
+                  setPassword('demo')
+                }}
+              >
+                {t('auth.demoAlt')}
               </Button>
             </div>
 
             <p className="text-center text-sm text-zinc-500">
-              {t("auth.noAccount")}{" "}
+              {t('auth.noAccount')}{' '}
               <Link to="/register" className="text-primary font-medium">
-                {t("auth.createOne")}
+                {t('auth.createOne')}
               </Link>
             </p>
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }

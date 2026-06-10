@@ -1,53 +1,157 @@
-import { useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Button, Checkbox, Description, Disclosure, Label, ListBox, ListBoxItem, Modal, ModalBackdrop, ModalBody, ModalContainer, ModalDialog, ModalFooter, ModalHeader, Select, Switch, toast } from "@heroui/react";
-import { useTimers, getRemainingSeconds, formatCountdown } from "../context/TimerContext";
-import PageHeader from "../components/PageHeader";
+import { useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
-  exportRecipes, importRecipes, updatePreferences, updateHouseholdAllergens, streamReanalyze,
-  createHousehold, leaveHousehold, listMembers, updateHousehold, inviteUser,
-  type AllergenData, type RecipeStats, type UserPreferences, type MemberOut, type HouseholdOut,
-} from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import { useHousehold } from "../context/HouseholdContext";
+  Button,
+  Checkbox,
+  Description,
+  Disclosure,
+  Label,
+  ListBox,
+  ListBoxItem,
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalContainer,
+  ModalDialog,
+  ModalFooter,
+  ModalHeader,
+  Select,
+  Switch,
+  toast,
+} from '@heroui/react'
+import {
+  useTimers,
+  getRemainingSeconds,
+  formatCountdown,
+} from '../context/TimerContext'
+import PageHeader from '../components/PageHeader'
+import {
+  exportRecipes,
+  importRecipes,
+  updatePreferences,
+  updateHouseholdAllergens,
+  streamReanalyze,
+  createHousehold,
+  leaveHousehold,
+  listMembers,
+  updateHousehold,
+  inviteUser,
+  type AllergenData,
+  type RecipeStats,
+  type UserPreferences,
+  type MemberOut,
+  type HouseholdOut,
+} from '../api/client'
+import { useAuth } from '../context/AuthContext'
+import { useHousehold } from '../context/HouseholdContext'
 
-function StatCard({ value, label }: { value: string | number | null; label: string }) {
+function StatCard({
+  value,
+  label,
+}: {
+  value: string | number | null
+  label: string
+}) {
   return (
     <div className="flex-1 flex flex-col items-center gap-1 rounded-xl bg-zinc-50 py-4 px-2">
-      <span className="text-2xl font-bold text-zinc-800">
-        {value ?? "—"}
-      </span>
+      <span className="text-2xl font-bold text-zinc-800">{value ?? '—'}</span>
       <span className="text-xs text-zinc-400 text-center">{label}</span>
     </div>
-  );
+  )
 }
 
 const WEEK_DAY_OPTIONS = [
-  { key: "1", labelKey: "settings.monday" },
-  { key: "0", labelKey: "settings.sunday" },
-  { key: "6", labelKey: "settings.saturday" },
-];
+  { key: '1', labelKey: 'settings.monday' },
+  { key: '0', labelKey: 'settings.sunday' },
+  { key: '6', labelKey: 'settings.saturday' },
+]
 
 const PRESET_COLORS = [
-  "#6366f1", "#ec4899", "#14b8a6", "#f59e0b", "#22c55e", "#ef4444", "#8b5cf6", "#06b6d4",
-];
+  '#6366f1',
+  '#ec4899',
+  '#14b8a6',
+  '#f59e0b',
+  '#22c55e',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+]
 
 const ALLERGEN_KEYS = [
-  "gluten", "crustaceans", "tree nuts", "celery", "mustard",
-  "sulphites", "lupin", "molluscs", "eggs", "fish",
-  "peanuts", "soybeans", "milk", "sesame",
-];
+  'gluten',
+  'crustaceans',
+  'tree nuts',
+  'celery',
+  'mustard',
+  'sulphites',
+  'lupin',
+  'molluscs',
+  'eggs',
+  'fish',
+  'peanuts',
+  'soybeans',
+  'milk',
+  'sesame',
+]
 
 const INTOLERANCE_KEYS = [
-  "lactose", "ncgs", "fructose", "histamine", "fodmap",
-  "caffeine", "sulphite-sensitivity", "sorbitol", "salicylates", "msg",
-];
+  'lactose',
+  'ncgs',
+  'fructose',
+  'histamine',
+  'fodmap',
+  'caffeine',
+  'sulphite-sensitivity',
+  'sorbitol',
+  'salicylates',
+  'msg',
+]
 
 interface SettingsPageProps {
-  stats: RecipeStats | null;
-  onStatsRefresh: () => void;
-  preferences: UserPreferences | null;
-  onPreferencesChange: (prefs: UserPreferences) => void;
+  stats: RecipeStats | null
+  onStatsRefresh: () => void
+  preferences: UserPreferences | null
+  onPreferencesChange: (prefs: UserPreferences) => void
+}
+
+function CheckboxGroup({
+  keys,
+  namespace,
+  predefined,
+  onToggle,
+}: {
+  keys: string[]
+  namespace: 'allergens' | 'intolerances'
+  predefined: string[]
+  onToggle: (key: string) => void
+}) {
+  const { t } = useTranslation()
+  const iKey = (k: string) => k.replace(/[- ]/g, '_')
+
+  return (
+    <div className="flex flex-col gap-3 pt-1">
+      {keys.map((key) => {
+        const k = iKey(key)
+        const desc = t(`${namespace}.${k}_desc`, { defaultValue: '' })
+
+        return (
+          <Checkbox
+            key={key}
+            isSelected={predefined.includes(key)}
+            onChange={() => onToggle(key)}
+          >
+            <Checkbox.Control>
+              <Checkbox.Indicator />
+            </Checkbox.Control>
+            <Checkbox.Content>
+              <Label>{t(`${namespace}.${k}`)}</Label>
+              {desc && <Description>{desc}</Description>}
+            </Checkbox.Content>
+          </Checkbox>
+        )
+      })}
+    </div>
+  )
 }
 
 // ── Allergen section ──────────────────────────────────────────────────────────
@@ -57,90 +161,75 @@ function AllergenSection({
   scopeLabel,
   onSave,
 }: {
-  allergens: AllergenData;
-  scopeLabel: string;
-  onSave: (data: AllergenData) => Promise<void>;
+  allergens: AllergenData
+  scopeLabel: string
+  onSave: (data: AllergenData) => Promise<void>
 }) {
-  const { t } = useTranslation();
-  const [predefined, setPredefined] = useState<string[]>(allergens.predefined ?? []);
-  const [custom, setCustom] = useState<string[]>(allergens.custom ?? []);
-  const [tagInput, setTagInput] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [reanalyzing, setReanalyzing] = useState(false);
-  const [reanalyzeProgress, setReanalyzeProgress] = useState<{ done: number; total: number } | null>(null);
+  const { t } = useTranslation()
+  const [predefined, setPredefined] = useState<string[]>(
+    allergens.predefined ?? []
+  )
+  const [custom, setCustom] = useState<string[]>(allergens.custom ?? [])
+  const [tagInput, setTagInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState(false)
+  const [reanalyzeProgress, setReanalyzeProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
 
   function togglePredefined(key: string) {
     setPredefined((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+    )
   }
 
   function addCustomTag() {
-    const tag = tagInput.trim().toLowerCase();
+    const tag = tagInput.trim().toLowerCase()
     if (tag && !custom.includes(tag)) {
-      setCustom((prev) => [...prev, tag]);
+      setCustom((prev) => [...prev, tag])
     }
-    setTagInput("");
+    setTagInput('')
   }
 
   function removeCustomTag(tag: string) {
-    setCustom((prev) => prev.filter((t) => t !== tag));
+    setCustom((prev) => prev.filter((t) => t !== tag))
   }
 
   async function handleSave() {
-    setSaving(true);
+    setSaving(true)
     try {
-      await onSave({ predefined, custom });
-      toast.success(t("settings.allergensSaved"), { timeout: 2000 });
+      await onSave({ predefined, custom })
+      toast.success(t('settings.allergensSaved'), { timeout: 2000 })
     } catch (e) {
-      toast.danger(e instanceof Error ? e.message : t("settings.failedToSave"), { timeout: 3000 });
+      toast.danger(
+        e instanceof Error ? e.message : t('settings.failedToSave'),
+        { timeout: 3000 }
+      )
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   function handleReanalyze() {
-    setReanalyzing(true);
-    setReanalyzeProgress({ done: 0, total: 0 });
+    setReanalyzing(true)
+    setReanalyzeProgress({ done: 0, total: 0 })
     streamReanalyze({
       onStart: (total) => setReanalyzeProgress({ done: 0, total }),
       onProgress: (done, total) => setReanalyzeProgress({ done, total }),
       onComplete: (analyzed) => {
-        setReanalyzing(false);
-        setReanalyzeProgress(null);
-        toast.success(t("settings.reanalyzedRecipes", { count: analyzed }), { timeout: 3000 });
+        setReanalyzing(false)
+        setReanalyzeProgress(null)
+        toast.success(t('settings.reanalyzedRecipes', { count: analyzed }), {
+          timeout: 3000,
+        })
       },
       onError: (msg) => {
-        setReanalyzing(false);
-        setReanalyzeProgress(null);
-        toast.danger(msg, { timeout: 3000 });
+        setReanalyzing(false)
+        setReanalyzeProgress(null)
+        toast.danger(msg, { timeout: 3000 })
       },
-    });
-  }
-
-  function CheckboxGroup({ keys, namespace }: { keys: string[]; namespace: "allergens" | "intolerances" }) {
-    const iKey = (k: string) => k.replace(/[- ]/g, "_");
-    return (
-      <div className="flex flex-col gap-3 pt-1">
-        {keys.map((key) => {
-          const k = iKey(key);
-          const desc = t(`${namespace}.${k}_desc`, { defaultValue: "" });
-          return (
-            <Checkbox
-              key={key}
-              isSelected={predefined.includes(key)}
-              onChange={() => togglePredefined(key)}
-            >
-              <Checkbox.Control><Checkbox.Indicator /></Checkbox.Control>
-              <Checkbox.Content>
-                <Label>{t(`${namespace}.${k}`)}</Label>
-                {desc && <Description>{desc}</Description>}
-              </Checkbox.Content>
-            </Checkbox>
-          );
-        })}
-      </div>
-    );
+    })
   }
 
   return (
@@ -151,13 +240,18 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              {t("settings.allergens")}
+              {t('settings.allergens')}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
           <Disclosure.Content>
             <Disclosure.Body className="pb-3">
-              <CheckboxGroup keys={ALLERGEN_KEYS} namespace="allergens" />
+              <CheckboxGroup
+                keys={ALLERGEN_KEYS}
+                namespace="allergens"
+                predefined={predefined}
+                onToggle={togglePredefined}
+              />
             </Disclosure.Body>
           </Disclosure.Content>
         </Disclosure>
@@ -165,13 +259,18 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              {t("settings.intolerances")}
+              {t('settings.intolerances')}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
           <Disclosure.Content>
             <Disclosure.Body className="pb-3">
-              <CheckboxGroup keys={INTOLERANCE_KEYS} namespace="intolerances" />
+              <CheckboxGroup
+                keys={INTOLERANCE_KEYS}
+                namespace="intolerances"
+                predefined={predefined}
+                onToggle={togglePredefined}
+              />
             </Disclosure.Body>
           </Disclosure.Content>
         </Disclosure>
@@ -179,7 +278,7 @@ function AllergenSection({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              {t("settings.custom")}
+              {t('settings.custom')}
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
@@ -188,20 +287,36 @@ function AllergenSection({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder={t("settings.customPlaceholder")}
+                  placeholder={t('settings.customPlaceholder')}
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustomTag()
+                    }
+                  }}
                   className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
-                <Button size="sm" variant="secondary" onPress={addCustomTag}>{t("common.add")}</Button>
+                <Button size="sm" variant="secondary" onPress={addCustomTag}>
+                  {t('common.add')}
+                </Button>
               </div>
               {custom.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {custom.map((tag) => (
-                    <span key={tag} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-zinc-100 text-zinc-600">
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-zinc-100 text-zinc-600"
+                    >
                       {tag}
-                      <button type="button" onClick={() => removeCustomTag(tag)} className="text-zinc-400 hover:text-zinc-700 ml-0.5">×</button>
+                      <button
+                        type="button"
+                        onClick={() => removeCustomTag(tag)}
+                        className="text-zinc-400 hover:text-zinc-700 ml-0.5"
+                      >
+                        ×
+                      </button>
                     </span>
                   ))}
                 </div>
@@ -212,71 +327,97 @@ function AllergenSection({
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <Button size="sm" variant="primary" onPress={handleSave} isDisabled={saving}>
-          {saving ? t("common.saving") : t("common.save")}
+        <Button
+          size="sm"
+          variant="primary"
+          onPress={handleSave}
+          isDisabled={saving}
+        >
+          {saving ? t('common.saving') : t('common.save')}
         </Button>
-        <Button size="sm" variant="secondary" onPress={handleReanalyze} isDisabled={reanalyzing}>
+        <Button
+          size="sm"
+          variant="secondary"
+          onPress={handleReanalyze}
+          isDisabled={reanalyzing}
+        >
           {reanalyzing
             ? reanalyzeProgress && reanalyzeProgress.total > 0
-              ? t("settings.analyzingProgress", { done: reanalyzeProgress.done, total: reanalyzeProgress.total })
-              : t("settings.starting")
-            : t("settings.reAnalyzeRecipes")}
+              ? t('settings.analyzingProgress', {
+                  done: reanalyzeProgress.done,
+                  total: reanalyzeProgress.total,
+                })
+              : t('settings.starting')
+            : t('settings.reAnalyzeRecipes')}
         </Button>
       </div>
     </div>
-  );
+  )
 }
 
 // ── Create Household modal ────────────────────────────────────────────────────
 
-function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onCreated: () => void;
+function CreateHouseholdModal({
+  isOpen,
+  onClose,
+  onCreated,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onCreated: () => void
 }) {
-  const { t } = useTranslation();
-  const [name, setName] = useState("");
-  const [color, setColor] = useState(PRESET_COLORS[0]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation()
+  const [name, setName] = useState('')
+  const [color, setColor] = useState(PRESET_COLORS[0])
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleCreate() {
-    setBusy(true);
-    setError(null);
+    setBusy(true)
+    setError(null)
     try {
-      await createHousehold(name.trim() || undefined, color);
-      toast.success(t("settings.householdCreated"), { timeout: 3000 });
-      setName("");
-      setColor(PRESET_COLORS[0]);
-      onCreated();
-      onClose();
+      await createHousehold(name.trim() || undefined, color)
+      toast.success(t('settings.householdCreated'), { timeout: 3000 })
+      setName('')
+      setColor(PRESET_COLORS[0])
+      onCreated()
+      onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to create household");
+      setError(e instanceof Error ? e.message : 'Failed to create household')
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
   }
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
-            <ModalHeader>{t("settings.newHouseholdTitle")}</ModalHeader>
+            <ModalHeader>{t('settings.newHouseholdTitle')}</ModalHeader>
             <ModalBody className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="household-name">{t("settings.householdNameOptional")}</label>
+                <label className="text-sm font-medium" htmlFor="household-name">
+                  {t('settings.householdNameOptional')}
+                </label>
                 <input
                   id="household-name"
                   type="text"
-                  placeholder={t("settings.householdNamePlaceholder")}
+                  placeholder={t('settings.householdNamePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
               <div>
-                <p className="text-sm font-medium mb-2">{t("settings.colorLabel")}</p>
+                <p className="text-sm font-medium mb-2">
+                  {t('settings.colorLabel')}
+                </p>
                 <div className="flex gap-2 flex-wrap">
                   {PRESET_COLORS.map((c) => (
                     <button
@@ -285,7 +426,7 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
                       className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
                       style={{
                         backgroundColor: c,
-                        borderColor: color === c ? "white" : "transparent",
+                        borderColor: color === c ? 'white' : 'transparent',
                         boxShadow: color === c ? `0 0 0 2px ${c}` : undefined,
                       }}
                       onClick={() => setColor(c)}
@@ -296,106 +437,133 @@ function CreateHouseholdModal({ isOpen, onClose, onCreated }: {
               {error && <p className="text-sm text-danger">{error}</p>}
             </ModalBody>
             <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>{t("common.cancel")}</Button>
-              <Button variant="primary" onPress={handleCreate} isDisabled={busy}>{t("common.create")}</Button>
+              <Button variant="tertiary" onPress={onClose}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={handleCreate}
+                isDisabled={busy}
+              >
+                {t('common.create')}
+              </Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
       </ModalBackdrop>
     </Modal>
-  );
+  )
 }
 
 // ── Manage Household modal ────────────────────────────────────────────────────
 
-function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
-  household: HouseholdOut;
-  isOpen: boolean;
-  onClose: () => void;
-  onChanged: () => void;
+function ManageHouseholdModal({
+  household,
+  isOpen,
+  onClose,
+  onChanged,
+}: {
+  household: HouseholdOut
+  isOpen: boolean
+  onClose: () => void
+  onChanged: () => void
 }) {
-  const { t } = useTranslation();
-  const [members, setMembers] = useState<MemberOut[]>([]);
-  const [membersLoading, setMembersLoading] = useState(false);
-  const [name, setName] = useState(household.name);
-  const [color, setColor] = useState(household.color);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviting, setBusy] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-  const [confirmLeave, setConfirmLeave] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation()
+  const [members, setMembers] = useState<MemberOut[]>([])
+  const [membersLoading, setMembersLoading] = useState(false)
+  const [name, setName] = useState(household.name)
+  const [color, setColor] = useState(household.color)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviting, setBusy] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function loadMembers() {
-    setMembersLoading(true);
+    setMembersLoading(true)
     try {
-      const m = await listMembers(household.id);
-      setMembers(m);
-    } catch { /* ignore */ }
-    finally { setMembersLoading(false); }
+      const m = await listMembers(household.id)
+      setMembers(m)
+    } catch {
+      /* ignore */
+    } finally {
+      setMembersLoading(false)
+    }
   }
 
   function handleOpen() {
-    setName(household.name);
-    setColor(household.color);
-    setInviteEmail("");
-    setError(null);
-    setConfirmLeave(false);
-    loadMembers();
+    setName(household.name)
+    setColor(household.color)
+    setInviteEmail('')
+    setError(null)
+    setConfirmLeave(false)
+    loadMembers()
   }
 
   async function handleSave() {
-    setSaving(true);
-    setError(null);
+    setSaving(true)
+    setError(null)
     try {
-      await updateHousehold(household.id, { name: name.trim() || household.name, color });
-      toast.success(t("settings.saved"), { timeout: 2000 });
-      onChanged();
+      await updateHousehold(household.id, {
+        name: name.trim() || household.name,
+        color,
+      })
+      toast.success(t('settings.saved'), { timeout: 2000 })
+      onChanged()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to save");
+      setError(e instanceof Error ? e.message : 'Failed to save')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   async function handleInvite() {
-    if (!inviteEmail.trim()) return;
-    setBusy(true);
-    setError(null);
+    if (!inviteEmail.trim()) return
+    setBusy(true)
+    setError(null)
     try {
-      await inviteUser(household.id, inviteEmail.trim());
-      toast.success(t("settings.invitationSent"), { timeout: 3000 });
-      setInviteEmail("");
+      await inviteUser(household.id, inviteEmail.trim())
+      toast.success(t('settings.invitationSent'), { timeout: 3000 })
+      setInviteEmail('')
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to invite");
+      setError(e instanceof Error ? e.message : 'Failed to invite')
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
   }
 
   async function handleLeave() {
-    setLeaving(true);
+    setLeaving(true)
     try {
-      await leaveHousehold(household.id);
-      toast(t("settings.leftHousehold"), { timeout: 3000 });
-      onChanged();
-      onClose();
+      await leaveHousehold(household.id)
+      toast(t('settings.leftHousehold'), { timeout: 3000 })
+      onChanged()
+      onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to leave");
-      setLeaving(false);
+      setError(e instanceof Error ? e.message : 'Failed to leave')
+      setLeaving(false)
     }
   }
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => { if (!open) onClose(); if (open) handleOpen(); }}>
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+        if (open) handleOpen()
+      }}
+    >
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
-            <ModalHeader>{t("settings.manageHousehold")}</ModalHeader>
+            <ModalHeader>{t('settings.manageHousehold')}</ModalHeader>
             <ModalBody className="flex flex-col gap-5">
               {/* Rename */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.nameLabel")}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t('settings.nameLabel')}
+                </p>
                 <input
                   type="text"
                   value={name}
@@ -406,7 +574,9 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
 
               {/* Recolor */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.colorLabel")}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t('settings.colorLabel')}
+                </p>
                 <div className="flex gap-2 flex-wrap">
                   {PRESET_COLORS.map((c) => (
                     <button
@@ -415,7 +585,7 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
                       className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
                       style={{
                         backgroundColor: c,
-                        borderColor: color === c ? "white" : "transparent",
+                        borderColor: color === c ? 'white' : 'transparent',
                         boxShadow: color === c ? `0 0 0 2px ${c}` : undefined,
                       }}
                       onClick={() => setColor(c)}
@@ -424,23 +594,35 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
                 </div>
               </div>
 
-              <Button size="sm" variant="secondary" onPress={handleSave} isDisabled={saving}>
-                {t("settings.saveChanges")}
+              <Button
+                size="sm"
+                variant="secondary"
+                onPress={handleSave}
+                isDisabled={saving}
+              >
+                {t('settings.saveChanges')}
               </Button>
 
               {/* Members */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.members")}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t('settings.members')}
+                </p>
                 {membersLoading ? (
-                  <p className="text-sm text-zinc-400">{t("common.loading")}</p>
+                  <p className="text-sm text-zinc-400">{t('common.loading')}</p>
                 ) : (
                   <ul className="flex flex-col gap-1">
                     {members.map((m) => (
-                      <li key={m.user_id.toString()} className="text-sm flex items-center gap-2">
+                      <li
+                        key={m.user_id.toString()}
+                        className="text-sm flex items-center gap-2"
+                      >
                         <span className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold uppercase">
                           {(m.nickname || m.email)[0]}
                         </span>
-                        <span className="truncate">{m.nickname || m.email}</span>
+                        <span className="truncate">
+                          {m.nickname || m.email}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -449,17 +631,24 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
 
               {/* Invite */}
               <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.inviteByEmail")}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t('settings.inviteByEmail')}
+                </p>
                 <div className="flex gap-2">
                   <input
                     type="email"
-                    placeholder={t("settings.inviteEmailPlaceholder")}
+                    placeholder={t('settings.inviteEmailPlaceholder')}
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
-                  <Button size="sm" variant="secondary" isDisabled={inviting} onPress={handleInvite}>
-                    {t("common.invite")}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    isDisabled={inviting}
+                    onPress={handleInvite}
+                  >
+                    {t('common.invite')}
                   </Button>
                 </div>
               </div>
@@ -469,197 +658,259 @@ function ManageHouseholdModal({ household, isOpen, onClose, onChanged }: {
               {/* Leave */}
               <div className="border-t border-zinc-200 pt-3">
                 {!confirmLeave ? (
-                  <Button size="sm" variant="danger-soft" onPress={() => setConfirmLeave(true)}>
-                    {t("settings.leaveHousehold")}
+                  <Button
+                    size="sm"
+                    variant="danger-soft"
+                    onPress={() => setConfirmLeave(true)}
+                  >
+                    {t('settings.leaveHousehold')}
                   </Button>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-danger font-medium">{t("settings.areYouSure")}</span>
-                    <Button size="sm" variant="danger" isDisabled={leaving} onPress={handleLeave}>
-                      {t("settings.leaveHousehold")}
+                    <span className="text-sm text-danger font-medium">
+                      {t('settings.areYouSure')}
+                    </span>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      isDisabled={leaving}
+                      onPress={handleLeave}
+                    >
+                      {t('settings.leaveHousehold')}
                     </Button>
-                    <Button size="sm" variant="tertiary" onPress={() => setConfirmLeave(false)}>
-                      {t("common.cancel")}
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      onPress={() => setConfirmLeave(false)}
+                    >
+                      {t('common.cancel')}
                     </Button>
                   </div>
                 )}
               </div>
             </ModalBody>
             <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>{t("common.close")}</Button>
+              <Button variant="tertiary" onPress={onClose}>
+                {t('common.close')}
+              </Button>
             </ModalFooter>
           </ModalDialog>
         </ModalContainer>
       </ModalBackdrop>
     </Modal>
-  );
+  )
 }
 
 // ── Timer settings section ────────────────────────────────────────────────────
 
 function TimerSettingsSection() {
-  const { timers, pauseTimer, resumeTimer, cancelTimer, wakeLockTimersEnabled, setWakeLockTimersEnabled } = useTimers();
-  const { t } = useTranslation();
-  const timerList = [...timers.values()];
+  const {
+    timers,
+    pauseTimer,
+    resumeTimer,
+    cancelTimer,
+    wakeLockTimersEnabled,
+    setWakeLockTimersEnabled,
+  } = useTimers()
+  const { t } = useTranslation()
+  const timerList = [...timers.values()]
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.timers")}</h2>
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        {t('settings.timers')}
+      </h2>
       <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
         {timerList.length > 0 ? (
           <div className="flex flex-col divide-y divide-zinc-100">
             {timerList.map((timer) => {
-              const remaining = getRemainingSeconds(timer);
+              const remaining = getRemainingSeconds(timer)
+
               return (
                 <div key={timer.id} className="flex items-center gap-3 py-2.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{timer.recipeTitle}</p>
+                    <p className="text-sm font-medium truncate">
+                      {timer.recipeTitle}
+                    </p>
                     <p className="text-xs text-zinc-400 truncate">
-                      {t("common.step")} {timer.stepIndex + 1}: {timer.stepText.length > 55 ? timer.stepText.slice(0, 52) + "…" : timer.stepText}
+                      {t('common.step')} {timer.stepIndex + 1}:{' '}
+                      {timer.stepText.length > 55
+                        ? timer.stepText.slice(0, 52) + '…'
+                        : timer.stepText}
                     </p>
                   </div>
-                  <span className={`font-mono text-sm font-semibold tabular-nums shrink-0 ${
-                    timer.status === "done" ? "text-emerald-600" :
-                    timer.status === "paused" ? "text-zinc-400" : "text-amber-600"
-                  }`}>
-                    {timer.status === "done" ? t("common.doneCheck") : formatCountdown(remaining)}
+                  <span
+                    className={`font-mono text-sm font-semibold tabular-nums shrink-0 ${
+                      timer.status === 'done'
+                        ? 'text-emerald-600'
+                        : timer.status === 'paused'
+                          ? 'text-zinc-400'
+                          : 'text-amber-600'
+                    }`}
+                  >
+                    {timer.status === 'done'
+                      ? t('common.doneCheck')
+                      : formatCountdown(remaining)}
                   </span>
                   <div className="flex gap-0.5 shrink-0">
-                    {timer.status === "running" && (
+                    {timer.status === 'running' && (
                       <button
                         type="button"
                         onClick={() => pauseTimer(timer.id)}
                         className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700"
-                        title={t("common.pause")}
-                      >⏸</button>
+                        title={t('common.pause')}
+                      >
+                        ⏸
+                      </button>
                     )}
-                    {timer.status === "paused" && (
+                    {timer.status === 'paused' && (
                       <button
                         type="button"
                         onClick={() => resumeTimer(timer.id)}
                         className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-amber-600"
-                        title={t("common.resume")}
-                      >▶</button>
+                        title={t('common.resume')}
+                      >
+                        ▶
+                      </button>
                     )}
                     <button
                       type="button"
                       onClick={() => cancelTimer(timer.id)}
                       className="w-7 h-7 flex items-center justify-center rounded hover:bg-zinc-100 text-zinc-400 hover:text-danger"
-                      title={t("common.cancel")}
-                    >✕</button>
+                      title={t('common.cancel')}
+                    >
+                      ✕
+                    </button>
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">{t("timers.noTimers")}</p>
+          <p className="text-sm text-zinc-400">{t('timers.noTimers')}</p>
         )}
 
-        {"wakeLock" in navigator && (
+        {'wakeLock' in navigator && (
           <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
             <div>
-              <p className="text-sm font-medium">{t("timers.keepScreenOn")}</p>
-              <p className="text-xs text-zinc-400">{t("timers.keepScreenOnDesc")}</p>
+              <p className="text-sm font-medium">{t('timers.keepScreenOn')}</p>
+              <p className="text-xs text-zinc-400">
+                {t('timers.keepScreenOnDesc')}
+              </p>
             </div>
             <Switch
               size="sm"
               isSelected={wakeLockTimersEnabled}
               onChange={setWakeLockTimersEnabled}
             >
-              <Switch.Control><Switch.Thumb /></Switch.Control>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
             </Switch>
           </div>
         )}
       </div>
     </section>
-  );
+  )
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default function SettingsPage({ stats, onStatsRefresh, preferences, onPreferencesChange }: SettingsPageProps) {
-  const { user, logout } = useAuth();
-  const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold();
-  const { t, i18n } = useTranslation();
-  const [wakeLockDefault, setWakeLockDefault] = useState(() => localStorage.getItem("wakelock-default") === "1");
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [managingHousehold, setManagingHousehold] = useState<HouseholdOut | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+export default function SettingsPage({
+  stats,
+  onStatsRefresh,
+  preferences,
+  onPreferencesChange,
+}: SettingsPageProps) {
+  const { user, logout } = useAuth()
+  const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
+    useHousehold()
+  const { t, i18n } = useTranslation()
+  const [wakeLockDefault, setWakeLockDefault] = useState(
+    () => localStorage.getItem('wakelock-default') === '1'
+  )
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [managingHousehold, setManagingHousehold] =
+    useState<HouseholdOut | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
-  const displayName = user?.nickname || user?.email || "";
+  const displayName = user?.nickname || user?.email || ''
 
   async function handleLogout() {
-    setLoggingOut(true);
-    await logout();
+    setLoggingOut(true)
+    await logout()
   }
 
   async function handleExport() {
-    setExporting(true);
-    setError(null);
+    setExporting(true)
+    setError(null)
     try {
-      await exportRecipes();
+      await exportRecipes()
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Export failed");
+      setError(e instanceof Error ? e.message : 'Export failed')
     } finally {
-      setExporting(false);
+      setExporting(false)
     }
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImporting(true);
-    setImportResult(null);
-    setError(null);
+    const file = e.target.files?.[0]
+    if (!file) return
+    setImporting(true)
+    setImportResult(null)
+    setError(null)
     try {
-      const { imported } = await importRecipes(file);
-      setImportResult(t("settings.importedRecipes", { count: imported }));
-      onStatsRefresh();
+      const { imported } = await importRecipes(file)
+      setImportResult(t('settings.importedRecipes', { count: imported }))
+      onStatsRefresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(err instanceof Error ? err.message : 'Import failed')
     } finally {
-      setImporting(false);
-      if (fileRef.current) fileRef.current.value = "";
+      setImporting(false)
+      if (fileRef.current) fileRef.current.value = ''
     }
   }
 
-  async function handleSaveAllergens(data: { predefined: string[]; custom: string[] }) {
+  async function handleSaveAllergens(data: {
+    predefined: string[]
+    custom: string[]
+  }) {
     if (activeHousehold) {
-      await updateHouseholdAllergens(activeHousehold.id, data);
-      refetchHouseholds();
+      await updateHouseholdAllergens(activeHousehold.id, data)
+      refetchHouseholds()
     } else {
-      const updated = await updatePreferences({ personal_allergens: data });
-      onPreferencesChange(updated);
+      const updated = await updatePreferences({ personal_allergens: data })
+      onPreferencesChange(updated)
     }
   }
 
   const allergenScopeLabel = activeHousehold
-    ? t("settings.householdScope", { name: activeHousehold.name })
-    : t("settings.personalScope");
+    ? t('settings.householdScope', { name: activeHousehold.name })
+    : t('settings.personalScope')
 
-  const currentAllergens: { predefined: string[]; custom: string[] } = activeHousehold?.allergens
-    ?? preferences?.personal_allergens
-    ?? { predefined: [], custom: [] };
+  const currentAllergens: { predefined: string[]; custom: string[] } =
+    activeHousehold?.allergens ??
+      preferences?.personal_allergens ?? { predefined: [], custom: [] }
 
   return (
     <>
-      <PageHeader title={t("settings.title")} />
+      <PageHeader title={t('settings.title')} />
       <div className="px-4 py-6 flex flex-col gap-6">
-
         {/* Profile */}
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-zinc-200 flex items-center justify-center text-lg font-bold uppercase shrink-0">
-            {displayName[0] ?? "?"}
+            {displayName[0] ?? '?'}
           </div>
           <div className="min-w-0">
             {user?.nickname && (
-              <p className="font-semibold text-base truncate">{user.nickname}</p>
+              <p className="font-semibold text-base truncate">
+                {user.nickname}
+              </p>
             )}
             <p className="text-sm text-zinc-400 truncate">{user?.email}</p>
           </div>
@@ -667,21 +918,38 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Stats */}
         <div className="flex gap-2">
-          <StatCard value={stats?.total_recipes ?? null} label={t("settings.recipesLabel")} />
-          <StatCard value={stats?.total_ingredients ?? null} label={t("settings.ingredientsLabel")} />
-          <StatCard value={stats?.avg_kcal ?? null} label={t("settings.avgKcal")} />
+          <StatCard
+            value={stats?.total_recipes ?? null}
+            label={t('settings.recipesLabel')}
+          />
+          <StatCard
+            value={stats?.total_ingredients ?? null}
+            label={t('settings.ingredientsLabel')}
+          />
+          <StatCard
+            value={stats?.avg_kcal ?? null}
+            label={t('settings.avgKcal')}
+          />
         </div>
 
         {/* Households */}
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.households")}</h2>
-            <Button size="sm" variant="secondary" onPress={() => setCreateOpen(true)}>{t("settings.newHousehold")}</Button>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              {t('settings.households')}
+            </h2>
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={() => setCreateOpen(true)}
+            >
+              {t('settings.newHousehold')}
+            </Button>
           </div>
 
           {households.length === 0 ? (
             <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-400">
-              {t("settings.noHouseholds")}
+              {t('settings.noHouseholds')}
             </div>
           ) : (
             <ul className="flex flex-col gap-2">
@@ -697,7 +965,9 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{h.name}</p>
                     {h.id === activeHouseholdId && (
-                      <p className="text-xs text-primary">{t("settings.active")}</p>
+                      <p className="text-xs text-primary">
+                        {t('settings.active')}
+                      </p>
                     )}
                   </div>
                   <Button
@@ -705,7 +975,7 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                     variant="secondary"
                     onPress={() => setManagingHousehold(h)}
                   >
-                    {t("settings.manage")}
+                    {t('settings.manage')}
                   </Button>
                 </li>
               ))}
@@ -715,18 +985,24 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Allergies & Intolerances */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.allergiesIntolerances")}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            {t('settings.allergiesIntolerances')}
+          </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <AllergenSection
-              key={activeHouseholdId ?? "personal"}
+              key={activeHouseholdId ?? 'personal'}
               allergens={currentAllergens}
               scopeLabel={allergenScopeLabel}
               onSave={handleSaveAllergens}
             />
             <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
               <div>
-                <p className="text-sm font-medium">{t("settings.autoApplySubstitutes")}</p>
-                <p className="text-xs text-zinc-400">{t("settings.autoApplySubstitutesDesc")}</p>
+                <p className="text-sm font-medium">
+                  {t('settings.autoApplySubstitutes')}
+                </p>
+                <p className="text-xs text-zinc-400">
+                  {t('settings.autoApplySubstitutesDesc')}
+                </p>
               </div>
               <Switch
                 size="sm"
@@ -734,10 +1010,12 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                 onChange={(v) => {
                   updatePreferences({ auto_substitute: v })
                     .then(onPreferencesChange)
-                    .catch(() => {});
+                    .catch(() => {})
                 }}
               >
-                <Switch.Control><Switch.Thumb /></Switch.Control>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
               </Switch>
             </div>
           </div>
@@ -745,7 +1023,9 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Account */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.account")}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            {t('settings.account')}
+          </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4">
             <Button
               size="sm"
@@ -753,25 +1033,29 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
               onPress={handleLogout}
               isDisabled={loggingOut}
             >
-              {loggingOut ? t("settings.loggingOut") : t("settings.logOut")}
+              {loggingOut ? t('settings.loggingOut') : t('settings.logOut')}
             </Button>
           </div>
         </section>
 
         {/* Preferences */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.preferences")}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            {t('settings.preferences')}
+          </h2>
           <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{t("settings.weekStartsOn")}</label>
+              <label className="text-sm font-medium">
+                {t('settings.weekStartsOn')}
+              </label>
               <Select
                 selectedKey={String(preferences?.week_start_day ?? 1)}
                 onSelectionChange={(key) => {
                   updatePreferences({ week_start_day: Number(key) })
                     .then(onPreferencesChange)
-                    .catch(() => {});
+                    .catch(() => {})
                 }}
-                aria-label={t("settings.weekStartsOn")}
+                aria-label={t('settings.weekStartsOn')}
               >
                 <Select.Trigger>
                   <Select.Value />
@@ -780,24 +1064,28 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                 <Select.Popover>
                   <ListBox>
                     {WEEK_DAY_OPTIONS.map((opt) => (
-                      <ListBoxItem key={opt.key} id={String(opt.key)}>{t(opt.labelKey)}</ListBoxItem>
+                      <ListBoxItem key={opt.key} id={String(opt.key)}>
+                        {t(opt.labelKey)}
+                      </ListBoxItem>
                     ))}
                   </ListBox>
                 </Select.Popover>
               </Select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium">{t("settings.language")}</label>
+              <label className="text-sm font-medium">
+                {t('settings.language')}
+              </label>
               <Select
                 selectedKey={preferences?.language ?? i18n.language}
                 onSelectionChange={(key) => {
-                  const lang = String(key);
-                  i18n.changeLanguage(lang);
+                  const lang = String(key)
+                  i18n.changeLanguage(lang)
                   updatePreferences({ language: lang })
                     .then(onPreferencesChange)
-                    .catch(() => {});
+                    .catch(() => {})
                 }}
-                aria-label={t("settings.language")}
+                aria-label={t('settings.language')}
               >
                 <Select.Trigger>
                   <Select.Value />
@@ -805,28 +1093,36 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
                 </Select.Trigger>
                 <Select.Popover>
                   <ListBox>
-                    {(["en", "de", "pl", "fr", "es"] as const).map((code) => (
-                      <ListBoxItem key={code} id={code}>{t(`languages.${code}`)}</ListBoxItem>
+                    {(['en', 'de', 'pl', 'fr', 'es'] as const).map((code) => (
+                      <ListBoxItem key={code} id={code}>
+                        {t(`languages.${code}`)}
+                      </ListBoxItem>
                     ))}
                   </ListBox>
                 </Select.Popover>
               </Select>
             </div>
-            {"wakeLock" in navigator && (
+            {'wakeLock' in navigator && (
               <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
                 <div>
-                  <p className="text-sm font-medium">{t("settings.keepScreenOnDefault")}</p>
-                  <p className="text-xs text-zinc-400">{t("settings.keepScreenOnDefaultDesc")}</p>
+                  <p className="text-sm font-medium">
+                    {t('settings.keepScreenOnDefault')}
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    {t('settings.keepScreenOnDefaultDesc')}
+                  </p>
                 </div>
                 <Switch
                   size="sm"
                   isSelected={wakeLockDefault}
                   onChange={(v) => {
-                    localStorage.setItem("wakelock-default", v ? "1" : "0");
-                    setWakeLockDefault(v);
+                    localStorage.setItem('wakelock-default', v ? '1' : '0')
+                    setWakeLockDefault(v)
                   }}
                 >
-                  <Switch.Control><Switch.Thumb /></Switch.Control>
+                  <Switch.Control>
+                    <Switch.Thumb />
+                  </Switch.Control>
                 </Switch>
               </div>
             )}
@@ -837,31 +1133,54 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
 
         {/* Data */}
         <section className="flex flex-col gap-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">{t("settings.data")}</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            {t('settings.data')}
+          </h2>
 
           <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-medium">{t("settings.exportRecipes")}</p>
-            <p className="text-xs text-zinc-400">{t("settings.exportDesc")}</p>
-            <Button size="sm" variant="secondary" onPress={handleExport} isDisabled={exporting} className="self-start">
-              {exporting ? t("settings.exporting") : t("settings.exportCSV")}
+            <p className="text-sm font-medium">{t('settings.exportRecipes')}</p>
+            <p className="text-xs text-zinc-400">{t('settings.exportDesc')}</p>
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={handleExport}
+              isDisabled={exporting}
+              className="self-start"
+            >
+              {exporting ? t('settings.exporting') : t('settings.exportCSV')}
             </Button>
           </div>
 
           <div className="flex flex-col gap-2 rounded-xl border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-medium">{t("settings.importRecipes")}</p>
-            <p className="text-xs text-zinc-400">{t("settings.importDesc")}</p>
-            <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
-            <Button size="sm" variant="secondary" onPress={() => fileRef.current?.click()} isDisabled={importing} className="self-start">
-              {importing ? t("settings.importing") : t("settings.chooseCSV")}
+            <p className="text-sm font-medium">{t('settings.importRecipes')}</p>
+            <p className="text-xs text-zinc-400">{t('settings.importDesc')}</p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={() => fileRef.current?.click()}
+              isDisabled={importing}
+              className="self-start"
+            >
+              {importing ? t('settings.importing') : t('settings.chooseCSV')}
             </Button>
-            {importResult && <p className="text-xs text-success font-medium">{importResult}</p>}
+            {importResult && (
+              <p className="text-xs text-success font-medium">{importResult}</p>
+            )}
           </div>
         </section>
 
         {error && (
-          <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm">{error}</div>
+          <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm">
+            {error}
+          </div>
         )}
-
       </div>
 
       <CreateHouseholdModal
@@ -879,5 +1198,5 @@ export default function SettingsPage({ stats, onStatsRefresh, preferences, onPre
         />
       )}
     </>
-  );
+  )
 }

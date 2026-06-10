@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { useTranslation } from "react-i18next";
-import i18n from "../i18n";
-import { createPortal } from "react-dom";
+import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n'
+import { createPortal } from 'react-dom'
 import {
   DndContext,
   closestCenter,
@@ -10,32 +10,44 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core'
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
   arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { RecipeOut, reorderRecipes } from "../api/client";
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { RecipeOut, reorderRecipes } from '../api/client'
 
-type SortField = "title" | "servings" | "kcal_per_serving" | "creator_handle" | "added_by" | "created_at";
-type SortDir = "asc" | "desc";
-type Sort = { field: SortField; dir: SortDir } | null;
+type SortField =
+  | 'title'
+  | 'servings'
+  | 'kcal_per_serving'
+  | 'creator_handle'
+  | 'added_by'
+  | 'created_at'
+type SortDir = 'asc' | 'desc'
+type Sort = { field: SortField; dir: SortDir } | null
 
 interface RecipesTableProps {
-  recipes: RecipeOut[];
-  showAddedBy: boolean;
-  onView: (recipe: RecipeOut) => void;
-  onEdit: (recipe: RecipeOut) => void;
-  onDelete: (recipe: RecipeOut) => void;
+  recipes: RecipeOut[]
+  showAddedBy: boolean
+  onView: (recipe: RecipeOut) => void
+  onEdit: (recipe: RecipeOut) => void
+  onDelete: (recipe: RecipeOut) => void
 }
 
 function GripIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="currentColor"
+      aria-hidden="true"
+    >
       <circle cx="4" cy="3.5" r="1.2" />
       <circle cx="10" cy="3.5" r="1.2" />
       <circle cx="4" cy="7" r="1.2" />
@@ -43,40 +55,73 @@ function GripIcon() {
       <circle cx="4" cy="10.5" r="1.2" />
       <circle cx="10" cy="10.5" r="1.2" />
     </svg>
-  );
+  )
 }
 
 function SortIndicator({ field, sort }: { field: SortField; sort: Sort }) {
   if (!sort || sort.field !== field) {
-    return <span className="ml-1 text-zinc-300 text-[10px]">↕</span>;
+    return <span className="ml-1 text-zinc-300 text-[10px]">↕</span>
   }
+
   return (
     <span className="ml-1 text-primary text-[10px]">
-      {sort.dir === "asc" ? "↑" : "↓"}
+      {sort.dir === 'asc' ? '↑' : '↓'}
     </span>
-  );
+  )
+}
+
+function ColHeader({
+  label,
+  field,
+  sort,
+  onToggleSort,
+  align = 'left',
+}: {
+  label: string
+  field: SortField
+  sort: Sort
+  onToggleSort: (field: SortField) => void
+  align?: 'left' | 'right'
+}) {
+  const active = sort?.field === field
+
+  return (
+    <button
+      type="button"
+      onClick={() => onToggleSort(field)}
+      className={`flex items-center gap-0.5 text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${align === 'right' ? 'justify-end' : 'justify-start'} ${active ? 'text-zinc-700' : 'text-zinc-400 hover:text-zinc-600'}`}
+    >
+      {label}
+      <SortIndicator field={field} sort={sort} />
+    </button>
+  )
 }
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(i18n.language, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 function ThumbCell({ url, title }: { url: string | null; title: string }) {
-  const [loaded, setLoaded] = useState(false);
-  const proxyUrl = url ? `/api/proxy/image?url=${encodeURIComponent(url)}` : null;
+  const [loaded, setLoaded] = useState(false)
+  const proxyUrl = url
+    ? `/api/proxy/image?url=${encodeURIComponent(url)}`
+    : null
+
   return (
     <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-100 shrink-0 relative">
-      {!loaded && proxyUrl && <div className="absolute inset-0 animate-pulse bg-zinc-200" />}
+      {!loaded && proxyUrl && (
+        <div className="absolute inset-0 animate-pulse bg-zinc-200" />
+      )}
       {proxyUrl ? (
         <img
           src={proxyUrl}
           alt={title}
           onLoad={() => setLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center text-zinc-200 text-xl">
@@ -84,7 +129,7 @@ function ThumbCell({ url, title }: { url: string | null; title: string }) {
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // Portal-based dropdown — renders into document.body so overflow:hidden can't clip it
@@ -93,36 +138,38 @@ function RowMenu({
   onEdit,
   onDelete,
 }: {
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  onView: () => void
+  onEdit: () => void
+  onDelete: () => void
 }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   function openMenu(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-    setOpen(true);
+    e.stopPropagation()
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    setOpen(true)
   }
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     function onPointerDown(e: PointerEvent) {
       if (
         menuRef.current?.contains(e.target as Node) ||
         triggerRef.current?.contains(e.target as Node)
-      ) return;
-      setOpen(false);
+      )
+        return
+      setOpen(false)
     }
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [open]);
+    document.addEventListener('pointerdown', onPointerDown)
+
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
 
   return (
     <div className="flex items-center justify-center">
@@ -135,36 +182,51 @@ function RowMenu({
       >
         ⋯
       </button>
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          style={{ position: "fixed", top: pos.top, right: pos.right, zIndex: 9999 }}
-          className="w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={() => { setOpen(false); onView(); }}
+      {open &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: 'fixed',
+              top: pos.top,
+              right: pos.right,
+              zIndex: 9999,
+            }}
+            className="w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
+            onClick={(e) => e.stopPropagation()}
           >
-            {t("common.view")}
-          </button>
-          <button
-            className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={() => { setOpen(false); onEdit(); }}
-          >
-            {t("common.edit")}
-          </button>
-          <button
-            className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
-            onClick={() => { setOpen(false); onDelete(); }}
-          >
-            {t("common.delete")}
-          </button>
-        </div>,
-        document.body
-      )}
+            <button
+              className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
+              onClick={() => {
+                setOpen(false)
+                onView()
+              }}
+            >
+              {t('common.view')}
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
+              onClick={() => {
+                setOpen(false)
+                onEdit()
+              }}
+            >
+              {t('common.edit')}
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
+              onClick={() => {
+                setOpen(false)
+                onDelete()
+              }}
+            >
+              {t('common.delete')}
+            </button>
+          </div>,
+          document.body
+        )}
     </div>
-  );
+  )
 }
 
 function SortableRow({
@@ -175,17 +237,24 @@ function SortableRow({
   onEdit,
   onDelete,
 }: {
-  recipe: RecipeOut;
-  showAddedBy: boolean;
-  cols: string;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
+  recipe: RecipeOut
+  showAddedBy: boolean
+  cols: string
+  onView: () => void
+  onEdit: () => void
+  onDelete: () => void
 }) {
   // Both attributes and listeners go on the grip button (correct drag-handle pattern)
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: recipe.id,
-  });
+  })
 
   return (
     <div
@@ -195,7 +264,7 @@ function SortableRow({
         transition,
         gridTemplateColumns: cols,
       }}
-      className={`grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? "opacity-50 z-10 relative" : ""}`}
+      className={`grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`}
       onClick={onView}
     >
       {/* Grip — both listeners and attributes live here */}
@@ -217,22 +286,36 @@ function SortableRow({
 
       {/* Title */}
       <div className="min-w-0">
-        <p className="font-medium text-sm leading-snug line-clamp-2">{recipe.title}</p>
+        <p className="font-medium text-sm leading-snug line-clamp-2">
+          {recipe.title}
+        </p>
       </div>
 
       {/* Servings */}
       <div className="text-sm text-zinc-600 text-right tabular-nums pr-2">
-        {recipe.servings != null ? recipe.servings : <span className="text-zinc-300">—</span>}
+        {recipe.servings != null ? (
+          recipe.servings
+        ) : (
+          <span className="text-zinc-300">—</span>
+        )}
       </div>
 
       {/* Kcal */}
       <div className="text-sm text-zinc-600 text-right tabular-nums pr-2">
-        {recipe.kcal_per_serving != null ? recipe.kcal_per_serving : <span className="text-zinc-300">—</span>}
+        {recipe.kcal_per_serving != null ? (
+          recipe.kcal_per_serving
+        ) : (
+          <span className="text-zinc-300">—</span>
+        )}
       </div>
 
       {/* Author */}
       <div className="text-sm text-zinc-500 truncate">
-        {recipe.creator_handle ? `@${recipe.creator_handle}` : <span className="text-zinc-300">—</span>}
+        {recipe.creator_handle ? (
+          `@${recipe.creator_handle}`
+        ) : (
+          <span className="text-zinc-300">—</span>
+        )}
       </div>
 
       {/* Added by */}
@@ -252,31 +335,42 @@ function SortableRow({
         <RowMenu onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </div>
     </div>
-  );
+  )
 }
 
-function getSortValue(recipe: RecipeOut, field: SortField): string | number | null {
+function getSortValue(
+  recipe: RecipeOut,
+  field: SortField
+): string | number | null {
   switch (field) {
-    case "title": return recipe.title.toLowerCase();
-    case "servings": return recipe.servings;
-    case "kcal_per_serving": return recipe.kcal_per_serving;
-    case "creator_handle": return recipe.creator_handle?.toLowerCase() ?? null;
-    case "added_by": return recipe.added_by?.toLowerCase() ?? null;
-    case "created_at": return recipe.created_at;
+    case 'title':
+      return recipe.title.toLowerCase()
+    case 'servings':
+      return recipe.servings
+    case 'kcal_per_serving':
+      return recipe.kcal_per_serving
+    case 'creator_handle':
+      return recipe.creator_handle?.toLowerCase() ?? null
+    case 'added_by':
+      return recipe.added_by?.toLowerCase() ?? null
+    case 'created_at':
+      return recipe.created_at
   }
 }
 
 function applySortRows(rows: RecipeOut[], sort: Sort): RecipeOut[] {
-  if (!sort) return rows;
+  if (!sort) return rows
+
   return [...rows].sort((a, b) => {
-    const av = getSortValue(a, sort.field);
-    const bv = getSortValue(b, sort.field);
-    if (av === null && bv === null) return 0;
-    if (av === null) return 1;
-    if (bv === null) return -1;
-    const cmp = av < bv ? -1 : av > bv ? 1 : 0;
-    return sort.dir === "asc" ? cmp : -cmp;
-  });
+    const av = getSortValue(a, sort.field)
+    const bv = getSortValue(b, sort.field)
+    if (av === null && bv === null) return 0
+    if (av === null) return 1
+    if (bv === null) return -1
+    const cmp = av < bv ? -1 : av > bv ? 1 : 0
+
+    return sort.dir === 'asc' ? cmp : -cmp
+  })
 }
 
 export default function RecipesTable({
@@ -286,65 +380,56 @@ export default function RecipesTable({
   onEdit,
   onDelete,
 }: RecipesTableProps) {
-  const { t } = useTranslation();
-  const [sort, setSort] = useState<Sort>({ field: "created_at", dir: "desc" });
-  const [localRows, setLocalRows] = useState<RecipeOut[]>(recipes);
+  const { t } = useTranslation()
+  const [sort, setSort] = useState<Sort>({ field: 'created_at', dir: 'desc' })
+  const [localRows, setLocalRows] = useState<RecipeOut[]>(recipes)
 
   // Merge external recipe updates (edits, deletes, adds) without losing drag order
   useEffect(() => {
     setLocalRows((prev) => {
-      const map = new Map(recipes.map((r) => [r.id, r]));
-      const updated = prev.filter((r) => map.has(r.id)).map((r) => map.get(r.id)!);
-      const prevIds = new Set(prev.map((r) => r.id));
-      const added = recipes.filter((r) => !prevIds.has(r.id));
-      return [...added, ...updated];
-    });
-  }, [recipes]);
+      const map = new Map(recipes.map((r) => [r.id, r]))
+      const updated = prev
+        .filter((r) => map.has(r.id))
+        .map((r) => map.get(r.id)!)
+      const prevIds = new Set(prev.map((r) => r.id))
+      const added = recipes.filter((r) => !prevIds.has(r.id))
+
+      return [...added, ...updated]
+    })
+  }, [recipes])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  )
 
   function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    const { active, over } = event
+    if (!over || active.id === over.id) return
     // Drag operates on whatever is currently displayed (sorted or not)
-    const source = sort ? applySortRows(localRows, sort) : localRows;
-    const oldIdx = source.findIndex((r) => r.id === active.id);
-    const newIdx = source.findIndex((r) => r.id === over.id);
-    const reordered = arrayMove(source, oldIdx, newIdx);
-    setLocalRows(reordered);
-    setSort(null); // dragging always clears column sort → manual mode
-    reorderRecipes(reordered.map((r) => r.id)).catch(() => {});
+    const source = sort ? applySortRows(localRows, sort) : localRows
+    const oldIdx = source.findIndex((r) => r.id === active.id)
+    const newIdx = source.findIndex((r) => r.id === over.id)
+    const reordered = arrayMove(source, oldIdx, newIdx)
+    setLocalRows(reordered)
+    setSort(null) // dragging always clears column sort → manual mode
+    reorderRecipes(reordered.map((r) => r.id)).catch(() => {})
   }
 
   function toggleSort(field: SortField) {
     setSort((prev) => {
-      if (prev?.field === field) return { field, dir: prev.dir === "asc" ? "desc" : "asc" };
-      return { field, dir: field === "created_at" ? "desc" : "asc" };
-    });
+      if (prev?.field === field)
+        return { field, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+
+      return { field, dir: field === 'created_at' ? 'desc' : 'asc' }
+    })
   }
 
-  const displayed = sort ? applySortRows(localRows, sort) : localRows;
+  const displayed = sort ? applySortRows(localRows, sort) : localRows
 
   const cols = showAddedBy
-    ? "2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 8rem 6.5rem 2.5rem"
-    : "2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 6.5rem 2.5rem";
-
-  function ColHeader({ label, field, align = "left" }: { label: string; field: SortField; align?: "left" | "right" }) {
-    const active = sort?.field === field;
-    return (
-      <button
-        type="button"
-        onClick={() => toggleSort(field)}
-        className={`flex items-center gap-0.5 text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${align === "right" ? "justify-end" : "justify-start"} ${active ? "text-zinc-700" : "text-zinc-400 hover:text-zinc-600"}`}
-      >
-        {label}
-        <SortIndicator field={field} sort={sort} />
-      </button>
-    );
-  }
+    ? '2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 8rem 6.5rem 2.5rem'
+    : '2rem 3.5rem 1fr 4.5rem 4.5rem 8rem 6.5rem 2.5rem'
 
   return (
     <div className="px-4 mt-4 pb-6">
@@ -355,22 +440,70 @@ export default function RecipesTable({
           className="grid items-center gap-2 px-2 py-2.5 border-b-2 border-zinc-100 bg-zinc-50/80 rounded-t-xl"
           style={{ gridTemplateColumns: cols }}
         >
-          <div className="flex items-center justify-center text-zinc-300" title="Drag rows to reorder">
+          <div
+            className="flex items-center justify-center text-zinc-300"
+            title="Drag rows to reorder"
+          >
             <GripIcon />
           </div>
           <div />
-          <ColHeader label={t("recipes.colTitle")} field="title" />
-          <div className="flex justify-end"><ColHeader label={t("recipes.colServings")} field="servings" align="right" /></div>
-          <div className="flex justify-end"><ColHeader label={t("recipes.colKcal")} field="kcal_per_serving" align="right" /></div>
-          <ColHeader label={t("recipes.colAuthor")} field="creator_handle" />
-          {showAddedBy && <ColHeader label={t("recipes.colAddedBy")} field="added_by" />}
-          <ColHeader label={t("recipes.colAdded")} field="created_at" />
+          <ColHeader
+            label={t('recipes.colTitle')}
+            field="title"
+            sort={sort}
+            onToggleSort={toggleSort}
+          />
+          <div className="flex justify-end">
+            <ColHeader
+              label={t('recipes.colServings')}
+              field="servings"
+              sort={sort}
+              onToggleSort={toggleSort}
+              align="right"
+            />
+          </div>
+          <div className="flex justify-end">
+            <ColHeader
+              label={t('recipes.colKcal')}
+              field="kcal_per_serving"
+              sort={sort}
+              onToggleSort={toggleSort}
+              align="right"
+            />
+          </div>
+          <ColHeader
+            label={t('recipes.colAuthor')}
+            field="creator_handle"
+            sort={sort}
+            onToggleSort={toggleSort}
+          />
+          {showAddedBy && (
+            <ColHeader
+              label={t('recipes.colAddedBy')}
+              field="added_by"
+              sort={sort}
+              onToggleSort={toggleSort}
+            />
+          )}
+          <ColHeader
+            label={t('recipes.colAdded')}
+            field="created_at"
+            sort={sort}
+            onToggleSort={toggleSort}
+          />
           <div />
         </div>
 
         {/* Rows */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={displayed.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={displayed.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
+          >
             {displayed.map((recipe) => (
               <SortableRow
                 key={recipe.id}
@@ -386,5 +519,5 @@ export default function RecipesTable({
         </DndContext>
       </div>
     </div>
-  );
+  )
 }

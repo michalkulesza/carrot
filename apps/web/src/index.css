@@ -1,27 +1,27 @@
-@import "@heroui/react/styles";
+@import '@heroui/react/styles';
 
 @theme {
   /* primary — maps to HeroUI accent (blue-indigo) */
-  --color-primary:             oklch(0.62 0.195 253.83);
-  --color-primary-foreground:  oklch(1 0 0);
+  --color-primary: oklch(0.62 0.195 253.83);
+  --color-primary-foreground: oklch(1 0 0);
 
   /* secondary — violet, used for tags */
-  --color-secondary:           oklch(0.60 0.185 300);
+  --color-secondary: oklch(0.6 0.185 300);
   --color-secondary-foreground: oklch(1 0 0);
-  --color-secondary-400:       oklch(0.72 0.15 300);
-  --color-secondary-700:       oklch(0.48 0.18 300);
+  --color-secondary-400: oklch(0.72 0.15 300);
+  --color-secondary-700: oklch(0.48 0.18 300);
 
   /* warning shades */
-  --color-warning-100:         oklch(0.97 0.03 72);
-  --color-warning-400:         oklch(0.83 0.12 72);
-  --color-warning-700:         oklch(0.62 0.17 55);
+  --color-warning-100: oklch(0.97 0.03 72);
+  --color-warning-400: oklch(0.83 0.12 72);
+  --color-warning-700: oklch(0.62 0.17 55);
 
   /* danger shades */
-  --color-danger-50:           oklch(0.97 0.015 25);
-  --color-danger-100:          oklch(0.95 0.04 25);
+  --color-danger-50: oklch(0.97 0.015 25);
+  --color-danger-100: oklch(0.95 0.04 25);
 
   /* success shades */
-  --color-success-700:         oklch(0.56 0.16 150);
+  --color-success-700: oklch(0.56 0.16 150);
 }
 
 @layer utilities {

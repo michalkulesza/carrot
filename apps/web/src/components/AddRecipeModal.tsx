@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import {
   Modal,
   ModalBackdrop,
@@ -10,7 +10,7 @@ import {
   Button,
   Switch,
   toast,
-} from "@heroui/react";
+} from '@heroui/react'
 import {
   streamImport,
   saveRecipe,
@@ -24,42 +24,46 @@ import {
   StageEvent,
   Tag,
   UserPreferences,
-} from "../api/client";
-import TagRow from "./TagRow";
-import { useHousehold } from "../context/HouseholdContext";
+} from '../api/client'
+import TagRow from './TagRow'
+import { useHousehold } from '../context/HouseholdContext'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 interface StepState extends StageEvent {
-  status: "active" | "done";
+  status: 'active' | 'done'
 }
 
 interface EditableComponent {
-  name: string;
-  yield_note: string;
-  ingredients: string[];
-  steps: string[];
-  ingredient_flags: (AllergenFlag | null)[];
+  name: string
+  yield_note: string
+  ingredients: string[]
+  steps: string[]
+  ingredient_flags: (AllergenFlag | null)[]
 }
 
 interface EditableRecipe {
-  title: string;
-  servings: string;
-  kcal: string;
-  thumbnail_url: string | null;
-  creator_handle: string | null;
-  source_url: string | null;
-  stage: string;
-  components: EditableComponent[];
-  suggestedTagNames: string[];
+  title: string
+  servings: string
+  kcal: string
+  thumbnail_url: string | null
+  creator_handle: string | null
+  source_url: string | null
+  stage: string
+  components: EditableComponent[]
+  suggestedTagNames: string[]
 }
 
-function toEditable(result: ImportResult, autoSubstitute: boolean): EditableRecipe {
-  const { recipe, metadata, stage } = result;
+function toEditable(
+  result: ImportResult,
+  autoSubstitute: boolean
+): EditableRecipe {
+  const { recipe, metadata, stage } = result
+
   return {
-    title: recipe?.title ?? "",
-    servings: recipe?.servings?.toString() ?? "",
-    kcal: recipe?.kcal_per_serving?.toString() ?? "",
+    title: recipe?.title ?? '',
+    servings: recipe?.servings?.toString() ?? '',
+    kcal: recipe?.kcal_per_serving?.toString() ?? '',
     thumbnail_url: metadata.thumbnail_url,
     creator_handle: metadata.creator_handle,
     source_url: metadata.source_url || null,
@@ -67,22 +71,26 @@ function toEditable(result: ImportResult, autoSubstitute: boolean): EditableReci
     suggestedTagNames: recipe?.tags ?? [],
     components: (recipe?.components ?? []).map((c: RecipeComponent) => ({
       name: c.name ?? c.role,
-      yield_note: c.yield_note ?? "",
+      yield_note: c.yield_note ?? '',
       ingredients: c.ingredients.map((ing) => {
-        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute;
-        const nameToUse = useSub ? ing.substitute! : ing.name;
-        return [ing.qty, ing.unit, nameToUse, ing.note ? `(${ing.note})` : null].filter(Boolean).join(" ");
+        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
+        const nameToUse = useSub ? ing.substitute! : ing.name
+
+        return [ing.qty, ing.unit, nameToUse, ing.note ? `(${ing.note})` : null]
+          .filter(Boolean)
+          .join(' ')
       }),
       steps: c.steps,
       ingredient_flags: c.ingredients.map((ing) => ({
         allergen: ing.allergen ?? null,
         substitute: ing.substitute ?? null,
-        substitute_applied: autoSubstitute && !!ing.allergen && !!ing.substitute,
+        substitute_applied:
+          autoSubstitute && !!ing.allergen && !!ing.substitute,
         original_display: null,
         ingredient_name: ing.name,
       })),
     })),
-  };
+  }
 }
 
 // ── Allergen popover ──────────────────────────────────────────────────────────
@@ -93,29 +101,33 @@ function AllergenPopover({
   onReplace,
   onRestore,
 }: {
-  flag: AllergenFlag;
-  activeAllergens: string[];
-  onReplace: () => void;
-  onRestore: () => void;
+  flag: AllergenFlag
+  activeAllergens: string[]
+  onReplace: () => void
+  onRestore: () => void
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+    document.addEventListener('mousedown', handleClick)
 
-  const isActive = flag.allergen && activeAllergens.some((a) => {
-    const fa = flag.allergen!.toLowerCase();
-    const la = a.toLowerCase();
-    return fa === la || fa.includes(la) || la.includes(fa);
-  });
-  if (!isActive) return null;
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  const isActive =
+    flag.allergen &&
+    activeAllergens.some((a) => {
+      const fa = flag.allergen!.toLowerCase()
+      const la = a.toLowerCase()
+
+      return fa === la || fa.includes(la) || la.includes(fa)
+    })
+  if (!isActive) return null
 
   return (
     <div className="relative shrink-0" ref={ref}>
@@ -132,58 +144,90 @@ function AllergenPopover({
           {flag.substitute_applied && flag.original_display ? (
             <>
               <p className="text-zinc-600 mb-2">
-                Originally <strong className="text-zinc-800">{flag.original_display}</strong>,
-                replaced with <strong className="text-zinc-800">{flag.substitute}</strong> due to {flag.allergen}.
+                Originally{' '}
+                <strong className="text-zinc-800">
+                  {flag.original_display}
+                </strong>
+                , replaced with{' '}
+                <strong className="text-zinc-800">{flag.substitute}</strong> due
+                to {flag.allergen}.
               </p>
-              <Button size="sm" variant="secondary" onPress={() => { onRestore(); setOpen(false); }}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onPress={() => {
+                  onRestore()
+                  setOpen(false)
+                }}
+              >
                 Restore original
               </Button>
             </>
           ) : flag.substitute ? (
             <>
               <p className="text-zinc-600 mb-2">
-                Contains <strong className="text-zinc-800">{flag.allergen}</strong>.
-                Suggested substitute: <strong className="text-zinc-800">{flag.substitute}</strong>.
+                Contains{' '}
+                <strong className="text-zinc-800">{flag.allergen}</strong>.
+                Suggested substitute:{' '}
+                <strong className="text-zinc-800">{flag.substitute}</strong>.
               </p>
               <div className="flex gap-2">
-                <Button size="sm" variant="primary" onPress={() => { onReplace(); setOpen(false); }}>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onPress={() => {
+                    onReplace()
+                    setOpen(false)
+                  }}
+                >
                   Replace
                 </Button>
-                <Button size="sm" variant="tertiary" onPress={() => setOpen(false)}>
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  onPress={() => setOpen(false)}
+                >
                   Keep original
                 </Button>
               </div>
             </>
           ) : (
             <p className="text-zinc-600">
-              Contains <strong className="text-zinc-800">{flag.allergen}</strong>. No substitute available.
+              Contains{' '}
+              <strong className="text-zinc-800">{flag.allergen}</strong>. No
+              substitute available.
             </p>
           )}
         </div>
       )}
     </div>
-  );
+  )
 }
 
 // ── Progress list ────────────────────────────────────────────────────────────
 
 function ProgressList({ steps }: { steps: StepState[] }) {
-  if (steps.length === 0) return null;
+  if (steps.length === 0) return null
+
   return (
     <ul className="list-none p-0 m-0 space-y-1 mt-3">
       {steps.map((s) => (
         <li
           key={s.key}
           className={`flex items-center gap-2 text-sm ${
-            s.status === "active" ? "text-primary font-semibold" : "text-zinc-500"
+            s.status === 'active'
+              ? 'text-primary font-semibold'
+              : 'text-zinc-500'
           }`}
         >
-          <span className="w-4 text-center">{s.status === "done" ? "✓" : "⋯"}</span>
+          <span className="w-4 text-center">
+            {s.status === 'done' ? '✓' : '⋯'}
+          </span>
           {s.label}
         </li>
       ))}
     </ul>
-  );
+  )
 }
 
 // ── Inline editable field ─────────────────────────────────────────────────────
@@ -191,24 +235,24 @@ function ProgressList({ steps }: { steps: StepState[] }) {
 function EditLine({
   value,
   onChange,
-  className = "",
+  className = '',
   multiline = false,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  className?: string;
-  multiline?: boolean;
+  value: string
+  onChange: (v: string) => void
+  className?: string
+  multiline?: boolean
 }) {
   const base =
-    "w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none";
-  const ref = useRef<HTMLTextAreaElement>(null);
+    'w-full bg-transparent border-b border-transparent hover:border-zinc-300 focus:border-primary focus:outline-none transition-colors resize-none'
+  const ref = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (ref.current) {
-      ref.current.style.height = "auto";
-      ref.current.style.height = `${ref.current.scrollHeight}px`;
+      ref.current.style.height = 'auto'
+      ref.current.style.height = `${ref.current.scrollHeight}px`
     }
-  }, [value]);
+  }, [value])
 
   if (multiline) {
     return (
@@ -219,8 +263,9 @@ function EditLine({
         onChange={(e) => onChange(e.target.value)}
         className={`${base} overflow-hidden ${className}`}
       />
-    );
+    )
   }
+
   return (
     <input
       type="text"
@@ -228,12 +273,12 @@ function EditLine({
       onChange={(e) => onChange(e.target.value)}
       className={`${base} ${className}`}
     />
-  );
+  )
 }
 
 // ── Editable recipe ───────────────────────────────────────────────────────────
 
-const currentUsername = () => localStorage.getItem("pk_username") || "you";
+const currentUsername = () => localStorage.getItem('pk_username') || 'you'
 
 function EditableRecipeView({
   recipe,
@@ -245,100 +290,116 @@ function EditableRecipeView({
   onTagRemove,
   onTagCreate,
 }: {
-  recipe: EditableRecipe;
-  selectedTags: Tag[];
-  allTags: Tag[];
-  activeAllergens: string[];
-  onChange: (r: EditableRecipe) => void;
-  onTagAdd: (tag: Tag) => void;
-  onTagRemove: (tagId: string) => void;
-  onTagCreate: (name: string) => Promise<Tag>;
+  recipe: EditableRecipe
+  selectedTags: Tag[]
+  allTags: Tag[]
+  activeAllergens: string[]
+  onChange: (r: EditableRecipe) => void
+  onTagAdd: (tag: Tag) => void
+  onTagRemove: (tagId: string) => void
+  onTagCreate: (name: string) => Promise<Tag>
 }) {
-  const [isAdapted, setIsAdapted] = useState(false);
-  const [showImgInput, setShowImgInput] = useState(false);
-  const [imgDraft, setImgDraft] = useState("");
+  const [isAdapted, setIsAdapted] = useState(false)
+  const [showImgInput, setShowImgInput] = useState(false)
+  const [imgDraft, setImgDraft] = useState('')
 
-  function setTitle(title: string) { onChange({ ...recipe, title }); }
-  function setServings(servings: string) { onChange({ ...recipe, servings }); }
-  function setKcal(kcal: string) { onChange({ ...recipe, kcal }); }
+  function setTitle(title: string) {
+    onChange({ ...recipe, title })
+  }
+  function setServings(servings: string) {
+    onChange({ ...recipe, servings })
+  }
+  function setKcal(kcal: string) {
+    onChange({ ...recipe, kcal })
+  }
 
   function setIngredient(ci: number, ii: number, val: string) {
-    setIsAdapted(true);
+    setIsAdapted(true)
     const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : {
-        ...c,
-        ingredients: c.ingredients.map((ing, ii2) => (ii2 === ii ? val : ing)),
-      }
-    );
-    onChange({ ...recipe, components });
+      ci2 !== ci
+        ? c
+        : {
+            ...c,
+            ingredients: c.ingredients.map((ing, ii2) =>
+              ii2 === ii ? val : ing
+            ),
+          }
+    )
+    onChange({ ...recipe, components })
   }
 
   function handleReplace(ci: number, ii: number) {
-    const comp = recipe.components[ci];
-    const flag = comp.ingredient_flags[ii];
-    if (!flag?.substitute) return;
-    const originalDisplay = comp.ingredients[ii];
+    const comp = recipe.components[ci]
+    const flag = comp.ingredient_flags[ii]
+    if (!flag?.substitute) return
+    const originalDisplay = comp.ingredients[ii]
     const newIngredients = comp.ingredients.map((ing, idx) =>
       idx === ii ? flag.substitute! : ing
-    );
+    )
     const newFlags = comp.ingredient_flags.map((f, idx) =>
       idx === ii
         ? { ...f!, substitute_applied: true, original_display: originalDisplay }
         : f
-    );
+    )
     const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
-    );
-    onChange({ ...recipe, components });
+      ci2 !== ci
+        ? c
+        : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
+    )
+    onChange({ ...recipe, components })
   }
 
   function handleRestore(ci: number, ii: number) {
-    const comp = recipe.components[ci];
-    const flag = comp.ingredient_flags[ii];
-    if (!flag?.original_display) return;
-    const originalDisplay = flag.original_display;
+    const comp = recipe.components[ci]
+    const flag = comp.ingredient_flags[ii]
+    if (!flag?.original_display) return
+    const originalDisplay = flag.original_display
     const newIngredients = comp.ingredients.map((ing, idx) =>
       idx === ii ? originalDisplay : ing
-    );
+    )
     const newFlags = comp.ingredient_flags.map((f, idx) =>
       idx === ii
         ? { ...f!, substitute_applied: false, original_display: null }
         : f
-    );
+    )
     const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
-    );
-    onChange({ ...recipe, components });
+      ci2 !== ci
+        ? c
+        : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
+    )
+    onChange({ ...recipe, components })
   }
 
   function setStep(ci: number, si: number, val: string) {
-    setIsAdapted(true);
+    setIsAdapted(true)
     const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : {
-        ...c,
-        steps: c.steps.map((s, si2) => (si2 === si ? val : s)),
-      }
-    );
-    onChange({ ...recipe, components });
+      ci2 !== ci
+        ? c
+        : {
+            ...c,
+            steps: c.steps.map((s, si2) => (si2 === si ? val : s)),
+          }
+    )
+    onChange({ ...recipe, components })
   }
 
   function openImgEditor() {
-    setImgDraft(recipe.thumbnail_url ?? "");
-    setShowImgInput(true);
+    setImgDraft(recipe.thumbnail_url ?? '')
+    setShowImgInput(true)
   }
 
   function commitImg() {
-    const trimmed = imgDraft.trim();
-    onChange({ ...recipe, thumbnail_url: trimmed || null });
-    setShowImgInput(false);
+    const trimmed = imgDraft.trim()
+    onChange({ ...recipe, thumbnail_url: trimmed || null })
+    setShowImgInput(false)
   }
 
   const proxyUrl = recipe.thumbnail_url
     ? `/api/proxy/image?url=${encodeURIComponent(recipe.thumbnail_url)}`
-    : null;
+    : null
 
-  const originalHandle = recipe.creator_handle;
-  const myHandle = currentUsername();
+  const originalHandle = recipe.creator_handle
+  const myHandle = currentUsername()
 
   return (
     <div className="mt-4 border-t border-zinc-200 pt-4">
@@ -350,12 +411,20 @@ function EditableRecipeView({
           className="relative w-16 h-16 rounded-lg shrink-0 overflow-hidden bg-zinc-100 group cursor-pointer"
         >
           {proxyUrl ? (
-            <img src={proxyUrl} alt="thumbnail" className="w-full h-full object-cover" />
+            <img
+              src={proxyUrl}
+              alt="thumbnail"
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-300 text-2xl">🖼</div>
+            <div className="w-full h-full flex items-center justify-center text-zinc-300 text-2xl">
+              🖼
+            </div>
           )}
           <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span className="text-white text-[10px] font-semibold uppercase tracking-wide">Edit</span>
+            <span className="text-white text-[10px] font-semibold uppercase tracking-wide">
+              Edit
+            </span>
           </div>
         </button>
         <div className="flex-1 min-w-0">
@@ -375,8 +444,11 @@ function EditableRecipeView({
           onChange={(e) => setImgDraft(e.target.value)}
           onBlur={commitImg}
           onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); commitImg(); }
-            if (e.key === "Escape") setShowImgInput(false);
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              commitImg()
+            }
+            if (e.key === 'Escape') setShowImgInput(false)
           }}
           placeholder="Image URL"
           autoFocus
@@ -411,8 +483,18 @@ function EditableRecipeView({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-zinc-100 text-zinc-500 hover:bg-zinc-200 hover:text-zinc-700 transition-colors"
               >
-                <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <svg
+                  className="w-3 h-3 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
                 </svg>
                 Source
               </a>
@@ -424,9 +506,9 @@ function EditableRecipeView({
             )}
           </div>
         )}
-        {(recipe.servings !== "" || recipe.kcal !== "") && (
+        {(recipe.servings !== '' || recipe.kcal !== '') && (
           <div className="flex gap-2">
-            {recipe.servings !== "" && (
+            {recipe.servings !== '' && (
               <label className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium pl-3 pr-2 py-1.5 rounded-full cursor-text">
                 <span>Serves</span>
                 <input
@@ -435,14 +517,14 @@ function EditableRecipeView({
                   max={67}
                   value={recipe.servings}
                   onChange={(e) => {
-                    const v = Math.min(67, Math.max(1, Number(e.target.value)));
-                    setServings(String(v));
+                    const v = Math.min(67, Math.max(1, Number(e.target.value)))
+                    setServings(String(v))
                   }}
                   className="w-[2.2ch] bg-transparent text-primary font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
               </label>
             )}
-            {recipe.kcal !== "" && (
+            {recipe.kcal !== '' && (
               <label className="flex items-center gap-1.5 bg-warning/10 text-warning-700 text-xs font-medium pl-2 pr-3 py-1.5 rounded-full cursor-text">
                 <input
                   type="number"
@@ -450,8 +532,11 @@ function EditableRecipeView({
                   max={9999}
                   value={recipe.kcal}
                   onChange={(e) => {
-                    const v = Math.min(9999, Math.max(1, Number(e.target.value)));
-                    setKcal(String(v));
+                    const v = Math.min(
+                      9999,
+                      Math.max(1, Number(e.target.value))
+                    )
+                    setKcal(String(v))
                   }}
                   className="w-[3.8ch] bg-transparent text-warning-700 font-semibold text-xs text-center focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
@@ -466,19 +551,28 @@ function EditableRecipeView({
       {recipe.components.map((comp, ci) => (
         <div key={ci} className="mb-5">
           {recipe.components.length > 1 && (
-            <h3 className="text-sm font-semibold text-zinc-600 mb-2">{comp.name}</h3>
+            <h3 className="text-sm font-semibold text-zinc-600 mb-2">
+              {comp.name}
+            </h3>
           )}
 
           {comp.ingredients.length > 0 && (
             <>
-              <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Ingredients</p>
+              <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+                Ingredients
+              </p>
               <ul className="space-y-1 mb-3">
                 {comp.ingredients.map((ing, ii) => {
-                  const flag = comp.ingredient_flags[ii];
+                  const flag = comp.ingredient_flags[ii]
+
                   return (
                     <li key={ii} className="flex items-start gap-2 text-sm">
                       <span className="text-zinc-300 mt-1.5 shrink-0">·</span>
-                      <EditLine value={ing} onChange={(v) => setIngredient(ci, ii, v)} className="flex-1" />
+                      <EditLine
+                        value={ing}
+                        onChange={(v) => setIngredient(ci, ii, v)}
+                        className="flex-1"
+                      />
                       {flag && (
                         <AllergenPopover
                           flag={flag}
@@ -488,7 +582,7 @@ function EditableRecipeView({
                         />
                       )}
                     </li>
-                  );
+                  )
                 })}
               </ul>
             </>
@@ -496,12 +590,20 @@ function EditableRecipeView({
 
           {comp.steps.length > 0 && (
             <>
-              <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">Steps</p>
+              <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
+                Steps
+              </p>
               <ol className="space-y-2">
                 {comp.steps.map((step, si) => (
                   <li key={si} className="flex items-start gap-2 text-sm">
-                    <span className="text-zinc-400 font-medium shrink-0">{si + 1}.</span>
-                    <EditLine value={step} onChange={(v) => setStep(ci, si, v)} multiline />
+                    <span className="text-zinc-400 font-medium shrink-0">
+                      {si + 1}.
+                    </span>
+                    <EditLine
+                      value={step}
+                      onChange={(v) => setStep(ci, si, v)}
+                      multiline
+                    />
                   </li>
                 ))}
               </ol>
@@ -510,93 +612,109 @@ function EditableRecipeView({
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 
 interface AddRecipeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSaved?: () => void;
-  allTags: Tag[];
-  onTagCreated: (tag: Tag) => void;
-  preferences: UserPreferences | null;
+  isOpen: boolean
+  onClose: () => void
+  onSaved?: () => void
+  allTags: Tag[]
+  onTagCreated: (tag: Tag) => void
+  preferences: UserPreferences | null
 }
 
-export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTagCreated, preferences }: AddRecipeModalProps) {
-  const { activeHouseholdId, activeHousehold } = useHousehold();
-  const [url, setUrl] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [progressSteps, setProgressSteps] = useState<StepState[]>([]);
-  const [editable, setEditable] = useState<EditableRecipe | null>(null);
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [sharedToPersonal, setSharedToPersonal] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const cancelRef = useRef<(() => void) | null>(null);
-  const [personalRecipes, setPersonalRecipes] = useState<RecipeOut[]>([]);
-  const [librarySearch, setLibrarySearch] = useState("");
-  const [linking, setLinking] = useState(false);
+export default function AddRecipeModal({
+  isOpen,
+  onClose,
+  onSaved,
+  allTags,
+  onTagCreated,
+  preferences,
+}: AddRecipeModalProps) {
+  const { activeHouseholdId, activeHousehold } = useHousehold()
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [progressSteps, setProgressSteps] = useState<StepState[]>([])
+  const [editable, setEditable] = useState<EditableRecipe | null>(null)
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [sharedToPersonal, setSharedToPersonal] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const cancelRef = useRef<(() => void) | null>(null)
+  const [personalRecipes, setPersonalRecipes] = useState<RecipeOut[]>([])
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [linking, setLinking] = useState(false)
 
   const activeAllergens: string[] = activeHousehold?.allergens
-    ? [...(activeHousehold.allergens.predefined ?? []), ...(activeHousehold.allergens.custom ?? [])]
+    ? [
+        ...(activeHousehold.allergens.predefined ?? []),
+        ...(activeHousehold.allergens.custom ?? []),
+      ]
     : preferences?.personal_allergens
-    ? [...(preferences.personal_allergens.predefined ?? []), ...(preferences.personal_allergens.custom ?? [])]
-    : [];
+      ? [
+          ...(preferences.personal_allergens.predefined ?? []),
+          ...(preferences.personal_allergens.custom ?? []),
+        ]
+      : []
 
-  const autoSubstitute = preferences?.auto_substitute ?? false;
+  const autoSubstitute = preferences?.auto_substitute ?? false
 
   useEffect(() => {
     if (isOpen && activeHouseholdId) {
-      listPersonalRecipes().then(setPersonalRecipes).catch(() => {});
+      listPersonalRecipes()
+        .then(setPersonalRecipes)
+        .catch(() => {})
     }
-  }, [isOpen, activeHouseholdId]);
+  }, [isOpen, activeHouseholdId])
 
   function reset() {
-    cancelRef.current?.();
-    setUrl("");
-    setLoading(false);
-    setSaving(false);
-    setProgressSteps([]);
-    setEditable(null);
-    setSelectedTags([]);
-    setSharedToPersonal(true);
-    setError(null);
-    setLibrarySearch("");
+    cancelRef.current?.()
+    setUrl('')
+    setLoading(false)
+    setSaving(false)
+    setProgressSteps([])
+    setEditable(null)
+    setSelectedTags([])
+    setSharedToPersonal(true)
+    setError(null)
+    setLibrarySearch('')
   }
 
   async function handleLink(id: string) {
-    setLinking(true);
-    setError(null);
+    setLinking(true)
+    setError(null)
     try {
-      await linkRecipeToHousehold(id);
-      toast.success("Recipe added to household", { timeout: 3000 });
-      onSaved?.();
-      reset();
-      onClose();
+      await linkRecipeToHousehold(id)
+      toast.success('Recipe added to household', { timeout: 3000 })
+      onSaved?.()
+      reset()
+      onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add recipe");
+      setError(err instanceof Error ? err.message : 'Failed to add recipe')
     } finally {
-      setLinking(false);
+      setLinking(false)
     }
   }
 
   async function handleTagCreate(name: string): Promise<Tag> {
-    const tag = await createTag(name);
-    onTagCreated(tag);
-    return tag;
+    const tag = await createTag(name)
+    onTagCreated(tag)
+
+    return tag
   }
 
   async function handleSave() {
-    if (!editable) return;
-    setSaving(true);
-    setError(null);
+    if (!editable) return
+    setSaving(true)
+    setError(null)
     try {
       await saveRecipe({
         title: editable.title,
-        servings: editable.servings !== "" ? Number(editable.servings) : null,
-        kcal_per_serving: editable.kcal !== "" ? Number(editable.kcal) : null,
+        servings: editable.servings !== '' ? Number(editable.servings) : null,
+        kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
         thumbnail_url: editable.thumbnail_url,
         creator_handle: editable.creator_handle,
         source_url: editable.source_url,
@@ -605,94 +723,128 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
           yield_note: c.yield_note,
           ingredients: c.ingredients,
           steps: c.steps,
-          ingredient_flags: c.ingredient_flags.map((f) =>
-            f ?? { allergen: null, substitute: null, substitute_applied: false, original_display: null }
+          ingredient_flags: c.ingredient_flags.map(
+            (f) =>
+              f ?? {
+                allergen: null,
+                substitute: null,
+                substitute_applied: false,
+                original_display: null,
+              }
           ),
         })),
         tag_ids: selectedTags.map((t) => t.id),
         shared_to_personal: sharedToPersonal,
-      });
-      toast.success("Recipe saved", { timeout: 3000 });
-      onSaved?.();
-      reset();
-      onClose();
+      })
+      toast.success('Recipe saved', { timeout: 3000 })
+      onSaved?.()
+      reset()
+      onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save recipe");
+      setError(err instanceof Error ? err.message : 'Failed to save recipe')
     } finally {
-      setSaving(false);
+      setSaving(false)
     }
   }
 
   function handleClose() {
-    reset();
-    onClose();
+    reset()
+    onClose()
   }
 
   async function handlePaste() {
     try {
-      const text = await navigator.clipboard.readText();
-      setUrl(text.trim());
-    } catch { /* permission denied */ }
+      const text = await navigator.clipboard.readText()
+      setUrl(text.trim())
+    } catch {
+      /* permission denied */
+    }
   }
 
   function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    cancelRef.current?.();
-    setLoading(true);
-    setError(null);
-    setEditable(null);
-    setSelectedTags([]);
-    setProgressSteps([]);
+    e.preventDefault()
+    cancelRef.current?.()
+    setLoading(true)
+    setError(null)
+    setEditable(null)
+    setSelectedTags([])
+    setProgressSteps([])
 
     cancelRef.current = streamImport(url, {
       onStage(stage) {
         setProgressSteps((prev) => {
           const updated = prev.map((s) =>
-            s.status === "active" ? { ...s, status: "done" as const } : s
-          );
-          return [...updated, { ...stage, status: "active" }];
-        });
+            s.status === 'active' ? { ...s, status: 'done' as const } : s
+          )
+
+          return [...updated, { ...stage, status: 'active' }]
+        })
       },
       onDone(res) {
         setProgressSteps((prev) =>
-          prev.map((s) => (s.status === "active" ? { ...s, status: "done" as const } : s))
-        );
+          prev.map((s) =>
+            s.status === 'active' ? { ...s, status: 'done' as const } : s
+          )
+        )
         if (res.recipe) {
-          const editableRecipe = toEditable(res, autoSubstitute);
-          setEditable(editableRecipe);
+          const editableRecipe = toEditable(res, autoSubstitute)
+          setEditable(editableRecipe)
           const suggested = allTags.filter((t) =>
             editableRecipe.suggestedTagNames.some(
               (name) => name.toLowerCase() === t.name.toLowerCase()
             )
-          );
-          setSelectedTags(suggested);
+          )
+          setSelectedTags(suggested)
         } else {
-          setError(res.error ?? "Import failed");
+          setError(res.error ?? 'Import failed')
         }
-        setLoading(false);
+        setLoading(false)
       },
       onError(msg) {
-        setError(msg);
-        setLoading(false);
+        setError(msg)
+        setLoading(false)
       },
-    });
+    })
   }
 
-  const parsed = editable !== null;
+  const parsed = editable !== null
 
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }}>
+    <Modal
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleClose()
+      }}
+    >
       <ModalBackdrop isDismissable>
-        <ModalContainer size="lg" scroll="inside" className="!rounded-xl overflow-hidden">
+        <ModalContainer
+          size="lg"
+          scroll="inside"
+          className="!rounded-xl overflow-hidden"
+        >
           <ModalDialog>
-            <ModalHeader>{parsed ? "Edit Recipe" : "Import Recipe"}</ModalHeader>
+            <ModalHeader>
+              {parsed ? 'Edit Recipe' : 'Import Recipe'}
+            </ModalHeader>
             <ModalBody>
               {!parsed && activeHouseholdId && personalRecipes.length > 0 && (
                 <div className="flex flex-col gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">From Personal Library</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                    From Personal Library
+                  </p>
                   <div className="relative">
-                    <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                     <input
                       type="text"
@@ -704,7 +856,11 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                   </div>
                   <ul className="max-h-44 overflow-y-auto flex flex-col gap-0.5">
                     {personalRecipes
-                      .filter((r) => r.title.toLowerCase().includes(librarySearch.toLowerCase()))
+                      .filter((r) =>
+                        r.title
+                          .toLowerCase()
+                          .includes(librarySearch.toLowerCase())
+                      )
                       .map((r) => (
                         <li key={r.id}>
                           <button
@@ -720,14 +876,24 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                                   className="w-8 h-8 rounded object-cover shrink-0"
                                 />
                               )}
-                              <span className="truncate font-medium">{r.title}</span>
+                              <span className="truncate font-medium">
+                                {r.title}
+                              </span>
                             </div>
-                            <span className="text-xs text-primary shrink-0 font-semibold">Add</span>
+                            <span className="text-xs text-primary shrink-0 font-semibold">
+                              Add
+                            </span>
                           </button>
                         </li>
                       ))}
-                    {personalRecipes.filter((r) => r.title.toLowerCase().includes(librarySearch.toLowerCase())).length === 0 && (
-                      <li className="text-sm text-zinc-400 px-3 py-2">No matches</li>
+                    {personalRecipes.filter((r) =>
+                      r.title
+                        .toLowerCase()
+                        .includes(librarySearch.toLowerCase())
+                    ).length === 0 && (
+                      <li className="text-sm text-zinc-400 px-3 py-2">
+                        No matches
+                      </li>
                     )}
                   </ul>
                   <div className="flex items-center gap-2 text-xs text-zinc-400 pt-1">
@@ -739,12 +905,16 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
               )}
 
               {!parsed && (
-                <form id="import-form" onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <form
+                  id="import-form"
+                  onSubmit={handleSubmit}
+                  className="flex flex-col gap-3"
+                >
                   <div className="flex gap-1.5 flex-wrap">
                     {[
-                      { label: "Web", icon: "🌐" },
-                      { label: "Instagram", icon: "📸" },
-                      { label: "TikTok", icon: "🎵" },
+                      { label: 'Web', icon: '🌐' },
+                      { label: 'Instagram', icon: '📸' },
+                      { label: 'TikTok', icon: '🎵' },
                     ].map(({ label, icon }) => (
                       <span
                         key={label}
@@ -756,7 +926,12 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                   </div>
                   <div className="flex gap-2 items-end">
                     <div className="flex flex-col gap-1 flex-1">
-                      <label className="text-sm font-medium" htmlFor="recipe-url">Recipe URL</label>
+                      <label
+                        className="text-sm font-medium"
+                        htmlFor="recipe-url"
+                      >
+                        Recipe URL
+                      </label>
                       <input
                         id="recipe-url"
                         type="url"
@@ -767,7 +942,12 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                         className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                       />
                     </div>
-                    <Button type="button" variant="secondary" onPress={handlePaste} className="shrink-0 mb-0.5">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onPress={handlePaste}
+                      className="shrink-0 mb-0.5"
+                    >
                       Paste
                     </Button>
                   </div>
@@ -791,7 +971,9 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                   activeAllergens={activeAllergens}
                   onChange={setEditable}
                   onTagAdd={(tag) => setSelectedTags((prev) => [...prev, tag])}
-                  onTagRemove={(id) => setSelectedTags((prev) => prev.filter((t) => t.id !== id))}
+                  onTagRemove={(id) =>
+                    setSelectedTags((prev) => prev.filter((t) => t.id !== id))
+                  }
                   onTagCreate={handleTagCreate}
                 />
               )}
@@ -804,21 +986,38 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
                     isSelected={sharedToPersonal}
                     onChange={setSharedToPersonal}
                   >
-                    <Switch.Control><Switch.Thumb /></Switch.Control>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
                   </Switch>
-                  <span className="text-sm text-zinc-600">Also add to my private recipes</span>
+                  <span className="text-sm text-zinc-600">
+                    Also add to my private recipes
+                  </span>
                 </div>
               )}
               <div className="flex justify-end gap-2">
-                <Button variant="tertiary" onPress={handleClose} isDisabled={loading || saving}>
-                  {parsed ? "Discard" : "Cancel"}
+                <Button
+                  variant="tertiary"
+                  onPress={handleClose}
+                  isDisabled={loading || saving}
+                >
+                  {parsed ? 'Discard' : 'Cancel'}
                 </Button>
                 {parsed ? (
-                  <Button variant="primary" onPress={handleSave} isDisabled={saving}>
+                  <Button
+                    variant="primary"
+                    onPress={handleSave}
+                    isDisabled={saving}
+                  >
                     Save
                   </Button>
                 ) : (
-                  <Button variant="primary" type="submit" form="import-form" isDisabled={loading}>
+                  <Button
+                    variant="primary"
+                    type="submit"
+                    form="import-form"
+                    isDisabled={loading}
+                  >
                     Import
                   </Button>
                 )}
@@ -828,5 +1027,5 @@ export default function AddRecipeModal({ isOpen, onClose, onSaved, allTags, onTa
         </ModalContainer>
       </ModalBackdrop>
     </Modal>
-  );
+  )
 }
