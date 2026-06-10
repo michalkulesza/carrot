@@ -17,6 +17,7 @@ import { RecipeOut, Tag, UserPreferences, deleteRecipe } from "../api/client";
 import { useHousehold } from "../context/HouseholdContext";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { tTag } from "../utils/tagUtils";
 
 function RecipeThumb({ src, alt }: { src: string; alt: string }) {
   const [loaded, setLoaded] = useState(false);
@@ -164,7 +165,7 @@ function RecipeCard({
                 }}
                 className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary/15 text-secondary-700 cursor-pointer hover:bg-secondary/25 transition-colors"
               >
-                {tag.name}
+                {tTag(tag.name, t)}
               </span>
             ))}
           </div>
@@ -401,7 +402,7 @@ export default function RecipesPage({
                     : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
                 }`}
               >
-                {tag.name}
+                {tTag(tag.name, t)}
               </button>
             );
           })}

@@ -20,13 +20,20 @@
     "view": "View",
     "edit": "Edit",
     "delete": "Delete",
-    "deleting": "Deleting…"
+    "deleting": "Deleting…",
+    "dismiss": "Dismiss",
+    "imageUrl": "Image URL",
+    "addPrivateNotes": "Add private notes…",
+    "thumbnail": "Thumbnail"
   },
   "recipes": {
     "searchPlaceholder": "Search recipes…",
     "noResults": "No results",
     "sectionRecipes": "Recipes",
     "sectionIngredients": "Ingredients",
+    "recipeActions": "Recipe actions",
+    "rowActions": "Row actions",
+    "dragToReorder": "Drag to reorder",
     "servings_one": "{{count}} serving",
     "servings_other": "{{count}} servings",
     "noRecipesYet": "No recipes yet.",
@@ -79,7 +86,8 @@
     "keepScreenOn": "Keep screen on while a timer is running",
     "keepScreenOnDesc": "Prevent screen from sleeping during cooking",
     "timerRunning": "Timer running",
-    "timerPaused": "Timer paused"
+    "timerPaused": "Timer paused",
+    "startTimer": "Start timer"
   },
   "bell": {
     "notifications": "Notifications",
@@ -214,7 +222,9 @@
     "noRecipesMatch": "No recipes match your search.",
     "viewRecipe": "View recipe",
     "changeRecipe": "Change recipe",
-    "removeFromPlan": "Remove from plan"
+    "removeFromPlan": "Remove from plan",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "households": {
     "switchContext": "Switch context",
@@ -226,7 +236,33 @@
     "creating": "Creating…",
     "createTag": "Create \"{{name}}\"",
     "noTagsAvailable": "No tags available",
-    "allTagsAdded": "All tags already added"
+    "allTagsAdded": "All tags already added",
+    "addTag": "Add tag"
+  },
+  "addRecipe": {
+    "urlPlaceholder": "Instagram, TikTok, or any recipe page URL"
+  },
+  "defaultTags": {
+    "Vegetarian": "Vegetarian",
+    "Vegan": "Vegan",
+    "Gluten_Free": "Gluten-Free",
+    "Dairy_Free": "Dairy-Free",
+    "Keto": "Keto",
+    "Low_Carb": "Low-Carb",
+    "Breakfast": "Breakfast",
+    "Lunch": "Lunch",
+    "Dinner": "Dinner",
+    "Snack": "Snack",
+    "Dessert": "Dessert",
+    "Drink": "Drink",
+    "Quick": "Quick",
+    "Grilled": "Grilled",
+    "Baked": "Baked",
+    "One_Pot": "One-Pot",
+    "High_Protein": "High-Protein",
+    "Comfort_Food": "Comfort Food",
+    "Italian": "Italian",
+    "Asian": "Asian"
   },
   "shoppingList": {
     "title": "Shopping List",

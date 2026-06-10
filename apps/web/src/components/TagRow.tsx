@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Tag } from "../api/client";
+import { tTag } from "../utils/tagUtils";
 
 interface TagRowProps {
   tags: Tag[];
@@ -71,12 +72,12 @@ export default function TagRow({ tags, allTags, onAdd, onRemove, onCreateTag }: 
           key={tag.id}
           className="inline-flex items-center gap-0.5 text-xs font-medium px-2 py-0.5 rounded-full bg-secondary/15 text-secondary-700"
         >
-          {tag.name}
+          {tTag(tag.name, t)}
           <button
             type="button"
             onClick={() => onRemove(tag.id)}
             className="ml-0.5 leading-none text-secondary-400 hover:text-secondary-700 transition-colors"
-            aria-label={`Remove ${tag.name}`}
+            aria-label={`Remove ${tTag(tag.name, t)}`}
           >
             ×
           </button>
@@ -123,7 +124,7 @@ export default function TagRow({ tags, allTags, onAdd, onRemove, onCreateTag }: 
                   className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 transition-colors"
                   onClick={() => handleAddTag(tag)}
                 >
-                  {tag.name}
+                  {tTag(tag.name, t)}
                 </button>
               ))}
               {canCreate && (

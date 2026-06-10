@@ -20,7 +20,11 @@
     "view": "Ansehen",
     "edit": "Bearbeiten",
     "delete": "Löschen",
-    "deleting": "Löschen…"
+    "deleting": "Löschen…",
+    "dismiss": "Verwerfen",
+    "imageUrl": "Bild-URL",
+    "addPrivateNotes": "Private Notizen hinzufügen…",
+    "thumbnail": "Vorschaubild"
   },
   "recipes": {
     "searchPlaceholder": "Rezepte suchen…",
@@ -231,6 +235,28 @@
   "shoppingList": {
     "title": "Einkaufsliste",
     "comingSoon": "Einkaufsliste kommt bald."
+  },
+  "defaultTags": {
+    "Vegetarian": "Vegetarisch",
+    "Vegan": "Vegan",
+    "Gluten_Free": "Glutenfrei",
+    "Dairy_Free": "Laktosefrei",
+    "Keto": "Keto",
+    "Low_Carb": "Low-Carb",
+    "Breakfast": "Frühstück",
+    "Lunch": "Mittagessen",
+    "Dinner": "Abendessen",
+    "Snack": "Snack",
+    "Dessert": "Dessert",
+    "Drink": "Getränk",
+    "Quick": "Schnell",
+    "Grilled": "Gegrillt",
+    "Baked": "Gebacken",
+    "One_Pot": "Ein-Topf",
+    "High_Protein": "Proteinreich",
+    "Comfort_Food": "Wohlfühlessen",
+    "Italian": "Italienisch",
+    "Asian": "Asiatisch"
   },
   "languages": {
     "en": "English",

@@ -232,6 +232,28 @@
     "title": "Lista de compras",
     "comingSoon": "Lista de compras próximamente."
   },
+  "defaultTags": {
+    "Vegetarian": "Vegetariano",
+    "Vegan": "Vegano",
+    "Gluten_Free": "Sin gluten",
+    "Dairy_Free": "Sin lácteos",
+    "Keto": "Keto",
+    "Low_Carb": "Bajo en carbohidratos",
+    "Breakfast": "Desayuno",
+    "Lunch": "Almuerzo",
+    "Dinner": "Cena",
+    "Snack": "Aperitivo",
+    "Dessert": "Postre",
+    "Drink": "Bebida",
+    "Quick": "Rápido",
+    "Grilled": "A la plancha",
+    "Baked": "Al horno",
+    "One_Pot": "Un solo plato",
+    "High_Protein": "Rico en proteínas",
+    "Comfort_Food": "Comida reconfortante",
+    "Italian": "Italiano",
+    "Asian": "Asiático"
+  },
   "languages": {
     "en": "English",
     "de": "Deutsch",
