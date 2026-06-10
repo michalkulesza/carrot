@@ -82,14 +82,16 @@ For each ingredient set:
 - "substitute": a single best substitute ingredient name if allergen found, else null
 Only flag allergens from the provided list — never flag others.
 
-step_refs: for every ingredient mentioned in a step — by full name, key noun
-("chicken" for "chicken thighs, skin on"), plural, or common abbreviation —
-add one entry per occurrence:
+step_refs: for every ingredient mentioned in a step — whether by full name,
+inflected/declined form (e.g. "kurczaki" or "kurczakiem" for ingredient
+"kurczak", "Zwiebeln" for "Zwiebel"), key noun ("chicken" for "chicken thighs,
+skin on"), plural, abbreviation, or any morphological variant — add one entry:
   step_index: 0-based index of the step in this component's steps list
   ingredient_index: 0-based index of the ingredient in this component's ingredients list
-  mention: the exact substring as it appears in the step text (may be shorter
-    than the full ingredient name, e.g. "chicken" when ingredient is "chicken thighs")
-Leave step_refs as an empty list if no ingredient names appear in the steps.
+  mention: the exact substring as it appears in the step text
+Match across all languages. For inflected languages (Polish, Russian, Czech,
+German, etc.) recognise all grammatical case and number variants of the
+ingredient name. Leave step_refs empty only if no ingredient is referenced.
 """
 
 _ALLERGEN_SYSTEM = """\
