@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronLeft, ChevronRight, Plus, Search } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import {
@@ -274,38 +275,14 @@ const DayRow = ({
               </p>
             )}
           </div>
-          <svg
-            className="w-4 h-4 text-zinc-300 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          <ChevronRight className="w-4 h-4 text-zinc-300 shrink-0" />
         </button>
       ) : (
         <button
           onClick={onAdd}
           className="flex-1 flex items-center gap-2 py-3 px-4 rounded-xl border border-dashed border-zinc-200 text-zinc-400 text-sm hover:border-zinc-400 hover:text-zinc-600 active:opacity-60 transition-all"
         >
-          <svg
-            className="w-4 h-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
+          <Plus className="w-4 h-4 shrink-0" />
           <span>{t('mealPlan.addDish')}</span>
         </button>
       )}
@@ -410,32 +387,14 @@ const DesktopCalendar = ({
               className="p-1.5 rounded-l-lg border border-zinc-200 hover:bg-zinc-100 transition-colors"
               aria-label="Previous month"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
+              <ChevronLeft size={16} />
             </button>
             <button
               onClick={onNext}
               className="p-1.5 rounded-r-lg border border-l-0 border-zinc-200 hover:bg-zinc-100 transition-colors"
               aria-label="Next month"
             >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+              <ChevronRight size={16} />
             </button>
           </div>
         </div>
@@ -499,19 +458,7 @@ const DesktopCalendar = ({
                   </div>
                 ) : isCurrentMonth ? (
                   <div className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-zinc-300 text-xs">
-                    <svg
-                      className="w-3 h-3 shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 4v16m8-8H4"
-                      />
-                    </svg>
+                    <Plus className="w-3 h-3 shrink-0" />
                     {t('common.add')}
                   </div>
                 ) : null}
@@ -756,32 +703,14 @@ const MealPlanPage = ({
                 className="p-1.5 rounded-lg active:bg-zinc-100 transition-colors"
                 aria-label="Previous month"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
+                <ChevronLeft size={16} />
               </button>
               <button
                 onClick={goToNextMonth}
                 className="p-1.5 rounded-lg active:bg-zinc-100 transition-colors"
                 aria-label="Next month"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
+                <ChevronRight size={16} />
               </button>
             </div>
           </div>
@@ -844,19 +773,7 @@ const MealPlanPage = ({
               <ModalHeader className="flex flex-col gap-3 pb-0">
                 <span className="text-lg">{t('mealPlan.chooseDish')}</span>
                 <div className="relative">
-                  <svg
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 shrink-0 pointer-events-none"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-                    />
-                  </svg>
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 shrink-0 pointer-events-none" />
                   <input
                     type="text"
                     placeholder={t('mealPlan.searchRecipes')}

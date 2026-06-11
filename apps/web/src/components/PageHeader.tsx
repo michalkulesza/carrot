@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ChevronDown } from 'react-feather'
 import BellPopover from './BellPopover'
 import HouseholdSwitcher from './HouseholdSwitcher'
 import { useHousehold } from '../context/HouseholdContext'
@@ -49,19 +50,7 @@ export default function PageHeader({
             <span className="truncate">
               {activeHousehold ? activeHousehold.name : 'Personal Library'}
             </span>
-            <svg
-              className="w-3 h-3 shrink-0 opacity-60"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <ChevronDown size={12} strokeWidth={2.5} className="shrink-0 opacity-60" />
           </p>
         </button>
         {/* Desktop: static title + optional search slot */}

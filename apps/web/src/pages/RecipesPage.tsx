@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { Star, Search, X } from 'react-feather'
 import {
   Modal,
   ModalBackdrop,
@@ -207,15 +208,7 @@ const RecipeCard = ({
           className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${recipe.is_favourite ? 'text-amber-400' : 'text-zinc-300 hover:text-amber-400'}`}
           aria-label={recipe.is_favourite ? 'Remove from favourites' : 'Add to favourites'}
         >
-          {recipe.is_favourite ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-          ) : (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
-          )}
+          <Star size={14} fill={recipe.is_favourite ? 'currentColor' : 'none'} aria-hidden={true} />
         </button>
         <CardMenu onView={onView} onEdit={onEdit} onDelete={onDelete} />
       </div>
@@ -411,19 +404,7 @@ const RecipesPage = ({
 
   const searchInput = (
     <div className="relative flex items-center w-full">
-      <svg
-        className="absolute left-3 w-4 h-4 text-zinc-400 pointer-events-none"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"
-        />
-      </svg>
+      <Search className="absolute left-3 w-4 h-4 text-zinc-400 pointer-events-none" />
       <input
         type="text"
         value={searchQuery}
@@ -437,19 +418,7 @@ const RecipesPage = ({
           onClick={() => setSearchQuery('')}
           className="absolute right-3 text-zinc-400 hover:text-zinc-600 transition-colors"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <X className="w-4 h-4" />
         </button>
       )}
     </div>
@@ -531,9 +500,7 @@ const RecipesPage = ({
                 : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
             }`}
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
+            <Star size={11} fill="currentColor" aria-hidden={true} />
             {t('recipes.filterFavourites')}
           </button>
 

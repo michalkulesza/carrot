@@ -6,6 +6,7 @@ import {
   ModalHeader,
   ModalBody,
 } from '@heroui/react'
+import { Check } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { useHousehold } from '../context/HouseholdContext'
 
@@ -70,19 +71,7 @@ export default function HouseholdSwitcher({
                         />
                         <span className="text-sm">{opt.name}</span>
                         {active && (
-                          <svg
-                            className="w-4 h-4 ml-auto text-primary shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2.5}
-                              d="M5 13l4 4L19 7"
-                            />
-                          </svg>
+                          <Check size={16} strokeWidth={2.5} className="ml-auto text-primary shrink-0" />
                         )}
                       </button>
                     </li>

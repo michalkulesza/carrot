@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Star } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import { createPortal } from 'react-dom'
@@ -33,16 +34,9 @@ type SortField =
 type SortDir = 'asc' | 'desc'
 type Sort = { field: SortField; dir: SortDir } | null
 
-const StarIcon = ({ filled }: { filled: boolean }) =>
-  filled ? (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  ) : (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-    </svg>
-  )
+const StarIcon = ({ filled }: { filled: boolean }) => (
+  <Star size={14} fill={filled ? 'currentColor' : 'none'} aria-hidden={true} />
+)
 
 interface RecipesTableProps {
   recipes: RecipeOut[]
