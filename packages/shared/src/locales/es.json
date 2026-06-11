@@ -43,6 +43,8 @@
     "deleteConfirm": "{{title}} se eliminará permanentemente.",
     "filterFavourites": "Favoritos",
     "noFavourites": "Aún no hay favoritos.",
+    "addToFavourites": "Añadir a favoritos",
+    "removeFromFavourites": "Quitar de favoritos",
     "colTitle": "Título",
     "colServings": "Raciones",
     "colKcal": "Kcal",

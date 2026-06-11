@@ -34,6 +34,8 @@ const RecipesScreen = ({ navigation }: Props) => {
   const qc = useQueryClient()
   const [query, setQuery] = useState('')
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
+  const [filterFavourites, setFilterFavourites] = useState(false)
+  const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [reordering, setReordering] = useState(false)
 
   useLayoutEffect(() => {
@@ -66,21 +68,52 @@ const RecipesScreen = ({ navigation }: Props) => {
     })
   }, [navigation, t, reordering])
 
+  const recipesWithOverrides = useMemo(
+    () =>
+      recipes.map((r) => ({
+        ...r,
+        is_favourite: favouriteOverrides.has(r.id) ? favouriteOverrides.get(r.id)! : r.is_favourite,
+      })),
+    [recipes, favouriteOverrides],
+  )
+
   const filtered = useMemo(() => {
-    if (reordering) return recipes
+    if (reordering) return recipesWithOverrides
     const q = query.trim().toLowerCase()
-    return recipes.filter((r) => {
+    return recipesWithOverrides.filter((r) => {
       const matchesQuery = !q || r.title.toLowerCase().includes(q)
       const matchesTag = !selectedTagId || r.tags.some((tag) => tag.id === selectedTagId)
-      return matchesQuery && matchesTag
+      const matchesFav = !filterFavourites || r.is_favourite
+      return matchesQuery && matchesTag && matchesFav
     })
-  }, [recipes, query, selectedTagId, reordering])
+  }, [recipesWithOverrides, query, selectedTagId, filterFavourites, reordering])
 
   const handleTagPress = useCallback(
     (tagId: string) => {
       setSelectedTagId((prev) => (prev === tagId ? null : tagId))
     },
     [],
+  )
+
+  const handleToggleFavourite = useCallback(
+    async (recipe: RecipeOut) => {
+      const current = favouriteOverrides.has(recipe.id)
+        ? favouriteOverrides.get(recipe.id)!
+        : recipe.is_favourite
+      setFavouriteOverrides((prev) => new Map(prev).set(recipe.id, !current))
+      try {
+        const result = await api.toggleFavourite(recipe.id)
+        setFavouriteOverrides((prev) => new Map(prev).set(recipe.id, result.is_favourite))
+        await qc.invalidateQueries({ queryKey: ['recipes'] })
+      } catch {
+        setFavouriteOverrides((prev) => {
+          const next = new Map(prev)
+          next.set(recipe.id, current)
+          return next
+        })
+      }
+    },
+    [api, favouriteOverrides, qc],
   )
 
   const handleRecipePress = useCallback(
@@ -126,40 +159,54 @@ const RecipesScreen = ({ navigation }: Props) => {
   )
 
   const renderRecipe = useCallback(
-    ({ item }: ListRenderItemInfo<RecipeOut>) => (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={() => handleRecipePress(item)}
-        accessibilityLabel={item.title}
-        accessibilityRole="button"
-      >
-        {item.thumbnail_url ? (
-          <Image
-            source={{ uri: item.thumbnail_url }}
-            style={styles.cardImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={styles.cardImagePlaceholder} />
-        )}
-        <View style={styles.cardBody}>
-          <Text style={styles.cardTitle} numberOfLines={2}>
-            {item.title}
-          </Text>
-          {item.tags.length > 0 && (
-            <Text style={styles.cardTags} numberOfLines={1}>
-              {item.tags.map((t) => t.name).join(', ')}
-            </Text>
+    ({ item }: ListRenderItemInfo<RecipeOut>) => {
+      const isFav = favouriteOverrides.has(item.id)
+        ? favouriteOverrides.get(item.id)!
+        : item.is_favourite
+      return (
+        <TouchableOpacity
+          style={styles.card}
+          onPress={() => handleRecipePress(item)}
+          accessibilityLabel={item.title}
+          accessibilityRole="button"
+        >
+          {item.thumbnail_url ? (
+            <Image
+              source={{ uri: item.thumbnail_url }}
+              style={styles.cardImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.cardImagePlaceholder} />
           )}
-          {item.servings != null && (
-            <Text style={styles.cardMeta}>
-              {t('recipes.serves')}: {item.servings}
+          <View style={styles.cardBody}>
+            <Text style={styles.cardTitle} numberOfLines={2}>
+              {item.title}
             </Text>
-          )}
-        </View>
-      </TouchableOpacity>
-    ),
-    [handleRecipePress, t],
+            {item.tags.length > 0 && (
+              <Text style={styles.cardTags} numberOfLines={1}>
+                {item.tags.map((tg) => tg.name).join(', ')}
+              </Text>
+            )}
+            {item.servings != null && (
+              <Text style={styles.cardMeta}>
+                {t('recipes.serves')}: {item.servings}
+              </Text>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.favBtn}
+            onPress={() => handleToggleFavourite(item)}
+            accessibilityLabel={isFav ? t('recipes.removeFromFavourites') : t('recipes.addToFavourites')}
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.favStar, isFav && styles.favStarActive]}>★</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      )
+    },
+    [handleRecipePress, handleToggleFavourite, favouriteOverrides, t],
   )
 
   const renderDraggableItem = useCallback(
@@ -200,6 +247,23 @@ const RecipesScreen = ({ navigation }: Props) => {
     [handleRecipePress],
   )
 
+  const favChip = useMemo(
+    () => (
+      <TouchableOpacity
+        onPress={() => setFilterFavourites((v) => !v)}
+        style={[styles.chip, filterFavourites && styles.chipSelected, styles.favChip]}
+        accessibilityLabel={t('recipes.filterFavourites')}
+        accessibilityRole="button"
+        accessibilityState={{ selected: filterFavourites }}
+      >
+        <Text style={[styles.chipText, filterFavourites && styles.chipTextSelected]}>
+          {'★ '}{t('recipes.filterFavourites')}
+        </Text>
+      </TouchableOpacity>
+    ),
+    [filterFavourites, t],
+  )
+
   const listHeader = useMemo(
     () =>
       reordering ? null : (
@@ -213,20 +277,19 @@ const RecipesScreen = ({ navigation }: Props) => {
             clearButtonMode="while-editing"
             accessibilityLabel={t('recipes.searchPlaceholder')}
           />
-          {tags.length > 0 && (
-            <FlatList
-              data={tags}
-              keyExtractor={(item) => item.id}
-              renderItem={renderTag}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.tagList}
-              contentContainerStyle={styles.tagListContent}
-            />
-          )}
+          <FlatList
+            data={tags}
+            keyExtractor={(item) => item.id}
+            renderItem={renderTag}
+            ListHeaderComponent={favChip}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tagList}
+            contentContainerStyle={styles.tagListContent}
+          />
         </View>
       ),
-    [t, query, tags, renderTag, reordering],
+    [t, query, tags, renderTag, reordering, favChip],
   )
 
   if (isLoading) {
@@ -267,13 +330,15 @@ const RecipesScreen = ({ navigation }: Props) => {
       ListEmptyComponent={
         <View style={styles.empty}>
           <Text style={styles.emptyText}>
-            {selectedTagId
+            {filterFavourites
+              ? t('recipes.noFavourites')
+              : selectedTagId
               ? t('recipes.noRecipesWithTag')
               : t('recipes.noRecipesYet')}
           </Text>
-          {selectedTagId && (
+          {(selectedTagId || filterFavourites) && (
             <TouchableOpacity
-              onPress={() => setSelectedTagId(null)}
+              onPress={() => { setSelectedTagId(null); setFilterFavourites(false) }}
               accessibilityLabel={t('recipes.clearFilter')}
               accessibilityRole="button"
             >
@@ -364,6 +429,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   clearFilter: { fontSize: 14, color: '#2563eb', fontWeight: '500' },
+  favBtn: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favStar: { fontSize: 20, color: '#d1d5db' },
+  favStarActive: { color: '#f59e0b' },
+  favChip: { marginRight: 4 },
 })
 
 export default RecipesScreen

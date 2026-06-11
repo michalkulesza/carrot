@@ -45,6 +45,8 @@
     "deleteConfirm": "{{title}} zostanie trwale usunięty.",
     "filterFavourites": "Ulubione",
     "noFavourites": "Brak ulubionych.",
+    "addToFavourites": "Dodaj do ulubionych",
+    "removeFromFavourites": "Usuń z ulubionych",
     "colTitle": "Tytuł",
     "colServings": "Porcje",
     "colKcal": "Kcal",

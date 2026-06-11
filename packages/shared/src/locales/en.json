@@ -46,6 +46,8 @@
     "deleteConfirm": "{{title}} will be permanently removed.",
     "filterFavourites": "Favourites",
     "noFavourites": "No favourites yet.",
+    "addToFavourites": "Add to favourites",
+    "removeFromFavourites": "Remove from favourites",
     "colTitle": "Title",
     "colServings": "Servings",
     "colKcal": "Kcal",
