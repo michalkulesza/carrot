@@ -345,7 +345,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     const body = new URLSearchParams({ username: email, password })
     const res = await fetch(`${baseUrl}${loginEndpoint}`, {
       method: 'POST',
-      body,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
       credentials,
     })
     if (!res.ok) {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -14,6 +14,16 @@ const LoginScreen = ({ navigation }: Props) => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const fillDemo = useCallback(() => {
+    setEmail('demo@demo.com')
+    setPassword('demo')
+  }, [])
+
+  const fillDemoAlt = useCallback(() => {
+    setEmail('alt@demo.com')
+    setPassword('demo')
+  }, [])
 
   const handleLogin = async () => {
     if (!email || !password) return
@@ -67,6 +77,25 @@ const LoginScreen = ({ navigation }: Props) => {
           </Text>
         </TouchableOpacity>
 
+        <View style={styles.demoRow}>
+          <TouchableOpacity
+            style={[styles.demoBtn, styles.buttonDemo]}
+            onPress={fillDemo}
+            accessibilityLabel={t('auth.demoAccount')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonDemoText}>{t('auth.demoAccount')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.demoBtn, styles.buttonDemo]}
+            onPress={fillDemoAlt}
+            accessibilityLabel={t('auth.demoAlt')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.buttonDemoText}>{t('auth.demoAlt')}</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity
           style={styles.button}
           onPress={() => navigation.navigate('Register')}
@@ -98,6 +127,10 @@ const styles = StyleSheet.create({
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
   buttonPrimary: { backgroundColor: '#2563eb' },
   buttonPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  demoRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  demoBtn: { flex: 1, borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
+  buttonDemo: { borderWidth: 1, borderColor: '#d1d5db' },
+  buttonDemoText: { color: '#374151', fontSize: 15 },
   buttonOutlineText: { color: '#6b7280', fontSize: 15 },
 })
 

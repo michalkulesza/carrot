@@ -11,6 +11,7 @@ export const aggregateIngredients = (entries: MealPlanEntry[]): AggregatedIngred
   for (const entry of entries) {
     for (const component of entry.recipe.components) {
       for (const ing of component.ingredients) {
+        if (!ing.name) continue
         const normalised = ing.name.trim().toLowerCase()
         const existing = map.get(normalised)
         const part = [ing.qty, ing.unit].filter(Boolean).join(' ')
