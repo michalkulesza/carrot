@@ -277,7 +277,9 @@
     "recipeSaved": "Receta guardada",
     "failedToSave": "No se pudo guardar la receta",
     "recipeAddedToHousehold": "Receta añadida al hogar",
-    "failedToAdd": "No se pudo añadir la receta"
+    "failedToAdd": "No se pudo añadir la receta",
+    "addIngredient": "Añadir ingrediente",
+    "addStep": "Añadir paso"
   },
   "shoppingList": {
     "title": "Lista de compras",

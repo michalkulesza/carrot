@@ -288,7 +288,9 @@
     "recipeSaved": "Recipe saved",
     "failedToSave": "Failed to save recipe",
     "recipeAddedToHousehold": "Recipe added to household",
-    "failedToAdd": "Failed to add recipe"
+    "failedToAdd": "Failed to add recipe",
+    "addIngredient": "Add ingredient",
+    "addStep": "Add step"
   },
   "defaultTags": {
     "Vegetarian": "Vegetarian",

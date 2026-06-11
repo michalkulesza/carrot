@@ -4,7 +4,8 @@ import { Feather } from '@expo/vector-icons'
 import RecipesStack from './RecipesStack'
 import MealPlanScreen from '../screens/MealPlanScreen'
 import ShoppingListScreen from '../screens/ShoppingListScreen'
-import SettingsScreen from '../screens/SettingsScreen'
+import SettingsStack from './SettingsStack'
+import BellModal from '../components/BellModal'
 
 export type MainTabsParamList = {
   Recipes: undefined
@@ -14,6 +15,8 @@ export type MainTabsParamList = {
 }
 
 const Tab = createBottomTabNavigator<MainTabsParamList>()
+
+const BellHeader = () => <BellModal />
 
 const MainTabs = () => {
   const { t } = useTranslation()
@@ -25,7 +28,9 @@ const MainTabs = () => {
         options={{
           title: t('nav.recipes'),
           headerShown: false,
-          tabBarIcon: ({ color, size }) => <Feather name="book" size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="book" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -33,7 +38,10 @@ const MainTabs = () => {
         component={MealPlanScreen}
         options={{
           title: t('nav.mealPlan'),
-          tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
+          headerRight: BellHeader,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="calendar" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
@@ -41,15 +49,21 @@ const MainTabs = () => {
         component={ShoppingListScreen}
         options={{
           title: t('nav.shopping'),
-          tabBarIcon: ({ color, size }) => <Feather name="shopping-cart" size={size} color={color} />,
+          headerRight: BellHeader,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="shopping-cart" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="Settings"
-        component={SettingsScreen}
+        component={SettingsStack}
         options={{
           title: t('nav.settings'),
-          tabBarIcon: ({ color, size }) => <Feather name="settings" size={size} color={color} />,
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="settings" size={size} color={color} />
+          ),
         }}
       />
     </Tab.Navigator>

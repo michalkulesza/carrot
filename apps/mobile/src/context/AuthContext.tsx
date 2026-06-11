@@ -11,6 +11,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
   logout: () => Promise<void>
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -57,8 +58,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null)
   }, [])
 
+  const refreshUser = useCallback(async (): Promise<void> => {
+    const me = await mobileClient.getMe()
+    setUser(me)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

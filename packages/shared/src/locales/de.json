@@ -281,7 +281,9 @@
     "recipeSaved": "Rezept gespeichert",
     "failedToSave": "Rezept konnte nicht gespeichert werden",
     "recipeAddedToHousehold": "Rezept zum Haushalt hinzugefügt",
-    "failedToAdd": "Rezept konnte nicht hinzugefügt werden"
+    "failedToAdd": "Rezept konnte nicht hinzugefügt werden",
+    "addIngredient": "Zutat hinzufügen",
+    "addStep": "Schritt hinzufügen"
   },
   "shoppingList": {
     "title": "Einkaufsliste",

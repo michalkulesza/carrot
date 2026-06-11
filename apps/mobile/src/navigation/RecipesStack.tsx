@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 import RecipesScreen from '../screens/RecipesScreen'
 import RecipeDetailScreen from '../screens/RecipeDetailScreen'
 import ImportRecipeScreen from '../screens/ImportRecipeScreen'
+import EditRecipeScreen from '../screens/EditRecipeScreen'
 
 export type RecipesStackParamList = {
   RecipesList: undefined
   RecipeDetail: { recipeId: string; title?: string }
   ImportRecipe: undefined
+  EditRecipe: { recipeId: string }
 }
 
 const Stack = createNativeStackNavigator<RecipesStackParamList>()
@@ -30,6 +32,11 @@ const RecipesStack = () => {
         name="ImportRecipe"
         component={ImportRecipeScreen}
         options={{ title: t('addRecipe.importRecipe') }}
+      />
+      <Stack.Screen
+        name="EditRecipe"
+        component={EditRecipeScreen}
+        options={{ title: t('common.edit') }}
       />
     </Stack.Navigator>
   )
