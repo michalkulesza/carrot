@@ -77,7 +77,10 @@
     "suggestedSubstitute": "Sugerowany zamiennik:",
     "noSubstituteAvailable": "Brak dostępnego zamiennika.",
     "replace": "Zastąp",
-    "keepOriginal": "Zachowaj oryginał"
+    "keepOriginal": "Zachowaj oryginał",
+    "dragToReorder": "Przeciągnij, aby zmienić kolejność",
+    "recipeActions": "Akcje przepisu",
+    "rowActions": "Akcje wiersza"
   },
   "nav": {
     "recipes": "Przepisy",
@@ -105,6 +108,7 @@
     "chooseLanguage": "Wybierz język"
   },
   "timers": {
+    "startTimer": "Uruchom minutnik",
     "timerDone_one": "Minutnik gotowy",
     "timerDone_few": "{{count}} minutniki gotowe",
     "timerDone_many": "{{count}} minutników gotowych",
@@ -258,7 +262,9 @@
     "noRecipesMatch": "Żadne przepisy nie pasują do wyszukiwania.",
     "viewRecipe": "Wyświetl przepis",
     "changeRecipe": "Zmień przepis",
-    "removeFromPlan": "Usuń z planu"
+    "removeFromPlan": "Usuń z planu",
+    "nextMonth": "Następny miesiąc",
+    "prevMonth": "Poprzedni miesiąc"
   },
   "households": {
     "switchContext": "Przełącz kontekst",
@@ -270,7 +276,8 @@
     "creating": "Tworzę…",
     "createTag": "Utwórz '{{name}}'",
     "noTagsAvailable": "Brak dostępnych tagów",
-    "allTagsAdded": "Wszystkie tagi już dodane"
+    "allTagsAdded": "Wszystkie tagi już dodane",
+    "addTag": "Dodaj tag"
   },
   "addRecipe": {
     "urlPlaceholder": "URL z Instagrama, TikToka lub dowolnej strony z przepisami",

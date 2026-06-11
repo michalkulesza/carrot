@@ -20,7 +20,11 @@
     "view": "Ver",
     "edit": "Editar",
     "delete": "Eliminar",
-    "deleting": "Eliminando…"
+    "deleting": "Eliminando…",
+    "dismiss": "Descartar",
+    "imageUrl": "URL de imagen",
+    "addPrivateNotes": "Añadir notas privadas…",
+    "thumbnail": "Miniatura"
   },
   "recipes": {
     "searchPlaceholder": "Buscar recetas…",
@@ -71,7 +75,10 @@
     "suggestedSubstitute": "Sustituto sugerido:",
     "noSubstituteAvailable": "No hay sustituto disponible.",
     "replace": "Reemplazar",
-    "keepOriginal": "Mantener original"
+    "keepOriginal": "Mantener original",
+    "dragToReorder": "Arrastrar para reordenar",
+    "recipeActions": "Acciones de la receta",
+    "rowActions": "Acciones de fila"
   },
   "nav": {
     "recipes": "Recetas",
@@ -99,6 +106,7 @@
     "chooseLanguage": "Elegir idioma"
   },
   "timers": {
+    "startTimer": "Iniciar temporizador",
     "timerDone_one": "Temporizador listo",
     "timerDone_other": "{{count}} temporizadores listos",
     "running": "Temporizadores en marcha",
@@ -246,7 +254,9 @@
     "noRecipesMatch": "Ninguna receta coincide con tu búsqueda.",
     "viewRecipe": "Ver receta",
     "changeRecipe": "Cambiar receta",
-    "removeFromPlan": "Quitar del plan"
+    "removeFromPlan": "Quitar del plan",
+    "nextMonth": "Mes siguiente",
+    "prevMonth": "Mes anterior"
   },
   "households": {
     "switchContext": "Cambiar contexto",
@@ -258,7 +268,8 @@
     "creating": "Creando…",
     "createTag": "Crear \"{{name}}\"",
     "noTagsAvailable": "No hay etiquetas disponibles",
-    "allTagsAdded": "Todas las etiquetas ya añadidas"
+    "allTagsAdded": "Todas las etiquetas ya añadidas",
+    "addTag": "Añadir etiqueta"
   },
   "addRecipe": {
     "urlPlaceholder": "URL de Instagram, TikTok o cualquier página de recetas",

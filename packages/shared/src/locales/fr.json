@@ -75,7 +75,10 @@
     "suggestedSubstitute": "Substitut suggéré :",
     "noSubstituteAvailable": "Aucun substitut disponible.",
     "replace": "Remplacer",
-    "keepOriginal": "Garder l'original"
+    "keepOriginal": "Garder l'original",
+    "dragToReorder": "Glisser pour réorganiser",
+    "recipeActions": "Actions de la recette",
+    "rowActions": "Actions de ligne"
   },
   "nav": {
     "recipes": "Recettes",
@@ -103,6 +106,7 @@
     "chooseLanguage": "Choisir la langue"
   },
   "timers": {
+    "startTimer": "Démarrer le minuteur",
     "timerDone_one": "Minuteur terminé",
     "timerDone_other": "{{count}} minuteurs terminés",
     "running": "Des minuteurs sont en cours",
@@ -250,7 +254,9 @@
     "noRecipesMatch": "Aucune recette ne correspond à votre recherche.",
     "viewRecipe": "Voir la recette",
     "changeRecipe": "Changer la recette",
-    "removeFromPlan": "Retirer du plan"
+    "removeFromPlan": "Retirer du plan",
+    "nextMonth": "Mois suivant",
+    "prevMonth": "Mois précédent"
   },
   "households": {
     "switchContext": "Changer de contexte",
@@ -262,7 +268,8 @@
     "creating": "Création…",
     "createTag": "Créer « {{name}} »",
     "noTagsAvailable": "Aucun tag disponible",
-    "allTagsAdded": "Tous les tags déjà ajoutés"
+    "allTagsAdded": "Tous les tags déjà ajoutés",
+    "addTag": "Ajouter un tag"
   },
   "addRecipe": {
     "urlPlaceholder": "URL Instagram, TikTok ou toute page de recette",

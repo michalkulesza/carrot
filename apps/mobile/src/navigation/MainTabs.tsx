@@ -1,11 +1,14 @@
+import { useEffect } from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import RecipesStack from './RecipesStack'
 import MealPlanScreen from '../screens/MealPlanScreen'
 import ShoppingListScreen from '../screens/ShoppingListScreen'
 import SettingsStack from './SettingsStack'
 import BellModal from '../components/BellModal'
+import { persistLanguage } from '../i18n'
 
 export type MainTabsParamList = {
   Recipes: undefined
@@ -19,7 +22,17 @@ const Tab = createBottomTabNavigator<MainTabsParamList>()
 const BellHeader = () => <BellModal />
 
 const MainTabs = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const { preferences } = usePreferences()
+
+  useEffect(() => {
+    const lang = preferences?.language
+    if (lang && lang !== i18n.language) {
+      void i18n.changeLanguage(lang)
+      void persistLanguage(lang)
+    }
+  }, [preferences?.language, i18n])
+
   return (
     <Tab.Navigator>
       <Tab.Screen

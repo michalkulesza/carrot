@@ -19,6 +19,7 @@ import type { UserPreferences, AllergenData } from '@platekeeper/shared/types'
 import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
 import { useTimers, getRemainingSeconds, formatCountdown } from '../context/TimerContext'
+import { persistLanguage } from '../i18n'
 import type { SettingsStackParamList } from '../navigation/SettingsStack'
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'SettingsMain'>
@@ -336,6 +337,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   const handleLanguageChange = useCallback(
     (code: string) => {
       void i18n.changeLanguage(code)
+      void persistLanguage(code)
       update.mutate({ language: code } as Partial<UserPreferences>)
     },
     [i18n, update],
