@@ -15,6 +15,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
 import { useApiClient } from '@platekeeper/shared/api/context'
+import { useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
 import type { UserPreferences, AllergenData } from '@platekeeper/shared/types'
 import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
@@ -54,6 +55,38 @@ const iKey = (k: string) => k.replace(/[- ]/g, '_')
 const SectionHeader = ({ label }: { label: string }) => (
   <Text style={styles.sectionHeader}>{label}</Text>
 )
+
+// ── Stats section ─────────────────────────────────────────────────────────────
+
+const StatsSection = () => {
+  const { t } = useTranslation()
+  const { data: stats, isLoading } = useRecipeStats()
+
+  return (
+    <View style={styles.statsRow}>
+      {isLoading ? (
+        <ActivityIndicator accessibilityLabel={t('common.loading')} />
+      ) : (
+        <>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats?.total_recipes ?? '—'}</Text>
+            <Text style={styles.statLabel}>{t('settings.recipesLabel')}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{stats?.total_ingredients ?? '—'}</Text>
+            <Text style={styles.statLabel}>{t('settings.ingredientsLabel')}</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>
+              {stats?.avg_kcal != null ? Math.round(stats.avg_kcal) : '—'}
+            </Text>
+            <Text style={styles.statLabel}>{t('settings.avgKcal')}</Text>
+          </View>
+        </>
+      )}
+    </View>
+  )
+}
 
 // ── Allergen section ──────────────────────────────────────────────────────────
 
@@ -398,6 +431,10 @@ const SettingsScreen = ({ navigation }: Props) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Stats */}
+      <SectionHeader label={t('settings.stats')} />
+      <StatsSection />
+
       {/* Account */}
       <SectionHeader label={t('settings.account')} />
       <View style={styles.card}>
@@ -591,6 +628,39 @@ const SettingsScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   content: { paddingBottom: 48 },
+  statsRow: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 4,
+    gap: 8,
+    minHeight: 72,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 3,
+    textAlign: 'center',
+  },
   sectionHeader: {
     fontSize: 12,
     fontWeight: '700',
