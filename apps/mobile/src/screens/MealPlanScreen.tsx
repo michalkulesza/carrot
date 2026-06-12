@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,11 +13,16 @@ import {
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import { useNavigation } from '@react-navigation/native'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
+import * as Sharing from 'expo-sharing'
+import { File, Paths } from 'expo-file-system'
 import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
 import { useApiClient } from '@platekeeper/shared/api/context'
 import type { MealPlanEntry, RecipeOut } from '@platekeeper/shared/types'
 import { toYYYYMM, toISODate, formatWeekdayShort, formatMonthYear } from '@platekeeper/shared/utils/dateUtils'
+import { getToken } from '../api/client'
+import BellModal from '../components/BellModal'
 
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 180
@@ -192,8 +197,10 @@ const DayRow = ({ date, entry, isToday, onPress }: DayRowProps) => {
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 const MealPlanScreen = () => {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const navigation = useNavigation()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
+  const [exporting, setExporting] = useState(false)
   const api = useApiClient()
   const qc = useQueryClient()
   const { recipes } = useRecipes()
@@ -205,6 +212,52 @@ const MealPlanScreen = () => {
   }, [])
 
   const todayIso = useMemo(() => toISODate(today), [today])
+  const currentMonth = useMemo(() => toYYYYMM(today), [today])
+
+  const handleExportPdf = useCallback(async () => {
+    setExporting(true)
+    try {
+      const baseUrl = (process.env.EXPO_PUBLIC_API_URL as string | undefined) ?? ''
+      const token = getToken()
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const res = await fetch(`${baseUrl}/api/export/meal-plan.pdf?month=${currentMonth}`, {
+        headers,
+        credentials: 'omit',
+      })
+      if (!res.ok) throw new Error(t('shoppingList.exportError'))
+      const bytes = new Uint8Array(await res.arrayBuffer())
+      const file = new File(Paths.cache, `meal-plan-${currentMonth}.pdf`)
+      file.write(bytes)
+      const canShare = await Sharing.isAvailableAsync()
+      if (!canShare) throw new Error(t('shoppingList.exportError'))
+      await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
+    } catch {
+      // silently fail — share sheet handles errors
+    } finally {
+      setExporting(false)
+    }
+  }, [currentMonth, t])
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            onPress={handleExportPdf}
+            disabled={exporting}
+            style={styles.exportBtn}
+            accessibilityLabel={t('shoppingList.exportPdf')}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.exportBtnText, exporting && styles.exportBtnTextDisabled]}>
+              {exporting ? t('shoppingList.exporting') : t('shoppingList.exportPdf')}
+            </Text>
+          </TouchableOpacity>
+          <BellModal />
+        </View>
+      ),
+    })
+  }, [navigation, handleExportPdf, exporting, t])
 
   const { items, offsets, todayIndex, months } = useMemo(() => {
     const items: ListItem[] = []
@@ -392,11 +445,11 @@ const MealPlanScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 12,
-    alignSelf: 'center',
-  },
+  loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  exportBtn: { paddingHorizontal: 8, paddingVertical: 4 },
+  exportBtnText: { fontSize: 13, color: '#7c3aed', fontWeight: '600' },
+  exportBtnTextDisabled: { color: '#c4b5fd' },
   list: { flex: 1 },
   listContent: { paddingBottom: 40 },
   monthRow: {

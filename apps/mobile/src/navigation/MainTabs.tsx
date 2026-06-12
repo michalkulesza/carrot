@@ -51,7 +51,6 @@ const MainTabs = () => {
         component={MealPlanScreen}
         options={{
           title: t('nav.mealPlan'),
-          headerRight: BellHeader,
           tabBarIcon: ({ color, size }) => (
             <Feather name="calendar" size={size} color={color} />
           ),
