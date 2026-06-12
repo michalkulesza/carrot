@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'
 import {
   useTimers,
@@ -23,6 +24,7 @@ import { useApiClient } from '@platekeeper/shared/api/context'
 
 const BellModal = () => {
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   const { timers, pauseTimer, resumeTimer, cancelTimer } = useTimers()
   const { items: notifHistory, dismiss: dismissNotif, clearAll: clearNotifHistory } =
     useNotificationHistory()
@@ -83,7 +85,7 @@ const BellModal = () => {
         presentationStyle="pageSheet"
         onRequestClose={() => setOpen(false)}
       >
-        <View style={styles.modal}>
+        <View style={[styles.modal, { paddingTop: insets.top }]}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{t('bell.notifications')}</Text>
             <TouchableOpacity
