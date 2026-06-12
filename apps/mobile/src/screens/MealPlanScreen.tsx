@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   ListRenderItemInfo,
   Modal,
@@ -192,7 +193,6 @@ const DayRow = ({ date, entry, isToday, onPress }: DayRowProps) => {
 const MealPlanScreen = () => {
   const { i18n } = useTranslation()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
-  const listRef = useRef<FlatList>(null)
   const api = useApiClient()
   const qc = useQueryClient()
   const { recipes } = useRecipes()
@@ -274,17 +274,11 @@ const MealPlanScreen = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
-  const hasScrolled = useRef(false)
-
-  const handleListLayout = useCallback(() => {
-    if (hasScrolled.current) return
-    hasScrolled.current = true
-    listRef.current?.scrollToIndex({
-      index: todayIndex,
-      viewPosition: 0.5,
-      animated: false,
-    })
-  }, [todayIndex])
+  const initialScrollOffset = useMemo(() => {
+    const todayOffset = offsets[todayIndex] ?? 0
+    const screenHeight = Dimensions.get('window').height
+    return Math.max(0, todayOffset - screenHeight / 2 + DAY_ROW_HEIGHT / 2)
+  }, [offsets, todayIndex])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -347,12 +341,11 @@ const MealPlanScreen = () => {
   return (
     <View style={styles.container}>
       <FlatList
-        ref={listRef}
         data={items}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
-        onLayout={handleListLayout}
+        contentOffset={{ x: 0, y: initialScrollOffset }}
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
