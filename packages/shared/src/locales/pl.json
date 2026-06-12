@@ -90,7 +90,9 @@
     "keepOriginal": "Zachowaj oryginał",
     "dragToReorder": "Przeciągnij, aby zmienić kolejność",
     "recipeActions": "Akcje przepisu",
-    "rowActions": "Akcje wiersza"
+    "rowActions": "Akcje wiersza",
+    "sortEditedNewest": "Edytowane: od najnowszych",
+    "sortEditedOldest": "Edytowane: od najstarszych"
   },
   "nav": {
     "recipes": "Przepisy",

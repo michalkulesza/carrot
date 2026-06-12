@@ -152,6 +152,7 @@ class Recipe(Base):
     components: Mapped[list[Any]] = mapped_column(JSON, default=list)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=recipe_tags_table, lazy="selectin")
     author: Mapped["User"] = relationship("User", foreign_keys="Recipe.user_id", lazy="selectin")  # type: ignore[name-defined]
@@ -274,6 +275,7 @@ class RecipeOut(BaseModel):
     notes: str | None = None
     components: list[Any]
     created_at: datetime
+    updated_at: datetime
     tags: list[TagOut] = []
     household_id: uuid.UUID | None = None
     shared_to_personal: bool = True

@@ -122,6 +122,7 @@ export interface RecipeOut {
   notes: string | null
   components: SaveComponent[]
   created_at: string
+  updated_at: string
   tags: Tag[]
   household_id: string | null
   shared_to_personal: boolean

@@ -23,11 +23,13 @@ import BellModal from '../components/BellModal'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipesList'>
-type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc'
+type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'edited_newest' | 'edited_oldest'
 
 const SORT_OPTIONS: { key: SortMode; labelKey: string }[] = [
   { key: 'newest', labelKey: 'recipes.sortNewest' },
   { key: 'oldest', labelKey: 'recipes.sortOldest' },
+  { key: 'edited_newest', labelKey: 'recipes.sortEditedNewest' },
+  { key: 'edited_oldest', labelKey: 'recipes.sortEditedOldest' },
   { key: 'title_asc', labelKey: 'recipes.sortTitleAZ' },
   { key: 'title_desc', labelKey: 'recipes.sortTitleZA' },
 ]
@@ -141,6 +143,10 @@ const RecipesScreen = ({ navigation }: Props) => {
       if (sort === 'title_desc') return b.title.localeCompare(a.title)
       if (sort === 'oldest')
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      if (sort === 'edited_newest')
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      if (sort === 'edited_oldest')
+        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
   }, [recipesWithOverrides, query, selectedTagId, filterFavourites, sort])

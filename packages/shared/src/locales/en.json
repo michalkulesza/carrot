@@ -88,7 +88,9 @@
     "suggestedSubstitute": "Suggested substitute:",
     "noSubstituteAvailable": "No substitute available.",
     "replace": "Replace",
-    "keepOriginal": "Keep original"
+    "keepOriginal": "Keep original",
+    "sortEditedNewest": "Edited: newest first",
+    "sortEditedOldest": "Edited: oldest first"
   },
   "nav": {
     "recipes": "Recipes",

@@ -51,6 +51,8 @@
     "sortOldest": "Plus ancien",
     "sortTitleAZ": "Titre A→Z",
     "sortTitleZA": "Titre Z→A",
+    "sortEditedNewest": "Modifié: récent d'abord",
+    "sortEditedOldest": "Modifié: ancien d'abord",
     "colTitle": "Titre",
     "colServings": "Portions",
     "colKcal": "Kcal",
