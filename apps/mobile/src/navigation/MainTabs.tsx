@@ -4,10 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import RecipesStack from './RecipesStack'
-import MealPlanScreen from '../screens/MealPlanScreen'
-import ShoppingListScreen from '../screens/ShoppingListScreen'
+import MealPlanStack from './MealPlanStack'
+import ShoppingStack from './ShoppingStack'
 import SettingsStack from './SettingsStack'
-import BellModal from '../components/BellModal'
 import { persistLanguage } from '../i18n'
 
 export type MainTabsParamList = {
@@ -18,8 +17,6 @@ export type MainTabsParamList = {
 }
 
 const Tab = createBottomTabNavigator<MainTabsParamList>()
-
-const BellHeader = () => <BellModal />
 
 const MainTabs = () => {
   const { t, i18n } = useTranslation()
@@ -48,9 +45,10 @@ const MainTabs = () => {
       />
       <Tab.Screen
         name="MealPlan"
-        component={MealPlanScreen}
+        component={MealPlanStack}
         options={{
           title: t('nav.mealPlan'),
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Feather name="calendar" size={size} color={color} />
           ),
@@ -58,10 +56,10 @@ const MainTabs = () => {
       />
       <Tab.Screen
         name="Shopping"
-        component={ShoppingListScreen}
+        component={ShoppingStack}
         options={{
           title: t('nav.shopping'),
-          headerRight: BellHeader,
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Feather name="shopping-cart" size={size} color={color} />
           ),
