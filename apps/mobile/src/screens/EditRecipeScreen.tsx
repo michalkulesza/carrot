@@ -25,6 +25,7 @@ import {
   serializeIngredient,
 } from '@platekeeper/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'EditRecipe'>
@@ -414,7 +415,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: sel }}
               >
-                <Text style={[styles.tagChipText, sel && styles.tagChipTextSel]}>{tag.name}</Text>
+                <Text style={[styles.tagChipText, sel && styles.tagChipTextSel]}>{tTag(tag.name, t)}</Text>
               </TouchableOpacity>
             )
           })}

@@ -28,6 +28,7 @@ import BellModal from '../components/BellModal'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@platekeeper/shared/types'
 import { displayIngredient, buildClientStepRefs } from '@platekeeper/shared/utils/ingredientUtils'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -455,7 +456,7 @@ const RecipeDetailScreen = ({ route, navigation }: Props) => {
         <View style={styles.tagRow}>
           {recipe.tags.map((tag) => (
             <View key={tag.id} style={styles.tag}>
-              <Text style={styles.tagText}>{tag.name}</Text>
+              <Text style={styles.tagText}>{tTag(tag.name, t)}</Text>
             </View>
           ))}
         </View>

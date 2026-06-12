@@ -1,6 +1,4 @@
-import type { TFunction } from 'i18next'
-
-export const tTag = (name: string, t: TFunction): string => {
+export const tTag = (name: string, t: (key: string, options?: Record<string, unknown>) => string): string => {
   const key = name.replace(/[-\s]/g, '_')
   return t(`defaultTags.${key}`, { defaultValue: name })
 }

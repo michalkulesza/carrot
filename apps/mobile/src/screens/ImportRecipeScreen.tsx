@@ -35,6 +35,7 @@ import {
   serializeIngredient,
 } from '@platekeeper/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'ImportRecipe'>
@@ -252,7 +253,7 @@ const TagPickerModal = ({
                   accessibilityLabel={tag.name}
                   accessibilityState={{ selected: isSel }}
                 >
-                  <Text style={styles.tagListText}>{tag.name}</Text>
+                  <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
                   {isSel && <Text style={styles.tagCheck}>✓</Text>}
                 </TouchableOpacity>
               )
@@ -599,7 +600,7 @@ const EditableRecipeView = ({
               onPress={() => onTagRemove(tag.id)}
               accessibilityLabel={`${tag.name}, tap to remove`}
             >
-              <Text style={styles.tagChipText}>{tag.name} ×</Text>
+              <Text style={styles.tagChipText}>{tTag(tag.name, t)} ×</Text>
             </TouchableOpacity>
           ))}
           <TouchableOpacity
