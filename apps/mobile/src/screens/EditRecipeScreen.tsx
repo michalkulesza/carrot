@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
+  FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -16,7 +18,13 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { useApiClient } from '@platekeeper/shared/api/context'
+import { UNITS } from '@platekeeper/shared/types'
 import type { Tag } from '@platekeeper/shared/types'
+import {
+  parseIngredient,
+  serializeIngredient,
+} from '@platekeeper/shared/utils/ingredientUtils'
+import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'EditRecipe'>
@@ -24,7 +32,7 @@ type Props = NativeStackScreenProps<RecipesStackParamList, 'EditRecipe'>
 interface EditComponent {
   name: string
   yield_note: string
-  ingredients: string[]
+  ingredients: StructuredIngredient[]
   steps: string[]
 }
 
@@ -37,6 +45,111 @@ interface EditState {
   source_url: string
   components: EditComponent[]
 }
+
+// ── Unit picker modal ──────────────────────────────────────────────────────────
+
+const UNIT_OPTIONS: string[] = ['', ...UNITS]
+
+const UnitPickerModal = ({
+  visible,
+  selected,
+  onSelect,
+  onClose,
+}: {
+  visible: boolean
+  selected: string
+  onSelect: (u: string) => void
+  onClose: () => void
+}) => {
+  const { t } = useTranslation()
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose} />
+      <View style={styles.unitSheet}>
+        <View style={styles.sheetHandle} />
+        <FlatList
+          data={UNIT_OPTIONS}
+          keyExtractor={(item) => item || '__none__'}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[styles.unitOption, item === selected && styles.unitOptionSel]}
+              onPress={() => { onSelect(item); onClose() }}
+              accessibilityLabel={item ? t(`units.${item}`) : '—'}
+              accessibilityState={{ selected: item === selected }}
+            >
+              <Text style={[styles.unitOptionText, item === selected && styles.unitOptionTextSel]}>
+                {item ? `${item}  ·  ${t(`units.${item}`)}` : '—'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={{ paddingBottom: 32 }}
+        />
+      </View>
+    </Modal>
+  )
+}
+
+// ── Ingredient row editor ──────────────────────────────────────────────────────
+
+const IngredientEditor = ({
+  value,
+  onUnitPress,
+  onChange,
+  onRemove,
+}: {
+  value: StructuredIngredient
+  onUnitPress: () => void
+  onChange: (v: StructuredIngredient) => void
+  onRemove: () => void
+}) => {
+  const { t } = useTranslation()
+  return (
+    <View style={styles.ingEditor}>
+      <View style={styles.ingRow}>
+        <TextInput
+          style={styles.ingQty}
+          value={value.qty}
+          onChangeText={(v) => onChange({ ...value, qty: v })}
+          placeholder={t('units.qtyLabel')}
+          keyboardType="decimal-pad"
+          accessibilityLabel={t('units.qtyLabel')}
+        />
+        <TouchableOpacity
+          style={styles.ingUnitBtn}
+          onPress={onUnitPress}
+          accessibilityLabel={value.unit ? t(`units.${value.unit}`) : t('units.unitLabel')}
+        >
+          <Text style={[styles.ingUnitText, !value.unit && styles.ingPlaceholder]}>
+            {value.unit || '—'}
+          </Text>
+        </TouchableOpacity>
+        <TextInput
+          style={styles.ingName}
+          value={value.name}
+          onChangeText={(v) => onChange({ ...value, name: v })}
+          accessibilityLabel={t('recipes.sectionIngredients')}
+        />
+        <TouchableOpacity
+          onPress={onRemove}
+          style={styles.removeBtn}
+          accessibilityLabel={t('common.delete')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.removeBtnText}>✕</Text>
+        </TouchableOpacity>
+      </View>
+      <TextInput
+        style={styles.ingNote}
+        value={value.note}
+        onChangeText={(v) => onChange({ ...value, note: v })}
+        placeholder={t('units.noteLabel')}
+        accessibilityLabel={t('units.noteLabel')}
+      />
+    </View>
+  )
+}
+
+// ── Screen ─────────────────────────────────────────────────────────────────────
 
 const EditRecipeScreen = ({ route, navigation }: Props) => {
   const { recipeId } = route.params
@@ -51,6 +164,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
   const [state, setState] = useState<EditState | null>(null)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [saving, setSaving] = useState(false)
+  const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
 
   useEffect(() => {
     if (!recipe || state) return
@@ -64,7 +178,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
       components: recipe.components.map((c) => ({
         name: c.name,
         yield_note: c.yield_note,
-        ingredients: c.ingredients as string[],
+        ingredients: (c.ingredients as string[]).map(parseIngredient),
         steps: c.steps,
       })),
     })
@@ -91,10 +205,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
     (ci: number, patch: Partial<EditComponent>) => {
       setState((prev) => {
         if (!prev) return prev
-        const components = prev.components.map((c, i) =>
-          i === ci ? { ...c, ...patch } : c,
-        )
-        return { ...prev, components }
+        return { ...prev, components: prev.components.map((c, i) => i === ci ? { ...c, ...patch } : c) }
       })
     },
     [],
@@ -103,82 +214,77 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
   const addIngredient = useCallback((ci: number) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci ? { ...c, ingredients: [...c.ingredients, ''] } : c,
-      )
-      return { ...prev, components }
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci ? { ...c, ingredients: [...c.ingredients, { qty: '', unit: '', name: '', note: '' }] } : c,
+        ),
+      }
     })
   }, [])
 
   const removeIngredient = useCallback((ci: number, ii: number) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci
-          ? { ...c, ingredients: c.ingredients.filter((_, j) => j !== ii) }
-          : c,
-      )
-      return { ...prev, components }
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci ? { ...c, ingredients: c.ingredients.filter((_, j) => j !== ii) } : c,
+        ),
+      }
     })
   }, [])
 
-  const updateIngredient = useCallback((ci: number, ii: number, text: string) => {
+  const updateIngredient = useCallback((ci: number, ii: number, val: StructuredIngredient) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci
-          ? {
-              ...c,
-              ingredients: c.ingredients.map((ing, j) => (j === ii ? text : ing)),
-            }
-          : c,
-      )
-      return { ...prev, components }
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci
+            ? { ...c, ingredients: c.ingredients.map((ing, j) => (j === ii ? val : ing)) }
+            : c,
+        ),
+      }
     })
   }, [])
 
   const addStep = useCallback((ci: number) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci ? { ...c, steps: [...c.steps, ''] } : c,
-      )
-      return { ...prev, components }
+      return { ...prev, components: prev.components.map((c, i) => i === ci ? { ...c, steps: [...c.steps, ''] } : c) }
     })
   }, [])
 
   const removeStep = useCallback((ci: number, si: number) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci ? { ...c, steps: c.steps.filter((_, j) => j !== si) } : c,
-      )
-      return { ...prev, components }
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci ? { ...c, steps: c.steps.filter((_, j) => j !== si) } : c,
+        ),
+      }
     })
   }, [])
 
   const updateStep = useCallback((ci: number, si: number, text: string) => {
     setState((prev) => {
       if (!prev) return prev
-      const components = prev.components.map((c, i) =>
-        i === ci
-          ? { ...c, steps: c.steps.map((s, j) => (j === si ? text : s)) }
-          : c,
-      )
-      return { ...prev, components }
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci ? { ...c, steps: c.steps.map((s, j) => (j === si ? text : s)) } : c,
+        ),
+      }
     })
   }, [])
 
-  const toggleTag = useCallback(
-    (tag: Tag) => {
-      setSelectedTags((prev) =>
-        prev.some((t) => t.id === tag.id)
-          ? prev.filter((t) => t.id !== tag.id)
-          : [...prev, tag],
-      )
-    },
-    [],
-  )
+  const toggleTag = useCallback((tag: Tag) => {
+    setSelectedTags((prev) =>
+      prev.some((t) => t.id === tag.id) ? prev.filter((t) => t.id !== tag.id) : [...prev, tag],
+    )
+  }, [])
 
   const handleSave = useCallback(async () => {
     if (!state) return
@@ -195,7 +301,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
         components: state.components.map((c) => ({
           name: c.name,
           yield_note: c.yield_note,
-          ingredients: c.ingredients.filter(Boolean),
+          ingredients: c.ingredients.filter((ing) => ing.name).map(serializeIngredient),
           steps: c.steps.filter(Boolean),
           ingredient_flags: [],
           step_ingredient_refs: null,
@@ -213,6 +319,10 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
       setSaving(false)
     }
   }, [state, api, recipeId, recipe, selectedTags, qc, navigation, t])
+
+  const pickedIngredient = unitPickerTarget
+    ? state?.components[unitPickerTarget.ci]?.ingredients[unitPickerTarget.ii]
+    : null
 
   if (!recipe || !state) {
     return (
@@ -304,9 +414,7 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: sel }}
               >
-                <Text style={[styles.tagChipText, sel && styles.tagChipTextSel]}>
-                  {tag.name}
-                </Text>
+                <Text style={[styles.tagChipText, sel && styles.tagChipTextSel]}>{tag.name}</Text>
               </TouchableOpacity>
             )
           })}
@@ -335,23 +443,13 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
             {/* Ingredients */}
             <Text style={styles.subLabel}>{t('recipes.sectionIngredients')}</Text>
             {comp.ingredients.map((ing, ii) => (
-              <View key={ii} style={styles.listRow}>
-                <TextInput
-                  style={styles.listInput}
-                  value={ing}
-                  onChangeText={(v) => updateIngredient(ci, ii, v)}
-                  placeholder={`${t('recipes.sectionIngredients')} ${ii + 1}`}
-                  accessibilityLabel={`${t('recipes.sectionIngredients')} ${ii + 1}`}
-                />
-                <TouchableOpacity
-                  onPress={() => removeIngredient(ci, ii)}
-                  style={styles.removeBtn}
-                  accessibilityLabel={t('common.delete')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.removeBtnText}>✕</Text>
-                </TouchableOpacity>
-              </View>
+              <IngredientEditor
+                key={ii}
+                value={ing}
+                onUnitPress={() => setUnitPickerTarget({ ci, ii })}
+                onChange={(val) => updateIngredient(ci, ii, val)}
+                onRemove={() => removeIngredient(ci, ii)}
+              />
             ))}
             <TouchableOpacity
               style={styles.addRowBtn}
@@ -409,6 +507,17 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <UnitPickerModal
+        visible={unitPickerTarget !== null}
+        selected={pickedIngredient?.unit ?? ''}
+        onSelect={(u) => {
+          if (!unitPickerTarget) return
+          const ing = state.components[unitPickerTarget.ci]?.ingredients[unitPickerTarget.ii]
+          if (ing) updateIngredient(unitPickerTarget.ci, unitPickerTarget.ii, { ...ing, unit: u })
+        }}
+        onClose={() => setUnitPickerTarget(null)}
+      />
     </KeyboardAvoidingView>
   )
 }
@@ -458,12 +567,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
   },
-  componentHeader: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111',
-    marginBottom: 4,
-  },
+  componentHeader: { fontSize: 16, fontWeight: '700', color: '#111', marginBottom: 4 },
   subLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -506,6 +610,76 @@ const styles = StyleSheet.create({
   },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  // Unit picker modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  unitSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingTop: 8,
+    maxHeight: '60%',
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
+  unitOption: {
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#f3f4f6',
+  },
+  unitOptionSel: { backgroundColor: '#f5f3ff' },
+  unitOptionText: { fontSize: 15, color: '#374151' },
+  unitOptionTextSel: { color: '#7c3aed', fontWeight: '600' },
+  // Ingredient editor
+  ingEditor: {
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#f3f4f6',
+    gap: 4,
+  },
+  ingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  ingQty: {
+    width: 44,
+    borderBottomWidth: 1,
+    borderColor: '#e5e7eb',
+    fontSize: 14,
+    color: '#111',
+    textAlign: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+  },
+  ingUnitBtn: {
+    borderBottomWidth: 1,
+    borderColor: '#e5e7eb',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    minWidth: 36,
+  },
+  ingUnitText: { fontSize: 13, color: '#7c3aed', fontWeight: '500' },
+  ingPlaceholder: { color: '#9ca3af' },
+  ingName: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderColor: '#e5e7eb',
+    fontSize: 14,
+    color: '#111',
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+  },
+  ingNote: {
+    fontSize: 12,
+    color: '#9ca3af',
+    borderBottomWidth: 1,
+    borderColor: '#f3f4f6',
+    paddingVertical: 2,
+    paddingHorizontal: 2,
+  },
 })
 
 export default EditRecipeScreen
