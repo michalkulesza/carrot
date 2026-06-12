@@ -249,16 +249,33 @@ const StepRow = ({
     <View style={styles.stepRow}>
       <Text style={styles.stepNum}>{index + 1}.</Text>
       <View style={styles.stepBody}>
-        <StepText step={step} stepRefs={stepRefs} rawIngredients={rawIngredients} />
-        {durationMatch && (
-          <TimerButton
-            timerId={timerId}
-            recipe={recipe}
-            componentIndex={componentIndex}
-            stepIndex={index}
-            stepText={step}
-            seconds={durationMatch.seconds}
-          />
+        {durationMatch ? (
+          <View style={styles.stepInline}>
+            {durationMatch.start > 0 && (
+              <StepText
+                step={step.slice(0, durationMatch.start)}
+                stepRefs={stepRefs}
+                rawIngredients={rawIngredients}
+              />
+            )}
+            <TimerButton
+              timerId={timerId}
+              recipe={recipe}
+              componentIndex={componentIndex}
+              stepIndex={index}
+              stepText={step}
+              seconds={durationMatch.seconds}
+            />
+            {durationMatch.end < step.length && (
+              <StepText
+                step={step.slice(durationMatch.end)}
+                stepRefs={stepRefs}
+                rawIngredients={rawIngredients}
+              />
+            )}
+          </View>
+        ) : (
+          <StepText step={step} stepRefs={stepRefs} rawIngredients={rawIngredients} />
         )}
       </View>
     </View>
@@ -575,6 +592,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   stepBody: { flex: 1 },
+  stepInline: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
   stepText: { fontSize: 15, color: '#111', lineHeight: 22 },
   ingredientMention: {
     color: '#1d4ed8',
@@ -601,7 +619,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    marginTop: 6,
     backgroundColor: '#fffbeb',
     borderWidth: 1,
     borderColor: '#fde68a',
