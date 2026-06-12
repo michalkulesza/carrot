@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
@@ -261,7 +261,7 @@ const MealPlanScreen = () => {
     return map
   }, [queries])
 
-  const isLoading = queries.length > 0 && queries.every((q) => q.isLoading)
+  const isLoading = queries.some((q) => q.isLoading)
 
   const setEntry = useMutation({
     mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
@@ -274,16 +274,17 @@ const MealPlanScreen = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
-  useEffect(() => {
-    if (offsets[todayIndex] === undefined) return
-    const timer = setTimeout(() => {
-      listRef.current?.scrollToOffset({
-        offset: Math.max(0, offsets[todayIndex] - 120),
-        animated: false,
-      })
-    }, 50)
-    return () => clearTimeout(timer)
-  }, [todayIndex, offsets])
+  const hasScrolled = useRef(false)
+
+  const handleListLayout = useCallback(() => {
+    if (hasScrolled.current) return
+    hasScrolled.current = true
+    listRef.current?.scrollToIndex({
+      index: todayIndex,
+      viewPosition: 0.5,
+      animated: false,
+    })
+  }, [todayIndex])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -345,21 +346,21 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
-      {isLoading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" />
+      <FlatList
+        ref={listRef}
+        data={items}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        onLayout={handleListLayout}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+      />
+      {isLoading && (
+        <View style={styles.loadingOverlay} pointerEvents="none">
+          <ActivityIndicator size="small" color="#7c3aed" />
         </View>
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={items}
-          keyExtractor={(item) => item.key}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
       )}
 
       {pickerDate && (
@@ -380,6 +381,11 @@ const MealPlanScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+  },
   list: { flex: 1 },
   listContent: { paddingBottom: 40 },
   monthRow: {
