@@ -19,6 +19,7 @@ import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { useApiClient } from '@platekeeper/shared/api/context'
 import { useQueryClient } from '@tanstack/react-query'
 import type { RecipeOut, Tag } from '@platekeeper/shared/types'
+import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import BellModal from '../components/BellModal'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 
@@ -198,12 +199,12 @@ const RecipesScreen = ({ navigation }: Props) => {
           accessibilityState={{ selected: isSelected }}
         >
           <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
-            {item.name}
+            {tTag(item.name, t)}
           </Text>
         </TouchableOpacity>
       )
     },
-    [selectedTagId, handleTagPress],
+    [selectedTagId, handleTagPress, t],
   )
 
   const renderRecipe = useCallback(
@@ -252,7 +253,7 @@ const RecipesScreen = ({ navigation }: Props) => {
               </Text>
               {item.tags.length > 0 && (
                 <Text style={styles.cardTags} numberOfLines={1}>
-                  {item.tags.map((tg) => tg.name).join(', ')}
+                  {item.tags.map((tg) => tTag(tg.name, t)).join(', ')}
                 </Text>
               )}
               {item.servings != null && (
