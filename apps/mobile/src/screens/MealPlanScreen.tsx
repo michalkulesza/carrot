@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
   StyleSheet,
@@ -274,11 +275,26 @@ const MealPlanScreen = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
+  const listRef = useRef<FlatList>(null)
+  const layoutDone = useRef(false)
+
   const initialScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
     const screenHeight = Dimensions.get('window').height
     return Math.max(0, todayOffset - screenHeight / 2 + DAY_ROW_HEIGHT / 2)
   }, [offsets, todayIndex])
+
+  const handleListLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      if (layoutDone.current) return
+      layoutDone.current = true
+      const listHeight = e.nativeEvent.layout.height
+      const todayOffset = offsets[todayIndex] ?? 0
+      const target = Math.max(0, todayOffset - listHeight / 2 + DAY_ROW_HEIGHT / 2)
+      listRef.current?.scrollToOffset({ offset: target, animated: false })
+    },
+    [offsets, todayIndex],
+  )
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -341,11 +357,13 @@ const MealPlanScreen = () => {
   return (
     <View style={styles.container}>
       <FlatList
+        ref={listRef}
         data={items}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         contentOffset={{ x: 0, y: initialScrollOffset }}
+        onLayout={handleListLayout}
         style={styles.list}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
