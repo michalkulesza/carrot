@@ -316,8 +316,6 @@
     "methodGalleryDesc": "Depuis votre photothèque",
     "methodText": "Coller du texte",
     "methodTextDesc": "Copier-coller n'importe quel texte de recette",
-    "methodShare": "Partager depuis une app",
-    "methodShareDesc": "Depuis le navigateur, Instagram ou toute app",
     "methodScratch": "Créer de zéro",
     "methodScratchDesc": "Créer une recette manuellement",
     "pasteTextPlaceholder": "Collez une recette ici…",
@@ -333,7 +331,8 @@
     "newRecipe": "Nouvelle recette",
     "fromUrl": "Depuis URL",
     "fromImage": "Depuis image",
-    "fromText": "Depuis texte"
+    "fromText": "Depuis texte",
+    "shareTip": "💡 Le saviez-vous ? Dans Safari, Instagram ou toute app — appuyez sur Partager et choisissez PlateKeeper pour importer instantanément."
   },
   "shoppingList": {
     "title": "Liste de courses",

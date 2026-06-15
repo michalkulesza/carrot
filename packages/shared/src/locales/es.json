@@ -316,8 +316,6 @@
     "methodGalleryDesc": "Desde tu biblioteca de fotos",
     "methodText": "Pegar texto",
     "methodTextDesc": "Copia y pega cualquier texto de receta",
-    "methodShare": "Compartir desde app",
-    "methodShareDesc": "Desde el navegador, Instagram o cualquier app",
     "methodScratch": "Crear desde cero",
     "methodScratchDesc": "Crear una receta manualmente",
     "pasteTextPlaceholder": "Pega una receta aquí…",
@@ -333,7 +331,8 @@
     "newRecipe": "Nueva receta",
     "fromUrl": "Desde URL",
     "fromImage": "Desde imagen",
-    "fromText": "Desde texto"
+    "fromText": "Desde texto",
+    "shareTip": "💡 ¿Sabías que? En Safari, Instagram o cualquier app — toca Compartir y elige PlateKeeper para importar al instante."
   },
   "shoppingList": {
     "title": "Lista de compras",

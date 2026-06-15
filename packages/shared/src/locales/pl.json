@@ -324,8 +324,6 @@
     "methodGalleryDesc": "Z biblioteki zdjęć",
     "methodText": "Wklej tekst",
     "methodTextDesc": "Skopiuj i wklej dowolny tekst przepisu",
-    "methodShare": "Udostępnij z aplikacji",
-    "methodShareDesc": "Z przeglądarki, Instagrama lub innej aplikacji",
     "methodScratch": "Stwórz od zera",
     "methodScratchDesc": "Utwórz przepis ręcznie",
     "pasteTextPlaceholder": "Wklej tutaj przepis…",
@@ -341,7 +339,8 @@
     "newRecipe": "Nowy przepis",
     "fromUrl": "Z URL",
     "fromImage": "Ze zdjęcia",
-    "fromText": "Z tekstu"
+    "fromText": "Z tekstu",
+    "shareTip": "💡 Czy wiesz? W Safari, Instagramie lub dowolnej aplikacji — dotknij Udostępnij i wybierz PlateKeeper, aby natychmiast zaimportować."
   },
   "shoppingList": {
     "title": "Lista zakupów",

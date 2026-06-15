@@ -316,8 +316,6 @@
     "methodGalleryDesc": "Aus deiner Fotobibliothek",
     "methodText": "Text einfügen",
     "methodTextDesc": "Beliebigen Rezepttext kopieren und einfügen",
-    "methodShare": "Aus App teilen",
-    "methodShareDesc": "Aus Browser, Instagram oder einer anderen App",
     "methodScratch": "Von Grund auf erstellen",
     "methodScratchDesc": "Rezept manuell erstellen",
     "pasteTextPlaceholder": "Rezept hier einfügen…",
@@ -333,7 +331,8 @@
     "newRecipe": "Neues Rezept",
     "fromUrl": "Von URL",
     "fromImage": "Von Bild",
-    "fromText": "Von Text"
+    "fromText": "Von Text",
+    "shareTip": "💡 Wusstest du? In Safari, Instagram oder jeder anderen App — tippe auf Teilen und wähle PlateKeeper, um sofort zu importieren."
   },
   "shoppingList": {
     "title": "Einkaufsliste",

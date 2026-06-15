@@ -754,7 +754,6 @@ const METHOD_GROUPS = [
   ],
   [
     { key: 'text' as ImportMode, icon: '📋', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc', iconBg: colors.brand },
-    { key: 'share' as ImportMode, icon: '↗', titleKey: 'addRecipe.methodShare', descKey: 'addRecipe.methodShareDesc', iconBg: PlatformColor('systemIndigo') },
     { key: 'scratch' as ImportMode, icon: '✏️', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc', iconBg: PlatformColor('systemPink') },
   ],
 ]
@@ -790,6 +789,9 @@ const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }
           ))}
         </View>
       ))}
+      <View style={styles.shareTipCard}>
+        <Text style={styles.shareTipText}>{t('addRecipe.shareTip')}</Text>
+      </View>
     </View>
   )
 }
@@ -936,10 +938,8 @@ const ShareView = ({
   const { t } = useTranslation()
   return (
     <View style={styles.inputSection}>
-      <View style={styles.shareCard}>
-        <Text style={styles.shareCardIcon}>↗</Text>
-        <Text style={styles.shareCardTitle}>{t('addRecipe.shareTitle')}</Text>
-        <Text style={styles.shareCardDesc}>{t('addRecipe.shareInstructions')}</Text>
+      <View style={styles.shareTipCard}>
+        <Text style={styles.shareTipText}>{t('addRecipe.shareTitle')}{'\n'}{t('addRecipe.shareInstructions')}</Text>
       </View>
       <Text style={styles.shareUrlLabel}>{t('addRecipe.shareUrlLabel')}</Text>
       <View style={styles.urlInputGroup}>
@@ -1005,6 +1005,8 @@ const ImportRecipeScreen = ({ navigation, route }: Props) => {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [error, setError] = useState<string | null>(null)
   const cancelRef = useRef<(() => void) | null>(null)
+  const skipGuardRef = useRef(false)
+  const pendingThumbRef = useRef<string | null>(null)
 
   const activeAllergens = useMemo(() => {
     const p = preferences?.personal_allergens
@@ -1048,6 +1050,7 @@ const ImportRecipeScreen = ({ navigation, route }: Props) => {
   useEffect(() => {
     if (!editable) return
     const unsub = navigation.addListener('beforeRemove', (e) => {
+      if (skipGuardRef.current) return
       e.preventDefault()
       Alert.alert(t('addRecipe.discard'), undefined, [
         { text: t('common.cancel'), style: 'cancel' },
@@ -1112,11 +1115,16 @@ const ImportRecipeScreen = ({ navigation, route }: Props) => {
     setError(null)
     setUrl('')
     setPastedText('')
+    pendingThumbRef.current = null
   }
 
   const applyImportResult = (res: ImportResult) => {
     if (res.recipe) {
       const editableRecipe = toEditable(res, autoSubstitute)
+      if (!editableRecipe.thumbnail_url && pendingThumbRef.current) {
+        editableRecipe.thumbnail_url = pendingThumbRef.current
+      }
+      pendingThumbRef.current = null
       setEditable(editableRecipe)
       setSelectedTags(
         tags.filter((tag) =>
@@ -1218,6 +1226,7 @@ const ImportRecipeScreen = ({ navigation, route }: Props) => {
 
   const startImageImport = (imageBase64: string, mimeType: string) => {
     cancelRef.current?.()
+    pendingThumbRef.current = `data:${mimeType};base64,${imageBase64}`
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1267,6 +1276,7 @@ const ImportRecipeScreen = ({ navigation, route }: Props) => {
         tag_ids: selectedTags.map((tag) => tag.id),
       })
       await qc.invalidateQueries({ queryKey: ['recipes'] })
+      skipGuardRef.current = true
       navigation.goBack()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('addRecipe.failedToSave'))
@@ -1581,28 +1591,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
 
-  // Share card
-  shareCard: {
+  // Share tip card
+  shareTipCard: {
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  shareCardIcon: { fontSize: 36 },
-  shareCardTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: PlatformColor('label') as unknown as string,
-    textAlign: 'center',
-  },
-  shareCardDesc: {
-    fontSize: 14,
+  shareTipText: {
+    fontSize: 13,
     color: PlatformColor('secondaryLabel') as unknown as string,
-    textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 19,
   },
+
+  // Share URL label (used when share extension delivers a URL)
   shareUrlLabel: {
     fontSize: 13,
     fontWeight: '500',
