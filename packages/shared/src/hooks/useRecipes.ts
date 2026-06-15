@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
-import type { RecipeSaveRequest } from '../types'
+import type { RecipeOut, RecipeSaveRequest } from '../types'
 
 export const useRecipes = () => {
   const api = useApiClient()
@@ -21,7 +21,10 @@ export const useRecipes = () => {
 
   const remove = useMutation({
     mutationFn: api.deleteRecipe,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+    onSuccess: (_, id) => {
+      qc.setQueryData<RecipeOut[]>(['recipes'], (old) => old?.filter((r) => r.id !== id) ?? [])
+      return qc.invalidateQueries({ queryKey: ['recipes'] })
+    },
   })
 
   const reorder = useMutation({
