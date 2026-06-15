@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react'
-import { StyleSheet, Text, TextInput, TouchableOpacity, View, KeyboardAvoidingView, Platform } from 'react-native'
+import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useAuth } from '../../context/AuthContext'
 import type { AuthStackParamList } from '../../navigation/AuthStack'
+import { colors } from '../../theme/colors'
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>
 
@@ -48,25 +49,32 @@ const LoginScreen = ({ navigation }: Props) => {
         <TextInput
           style={styles.input}
           placeholder={t('auth.email')}
+          placeholderTextColor={colors.placeholderText}
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoCorrect={false}
           autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="next"
           accessibilityLabel={t('auth.email')}
         />
         <TextInput
           style={styles.input}
           placeholder={t('auth.password')}
+          placeholderTextColor={colors.placeholderText}
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           autoComplete="password"
+          textContentType="password"
+          returnKeyType="done"
           accessibilityLabel={t('auth.password')}
         />
 
-        <TouchableOpacity
-          style={[styles.button, styles.buttonPrimary]}
+        <Pressable
+          style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
           onPress={handleLogin}
           disabled={submitting}
           accessibilityLabel={t('auth.signIn')}
@@ -75,63 +83,63 @@ const LoginScreen = ({ navigation }: Props) => {
           <Text style={styles.buttonPrimaryText}>
             {submitting ? t('auth.signingIn') : t('auth.signIn')}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.demoRow}>
-          <TouchableOpacity
-            style={[styles.demoBtn, styles.buttonDemo]}
+          <Pressable
+            style={({ pressed }) => [styles.demoBtn, styles.buttonDemo, pressed && { opacity: 0.7 }]}
             onPress={fillDemo}
             accessibilityLabel={t('auth.demoAccount')}
             accessibilityRole="button"
           >
             <Text style={styles.buttonDemoText}>{t('auth.demoAccount')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.demoBtn, styles.buttonDemo]}
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.demoBtn, styles.buttonDemo, pressed && { opacity: 0.7 }]}
             onPress={fillDemoAlt}
             accessibilityLabel={t('auth.demoAlt')}
             accessibilityRole="button"
           >
             <Text style={styles.buttonDemoText}>{t('auth.demoAlt')}</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
 
-        <TouchableOpacity
-          style={styles.button}
+        <Pressable
+          style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
           onPress={() => navigation.navigate('Register')}
           accessibilityLabel={t('auth.createAccount')}
           accessibilityRole="button"
         >
           <Text style={styles.buttonOutlineText}>{t('auth.noAccount')} {t('auth.createOne')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  outer: { flex: 1, backgroundColor: '#fff' },
+  outer: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  tagline: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 40, color: '#111' },
-  error: { color: '#dc2626', marginBottom: 12, textAlign: 'center' },
+  tagline: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 40, color: colors.label },
+  error: { color: colors.red, marginBottom: 12, textAlign: 'center' },
   input: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 14,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
   },
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  buttonPrimary: { backgroundColor: '#2563eb' },
-  buttonPrimaryText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  buttonPrimary: { backgroundColor: colors.blue },
+  buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
   demoRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   demoBtn: { flex: 1, borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
-  buttonDemo: { borderWidth: 1, borderColor: '#d1d5db' },
-  buttonDemoText: { color: '#374151', fontSize: 15 },
-  buttonOutlineText: { color: '#6b7280', fontSize: 15 },
+  buttonDemo: { borderWidth: 1, borderColor: colors.opaqueSeparator },
+  buttonDemoText: { color: colors.secondaryLabel, fontSize: 15 },
+  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 15 },
 })
 
 export default LoginScreen
