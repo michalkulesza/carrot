@@ -42,7 +42,7 @@ import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientU
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import { colors } from '../theme/colors'
-import { proxyThumbnailUrl } from '../api/thumbnailUrl'
+import { proxyThumbnailUrl, isValidImageUrl } from '../api/thumbnailUrl'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'ImportRecipe'>
 type ImportMode = 'url' | 'camera' | 'gallery' | 'text' | 'share' | 'scratch'
@@ -579,7 +579,15 @@ const EditableRecipeView = ({
               </Pressable>
               <Pressable
                 style={({ pressed }) => [styles.imgSaveBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => { onChange({ ...recipe, thumbnail_url: imgDraft.trim() || null }); setShowImgEdit(false) }}
+                onPress={() => {
+                  const trimmed = imgDraft.trim()
+                  if (trimmed && !isValidImageUrl(trimmed)) {
+                    Alert.alert(t('common.invalidImageUrl'))
+                    return
+                  }
+                  onChange({ ...recipe, thumbnail_url: trimmed || null })
+                  setShowImgEdit(false)
+                }}
                 accessibilityLabel={t('common.save')}
               >
                 <Text style={styles.imgSaveText}>{t('common.save')}</Text>

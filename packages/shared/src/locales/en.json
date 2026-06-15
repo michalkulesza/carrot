@@ -24,7 +24,8 @@
     "dismiss": "Dismiss",
     "imageUrl": "Image URL",
     "addPrivateNotes": "Add private notes…",
-    "thumbnail": "Thumbnail"
+    "thumbnail": "Thumbnail",
+    "invalidImageUrl": "Invalid URL. Please enter a valid https:// address."
   },
   "recipes": {
     "searchPlaceholder": "Search recipes…",

@@ -28,6 +28,7 @@ import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientU
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import { colors } from '../theme/colors'
+import { isValidImageUrl } from '../api/thumbnailUrl'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'EditRecipe'>
 
@@ -290,6 +291,10 @@ const EditRecipeScreen = ({ route, navigation }: Props) => {
 
   const handleSave = useCallback(async () => {
     if (!state) return
+    if (state.thumbnail_url && !isValidImageUrl(state.thumbnail_url)) {
+      Alert.alert(t('common.invalidImageUrl'))
+      return
+    }
     setSaving(true)
     try {
       await api.updateRecipe(recipeId, {

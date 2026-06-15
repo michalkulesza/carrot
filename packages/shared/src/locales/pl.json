@@ -24,7 +24,8 @@
     "dismiss": "Odrzuć",
     "imageUrl": "URL obrazu",
     "addPrivateNotes": "Dodaj prywatne notatki…",
-    "thumbnail": "Miniatura"
+    "thumbnail": "Miniatura",
+    "invalidImageUrl": "Nieprawidłowy URL. Podaj prawidłowy adres https://."
   },
   "recipes": {
     "searchPlaceholder": "Wyszukaj",
