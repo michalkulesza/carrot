@@ -720,7 +720,6 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 15,
     color: colors.label,
-    fontWeight: '500',
   },
   cardDesc: {
     fontSize: 12,
