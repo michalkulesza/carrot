@@ -15,7 +15,7 @@ import {
 import GlassViewSafe from '../components/GlassViewSafe'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
-import { useNavigation, useRouter } from 'expo-router'
+import { useNavigation } from 'expo-router'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Sharing from 'expo-sharing'
@@ -212,7 +212,6 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
 const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
   const navigation = useNavigation()
-  const router = useRouter()
   const insets = useSafeAreaInsets()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -270,15 +269,6 @@ const MealPlanScreen = () => {
             </Text>
           </Pressable>
           <BellModal />
-          <Pressable
-            onPress={() => router.push('/settings')}
-            style={({ pressed }) => [{ paddingHorizontal: 4, paddingVertical: 4 }, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('nav.settings')}
-            accessibilityRole="button"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Feather name="settings" size={22} color={colors.secondaryLabel} />
-          </Pressable>
         </View>
       ),
     })

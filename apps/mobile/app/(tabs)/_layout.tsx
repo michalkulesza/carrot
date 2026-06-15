@@ -33,6 +33,11 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t('nav.shopping')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
+      <NativeTabs.Trigger name="settings">
+        <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
+        <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
       <NativeTabs.Trigger name="add" role="search">
         <NativeTabs.Trigger.Icon sf="plus.circle.fill" md="add-circle" />
         <NativeTabs.Trigger.Label>{t('nav.addRecipe')}</NativeTabs.Trigger.Label>

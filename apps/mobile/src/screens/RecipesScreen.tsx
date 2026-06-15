@@ -139,15 +139,6 @@ const RecipesScreen = () => {
             <Feather name="sliders" size={22} color={colors.secondaryLabel} />
           </Pressable>
           <BellModal />
-          <Pressable
-            onPress={() => router.push('/settings')}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('nav.settings')}
-            accessibilityRole="button"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Feather name="settings" size={22} color={colors.secondaryLabel} />
-          </Pressable>
         </View>
       ),
     })

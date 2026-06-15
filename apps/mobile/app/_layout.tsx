@@ -36,7 +36,6 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="import-recipe" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="settings" />
         <Stack.Screen name="recipe/[id]" />
         <Stack.Screen name="recipe/[id]/edit" />
         <Stack.Screen name="household/[id]" />
