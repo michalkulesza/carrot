@@ -71,7 +71,7 @@ jobs:
             docker compose -f compose.prod.yml up -d db api
             docker image prune -f
             for i in $(seq 1 15); do
-              if curl -fsS http://localhost:8000/healthz; then echo "API healthy"; exit 0; fi
+              if curl -fsS http://localhost:8088/healthz; then echo "API healthy"; exit 0; fi
               sleep 2
             done
             echo "API failed health check" && exit 1
