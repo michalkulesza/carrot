@@ -272,7 +272,7 @@ const MealPlanScreen = () => {
         </View>
       ),
     })
-  }, [navigation, handleExportPdf, exporting, t, router])
+  }, [navigation, handleExportPdf, exporting, t])
 
   const { items, offsets, todayIndex, months } = useMemo(() => {
     const items: ListItem[] = []
