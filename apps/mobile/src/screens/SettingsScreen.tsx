@@ -22,7 +22,7 @@ import { useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
 import type { UserPreferences, AllergenData } from '@platekeeper/shared/types'
 import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
-import { useTimers, getRemainingSeconds, formatCountdown } from '../context/TimerContext'
+import { useTimers } from '../context/TimerContext'
 import { persistLanguage } from '../i18n'
 import type { SettingsStackParamList } from '../navigation/SettingsStack'
 import { colors } from '../theme/colors'
@@ -318,100 +318,10 @@ const AllergenSection = ({
   )
 }
 
-// ── Timers section ────────────────────────────────────────────────────────────
-
-const TimersSection = () => {
-  const { t } = useTranslation()
-  const { timers, pauseTimer, resumeTimer, cancelTimer, keepScreenOn, setKeepScreenOn } = useTimers()
-  const timerList = [...timers.values()]
-
-  return (
-    <View>
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('timers.keepScreenOn')}</Text>
-            <Text style={styles.cardDesc}>{t('timers.keepScreenOnDesc')}</Text>
-          </View>
-          <Switch
-            value={keepScreenOn}
-            onValueChange={setKeepScreenOn}
-            accessibilityLabel={t('timers.keepScreenOn')}
-          />
-        </View>
-      </View>
-      {timerList.length > 0 && (
-        <View style={[styles.card, { marginTop: 8 }]}>
-          {timerList.map((timer) => {
-            const remaining = getRemainingSeconds(timer)
-            const isRunning = timer.status === 'running'
-            return (
-              <View key={timer.id} style={styles.timerRow}>
-                <View style={styles.timerInfo}>
-                  <Text style={styles.timerTitle} numberOfLines={1}>
-                    {timer.recipeTitle}
-                  </Text>
-                  <Text style={styles.timerStep} numberOfLines={1}>
-                    {t('common.step')} {timer.stepIndex + 1}
-                  </Text>
-                </View>
-                <Text
-                  style={[
-                    styles.timerCountdown,
-                    {
-                      color: timer.status === 'done'
-                        ? '#10b981'
-                        : isRunning
-                          ? '#d97706'
-                          : colors.tertiaryLabel,
-                    },
-                  ]}
-                >
-                  {timer.status === 'done'
-                    ? t('common.doneCheck')
-                    : formatCountdown(remaining)}
-                </Text>
-                <View style={styles.timerBtns}>
-                  {isRunning ? (
-                    <Pressable
-                      onPress={() => pauseTimer(timer.id)}
-                      accessibilityLabel={t('common.pause')}
-                      accessibilityRole="button"
-                      style={({ pressed }) => pressed && { opacity: 0.7 }}
-                    >
-                      <Text style={styles.timerBtnText}>⏸</Text>
-                    </Pressable>
-                  ) : (
-                    <Pressable
-                      onPress={() => resumeTimer(timer.id)}
-                      accessibilityLabel={t('common.resume')}
-                      accessibilityRole="button"
-                      style={({ pressed }) => pressed && { opacity: 0.7 }}
-                    >
-                      <Text style={styles.timerBtnText}>▶</Text>
-                    </Pressable>
-                  )}
-                  <Pressable
-                    onPress={() => cancelTimer(timer.id)}
-                    accessibilityLabel={t('common.cancel')}
-                    accessibilityRole="button"
-                    style={({ pressed }) => pressed && { opacity: 0.7 }}
-                  >
-                    <Text style={[styles.timerBtnText, { color: colors.red }]}>✕</Text>
-                  </Pressable>
-                </View>
-              </View>
-            )
-          })}
-        </View>
-      )}
-    </View>
-  )
-}
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 const KEEP_AWAKE_STORAGE_KEY = 'recipe-keep-screen-default'
+const KEEP_AWAKE_SHOPPING_STORAGE_KEY = 'shopping-list-keep-screen-on'
 
 const SettingsScreen = ({ navigation }: Props) => {
   const { t, i18n } = useTranslation()
@@ -421,17 +331,27 @@ const SettingsScreen = ({ navigation }: Props) => {
   const { create: createHousehold } = useHouseholds()
   const api = useApiClient()
   const insets = useSafeAreaInsets()
+  const { keepScreenOn: keepScreenOnTimer, setKeepScreenOn: setKeepScreenOnTimer } = useTimers()
   const [keepScreenDefault, setKeepScreenDefault] = useState(false)
+  const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false)
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_STORAGE_KEY).then((val) => {
       setKeepScreenDefault(val === '1')
+    })
+    AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
+      setKeepScreenOnShopping(val === '1')
     })
   }, [])
 
   const handleKeepScreenDefaultToggle = useCallback((val: boolean) => {
     setKeepScreenDefault(val)
     void AsyncStorage.setItem(KEEP_AWAKE_STORAGE_KEY, val ? '1' : '0')
+  }, [])
+
+  const handleKeepScreenShoppingToggle = useCallback((val: boolean) => {
+    setKeepScreenOnShopping(val)
+    void AsyncStorage.setItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY, val ? '1' : '0')
   }, [])
 
   const handleLanguageChange = useCallback(
@@ -608,26 +528,46 @@ const SettingsScreen = ({ navigation }: Props) => {
               />
             </View>
           </View>
-          {/* Keep screen on default */}
-          <View style={styles.card}>
-            <View style={styles.switchRow}>
-              <View style={styles.switchLabelBlock}>
-                <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('settings.keepScreenOnDefault')}</Text>
-                <Text style={styles.cardDesc}>{t('settings.keepScreenOnDefaultDesc')}</Text>
-              </View>
-              <Switch
-                value={keepScreenDefault}
-                onValueChange={handleKeepScreenDefaultToggle}
-                accessibilityLabel={t('settings.keepScreenOnDefault')}
-              />
-            </View>
-          </View>
         </>
       )}
 
-      {/* Timers */}
-      <SectionHeader label={t('settings.timers')} />
-      <TimersSection />
+      {/* Screen */}
+      <SectionHeader label={t('settings.screen')} />
+      <View style={styles.card}>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('settings.keepScreenOnDefault')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.keepScreenOnDefaultDesc')}</Text>
+          </View>
+          <Switch
+            value={keepScreenDefault}
+            onValueChange={handleKeepScreenDefaultToggle}
+            accessibilityLabel={t('settings.keepScreenOnDefault')}
+          />
+        </View>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('timers.keepScreenOn')}</Text>
+            <Text style={styles.cardDesc}>{t('timers.keepScreenOnDesc')}</Text>
+          </View>
+          <Switch
+            value={keepScreenOnTimer}
+            onValueChange={setKeepScreenOnTimer}
+            accessibilityLabel={t('timers.keepScreenOn')}
+          />
+        </View>
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('settings.keepScreenOnWhileShoppingList')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.keepScreenOnWhileShoppingListDesc')}</Text>
+          </View>
+          <Switch
+            value={keepScreenOnShopping}
+            onValueChange={handleKeepScreenShoppingToggle}
+            accessibilityLabel={t('settings.keepScreenOnWhileShoppingList')}
+          />
+        </View>
+      </View>
 
       {/* Households */}
       <SectionHeader label={t('settings.households')} />
@@ -800,23 +740,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  switchLabelBlock: { flex: 1, marginRight: 12 },
-  // Timer section
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  switchRowBorder: {
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
-    gap: 8,
   },
-  timerInfo: { flex: 1 },
-  timerTitle: { fontSize: 14, fontWeight: '600', color: colors.label },
-  timerStep: { fontSize: 12, color: colors.tertiaryLabel, marginTop: 2 },
-  timerCountdown: { fontFamily: 'monospace', fontSize: 14, fontWeight: '700' },
-  timerBtns: { flexDirection: 'row', gap: 12 },
-  timerBtnText: { fontSize: 16, color: colors.secondaryLabel },
+  switchLabelBlock: { flex: 1, marginRight: 12 },
   // Household section
   householdRow: {
     flexDirection: 'row',
