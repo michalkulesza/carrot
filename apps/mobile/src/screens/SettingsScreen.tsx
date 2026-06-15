@@ -2,17 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
 import { useApiClient } from '@platekeeper/shared/api/context'
@@ -23,6 +24,7 @@ import { useHousehold } from '../context/HouseholdContext'
 import { useTimers, getRemainingSeconds, formatCountdown } from '../context/TimerContext'
 import { persistLanguage } from '../i18n'
 import type { SettingsStackParamList } from '../navigation/SettingsStack'
+import { colors } from '../theme/colors'
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'SettingsMain'>
 
@@ -170,8 +172,8 @@ const AllergenSection = ({
     label: string,
   ) => (
     <View style={styles.accordionBlock}>
-      <TouchableOpacity
-        style={styles.accordionHeader}
+      <Pressable
+        style={({ pressed }) => [styles.accordionHeader, pressed && { opacity: 0.7 }]}
         onPress={() =>
           setExpanded((prev) => (prev === sectionKey ? null : sectionKey))
         }
@@ -183,7 +185,7 @@ const AllergenSection = ({
         <Text style={styles.accordionChevron}>
           {expanded === sectionKey ? '▲' : '▼'}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
       {expanded === sectionKey && (
         <View style={styles.accordionBody}>
           {keys.map((key) => {
@@ -191,9 +193,9 @@ const AllergenSection = ({
             const desc = t(`${namespace}.${k}_desc`, { defaultValue: '' })
             const isSelected = predefined.includes(key)
             return (
-              <TouchableOpacity
+              <Pressable
                 key={key}
-                style={styles.checkRow}
+                style={({ pressed }) => [styles.checkRow, pressed && { opacity: 0.7 }]}
                 onPress={() => togglePredefined(key)}
                 accessibilityLabel={t(`${namespace}.${k}`)}
                 accessibilityRole="checkbox"
@@ -208,7 +210,7 @@ const AllergenSection = ({
                     <Text style={styles.checkDesc}>{desc}</Text>
                   ) : null}
                 </View>
-              </TouchableOpacity>
+              </Pressable>
             )
           })}
         </View>
@@ -225,8 +227,8 @@ const AllergenSection = ({
 
       {/* Custom */}
       <View style={styles.accordionBlock}>
-        <TouchableOpacity
-          style={styles.accordionHeader}
+        <Pressable
+          style={({ pressed }) => [styles.accordionHeader, pressed && { opacity: 0.7 }]}
           onPress={() =>
             setExpanded((prev) => (prev === 'custom' ? null : 'custom'))
           }
@@ -238,7 +240,7 @@ const AllergenSection = ({
           <Text style={styles.accordionChevron}>
             {expanded === 'custom' ? '▲' : '▼'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
         {expanded === 'custom' && (
           <View style={styles.accordionBody}>
             <View style={styles.customInputRow}>
@@ -251,28 +253,29 @@ const AllergenSection = ({
                 returnKeyType="done"
                 accessibilityLabel={t('settings.custom')}
               />
-              <TouchableOpacity
-                style={styles.addBtn}
+              <Pressable
+                style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
                 onPress={addCustom}
                 accessibilityLabel={t('common.add')}
                 accessibilityRole="button"
               >
                 <Text style={styles.addBtnText}>{t('common.add')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
             {custom.length > 0 && (
               <View style={styles.tagCloud}>
                 {custom.map((tag) => (
                   <View key={tag} style={styles.customTag}>
                     <Text style={styles.customTagText}>{tag}</Text>
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => removeCustom(tag)}
                       accessibilityLabel={t('common.delete')}
                       accessibilityRole="button"
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      style={({ pressed }) => pressed && { opacity: 0.7 }}
                     >
                       <Text style={styles.customTagRemove}>×</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   </View>
                 ))}
               </View>
@@ -281,8 +284,8 @@ const AllergenSection = ({
         )}
       </View>
 
-      <TouchableOpacity
-        style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+      <Pressable
+        style={({ pressed }) => [styles.saveBtn, saving && styles.saveBtnDisabled, pressed && { opacity: 0.7 }]}
         onPress={handleSave}
         disabled={saving}
         accessibilityLabel={t('common.save')}
@@ -291,9 +294,9 @@ const AllergenSection = ({
         <Text style={styles.saveBtnText}>
           {saving ? t('common.saving') : t('common.save')}
         </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.reanalyzeBtn, reanalyzing && styles.saveBtnDisabled]}
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [styles.reanalyzeBtn, reanalyzing && styles.saveBtnDisabled, pressed && { opacity: 0.7 }]}
         onPress={handleReanalyze}
         disabled={reanalyzing}
         accessibilityLabel={t('settings.reAnalyzeRecipes')}
@@ -309,7 +312,7 @@ const AllergenSection = ({
               : t('settings.starting')
             : t('settings.reAnalyzeRecipes')}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
     </View>
   )
 }
@@ -333,8 +336,6 @@ const TimersSection = () => {
             value={keepScreenOn}
             onValueChange={setKeepScreenOn}
             accessibilityLabel={t('timers.keepScreenOn')}
-            trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-            thumbColor={keepScreenOn ? '#2563eb' : '#9ca3af'}
           />
         </View>
       </View>
@@ -361,7 +362,7 @@ const TimersSection = () => {
                         ? '#10b981'
                         : isRunning
                           ? '#d97706'
-                          : '#9ca3af',
+                          : colors.tertiaryLabel,
                     },
                   ]}
                 >
@@ -371,29 +372,32 @@ const TimersSection = () => {
                 </Text>
                 <View style={styles.timerBtns}>
                   {isRunning ? (
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => pauseTimer(timer.id)}
                       accessibilityLabel={t('common.pause')}
                       accessibilityRole="button"
+                      style={({ pressed }) => pressed && { opacity: 0.7 }}
                     >
                       <Text style={styles.timerBtnText}>⏸</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   ) : (
-                    <TouchableOpacity
+                    <Pressable
                       onPress={() => resumeTimer(timer.id)}
                       accessibilityLabel={t('common.resume')}
                       accessibilityRole="button"
+                      style={({ pressed }) => pressed && { opacity: 0.7 }}
                     >
                       <Text style={styles.timerBtnText}>▶</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                   )}
-                  <TouchableOpacity
+                  <Pressable
                     onPress={() => cancelTimer(timer.id)}
                     accessibilityLabel={t('common.cancel')}
                     accessibilityRole="button"
+                    style={({ pressed }) => pressed && { opacity: 0.7 }}
                   >
-                    <Text style={[styles.timerBtnText, { color: '#dc2626' }]}>✕</Text>
-                  </TouchableOpacity>
+                    <Text style={[styles.timerBtnText, { color: colors.red }]}>✕</Text>
+                  </Pressable>
                 </View>
               </View>
             )
@@ -415,6 +419,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold()
   const { create: createHousehold } = useHouseholds()
   const api = useApiClient()
+  const insets = useSafeAreaInsets()
   const [keepScreenDefault, setKeepScreenDefault] = useState(false)
 
   useEffect(() => {
@@ -491,7 +496,10 @@ const SettingsScreen = ({ navigation }: Props) => {
     }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
+    >
       {/* Stats */}
       <SectionHeader label={t('settings.stats')} />
       <StatsSection />
@@ -507,14 +515,14 @@ const SettingsScreen = ({ navigation }: Props) => {
             </Text>
           </View>
         )}
-        <TouchableOpacity
-          style={styles.logoutRow}
+        <Pressable
+          style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
           onPress={logout}
           accessibilityLabel={t('settings.logOut')}
           accessibilityRole="button"
         >
           <Text style={styles.logoutText}>{t('settings.logOut')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Preferences */}
@@ -536,9 +544,9 @@ const SettingsScreen = ({ navigation }: Props) => {
               {LANGUAGES.map(({ code, labelKey }) => {
                 const isSelected = (preferences?.language ?? i18n.language) === code
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={code}
-                    style={[styles.chip, isSelected && styles.chipSelected]}
+                    style={({ pressed }) => [styles.chip, isSelected && styles.chipSelected, pressed && { opacity: 0.7 }]}
                     onPress={() => handleLanguageChange(code)}
                     accessibilityLabel={t(labelKey)}
                     accessibilityRole="button"
@@ -549,7 +557,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                     >
                       {t(labelKey)}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 )
               })}
             </View>
@@ -572,10 +580,6 @@ const SettingsScreen = ({ navigation }: Props) => {
                   value={preferences?.unit_system !== 'imperial'}
                   onValueChange={handleUnitSystemToggle}
                   accessibilityLabel={t('settings.unitSystem')}
-                  trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                  thumbColor={
-                    preferences?.unit_system !== 'imperial' ? '#2563eb' : '#9ca3af'
-                  }
                 />
                 <Text
                   style={[
@@ -596,9 +600,9 @@ const SettingsScreen = ({ navigation }: Props) => {
               {WEEK_START_OPTIONS.map(({ value, labelKey }) => {
                 const isSelected = (preferences?.week_start_day ?? 1) === value
                 return (
-                  <TouchableOpacity
+                  <Pressable
                     key={value}
-                    style={[styles.chip, isSelected && styles.chipSelected]}
+                    style={({ pressed }) => [styles.chip, isSelected && styles.chipSelected, pressed && { opacity: 0.7 }]}
                     onPress={() => handleWeekStartChange(value)}
                     accessibilityLabel={t(labelKey)}
                     accessibilityRole="button"
@@ -609,7 +613,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                     >
                       {t(labelKey)}
                     </Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 )
               })}
             </View>
@@ -625,8 +629,6 @@ const SettingsScreen = ({ navigation }: Props) => {
                 value={keepScreenDefault}
                 onValueChange={handleKeepScreenDefaultToggle}
                 accessibilityLabel={t('settings.keepScreenOnDefault')}
-                trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                thumbColor={keepScreenDefault ? '#2563eb' : '#9ca3af'}
               />
             </View>
           </View>
@@ -660,8 +662,8 @@ const SettingsScreen = ({ navigation }: Props) => {
                   <Text style={styles.householdActive}>{t('settings.active')}</Text>
                 )}
               </View>
-              <TouchableOpacity
-                style={styles.manageBtn}
+              <Pressable
+                style={({ pressed }) => [styles.manageBtn, pressed && { opacity: 0.7 }]}
                 onPress={() =>
                   navigation.navigate('HouseholdDetail', {
                     householdId: h.id,
@@ -672,18 +674,18 @@ const SettingsScreen = ({ navigation }: Props) => {
                 accessibilityRole="button"
               >
                 <Text style={styles.manageBtnText}>{t('settings.manage')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           ))
         )}
-        <TouchableOpacity
-          style={styles.newHouseholdRow}
+        <Pressable
+          style={({ pressed }) => [styles.newHouseholdRow, pressed && { opacity: 0.7 }]}
           onPress={handleCreateHousehold}
           accessibilityLabel={t('settings.newHousehold')}
           accessibilityRole="button"
         >
           <Text style={styles.newHouseholdText}>{t('settings.newHousehold')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Allergens */}
@@ -704,7 +706,7 @@ const SettingsScreen = ({ navigation }: Props) => {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: colors.secondaryBackground },
   content: { paddingBottom: 48 },
   statsRow: {
     flexDirection: 'row',
@@ -717,7 +719,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 10,
     paddingVertical: 14,
     paddingHorizontal: 8,
@@ -731,18 +733,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
+    color: colors.label,
   },
   statLabel: {
     fontSize: 11,
-    color: '#9ca3af',
+    color: colors.tertiaryLabel,
     marginTop: 3,
     textAlign: 'center',
   },
   sectionHeader: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6b7280',
+    color: colors.secondaryLabel,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginHorizontal: 16,
@@ -750,7 +752,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 10,
     marginHorizontal: 16,
     marginBottom: 4,
@@ -766,22 +768,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
   },
-  label: { fontSize: 15, color: '#374151' },
-  value: { fontSize: 14, color: '#6b7280', maxWidth: '60%' },
+  label: { fontSize: 15, color: colors.secondaryLabel },
+  value: { fontSize: 14, color: colors.secondaryLabel, maxWidth: '60%' },
   logoutRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'flex-start',
   },
-  logoutText: { color: '#dc2626', fontSize: 15, fontWeight: '500' },
+  logoutText: { color: colors.red, fontSize: 15, fontWeight: '500' },
   loadingRow: { padding: 24, alignItems: 'center' },
-  errorText: { color: '#dc2626', fontSize: 14, padding: 16 },
+  errorText: { color: colors.red, fontSize: 14, padding: 16 },
   cardLabel: {
     fontSize: 15,
-    color: '#374151',
+    color: colors.secondaryLabel,
     fontWeight: '500',
     paddingHorizontal: 16,
     paddingTop: 12,
@@ -789,7 +791,7 @@ const styles = StyleSheet.create({
   },
   cardDesc: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.tertiaryLabel,
     marginTop: 2,
   },
   chipRow: {
@@ -802,14 +804,14 @@ const styles = StyleSheet.create({
   chip: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.background,
   },
-  chipSelected: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  chipText: { fontSize: 13, color: '#374151', fontWeight: '500' },
-  chipTextSelected: { color: '#fff' },
+  chipSelected: { backgroundColor: colors.blue, borderColor: colors.blue },
+  chipText: { fontSize: 13, color: colors.secondaryLabel, fontWeight: '500' },
+  chipTextSelected: { color: colors.background },
   switchRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -823,24 +825,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  unitLabel: { fontSize: 14, color: '#9ca3af', fontWeight: '500' },
-  unitLabelActive: { color: '#2563eb' },
+  unitLabel: { fontSize: 14, color: colors.tertiaryLabel, fontWeight: '500' },
+  unitLabelActive: { color: colors.blue },
   // Timer section
   timerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
     gap: 8,
   },
   timerInfo: { flex: 1 },
-  timerTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
-  timerStep: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  timerTitle: { fontSize: 14, fontWeight: '600', color: colors.label },
+  timerStep: { fontSize: 12, color: colors.tertiaryLabel, marginTop: 2 },
   timerCountdown: { fontFamily: 'monospace', fontSize: 14, fontWeight: '700' },
   timerBtns: { flexDirection: 'row', gap: 12 },
-  timerBtnText: { fontSize: 16, color: '#6b7280' },
+  timerBtnText: { fontSize: 16, color: colors.secondaryLabel },
   // Household section
   householdRow: {
     flexDirection: 'row',
@@ -850,41 +852,41 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   householdRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
   },
   householdDot: { width: 14, height: 14, borderRadius: 7 },
   householdInfo: { flex: 1 },
-  householdName: { fontSize: 14, fontWeight: '500', color: '#111' },
-  householdActive: { fontSize: 12, color: '#2563eb', marginTop: 1 },
+  householdName: { fontSize: 14, fontWeight: '500', color: colors.label },
+  householdActive: { fontSize: 12, color: colors.blue, marginTop: 1 },
   manageBtn: {
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
   },
-  manageBtnText: { fontSize: 13, fontWeight: '500', color: '#374151' },
+  manageBtnText: { fontSize: 13, fontWeight: '500', color: colors.secondaryLabel },
   newHouseholdRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
   },
-  newHouseholdText: { fontSize: 14, color: '#2563eb', fontWeight: '500' },
+  newHouseholdText: { fontSize: 14, color: colors.blue, fontWeight: '500' },
   emptyHouseholds: {
     fontSize: 14,
-    color: '#9ca3af',
+    color: colors.tertiaryLabel,
     padding: 16,
     textAlign: 'center',
   },
   // Allergen section
   allergenPad: { padding: 16 },
-  scopeLabel: { fontSize: 12, color: '#9ca3af', marginBottom: 12 },
+  scopeLabel: { fontSize: 12, color: colors.tertiaryLabel, marginBottom: 12 },
   accordionBlock: {
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
     marginTop: 4,
   },
   accordionHeader: {
@@ -893,8 +895,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-  accordionLabel: { fontSize: 14, fontWeight: '500', color: '#374151' },
-  accordionChevron: { fontSize: 10, color: '#9ca3af' },
+  accordionLabel: { fontSize: 14, fontWeight: '500', color: colors.secondaryLabel },
+  accordionChevron: { fontSize: 10, color: colors.tertiaryLabel },
   accordionBody: { paddingBottom: 12 },
   checkRow: {
     flexDirection: 'row',
@@ -907,16 +909,16 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
-  checkboxSelected: { backgroundColor: '#2563eb', borderColor: '#2563eb' },
-  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  checkboxSelected: { backgroundColor: colors.blue, borderColor: colors.blue },
+  checkmark: { color: colors.background, fontSize: 12, fontWeight: '700' },
   checkContent: { flex: 1 },
-  checkLabel: { fontSize: 14, color: '#111' },
-  checkDesc: { fontSize: 12, color: '#9ca3af', marginTop: 1 },
+  checkLabel: { fontSize: 14, color: colors.label },
+  checkDesc: { fontSize: 12, color: colors.tertiaryLabel, marginTop: 1 },
   customInputRow: {
     flexDirection: 'row',
     gap: 8,
@@ -925,53 +927,53 @@ const styles = StyleSheet.create({
   customInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
   },
   addBtn: {
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
   },
-  addBtnText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  addBtnText: { fontSize: 13, fontWeight: '600', color: colors.secondaryLabel },
   tagCloud: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   customTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
     gap: 4,
   },
-  customTagText: { fontSize: 13, color: '#374151' },
-  customTagRemove: { fontSize: 16, color: '#9ca3af', lineHeight: 18 },
+  customTagText: { fontSize: 13, color: colors.secondaryLabel },
+  customTagRemove: { fontSize: 16, color: colors.tertiaryLabel, lineHeight: 18 },
   saveBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.blue,
     borderRadius: 8,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 16,
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  saveBtnText: { color: colors.background, fontSize: 14, fontWeight: '600' },
   reanalyzeBtn: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderRadius: 8,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
   },
-  reanalyzeBtnText: { color: '#374151', fontSize: 14, fontWeight: '600' },
+  reanalyzeBtnText: { color: colors.secondaryLabel, fontSize: 14, fontWeight: '600' },
   keepScreenCard: { marginTop: 8 },
 })
 
