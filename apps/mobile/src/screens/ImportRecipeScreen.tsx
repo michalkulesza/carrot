@@ -746,16 +746,12 @@ const EditableRecipeView = ({
 
 // ── MethodPickerView ───────────────────────────────────────────────────────────
 
-const METHOD_GROUPS = [
-  [
-    { key: 'url' as ImportMode, icon: '🔗', titleKey: 'addRecipe.methodUrl', descKey: 'addRecipe.methodUrlDesc', iconBg: PlatformColor('systemBlue') },
-    { key: 'camera' as ImportMode, icon: '📷', titleKey: 'addRecipe.methodCamera', descKey: 'addRecipe.methodCameraDesc', iconBg: PlatformColor('systemOrange') },
-    { key: 'gallery' as ImportMode, icon: '🖼', titleKey: 'addRecipe.methodGallery', descKey: 'addRecipe.methodGalleryDesc', iconBg: PlatformColor('systemGreen') },
-  ],
-  [
-    { key: 'text' as ImportMode, icon: '📋', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc', iconBg: colors.brand },
-    { key: 'scratch' as ImportMode, icon: '✏️', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc', iconBg: PlatformColor('systemPink') },
-  ],
+const METHODS = [
+  { key: 'url' as ImportMode, icon: '🔗', titleKey: 'addRecipe.methodUrl', descKey: 'addRecipe.methodUrlDesc', iconBg: PlatformColor('systemBlue') },
+  { key: 'camera' as ImportMode, icon: '📷', titleKey: 'addRecipe.methodCamera', descKey: 'addRecipe.methodCameraDesc', iconBg: PlatformColor('systemOrange') },
+  { key: 'gallery' as ImportMode, icon: '🖼', titleKey: 'addRecipe.methodGallery', descKey: 'addRecipe.methodGalleryDesc', iconBg: PlatformColor('systemGreen') },
+  { key: 'text' as ImportMode, icon: '📋', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc', iconBg: colors.brand },
+  { key: 'scratch' as ImportMode, icon: '✏️', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc', iconBg: PlatformColor('systemPink') },
 ]
 
 const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }) => {
@@ -763,32 +759,30 @@ const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }
   return (
     <View style={styles.pickerWrap}>
       <Text style={styles.pickerHeading}>{t('addRecipe.chooseMethod')}</Text>
-      {METHOD_GROUPS.map((group, gi) => (
-        <View key={gi} style={styles.pickerGroup}>
-          {group.map((method, mi) => (
-            <Pressable
-              key={method.key}
-              style={({ pressed }) => [
-                styles.methodRow,
-                mi < group.length - 1 && styles.methodRowBorder,
-                pressed && styles.methodRowPressed,
-              ]}
-              onPress={() => onSelect(method.key)}
-              accessibilityLabel={t(method.titleKey)}
-              accessibilityHint={t(method.descKey)}
-            >
-              <View style={[styles.methodIconWrap, { backgroundColor: method.iconBg as unknown as string }]}>
-                <Text style={styles.methodIcon}>{method.icon}</Text>
-              </View>
-              <View style={styles.methodTextWrap}>
-                <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
-                <Text style={styles.methodDesc}>{t(method.descKey)}</Text>
-              </View>
-              <Text style={styles.methodChevron}>›</Text>
-            </Pressable>
-          ))}
-        </View>
-      ))}
+      <View style={styles.pickerGroup}>
+        {METHODS.map((method, mi) => (
+          <Pressable
+            key={method.key}
+            style={({ pressed }) => [
+              styles.methodRow,
+              mi < METHODS.length - 1 && styles.methodRowBorder,
+              pressed && styles.methodRowPressed,
+            ]}
+            onPress={() => onSelect(method.key)}
+            accessibilityLabel={t(method.titleKey)}
+            accessibilityHint={t(method.descKey)}
+          >
+            <View style={[styles.methodIconWrap, { backgroundColor: method.iconBg as unknown as string }]}>
+              <Text style={styles.methodIcon}>{method.icon}</Text>
+            </View>
+            <View style={styles.methodTextWrap}>
+              <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
+              <Text style={styles.methodDesc}>{t(method.descKey)}</Text>
+            </View>
+            <Text style={styles.methodChevron}>›</Text>
+          </Pressable>
+        ))}
+      </View>
       <View style={styles.shareTipCard}>
         <Text style={styles.shareTipText}>{t('addRecipe.shareTip')}</Text>
       </View>
