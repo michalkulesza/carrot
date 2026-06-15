@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { GlassView } from 'expo-glass-effect'
 import { useTranslation } from 'react-i18next'
 import { useNavigation } from '@react-navigation/native'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -104,7 +105,7 @@ const RecipePicker = ({
       onRequestClose={handleClose}
     >
       <View style={styles.pickerContainer}>
-        <View style={styles.pickerHeader}>
+        <GlassView style={styles.pickerHeader} glassEffectStyle="regular">
           <Text style={styles.pickerTitle}>{t('mealPlan.chooseDish')}</Text>
           <Text style={styles.pickerDate}>{date}</Text>
           <Pressable
@@ -115,7 +116,7 @@ const RecipePicker = ({
           >
             <Text style={styles.pickerCloseText}>{t('common.close')}</Text>
           </Pressable>
-        </View>
+        </GlassView>
 
         <TextInput
           style={styles.pickerSearch}
@@ -451,6 +452,7 @@ const MealPlanScreen = () => {
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
+        <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" tintColor={colors.blue} />
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 
@@ -602,16 +604,12 @@ const styles = StyleSheet.create({
   todayBtn: {
     position: 'absolute',
     right: 16,
-    backgroundColor: colors.blue,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    overflow: 'hidden',
   },
-  todayBtnText: { color: 'white', fontSize: 15, fontWeight: '600' },
+  todayBtnText: { color: colors.blue, fontSize: 15, fontWeight: '600' },
 })
 
 export default MealPlanScreen
