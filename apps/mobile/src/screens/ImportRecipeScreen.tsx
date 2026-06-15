@@ -1086,7 +1086,7 @@ const ImportRecipeScreen = () => {
             style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
             accessibilityLabel={t('common.cancel')}
           >
-            <Text style={styles.headerBackBtn}>{t('addRecipe.addRecipe')}</Text>
+            <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
           </Pressable>
         ),
       })
