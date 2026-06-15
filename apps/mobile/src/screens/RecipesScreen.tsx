@@ -21,6 +21,7 @@ import { useApiClient } from '@platekeeper/shared/api/context'
 import { useQueryClient } from '@tanstack/react-query'
 import type { RecipeOut, Tag } from '@platekeeper/shared/types'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
+import { Feather } from '@expo/vector-icons'
 import BellModal from '../components/BellModal'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import { colors } from '../theme/colors'
@@ -134,7 +135,7 @@ const RecipesScreen = ({ navigation }: Props) => {
             accessibilityLabel={t('recipes.sortBy')}
             accessibilityRole="button"
           >
-            <Text style={styles.headerSortText}>↕</Text>
+            <Feather name="sliders" size={22} color={colors.secondaryLabel} />
           </Pressable>
           <Pressable
             onPress={() => navigation.navigate('ImportRecipe')}
@@ -404,12 +405,6 @@ const RecipesScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4 },
-  headerSortText: {
-    fontSize: 18,
-    color: colors.brand,
-    lineHeight: 24,
-    fontWeight: '400',
-  },
   headerAddText: {
     fontSize: 26,
     color: colors.brand,
