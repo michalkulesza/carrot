@@ -7,13 +7,14 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import * as Clipboard from 'expo-clipboard'
 import { useQueryClient } from '@tanstack/react-query'
@@ -37,6 +38,7 @@ import {
 import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
+import { colors } from '../theme/colors'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'ImportRecipe'>
 
@@ -135,15 +137,15 @@ const UnitPickerModal = ({
   const { t } = useTranslation()
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose} />
+      <Pressable style={styles.modalOverlay} onPress={onClose} />
       <View style={styles.unitSheet}>
         <View style={styles.sheetHandle} />
         <FlatList
           data={UNIT_OPTIONS}
           keyExtractor={(item) => item || '__none__'}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.unitOption, item === selected && styles.unitOptionSel]}
+            <Pressable
+              style={({ pressed }) => [styles.unitOption, item === selected && styles.unitOptionSel, pressed && { opacity: 0.7 }]}
               onPress={() => {
                 onSelect(item)
                 onClose()
@@ -154,7 +156,7 @@ const UnitPickerModal = ({
               <Text style={[styles.unitOptionText, item === selected && styles.unitOptionTextSel]}>
                 {item ? `${item}  ·  ${t(`units.${item}`)}` : '—'}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           )}
           contentContainerStyle={{ paddingBottom: 32 }}
         />
@@ -216,9 +218,9 @@ const TagPickerModal = ({
           <View style={styles.sheetHandle} />
           <View style={styles.tagModalHeader}>
             <Text style={styles.tagModalTitle}>{t('tags.addTag')}</Text>
-            <TouchableOpacity onPress={onClose} accessibilityLabel={t('common.close')}>
+            <Pressable style={({ pressed }) => [pressed && { opacity: 0.7 }]} onPress={onClose} accessibilityLabel={t('common.close')}>
               <Text style={styles.tagModalClose}>✕</Text>
-            </TouchableOpacity>
+            </Pressable>
           </View>
           <TextInput
             style={styles.tagSearch}
@@ -230,8 +232,8 @@ const TagPickerModal = ({
           />
           <ScrollView style={styles.tagScrollList} keyboardShouldPersistTaps="handled">
             {canCreate && (
-              <TouchableOpacity
-                style={styles.tagCreateRow}
+              <Pressable
+                style={({ pressed }) => [styles.tagCreateRow, pressed && { opacity: 0.7 }]}
                 onPress={handleCreate}
                 disabled={creating}
                 accessibilityLabel={t('tags.createTag', { name: query.trim() })}
@@ -241,21 +243,21 @@ const TagPickerModal = ({
                     ? t('tags.creating')
                     : t('tags.createTag', { name: query.trim() })}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             )}
             {filtered.map((tag) => {
               const isSel = selectedIds.has(tag.id)
               return (
-                <TouchableOpacity
+                <Pressable
                   key={tag.id}
-                  style={styles.tagListRow}
+                  style={({ pressed }) => [styles.tagListRow, pressed && { opacity: 0.7 }]}
                   onPress={() => (isSel ? onRemove(tag.id) : onAdd(tag))}
                   accessibilityLabel={tag.name}
                   accessibilityState={{ selected: isSel }}
                 >
                   <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
                   {isSel && <Text style={styles.tagCheck}>✓</Text>}
-                </TouchableOpacity>
+                </Pressable>
               )
             })}
             {filtered.length === 0 && !canCreate && (
@@ -334,15 +336,15 @@ const IngredientEditor = ({
           keyboardType="decimal-pad"
           accessibilityLabel={t('units.qtyLabel')}
         />
-        <TouchableOpacity
-          style={styles.ingUnitBtn}
+        <Pressable
+          style={({ pressed }) => [styles.ingUnitBtn, pressed && { opacity: 0.7 }]}
           onPress={onUnitPress}
           accessibilityLabel={value.unit ? t(`units.${value.unit}`) : t('units.unitLabel')}
         >
           <Text style={[styles.ingUnitText, !value.unit && styles.ingPlaceholder]}>
             {value.unit || '—'}
           </Text>
-        </TouchableOpacity>
+        </Pressable>
         <TextInput
           style={styles.ingName}
           value={value.name}
@@ -350,13 +352,13 @@ const IngredientEditor = ({
           accessibilityLabel="ingredient name"
         />
         {isAllergenActive && (
-          <TouchableOpacity
-            style={styles.allergenBadge}
+          <Pressable
+            style={({ pressed }) => [styles.allergenBadge, pressed && { opacity: 0.7 }]}
             onPress={handleAllergenPress}
             accessibilityLabel={`${t('recipes.contains')} ${flag!.allergen}`}
           >
             <Text style={styles.allergenText}>⚠ {flag!.allergen}</Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
       <TextInput
@@ -469,8 +471,8 @@ const EditableRecipeView = ({
     <View style={styles.editView}>
       {/* Thumbnail + title */}
       <View style={styles.titleRow}>
-        <TouchableOpacity
-          style={styles.thumbBtn}
+        <Pressable
+          style={({ pressed }) => [styles.thumbBtn, pressed && { opacity: 0.7 }]}
           onPress={() => {
             setImgDraft(recipe.thumbnail_url ?? '')
             setShowImgEdit(true)
@@ -491,7 +493,7 @@ const EditableRecipeView = ({
           <View style={styles.thumbEditBadge}>
             <Text style={styles.thumbEditText}>{t('common.edit')}</Text>
           </View>
-        </TouchableOpacity>
+        </Pressable>
 
         <TextInput
           style={styles.titleInput}
@@ -524,15 +526,15 @@ const EditableRecipeView = ({
               accessibilityLabel={t('common.imageUrl')}
             />
             <View style={styles.imgEditActions}>
-              <TouchableOpacity
-                style={styles.imgCancelBtn}
+              <Pressable
+                style={({ pressed }) => [styles.imgCancelBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => setShowImgEdit(false)}
                 accessibilityLabel={t('common.cancel')}
               >
                 <Text style={styles.imgCancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.imgSaveBtn}
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [styles.imgSaveBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => {
                   onChange({ ...recipe, thumbnail_url: imgDraft.trim() || null })
                   setShowImgEdit(false)
@@ -540,7 +542,7 @@ const EditableRecipeView = ({
                 accessibilityLabel={t('common.save')}
               >
                 <Text style={styles.imgSaveText}>{t('common.save')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>
@@ -594,22 +596,22 @@ const EditableRecipeView = ({
       <View style={styles.tagsSection}>
         <View style={styles.tagsRow}>
           {selectedTags.map((tag) => (
-            <TouchableOpacity
+            <Pressable
               key={tag.id}
-              style={styles.tagChip}
+              style={({ pressed }) => [styles.tagChip, pressed && { opacity: 0.7 }]}
               onPress={() => onTagRemove(tag.id)}
               accessibilityLabel={`${tag.name}, tap to remove`}
             >
               <Text style={styles.tagChipText}>{tTag(tag.name, t)} ×</Text>
-            </TouchableOpacity>
+            </Pressable>
           ))}
-          <TouchableOpacity
-            style={styles.addTagBtn}
+          <Pressable
+            style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
             onPress={() => setShowTagPicker(true)}
             accessibilityLabel={t('tags.addTag')}
           >
             <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
@@ -688,6 +690,7 @@ const EditableRecipeView = ({
 
 const ImportRecipeScreen = ({ navigation }: Props) => {
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   const api = useApiClient()
   const qc = useQueryClient()
   const { tags, create: createTagMutation } = useTags()
@@ -881,14 +884,14 @@ const ImportRecipeScreen = ({ navigation }: Props) => {
                 onSubmitEditing={handleImport}
                 accessibilityLabel={t('addRecipe.recipeUrl')}
               />
-              <TouchableOpacity
-                style={styles.pasteBtn}
+              <Pressable
+                style={({ pressed }) => [styles.pasteBtn, pressed && { opacity: 0.7 }]}
                 onPress={handlePaste}
                 disabled={loading}
                 accessibilityLabel={t('addRecipe.paste')}
               >
                 <Text style={styles.pasteBtnText}>{t('addRecipe.paste')}</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             {progressSteps.length > 0 && (
@@ -910,7 +913,7 @@ const ImportRecipeScreen = ({ navigation }: Props) => {
               <ActivityIndicator
                 style={styles.spinner}
                 size="small"
-                color="#7c3aed"
+                color={colors.brand}
                 accessibilityLabel={t('common.loading')}
               />
             )}
@@ -941,43 +944,43 @@ const ImportRecipeScreen = ({ navigation }: Props) => {
       </ScrollView>
 
       {/* Action bar */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         {editable ? (
           <>
-            <TouchableOpacity
-              style={[styles.secondaryBtn, styles.flex]}
+            <Pressable
+              style={({ pressed }) => [styles.secondaryBtn, styles.flex, pressed && { opacity: 0.7 }]}
               onPress={reset}
               disabled={saving}
               accessibilityLabel={t('addRecipe.discard')}
             >
               <Text style={styles.secondaryBtnText}>{t('addRecipe.discard')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.primaryBtn, styles.flex, saving && styles.btnDisabled]}
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.primaryBtn, styles.flex, saving && styles.btnDisabled, pressed && { opacity: 0.7 }]}
               onPress={handleSave}
               disabled={saving}
               accessibilityLabel={t('common.save')}
             >
               {saving ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color={colors.background} size="small" />
               ) : (
                 <Text style={styles.primaryBtnText}>{t('common.save')}</Text>
               )}
-            </TouchableOpacity>
+            </Pressable>
           </>
         ) : (
-          <TouchableOpacity
-            style={[styles.primaryBtn, styles.flex, (!url.trim() || loading) && styles.btnDisabled]}
+          <Pressable
+            style={({ pressed }) => [styles.primaryBtn, styles.flex, (!url.trim() || loading) && styles.btnDisabled, pressed && { opacity: 0.7 }]}
             onPress={handleImport}
             disabled={!url.trim() || loading}
             accessibilityLabel={t('addRecipe.import')}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
+              <ActivityIndicator color={colors.background} size="small" />
             ) : (
               <Text style={styles.primaryBtnText}>{t('addRecipe.import')}</Text>
             )}
-          </TouchableOpacity>
+          </Pressable>
         )}
       </View>
     </KeyboardAvoidingView>
@@ -994,35 +997,35 @@ const styles = StyleSheet.create({
 
   // URL section
   urlSection: { padding: 16, gap: 12 },
-  urlLabel: { fontSize: 14, fontWeight: '600', color: '#374151' },
+  urlLabel: { fontSize: 14, fontWeight: '600', color: colors.secondaryLabel },
   urlRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   urlInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingVertical: 10,
     fontSize: 14,
-    backgroundColor: '#fff',
-    color: '#111',
+    backgroundColor: colors.background,
+    color: colors.label,
   },
   pasteBtn: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: Platform.OS === 'ios' ? 10 : 8,
+    paddingVertical: 10,
   },
-  pasteBtnText: { fontSize: 14, color: '#374151', fontWeight: '500' },
+  pasteBtnText: { fontSize: 14, color: colors.secondaryLabel, fontWeight: '500' },
 
   // Progress
   progressList: { gap: 6 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  progressIcon: { fontSize: 13, color: '#6b7280', width: 14 },
-  progressLabel: { fontSize: 13, color: '#6b7280', flex: 1 },
-  progressActive: { color: '#7c3aed', fontWeight: '600' },
+  progressIcon: { fontSize: 13, color: colors.secondaryLabel, width: 14 },
+  progressLabel: { fontSize: 13, color: colors.secondaryLabel, flex: 1 },
+  progressActive: { color: colors.brand, fontWeight: '600' },
   spinner: { marginTop: 4 },
 
   // Error box
@@ -1032,7 +1035,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
   },
-  errorTitle: { fontSize: 13, fontWeight: '700', color: '#dc2626', marginBottom: 4 },
+  errorTitle: { fontSize: 13, fontWeight: '700', color: colors.red, marginBottom: 4 },
   errorMsg: { fontSize: 13, color: '#b91c1c', lineHeight: 18 },
 
   // Action bar
@@ -1040,29 +1043,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     padding: 12,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fff',
+    borderColor: colors.separator,
+    backgroundColor: colors.background,
   },
   secondaryBtn: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondaryBtnText: { fontSize: 15, color: '#374151', fontWeight: '500' },
+  secondaryBtnText: { fontSize: 15, color: colors.secondaryLabel, fontWeight: '500' },
   primaryBtn: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: colors.brand,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 46,
   },
-  primaryBtnText: { fontSize: 15, color: '#fff', fontWeight: '600' },
+  primaryBtnText: { fontSize: 15, color: colors.background, fontWeight: '600' },
   btnDisabled: { opacity: 0.4 },
 
   // Editable view
@@ -1075,7 +1077,7 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
   },
   thumbImg: { width: 64, height: 64 },
   thumbPlaceholder: { width: 64, height: 64, alignItems: 'center', justifyContent: 'center' },
@@ -1086,17 +1088,17 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingVertical: 2,
+    paddingVertical: 4,
     alignItems: 'center',
   },
-  thumbEditText: { fontSize: 8, color: '#fff', fontWeight: '700', letterSpacing: 0.5 },
+  thumbEditText: { fontSize: 8, color: colors.background, fontWeight: '700', letterSpacing: 0.5 },
   titleInput: {
     flex: 1,
     fontSize: 18,
     fontWeight: '700',
-    color: '#111',
+    color: colors.label,
     borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
     paddingBottom: 4,
     lineHeight: 24,
   },
@@ -1108,16 +1110,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
-  imgEditBox: { backgroundColor: '#fff', borderRadius: 14, padding: 20 },
-  imgEditTitle: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 },
+  imgEditBox: { backgroundColor: colors.background, borderRadius: 14, padding: 20 },
+  imgEditTitle: { fontSize: 14, fontWeight: '600', color: colors.secondaryLabel, marginBottom: 12 },
   imgEditInput: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
     marginBottom: 12,
   },
   imgEditActions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end' },
@@ -1126,11 +1128,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
   },
-  imgCancelText: { fontSize: 14, color: '#374151' },
-  imgSaveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: '#7c3aed' },
-  imgSaveText: { fontSize: 14, color: '#fff', fontWeight: '600' },
+  imgCancelText: { fontSize: 14, color: colors.secondaryLabel },
+  imgSaveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.brand },
+  imgSaveText: { fontSize: 14, color: colors.background, fontWeight: '600' },
 
   // Meta pills
   metaRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
@@ -1138,16 +1140,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ede9fe',
+    backgroundColor: colors.brandLight,
     borderRadius: 20,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  servingsLabel: { fontSize: 12, color: '#7c3aed', fontWeight: '500' },
+  servingsLabel: { fontSize: 12, color: colors.brand, fontWeight: '500' },
   servingsInput: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#7c3aed',
+    color: colors.brand,
     minWidth: 20,
     textAlign: 'center',
     padding: 0,
@@ -1175,8 +1177,8 @@ const styles = StyleSheet.create({
   sourceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   sourcePill: {
     fontSize: 11,
-    color: '#6b7280',
-    backgroundColor: '#f3f4f6',
+    color: colors.secondaryLabel,
+    backgroundColor: colors.secondaryBackground,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -1187,21 +1189,21 @@ const styles = StyleSheet.create({
   tagsSection: { marginBottom: 16 },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   tagChip: {
-    backgroundColor: '#ede9fe',
+    backgroundColor: colors.brandLight,
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  tagChipText: { fontSize: 12, color: '#7c3aed', fontWeight: '500' },
+  tagChipText: { fontSize: 12, color: colors.brand, fontWeight: '500' },
   addTagBtn: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderStyle: 'dashed',
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  addTagBtnText: { fontSize: 12, color: '#6b7280' },
+  addTagBtnText: { fontSize: 12, color: colors.secondaryLabel },
 
   // Tag picker modal
   tagModalWrap: {
@@ -1210,12 +1212,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   tagModal: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: 8,
     maxHeight: '72%',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 0,
+    paddingBottom: 24,
   },
   tagModalHeader: {
     flexDirection: 'row',
@@ -1224,28 +1226,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  tagModalTitle: { fontSize: 16, fontWeight: '700', color: '#111' },
-  tagModalClose: { fontSize: 18, color: '#6b7280', padding: 4 },
+  tagModalTitle: { fontSize: 16, fontWeight: '700', color: colors.label },
+  tagModalClose: { fontSize: 18, color: colors.secondaryLabel, padding: 4 },
   tagSearch: {
     marginHorizontal: 16,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
   },
   tagScrollList: { maxHeight: 320 },
   tagCreateRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f5f3ff',
+    backgroundColor: colors.brandLight,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#e5e7eb',
+    borderColor: colors.separator,
   },
-  tagCreateText: { fontSize: 14, color: '#7c3aed', fontWeight: '600' },
+  tagCreateText: { fontSize: 14, color: colors.brand, fontWeight: '600' },
   tagListRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1253,16 +1255,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#e5e7eb',
+    borderColor: colors.separator,
   },
-  tagListText: { fontSize: 14, color: '#374151' },
-  tagCheck: { fontSize: 16, color: '#7c3aed' },
-  tagEmpty: { padding: 16, fontSize: 13, color: '#9ca3af', textAlign: 'center' },
+  tagListText: { fontSize: 14, color: colors.secondaryLabel },
+  tagCheck: { fontSize: 16, color: colors.brand },
+  tagEmpty: { padding: 16, fontSize: 13, color: colors.tertiaryLabel, textAlign: 'center' },
 
   // Unit picker sheet
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
   unitSheet: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: 8,
@@ -1271,7 +1273,7 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 36,
     height: 4,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.opaqueSeparator,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 8,
@@ -1280,47 +1282,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#f3f4f6',
+    borderColor: colors.separator,
   },
-  unitOptionSel: { backgroundColor: '#f5f3ff' },
-  unitOptionText: { fontSize: 15, color: '#374151' },
-  unitOptionTextSel: { color: '#7c3aed', fontWeight: '600' },
+  unitOptionSel: { backgroundColor: colors.brandLight },
+  unitOptionText: { fontSize: 15, color: colors.secondaryLabel },
+  unitOptionTextSel: { color: colors.brand, fontWeight: '600' },
 
   // Ingredient editor
   ingEditor: {
     paddingVertical: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#f3f4f6',
+    borderColor: colors.separator,
     gap: 4,
   },
   ingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   ingQty: {
     width: 44,
     borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
     textAlign: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   ingUnitBtn: {
     borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 2,
+    borderColor: colors.opaqueSeparator,
+    paddingVertical: 4,
     paddingHorizontal: 4,
     minWidth: 36,
   },
-  ingUnitText: { fontSize: 13, color: '#7c3aed', fontWeight: '500' },
-  ingPlaceholder: { color: '#9ca3af' },
+  ingUnitText: { fontSize: 13, color: colors.brand, fontWeight: '500' },
+  ingPlaceholder: { color: colors.tertiaryLabel },
   ingName: {
     flex: 1,
     borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
     fontSize: 14,
-    color: '#111',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
+    color: colors.label,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
   allergenBadge: {
     backgroundColor: '#fef3c7',
@@ -1328,42 +1330,42 @@ const styles = StyleSheet.create({
     borderColor: '#f59e0b',
     borderRadius: 6,
     paddingHorizontal: 5,
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
   allergenText: { fontSize: 10, color: '#92400e', fontWeight: '600' },
   ingNote: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: colors.tertiaryLabel,
     borderBottomWidth: 1,
-    borderColor: '#f3f4f6',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
+    borderColor: colors.separator,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
     fontStyle: 'italic',
     marginLeft: 52,
   },
 
   // Component sections
   componentBlock: { marginTop: 16 },
-  componentTitle: { fontSize: 16, fontWeight: '700', color: '#374151', marginBottom: 10 },
+  componentTitle: { fontSize: 16, fontWeight: '700', color: colors.secondaryLabel, marginBottom: 10 },
   section: { marginBottom: 14 },
   sectionLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#9ca3af',
+    color: colors.tertiaryLabel,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 6,
   },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
-  stepNum: { fontSize: 14, fontWeight: '700', color: '#2563eb', width: 24, marginTop: 3 },
+  stepNum: { fontSize: 14, fontWeight: '700', color: colors.blue, width: 24, marginTop: 3 },
   stepInput: {
     flex: 1,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
     lineHeight: 20,
     borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
+    borderColor: colors.opaqueSeparator,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
   },
 })
