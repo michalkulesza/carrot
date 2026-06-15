@@ -446,7 +446,7 @@ const MealPlanScreen = () => {
       <Pressable
         style={({ pressed }) => [
           styles.todayBtn,
-          { bottom: 16 },
+          { bottom: insets.bottom + 16 },
           pressed && { opacity: 0.8 },
         ]}
         onPress={handleScrollToToday}
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
-  todayBtnText: { color: colors.blue, fontSize: 15, fontWeight: '600' },
+  todayBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
 })
 
 export default MealPlanScreen
