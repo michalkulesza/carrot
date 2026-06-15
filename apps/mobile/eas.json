@@ -23,7 +23,7 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "kulesza.michal@gmail.com",
+        "appleId": "kulesza.michaluk@gmail.com",
         "ascAppId": "6780619536",
         "bundleIdentifier": "com.kulesza.platekeeper"
       }
