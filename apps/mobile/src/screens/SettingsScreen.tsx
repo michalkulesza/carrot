@@ -576,21 +576,6 @@ const SettingsScreen = ({ navigation }: Props) => {
             </Pressable>
           </View>
 
-          {/* Unit system */}
-          <View style={styles.card}>
-            <View style={styles.switchRow}>
-              <View style={styles.switchLabelBlock}>
-                <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('settings.useMetricSystem')}</Text>
-                <Text style={styles.cardDesc}>{t('settings.useMetricSystemDesc')}</Text>
-              </View>
-              <Switch
-                value={preferences?.unit_system !== 'imperial'}
-                onValueChange={handleUnitSystemToggle}
-                accessibilityLabel={t('settings.useMetricSystem')}
-              />
-            </View>
-          </View>
-
           {/* Week start day */}
           <View style={styles.card}>
             <Pressable
@@ -607,6 +592,21 @@ const SettingsScreen = ({ navigation }: Props) => {
                 <Text style={styles.pickerChevron}>›</Text>
               </View>
             </Pressable>
+          </View>
+
+          {/* Unit system */}
+          <View style={styles.card}>
+            <View style={styles.switchRow}>
+              <View style={styles.switchLabelBlock}>
+                <Text style={[styles.cardLabel, { paddingHorizontal: 0 }]}>{t('settings.useMetricSystem')}</Text>
+                <Text style={styles.cardDesc}>{t('settings.useMetricSystemDesc')}</Text>
+              </View>
+              <Switch
+                value={preferences?.unit_system !== 'imperial'}
+                onValueChange={handleUnitSystemToggle}
+                accessibilityLabel={t('settings.useMetricSystem')}
+              />
+            </View>
           </View>
           {/* Keep screen on default */}
           <View style={styles.card}>
