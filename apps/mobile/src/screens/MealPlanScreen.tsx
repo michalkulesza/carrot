@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -171,7 +171,7 @@ interface DayRowProps {
   onPress: (date: Date) => void
 }
 
-const DayRow = ({ date, entry, isToday, onPress }: DayRowProps) => {
+const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   const { t, i18n } = useTranslation()
   const weekday = formatWeekdayShort(date, i18n.language)
   const dayLabel = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(date)
@@ -198,7 +198,12 @@ const DayRow = ({ date, entry, isToday, onPress }: DayRowProps) => {
       </View>
     </Pressable>
   )
-}
+}, (prev, next) =>
+  prev.isToday === next.isToday &&
+  prev.onPress === next.onPress &&
+  prev.date === next.date &&
+  prev.entry?.recipe.id === next.entry?.recipe.id
+)
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
@@ -388,6 +393,10 @@ const MealPlanScreen = () => {
     setPickerDate(null)
   }, [])
 
+  const handleScrollToToday = useCallback(() => {
+    listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
+  }, [todayIndex])
+
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
       if (item.type === 'month') {
@@ -427,7 +436,24 @@ const MealPlanScreen = () => {
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
         showsVerticalScrollIndicator={false}
+        windowSize={5}
+        maxToRenderPerBatch={20}
+        initialNumToRender={14}
       />
+      <Pressable
+        style={({ pressed }) => [
+          styles.todayBtn,
+          { bottom: 16 },
+          pressed && { opacity: 0.8 },
+        ]}
+        onPress={handleScrollToToday}
+        accessibilityLabel={t('mealPlan.today')}
+        accessibilityRole="button"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
+      </Pressable>
+
       {isLoading && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <ActivityIndicator size="small" color={colors.brand} />
@@ -573,6 +599,19 @@ const styles = StyleSheet.create({
   pickerItemTextActive: { color: colors.brand, fontWeight: '600' },
   pickerEmpty: { flex: 1, padding: 40, alignItems: 'center' },
   pickerEmptyText: { fontSize: 14, color: colors.secondaryLabel, textAlign: 'center' },
+  todayBtn: {
+    position: 'absolute',
+    right: 16,
+    backgroundColor: colors.blue,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+  },
+  todayBtnText: { color: 'white', fontSize: 15, fontWeight: '600' },
 })
 
 export default MealPlanScreen
