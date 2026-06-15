@@ -23,6 +23,7 @@ import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import BellModal from '../components/BellModal'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import { colors } from '../theme/colors'
+import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'RecipesList'>
 type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'edited_newest' | 'edited_oldest'
@@ -244,7 +245,7 @@ const RecipesScreen = ({ navigation }: Props) => {
           >
             {item.thumbnail_url ? (
               <Image
-                source={{ uri: item.thumbnail_url }}
+                source={{ uri: proxyThumbnailUrl(item.thumbnail_url)! }}
                 style={styles.cardImage}
                 resizeMode="cover"
               />

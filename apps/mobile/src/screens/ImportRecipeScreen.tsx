@@ -42,6 +42,7 @@ import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientU
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import type { RecipesStackParamList } from '../navigation/RecipesStack'
 import { colors } from '../theme/colors'
+import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
 type Props = NativeStackScreenProps<RecipesStackParamList, 'ImportRecipe'>
 type ImportMode = 'url' | 'camera' | 'gallery' | 'text' | 'share' | 'scratch'
@@ -531,7 +532,7 @@ const EditableRecipeView = ({
           accessibilityLabel={t('common.thumbnail')}
         >
           {recipe.thumbnail_url ? (
-            <Image source={{ uri: recipe.thumbnail_url }} style={styles.thumbImg} resizeMode="cover" />
+            <Image source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url)! }} style={styles.thumbImg} resizeMode="cover" />
           ) : (
             <View style={styles.thumbPlaceholder}>
               <Text style={styles.thumbIcon}>🖼</Text>
