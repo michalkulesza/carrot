@@ -2,19 +2,21 @@ import { useCallback, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
 import { useMembers } from '@platekeeper/shared/hooks/useMembers'
 import { useAuth } from '../context/AuthContext'
 import type { SettingsStackParamList } from '../navigation/SettingsStack'
+import { colors } from '../theme/colors'
 
 type Props = NativeStackScreenProps<SettingsStackParamList, 'HouseholdDetail'>
 
@@ -35,6 +37,7 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
   const { user, refreshUser } = useAuth()
   const { households, update, leave, invite } = useHouseholds()
   const { data: members, isLoading: membersLoading } = useMembers(householdId)
+  const insets = useSafeAreaInsets()
 
   const household = households.find((h) => h.id === householdId)
   const [name, setName] = useState(household?.name ?? '')
@@ -100,7 +103,10 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
+    >
       {/* Name */}
       <Text style={styles.sectionHeader}>{t('settings.nameLabel')}</Text>
       <View style={styles.card}>
@@ -117,13 +123,14 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
       <Text style={styles.sectionHeader}>{t('settings.colorLabel')}</Text>
       <View style={[styles.card, styles.colorRow]}>
         {PRESET_COLORS.map((c) => (
-          <TouchableOpacity
+          <Pressable
             key={c}
             onPress={() => setColor(c)}
-            style={[
+            style={({ pressed }) => [
               styles.colorDot,
               { backgroundColor: c },
               color === c && styles.colorDotSelected,
+              pressed && { opacity: 0.7 },
             ]}
             accessibilityLabel={c}
             accessibilityRole="radio"
@@ -132,8 +139,8 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
         ))}
       </View>
 
-      <TouchableOpacity
-        style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+      <Pressable
+        style={({ pressed }) => [styles.saveBtn, saving && styles.saveBtnDisabled, pressed && { opacity: 0.7 }]}
         onPress={handleSave}
         disabled={saving}
         accessibilityLabel={t('settings.saveChanges')}
@@ -142,7 +149,7 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
         <Text style={styles.saveBtnText}>
           {saving ? t('common.saving') : t('settings.saveChanges')}
         </Text>
-      </TouchableOpacity>
+      </Pressable>
 
       {/* Members */}
       <Text style={styles.sectionHeader}>{t('settings.members')}</Text>
@@ -178,42 +185,42 @@ const HouseholdDetailScreen = ({ route, navigation }: Props) => {
             autoCapitalize="none"
             accessibilityLabel={t('settings.inviteByEmail')}
           />
-          <TouchableOpacity
-            style={[styles.inviteBtn, inviting && styles.inviteBtnDisabled]}
+          <Pressable
+            style={({ pressed }) => [styles.inviteBtn, inviting && styles.inviteBtnDisabled, pressed && { opacity: 0.7 }]}
             onPress={handleInvite}
             disabled={inviting}
             accessibilityLabel={t('common.invite')}
             accessibilityRole="button"
           >
             <Text style={styles.inviteBtnText}>{t('common.invite')}</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
 
       {/* Leave */}
       <View style={styles.leaveSection}>
-        <TouchableOpacity
-          style={styles.leaveBtn}
+        <Pressable
+          style={({ pressed }) => [styles.leaveBtn, pressed && { opacity: 0.7 }]}
           onPress={handleLeave}
           accessibilityLabel={t('settings.leaveHousehold')}
           accessibilityRole="button"
         >
           <Text style={styles.leaveBtnText}>{t('settings.leaveHousehold')}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  errorText: { color: '#dc2626', fontSize: 15 },
+  errorText: { color: colors.red, fontSize: 15 },
   sectionHeader: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6b7280',
+    color: colors.secondaryLabel,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     marginHorizontal: 16,
@@ -221,7 +228,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
     borderRadius: 10,
     marginHorizontal: 16,
     shadowColor: '#000',
@@ -233,7 +240,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 15,
-    color: '#111',
+    color: colors.label,
     paddingHorizontal: 16,
     paddingVertical: 13,
   },
@@ -250,7 +257,7 @@ const styles = StyleSheet.create({
   },
   colorDotSelected: {
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: colors.background,
     shadowColor: '#000',
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -258,7 +265,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveBtn: {
-    backgroundColor: '#2563eb',
+    backgroundColor: colors.blue,
     borderRadius: 10,
     marginHorizontal: 16,
     marginTop: 12,
@@ -266,26 +273,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  saveBtnText: { color: colors.background, fontSize: 15, fontWeight: '600' },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.secondaryBackground,
   },
   memberAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#e5e7eb',
+    backgroundColor: colors.opaqueSeparator,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
-  memberAvatarText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  memberName: { flex: 1, fontSize: 14, color: '#111' },
+  memberAvatarText: { fontSize: 13, fontWeight: '700', color: colors.secondaryLabel },
+  memberName: { flex: 1, fontSize: 14, color: colors.label },
   inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -296,31 +303,31 @@ const styles = StyleSheet.create({
   inviteInput: {
     flex: 1,
     fontSize: 14,
-    color: '#111',
+    color: colors.label,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.opaqueSeparator,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
   inviteBtn: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.secondaryBackground,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: colors.opaqueSeparator,
   },
   inviteBtnDisabled: { opacity: 0.5 },
-  inviteBtnText: { fontSize: 14, fontWeight: '600', color: '#374151' },
+  inviteBtnText: { fontSize: 14, fontWeight: '600', color: colors.secondaryLabel },
   leaveSection: { marginHorizontal: 16, marginTop: 32 },
   leaveBtn: {
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.brandLight,
   },
-  leaveBtnText: { color: '#dc2626', fontSize: 15, fontWeight: '600' },
+  leaveBtnText: { color: colors.red, fontSize: 15, fontWeight: '600' },
 })
 
 export default HouseholdDetailScreen
