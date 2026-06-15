@@ -1,5 +1,6 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
+  ActionSheetIOS,
   ActivityIndicator,
   Alert,
   FlatList,
@@ -109,10 +110,32 @@ const RecipesScreen = ({ navigation }: Props) => {
     [handleDelete, navigation, t],
   )
 
+  const showSortSheet = useCallback(() => {
+    const options = [t('common.cancel'), ...SORT_OPTIONS.map((o) => {
+      const label = t(o.labelKey)
+      return sort === o.key ? `✓ ${label}` : label
+    })]
+    ActionSheetIOS.showActionSheetWithOptions(
+      { options, cancelButtonIndex: 0, title: t('recipes.sortBy') },
+      (index) => {
+        if (index === 0) return
+        setSort(SORT_OPTIONS[index - 1].key)
+      },
+    )
+  }, [sort, t])
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
         <View style={styles.headerBtns}>
+          <Pressable
+            onPress={showSortSheet}
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('recipes.sortBy')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.headerSortText}>↕</Text>
+          </Pressable>
           <Pressable
             onPress={() => navigation.navigate('ImportRecipe')}
             style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
@@ -125,7 +148,7 @@ const RecipesScreen = ({ navigation }: Props) => {
         </View>
       ),
     })
-  }, [navigation, t])
+  }, [navigation, showSortSheet, t])
 
   const recipesWithOverrides = useMemo(
     () =>
@@ -300,28 +323,6 @@ const RecipesScreen = ({ navigation }: Props) => {
     [filterFavourites, t],
   )
 
-  const sortChips = useMemo(
-    () => (
-      <View style={styles.sortChips}>
-        {SORT_OPTIONS.map((opt) => (
-          <Pressable
-            key={opt.key}
-            onPress={() => setSort(opt.key)}
-            style={({ pressed }) => [styles.chip, sort === opt.key && styles.chipSelected, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t(opt.labelKey)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: sort === opt.key }}
-          >
-            <Text style={[styles.chipText, sort === opt.key && styles.chipTextSelected]}>
-              {t(opt.labelKey)}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-    ),
-    [sort, t],
-  )
-
   const listHeader = useMemo(
     () => (
       <View>
@@ -344,10 +345,9 @@ const RecipesScreen = ({ navigation }: Props) => {
           style={styles.tagList}
           contentContainerStyle={styles.tagListContent}
         />
-        {sortChips}
       </View>
     ),
-    [t, query, tags, renderTag, favChip, sortChips],
+    [t, query, tags, renderTag, favChip],
   )
 
   if (isLoading) {
@@ -404,6 +404,12 @@ const RecipesScreen = ({ navigation }: Props) => {
 const styles = StyleSheet.create({
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4 },
+  headerSortText: {
+    fontSize: 18,
+    color: colors.brand,
+    lineHeight: 24,
+    fontWeight: '400',
+  },
   headerAddText: {
     fontSize: 26,
     color: colors.brand,
@@ -477,13 +483,6 @@ const styles = StyleSheet.create({
   favStar: { fontSize: 20, color: colors.opaqueSeparator },
   favStarActive: { color: '#f59e0b' },
   favChip: { marginRight: 4 },
-  sortChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 12,
-    paddingBottom: 8,
-    gap: 8,
-  },
   swipeContainer: { marginHorizontal: 12, marginTop: 8 },
   cardInSwipeable: { marginHorizontal: 0, marginTop: 0 },
   swipeActions: { flexDirection: 'row' },
