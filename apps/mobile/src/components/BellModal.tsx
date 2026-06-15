@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native'
-import { GlassView } from 'expo-glass-effect'
+import GlassViewSafe from './GlassViewSafe'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Feather } from '@expo/vector-icons'
@@ -87,7 +87,7 @@ const BellModal = () => {
         onRequestClose={() => setOpen(false)}
       >
         <View style={[styles.modal, { paddingTop: insets.top }]}>
-          <GlassView style={styles.modalHeader} glassEffectStyle="regular">
+          <GlassViewSafe style={styles.modalHeader} glassEffectStyle="regular">
             <Text style={styles.modalTitle}>{t('bell.notifications')}</Text>
             <Pressable
               onPress={() => setOpen(false)}
@@ -97,7 +97,7 @@ const BellModal = () => {
             >
               <Feather name="x" size={22} color={colors.secondaryLabel} />
             </Pressable>
-          </GlassView>
+          </GlassViewSafe>
 
           {totalCount === 0 ? (
             <View style={styles.empty}>

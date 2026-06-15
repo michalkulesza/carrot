@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { GlassView } from 'expo-glass-effect'
+import GlassViewSafe from '../components/GlassViewSafe'
 import { useTranslation } from 'react-i18next'
 import { useNavigation } from '@react-navigation/native'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -105,7 +105,7 @@ const RecipePicker = ({
       onRequestClose={handleClose}
     >
       <View style={styles.pickerContainer}>
-        <GlassView style={styles.pickerHeader} glassEffectStyle="regular">
+        <GlassViewSafe style={styles.pickerHeader} glassEffectStyle="regular">
           <Text style={styles.pickerTitle}>{t('mealPlan.chooseDish')}</Text>
           <Text style={styles.pickerDate}>{date}</Text>
           <Pressable
@@ -116,7 +116,7 @@ const RecipePicker = ({
           >
             <Text style={styles.pickerCloseText}>{t('common.close')}</Text>
           </Pressable>
-        </GlassView>
+        </GlassViewSafe>
 
         <TextInput
           style={styles.pickerSearch}
@@ -452,7 +452,7 @@ const MealPlanScreen = () => {
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <GlassView style={StyleSheet.absoluteFill} glassEffectStyle="regular" tintColor={colors.blue} />
+        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="regular" tintColor={colors.blue} />
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 
