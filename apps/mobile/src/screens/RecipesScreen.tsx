@@ -63,6 +63,9 @@ const RecipesScreen = ({ navigation }: Props) => {
             onPress: async () => {
               try {
                 await api.deleteRecipe(recipe.id)
+                qc.setQueryData<RecipeOut[]>(['recipes'], (old) =>
+                  old?.filter((r) => r.id !== recipe.id) ?? [],
+                )
                 await qc.invalidateQueries({ queryKey: ['recipes'] })
               } catch {
                 Alert.alert(t('recipes.failedToDelete'))
