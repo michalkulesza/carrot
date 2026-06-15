@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:8000 tcp:8000 && docker compose up -d && concurrently --names api,web,mobile --prefix-colors cyan,magenta,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter web dev --host\" \"pnpm --filter mobile android\"",
+    "dev": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter web dev --host\"",
     "dev:web": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter web dev --host\"",
-    "dev:mobile": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:8000 tcp:8000 && docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile android\"",
-    "dev:mobile:fresh": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:8000 tcp:8000 && docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile android\""
+    "dev:ios": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile ios\"",
+    "dev:android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile android\""
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {
