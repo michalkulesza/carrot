@@ -2,9 +2,9 @@ import { Pressable, View } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
-import BellModal from '../../src/components/BellModal'
-import ShoppingListScreen from '../../src/screens/ShoppingListScreen'
-import { colors } from '../../src/theme/colors'
+import BellModal from '../../../src/components/BellModal'
+import ShoppingListScreen from '../../../src/screens/ShoppingListScreen'
+import { colors } from '../../../src/theme/colors'
 
 export default function ShoppingTab() {
   const router = useRouter()

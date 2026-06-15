@@ -18,7 +18,7 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="index">
+      <NativeTabs.Trigger name="recipes">
         <NativeTabs.Trigger.Icon sf="book" md="menu-book" />
         <NativeTabs.Trigger.Label>{t('nav.recipes')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
@@ -33,7 +33,7 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t('nav.shopping')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="add">
+      <NativeTabs.Trigger name="add" role="search">
         <NativeTabs.Trigger.Icon sf="plus.circle.fill" md="add-circle" />
         <NativeTabs.Trigger.Label>{t('nav.addRecipe')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
