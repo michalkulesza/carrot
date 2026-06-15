@@ -31,6 +31,7 @@ import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@p
 import { displayIngredient, buildClientStepRefs } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
+import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -445,7 +446,7 @@ const RecipeDetailScreen = ({ route, navigation }: Props) => {
     <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: 40 + insets.bottom }]}>
       {recipe.thumbnail_url ? (
         <Image
-          source={{ uri: recipe.thumbnail_url }}
+          source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url)! }}
           style={styles.thumbnail}
           accessibilityLabel={recipe.title}
           resizeMode="cover"
