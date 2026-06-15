@@ -8,16 +8,10 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.recipes.xcxz.xyz"
-      }
+      "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.recipes.xcxz.xyz"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
