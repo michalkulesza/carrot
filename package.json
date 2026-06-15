@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter web dev --host\"",
-    "dev:web": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter web dev --host\"",
-    "dev:ios": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile ios\"",
-    "dev:android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8000\" \"pnpm --filter mobile android\""
+    "dev": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088\" \"pnpm --filter web dev --host\"",
+    "dev:web": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088\" \"pnpm --filter web dev --host\"",
+    "dev:ios": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088\" \"pnpm --filter mobile ios\"",
+    "dev:android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088\" \"pnpm --filter mobile android\""
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {
