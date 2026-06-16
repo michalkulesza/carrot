@@ -111,21 +111,6 @@ const RecipesScreen = () => {
     [handleDelete, router, t],
   )
 
-  const addMenuActions = useMemo(() => [
-    { id: 'url',     title: t('addRecipe.methodUrl') },
-    { id: 'camera',  title: t('addRecipe.methodCamera') },
-    { id: 'gallery', title: t('addRecipe.methodGallery') },
-    { id: 'text',    title: t('addRecipe.methodText') },
-    { id: 'scratch', title: t('addRecipe.methodScratch') },
-  ], [t])
-
-  const handleAddAction = useCallback(
-    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
-      router.push({ pathname: '/import-recipe', params: { method: nativeEvent.event } })
-    },
-    [router],
-  )
-
   const filterMenuActions = useMemo(() =>
     SORT_OPTIONS.map((o) => ({
       id: o.key,
@@ -147,15 +132,14 @@ const RecipesScreen = () => {
       title: t('nav.recipes'),
       headerRight: () => (
         <View style={styles.headerBtns}>
-          <MenuView
-            title={t('addRecipe.addRecipe')}
-            actions={addMenuActions}
-            onPressAction={handleAddAction}
+          <Pressable
+            onPress={() => router.push('/import-recipe')}
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('nav.addRecipe')}
+            accessibilityRole="button"
           >
-            <View style={styles.headerBtn}>
-              <Feather name="plus" size={26} color={colors.secondaryLabel} />
-            </View>
-          </MenuView>
+            <Feather name="plus" size={26} color={colors.secondaryLabel} />
+          </Pressable>
           <MenuView
             title={t('recipes.sortBy')}
             actions={filterMenuActions}
@@ -169,7 +153,7 @@ const RecipesScreen = () => {
         </View>
       ),
     })
-  }, [navigation, addMenuActions, handleAddAction, filterMenuActions, handleFilterAction, t])
+  }, [navigation, filterMenuActions, handleFilterAction, t, router])
 
   const recipesWithOverrides = useMemo(
     () =>

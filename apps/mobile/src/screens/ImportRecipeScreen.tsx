@@ -989,7 +989,7 @@ const ShareView = ({
 // ── ImportRecipeScreen ─────────────────────────────────────────────────────────
 
 const ImportRecipeScreen = () => {
-  const { type: sharedTypeParam, value: sharedValueParam, method: methodParam } = useLocalSearchParams<{ type?: string; value?: string; method?: string }>()
+  const { type: sharedTypeParam, value: sharedValueParam } = useLocalSearchParams<{ type?: string; value?: string }>()
   const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
@@ -1032,14 +1032,6 @@ const ImportRecipeScreen = () => {
       setPastedText(sharedValueParam)
     }
   }, [sharedTypeParam, sharedValueParam])
-
-  // Handle method pre-selected from the add-recipe popover
-  useEffect(() => {
-    if (methodParam && !sharedTypeParam) {
-      setMode(methodParam as ImportMode)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   // Handle raw http(s) URLs opened via Linking (e.g. from browser tap on universal links)
   useEffect(() => {
