@@ -111,41 +111,18 @@ const RecipesScreen = () => {
     [handleDelete, router, t],
   )
 
-  const filterMenuActions = useMemo(() => [
-    {
-      id: 'sort-section',
-      title: t('recipes.sortBy'),
-      displayInline: true,
-      subactions: SORT_OPTIONS.map((o) => ({
-        id: o.key,
-        title: t(o.labelKey),
-        state: (sort === o.key ? 'on' : 'off') as 'on' | 'off',
-      })),
-    },
-    {
-      id: 'filter-section',
-      title: '',
-      displayInline: true,
-      subactions: [
-        {
-          id: 'filter-favourites',
-          title: t('recipes.filterFavourites'),
-          image: 'star.fill',
-          state: (filterFavourites ? 'on' : 'off') as 'on' | 'off',
-        },
-      ],
-    },
-  ], [sort, filterFavourites, t])
+  const filterMenuActions = useMemo(() =>
+    SORT_OPTIONS.map((o) => ({
+      id: o.key,
+      title: t(o.labelKey),
+      state: (sort === o.key ? 'on' : 'off') as 'on' | 'off',
+    }))
+  , [sort, t])
 
   const handleFilterAction = useCallback(
     ({ nativeEvent }: { nativeEvent: { event: string } }) => {
-      const id = nativeEvent.event
-      const sortOption = SORT_OPTIONS.find((o) => o.key === id)
-      if (sortOption) {
-        setSort(sortOption.key)
-      } else if (id === 'filter-favourites') {
-        setFilterFavourites((v) => !v)
-      }
+      const sortOption = SORT_OPTIONS.find((o) => o.key === nativeEvent.event)
+      if (sortOption) setSort(sortOption.key)
     },
     [],
   )
