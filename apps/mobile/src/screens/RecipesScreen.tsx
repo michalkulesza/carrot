@@ -131,6 +131,14 @@ const RecipesScreen = () => {
       headerRight: () => (
         <View style={styles.headerBtns}>
           <Pressable
+            onPress={() => router.push('/import-recipe')}
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('nav.addRecipe')}
+            accessibilityRole="button"
+          >
+            <Feather name="plus" size={26} color={colors.secondaryLabel} />
+          </Pressable>
+          <Pressable
             onPress={showSortSheet}
             style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
             accessibilityLabel={t('recipes.sortBy')}
