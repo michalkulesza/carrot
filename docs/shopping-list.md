@@ -30,7 +30,7 @@ Status legend: ☐ todo · ◐ in progress · ☑ done
 | Broadcaster | All publish/subscribe + the presence registry go through a single **`broadcaster` module** with a clean interface; default impl is **in-memory/asyncio**. Routes/hook/UI never touch the implementation. |
 | Scaling | In-memory is single-worker only — fine well into the thousands of users (per-scope connections are ~2–5; idle SSE is cheap on async). Upgrading to **Postgres `LISTEN/NOTIFY`** (no new infra) or **Redis pub/sub** is a one-file swap, needed only when running ≥2 workers/containers. Documented at the top of the module. |
 | Migrations | No Alembic — `create_all` builds the new table (drop & recreate dev DB if needed). |
-| Scope of work | **Mobile only**; web app out of scope for now. |
+| Scope of work | Mobile shipped (stages 1–3). **Web now in scope** (stages 4+, see below). |
 
 ## Data model
 
@@ -86,3 +86,46 @@ Status legend: ☐ todo · ◐ in progress · ☑ done
    lock + 409 backstop.
 
 Translations land with each stage's strings; commit after each stage.
+
+## Web (resolved 2026-06-16, via /grill-me)
+
+**Data layer is already shared and live on web** — `useShoppingList` (query + SSE snapshot
+via `setQueryData`, optimistic mutations, presence + `setEditing`), the SSE / `postPresence`
+client methods, and all types live in `packages/shared`, and `App.tsx` already provides
+`webClient` (a full shared `ApiClient`) through `ApiClientProvider`. The web work is
+**UI-only**. Almost all `shoppingList.*` strings already exist; only a couple of web-only
+keys (clear-confirm title/body, "who's here" label) need adding to all 5 locales.
+
+### Web decisions
+
+| Area | Decision |
+|---|---|
+| Scope | Both surfaces — `ShoppingListPage` + recipe→list add-mode in web `RecipeDetailModal`. |
+| Delete | **Hover-revealed trash icon** at the row's right edge; no confirm (items are cheap to re-add). |
+| Reorder | `@dnd-kit/sortable` (already a dep, used by `RecipesTable`); **grip handle left of each incomplete row, hover-revealed**. Completed render as a non-draggable footer. |
+| Touch / mobile-web | **Not handled** — mobile-web is being dropped; desktop-first, hover-only controls. |
+| Cart toggle | **"Add to list" button in the view-mode action bar** (next to Edit/Remove). |
+| Add-mode | `+` per ingredient → `✓`; an **"Add all"** row atop each component's ingredient list. |
+| Add feedback | `+`→`✓` **plus a toast**; "Add all" fires **one summary toast**, not one per item. |
+| Presence bar | Colored-initial chips at the **top of the list body**; **exclude self** via `useAuth().user.id`. Presence = active editors only (fires on inline-edit focus), same as mobile. |
+| Inline edit | Tap text → input; focus→`setEditing(id)`, blur/Enter→submit+`setEditing(null)`; **Esc cancels** (web addition). |
+| Soft lock | Locked item: badge ("Anna…"), non-editable, trash hidden; **409 server backstop** unchanged. |
+| Layout | Centered `~max-w-2xl` column on a white rounded card (matches `RecipesTable` aesthetic). |
+| Clear completed | **heroui confirm Modal** (reuse the `RecipesPage` delete-confirm pattern). |
+
+### Web build plan (staged, reviewable commits)
+
+4. ☐ **`ShoppingListPage`** (replaces the stub) — wire `useShoppingList`; presence bar
+   (exclude self), `@dnd-kit` sortable incomplete list (left grip + circle toggle +
+   tap-to-edit + hover trash), inline add row (submit-on-Enter, auto-refocus, append),
+   completed footer (count + "Clear completed" → confirm Modal), loading + empty states,
+   centered card layout.
+5. ☐ **Soft-lock + edit wiring** — per-item editing badge, disabled/lock affordance on
+   items held by another active presence, 409 handling, Esc-to-cancel on inline edit.
+6. ☐ **Recipe → list add-mode** (web `RecipeDetailModal`) — add-mode state + "Add to list"
+   toggle in the view action bar; `+`/`✓` per ingredient + "Add all" row per component;
+   toast feedback (summary toast for "Add all").
+7. ☐ **Translations** — audit `shoppingList.*`, add the few missing web-only keys to all 5
+   locales (en, pl, de, fr, es).
+
+Commit after each web stage; include this file in the first web commit.

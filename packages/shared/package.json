@@ -14,6 +14,7 @@
     "./hooks/useHouseholds": "./src/hooks/useHouseholds.ts",
     "./hooks/useInvitations": "./src/hooks/useInvitations.ts",
     "./hooks/useMembers": "./src/hooks/useMembers.ts",
+    "./hooks/useShoppingList": "./src/hooks/useShoppingList.ts",
     "./utils/*": "./src/utils/*.ts",
     "./i18n": "./src/i18n.ts",
     "./locales/*": "./src/locales/*.json"
