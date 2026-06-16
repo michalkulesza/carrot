@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 24,
   },
-  errorText: { color: colors.red, fontSize: 15, textAlign: 'center' },
+  errorText: { color: colors.red, fontSize: 16, textAlign: 'center' },
   headerBtns: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4, marginRight: 4 },
   keepScreenBtn: { fontSize: 18, color: colors.opaqueSeparator },
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
   metaItem: { fontSize: 13, color: colors.secondaryLabel },
   source: { fontSize: 12, color: colors.tertiaryLabel, marginHorizontal: 16, marginBottom: 12 },
   notesBlock: { marginHorizontal: 16, marginBottom: 12 },
-  notesText: { fontSize: 14, color: colors.secondaryLabel, lineHeight: 20 },
+  notesText: { fontSize: 17, color: colors.secondaryLabel, lineHeight: 22 },
   componentBlock: { marginHorizontal: 16, marginTop: 12 },
   componentName: {
     fontSize: 17,
@@ -566,10 +566,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bullet: { color: colors.tertiaryLabel, marginRight: 8, marginTop: 1 },
-  ingredientText: { flex: 1, fontSize: 15, color: colors.label, lineHeight: 22 },
+  ingredientText: { flex: 1, fontSize: 17, color: colors.label, lineHeight: 22 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   stepNum: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: colors.blue,
     width: 28,
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   },
   stepBody: { flex: 1 },
   timerSpan: { color: '#d97706', fontWeight: '700' },
-  stepText: { fontSize: 15, color: colors.label, lineHeight: 22 },
+  stepText: { fontSize: 17, color: colors.label, lineHeight: 22 },
   ingredientMention: {
     color: '#1d4ed8',
     backgroundColor: '#eff6ff',
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  ingredientTooltipText: { fontSize: 14, color: colors.label },
+  ingredientTooltipText: { fontSize: 16, color: colors.label },
 })
 
 export default RecipeDetailScreen

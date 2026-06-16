@@ -696,18 +696,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
   },
-  label: { fontSize: 15, color: colors.secondaryLabel },
-  value: { fontSize: 14, color: colors.secondaryLabel, maxWidth: '60%' },
+  label: { fontSize: 16, color: colors.secondaryLabel },
+  value: { fontSize: 16, color: colors.secondaryLabel, maxWidth: '60%' },
   logoutRow: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'flex-start',
   },
-  logoutText: { color: colors.red, fontSize: 15, fontWeight: '500' },
+  logoutText: { color: colors.red, fontSize: 16, fontWeight: '500' },
   loadingRow: { padding: 24, alignItems: 'center' },
-  errorText: { color: colors.red, fontSize: 14, padding: 16 },
+  errorText: { color: colors.red, fontSize: 16, padding: 16 },
   cardLabel: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.secondaryLabel,
     fontWeight: '500',
     paddingHorizontal: 16,
@@ -715,7 +715,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   switchLabel: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.label,
   },
   cardDesc: {
@@ -730,9 +730,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  pickerLabel: { fontSize: 15, color: colors.label },
+  pickerLabel: { fontSize: 16, color: colors.label },
   pickerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  pickerValue: { fontSize: 15, color: colors.secondaryLabel },
+  pickerValue: { fontSize: 16, color: colors.secondaryLabel },
   pickerChevron: { fontSize: 20, color: colors.tertiaryLabel, lineHeight: 22 },
   switchRow: {
     paddingHorizontal: 16,
@@ -760,22 +760,22 @@ const styles = StyleSheet.create({
   },
   householdDot: { width: 14, height: 14, borderRadius: 7 },
   householdInfo: { flex: 1 },
-  householdName: { fontSize: 14, fontWeight: '500', color: colors.label },
+  householdName: { fontSize: 16, fontWeight: '500', color: colors.label },
   householdActive: { fontSize: 12, color: colors.blue, marginTop: 1 },
   manageBtn: {
     paddingHorizontal: 4,
     paddingVertical: 6,
   },
-  manageBtnText: { fontSize: 15, fontWeight: '400', color: colors.blue },
+  manageBtnText: { fontSize: 16, fontWeight: '400', color: colors.blue },
   newHouseholdRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.separator,
   },
-  newHouseholdText: { fontSize: 14, color: colors.blue, fontWeight: '500' },
+  newHouseholdText: { fontSize: 16, color: colors.blue, fontWeight: '500' },
   emptyHouseholds: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.tertiaryLabel,
     padding: 16,
     textAlign: 'center',
@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
   },
-  accordionLabel: { fontSize: 14, fontWeight: '500', color: colors.secondaryLabel },
+  accordionLabel: { fontSize: 16, fontWeight: '500', color: colors.secondaryLabel },
   accordionChevron: { fontSize: 10, color: colors.tertiaryLabel },
   accordionBody: { paddingBottom: 12 },
   checkRow: {
@@ -816,7 +816,7 @@ const styles = StyleSheet.create({
   checkboxSelected: { backgroundColor: colors.blue, borderColor: colors.blue },
   checkmark: { color: colors.background, fontSize: 12, fontWeight: '700' },
   checkContent: { flex: 1 },
-  checkLabel: { fontSize: 14, color: colors.label },
+  checkLabel: { fontSize: 16, color: colors.label },
   checkDesc: { fontSize: 12, color: colors.tertiaryLabel, marginTop: 1 },
   customInputRow: {
     flexDirection: 'row',
@@ -830,7 +830,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.label,
   },
   addBtn: {
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: colors.background, fontSize: 14, fontWeight: '600' },
+  saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
   reanalyzeBtn: {
     backgroundColor: colors.secondaryBackground,
     borderRadius: 8,
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.opaqueSeparator,
   },
-  reanalyzeBtnText: { color: colors.secondaryLabel, fontSize: 14, fontWeight: '600' },
+  reanalyzeBtnText: { color: colors.secondaryLabel, fontSize: 16, fontWeight: '600' },
 })
 
 export default SettingsScreen

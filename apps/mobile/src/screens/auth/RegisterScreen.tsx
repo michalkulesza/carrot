@@ -102,7 +102,7 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
-  title: { fontSize: 26, fontWeight: '700', textAlign: 'center', marginBottom: 32, color: colors.label },
+  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 32, color: colors.label },
   error: { color: colors.red, marginBottom: 12, textAlign: 'center' },
   input: {
     borderWidth: 1,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
   buttonPrimary: { backgroundColor: colors.blue },
   buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
-  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 15 },
+  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 16 },
 })
 
 export default RegisterScreen

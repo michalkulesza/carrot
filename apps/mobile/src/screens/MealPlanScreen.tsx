@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   },
   dayRowContent: { flex: 1 },
   dayRowRecipe: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.label,
     fontWeight: '500',
   },
@@ -567,9 +567,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pickerTitle: { fontSize: 17, fontWeight: '700', color: colors.label, flex: 1 },
-  pickerDate: { fontSize: 14, color: colors.secondaryLabel },
+  pickerDate: { fontSize: 16, color: colors.secondaryLabel },
   pickerClose: { padding: 4 },
-  pickerCloseText: { fontSize: 15, color: colors.blue, fontWeight: '500' },
+  pickerCloseText: { fontSize: 16, color: colors.blue, fontWeight: '500' },
   pickerSearch: {
     margin: 12,
     borderWidth: 1,
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 16,
     backgroundColor: colors.background,
   },
   removeButton: {
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     alignItems: 'center',
   },
-  removeButtonText: { color: colors.red, fontWeight: '500', fontSize: 14 },
+  removeButtonText: { color: colors.red, fontWeight: '500', fontSize: 16 },
   pickerList: { flex: 1 },
   pickerItem: {
     paddingHorizontal: 16,
@@ -599,10 +599,10 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.separator,
   },
   pickerItemActive: { backgroundColor: colors.brandLight },
-  pickerItemText: { fontSize: 15, color: colors.label },
+  pickerItemText: { fontSize: 16, color: colors.label },
   pickerItemTextActive: { color: colors.brand, fontWeight: '600' },
   pickerEmpty: { flex: 1, padding: 40, alignItems: 'center' },
-  pickerEmptyText: { fontSize: 14, color: colors.secondaryLabel, textAlign: 'center' },
+  pickerEmptyText: { fontSize: 16, color: colors.secondaryLabel, textAlign: 'center' },
   todayBtn: {
     position: 'absolute',
     right: 16,
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
-  todayBtnText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
+  todayBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
 })
 
 export default MealPlanScreen
