@@ -230,6 +230,7 @@ const MealPlanScreen = () => {
 
   const handleExportPdf = useCallback(async () => {
     setExporting(true)
+    const startedAt = Date.now()
     try {
       const baseUrl = (process.env.EXPO_PUBLIC_API_URL as string | undefined) ?? ''
       const token = getToken()
@@ -244,6 +245,8 @@ const MealPlanScreen = () => {
       file.write(bytes)
       const canShare = await Sharing.isAvailableAsync()
       if (!canShare) throw new Error(t('shoppingList.exportError'))
+      const elapsed = Date.now() - startedAt
+      if (elapsed < 2000) await new Promise<void>(resolve => setTimeout(resolve, 2000 - elapsed))
       setExporting(false)
       await new Promise<void>(resolve => setTimeout(resolve, 100))
       await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
