@@ -102,8 +102,7 @@
     "shopping": "Zakupy",
     "settings": "Ustawienia",
     "personalLibrary": "Biblioteka osobista",
-    "addRecipe": "Dodaj",
-    "search": "Szukaj"
+    "addRecipe": "Dodaj"
   },
   "auth": {
     "signIn": "Zaloguj się",
