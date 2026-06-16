@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import BottomSheet, { BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
@@ -62,13 +62,13 @@ const RecipePicker = ({
 }: RecipePickerProps) => {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
-  const sheetRef = useRef<BottomSheet>(null)
+  const sheetRef = useRef<BottomSheetModal>(null)
 
   useEffect(() => {
     if (visible) {
-      sheetRef.current?.snapToIndex(0)
+      sheetRef.current?.present()
     } else {
-      sheetRef.current?.close()
+      sheetRef.current?.dismiss()
     }
   }, [visible])
 
@@ -110,12 +110,11 @@ const RecipePicker = ({
   )
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={sheetRef}
-      index={-1}
       snapPoints={SNAP_POINTS}
       enablePanDownToClose
-      onClose={handleClose}
+      onDismiss={handleClose}
       backgroundStyle={styles.sheetBackground}
       handleIndicatorStyle={styles.sheetHandle}
     >
@@ -160,7 +159,7 @@ const RecipePicker = ({
           style={styles.pickerList}
         />
       )}
-    </BottomSheet>
+    </BottomSheetModal>
   )
 }
 

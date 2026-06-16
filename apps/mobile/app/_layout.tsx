@@ -13,6 +13,7 @@ Sentry.init({
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { ApiClientProvider } from '@platekeeper/shared/api/context'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
 import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
@@ -61,23 +62,25 @@ function RootLayoutNav() {
 const RootLayout = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ColorSchemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <I18nextProvider i18n={i18n}>
-            <ApiClientProvider client={mobileClient}>
-              <AuthProvider>
-                <NotificationHistoryProvider>
-                  <TimerProvider>
-                    <HouseholdProvider>
-                      <RootLayoutNav />
-                    </HouseholdProvider>
-                  </TimerProvider>
-                </NotificationHistoryProvider>
-              </AuthProvider>
-            </ApiClientProvider>
-          </I18nextProvider>
-        </QueryClientProvider>
-      </ColorSchemeProvider>
+      <BottomSheetModalProvider>
+        <ColorSchemeProvider>
+          <QueryClientProvider client={queryClient}>
+            <I18nextProvider i18n={i18n}>
+              <ApiClientProvider client={mobileClient}>
+                <AuthProvider>
+                  <NotificationHistoryProvider>
+                    <TimerProvider>
+                      <HouseholdProvider>
+                        <RootLayoutNav />
+                      </HouseholdProvider>
+                    </TimerProvider>
+                  </NotificationHistoryProvider>
+                </AuthProvider>
+              </ApiClientProvider>
+            </I18nextProvider>
+          </QueryClientProvider>
+        </ColorSchemeProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   )
 }
