@@ -15,20 +15,59 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
-import type { ShoppingListItem } from '@platekeeper/shared/types'
+import type { ShoppingListItem, PresenceUser } from '@platekeeper/shared/types'
 import { colors } from '../theme/colors'
+
+// ── Presence chip (colored initial dot + name) ────────────────────────────────
+
+const PresenceChip = ({ user }: { user: PresenceUser }) => (
+  <View style={[styles.presenceChip, { backgroundColor: user.color }]}>
+    <Text style={styles.presenceInitial}>{user.nickname.charAt(0).toUpperCase()}</Text>
+  </View>
+)
+
+const PresenceBar = ({ users, currentUserId }: { users: PresenceUser[]; currentUserId?: string }) => {
+  const others = users.filter((u) => u.user_id !== currentUserId)
+  if (others.length === 0) return null
+  return (
+    <View style={styles.presenceBar}>
+      {others.map((u) => (
+        <PresenceChip key={u.user_id} user={u} />
+      ))}
+    </View>
+  )
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
 
-  const { incompleteItems, completedItems, isLoading, addItems, toggle, editText, reorder, remove, clearCompleted } =
-    useShoppingList()
+  const {
+    incompleteItems,
+    completedItems,
+    isLoading,
+    presence,
+    setEditing,
+    addItems,
+    toggle,
+    editText,
+    reorder,
+    remove,
+    clearCompleted,
+  } = useShoppingList()
 
   const [addText, setAddText] = useState('')
   const addInputRef = useRef<TextInput>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingText, setEditingText] = useState('')
+
+  const lockedByOther = useCallback(
+    (itemId: string): PresenceUser | undefined =>
+      presence.find((u) => u.item_id === itemId),
+    [presence]
+  )
 
   const handleClearCompleted = useCallback(() => {
     ActionSheetIOS.showActionSheetWithOptions(
@@ -60,10 +99,14 @@ const ShoppingListScreen = () => {
     [toggle]
   )
 
-  const handleEditStart = useCallback((item: ShoppingListItem) => {
-    setEditingId(item.id)
-    setEditingText(item.text)
-  }, [])
+  const handleEditStart = useCallback(
+    (item: ShoppingListItem) => {
+      setEditingId(item.id)
+      setEditingText(item.text)
+      setEditing(item.id)
+    },
+    [setEditing]
+  )
 
   const handleEditSubmit = useCallback(
     (id: string, originalText: string) => {
@@ -73,8 +116,9 @@ const ShoppingListScreen = () => {
       }
       setEditingId(null)
       setEditingText('')
+      setEditing(null)
     },
-    [editingText, editText]
+    [editingText, editText, setEditing]
   )
 
   const handleDelete = useCallback(
@@ -86,24 +130,31 @@ const ShoppingListScreen = () => {
   )
 
   const renderRightDelete = useCallback(
-    (id: string) => () => (
-      <Pressable
-        style={styles.deleteAction}
-        onPress={() => handleDelete(id)}
-        accessibilityLabel={t('common.delete')}
-      >
-        <Feather name="trash-2" size={18} color="#fff" />
-      </Pressable>
-    ),
+    (id: string, locked: boolean) => () =>
+      locked ? null : (
+        <Pressable
+          style={styles.deleteAction}
+          onPress={() => handleDelete(id)}
+          accessibilityLabel={t('common.delete')}
+        >
+          <Feather name="trash-2" size={18} color="#fff" />
+        </Pressable>
+      ),
     [handleDelete, t]
   )
 
   const renderItem = useCallback(
     ({ item, drag, isActive }: RenderItemParams<ShoppingListItem>) => {
       const isEditing = editingId === item.id
+      const editor = lockedByOther(item.id)
+      const isLocked = !!editor && !isEditing
+
       return (
         <ScaleDecorator>
-          <Swipeable renderRightActions={renderRightDelete(item.id)} overshootRight={false}>
+          <Swipeable
+            renderRightActions={renderRightDelete(item.id, isLocked)}
+            overshootRight={false}
+          >
             <View style={[styles.item, isActive && styles.itemActive]}>
               <Pressable
                 onPress={() => handleToggle(item.id, item.completed)}
@@ -114,39 +165,64 @@ const ShoppingListScreen = () => {
                 <Feather name="circle" size={22} color={colors.blue} />
               </Pressable>
 
-              {isEditing ? (
-                <TextInput
-                  style={styles.editInput}
-                  value={editingText}
-                  onChangeText={setEditingText}
-                  onSubmitEditing={() => handleEditSubmit(item.id, item.text)}
-                  onBlur={() => handleEditSubmit(item.id, item.text)}
-                  returnKeyType="done"
-                  autoFocus
-                  autoCapitalize="sentences"
-                  autoCorrect
-                />
+              <View style={styles.textArea}>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.editInput}
+                    value={editingText}
+                    onChangeText={setEditingText}
+                    onSubmitEditing={() => handleEditSubmit(item.id, item.text)}
+                    onBlur={() => handleEditSubmit(item.id, item.text)}
+                    returnKeyType="done"
+                    autoFocus
+                    autoCapitalize="sentences"
+                    autoCorrect
+                  />
+                ) : (
+                  <Pressable
+                    onPress={() => !isLocked && handleEditStart(item)}
+                    disabled={isLocked}
+                    accessibilityLabel={isLocked ? t('shoppingList.presenceEditing', { name: editor!.nickname }) : item.text}
+                  >
+                    <Text style={styles.itemText}>{item.text}</Text>
+                    {isLocked && (
+                      <View style={styles.lockBadge}>
+                        <View style={[styles.lockDot, { backgroundColor: editor!.color }]} />
+                        <Text style={styles.lockText}>
+                          {t('shoppingList.presenceEditing', { name: editor!.nickname })}
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
+              </View>
+
+              {isLocked ? (
+                <View style={styles.dragHandle}>
+                  <Feather name="lock" size={14} color={colors.gray3} />
+                </View>
               ) : (
-                <Pressable style={styles.textArea} onPress={() => handleEditStart(item)}>
-                  <Text style={styles.itemText}>{item.text}</Text>
+                <Pressable
+                  onLongPress={drag}
+                  disabled={isActive}
+                  hitSlop={8}
+                  style={styles.dragHandle}
+                  accessibilityLabel={t('recipes.dragToReorder')}
+                >
+                  <Feather name="menu" size={18} color={colors.tertiaryLabel} />
                 </Pressable>
               )}
-
-              <Pressable
-                onLongPress={drag}
-                disabled={isActive}
-                hitSlop={8}
-                style={styles.dragHandle}
-                accessibilityLabel={t('recipes.dragToReorder')}
-              >
-                <Feather name="menu" size={18} color={colors.tertiaryLabel} />
-              </Pressable>
             </View>
           </Swipeable>
         </ScaleDecorator>
       )
     },
-    [editingId, editingText, handleToggle, handleEditStart, handleEditSubmit, renderRightDelete, t]
+    [editingId, editingText, lockedByOther, handleToggle, handleEditStart, handleEditSubmit, renderRightDelete, t]
+  )
+
+  const ListHeader = useCallback(
+    () => <PresenceBar users={presence} />,
+    [presence]
   )
 
   const ListFooter = useCallback(
@@ -185,7 +261,7 @@ const ShoppingListScreen = () => {
               </Pressable>
             </View>
             {completedItems.map((item) => (
-              <Swipeable key={item.id} renderRightActions={renderRightDelete(item.id)} overshootRight={false}>
+              <Swipeable key={item.id} renderRightActions={renderRightDelete(item.id, false)} overshootRight={false}>
                 <View style={styles.item}>
                   <Pressable
                     onPress={() => handleToggle(item.id, item.completed)}
@@ -222,6 +298,7 @@ const ShoppingListScreen = () => {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       onDragEnd={({ data }) => reorder.mutate(data.map((i) => i.id))}
+      ListHeaderComponent={ListHeader}
       ListFooterComponent={ListFooter}
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.listContent}
@@ -247,6 +324,28 @@ const styles = StyleSheet.create({
   listContent: {
     flexGrow: 1,
     backgroundColor: colors.background,
+  },
+  presenceBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
+    backgroundColor: colors.background,
+  },
+  presenceChip: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  presenceInitial: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
   },
   clearBtn: {
     fontSize: 13,
@@ -287,6 +386,22 @@ const styles = StyleSheet.create({
   },
   completedText: {
     textDecorationLine: 'line-through',
+    color: colors.secondaryLabel,
+  },
+  lockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  lockDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  lockText: {
+    fontSize: 11,
+    lineHeight: 13,
     color: colors.secondaryLabel,
   },
   editInput: {

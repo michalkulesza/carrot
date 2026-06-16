@@ -366,6 +366,7 @@
     "addItemPlaceholder": "Dodaj pozycję…",
     "completedSection": "ukończone",
     "clearCompleted": "Usuń ukończone",
+    "presenceEditing": "{{name}} edytuje",
     "addToList": "Dodaj do listy",
     "addedToList": "Dodano",
     "addAll": "Dodaj wszystko"

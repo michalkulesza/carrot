@@ -1,10 +1,16 @@
+import asyncio
+import json
 import uuid
 from datetime import datetime
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.broadcaster import broadcaster
 from api.database import get_async_session
 from api.models import (
     ShoppingListItem,
@@ -28,6 +34,29 @@ def _scope_filter(user_id: uuid.UUID, household_id: uuid.UUID | None):
     )
 
 
+def _scope_key(user_id: uuid.UUID, household_id: uuid.UUID | None) -> str:
+    return f"household:{household_id}" if household_id else f"user:{user_id}"
+
+
+async def _snapshot(
+    session: AsyncSession, user_id: uuid.UUID, household_id: uuid.UUID | None
+) -> list[dict]:
+    result = await session.execute(
+        select(ShoppingListItem)
+        .where(_scope_filter(user_id, household_id))
+        .order_by(ShoppingListItem.completed.asc(), ShoppingListItem.position.asc())
+    )
+    return [
+        ShoppingListItemOut.model_validate(i).model_dump(mode="json")
+        for i in result.scalars().all()
+    ]
+
+
+class PresenceBody(BaseModel):
+    action: Literal["start", "stop", "keepalive"]
+    item_id: uuid.UUID | None = None
+
+
 @router.get("", response_model=list[ShoppingListItemOut])
 async def list_items(
     user: User = Depends(current_active_user),
@@ -40,6 +69,41 @@ async def list_items(
         .order_by(ShoppingListItem.completed.asc(), ShoppingListItem.position.asc())
     )
     return [ShoppingListItemOut.model_validate(i) for i in result.scalars().all()]
+
+
+# NOTE: /stream must be defined before /{item_id}
+@router.get("/stream")
+async def stream_shopping_list(
+    request: Request,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> StreamingResponse:
+    scope = _scope_key(user.id, household_id)
+    initial_items = await _snapshot(session, user.id, household_id)
+    initial_presence = broadcaster.get_presence(scope)
+
+    async def event_gen():
+        yield f"data: {json.dumps({'type': 'list_snapshot', 'items': initial_items})}\n\n"
+        yield f"data: {json.dumps({'type': 'presence', 'users': initial_presence})}\n\n"
+        q = await broadcaster.subscribe(scope)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = await asyncio.wait_for(q.get(), timeout=15.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+        finally:
+            broadcaster.unsubscribe(scope, q)
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @router.post("", response_model=list[ShoppingListItemOut], status_code=201)
@@ -74,10 +138,34 @@ async def add_items(
     await session.commit()
     for item in new_items:
         await session.refresh(item)
+
+    scope = _scope_key(user.id, household_id)
+    items_snap = await _snapshot(session, user.id, household_id)
+    await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
+
     return [ShoppingListItemOut.model_validate(i) for i in new_items]
 
 
-# NOTE: /order must be defined before /{item_id} so FastAPI matches it first
+# NOTE: /presence must be defined before /{item_id}
+@router.post("/presence", status_code=204)
+async def update_presence(
+    body: PresenceBody,
+    user: User = Depends(current_active_user),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> None:
+    scope = _scope_key(user.id, household_id)
+    nickname = user.nickname or user.email.split("@")[0]
+
+    if body.action == "stop":
+        broadcaster.clear_presence(scope, user.id)
+    else:
+        broadcaster.set_presence(scope, user.id, nickname, body.item_id)
+
+    presence = broadcaster.get_presence(scope)
+    await broadcaster.publish(scope, {"type": "presence", "users": presence})
+
+
+# NOTE: /order must be defined before /{item_id}
 @router.patch("/order", status_code=200)
 async def reorder_items(
     body: ShoppingListReorderRequest,
@@ -96,6 +184,11 @@ async def reorder_items(
         if item_id in items_by_id:
             items_by_id[item_id].position = pos
     await session.commit()
+
+    scope = _scope_key(user.id, household_id)
+    items_snap = await _snapshot(session, user.id, household_id)
+    await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
+
     return {}
 
 
@@ -116,12 +209,17 @@ async def update_item(
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
 
+    scope = _scope_key(user.id, household_id)
+
+    # 409 backstop: reject text edits while another user holds the edit lock
+    if body.text is not None and broadcaster.is_locked_by_other(scope, item_id, user.id):
+        raise HTTPException(status_code=409, detail="Item is being edited by another user")
+
     if body.text is not None:
         item.text = body.text.strip()
 
     if body.completed is not None and body.completed != item.completed:
         item.completed = body.completed
-        # Move to end of the relevant section
         max_pos_result = await session.execute(
             select(func.max(ShoppingListItem.position))
             .where(_scope_filter(user.id, household_id))
@@ -134,6 +232,10 @@ async def update_item(
     item.updated_at = datetime.utcnow()
     await session.commit()
     await session.refresh(item)
+
+    items_snap = await _snapshot(session, user.id, household_id)
+    await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
+
     return ShoppingListItemOut.model_validate(item)
 
 
@@ -153,6 +255,10 @@ async def clear_completed(
         await session.delete(item)
     await session.commit()
 
+    scope = _scope_key(user.id, household_id)
+    items_snap = await _snapshot(session, user.id, household_id)
+    await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
+
 
 @router.delete("/{item_id}", status_code=204)
 async def delete_item(
@@ -169,5 +275,15 @@ async def delete_item(
     item = result.scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
+
+    scope = _scope_key(user.id, household_id)
+
+    # 409 backstop: reject delete while another user is actively editing
+    if broadcaster.is_locked_by_other(scope, item_id, user.id):
+        raise HTTPException(status_code=409, detail="Item is being edited by another user")
+
     await session.delete(item)
     await session.commit()
+
+    items_snap = await _snapshot(session, user.id, household_id)
+    await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})

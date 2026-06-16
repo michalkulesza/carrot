@@ -208,3 +208,10 @@ export interface ShoppingListItem {
   created_at: string
   updated_at: string
 }
+
+export interface PresenceUser {
+  user_id: string
+  nickname: string
+  color: string
+  item_id: string | null
+}

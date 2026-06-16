@@ -1,12 +1,53 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
-import type { ShoppingListItem } from '../types'
+import type { ShoppingListItem, PresenceUser } from '../types'
 
 const QUERY_KEY = ['shopping-list'] as const
+const KEEPALIVE_INTERVAL_MS = 8_000
 
 export const useShoppingList = () => {
   const api = useApiClient()
   const qc = useQueryClient()
+  const [presence, setPresence] = useState<PresenceUser[]>([])
+  const editingItemIdRef = useRef<string | null>(null)
+  const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Subscribe to SSE stream on mount
+  useEffect(() => {
+    const cancel = api.subscribeShoppingList(
+      (items) => qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, items),
+      (users) => setPresence(users)
+    )
+    return cancel
+  }, [api, qc])
+
+  const setEditing = useCallback(
+    (itemId: string | null) => {
+      editingItemIdRef.current = itemId
+      if (keepaliveRef.current) {
+        clearInterval(keepaliveRef.current)
+        keepaliveRef.current = null
+      }
+      if (itemId) {
+        api.postPresence('start', itemId).catch(() => {})
+        keepaliveRef.current = setInterval(() => {
+          api.postPresence('keepalive', editingItemIdRef.current).catch(() => {})
+        }, KEEPALIVE_INTERVAL_MS)
+      } else {
+        api.postPresence('stop', null).catch(() => {})
+      }
+    },
+    [api]
+  )
+
+  // Clean up presence on unmount
+  useEffect(() => {
+    return () => {
+      if (keepaliveRef.current) clearInterval(keepaliveRef.current)
+      api.postPresence('stop', null).catch(() => {})
+    }
+  }, [api])
 
   const query = useQuery({
     queryKey: QUERY_KEY,
@@ -132,6 +173,8 @@ export const useShoppingList = () => {
     completedItems,
     isLoading: query.isLoading,
     error: query.error,
+    presence,
+    setEditing,
     addItems,
     toggle,
     editText,

@@ -77,11 +77,11 @@ Status legend: ☐ todo · ◐ in progress · ☑ done
 
 ## Build plan (staged, reviewable commits)
 
-1. ☐ **Backend + shared CRUD** — model, plain REST routes (no SSE), shared types/client/
+1. ☑ **Backend + shared CRUD** — model, plain REST routes (no SSE), shared types/client/
    `useShoppingList`, working `ShoppingListScreen` (list, add row, toggle, swipe-delete,
    inline edit, drag-reorder, clear-completed). Single-user list, fully usable.
-2. ☐ **Recipe → list** — cart-plus add-mode, "Add all", `expo-haptics`, `+`→✓.
-3. ☐ **Real-time + presence/lock** — `broadcaster` module, SSE stream + presence endpoints,
+2. ☑ **Recipe → list** — cart-plus add-mode, "Add all", `expo-haptics`, `+`→✓.
+3. ☑ **Real-time + presence/lock** — `broadcaster` module, SSE stream + presence endpoints,
    hook wiring (snapshot via `setQueryData`), presence chips + per-item editing badge + soft
    lock + 409 backstop.
 

@@ -374,6 +374,7 @@
     "addItemPlaceholder": "Add item…",
     "completedSection": "completed",
     "clearCompleted": "Clear completed",
+    "presenceEditing": "{{name}} is editing",
     "addToList": "Add to list",
     "addedToList": "Added",
     "addAll": "Add all",

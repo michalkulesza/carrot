@@ -15,6 +15,7 @@ import type {
   AuthUser,
   RegisterData,
   ShoppingListItem,
+  PresenceUser,
 } from '../types'
 
 export interface ApiClientConfig {
@@ -551,6 +552,54 @@ export const createApiClient = (config: ApiClientConfig) => {
     await throwOnError(res, 'Failed to clear completed items')
   }
 
+  const subscribeShoppingList = (
+    onList: (items: ShoppingListItem[]) => void,
+    onPresence: (users: PresenceUser[]) => void
+  ): (() => void) => {
+    let aborted = false
+    const controller = new AbortController()
+    apiFetch('/api/shopping-list/stream', { signal: controller.signal })
+      .then(async (res) => {
+        if (!res.ok || !res.body) return
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        while (!aborted) {
+          const { done, value } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+          const chunks = buffer.split('\n\n')
+          buffer = chunks.pop() ?? ''
+          for (const chunk of chunks) {
+            const line = chunk.trim()
+            if (!line.startsWith('data: ')) continue
+            try {
+              const event = JSON.parse(line.slice(6)) as { type: string; items?: ShoppingListItem[]; users?: PresenceUser[] }
+              if (event.type === 'list_snapshot' && event.items) onList(event.items)
+              else if (event.type === 'presence' && event.users) onPresence(event.users)
+            } catch { /* ignore malformed events */ }
+          }
+        }
+      })
+      .catch(() => {})
+    return () => {
+      aborted = true
+      controller.abort()
+    }
+  }
+
+  const postPresence = async (
+    action: 'start' | 'stop' | 'keepalive',
+    itemId: string | null
+  ): Promise<void> => {
+    const res = await apiFetch('/api/shopping-list/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, item_id: itemId }),
+    })
+    await throwOnError(res, 'Failed to update presence')
+  }
+
   return {
     saveRecipe,
     updateRecipe,
@@ -596,6 +645,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     reorderShoppingList,
     deleteShoppingListItem,
     clearCompletedShoppingList,
+    subscribeShoppingList,
+    postPresence,
   }
 }
 
