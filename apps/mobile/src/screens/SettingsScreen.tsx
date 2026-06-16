@@ -861,7 +861,7 @@ const styles = StyleSheet.create({
   customTagRemove: { fontSize: 16, color: colors.tertiaryLabel, lineHeight: 18 },
   saveBtn: {
     backgroundColor: colors.blue,
-    borderRadius: 8,
+    borderRadius: CARD_RADIUS,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 16,
@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
   saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
   reanalyzeBtn: {
     backgroundColor: colors.secondaryBackground,
-    borderRadius: 8,
+    borderRadius: CARD_RADIUS,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
