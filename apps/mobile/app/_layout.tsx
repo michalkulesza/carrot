@@ -1,5 +1,6 @@
 import '../src/i18n'
 import { useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Sentry from '@sentry/react-native'
@@ -10,7 +11,6 @@ Sentry.init({
 })
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
-import i18n from '../src/i18n'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { ApiClientProvider } from '@platekeeper/shared/api/context'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
@@ -22,6 +22,7 @@ import { mobileClient } from '../src/api/client'
 const queryClient = new QueryClient()
 
 function RootLayoutNav() {
+  const { t } = useTranslation()
   const { user, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()
@@ -38,7 +39,7 @@ function RootLayoutNav() {
 
   return (
     <>
-      <Stack screenOptions={{ headerBackTitle: i18n.t('nav.back'), headerTransparent: true, headerShadowVisible: false }}>
+      <Stack screenOptions={{ headerBackTitle: t('nav.back'), headerTransparent: true, headerShadowVisible: false }}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="import-recipe" options={{ title: '' }} />
