@@ -1049,26 +1049,29 @@ const ImportRecipeScreen = () => {
     return () => sub.remove()
   }, [editable])
 
-  useEffect(() => {
-    if (!editable) return
-    const unsub = navigation.addListener('beforeRemove', (e) => {
-      if (skipGuardRef.current) return
-      e.preventDefault()
-      Alert.alert(t('addRecipe.discard'), undefined, [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('addRecipe.discard'), style: 'destructive', onPress: () => navigation.dispatch(e.data.action) },
-      ])
-    })
-    return unsub
-  }, [navigation, editable, t])
-
   useLayoutEffect(() => {
     if (editable) {
       navigation.setOptions({
-        headerLeft: undefined,
+        gestureEnabled: false,
+        headerLeft: () => (
+          <Pressable
+            onPress={() => {
+              Alert.alert(t('addRecipe.discard'), undefined, [
+                { text: t('common.cancel'), style: 'cancel' },
+                { text: t('addRecipe.discard'), style: 'destructive', onPress: () => navigation.goBack() },
+              ])
+            }}
+            hitSlop={8}
+            style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
+            accessibilityLabel={t('common.back')}
+          >
+            <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
+          </Pressable>
+        ),
       })
     } else if (mode) {
       navigation.setOptions({
+        gestureEnabled: true,
         headerLeft: () => (
           <Pressable
             onPress={() => { reset(); setMode(null) }}
@@ -1082,6 +1085,7 @@ const ImportRecipeScreen = () => {
       })
     } else {
       navigation.setOptions({
+        gestureEnabled: true,
         headerLeft: undefined,
       })
     }

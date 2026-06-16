@@ -4,7 +4,6 @@ import {
   Dimensions,
   Image,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native'
+
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -36,10 +36,9 @@ import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
+const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
-const HERO_HEIGHT = 220
-const CARD_OVERLAP = 24
+const HERO_HEIGHT = Math.round(SCREEN_WIDTH * (3 / 4))
 
 const extractDisplayUrl = (url: string) => {
   try {
@@ -90,7 +89,7 @@ const TimerSpan = ({
         accessibilityRole="button"
         accessibilityLabel={t('timers.startTimer')}
       >
-        {`⏱ ${formatDurationLabel(seconds)}`}
+        {`⏱ ${formatDurationLabel(seconds)}`}
       </Text>
     )
   }
@@ -109,7 +108,7 @@ const TimerSpan = ({
       accessibilityRole="button"
       accessibilityLabel={isDone ? t('common.done') : isRunning ? t('common.pause') : t('common.resume')}
     >
-      {isDone ? `✓ ${t('common.done')}` : `⏱ ${formatCountdown(remaining)}`}
+      {isDone ? `✓ ${t('common.done')}` : `⏱ ${formatCountdown(remaining)}`}
     </Text>
   )
 }
@@ -169,74 +168,32 @@ const buildSegments = (
 const StepText = ({
   step,
   stepRefs,
-  rawIngredients,
   durationMatch,
   timerProps,
 }: {
   step: string
   stepRefs: StepIngredientRef[]
-  rawIngredients: string[]
   durationMatch?: DurationMatch | null
   timerProps?: Omit<React.ComponentProps<typeof TimerSpan>, 'seconds'>
 }) => {
-  const { t } = useTranslation()
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
-
   const segments = useMemo(
     () => buildSegments(step, stepRefs, durationMatch ?? null),
     [step, stepRefs, durationMatch],
   )
 
   return (
-    <>
-      <Text style={styles.stepText}>
-        {segments.map((seg, i) => {
-          if (seg.type === 'text') return <Text key={i}>{seg.text}</Text>
-          if (seg.type === 'mention') {
-            return (
-              <Text
-                key={i}
-                style={styles.ingredientMention}
-                onPress={(e) => {
-                  const ingText = displayIngredient(rawIngredients[seg.ingredientIndex] ?? '', t)
-                  const { pageX, pageY } = e.nativeEvent
-                  setTooltip({ text: ingText, x: pageX, y: pageY })
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('recipes.showIngredientAmount')}
-              >
-                {seg.text}
-              </Text>
-            )
-          }
-          if (seg.type === 'timer' && timerProps) {
-            return <TimerSpan key={i} {...timerProps} seconds={seg.seconds} />
-          }
-          return null
-        })}
-      </Text>
-      {tooltip && (
-        <Modal transparent animationType="none" onRequestClose={() => setTooltip(null)}>
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={() => setTooltip(null)}
-            accessibilityLabel={t('recipes.dismissIngredientTooltip')}
-          >
-            <View
-              style={[
-                styles.ingredientTooltip,
-                {
-                  top: tooltip.y > 80 ? tooltip.y - 52 : tooltip.y + 16,
-                  left: Math.max(8, Math.min(tooltip.x - 110, SCREEN_WIDTH - 228)),
-                },
-              ]}
-            >
-              <Text style={styles.ingredientTooltipText}>{tooltip.text}</Text>
-            </View>
-          </Pressable>
-        </Modal>
-      )}
-    </>
+    <Text style={styles.stepText}>
+      {segments.map((seg, i) => {
+        if (seg.type === 'text') return <Text key={i}>{seg.text}</Text>
+        if (seg.type === 'mention') {
+          return <Text key={i}>{seg.text}</Text>
+        }
+        if (seg.type === 'timer' && timerProps) {
+          return <TimerSpan key={i} {...timerProps} seconds={seg.seconds} />
+        }
+        return null
+      })}
+    </Text>
   )
 }
 
@@ -249,6 +206,7 @@ const StepRow = ({
   componentIndex,
   stepRefs,
   rawIngredients,
+  showStepQty = true,
 }: {
   step: string
   index: number
@@ -256,9 +214,20 @@ const StepRow = ({
   componentIndex: number
   stepRefs: StepIngredientRef[]
   rawIngredients: string[]
+  showStepQty?: boolean
 }) => {
+  const { t } = useTranslation()
   const durationMatch = useMemo(() => parseDurationMatch(step), [step])
   const timerId = `${recipe.id}-c${componentIndex}-s${index}`
+
+  const stepIngredients = useMemo(() => {
+    const seen = new Set<number>()
+    return stepRefs.filter((ref) => {
+      if (seen.has(ref.ingredient_index)) return false
+      seen.add(ref.ingredient_index)
+      return true
+    })
+  }, [stepRefs])
 
   return (
     <View style={styles.stepRow}>
@@ -267,7 +236,6 @@ const StepRow = ({
         <StepText
           step={step}
           stepRefs={stepRefs}
-          rawIngredients={rawIngredients}
           durationMatch={durationMatch}
           timerProps={
             durationMatch
@@ -275,6 +243,18 @@ const StepRow = ({
               : undefined
           }
         />
+        {showStepQty && stepIngredients.length > 0 && (
+          <View style={styles.stepIngList}>
+            {stepIngredients.map((ref) => (
+              <View key={ref.ingredient_index} style={styles.stepIngRow}>
+                <View style={styles.stepIngDot} />
+                <Text style={styles.stepIngItem}>
+                  {displayIngredient(rawIngredients[ref.ingredient_index] ?? '', t)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   )
@@ -327,6 +307,7 @@ const ComponentSection = ({
   index,
   recipe,
   addMode = false,
+  showStepQty = true,
   sessionAdded,
   onAdd,
   onAddAll,
@@ -335,6 +316,7 @@ const ComponentSection = ({
   index: number
   recipe: RecipeOut
   addMode?: boolean
+  showStepQty?: boolean
   sessionAdded?: Set<string>
   onAdd?: (key: string, text: string) => void
   onAddAll?: (keys: string[], texts: string[]) => void
@@ -423,6 +405,7 @@ const ComponentSection = ({
               componentIndex={index}
               stepRefs={stepRefs[i] ?? []}
               rawIngredients={component.ingredients}
+              showStepQty={showStepQty}
             />
           ))}
         </View>
@@ -435,6 +418,7 @@ const ComponentSection = ({
 
 const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
 const KEEP_AWAKE_STORAGE_KEY = 'recipe-keep-screen-default'
+const SHOW_STEP_QTY_STORAGE_KEY = 'recipe-show-step-qty'
 
 const RecipeDetailScreen = () => {
   const { id: recipeId } = useLocalSearchParams<{ id: string }>()
@@ -444,6 +428,7 @@ const RecipeDetailScreen = () => {
   const { recipes, isLoading, error } = useRecipes()
   const { addItems } = useShoppingList()
   const [keepScreenOn, setKeepScreenOn] = useState(false)
+  const [showStepQty, setShowStepQty] = useState(true)
   const [addMode, setAddMode] = useState(false)
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const insets = useSafeAreaInsets()
@@ -453,6 +438,9 @@ const RecipeDetailScreen = () => {
       const enabled = val === '1'
       setKeepScreenOn(enabled)
       if (enabled) void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_RECIPE_TAG)
+    })
+    AsyncStorage.getItem(SHOW_STEP_QTY_STORAGE_KEY).then((val) => {
+      if (val !== null) setShowStepQty(val === '1')
     })
     return () => { KeepAwake.deactivateKeepAwake(KEEP_AWAKE_RECIPE_TAG) }
   }, [])
@@ -548,24 +536,23 @@ const RecipeDetailScreen = () => {
 
   return (
     <View style={styles.container}>
-      {hasImage && (
-        <Image
-          source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url!)! }}
-          style={styles.heroImage}
-          accessibilityLabel={recipe.title}
-          resizeMode="cover"
-        />
-      )}
-
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
         contentInsetAdjustmentBehavior="never"
       >
-        {/* transparent spacer so card starts over the image */}
-        <View style={hasImage ? styles.heroSpacer : { height: insets.top + 56 }} />
+        {hasImage ? (
+          <Image
+            source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url!)! }}
+            style={styles.heroImage}
+            accessibilityLabel={recipe.title}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={{ height: insets.top + 56 }} />
+        )}
 
-        <View style={[styles.card, !hasImage && styles.cardNoRound]}>
+        <View style={styles.card}>
           <Text style={styles.title}>{recipe.title}</Text>
 
           {recipe.tags.length > 0 && (
@@ -605,13 +592,27 @@ const RecipeDetailScreen = () => {
             </Pressable>
           ) : null}
 
-          <View style={styles.keepScreenRow}>
-            <Text style={styles.keepScreenLabel}>{t('settings.keepScreenOnDefault')}</Text>
-            <Switch
-              value={keepScreenOn}
-              onValueChange={handleToggleKeepScreenOn}
-              accessibilityLabel={t('settings.keepScreenOnDefault')}
-            />
+          <View style={styles.toggleGroup}>
+            <View style={styles.keepScreenRow}>
+              <Text style={styles.keepScreenLabel}>{t('settings.keepScreenOnDefault')}</Text>
+              <Switch
+                value={keepScreenOn}
+                onValueChange={handleToggleKeepScreenOn}
+                accessibilityLabel={t('settings.keepScreenOnDefault')}
+              />
+            </View>
+            <View style={styles.toggleDivider} />
+            <View style={styles.keepScreenRow}>
+              <Text style={styles.keepScreenLabel}>{t('settings.showQuantityUnderStep')}</Text>
+              <Switch
+                value={showStepQty}
+                onValueChange={(val) => {
+                  setShowStepQty(val)
+                  void AsyncStorage.setItem(SHOW_STEP_QTY_STORAGE_KEY, val ? '1' : '0')
+                }}
+                accessibilityLabel={t('settings.showQuantityUnderStep')}
+              />
+            </View>
           </View>
 
           {recipe.notes ? (
@@ -628,6 +629,7 @@ const RecipeDetailScreen = () => {
               index={i}
               recipe={recipe}
               addMode={addMode}
+              showStepQty={showStepQty}
               sessionAdded={sessionAdded}
               onAdd={handleAddIngredient}
               onAddAll={handleAddAll}
@@ -642,23 +644,15 @@ const RecipeDetailScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   heroImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
+    height: HERO_HEIGHT,
   },
-  scroll: { flex: 1, backgroundColor: 'transparent' },
-  heroSpacer: { height: HERO_HEIGHT - CARD_OVERLAP },
+  scroll: { flex: 1 },
   card: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
     paddingHorizontal: 16,
     paddingTop: 20,
-    minHeight: SCREEN_HEIGHT - (HERO_HEIGHT - CARD_OVERLAP),
   },
-  cardNoRound: { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -697,15 +691,21 @@ const styles = StyleSheet.create({
   },
   sourceIcon: { marginRight: 5 },
   sourceText: { fontSize: 13, color: colors.blue },
+  toggleGroup: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+    marginBottom: 16,
+  },
+  toggleDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
+  },
   keepScreenRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.separator,
-    marginBottom: 16,
   },
   keepScreenLabel: { fontSize: 16, color: colors.label },
   notesBlock: { marginBottom: 16 },
@@ -753,27 +753,28 @@ const styles = StyleSheet.create({
   stepBody: { flex: 1 },
   timerSpan: { color: '#d97706', fontWeight: '700' },
   stepText: { fontSize: 17, color: colors.label, lineHeight: 22 },
-  ingredientMention: {
-    color: '#1d4ed8',
-    backgroundColor: '#eff6ff',
-    borderRadius: 4,
+  stepIngList: {
+    marginTop: 8,
+    gap: 5,
   },
-  ingredientTooltip: {
-    position: 'absolute',
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.separator,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    maxWidth: 220,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+  stepIngRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
   },
-  ingredientTooltipText: { fontSize: 16, color: colors.label },
+  stepIngDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.tertiaryLabel,
+    marginTop: 8,
+  },
+  stepIngItem: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 21,
+    color: colors.secondaryLabel,
+  },
 })
 
 export default RecipeDetailScreen

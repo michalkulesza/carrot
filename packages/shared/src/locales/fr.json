@@ -206,6 +206,7 @@
     "recipesLabel": "Recettes",
     "ingredientsLabel": "Ingrédients",
     "avgKcal": "Kcal moy.",
+    "showQuantityUnderStep": "Afficher la quantité sous chaque étape",
     "keepScreenOnDefault": "Garder l'écran allumé pendant la lecture d'une recette",
     "keepScreenOnDefaultDesc": "L'écran reste actif lorsqu'une recette est ouverte",
     "screen": "Écran",

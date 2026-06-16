@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router'
 
 export default function SettingsLayout() {
-  return <Stack screenOptions={{ headerBackTitle: '', headerTransparent: true, headerShadowVisible: false }} />
+  return <Stack screenOptions={{ headerBackTitle: ' ', headerTransparent: true, headerShadowVisible: false }} />
 }

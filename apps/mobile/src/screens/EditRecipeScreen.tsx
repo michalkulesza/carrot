@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
   Platform,
+  PlatformColor,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -187,20 +188,26 @@ const EditRecipeScreen = () => {
     setSelectedTags(recipe.tags)
   }, [recipe, state])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!state) return
-    const unsub = navigation.addListener('beforeRemove', (e) => {
-      e.preventDefault()
-      Alert.alert(t('addRecipe.discard'), undefined, [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('addRecipe.discard'),
-          style: 'destructive',
-          onPress: () => navigation.dispatch(e.data.action),
-        },
-      ])
+    navigation.setOptions({
+      gestureEnabled: false,
+      headerLeft: () => (
+        <Pressable
+          onPress={() => {
+            Alert.alert(t('addRecipe.discard'), undefined, [
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('addRecipe.discard'), style: 'destructive', onPress: () => navigation.goBack() },
+            ])
+          }}
+          hitSlop={8}
+          style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
+          accessibilityLabel={t('common.back')}
+        >
+          <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
+        </Pressable>
+      ),
     })
-    return unsub
   }, [navigation, state, t])
 
   const updateComp = useCallback(
@@ -529,6 +536,10 @@ const EditRecipeScreen = () => {
 }
 
 const styles = StyleSheet.create({
+  headerBackBtn: {
+    fontSize: 17,
+    color: PlatformColor('systemBlue') as unknown as string,
+  },
   flex: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   errorText: { color: colors.tertiaryLabel, fontSize: 16 },

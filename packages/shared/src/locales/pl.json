@@ -214,6 +214,7 @@
     "recipesLabel": "Przepisy",
     "ingredientsLabel": "Składniki",
     "avgKcal": "Śr. kcal",
+    "showQuantityUnderStep": "Pokaż ilość pod każdym krokiem",
     "keepScreenOnDefault": "Trzymaj ekran włączony podczas oglądania przepisu",
     "keepScreenOnDefaultDesc": "Ekran pozostaje aktywny podczas przeglądania przepisu",
     "screen": "Ekran",

@@ -515,7 +515,7 @@ const MealPlanScreen = () => {
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="regular" tintColor={colors.blue} />
+        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="clear" tintColor={colors.blue} />
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 
@@ -577,7 +577,7 @@ const styles = StyleSheet.create({
   },
   dayRowToday: {
     borderLeftWidth: 3,
-    borderLeftColor: colors.brand,
+    borderLeftColor: colors.blue,
     paddingLeft: 13,
   },
   dayRowLeft: {
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     color: colors.tertiaryLabel,
   },
   dayRowTextToday: {
-    color: colors.brand,
+    color: colors.blue,
   },
   dayRowDivider: {
     width: 1,
