@@ -4,6 +4,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as Haptics from 'expo-haptics'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { persistLanguage } from '../../src/i18n'
 import { colors } from '../../src/theme/colors'
@@ -15,6 +16,7 @@ const AddFAB = () => {
   const insets = useSafeAreaInsets()
 
   const handlePress = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     router.push('/import-recipe')
   }, [router])
 
