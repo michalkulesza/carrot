@@ -1,4 +1,5 @@
 import '../src/i18n'
+import i18n from '../src/i18n'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
