@@ -1,6 +1,7 @@
 import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -18,7 +19,7 @@ import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput, BottomShee
 import GlassViewSafe from '../components/GlassViewSafe'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
-import { useNavigation } from 'expo-router'
+import { useNavigation, useRouter } from 'expo-router'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Sharing from 'expo-sharing'
@@ -239,6 +240,7 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
 const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
   const navigation = useNavigation()
+  const router = useRouter()
   const insets = useSafeAreaInsets()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -407,9 +409,34 @@ const MealPlanScreen = () => {
   const pickerRef = useRef<RecipePickerHandle>(null)
 
   const handleDayPress = useCallback((date: Date) => {
-    setPickerDate(date)
-    pickerRef.current?.present()
-  }, [])
+    const isoDate = toISODate(date)
+    const existing = entriesByDate.get(isoDate)
+
+    if (existing) {
+      Alert.alert(existing.recipe.title, undefined, [
+        {
+          text: t('common.view'),
+          onPress: () => router.push({ pathname: '/recipe/[id]', params: { id: existing.recipe.id, title: existing.recipe.title } }),
+        },
+        {
+          text: t('mealPlan.changeRecipe'),
+          onPress: () => {
+            setPickerDate(date)
+            pickerRef.current?.present()
+          },
+        },
+        {
+          text: t('mealPlan.removeFromPlan'),
+          style: 'destructive',
+          onPress: () => deleteEntry.mutate(isoDate),
+        },
+        { text: t('common.cancel'), style: 'cancel' },
+      ])
+    } else {
+      setPickerDate(date)
+      pickerRef.current?.present()
+    }
+  }, [entriesByDate, t, router, deleteEntry])
 
   const handlePickRecipe = useCallback(
     (recipeId: string) => {
