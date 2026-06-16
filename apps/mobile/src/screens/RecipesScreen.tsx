@@ -112,11 +112,11 @@ const RecipesScreen = () => {
   )
 
   const addMenuActions = useMemo(() => [
-    { id: 'url',     title: t('addRecipe.methodUrl'),     image: 'link' },
-    { id: 'camera',  title: t('addRecipe.methodCamera'),  image: 'camera' },
-    { id: 'gallery', title: t('addRecipe.methodGallery'), image: 'photo' },
-    { id: 'text',    title: t('addRecipe.methodText'),    image: 'doc.text' },
-    { id: 'scratch', title: t('addRecipe.methodScratch'), image: 'pencil' },
+    { id: 'url',     title: t('addRecipe.methodUrl') },
+    { id: 'camera',  title: t('addRecipe.methodCamera') },
+    { id: 'gallery', title: t('addRecipe.methodGallery') },
+    { id: 'text',    title: t('addRecipe.methodText') },
+    { id: 'scratch', title: t('addRecipe.methodScratch') },
   ], [t])
 
   const handleAddAction = useCallback(
