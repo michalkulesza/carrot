@@ -111,6 +111,21 @@ const RecipesScreen = () => {
     [handleDelete, router, t],
   )
 
+  const addMenuActions = useMemo(() => [
+    { id: 'url',     title: t('addRecipe.methodUrl'),     image: 'link' },
+    { id: 'camera',  title: t('addRecipe.methodCamera'),  image: 'camera' },
+    { id: 'gallery', title: t('addRecipe.methodGallery'), image: 'photo' },
+    { id: 'text',    title: t('addRecipe.methodText'),    image: 'doc.text' },
+    { id: 'scratch', title: t('addRecipe.methodScratch'), image: 'pencil' },
+  ], [t])
+
+  const handleAddAction = useCallback(
+    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
+      router.push({ pathname: '/import-recipe', params: { method: nativeEvent.event } })
+    },
+    [router],
+  )
+
   const filterMenuActions = useMemo(() =>
     SORT_OPTIONS.map((o) => ({
       id: o.key,
@@ -132,14 +147,15 @@ const RecipesScreen = () => {
       title: t('nav.recipes'),
       headerRight: () => (
         <View style={styles.headerBtns}>
-          <Pressable
-            onPress={() => router.push('/import-recipe')}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('nav.addRecipe')}
-            accessibilityRole="button"
+          <MenuView
+            title={t('addRecipe.addRecipe')}
+            actions={addMenuActions}
+            onPressAction={handleAddAction}
           >
-            <Feather name="plus" size={26} color={colors.secondaryLabel} />
-          </Pressable>
+            <View style={styles.headerBtn}>
+              <Feather name="plus" size={26} color={colors.secondaryLabel} />
+            </View>
+          </MenuView>
           <MenuView
             title={t('recipes.sortBy')}
             actions={filterMenuActions}
@@ -153,7 +169,7 @@ const RecipesScreen = () => {
         </View>
       ),
     })
-  }, [navigation, filterMenuActions, handleFilterAction, t, router])
+  }, [navigation, addMenuActions, handleAddAction, filterMenuActions, handleFilterAction, t])
 
   const recipesWithOverrides = useMemo(
     () =>
