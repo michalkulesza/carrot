@@ -18,6 +18,35 @@ import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
 import type { ShoppingListItem, PresenceUser } from '@platekeeper/shared/types'
 import { colors } from '../theme/colors'
 
+// ── Checkbox ──────────────────────────────────────────────────────────────────
+
+const CheckCircle = ({
+  checked,
+  onPress,
+  accessibilityLabel,
+}: {
+  checked: boolean
+  onPress: () => void
+  accessibilityLabel?: string
+}) => (
+  <Pressable
+    onPress={onPress}
+    hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
+    style={styles.circleBtn}
+    accessibilityRole="checkbox"
+    accessibilityState={{ checked }}
+    accessibilityLabel={accessibilityLabel}
+  >
+    {checked ? (
+      <View style={styles.checkCircleFilled}>
+        <Feather name="check" size={13} color="#fff" />
+      </View>
+    ) : (
+      <View style={styles.checkCircleRing} />
+    )}
+  </Pressable>
+)
+
 // ── Presence chip (colored initial dot + name) ────────────────────────────────
 
 const PresenceChip = ({ user }: { user: PresenceUser }) => (
@@ -156,14 +185,11 @@ const ShoppingListScreen = () => {
             overshootRight={false}
           >
             <View style={[styles.item, isActive && styles.itemActive]}>
-              <Pressable
+              <CheckCircle
+                checked={false}
                 onPress={() => handleToggle(item.id, item.completed)}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
-                style={styles.circleBtn}
-                accessibilityLabel={t('shoppingList.completedSection')}
-              >
-                <Feather name="circle" size={22} color={colors.blue} />
-              </Pressable>
+                accessibilityLabel={item.text}
+              />
 
               <View style={styles.textArea}>
                 {isEditing ? (
@@ -182,7 +208,11 @@ const ShoppingListScreen = () => {
                   <Pressable
                     onPress={() => !isLocked && handleEditStart(item)}
                     disabled={isLocked}
-                    accessibilityLabel={isLocked ? t('shoppingList.presenceEditing', { name: editor!.nickname }) : item.text}
+                    accessibilityLabel={
+                      isLocked
+                        ? t('shoppingList.presenceEditing', { name: editor!.nickname })
+                        : item.text
+                    }
                   >
                     <Text style={styles.itemText}>{item.text}</Text>
                     {isLocked && (
@@ -229,10 +259,10 @@ const ShoppingListScreen = () => {
     () => (
       <View>
         {/* Inline add row */}
-        <View style={styles.addRow}>
-          <Pressable onPress={() => addInputRef.current?.focus()} hitSlop={8} style={styles.circleBtn}>
-            <Feather name="plus-circle" size={22} color={colors.blue} />
-          </Pressable>
+        <Pressable style={styles.addRow} onPress={() => addInputRef.current?.focus()}>
+          <View style={styles.addIconWrap}>
+            <Text style={styles.addPlusIcon}>+</Text>
+          </View>
           <TextInput
             ref={addInputRef}
             style={styles.addInput}
@@ -246,31 +276,36 @@ const ShoppingListScreen = () => {
             autoCapitalize="sentences"
             autoCorrect
           />
-        </View>
+        </Pressable>
 
         {/* Completed section */}
         {completedItems.length > 0 && (
           <View>
-            <View style={styles.separator} />
+            <View style={styles.sectionDivider} />
             <View style={styles.completedHeader}>
               <Text style={styles.completedLabel}>
                 {completedItems.length} {t('shoppingList.completedSection')}
               </Text>
-              <Pressable onPress={handleClearCompleted} hitSlop={8} accessibilityLabel={t('shoppingList.clearCompleted')}>
+              <Pressable
+                onPress={handleClearCompleted}
+                hitSlop={8}
+                accessibilityLabel={t('shoppingList.clearCompleted')}
+              >
                 <Text style={styles.clearBtn}>{t('shoppingList.clearCompleted')}</Text>
               </Pressable>
             </View>
             {completedItems.map((item) => (
-              <Swipeable key={item.id} renderRightActions={renderRightDelete(item.id, false)} overshootRight={false}>
+              <Swipeable
+                key={item.id}
+                renderRightActions={renderRightDelete(item.id, false)}
+                overshootRight={false}
+              >
                 <View style={styles.item}>
-                  <Pressable
+                  <CheckCircle
+                    checked
                     onPress={() => handleToggle(item.id, item.completed)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
-                    style={styles.circleBtn}
-                    accessibilityLabel={t('shoppingList.completedSection')}
-                  >
-                    <Feather name="check-circle" size={22} color={colors.gray2} />
-                  </Pressable>
+                    accessibilityLabel={item.text}
+                  />
                   <Text style={[styles.itemText, styles.completedText]}>{item.text}</Text>
                 </View>
               </Swipeable>
@@ -325,6 +360,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: colors.background,
   },
+
+  // ── Checkbox ──────────────────────────────────────────────────────────────
+  checkCircleRing: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.blue,
+  },
+  checkCircleFilled: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.gray2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // ── Presence ──────────────────────────────────────────────────────────────
   presenceBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -347,18 +401,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
-  clearBtn: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: colors.blue,
-  },
+
+  // ── List items ────────────────────────────────────────────────────────────
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 16,
-    minHeight: 48,
+    minHeight: 52,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
   },
@@ -386,7 +437,7 @@ const styles = StyleSheet.create({
   },
   completedText: {
     textDecorationLine: 'line-through',
-    color: colors.secondaryLabel,
+    color: colors.tertiaryLabel,
   },
   lockBadge: {
     flexDirection: 'row',
@@ -423,15 +474,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 72,
   },
+
+  // ── Add row ───────────────────────────────────────────────────────────────
   addRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 13,
     paddingHorizontal: 16,
-    backgroundColor: colors.background,
+    backgroundColor: colors.secondaryBackground,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
-    minHeight: 48,
+    minHeight: 52,
+  },
+  addIconWrap: {
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  addPlusIcon: {
+    fontSize: 22,
+    lineHeight: 24,
+    fontWeight: '300',
+    color: colors.blue,
   },
   addInput: {
     flex: 1,
@@ -440,8 +505,10 @@ const styles = StyleSheet.create({
     color: colors.label,
     padding: 0,
   },
-  separator: {
-    height: 24,
+
+  // ── Completed section ─────────────────────────────────────────────────────
+  sectionDivider: {
+    height: 28,
     backgroundColor: colors.secondaryBackground,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.separator,
@@ -453,7 +520,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: colors.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
@@ -466,6 +533,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  clearBtn: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.blue,
+  },
+
+  // ── Empty state ───────────────────────────────────────────────────────────
   emptyContainer: {
     flex: 1,
     paddingTop: 80,
