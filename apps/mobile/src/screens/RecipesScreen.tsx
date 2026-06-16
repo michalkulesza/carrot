@@ -423,15 +423,13 @@ const styles = StyleSheet.create({
   tagListContent: { paddingHorizontal: 12, gap: 8 },
   chip: {
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: colors.background,
+    backgroundColor: colors.secondarySystemFill,
   },
-  chipSelected: { backgroundColor: colors.brand, borderColor: colors.brand },
+  chipSelected: { backgroundColor: colors.blue },
   chipText: { fontSize: 13, color: colors.secondaryLabel },
-  chipTextSelected: { color: colors.background, fontWeight: '600' },
+  chipTextSelected: { color: '#ffffff', fontWeight: '600' },
   card: {
     flexDirection: 'row',
     backgroundColor: colors.background,
