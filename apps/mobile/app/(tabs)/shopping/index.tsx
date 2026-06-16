@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import BellModal from '../../../src/components/BellModal'
+import BellMenu from '../../../src/components/BellMenu'
 import ShoppingListScreen from '../../../src/screens/ShoppingListScreen'
 
 export default function ShoppingTab() {
@@ -11,7 +11,7 @@ export default function ShoppingTab() {
       <Stack.Screen
         options={{
           title: t('nav.shopping'),
-          headerRight: () => <BellModal />,
+          headerRight: () => <BellMenu />,
         }}
       />
       <ShoppingListScreen />

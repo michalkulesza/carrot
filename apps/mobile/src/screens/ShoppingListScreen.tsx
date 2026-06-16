@@ -1,20 +1,9 @@
-import { useLayoutEffect } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { useNavigation } from 'expo-router'
-import BellMenu from '../components/BellMenu'
 import { colors } from '../theme/colors'
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
-  const navigation = useNavigation()
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => <BellMenu />,
-    })
-  }, [navigation])
-
   return (
     <View style={styles.container}>
       <Text style={styles.emoji}>🛒</Text>
