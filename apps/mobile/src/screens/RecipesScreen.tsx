@@ -111,20 +111,35 @@ const RecipesScreen = () => {
     [handleDelete, router, t],
   )
 
-  const filterMenuActions = useMemo(() =>
-    SORT_OPTIONS.map((o) => ({
-      id: o.key,
-      title: t(o.labelKey),
-      state: (sort === o.key ? 'on' : 'off') as 'on' | 'off',
-    }))
-  , [sort, t])
+  const filterMenuActions = useMemo(() => [
+    {
+      id: 'add-recipe',
+      title: t('nav.addRecipe'),
+      image: 'plus.circle',
+    },
+    {
+      id: 'sort-section',
+      title: '',
+      displayInline: true,
+      subactions: SORT_OPTIONS.map((o) => ({
+        id: o.key,
+        title: t(o.labelKey),
+        state: (sort === o.key ? 'on' : 'off') as 'on' | 'off',
+      })),
+    },
+  ], [sort, t])
 
   const handleFilterAction = useCallback(
     ({ nativeEvent }: { nativeEvent: { event: string } }) => {
-      const sortOption = SORT_OPTIONS.find((o) => o.key === nativeEvent.event)
-      if (sortOption) setSort(sortOption.key)
+      const id = nativeEvent.event
+      if (id === 'add-recipe') {
+        router.push('/import-recipe')
+      } else {
+        const sortOption = SORT_OPTIONS.find((o) => o.key === id)
+        if (sortOption) setSort(sortOption.key)
+      }
     },
-    [],
+    [router],
   )
 
   useLayoutEffect(() => {
@@ -132,14 +147,6 @@ const RecipesScreen = () => {
       title: t('nav.recipes'),
       headerRight: () => (
         <View style={styles.headerBtns}>
-          <Pressable
-            onPress={() => router.push('/import-recipe')}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('nav.addRecipe')}
-            accessibilityRole="button"
-          >
-            <Feather name="plus" size={26} color={colors.secondaryLabel} />
-          </Pressable>
           <MenuView
             title={t('recipes.sortBy')}
             actions={filterMenuActions}
@@ -153,7 +160,7 @@ const RecipesScreen = () => {
         </View>
       ),
     })
-  }, [navigation, filterMenuActions, handleFilterAction, t, router])
+  }, [navigation, filterMenuActions, handleFilterAction, t])
 
   const recipesWithOverrides = useMemo(
     () =>
