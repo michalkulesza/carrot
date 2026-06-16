@@ -352,9 +352,12 @@
     "exporting": "Exportation…",
     "exportError": "Échec de l'export PDF",
     "month": "Mois",
-    "emptyList": "Aucun ingrédient pour ce mois.",
+    "emptyList": "Votre liste est vide.",
     "ingredient": "Ingrédient",
-    "quantity": "Quantité"
+    "quantity": "Quantité",
+    "addItemPlaceholder": "Ajouter un article…",
+    "completedSection": "terminés",
+    "clearCompleted": "Supprimer terminés"
   },
   "defaultTags": {
     "Vegetarian": "Végétarien",

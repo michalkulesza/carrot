@@ -18,6 +18,7 @@ from api.routes.meal_plan import router as meal_plan_router
 from api.routes.preferences import router as preferences_router
 from api.routes.proxy import router as proxy_router
 from api.routes.recipes import router as recipes_router
+from api.routes.shopping_list import router as shopping_list_router
 from api.routes.tags import router as tags_router
 from api.users import (
     UserCreate,
@@ -106,6 +107,7 @@ app.include_router(meal_plan_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")
 app.include_router(proxy_router, prefix="/api")
 app.include_router(recipes_router, prefix="/api")
+app.include_router(shopping_list_router, prefix="/api")
 app.include_router(tags_router, prefix="/api")
 
 app.include_router(

@@ -365,3 +365,48 @@ class UserPreferencesUpdate(BaseModel):
     personal_allergens: dict | None = None
     language: str | None = None
     unit_system: str | None = None
+
+
+# ── Shopping List ──────────────────────────────────────────────────────────────
+
+class ShoppingListItem(Base):
+    __tablename__ = "shopping_list_items"
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    household_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
+    )
+    text: Mapped[str] = mapped_column(String, nullable=False)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ShoppingListItemOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    household_id: uuid.UUID | None = None
+    text: str
+    completed: bool
+    position: int
+    created_at: datetime
+    updated_at: datetime
+
+
+class ShoppingListItemsCreate(BaseModel):
+    items: list[str]
+
+
+class ShoppingListItemUpdate(BaseModel):
+    text: str | None = None
+    completed: bool | None = None
+
+
+class ShoppingListReorderRequest(BaseModel):
+    ids: list[uuid.UUID]
