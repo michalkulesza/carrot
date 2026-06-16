@@ -370,11 +370,14 @@
   "shoppingList": {
     "title": "Shopping List",
     "comingSoon": "Shopping list coming soon.",
+    "emptyList": "Your list is empty.",
+    "addItemPlaceholder": "Add item…",
+    "completedSection": "completed",
+    "clearCompleted": "Clear completed",
     "exportPdf": "Export PDF",
     "exporting": "Exporting…",
     "exportError": "Failed to export PDF",
     "month": "Month",
-    "emptyList": "No ingredients for this month.",
     "ingredient": "Ingredient",
     "quantity": "Quantity"
   },

@@ -360,9 +360,12 @@
     "exporting": "Eksportowanie…",
     "exportError": "Nie udało się wyeksportować PDF",
     "month": "Miesiąc",
-    "emptyList": "Brak składników w tym miesiącu.",
+    "emptyList": "Lista jest pusta.",
     "ingredient": "Składnik",
-    "quantity": "Ilość"
+    "quantity": "Ilość",
+    "addItemPlaceholder": "Dodaj pozycję…",
+    "completedSection": "ukończone",
+    "clearCompleted": "Usuń ukończone"
   },
   "defaultTags": {
     "Vegetarian": "Wegetariańskie",

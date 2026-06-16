@@ -197,3 +197,14 @@ export interface RegisterData {
   password: string
   nickname?: string
 }
+
+export interface ShoppingListItem {
+  id: string
+  user_id: string
+  household_id: string | null
+  text: string
+  completed: boolean
+  position: number
+  created_at: string
+  updated_at: string
+}

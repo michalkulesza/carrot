@@ -14,6 +14,7 @@ import type {
   ImportResult,
   AuthUser,
   RegisterData,
+  ShoppingListItem,
 } from '../types'
 
 export interface ApiClientConfig {
@@ -500,6 +501,56 @@ export const createApiClient = (config: ApiClientConfig) => {
   const streamImageImportFetch = (imageBase64: string, mimeType: string, callbacks: StreamCallbacks): () => void =>
     _streamPostFetch('/api/imports/stream-image', { image_base64: imageBase64, mime_type: mimeType, model: 'gemini-2.5-flash-lite' }, callbacks)
 
+  // ── Shopping List ──────────────────────────────────────────────────────────
+
+  const listShoppingList = async (): Promise<ShoppingListItem[]> => {
+    const res = await apiFetch('/api/shopping-list')
+    if (!res.ok) throw new Error('Failed to load shopping list')
+    return res.json() as Promise<ShoppingListItem[]>
+  }
+
+  const addShoppingListItems = async (items: string[]): Promise<ShoppingListItem[]> => {
+    const res = await apiFetch('/api/shopping-list', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    })
+    await throwOnError(res, 'Failed to add items')
+    return res.json() as Promise<ShoppingListItem[]>
+  }
+
+  const updateShoppingListItem = async (
+    id: string,
+    data: { text?: string; completed?: boolean }
+  ): Promise<ShoppingListItem> => {
+    const res = await apiFetch(`/api/shopping-list/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    await throwOnError(res, 'Failed to update item')
+    return res.json() as Promise<ShoppingListItem>
+  }
+
+  const reorderShoppingList = async (ids: string[]): Promise<void> => {
+    const res = await apiFetch('/api/shopping-list/order', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    await throwOnError(res, 'Failed to reorder list')
+  }
+
+  const deleteShoppingListItem = async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/shopping-list/${id}`, { method: 'DELETE' })
+    await throwOnError(res, 'Failed to delete item')
+  }
+
+  const clearCompletedShoppingList = async (): Promise<void> => {
+    const res = await apiFetch('/api/shopping-list/completed', { method: 'DELETE' })
+    await throwOnError(res, 'Failed to clear completed items')
+  }
+
   return {
     saveRecipe,
     updateRecipe,
@@ -539,6 +590,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     streamImportFetch,
     streamTextImportFetch,
     streamImageImportFetch,
+    listShoppingList,
+    addShoppingListItems,
+    updateShoppingListItem,
+    reorderShoppingList,
+    deleteShoppingListItem,
+    clearCompletedShoppingList,
   }
 }
 
