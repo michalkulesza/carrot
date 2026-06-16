@@ -1,4 +1,4 @@
-import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -6,12 +6,14 @@ import {
   LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
+  PlatformColor,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
+import BottomSheet, { BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
@@ -37,11 +39,10 @@ type ListItem =
   | { type: 'month'; key: string; label: string }
   | { type: 'day'; key: string; date: Date; isoDate: string }
 
-// ─── RecipePicker modal ─────────────────────────────────────────────────────
+// ─── RecipePicker bottom sheet ──────────────────────────────────────────────
 
 interface RecipePickerProps {
   visible: boolean
-  date: string
   currentRecipeId: string | null
   recipes: RecipeOut[]
   onPick: (recipeId: string) => void
@@ -49,9 +50,10 @@ interface RecipePickerProps {
   onClose: () => void
 }
 
+const SNAP_POINTS = ['60%']
+
 const RecipePicker = ({
   visible,
-  date,
   currentRecipeId,
   recipes,
   onPick,
@@ -60,6 +62,15 @@ const RecipePicker = ({
 }: RecipePickerProps) => {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
+  const sheetRef = useRef<BottomSheet>(null)
+
+  useEffect(() => {
+    if (visible) {
+      sheetRef.current?.snapToIndex(0)
+    } else {
+      sheetRef.current?.close()
+    }
+  }, [visible])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -99,68 +110,57 @@ const RecipePicker = ({
   )
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={handleClose}
+    <BottomSheet
+      ref={sheetRef}
+      index={-1}
+      snapPoints={SNAP_POINTS}
+      enablePanDownToClose
+      onClose={handleClose}
+      backgroundStyle={styles.sheetBackground}
+      handleIndicatorStyle={styles.sheetHandle}
     >
-      <View style={styles.pickerContainer}>
-        <GlassViewSafe style={styles.pickerHeader} glassEffectStyle="regular">
-          <Text style={styles.pickerTitle}>{t('mealPlan.chooseDish')}</Text>
-          <Text style={styles.pickerDate}>{date}</Text>
-          <Pressable
-            onPress={handleClose}
-            style={({ pressed }) => [styles.pickerClose, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('common.close')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.pickerCloseText}>{t('common.close')}</Text>
-          </Pressable>
-        </GlassViewSafe>
+      <BottomSheetTextInput
+        style={styles.pickerSearch}
+        placeholder={t('mealPlan.searchRecipes')}
+        placeholderTextColor={PlatformColor('placeholderText') as unknown as string}
+        value={search}
+        onChangeText={setSearch}
+        autoCapitalize="none"
+        clearButtonMode="while-editing"
+        accessibilityLabel={t('mealPlan.searchRecipes')}
+      />
 
-        <TextInput
-          style={styles.pickerSearch}
-          placeholder={t('mealPlan.searchRecipes')}
-          value={search}
-          onChangeText={setSearch}
-          autoCapitalize="none"
-          clearButtonMode="while-editing"
-          accessibilityLabel={t('mealPlan.searchRecipes')}
+      {currentRecipeId && (
+        <Pressable
+          style={({ pressed }) => [styles.removeButton, pressed && { opacity: 0.7 }]}
+          onPress={() => {
+            setSearch('')
+            onRemove()
+          }}
+          accessibilityLabel={t('mealPlan.removeFromPlan')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.removeButtonText}>{t('mealPlan.removeFromPlan')}</Text>
+        </Pressable>
+      )}
+
+      {filtered.length === 0 ? (
+        <View style={styles.pickerEmpty}>
+          <Text style={styles.pickerEmptyText}>
+            {recipes.length === 0
+              ? t('mealPlan.noRecipesYet')
+              : t('mealPlan.noRecipesMatch')}
+          </Text>
+        </View>
+      ) : (
+        <BottomSheetFlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          style={styles.pickerList}
         />
-
-        {currentRecipeId && (
-          <Pressable
-            style={({ pressed }) => [styles.removeButton, pressed && { opacity: 0.7 }]}
-            onPress={() => {
-              setSearch('')
-              onRemove()
-            }}
-            accessibilityLabel={t('mealPlan.removeFromPlan')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.removeButtonText}>{t('mealPlan.removeFromPlan')}</Text>
-          </Pressable>
-        )}
-
-        {filtered.length === 0 ? (
-          <View style={styles.pickerEmpty}>
-            <Text style={styles.pickerEmptyText}>
-              {recipes.length === 0
-                ? t('mealPlan.noRecipesYet')
-                : t('mealPlan.noRecipesMatch')}
-            </Text>
-          </View>
-        ) : (
-          <FlatList
-            data={filtered}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            style={styles.pickerList}
-          />
-        )}
-      </View>
-    </Modal>
+      )}
+    </BottomSheet>
   )
 }
 
@@ -475,17 +475,14 @@ const MealPlanScreen = () => {
         </View>
       </Modal>
 
-      {pickerDate && (
-        <RecipePicker
-          visible
-          date={pickerDateStr}
-          currentRecipeId={pickerCurrentRecipeId}
-          recipes={recipes}
-          onPick={handlePickRecipe}
-          onRemove={handleRemoveEntry}
-          onClose={handleClosePicker}
-        />
-      )}
+      <RecipePicker
+        visible={pickerDate !== null}
+        currentRecipeId={pickerCurrentRecipeId}
+        recipes={recipes}
+        onPick={handlePickRecipe}
+        onRemove={handleRemoveEntry}
+        onClose={handleClosePicker}
+      />
     </View>
   )
 }
@@ -566,29 +563,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.opaqueSeparator,
   },
-  // picker
-  pickerContainer: { flex: 1, backgroundColor: colors.background },
-  pickerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-    gap: 8,
-  },
-  pickerTitle: { fontSize: 17, fontWeight: '700', color: colors.label, flex: 1 },
-  pickerDate: { fontSize: 16, color: colors.secondaryLabel },
-  pickerClose: { padding: 4 },
-  pickerCloseText: { fontSize: 16, color: colors.blue, fontWeight: '500' },
+  // picker bottom sheet
+  sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
+  sheetHandle: { backgroundColor: PlatformColor('systemGray3') as unknown as string },
   pickerSearch: {
-    margin: 12,
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
+    marginHorizontal: 12,
+    marginTop: 8,
+    marginBottom: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: PlatformColor('separator') as unknown as string,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 16,
-    backgroundColor: colors.background,
+    color: PlatformColor('label') as unknown as string,
+    backgroundColor: PlatformColor('systemBackground') as unknown as string,
   },
   removeButton: {
     marginHorizontal: 12,
@@ -596,23 +585,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    backgroundColor: '#fef2f2',
+    borderColor: PlatformColor('systemRed') as unknown as string,
     alignItems: 'center',
   },
-  removeButtonText: { color: colors.red, fontWeight: '500', fontSize: 16 },
+  removeButtonText: { color: PlatformColor('systemRed') as unknown as string, fontWeight: '500', fontSize: 16 },
   pickerList: { flex: 1 },
   pickerItem: {
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
+    borderBottomColor: PlatformColor('separator') as unknown as string,
   },
   pickerItemActive: { backgroundColor: colors.brandLight },
-  pickerItemText: { fontSize: 16, color: colors.label },
+  pickerItemText: { fontSize: 16, color: PlatformColor('label') as unknown as string },
   pickerItemTextActive: { color: colors.brand, fontWeight: '600' },
   pickerEmpty: { flex: 1, padding: 40, alignItems: 'center' },
-  pickerEmptyText: { fontSize: 16, color: colors.secondaryLabel, textAlign: 'center' },
+  pickerEmptyText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, textAlign: 'center' },
   todayBtn: {
     position: 'absolute',
     right: 16,
