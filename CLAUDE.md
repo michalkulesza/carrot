@@ -27,9 +27,29 @@ Let iOS draw the UI — every custom-styled JS component will look "off" compare
 - Example: `color: PlatformColor('label')`, `backgroundColor: PlatformColor('systemBackground')`
 
 ## Typography
-- Use the iOS Dynamic Type scale via `fontSize` + `allowFontScaling` — never lock font sizes.
+
+Use only sizes from the iOS HIG type scale. Never invent intermediate sizes (e.g. 14pt does not exist in the scale).
+
+| Role | fontSize | lineHeight | fontWeight |
+|------|----------|------------|------------|
+| Large Title | 34 | 41 | `'700'` |
+| Title 1 | 28 | 34 | `'700'` |
+| Title 2 | 22 | 28 | `'700'` |
+| Title 3 | 20 | 25 | `'600'` |
+| Headline | 17 | 22 | `'600'` |
+| Body (primary reading text: notes, ingredients, steps) | 17 | 22 | `'400'` |
+| Callout (UI labels, list items, button text, inputs) | 16 | 21 | `'400'` |
+| Footnote / meta info | 13 | 18 | `'400'` |
+| Caption 1 (tags, chips, badges) | 12 | 16 | `'400'` |
+| Caption 2 (minimum — tiny labels only) | 11 | 13 | `'400'` |
+
+Rules:
+- Default for most UI text (labels, list items, button text, inputs): **16pt Callout**.
+- Primary reading content (recipe notes, ingredients, step text): **17pt Body** with `lineHeight: 22`.
+- Section headers / uppercase meta labels: **13pt Footnote** with `textTransform: 'uppercase'` and `letterSpacing`.
+- Never go below 11pt except for purely decorative/icon characters.
 - Prefer system font weights: `'400'` (regular), `'600'` (semibold), `'700'` (bold).
-- Use `letterSpacing` and `lineHeight` values that match iOS HIG guidelines.
+- `allowFontScaling` defaults to `true` in React Native — do not disable it.
 
 ## Layout & spacing
 - Use multiples of 4pt for spacing (4, 8, 12, 16, 20, 24, 32).
