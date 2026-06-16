@@ -339,10 +339,8 @@ const ShoppingListScreen = () => {
       ListHeaderComponent={ListHeader}
       ListFooterComponent={ListFooter}
       contentInsetAdjustmentBehavior="never"
-      contentInset={{ top: navBarInset }}
-      contentOffset={{ x: 0, y: -navBarInset }}
       scrollIndicatorInsets={{ top: navBarInset }}
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[styles.listContent, { paddingTop: navBarInset }]}
       ListEmptyComponent={
         completedItems.length === 0 ? (
           <View style={styles.emptyContainer}>
