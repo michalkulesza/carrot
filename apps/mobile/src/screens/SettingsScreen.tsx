@@ -4,6 +4,7 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,6 +27,8 @@ import { useHousehold } from '../context/HouseholdContext'
 import { useTimers } from '../context/TimerContext'
 import { persistLanguage } from '../i18n'
 import { colors } from '../theme/colors'
+
+const CARD_RADIUS = Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 26 ? 20 : 10
 
 const LANGUAGES: { code: string; labelKey: string }[] = [
   { code: 'en', labelKey: 'languages.en' },
@@ -648,7 +651,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: colors.background,
-    borderRadius: 10,
+    borderRadius: CARD_RADIUS,
     paddingVertical: 14,
     paddingHorizontal: 8,
     alignItems: 'center',
@@ -673,13 +676,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: colors.secondaryLabel,
-    marginHorizontal: 16,
+    marginLeft: 32,
+    marginRight: 16,
     marginTop: 24,
     marginBottom: 8,
   },
   card: {
     backgroundColor: colors.background,
-    borderRadius: 10,
+    borderRadius: CARD_RADIUS,
     marginHorizontal: 16,
     marginBottom: 4,
     shadowColor: '#000',
