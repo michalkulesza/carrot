@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { paddingBottom: 48 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  errorText: { color: colors.red, fontSize: 15 },
+  errorText: { color: colors.red, fontSize: 16 },
   sectionHeader: {
     fontSize: 12,
     fontWeight: '700',
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   input: {
-    fontSize: 15,
+    fontSize: 16,
     color: colors.label,
     paddingHorizontal: 16,
     paddingVertical: 13,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: colors.background, fontSize: 15, fontWeight: '600' },
+  saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   memberAvatarText: { fontSize: 13, fontWeight: '700', color: colors.secondaryLabel },
-  memberName: { flex: 1, fontSize: 14, color: colors.label },
+  memberName: { flex: 1, fontSize: 16, color: colors.label },
   inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   inviteInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.label,
     borderWidth: 1,
     borderColor: colors.opaqueSeparator,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     borderColor: colors.opaqueSeparator,
   },
   inviteBtnDisabled: { opacity: 0.5 },
-  inviteBtnText: { fontSize: 14, fontWeight: '600', color: colors.secondaryLabel },
+  inviteBtnText: { fontSize: 16, fontWeight: '600', color: colors.secondaryLabel },
   leaveSection: { marginHorizontal: 16, marginTop: 32 },
   leaveBtn: {
     borderRadius: 10,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.brandLight,
   },
-  leaveBtnText: { color: colors.red, fontSize: 15, fontWeight: '600' },
+  leaveBtnText: { color: colors.red, fontSize: 16, fontWeight: '600' },
 })
 
 export default HouseholdDetailScreen

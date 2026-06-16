@@ -1550,7 +1550,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    fontSize: 15,
+    fontSize: 16,
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
   },
@@ -1563,7 +1563,7 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
   },
   pasteBtnText: {
-    fontSize: 15,
+    fontSize: 16,
     color: PlatformColor('secondaryLabel') as unknown as string,
     fontWeight: '500',
   },
@@ -1577,7 +1577,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 11,
     paddingBottom: 11,
-    fontSize: 15,
+    fontSize: 16,
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
     minHeight: 200,
@@ -1653,7 +1653,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  secondaryBtnText: { fontSize: 15, color: PlatformColor('secondaryLabel') as unknown as string, fontWeight: '500' },
+  secondaryBtnText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, fontWeight: '500' },
   primaryBtn: {
     backgroundColor: colors.brand,
     borderRadius: 10,
@@ -1662,7 +1662,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 46,
   },
-  primaryBtnText: { fontSize: 15, color: '#fff', fontWeight: '600' },
+  primaryBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
   btnDisabled: { opacity: 0.4 },
 
   // Editable view
@@ -1709,7 +1709,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   imgEditTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: PlatformColor('secondaryLabel') as unknown as string,
     marginBottom: 12,
@@ -1720,7 +1720,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: 16,
     color: PlatformColor('label') as unknown as string,
     marginBottom: 12,
   },
@@ -1732,9 +1732,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
   },
-  imgCancelText: { fontSize: 14, color: PlatformColor('secondaryLabel') as unknown as string },
+  imgCancelText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
   imgSaveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.brand },
-  imgSaveText: { fontSize: 14, color: '#fff', fontWeight: '600' },
+  imgSaveText: { fontSize: 16, color: '#fff', fontWeight: '600' },
 
   // Meta pills
   metaRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
@@ -1814,7 +1814,7 @@ const styles = StyleSheet.create({
   },
   tagModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
   tagModalTitle: { fontSize: 16, fontWeight: '700', color: PlatformColor('label') as unknown as string },
-  tagModalClose: { fontSize: 18, color: PlatformColor('secondaryLabel') as unknown as string, padding: 4 },
+  tagModalClose: { fontSize: 17, color: PlatformColor('secondaryLabel') as unknown as string, padding: 4 },
   tagSearch: {
     marginHorizontal: 16,
     marginBottom: 8,
@@ -1823,7 +1823,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    fontSize: 14,
+    fontSize: 16,
     color: PlatformColor('label') as unknown as string,
   },
   tagScrollList: { maxHeight: 320 },
@@ -1834,7 +1834,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('separator') as unknown as string,
   },
-  tagCreateText: { fontSize: 14, color: colors.brand, fontWeight: '600' },
+  tagCreateText: { fontSize: 16, color: colors.brand, fontWeight: '600' },
   tagListRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1844,7 +1844,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('separator') as unknown as string,
   },
-  tagListText: { fontSize: 14, color: PlatformColor('secondaryLabel') as unknown as string },
+  tagListText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
   tagCheck: { fontSize: 16, color: colors.brand },
   tagEmpty: { padding: 16, fontSize: 13, color: PlatformColor('tertiaryLabel') as unknown as string, textAlign: 'center' },
 
@@ -1872,7 +1872,7 @@ const styles = StyleSheet.create({
     borderColor: PlatformColor('separator') as unknown as string,
   },
   unitOptionSel: { backgroundColor: colors.brandLight },
-  unitOptionText: { fontSize: 15, color: PlatformColor('secondaryLabel') as unknown as string },
+  unitOptionText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
   unitOptionTextSel: { color: colors.brand, fontWeight: '600' },
 
   // Ingredient editor
@@ -1896,7 +1896,7 @@ const styles = StyleSheet.create({
     width: 44,
     borderBottomWidth: 1,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    fontSize: 14,
+    fontSize: 16,
     color: PlatformColor('label') as unknown as string,
     textAlign: 'center',
     paddingVertical: 4,
@@ -1915,7 +1915,7 @@ const styles = StyleSheet.create({
     flex: 1,
     borderBottomWidth: 1,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    fontSize: 14,
+    fontSize: 16,
     color: PlatformColor('label') as unknown as string,
     paddingVertical: 4,
     paddingHorizontal: 4,
@@ -1948,7 +1948,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   addRowBtnText: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.brand,
     fontWeight: '500',
   },
@@ -1972,7 +1972,7 @@ const styles = StyleSheet.create({
   },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
   stepNum: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: PlatformColor('systemBlue') as unknown as string,
     width: 24,
@@ -1980,7 +1980,7 @@ const styles = StyleSheet.create({
   },
   stepInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     color: PlatformColor('label') as unknown as string,
     lineHeight: 20,
     borderBottomWidth: 1,

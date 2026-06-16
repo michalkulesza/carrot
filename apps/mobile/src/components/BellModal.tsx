@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  badgeText: { color: colors.background, fontSize: 9, fontWeight: '700' },
+  badgeText: { color: colors.background, fontSize: 11, fontWeight: '700' },
   modal: { flex: 1, backgroundColor: colors.secondaryBackground },
   modalHeader: {
     flexDirection: 'row',
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 17, fontWeight: '600', color: colors.label },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { fontSize: 15, color: colors.tertiaryLabel },
+  emptyText: { fontSize: 16, color: colors.tertiaryLabel },
   list: { flex: 1 },
   listContent: { paddingBottom: 32 },
   item: {
@@ -323,17 +323,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemBadge: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: colors.tertiaryLabel,
     letterSpacing: 0.4,
   },
   countdown: {
     fontFamily: 'monospace',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
   },
-  itemTitle: { fontSize: 15, fontWeight: '600', color: colors.label, marginBottom: 2 },
+  itemTitle: { fontSize: 16, fontWeight: '600', color: colors.label, marginBottom: 2 },
   itemBody: { fontSize: 13, color: colors.secondaryLabel, marginBottom: 10 },
   btnRow: { flexDirection: 'row', gap: 8 },
   btnPrimary: {
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   historyLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: colors.tertiaryLabel,
     letterSpacing: 0.4,

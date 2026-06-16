@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
   demoRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   demoBtn: { flex: 1, borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
   buttonDemo: { borderWidth: 1, borderColor: colors.opaqueSeparator },
-  buttonDemoText: { color: colors.secondaryLabel, fontSize: 15 },
-  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 15 },
+  buttonDemoText: { color: colors.secondaryLabel, fontSize: 16 },
+  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 16 },
 })
 
 export default LoginScreen
