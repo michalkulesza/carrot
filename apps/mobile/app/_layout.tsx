@@ -32,13 +32,13 @@ function RootLayoutNav() {
 
   return (
     <>
-      <Stack screenOptions={{ headerBackTitle: '' }}>
+      <Stack screenOptions={{ headerBackTitle: '', headerTransparent: true, headerShadowVisible: false }}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="import-recipe" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="recipe/[id]" />
-        <Stack.Screen name="recipe/[id]/edit" />
-        <Stack.Screen name="household/[id]" />
+        <Stack.Screen name="import-recipe" options={{ presentation: 'modal', title: '' }} />
+        <Stack.Screen name="recipe/[id]" options={{ title: '' }} />
+        <Stack.Screen name="recipe/[id]/edit" options={{ title: '' }} />
+        <Stack.Screen name="household/[id]" options={{ title: '' }} />
       </Stack>
       {loading && (
         <View style={styles.loadingOverlay}>

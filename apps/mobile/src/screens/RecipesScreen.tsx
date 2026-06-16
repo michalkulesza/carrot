@@ -127,7 +127,6 @@ const RecipesScreen = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: t('nav.recipes'),
       headerRight: () => (
         <View style={styles.headerBtns}>
           <Pressable
