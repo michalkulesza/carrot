@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  InteractionManager,
   LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
@@ -245,6 +246,7 @@ const MealPlanScreen = () => {
       const canShare = await Sharing.isAvailableAsync()
       if (!canShare) throw new Error(t('shoppingList.exportError'))
       setExporting(false)
+      await new Promise<void>(resolve => InteractionManager.runAfterInteractions(() => resolve()))
       await Sharing.shareAsync(file.uri, { mimeType: 'application/pdf', UTI: 'com.adobe.pdf' })
     } catch {
       // silently fail — share sheet handles errors
