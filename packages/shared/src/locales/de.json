@@ -357,7 +357,10 @@
     "quantity": "Menge",
     "addItemPlaceholder": "Artikel hinzufügen…",
     "completedSection": "erledigt",
-    "clearCompleted": "Erledigte löschen"
+    "clearCompleted": "Erledigte löschen",
+    "addToList": "Zur Liste hinzufügen",
+    "addedToList": "Hinzugefügt",
+    "addAll": "Alle hinzufügen"
   },
   "defaultTags": {
     "Vegetarian": "Vegetarisch",

@@ -16,9 +16,11 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as KeepAwake from 'expo-keep-awake'
+import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
+import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
 import {
   parseDurationMatch,
   formatDurationLabel,
@@ -280,10 +282,22 @@ const StepRow = ({
 
 // ── Ingredient row ─────────────────────────────────────────────────────────────
 
-const IngredientRow = ({ ingredient }: { ingredient: Ingredient }) => {
-  const parts = [ingredient.qty, ingredient.unit, ingredient.name]
-    .filter(Boolean)
-    .join(' ')
+const formatForList = (ing: Ingredient): string =>
+  [ing.qty, ing.unit, ing.name].filter(Boolean).join(' ')
+
+const IngredientRow = ({
+  ingredient,
+  addMode = false,
+  isAdded = false,
+  onAdd,
+}: {
+  ingredient: Ingredient
+  addMode?: boolean
+  isAdded?: boolean
+  onAdd?: () => void
+}) => {
+  const { t } = useTranslation()
+  const parts = [ingredient.qty, ingredient.unit, ingredient.name].filter(Boolean).join(' ')
   const note = ingredient.note ? ` (${ingredient.note})` : ''
   return (
     <View style={styles.ingredientRow}>
@@ -292,6 +306,16 @@ const IngredientRow = ({ ingredient }: { ingredient: Ingredient }) => {
         {parts}
         {note}
       </Text>
+      {addMode && (
+        <Pressable
+          onPress={isAdded ? undefined : onAdd}
+          hitSlop={8}
+          style={styles.addIngredientBtn}
+          accessibilityLabel={isAdded ? t('shoppingList.addedToList') : t('shoppingList.addToList')}
+        >
+          <Feather name={isAdded ? 'check' : 'plus'} size={18} color={isAdded ? colors.green : colors.blue} />
+        </Pressable>
+      )}
     </View>
   )
 }
@@ -302,10 +326,18 @@ const ComponentSection = ({
   component,
   index,
   recipe,
+  addMode = false,
+  sessionAdded,
+  onAdd,
+  onAddAll,
 }: {
   component: SaveComponent
   index: number
   recipe: RecipeOut
+  addMode?: boolean
+  sessionAdded?: Set<string>
+  onAdd?: (key: string, text: string) => void
+  onAddAll?: (keys: string[], texts: string[]) => void
 }) => {
   const { t } = useTranslation()
   const ingredients = useMemo(
@@ -327,6 +359,24 @@ const ComponentSection = ({
     [component.step_ingredient_refs, component.steps, component.ingredients],
   )
 
+  const handleAddAll = useCallback(() => {
+    const keys: string[] = []
+    const texts: string[] = []
+    ingredients.forEach((ing, i) => {
+      const key = `${index}-${i}`
+      if (!sessionAdded?.has(key)) {
+        keys.push(key)
+        texts.push(formatForList(ing))
+      }
+    })
+    if (texts.length > 0) onAddAll?.(keys, texts)
+  }, [ingredients, index, sessionAdded, onAddAll])
+
+  const allAdded = useMemo(
+    () => ingredients.length > 0 && ingredients.every((_, i) => sessionAdded?.has(`${index}-${i}`)),
+    [ingredients, index, sessionAdded],
+  )
+
   return (
     <View style={styles.componentBlock}>
       {component.name ? (
@@ -335,9 +385,28 @@ const ComponentSection = ({
 
       {ingredients.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
+            {addMode && (
+              <Pressable
+                onPress={allAdded ? undefined : handleAddAll}
+                hitSlop={8}
+                accessibilityLabel={t('shoppingList.addAll')}
+              >
+                <Text style={[styles.addAllText, allAdded && styles.addAllDone]}>
+                  {allAdded ? t('shoppingList.addedToList') : t('shoppingList.addAll')}
+                </Text>
+              </Pressable>
+            )}
+          </View>
           {ingredients.map((ing, i) => (
-            <IngredientRow key={i} ingredient={ing} />
+            <IngredientRow
+              key={i}
+              ingredient={ing}
+              addMode={addMode}
+              isAdded={sessionAdded?.has(`${index}-${i}`) ?? false}
+              onAdd={() => onAdd?.(`${index}-${i}`, formatForList(ing))}
+            />
           ))}
         </View>
       )}
@@ -373,7 +442,10 @@ const RecipeDetailScreen = () => {
   const router = useRouter()
   const { t } = useTranslation()
   const { recipes, isLoading, error } = useRecipes()
+  const { addItems } = useShoppingList()
   const [keepScreenOn, setKeepScreenOn] = useState(false)
+  const [addMode, setAddMode] = useState(false)
+  const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const insets = useSafeAreaInsets()
 
   useEffect(() => {
@@ -401,6 +473,24 @@ const RecipeDetailScreen = () => {
     router.push({ pathname: '/recipe/[id]/edit', params: { id: recipeId } })
   }, [router, recipeId])
 
+  const handleAddIngredient = useCallback(
+    (key: string, text: string) => {
+      addItems.mutate([text])
+      setSessionAdded((prev) => new Set([...prev, key]))
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    },
+    [addItems],
+  )
+
+  const handleAddAll = useCallback(
+    (keys: string[], texts: string[]) => {
+      addItems.mutate(texts)
+      setSessionAdded((prev) => new Set([...prev, ...keys]))
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    },
+    [addItems],
+  )
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerTransparent: true,
@@ -408,6 +498,14 @@ const RecipeDetailScreen = () => {
       headerShadowVisible: false,
       headerRight: () => (
         <View style={styles.headerBtns}>
+          <Pressable
+            onPress={() => setAddMode((prev) => !prev)}
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('shoppingList.addToList')}
+            accessibilityRole="button"
+          >
+            <Feather name="shopping-cart" size={20} color={addMode ? colors.blue : colors.secondaryLabel} />
+          </Pressable>
           <Pressable
             onPress={handleEdit}
             style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
@@ -420,7 +518,7 @@ const RecipeDetailScreen = () => {
         </View>
       ),
     })
-  }, [navigation, handleEdit, recipe, t])
+  }, [navigation, handleEdit, addMode, recipe, t])
 
   if (isLoading) {
     return (
@@ -529,6 +627,10 @@ const RecipeDetailScreen = () => {
               component={component}
               index={i}
               recipe={recipe}
+              addMode={addMode}
+              sessionAdded={sessionAdded}
+              onAdd={handleAddIngredient}
+              onAddAll={handleAddAll}
             />
           ))}
         </View>
@@ -625,6 +727,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 8,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  addAllText: { fontSize: 13, color: colors.blue },
+  addAllDone: { color: colors.green },
   ingredientRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -632,6 +741,7 @@ const styles = StyleSheet.create({
   },
   bullet: { color: colors.tertiaryLabel, marginRight: 8, marginTop: 1 },
   ingredientText: { flex: 1, fontSize: 17, color: colors.label, lineHeight: 22 },
+  addIngredientBtn: { marginLeft: 8, marginTop: 2 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
   stepNum: {
     fontSize: 16,
