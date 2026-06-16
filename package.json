@@ -11,10 +11,5 @@
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {
     "concurrently": "^10.0.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "@internationalized/date": "3.12.2"
-    }
   }
 }
