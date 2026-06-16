@@ -8,7 +8,13 @@ export default function ShoppingTab() {
 
   return (
     <>
-      <Stack.Screen options={{ title: t('nav.shopping'), headerRight: () => <BellMenu /> }} />
+      <Stack.Screen
+        options={{
+          title: t('nav.shopping'),
+          headerRight: () => <BellMenu />,
+          headerBlurEffect: 'systemMaterial',
+        }}
+      />
       <ShoppingListScreen />
     </>
   )

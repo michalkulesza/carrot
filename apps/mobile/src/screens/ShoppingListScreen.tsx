@@ -72,6 +72,9 @@ const PresenceBar = ({ users, currentUserId }: { users: PresenceUser[]; currentU
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  // DraggableFlatList's gesture-handler wrapping breaks the native
+  // contentInsetAdjustmentBehavior mechanism — set the inset manually instead.
+  const navBarInset = insets.top + 44
 
   const {
     incompleteItems,
@@ -335,7 +338,10 @@ const ShoppingListScreen = () => {
       onDragEnd={({ data }) => reorder.mutate(data.map((i) => i.id))}
       ListHeaderComponent={ListHeader}
       ListFooterComponent={ListFooter}
-      contentInsetAdjustmentBehavior="automatic"
+      contentInsetAdjustmentBehavior="never"
+      contentInset={{ top: navBarInset }}
+      contentOffset={{ x: 0, y: -navBarInset }}
+      scrollIndicatorInsets={{ top: navBarInset }}
       contentContainerStyle={styles.listContent}
       ListEmptyComponent={
         completedItems.length === 0 ? (
