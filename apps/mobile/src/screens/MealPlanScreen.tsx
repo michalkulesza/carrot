@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Dimensions,
   FlatList,
+  Image,
   LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
@@ -29,6 +30,7 @@ import { toYYYYMM, toISODate, formatWeekdayShort, formatMonthYear } from '@plate
 import { getToken } from '../api/client'
 import BellMenu from '../components/BellMenu'
 import { colors } from '../theme/colors'
+import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 180
@@ -91,28 +93,36 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   }, [onClose])
 
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<RecipeOut>) => (
-      <Pressable
-        style={({ pressed }) => [
-          styles.pickerItem,
-          item.id === currentRecipeId && styles.pickerItemActive,
-          pressed && { opacity: 0.7 },
-        ]}
-        onPress={() => {
-          setSearch('')
-          onPick(item.id)
-        }}
-        accessibilityLabel={item.title}
-        accessibilityRole="button"
-      >
-        <Text
-          style={[styles.pickerItemText, item.id === currentRecipeId && styles.pickerItemTextActive]}
-          numberOfLines={2}
+    ({ item }: ListRenderItemInfo<RecipeOut>) => {
+      const thumbUri = proxyThumbnailUrl(item.thumbnail_url)
+      return (
+        <Pressable
+          style={({ pressed }) => [
+            styles.pickerItem,
+            item.id === currentRecipeId && styles.pickerItemActive,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={() => {
+            setSearch('')
+            onPick(item.id)
+          }}
+          accessibilityLabel={item.title}
+          accessibilityRole="button"
         >
-          {item.title}
-        </Text>
-      </Pressable>
-    ),
+          {thumbUri ? (
+            <Image source={{ uri: thumbUri }} style={styles.pickerItemThumb} resizeMode="cover" />
+          ) : (
+            <View style={styles.pickerItemThumbPlaceholder} />
+          )}
+          <Text
+            style={[styles.pickerItemText, item.id === currentRecipeId && styles.pickerItemTextActive]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+        </Pressable>
+      )
+    },
     [currentRecipeId, onPick],
   )
 
@@ -185,6 +195,7 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   const { t, i18n } = useTranslation()
   const weekday = formatWeekdayShort(date, i18n.language)
   const dayLabel = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(date)
+  const thumbUri = entry ? proxyThumbnailUrl(entry.recipe.thumbnail_url) : null
 
   return (
     <Pressable
@@ -206,13 +217,21 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
           <Text style={styles.dayRowEmpty}>{t('mealPlan.addDish')}</Text>
         )}
       </View>
+      {entry && (
+        thumbUri ? (
+          <Image source={{ uri: thumbUri }} style={styles.dayRowThumb} resizeMode="cover" />
+        ) : (
+          <View style={styles.dayRowThumbPlaceholder} />
+        )
+      )}
     </Pressable>
   )
 }, (prev, next) =>
   prev.isToday === next.isToday &&
   prev.onPress === next.onPress &&
   prev.date === next.date &&
-  prev.entry?.recipe.id === next.entry?.recipe.id
+  prev.entry?.recipe.id === next.entry?.recipe.id &&
+  prev.entry?.recipe.thumbnail_url === next.entry?.recipe.thumbnail_url
 )
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
@@ -576,6 +595,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.opaqueSeparator,
   },
+  // day row thumbnail
+  dayRowThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  dayRowThumbPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    marginLeft: 12,
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
+  },
   // picker bottom sheet
   sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
   sheetHandle: { backgroundColor: PlatformColor('systemGray3') as unknown as string },
@@ -604,13 +637,27 @@ const styles = StyleSheet.create({
   removeButtonText: { color: PlatformColor('systemRed') as unknown as string, fontWeight: '500', fontSize: 16 },
   pickerList: { flex: 1 },
   pickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 10,
+    gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: PlatformColor('separator') as unknown as string,
   },
+  pickerItemThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+  },
+  pickerItemThumbPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
+  },
   pickerItemActive: { backgroundColor: colors.brandLight },
-  pickerItemText: { fontSize: 16, color: PlatformColor('label') as unknown as string },
+  pickerItemText: { flex: 1, fontSize: 16, color: PlatformColor('label') as unknown as string },
   pickerItemTextActive: { color: colors.brand, fontWeight: '600' },
   pickerEmpty: { flex: 1, padding: 40, alignItems: 'center' },
   pickerEmptyText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, textAlign: 'center' },
