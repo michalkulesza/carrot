@@ -485,9 +485,6 @@ const MealPlanScreen = () => {
   )
 
   const pickerDateStr = pickerDate ? toISODate(pickerDate) : ''
-  const pickerCurrentRecipeId = pickerDate
-    ? (entriesByDate.get(pickerDateStr)?.recipe.id ?? null)
-    : null
 
   return (
     <View style={styles.container}>
@@ -536,7 +533,7 @@ const MealPlanScreen = () => {
 
       <RecipePicker
         ref={pickerRef}
-        currentRecipeId={pickerCurrentRecipeId}
+        currentRecipeId={null}
         recipes={recipes}
         onPick={handlePickRecipe}
         onRemove={handleRemoveEntry}
