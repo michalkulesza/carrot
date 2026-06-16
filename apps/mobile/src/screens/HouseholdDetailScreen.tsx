@@ -104,7 +104,7 @@ const HouseholdDetailScreen = () => {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
     >
-      <Stack.Screen options={{ title: name.trim() || initialTitle || householdId }} />
+      <Stack.Screen options={{ title: '' }} />
       {/* Name */}
       <Text style={styles.sectionHeader}>{t('settings.nameLabel')}</Text>
       <View style={styles.card}>

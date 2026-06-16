@@ -254,7 +254,6 @@ const MealPlanScreen = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: t('nav.mealPlan'),
       headerRight: () => (
         <View style={styles.headerRight}>
           <Pressable

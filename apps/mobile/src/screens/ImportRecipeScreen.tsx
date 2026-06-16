@@ -1065,20 +1065,10 @@ const ImportRecipeScreen = () => {
   useLayoutEffect(() => {
     if (editable) {
       navigation.setOptions({
-        title: t('addRecipe.editRecipe'),
         headerLeft: undefined,
       })
     } else if (mode) {
-      const modeTitle: Record<ImportMode, string> = {
-        url: t('addRecipe.fromUrl'),
-        camera: t('addRecipe.methodCamera'),
-        gallery: t('addRecipe.methodGallery'),
-        text: t('addRecipe.fromText'),
-        share: t('addRecipe.methodShare'),
-        scratch: t('addRecipe.methodScratch'),
-      }
       navigation.setOptions({
-        title: modeTitle[mode],
         headerLeft: () => (
           <Pressable
             onPress={() => { reset(); setMode(null) }}
@@ -1092,7 +1082,6 @@ const ImportRecipeScreen = () => {
       })
     } else {
       navigation.setOptions({
-        title: t('addRecipe.addRecipe'),
         headerLeft: undefined,
       })
     }

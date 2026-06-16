@@ -440,7 +440,7 @@ const SettingsScreen = () => {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
     >
-      <Stack.Screen options={{ title: t('settings.title') }} />
+      <Stack.Screen options={{ title: '' }} />
       {/* Stats */}
       <SectionHeader label={t('settings.stats')} />
       <StatsSection />
