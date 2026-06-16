@@ -254,18 +254,21 @@ const MealPlanScreen = () => {
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      title: t('nav.mealPlan'),
+      headerTitleAlign: 'center',
       headerRight: () => (
         <View style={styles.headerRight}>
           <Pressable
             onPress={handleExportPdf}
             disabled={exporting}
+            hitSlop={8}
             style={({ pressed }) => [styles.exportBtn, pressed && { opacity: 0.7 }]}
             accessibilityLabel={t('shoppingList.exportPdf')}
             accessibilityRole="button"
           >
-            <Text style={[styles.exportBtnText, exporting && styles.exportBtnTextDisabled]}>
-              {exporting ? t('shoppingList.exporting') : t('shoppingList.exportPdf')}
-            </Text>
+            {exporting
+              ? <ActivityIndicator size="small" color={colors.secondaryLabel} />
+              : <Feather name="printer" size={22} color={colors.secondaryLabel} />}
           </Pressable>
           <BellModal />
         </View>
@@ -484,9 +487,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  exportBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  exportBtnText: { fontSize: 13, color: colors.brand, fontWeight: '600' },
-  exportBtnTextDisabled: { color: colors.brandLight },
+  exportBtn: { padding: 4 },
   list: { flex: 1 },
   listContent: {},
   monthRow: {

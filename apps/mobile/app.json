@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "PlateKeeper",
-    "slug": "platekeeper",
+    "slug": "mobile",
     "scheme": "platekeeper",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -18,7 +18,8 @@
       "bundleIdentifier": "com.kulesza.platekeeper",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -47,6 +48,7 @@
       "eas": {
         "projectId": "d8507eab-05ed-4623-9f23-1114227f11a8"
       }
-    }
+    },
+    "owner": "xxcuzzme"
   }
 }

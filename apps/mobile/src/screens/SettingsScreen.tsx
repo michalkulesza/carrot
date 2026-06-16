@@ -444,7 +444,7 @@ const SettingsScreen = () => {
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen options={{ title: '' }} />
+      <Stack.Screen options={{ title: t('nav.settings') }} />
       {/* Stats */}
       <SectionHeader label={t('settings.stats')} />
       <StatsSection />
