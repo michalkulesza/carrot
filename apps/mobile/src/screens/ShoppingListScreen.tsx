@@ -331,29 +331,35 @@ const ShoppingListScreen = () => {
   }
 
   return (
-    <DraggableFlatList
-      data={incompleteItems}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItem}
-      onDragEnd={({ data }) => reorder.mutate(data.map((i) => i.id))}
-      ListHeaderComponent={ListHeader}
-      ListFooterComponent={ListFooter}
-      contentInsetAdjustmentBehavior="never"
-      scrollIndicatorInsets={{ top: navBarInset }}
-      contentContainerStyle={[styles.listContent, { paddingTop: navBarInset }]}
-      ListEmptyComponent={
-        completedItems.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Feather name="shopping-cart" size={44} color={colors.gray3} />
-            <Text style={styles.emptyText}>{t('shoppingList.emptyList')}</Text>
-          </View>
-        ) : null
-      }
-    />
+    <View style={styles.screen}>
+      <DraggableFlatList
+        data={incompleteItems}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        onDragEnd={({ data }) => reorder.mutate(data.map((i) => i.id))}
+        ListHeaderComponent={ListHeader}
+        ListFooterComponent={ListFooter}
+        contentInsetAdjustmentBehavior="never"
+        scrollIndicatorInsets={{ top: navBarInset }}
+        contentContainerStyle={[styles.listContent, { paddingTop: navBarInset }]}
+        ListEmptyComponent={
+          completedItems.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Feather name="shopping-cart" size={44} color={colors.gray3} />
+              <Text style={styles.emptyText}>{t('shoppingList.emptyList')}</Text>
+            </View>
+          ) : null
+        }
+      />
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   center: {
     flex: 1,
     justifyContent: 'center',
