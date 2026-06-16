@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,7 +13,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
@@ -42,7 +42,6 @@ type ListItem =
 // ─── RecipePicker bottom sheet ──────────────────────────────────────────────
 
 interface RecipePickerProps {
-  visible: boolean
   currentRecipeId: string | null
   recipes: RecipeOut[]
   onPick: (recipeId: string) => void
@@ -50,27 +49,35 @@ interface RecipePickerProps {
   onClose: () => void
 }
 
+export interface RecipePickerHandle {
+  present: () => void
+  dismiss: () => void
+}
+
 const SNAP_POINTS = ['60%']
 
-const RecipePicker = ({
-  visible,
+const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   currentRecipeId,
   recipes,
   onPick,
   onRemove,
   onClose,
-}: RecipePickerProps) => {
+}, ref) => {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const sheetRef = useRef<BottomSheetModal>(null)
 
-  useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present()
-    } else {
-      sheetRef.current?.dismiss()
-    }
-  }, [visible])
+  useImperativeHandle(ref, () => ({
+    present: () => sheetRef.current?.present(),
+    dismiss: () => sheetRef.current?.dismiss(),
+  }))
+
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
+    ),
+    [],
+  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -113,8 +120,10 @@ const RecipePicker = ({
     <BottomSheetModal
       ref={sheetRef}
       snapPoints={SNAP_POINTS}
+      enableDynamicSizing={false}
       enablePanDownToClose
       onDismiss={handleClose}
+      backdropComponent={renderBackdrop}
       backgroundStyle={styles.sheetBackground}
       handleIndicatorStyle={styles.sheetHandle}
     >
@@ -161,7 +170,7 @@ const RecipePicker = ({
       )}
     </BottomSheetModal>
   )
-}
+})
 
 // ─── Day row ────────────────────────────────────────────────────────────────
 
@@ -376,8 +385,11 @@ const MealPlanScreen = () => {
     [items, offsets],
   )
 
+  const pickerRef = useRef<RecipePickerHandle>(null)
+
   const handleDayPress = useCallback((date: Date) => {
     setPickerDate(date)
+    pickerRef.current?.present()
   }, [])
 
   const handlePickRecipe = useCallback(
@@ -385,6 +397,7 @@ const MealPlanScreen = () => {
       if (!pickerDate) return
       setEntry.mutate({ date: toISODate(pickerDate), recipeId })
       setPickerDate(null)
+      pickerRef.current?.dismiss()
     },
     [pickerDate, setEntry],
   )
@@ -393,6 +406,7 @@ const MealPlanScreen = () => {
     if (!pickerDate) return
     deleteEntry.mutate(toISODate(pickerDate))
     setPickerDate(null)
+    pickerRef.current?.dismiss()
   }, [pickerDate, deleteEntry])
 
   const handleClosePicker = useCallback(() => {
@@ -475,7 +489,7 @@ const MealPlanScreen = () => {
       </Modal>
 
       <RecipePicker
-        visible={pickerDate !== null}
+        ref={pickerRef}
         currentRecipeId={pickerCurrentRecipeId}
         recipes={recipes}
         onPick={handlePickRecipe}
