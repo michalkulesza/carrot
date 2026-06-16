@@ -34,9 +34,10 @@ import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window')
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 const HERO_HEIGHT = 280
+const CARD_OVERLAP = 24
 
 const extractDisplayUrl = (url: string) => {
   try {
@@ -450,94 +451,117 @@ const RecipeDetailScreen = () => {
     )
   }
 
+  const hasImage = !!recipe.thumbnail_url
+
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
-      contentInsetAdjustmentBehavior="never"
-    >
-      {recipe.thumbnail_url ? (
+    <View style={styles.container}>
+      {hasImage && (
         <Image
-          source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url)! }}
+          source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url!)! }}
           style={styles.heroImage}
           accessibilityLabel={recipe.title}
           resizeMode="cover"
         />
-      ) : (
-        <View style={[styles.heroPlaceholder, { height: insets.top + 56 }]} />
       )}
 
-      <View style={styles.body}>
-        <Text style={styles.title}>{recipe.title}</Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
+        contentInsetAdjustmentBehavior="never"
+      >
+        {/* transparent spacer so card starts over the image */}
+        <View style={hasImage ? styles.heroSpacer : { height: insets.top + 56 }} />
 
-        {recipe.tags.length > 0 && (
-          <View style={styles.tagRow}>
-            {recipe.tags.map((tag) => (
-              <View key={tag.id} style={styles.tag}>
-                <Text style={styles.tagText}>{tTag(tag.name, t)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <View style={[styles.card, !hasImage && styles.cardNoRound]}>
+          <Text style={styles.title}>{recipe.title}</Text>
 
-        <View style={styles.metaRow}>
-          {recipe.servings != null && (
-            <Text style={styles.metaItem}>
-              {t('recipes.serves')}: {recipe.servings}
-            </Text>
+          {recipe.tags.length > 0 && (
+            <View style={styles.tagRow}>
+              {recipe.tags.map((tag) => (
+                <View key={tag.id} style={styles.tag}>
+                  <Text style={styles.tagText}>{tTag(tag.name, t)}</Text>
+                </View>
+              ))}
+            </View>
           )}
-          {recipe.kcal_per_serving != null && (
-            <Text style={styles.metaItem}>
-              {recipe.kcal_per_serving} {t('recipes.kcalPerServing')}
-            </Text>
-          )}
-        </View>
 
-        {recipe.source_url ? (
-          <Pressable
-            onPress={() => void Linking.openURL(recipe.source_url!)}
-            style={({ pressed }) => [styles.sourceRow, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('recipes.source')}
-            accessibilityRole="link"
-          >
-            <Feather name="link" size={13} color={colors.blue} style={styles.sourceIcon} />
-            <Text style={styles.sourceText} numberOfLines={1}>
-              {extractDisplayUrl(recipe.source_url)}
-            </Text>
-          </Pressable>
-        ) : null}
-
-        <View style={styles.keepScreenRow}>
-          <Text style={styles.keepScreenLabel}>{t('settings.keepScreenOnDefault')}</Text>
-          <Switch
-            value={keepScreenOn}
-            onValueChange={handleToggleKeepScreenOn}
-            accessibilityLabel={t('settings.keepScreenOnDefault')}
-          />
-        </View>
-
-        {recipe.notes ? (
-          <View style={styles.notesBlock}>
-            <Text style={styles.sectionLabel}>{t('recipes.notes')}</Text>
-            <Text style={styles.notesText}>{recipe.notes}</Text>
+          <View style={styles.metaRow}>
+            {recipe.servings != null && (
+              <Text style={styles.metaItem}>
+                {t('recipes.serves')}: {recipe.servings}
+              </Text>
+            )}
+            {recipe.kcal_per_serving != null && (
+              <Text style={styles.metaItem}>
+                {recipe.kcal_per_serving} {t('recipes.kcalPerServing')}
+              </Text>
+            )}
           </View>
-        ) : null}
 
-        {recipe.components.map((component, i) => (
-          <ComponentSection
-            key={i}
-            component={component}
-            index={i}
-            recipe={recipe}
-          />
-        ))}
-      </View>
-    </ScrollView>
+          {recipe.source_url ? (
+            <Pressable
+              onPress={() => void Linking.openURL(recipe.source_url!)}
+              style={({ pressed }) => [styles.sourceRow, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={t('recipes.source')}
+              accessibilityRole="link"
+            >
+              <Feather name="link" size={13} color={colors.blue} style={styles.sourceIcon} />
+              <Text style={styles.sourceText} numberOfLines={1}>
+                {extractDisplayUrl(recipe.source_url)}
+              </Text>
+            </Pressable>
+          ) : null}
+
+          <View style={styles.keepScreenRow}>
+            <Text style={styles.keepScreenLabel}>{t('settings.keepScreenOnDefault')}</Text>
+            <Switch
+              value={keepScreenOn}
+              onValueChange={handleToggleKeepScreenOn}
+              accessibilityLabel={t('settings.keepScreenOnDefault')}
+            />
+          </View>
+
+          {recipe.notes ? (
+            <View style={styles.notesBlock}>
+              <Text style={styles.sectionLabel}>{t('recipes.notes')}</Text>
+              <Text style={styles.notesText}>{recipe.notes}</Text>
+            </View>
+          ) : null}
+
+          {recipe.components.map((component, i) => (
+            <ComponentSection
+              key={i}
+              component={component}
+              index={i}
+              recipe={recipe}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  heroImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: HERO_HEIGHT,
+  },
+  scroll: { flex: 1, backgroundColor: 'transparent' },
+  heroSpacer: { height: HERO_HEIGHT - CARD_OVERLAP },
+  card: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    minHeight: SCREEN_HEIGHT - (HERO_HEIGHT - CARD_OVERLAP),
+  },
+  cardNoRound: { borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   center: {
     flex: 1,
     justifyContent: 'center',
@@ -547,9 +571,6 @@ const styles = StyleSheet.create({
   errorText: { color: colors.red, fontSize: 16, textAlign: 'center' },
   headerBtns: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4, marginRight: 4 },
-  heroImage: { width: '100%', height: HERO_HEIGHT },
-  heroPlaceholder: { width: '100%', backgroundColor: colors.background },
-  body: { paddingHorizontal: 16, paddingTop: 16 },
   title: {
     fontSize: 28,
     fontWeight: '700',
