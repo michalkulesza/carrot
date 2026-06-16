@@ -2,6 +2,12 @@ import '../src/i18n'
 import { useEffect } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import * as Sentry from '@sentry/react-native'
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  tracesSampleRate: 1.0,
+})
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { I18nextProvider } from 'react-i18next'
 import i18n from '../src/i18n'
@@ -49,7 +55,7 @@ function RootLayoutNav() {
   )
 }
 
-export default function RootLayout() {
+const RootLayout = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
@@ -70,6 +76,8 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
+export default Sentry.wrap(RootLayout)
 
 const styles = StyleSheet.create({
   loadingOverlay: {
