@@ -18,6 +18,8 @@ import { useTranslation } from 'react-i18next'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { MenuView } from '@react-native-menu/menu'
+import { useAppearanceMode, type AppearanceMode } from '../context/ColorSchemeContext'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
 import { useApiClient } from '@platekeeper/shared/api/context'
@@ -43,6 +45,12 @@ const WEEK_START_OPTIONS: { value: number; labelKey: string }[] = [
   { value: 0, labelKey: 'settings.sunday' },
   { value: 1, labelKey: 'settings.monday' },
   { value: 6, labelKey: 'settings.saturday' },
+]
+
+const APPEARANCE_OPTIONS: { value: AppearanceMode; labelKey: string }[] = [
+  { value: 'system', labelKey: 'settings.appearanceSystem' },
+  { value: 'light', labelKey: 'settings.appearanceLight' },
+  { value: 'dark', labelKey: 'settings.appearanceDark' },
 ]
 
 const ALLERGEN_KEYS = [
@@ -380,6 +388,8 @@ const SettingsScreen = () => {
     [update],
   )
 
+  const { mode: appearanceMode, setMode: setAppearanceMode } = useAppearanceMode()
+
   const handleLanguagePicker = useCallback(() => {
     const labels = LANGUAGES.map(({ labelKey }) => t(labelKey))
     ActionSheetIOS.showActionSheetWithOptions(
@@ -517,6 +527,31 @@ const SettingsScreen = () => {
                 <Text style={styles.pickerChevron}>›</Text>
               </View>
             </Pressable>
+          </View>
+
+          {/* Appearance */}
+          <View style={styles.card}>
+            <MenuView
+              title={t('settings.appearance')}
+              onPressAction={({ nativeEvent }) => {
+                setAppearanceMode(nativeEvent.event as AppearanceMode)
+              }}
+              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
+                id: value,
+                title: t(labelKey),
+                state: appearanceMode === value ? 'on' : 'off',
+              }))}
+            >
+              <View style={styles.pickerRow}>
+                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
+                <View style={styles.pickerRight}>
+                  <Text style={styles.pickerValue}>
+                    {t(APPEARANCE_OPTIONS.find(o => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem')}
+                  </Text>
+                  <Text style={styles.pickerChevron}>›</Text>
+                </View>
+              </View>
+            </MenuView>
           </View>
 
           {/* Unit system */}

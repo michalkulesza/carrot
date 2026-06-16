@@ -18,6 +18,7 @@ import { AuthProvider, useAuth } from '../src/context/AuthContext'
 import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
 import { TimerProvider } from '../src/context/TimerContext'
 import { HouseholdProvider } from '../src/context/HouseholdContext'
+import { ColorSchemeProvider } from '../src/context/ColorSchemeContext'
 import { mobileClient } from '../src/api/client'
 
 const queryClient = new QueryClient()
@@ -60,21 +61,23 @@ function RootLayoutNav() {
 const RootLayout = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <I18nextProvider i18n={i18n}>
-          <ApiClientProvider client={mobileClient}>
-            <AuthProvider>
-              <NotificationHistoryProvider>
-                <TimerProvider>
-                  <HouseholdProvider>
-                    <RootLayoutNav />
-                  </HouseholdProvider>
-                </TimerProvider>
-              </NotificationHistoryProvider>
-            </AuthProvider>
-          </ApiClientProvider>
-        </I18nextProvider>
-      </QueryClientProvider>
+      <ColorSchemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <I18nextProvider i18n={i18n}>
+            <ApiClientProvider client={mobileClient}>
+              <AuthProvider>
+                <NotificationHistoryProvider>
+                  <TimerProvider>
+                    <HouseholdProvider>
+                      <RootLayoutNav />
+                    </HouseholdProvider>
+                  </TimerProvider>
+                </NotificationHistoryProvider>
+              </AuthProvider>
+            </ApiClientProvider>
+          </I18nextProvider>
+        </QueryClientProvider>
+      </ColorSchemeProvider>
     </GestureHandlerRootView>
   )
 }
