@@ -765,7 +765,6 @@ const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }
   const { t } = useTranslation()
   return (
     <View style={styles.pickerWrap}>
-      <Text style={styles.pickerHeading}>{t('addRecipe.chooseMethod')}</Text>
       <View style={styles.pickerGroup}>
         {METHODS.map((method, mi) => (
           <Pressable
@@ -1476,15 +1475,6 @@ const styles = StyleSheet.create({
 
   // Method picker
   pickerWrap: { paddingTop: 8, paddingHorizontal: 16, gap: 12 },
-  pickerHeading: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: PlatformColor('secondaryLabel') as unknown as string,
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    marginBottom: 4,
-    marginLeft: 4,
-  },
   pickerGroup: {
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     borderRadius: 12,
