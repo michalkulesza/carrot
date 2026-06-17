@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ComponentProps } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -806,11 +807,13 @@ const QuickUrlInputRow = ({
 
 // ── MethodPickerView ───────────────────────────────────────────────────────────
 
-const METHODS = [
-  { key: 'camera' as ImportMode, icon: '📷', titleKey: 'addRecipe.methodCamera', descKey: 'addRecipe.methodCameraDesc', iconBg: PlatformColor('systemOrange') },
-  { key: 'gallery' as ImportMode, icon: '🖼', titleKey: 'addRecipe.methodGallery', descKey: 'addRecipe.methodGalleryDesc', iconBg: PlatformColor('systemGreen') },
-  { key: 'text' as ImportMode, icon: '📋', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc', iconBg: colors.brand },
-  { key: 'scratch' as ImportMode, icon: '✏️', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc', iconBg: PlatformColor('systemPink') },
+type FeatherIconName = ComponentProps<typeof Feather>['name']
+
+const METHODS: { key: ImportMode; icon: FeatherIconName; titleKey: string; descKey: string }[] = [
+  { key: 'camera', icon: 'camera', titleKey: 'addRecipe.methodCamera', descKey: 'addRecipe.methodCameraDesc' },
+  { key: 'gallery', icon: 'image', titleKey: 'addRecipe.methodGallery', descKey: 'addRecipe.methodGalleryDesc' },
+  { key: 'text', icon: 'clipboard', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc' },
+  { key: 'scratch', icon: 'edit-3', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc' },
 ]
 
 const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }) => {
@@ -830,8 +833,8 @@ const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }
             accessibilityLabel={t(method.titleKey)}
             accessibilityHint={t(method.descKey)}
           >
-            <View style={[styles.methodIconWrap, { backgroundColor: method.iconBg as unknown as string }]}>
-              <Text style={styles.methodIcon}>{method.icon}</Text>
+            <View style={styles.methodIconWrap}>
+              <Feather name={method.icon} size={20} color={colors.blue} />
             </View>
             <View style={styles.methodTextWrap}>
               <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
@@ -1571,8 +1574,8 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
   },
-  methodIcon: { fontSize: 20 },
   methodTextWrap: { flex: 1 },
   methodTitle: {
     fontSize: 16,
