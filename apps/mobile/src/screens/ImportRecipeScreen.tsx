@@ -793,7 +793,7 @@ const QuickUrlInputRow = ({
         </Pressable>
       </View>
       <Pressable
-        style={({ pressed }) => [styles.primaryBtn, !url.trim() && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [styles.primaryBtn, styles.accentBtn, !url.trim() && styles.btnDisabled, pressed && { opacity: 0.7 }]}
         onPress={onImport}
         disabled={!url.trim()}
         accessibilityLabel={t('addRecipe.import')}
@@ -1598,13 +1598,13 @@ const styles = StyleSheet.create({
   urlInputGroup: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   urlInput: {
     flex: 1,
+    height: 44,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 11,
     fontSize: 16,
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    backgroundColor: PlatformColor('systemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
   },
   pasteBtn: {
@@ -1626,7 +1626,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    backgroundColor: PlatformColor('systemBackground') as unknown as string,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1726,6 +1726,7 @@ const styles = StyleSheet.create({
     minHeight: 46,
   },
   primaryBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  accentBtn: { backgroundColor: PlatformColor('systemBlue') as unknown as string },
   btnDisabled: { opacity: 0.4 },
 
   // Editable view
