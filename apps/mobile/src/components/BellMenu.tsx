@@ -75,29 +75,33 @@ const BellMenu = () => {
     }
 
     for (const notif of notifHistory) {
-      if (notif.type === 'recipe_importing') {
-        items.push({
-          id: `recipe-importing-${notif.id}`,
-          title: notif.title,
-          subtitle: notif.body,
-          image: 'arrow.down.circle',
-          attributes: { disabled: true },
-        })
-      } else if (notif.type === 'recipe_imported') {
-        items.push({
-          id: `recipe-imported-${notif.id}`,
-          title: notif.title,
-          subtitle: notif.body,
-          image: 'checkmark.circle.fill',
-        })
-      } else if (notif.type === 'recipe_failed') {
-        items.push({
-          id: `recipe-failed-${notif.id}`,
-          title: notif.title,
-          subtitle: notif.body,
-          image: 'xmark.circle.fill',
-          attributes: { destructive: true },
-        })
+      switch (notif.type) {
+        case 'recipe_importing':
+          items.push({
+            id: `recipe-importing-${notif.id}`,
+            title: notif.title,
+            subtitle: notif.body,
+            image: 'arrow.down.circle',
+            attributes: { disabled: true },
+          })
+          break
+        case 'recipe_imported':
+          items.push({
+            id: `recipe-imported-${notif.id}`,
+            title: notif.title,
+            subtitle: notif.body,
+            image: 'checkmark.circle.fill',
+          })
+          break
+        case 'recipe_failed':
+          items.push({
+            id: `recipe-failed-${notif.id}`,
+            title: notif.title,
+            subtitle: notif.body,
+            image: 'xmark.circle.fill',
+            attributes: { destructive: true },
+          })
+          break
       }
     }
 
@@ -116,56 +120,70 @@ const BellMenu = () => {
   const handleAction = useCallback(
     async ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       const id = nativeEvent.event
-      if (id.startsWith('timer-pause-')) {
-        pauseTimer(id.slice('timer-pause-'.length))
-      } else if (id.startsWith('timer-resume-')) {
-        resumeTimer(id.slice('timer-resume-'.length))
-      } else if (id.startsWith('timer-goto-')) {
-        const timerId = id.slice('timer-goto-'.length)
-        const t = [...timers.values()].find((t) => t.id === timerId)
-        if (t) router.push(`/recipe/${t.recipeId}`)
-      } else if (id.startsWith('timer-cancel-')) {
-        cancelTimer(id.slice('timer-cancel-'.length))
-      } else if (id.startsWith('inv-accept-')) {
-        try {
-          await api.acceptInvitation(id.slice('inv-accept-'.length))
-          refetchInvitations()
-          refetchHouseholds()
-        } catch (e) {
-          Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+      // Split "namespace-action-payload" → key = "namespace-action", payload = rest
+      const sep = id.indexOf('-', id.indexOf('-') + 1)
+      const key = sep === -1 ? id : id.slice(0, sep)
+      const payload = sep === -1 ? '' : id.slice(sep + 1)
+
+      switch (key) {
+        case 'timer-pause':
+          pauseTimer(payload)
+          break
+        case 'timer-resume':
+          resumeTimer(payload)
+          break
+        case 'timer-goto': {
+          const timer = [...timers.values()].find((ti) => ti.id === payload)
+          if (timer) router.push(`/recipe/${timer.recipeId}`)
+          break
         }
-      } else if (id.startsWith('inv-decline-')) {
-        try {
-          await api.declineInvitation(id.slice('inv-decline-'.length))
-          refetchInvitations()
-        } catch {
-          // ignore
-        }
-      } else if (id.startsWith('recipe-imported-')) {
-        const notifId = id.slice('recipe-imported-'.length)
-        const notif = notifHistory.find((n) => n.id === notifId)
-        if (notif?.recipe_id) {
-          router.push(`/recipe/${notif.recipe_id}`)
-        }
-        dismissNotif(notifId)
-      } else if (id.startsWith('recipe-failed-')) {
-        const notifId = id.slice('recipe-failed-'.length)
-        const notif = notifHistory.find((n) => n.id === notifId)
-        if (notif?.job_kind && notif?.job_input) {
-          // Re-open import screen with the original input pre-filled
-          const kind = notif.job_kind
-          const inp = notif.job_input
-          if (kind === 'url' && inp.url) {
-            router.push(`/import-recipe?type=url&value=${encodeURIComponent(inp.url)}`)
-          } else if (kind === 'text' && inp.text) {
-            router.push(`/import-recipe?type=text&value=${encodeURIComponent(inp.text)}`)
-          } else {
-            router.push('/import-recipe')
+        case 'timer-cancel':
+          cancelTimer(payload)
+          break
+        case 'inv-accept':
+          try {
+            await api.acceptInvitation(payload)
+            refetchInvitations()
+            refetchHouseholds()
+          } catch (e) {
+            Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
           }
+          break
+        case 'inv-decline':
+          try {
+            await api.declineInvitation(payload)
+            refetchInvitations()
+          } catch {
+            // ignore
+          }
+          break
+        case 'recipe-imported': {
+          const notif = notifHistory.find((n) => n.id === payload)
+          if (notif?.recipe_id) router.push(`/recipe/${notif.recipe_id}`)
+          dismissNotif(payload)
+          break
         }
-        dismissNotif(notifId)
-      } else if (id === 'clear-history') {
-        clearNotifHistory()
+        case 'recipe-failed': {
+          const notif = notifHistory.find((n) => n.id === payload)
+          if (notif?.job_kind && notif?.job_input) {
+            const { job_kind: kind, job_input: inp } = notif
+            switch (kind) {
+              case 'url':
+                router.push(`/import-recipe?type=url&value=${encodeURIComponent(inp.url!)}`)
+                break
+              case 'text':
+                router.push(`/import-recipe?type=text&value=${encodeURIComponent(inp.text!)}`)
+                break
+              default:
+                router.push('/import-recipe')
+            }
+          }
+          dismissNotif(payload)
+          break
+        }
+        case 'clear-history':
+          clearNotifHistory()
+          break
       }
     },
     [timers, pauseTimer, resumeTimer, cancelTimer, api, refetchInvitations, refetchHouseholds, clearNotifHistory, dismissNotif, notifHistory, router, t],
