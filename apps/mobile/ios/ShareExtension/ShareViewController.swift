@@ -156,6 +156,9 @@ final class ShareViewController: UIViewController {
     // Recognized recipe + the original photo, kept around so Save can be retried on failure.
     private var pendingSave: (recipe: RecipeExtraction, thumbnailUrl: String?, imageBase64: String, mimeType: String, auth: SharedAuth)?
 
+    // Pending text/URL share — shown in the confirmation UI before opening the main app.
+    private var pendingOpenShare: (type: String, value: String)?
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
@@ -174,9 +177,9 @@ final class ShareViewController: UIViewController {
         handleSharedContent()
     }
 
-    // Many apps (Chrome, Instagram, Twitter/X) attach a URL alongside page/caption
-    // text and sometimes a thumbnail image in the same extension item. Scan every
-    // attachment for the best type instead of taking whatever the first one is.
+    // Scan every attachment for image or text content. Image takes precedence when both
+    // are present. Text shares are handled inline in the extension UI rather than
+    // immediately deep-linking, which caused the card to flash and disappear.
     private func handleSharedContent() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             NSLog("[ShareExtension] no input items")
@@ -189,19 +192,6 @@ final class ShareViewController: UIViewController {
             guard let providers = item.attachments else { continue }
             NSLog("[ShareExtension] item providers: \(providers.map { $0.registeredTypeIdentifiers })")
 
-            if let urlProvider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.url.identifier) }) {
-                NSLog("[ShareExtension] matched url provider")
-                urlProvider.loadItem(forTypeIdentifier: UTType.url.identifier) { [weak self] result, _ in
-                    let url = (result as? URL)?.absoluteString ?? (result as? String)
-                    if let value = url {
-                        self?.openApp(type: "url", value: value)
-                    } else {
-                        self?.complete()
-                    }
-                }
-                return
-            }
-
             if let imageProvider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.image.identifier) }) {
                 NSLog("[ShareExtension] matched image provider")
                 imageProvider.loadItem(forTypeIdentifier: UTType.image.identifier) { [weak self] result, _ in
@@ -211,17 +201,23 @@ final class ShareViewController: UIViewController {
             }
 
             if let textProvider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }) {
+                NSLog("[ShareExtension] matched text provider")
                 textProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier) { [weak self] result, _ in
+                    guard let self else { return }
                     guard let text = result as? String else {
-                        self?.complete()
+                        self.complete()
                         return
                     }
-                    // Some apps (Instagram, X) share a link as plain text rather than a proper URL attachment.
+                    // Some apps (Instagram, X) share a link as plain text — detect it and
+                    // route accordingly so the main app opens the correct import mode.
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if let url = URL(string: trimmed), let scheme = url.scheme, scheme.hasPrefix("http") {
-                        self?.openApp(type: "url", value: trimmed)
-                    } else {
-                        self?.openApp(type: "text", value: text)
+                    let isURL = URL(string: trimmed).flatMap { $0.scheme }.map { $0.hasPrefix("http") } ?? false
+                    let shareType = isURL ? "url" : "text"
+                    let shareValue = isURL ? trimmed : String(trimmed.prefix(2000))
+                    // Persist immediately as fallback for host apps that decline extensionContext.open().
+                    self.persistPendingShare(type: shareType, value: shareValue)
+                    DispatchQueue.main.async {
+                        self.showSharedText(isURL: isURL, shareType: shareType, shareValue: shareValue)
                     }
                 }
                 return
@@ -305,6 +301,24 @@ final class ShareViewController: UIViewController {
         }
     }
 
+    // MARK: Text/URL share confirmation UI
+
+    private func showSharedText(isURL: Bool, shareType: String, shareValue: String) {
+        pendingOpenShare = (type: shareType, value: shareValue)
+
+        spinner.stopAnimating()
+        spinner.isHidden = true
+        statusLabel.text = isURL ? "URL detected" : "Text detected"
+
+        let preview = shareValue.count > 120 ? String(shareValue.prefix(120)) + "…" : shareValue
+        detailLabel.text = preview
+        detailLabel.isHidden = false
+
+        saveButton.setTitle("Open in PlateKeeper", for: .normal)
+        saveButton.isEnabled = true
+        saveButton.isHidden = false
+    }
+
     // MARK: Rich recognize/save states (image shares with a valid shared auth only)
 
     private func showRecipeFound(_ recipe: RecipeExtraction, thumbnailUrl: String?, imageBase64: String, mimeType: String, auth: SharedAuth) {
@@ -332,6 +346,13 @@ final class ShareViewController: UIViewController {
     }
 
     @objc private func saveTapped() {
+        // Text/URL share — open the main app and let it handle the import.
+        if let pending = pendingOpenShare {
+            saveButton.isEnabled = false
+            openApp(type: pending.type, value: pending.value)
+            return
+        }
+
         guard let pending = pendingSave else { return }
         saveButton.isEnabled = false
         saveButton.setTitle("Saving…", for: .normal)
@@ -369,7 +390,7 @@ final class ShareViewController: UIViewController {
     }
 
     @objc private func doneTapped() {
-        // No recipe was found — the pending manifest is useless, clean it up.
+        // No recipe / user cancelled — clean up the pending manifest.
         cleanupAppGroupFiles()
         complete()
     }
