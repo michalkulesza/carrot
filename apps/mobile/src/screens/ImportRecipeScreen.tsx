@@ -19,7 +19,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
+import { Feather, Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
 import * as Notifications from 'expo-notifications'
@@ -1319,6 +1319,7 @@ const ImportRecipeScreen = () => {
           { text: t('addRecipe.openSettings'), onPress: () => Linking.openSettings() },
         ],
       )
+      setMode(null)
       return
     }
     const result = await ImagePicker.launchCameraAsync({
@@ -1328,6 +1329,8 @@ const ImportRecipeScreen = () => {
     })
     if (!result.canceled && result.assets[0]?.base64) {
       startImageImport(result.assets[0].base64, result.assets[0].mimeType ?? 'image/jpeg')
+    } else if (result.canceled) {
+      setMode(null)
     }
   }
 
@@ -1342,6 +1345,7 @@ const ImportRecipeScreen = () => {
           { text: t('addRecipe.openSettings'), onPress: () => Linking.openSettings() },
         ],
       )
+      setMode(null)
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -1351,6 +1355,8 @@ const ImportRecipeScreen = () => {
     })
     if (!result.canceled && result.assets[0]?.base64) {
       startImageImport(result.assets[0].base64, result.assets[0].mimeType ?? 'image/jpeg')
+    } else if (result.canceled) {
+      setMode(null)
     }
   }
 
@@ -1492,7 +1498,8 @@ const ImportRecipeScreen = () => {
 
         {/* Camera/Gallery loading state (no dedicated view, just progress) */}
         {(mode === 'camera' || mode === 'gallery') && !editable && (
-          <View style={styles.inputSection}>
+          <View style={styles.imageLoadingSection}>
+            <Ionicons name="image" size={80} color={PlatformColor('tertiaryLabel') as unknown as string} />
             {progressSteps.length > 0 && (
               <View style={styles.progressList}>
                 {progressSteps.map((s) => (
@@ -1534,7 +1541,7 @@ const ImportRecipeScreen = () => {
       </ScrollView>
 
       {/* Action bar */}
-      {(mode || editable) && (
+      {(editable || showImportBtn || showImportShareBtn || showExtractBtn) && (
         <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           {editable ? (
             <>
@@ -1680,6 +1687,7 @@ const styles = StyleSheet.create({
 
   // Input section (common wrapper for all input modes)
   inputSection: { padding: 16, gap: 12 },
+  imageLoadingSection: { padding: 16, gap: 16, alignItems: 'center', paddingTop: 60 },
 
   // URL input
   urlInputGroup: { flexDirection: 'row', gap: 8, alignItems: 'center' },
