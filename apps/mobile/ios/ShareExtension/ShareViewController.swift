@@ -7,7 +7,7 @@ private let sharedImageFilename = "shared_image.jpg"
 private let pendingShareFilename = "shared_payload.json"
 private let sharedAuthFilename = "shared_auth.json"
 private let importModel = "gemini-2.5-flash-lite"
-private let maxExtractionAttempts = 3
+private let maxExtractionAttempts = 2
 
 // ── Shared auth (written by the main app's JS layer on login/logout — see
 // apps/mobile/src/utils/sharedAuth.ts) ─────────────────────────────────────────
@@ -294,8 +294,8 @@ final class ShareViewController: UIViewController {
                             self.startURLTextExtraction(shareType: shareType, shareValue: shareValue, attempt: attempt + 1)
                         }
                     } else {
-                        // All retries exhausted — enqueue background job
-                        self.enqueueBackgroundJob(shareType: shareType, shareValue: shareValue, auth: auth)
+                        // All retries exhausted — ask the user before queuing in the background
+                        self.offerBackgroundJob(shareType: shareType, shareValue: shareValue, auth: auth)
                     }
                 }
             }
@@ -306,6 +306,28 @@ final class ShareViewController: UIViewController {
         } else {
             recognizeText(auth: auth, text: shareValue, completion: completion)
         }
+    }
+
+    private func offerBackgroundJob(shareType: String, shareValue: String, auth: SharedAuth) {
+        spinner.stopAnimating()
+        spinner.isHidden = true
+        statusLabel.text = "Extraction is taking a while…"
+        detailLabel.text = "PlateKeeper can continue in the background and notify you when ready."
+        detailLabel.isHidden = false
+
+        let alert = UIAlertController(
+            title: "High demand",
+            message: "Extraction is taking longer than expected. Queue it in the background?",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Keep waiting", style: .cancel) { [weak self] _ in
+            guard let self else { return }
+            self.startURLTextExtraction(shareType: shareType, shareValue: shareValue, attempt: 1)
+        })
+        alert.addAction(UIAlertAction(title: "Queue in background", style: .default) { [weak self] _ in
+            self?.enqueueBackgroundJob(shareType: shareType, shareValue: shareValue, auth: auth)
+        })
+        present(alert, animated: true)
     }
 
     private func enqueueBackgroundJob(shareType: String, shareValue: String, auth: SharedAuth) {
