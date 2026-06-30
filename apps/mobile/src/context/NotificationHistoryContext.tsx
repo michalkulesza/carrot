@@ -11,7 +11,7 @@ import {
 
 export interface NotificationItem {
   id: string
-  type: 'timer_done' | 'invitation' | 'recipe_imported' | 'recipe_failed'
+  type: 'timer_done' | 'invitation' | 'recipe_importing' | 'recipe_imported' | 'recipe_failed'
   title: string
   body: string
   timestamp: number

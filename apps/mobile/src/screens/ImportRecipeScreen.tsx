@@ -26,6 +26,7 @@ import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@platekeeper/shared/api/context'
+import { useNotificationHistory } from '../context/NotificationHistoryContext'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { UNITS } from '@platekeeper/shared/types'
@@ -1052,6 +1053,7 @@ const ImportRecipeScreen = () => {
   const insets = useSafeAreaInsets()
   const api = useApiClient()
   const qc = useQueryClient()
+  const { push: pushNotif } = useNotificationHistory()
   const { tags, create: createTagMutation } = useTags()
   const { preferences } = usePreferences()
 
@@ -1227,10 +1229,18 @@ const ImportRecipeScreen = () => {
             }
 
             try {
-              await api.enqueueImportJob({
+              const enqueued = await api.enqueueImportJob({
                 kind: job.kind,
                 input: job.input,
                 device_push_token: devicePushToken,
+              })
+              pushNotif({
+                type: 'recipe_importing',
+                title: t('bell.recipeImporting'),
+                body: t('bell.recipeImportingBody'),
+                job_id: enqueued.id,
+                job_kind: job.kind,
+                job_input: job.input,
               })
               skipGuardRef.current = true
               router.back()
@@ -1242,7 +1252,7 @@ const ImportRecipeScreen = () => {
         },
       ],
     )
-  }, [api, router, t])
+  }, [api, pushNotif, router, t])
 
   const startStreamCallbacks = () => ({
     onStage(stage: StageEvent) {

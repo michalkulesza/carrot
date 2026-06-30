@@ -140,6 +140,8 @@
     "history": "Historique",
     "timerDone": "Minuteur terminé",
     "household": "Foyer",
+    "recipeImporting": "Import en arrière-plan…",
+    "recipeImportingBody": "Vous serez notifié quand c'est prêt.",
     "recipeImported": "Recette ajoutée",
     "recipeImportedBody": "Appuyez pour voir votre nouvelle recette.",
     "recipeImportFailed": "Échec de l'import",

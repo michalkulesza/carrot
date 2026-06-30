@@ -140,6 +140,8 @@
     "history": "History",
     "timerDone": "Timer done",
     "household": "Household",
+    "recipeImporting": "Importing in background…",
+    "recipeImportingBody": "We'll notify you when it's ready.",
     "recipeImported": "Recipe added",
     "recipeImportedBody": "Tap to view your new recipe.",
     "recipeImportFailed": "Import failed",

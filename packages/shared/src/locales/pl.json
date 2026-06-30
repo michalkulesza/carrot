@@ -144,6 +144,8 @@
     "history": "Historia",
     "timerDone": "Minutnik gotowy",
     "household": "Gospodarstwo",
+    "recipeImporting": "Importowanie w tle…",
+    "recipeImportingBody": "Powiadomimy Cię, gdy będzie gotowy.",
     "recipeImported": "Przepis dodany",
     "recipeImportedBody": "Kliknij, aby wyświetlić nowy przepis.",
     "recipeImportFailed": "Import nieudany",

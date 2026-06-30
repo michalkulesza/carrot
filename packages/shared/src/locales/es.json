@@ -140,6 +140,8 @@
     "history": "Historial",
     "timerDone": "Temporizador listo",
     "household": "Hogar",
+    "recipeImporting": "Importando en segundo plano…",
+    "recipeImportingBody": "Te notificaremos cuando esté lista.",
     "recipeImported": "Receta añadida",
     "recipeImportedBody": "Toca para ver tu nueva receta.",
     "recipeImportFailed": "Fallo al importar",

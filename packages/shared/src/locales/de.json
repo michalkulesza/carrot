@@ -140,6 +140,8 @@
     "history": "Verlauf",
     "timerDone": "Timer fertig",
     "household": "Haushalt",
+    "recipeImporting": "Import läuft im Hintergrund…",
+    "recipeImportingBody": "Wir benachrichtigen dich, wenn er fertig ist.",
     "recipeImported": "Rezept hinzugefügt",
     "recipeImportedBody": "Tippen, um dein neues Rezept anzuzeigen.",
     "recipeImportFailed": "Import fehlgeschlagen",

@@ -60,9 +60,20 @@ async def _get_tags_and_allergens(session, user_id: uuid.UUID):
 
 async def _save_recipe(session, user_id: uuid.UUID, result) -> Recipe:
     """Save an ImportResult's recipe to the DB and return the new Recipe."""
-    from api.models import RecipeComponent as RC  # Pydantic model
     recipe_data = result.recipe
     meta = result.metadata
+
+    # Load tags first — setting a relationship on a mapped object after flush
+    # triggers implicit lazy loading which breaks in async context.
+    tags: list[Tag] = []
+    if recipe_data.tags:
+        tag_result = await session.execute(
+            select(Tag).where(
+                or_(Tag.is_default.is_(True), Tag.user_id == user_id),
+                Tag.name.in_(recipe_data.tags),
+            )
+        )
+        tags = list(tag_result.scalars().all())
 
     components_json = []
     for c in (recipe_data.components or []):
@@ -86,22 +97,11 @@ async def _save_recipe(session, user_id: uuid.UUID, result) -> Recipe:
         creator_handle=meta.creator_handle,
         source_url=meta.source_url,
         components=components_json,
+        tags=tags,
     )
     session.add(recipe)
-    await session.flush()
-
-    # Attach Gemini-suggested tags
-    if recipe_data.tags:
-        tag_result = await session.execute(
-            select(Tag).where(
-                or_(Tag.is_default.is_(True), Tag.user_id == user_id),
-                Tag.name.in_(recipe_data.tags),
-            )
-        )
-        recipe.tags = list(tag_result.scalars().all())
-
     await session.commit()
-    await session.refresh(recipe)
+    await session.refresh(recipe, ["id"])
     return recipe
 
 
@@ -182,7 +182,7 @@ async def _process_job(job: ImportJob) -> None:
                 job.device_push_token,
                 title=title,
                 body="Tap to view your new recipe.",
-                data={"type": "recipe_imported", "recipe_id": str(recipe_id)},
+                data={"type": "recipe_imported", "recipe_id": str(recipe_id), "job_id": str(job.id)},
             )
         log.info("Job %s succeeded: recipe %s", job.id, recipe_id)
 

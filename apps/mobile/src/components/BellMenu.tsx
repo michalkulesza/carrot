@@ -75,7 +75,15 @@ const BellMenu = () => {
     }
 
     for (const notif of notifHistory) {
-      if (notif.type === 'recipe_imported') {
+      if (notif.type === 'recipe_importing') {
+        items.push({
+          id: `recipe-importing-${notif.id}`,
+          title: notif.title,
+          subtitle: notif.body,
+          image: 'arrow.clockwise',
+          attributes: { disabled: true },
+        })
+      } else if (notif.type === 'recipe_imported') {
         items.push({
           id: `recipe-imported-${notif.id}`,
           title: notif.title,

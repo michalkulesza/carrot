@@ -37,7 +37,7 @@ function RootLayoutNav() {
   const router = useRouter()
   const qc = useQueryClient()
   const [processingShare, setProcessingShare] = useState(false)
-  const { push: pushNotif } = useNotificationHistory()
+  const { push: pushNotif, dismiss: dismissNotif, items: notifItems } = useNotificationHistory()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
 
   // Handle APNs pushes from the background import worker
@@ -46,20 +46,30 @@ function RootLayoutNav() {
     const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
       const data = notification.request.content.data as Record<string, unknown>
       const type = data?.type as string | undefined
+      const jobId = data?.job_id as string | undefined
       if (type === 'recipe_imported') {
+        if (jobId) {
+          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
+          if (pending) dismissNotif(pending.id)
+        }
         pushNotif({
           type: 'recipe_imported',
           title: notification.request.content.title ?? t('bell.recipeImported'),
           body: notification.request.content.body ?? t('bell.recipeImportedBody'),
           recipe_id: data.recipe_id as string | undefined,
+          job_id: jobId,
         })
         qc.invalidateQueries()
       } else if (type === 'recipe_failed') {
+        if (jobId) {
+          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
+          if (pending) dismissNotif(pending.id)
+        }
         pushNotif({
           type: 'recipe_failed',
           title: notification.request.content.title ?? t('bell.recipeImportFailed'),
           body: notification.request.content.body ?? t('bell.recipeImportFailedBody'),
-          job_id: data.job_id as string | undefined,
+          job_id: jobId,
           job_kind: data.job_kind as string | undefined,
           job_input: data.job_input as Record<string, string> | undefined,
         })
@@ -69,22 +79,32 @@ function RootLayoutNav() {
     responseListenerRef.current = Notifications.addNotificationResponseReceivedListener((response) => {
       const data = response.notification.request.content.data as Record<string, unknown>
       const type = data?.type as string | undefined
+      const jobId = data?.job_id as string | undefined
       if (type === 'recipe_imported') {
+        if (jobId) {
+          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
+          if (pending) dismissNotif(pending.id)
+        }
         pushNotif({
           type: 'recipe_imported',
           title: response.notification.request.content.title ?? t('bell.recipeImported'),
           body: response.notification.request.content.body ?? t('bell.recipeImportedBody'),
           recipe_id: data.recipe_id as string | undefined,
+          job_id: jobId,
         })
         if (data.recipe_id) {
           router.push(`/recipe/${data.recipe_id as string}`)
         }
       } else if (type === 'recipe_failed') {
+        if (jobId) {
+          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
+          if (pending) dismissNotif(pending.id)
+        }
         pushNotif({
           type: 'recipe_failed',
           title: response.notification.request.content.title ?? t('bell.recipeImportFailed'),
           body: response.notification.request.content.body ?? t('bell.recipeImportFailedBody'),
-          job_id: data.job_id as string | undefined,
+          job_id: jobId,
           job_kind: data.job_kind as string | undefined,
           job_input: data.job_input as Record<string, string> | undefined,
         })
@@ -94,7 +114,7 @@ function RootLayoutNav() {
       receivedSub.remove()
       responseListenerRef.current?.remove()
     }
-  }, [pushNotif, qc, router, t])
+  }, [dismissNotif, notifItems, pushNotif, qc, router, t])
 
   useEffect(() => {
     if (loading) return
