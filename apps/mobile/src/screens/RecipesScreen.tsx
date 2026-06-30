@@ -2,7 +2,6 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Image,
   ListRenderItemInfo,
   Pressable,
@@ -10,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import Reanimated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { MenuView } from '@react-native-menu/menu'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useTranslation } from 'react-i18next'
@@ -57,6 +57,15 @@ const RecipesScreen = () => {
   const [tagBarHeight, setTagBarHeight] = useState(0)
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map())
   const openSwipeableId = useRef<string | null>(null)
+  const seenIdsRef = useRef<Set<string>>(new Set())
+  const initialLoadDoneRef = useRef(false)
+
+  // Mark all recipes as "seen" on initial data arrival so they don't animate in.
+  // Runs during render (before renderRecipe) so subsequent calls see a populated set.
+  if (!isLoading && !initialLoadDoneRef.current) {
+    initialLoadDoneRef.current = true
+    recipes.forEach((r) => seenIdsRef.current.add(r.id))
+  }
 
   const handleDelete = useCallback(
     (recipe: RecipeOut) => {
@@ -267,7 +276,14 @@ const RecipesScreen = () => {
       const isFav = favouriteOverrides.has(item.id)
         ? favouriteOverrides.get(item.id)!
         : item.is_favourite
+      const isNew = initialLoadDoneRef.current && !seenIdsRef.current.has(item.id)
+      if (isNew) seenIdsRef.current.add(item.id)
       return (
+        <Reanimated.View
+          entering={isNew ? FadeInDown.springify().damping(20).mass(0.8) : undefined}
+          exiting={FadeOut.duration(250)}
+          layout={LinearTransition.springify().damping(20)}
+        >
         <Swipeable
           ref={(ref) => {
             if (ref) swipeableRefs.current.set(item.id, ref)
@@ -333,6 +349,7 @@ const RecipesScreen = () => {
             </Pressable>
           </Pressable>
         </Swipeable>
+        </Reanimated.View>
       )
     },
     [handleRecipePress, handleToggleFavourite, renderSwipeActions, favouriteOverrides, t],
@@ -378,10 +395,11 @@ const RecipesScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <FlatList
+      <Reanimated.FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderRecipe}
+        itemLayoutAnimation={LinearTransition.springify().damping(20)}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingTop: tagBarHeight, paddingBottom: insets.bottom + 24 }}
         ListFooterComponent={
