@@ -41,7 +41,7 @@ const BellMenu = () => {
         subtitle: isRunning
           ? formatCountdown(remaining)
           : `${t('timers.timerPaused')} · ${formatCountdown(remaining)}`,
-        image: 'timer',
+        image: 'stopwatch',
         subactions: [
           isRunning
             ? { id: `timer-pause-${timer.id}`, title: t('common.pause'), image: 'pause.circle' }
