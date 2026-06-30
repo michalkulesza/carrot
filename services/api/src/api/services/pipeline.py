@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable, Awaitable
 from typing import Any
 from urllib.parse import urlparse
 
@@ -23,6 +24,33 @@ from api.services import gemini as gemini_svc
 from api.services.scraper import ReelMetadata, scraper
 
 log = logging.getLogger(__name__)
+
+
+async def _gemini_task(
+    coro_factory: Callable[[Callable[[], Awaitable[None]]], Any],
+    hd_emitted: list[bool],
+) -> tuple[Any, bool]:
+    """
+    Run a Gemini coroutine (created by coro_factory(on_hd_callback)) as a task.
+    Yields high_demand detection: returns (result, newly_detected).
+    The task polls every 50ms so the high_demand signal fires during _with_retry sleep.
+    """
+    flag: list[bool] = []
+
+    async def on_hd() -> None:
+        if not flag:
+            flag.append(True)
+
+    task = asyncio.create_task(coro_factory(on_hd))
+    try:
+        while not task.done():
+            await asyncio.sleep(0.05)
+    except (asyncio.CancelledError, GeneratorExit):
+        task.cancel()
+        raise
+
+    newly_detected = bool(flag) and not hd_emitted
+    return task.result(), newly_detected
 
 
 def _is_complete(recipe: RecipeExtraction) -> bool:
@@ -118,7 +146,13 @@ def _strip_html(html: str) -> str:
 
 
 
-async def _try_linked_url(url: str, model: str = "gemini-2.5-flash-lite", available_tags: list[str] | None = None, allergens: list[str] | None = None) -> RecipeExtraction | None:
+async def _try_linked_url(
+    url: str,
+    model: str = "gemini-2.5-flash-lite",
+    available_tags: list[str] | None = None,
+    allergens: list[str] | None = None,
+    on_high_demand: Callable[[], Awaitable[None]] | None = None,
+) -> RecipeExtraction | None:
     try:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
             r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -136,7 +170,11 @@ async def _try_linked_url(url: str, model: str = "gemini-2.5-flash-lite", availa
     if len(page_text) < 50:
         return None
 
-    result = await gemini_svc.extract_recipe(page_text, source_hint="webpage", model=model, available_tags=available_tags, allergens=allergens)
+    result = await gemini_svc.extract_recipe(
+        page_text, source_hint="webpage", model=model,
+        available_tags=available_tags, allergens=allergens,
+        on_high_demand=on_high_demand,
+    )
     return result if _is_complete(result) else None
 
 
@@ -180,6 +218,8 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             yield _done_event(cached)
             return
 
+    hd_emitted: list[bool] = []  # shared flag: high_demand already yielded this stream
+
     if not _is_social_url(url):
         yield _stage_event("fetching_page", "Fetching recipe page…")
         try:
@@ -210,9 +250,18 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         yield _stage_event("analyzing_page", "Analyzing page with Gemini…")
         page_text = _strip_html(html)
         try:
-            result = await gemini_svc.extract_recipe(page_text, source_hint="webpage", model=model, available_tags=available_tags, allergens=allergens)
+            result, hd_new = await _gemini_task(
+                lambda on_hd: gemini_svc.extract_recipe(
+                    page_text, source_hint="webpage", model=model,
+                    available_tags=available_tags, allergens=allergens,
+                    on_high_demand=on_hd,
+                ),
+                hd_emitted,
+            )
+            if hd_new:
+                hd_emitted.append(True)
+                yield {"type": "high_demand"}
             if jsonld and _is_complete(jsonld):
-                # JSON-LD had the recipe but no kcal — take kcal from Gemini, keep structured data
                 jsonld = jsonld.model_copy(update={"kcal_per_serving": result.kcal_per_serving})
                 r = ImportResult(stage=ImportStage.LINK, recipe=jsonld, metadata=meta)
                 yield _done_event(await _with_allergens(r, allergens), cache_key=url)
@@ -255,9 +304,17 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
     if metadata.description.strip():
         yield _stage_event("checking_description", "Checking caption with Gemini…")
         try:
-            result = await gemini_svc.extract_recipe(
-                metadata.description, source_hint="instagram/tiktok caption", model=model, available_tags=available_tags, allergens=allergens
+            result, hd_new = await _gemini_task(
+                lambda on_hd: gemini_svc.extract_recipe(
+                    metadata.description, source_hint="instagram/tiktok caption",
+                    model=model, available_tags=available_tags, allergens=allergens,
+                    on_high_demand=on_hd,
+                ),
+                hd_emitted,
             )
+            if hd_new:
+                hd_emitted.append(True)
+                yield {"type": "high_demand"}
             if _is_complete(result):
                 r = ImportResult(stage=ImportStage.DESCRIPTION, recipe=result, metadata=meta)
                 yield _done_event(await _with_allergens(r, allergens), cache_key=url)
@@ -267,9 +324,12 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
 
     # Stage 2 — linked URLs
     for link in metadata.linked_urls[:3]:
-        yield _stage_event("checking_links", f"Checking linked page…")
+        yield _stage_event("checking_links", "Checking linked page…")
         try:
-            result = await _try_linked_url(link, model=model, available_tags=available_tags, allergens=allergens)
+            result = await _try_linked_url(
+                link, model=model, available_tags=available_tags, allergens=allergens,
+                on_high_demand=None,  # skip hd detection for linked pages
+            )
             if result and _is_complete(result):
                 r = ImportResult(stage=ImportStage.LINK, recipe=result, metadata=meta)
                 yield _done_event(await _with_allergens(r, allergens), cache_key=url)
@@ -283,9 +343,18 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         transcript = await scraper.fetch_transcript(url)
         if transcript.strip():
             yield _stage_event("analyzing_transcript", "Analyzing transcript with Gemini…")
-            result = await gemini_svc.extract_recipe(transcript, source_hint="video transcript", model=model, available_tags=available_tags, allergens=allergens)
+            result, hd_new = await _gemini_task(
+                lambda on_hd: gemini_svc.extract_recipe(
+                    transcript, source_hint="video transcript", model=model,
+                    available_tags=available_tags, allergens=allergens,
+                    on_high_demand=on_hd,
+                ),
+                hd_emitted,
+            )
+            if hd_new:
+                hd_emitted.append(True)
+                yield {"type": "high_demand"}
             log.debug("Transcript extraction result: title=%r components=%d", result.title, len(result.components))
-            # Last resort — return whatever Gemini found, even if partial
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
             yield _done_event(await _with_allergens(r, allergens), cache_key=url)
             return
@@ -307,11 +376,18 @@ async def run_text_import_stream(
 ) -> AsyncGenerator[dict[str, Any], None]:
     yield _stage_event("analyzing_text", "Analyzing recipe text with Gemini…")
     meta = ImportMetadata()
+    hd_emitted: list[bool] = []
     try:
-        result = await gemini_svc.extract_recipe(
-            text[:6000], source_hint="pasted text", model=model,
-            available_tags=available_tags, allergens=allergens,
+        result, hd_new = await _gemini_task(
+            lambda on_hd: gemini_svc.extract_recipe(
+                text[:6000], source_hint="pasted text", model=model,
+                available_tags=available_tags, allergens=allergens,
+                on_high_demand=on_hd,
+            ),
+            hd_emitted,
         )
+        if hd_new:
+            yield {"type": "high_demand"}
         if _is_complete(result):
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
             yield _done_event(await _with_allergens(r, allergens))
@@ -336,11 +412,18 @@ async def run_image_import_stream(
 ) -> AsyncGenerator[dict[str, Any], None]:
     yield _stage_event("analyzing_image", "Analyzing image with Gemini Vision…")
     meta = ImportMetadata()
+    hd_emitted: list[bool] = []
     try:
-        result = await gemini_svc.extract_recipe_from_image(
-            image_data, mime_type=mime_type, model=model,
-            available_tags=available_tags, allergens=allergens,
+        result, hd_new = await _gemini_task(
+            lambda on_hd: gemini_svc.extract_recipe_from_image(
+                image_data, mime_type=mime_type, model=model,
+                available_tags=available_tags, allergens=allergens,
+                on_high_demand=on_hd,
+            ),
+            hd_emitted,
         )
+        if hd_new:
+            yield {"type": "high_demand"}
         if _is_complete(result):
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
             yield _done_event(await _with_allergens(r, allergens))

@@ -82,6 +82,28 @@ export interface StreamCallbacks {
   onStage: (stage: StageEvent) => void
   onDone: (result: ImportResult) => void
   onError: (error: string) => void
+  onHighDemand?: () => void
+}
+
+export type ImportJobKind = 'url' | 'text' | 'image'
+
+export interface ImportJobEnqueue {
+  kind: ImportJobKind
+  input: Record<string, string>
+  model?: string
+  activity_push_token?: string | null
+  device_push_token?: string | null
+}
+
+export interface ImportJobOut {
+  id: string
+  status: 'pending' | 'running' | 'succeeded' | 'failed'
+  kind: ImportJobKind
+  result_recipe_id: string | null
+  error: string | null
+  attempts: number
+  created_at: string
+  updated_at: string
 }
 
 export interface StepIngredientRef {

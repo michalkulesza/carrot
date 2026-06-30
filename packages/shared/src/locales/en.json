@@ -139,7 +139,11 @@
     "from": "From {{name}}",
     "history": "History",
     "timerDone": "Timer done",
-    "household": "Household"
+    "household": "Household",
+    "recipeImported": "Recipe added",
+    "recipeImportedBody": "Tap to view your new recipe.",
+    "recipeImportFailed": "Import failed",
+    "recipeImportFailedBody": "Tap to retry."
   },
   "settings": {
     "title": "Settings",
@@ -297,6 +301,10 @@
     "addTag": "Add tag"
   },
   "addRecipe": {
+    "highDemandTitle": "High demand",
+    "highDemandMessage": "Gemini is busy right now. Finish the import in the background and we'll notify you when it's done — even if you close the app.",
+    "highDemandAccept": "Process in background",
+    "failedToEnqueueJob": "Failed to schedule background import",
     "urlPlaceholder": "Instagram, TikTok, or any recipe page URL",
     "editRecipe": "Edit Recipe",
     "importRecipe": "Import Recipe",

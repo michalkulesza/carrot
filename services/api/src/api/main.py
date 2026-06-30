@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -20,6 +21,7 @@ from api.routes.proxy import router as proxy_router
 from api.routes.recipes import router as recipes_router
 from api.routes.shopping_list import router as shopping_list_router
 from api.routes.tags import router as tags_router
+from api.services import import_worker
 from api.users import (
     UserCreate,
     UserManager,
@@ -86,7 +88,13 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS unit_system VARCHAR(20) NOT NULL DEFAULT 'metric'"))
     await _seed_demo_user()
     await _seed_default_tags()
+    worker_task = asyncio.create_task(import_worker.run())
     yield
+    worker_task.cancel()
+    try:
+        await worker_task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title="PlateKeeper API", lifespan=lifespan)

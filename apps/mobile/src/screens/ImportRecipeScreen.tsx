@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
+import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@platekeeper/shared/api/context'
@@ -30,6 +31,7 @@ import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { UNITS } from '@platekeeper/shared/types'
 import type {
   AllergenFlag,
+  ImportJobKind,
   ImportResult,
   RecipeComponent,
   StageEvent,
@@ -1065,6 +1067,9 @@ const ImportRecipeScreen = () => {
   const cancelRef = useRef<(() => void) | null>(null)
   const skipGuardRef = useRef(false)
   const pendingThumbRef = useRef<string | null>(null)
+  // High demand background job state
+  const highDemandJobRef = useRef<{ kind: ImportJobKind; input: Record<string, string> } | null>(null)
+  const highDemandOfferedRef = useRef(false)
 
   const activeAllergens = useMemo(() => {
     const p = preferences?.personal_allergens
@@ -1193,6 +1198,52 @@ const ImportRecipeScreen = () => {
     setLoading(false)
   }
 
+  const handleHighDemand = useCallback(async () => {
+    if (highDemandOfferedRef.current || !highDemandJobRef.current) return
+    highDemandOfferedRef.current = true
+
+    const job = highDemandJobRef.current
+
+    Alert.alert(
+      t('addRecipe.highDemandTitle'),
+      t('addRecipe.highDemandMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('addRecipe.highDemandAccept'),
+          onPress: async () => {
+            // Abort the foreground stream
+            cancelRef.current?.()
+            setLoading(false)
+            setProgressSteps([])
+
+            // Get device push token for fallback notification
+            let devicePushToken: string | null = null
+            try {
+              const tokenData = await Notifications.getDevicePushTokenAsync()
+              devicePushToken = tokenData.data
+            } catch {
+              // Push token unavailable — job will run silently
+            }
+
+            try {
+              await api.enqueueImportJob({
+                kind: job.kind,
+                input: job.input,
+                device_push_token: devicePushToken,
+              })
+              skipGuardRef.current = true
+              router.back()
+            } catch (err) {
+              setError(err instanceof Error ? err.message : t('addRecipe.failedToEnqueueJob'))
+              setLoading(false)
+            }
+          },
+        },
+      ],
+    )
+  }, [api, router, t])
+
   const startStreamCallbacks = () => ({
     onStage(stage: StageEvent) {
       setProgressSteps((prev) => [
@@ -1210,11 +1261,16 @@ const ImportRecipeScreen = () => {
       setError(msg)
       setLoading(false)
     },
+    onHighDemand() {
+      void handleHighDemand()
+    },
   })
 
   const handleImportUrl = () => {
     if (!url.trim()) return
     cancelRef.current?.()
+    highDemandJobRef.current = { kind: 'url', input: { url: url.trim() } }
+    highDemandOfferedRef.current = false
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1232,6 +1288,8 @@ const ImportRecipeScreen = () => {
   const handleImportText = () => {
     if (!pastedText.trim()) return
     cancelRef.current?.()
+    highDemandJobRef.current = { kind: 'text', input: { text: pastedText.trim() } }
+    highDemandOfferedRef.current = false
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1288,6 +1346,8 @@ const ImportRecipeScreen = () => {
 
   const startImageImport = (imageBase64: string, mimeType: string) => {
     cancelRef.current?.()
+    highDemandJobRef.current = { kind: 'image', input: { image_base64: imageBase64, mime_type: mimeType } }
+    highDemandOfferedRef.current = false
     pendingThumbRef.current = `data:${mimeType};base64,${imageBase64}`
     setLoading(true)
     setError(null)

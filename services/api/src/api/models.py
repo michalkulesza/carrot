@@ -410,3 +410,59 @@ class ShoppingListItemUpdate(BaseModel):
 
 class ShoppingListReorderRequest(BaseModel):
     ids: list[uuid.UUID]
+
+
+# ── Background Import Jobs ─────────────────────────────────────────────────────
+
+class ImportJobStatus(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class ImportJobKind(StrEnum):
+    URL = "url"
+    TEXT = "text"
+    IMAGE = "image"
+
+
+class ImportJob(Base):
+    __tablename__ = "import_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=ImportJobStatus.PENDING)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    input: Mapped[dict] = mapped_column(JSON, nullable=False)
+    model: Mapped[str] = mapped_column(String(100), nullable=False, default="gemini-2.5-flash-lite")
+    activity_push_token: Mapped[str | None] = mapped_column(String, nullable=True)
+    device_push_token: Mapped[str | None] = mapped_column(String, nullable=True)
+    result_recipe_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
+    error: Mapped[str | None] = mapped_column(String, nullable=True)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ImportJobCreate(BaseModel):
+    kind: ImportJobKind
+    input: dict  # {url} | {text} | {image_base64, mime_type}
+    model: str = "gemini-2.5-flash-lite"
+    activity_push_token: str | None = None
+    device_push_token: str | None = None
+
+
+class ImportJobOut(BaseModel):
+    model_config = {"from_attributes": True}
+
+    id: uuid.UUID
+    status: str
+    kind: str
+    result_recipe_id: uuid.UUID | None = None
+    error: str | None = None
+    attempts: int
+    created_at: datetime
+    updated_at: datetime

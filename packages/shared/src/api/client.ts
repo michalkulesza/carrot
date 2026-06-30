@@ -12,6 +12,8 @@ import type {
   ReanalyzeProgress,
   StreamCallbacks,
   ImportResult,
+  ImportJobEnqueue,
+  ImportJobOut,
   AuthUser,
   RegisterData,
   ShoppingListItem,
@@ -390,9 +392,39 @@ export const createApiClient = (config: ApiClientConfig) => {
 
   // ── SSE streaming (fetch-based, works on mobile too) ──────────────────────
 
+  const _parseStreamEvents = (
+    chunks: string[],
+    callbacks: StreamCallbacks,
+    highDemandFired: { current: boolean },
+  ) => {
+    for (const chunk of chunks) {
+      const data = chunk.replace(/^data: /, '').trim()
+      if (!data) continue
+      try {
+        const event = JSON.parse(data) as {
+          type: string
+          key?: string
+          label?: string
+          result?: ImportResult
+        }
+        if (event.type === 'stage') {
+          callbacks.onStage({ key: event.key ?? '', label: event.label ?? '' })
+        } else if (event.type === 'done') {
+          callbacks.onDone(event.result!)
+        } else if (event.type === 'high_demand' && !highDemandFired.current) {
+          highDemandFired.current = true
+          callbacks.onHighDemand?.()
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   const streamImportFetch = (url: string, callbacks: StreamCallbacks): () => void => {
     let aborted = false
     const controller = new AbortController()
+    const highDemandFired = { current: false }
     apiFetch(
       `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`,
       { signal: controller.signal }
@@ -411,25 +443,7 @@ export const createApiClient = (config: ApiClientConfig) => {
           buffer += decoder.decode(value, { stream: true })
           const chunks = buffer.split('\n\n')
           buffer = chunks.pop() ?? ''
-          for (const chunk of chunks) {
-            const data = chunk.replace(/^data: /, '').trim()
-            if (!data) continue
-            try {
-              const event = JSON.parse(data) as {
-                type: string
-                key?: string
-                label?: string
-                result?: ImportResult
-              }
-              if (event.type === 'stage') {
-                callbacks.onStage({ key: event.key ?? '', label: event.label ?? '' })
-              } else if (event.type === 'done') {
-                callbacks.onDone(event.result!)
-              }
-            } catch {
-              /* ignore */
-            }
-          }
+          _parseStreamEvents(chunks, callbacks, highDemandFired)
         }
       })
       .catch((err: unknown) => {
@@ -445,6 +459,7 @@ export const createApiClient = (config: ApiClientConfig) => {
   const _streamPostFetch = (path: string, body: unknown, callbacks: StreamCallbacks): () => void => {
     let aborted = false
     const controller = new AbortController()
+    const highDemandFired = { current: false }
     apiFetch(path, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -465,25 +480,7 @@ export const createApiClient = (config: ApiClientConfig) => {
           buffer += decoder.decode(value, { stream: true })
           const chunks = buffer.split('\n\n')
           buffer = chunks.pop() ?? ''
-          for (const chunk of chunks) {
-            const data = chunk.replace(/^data: /, '').trim()
-            if (!data) continue
-            try {
-              const event = JSON.parse(data) as {
-                type: string
-                key?: string
-                label?: string
-                result?: ImportResult
-              }
-              if (event.type === 'stage') {
-                callbacks.onStage({ key: event.key ?? '', label: event.label ?? '' })
-              } else if (event.type === 'done') {
-                callbacks.onDone(event.result!)
-              }
-            } catch {
-              /* ignore */
-            }
-          }
+          _parseStreamEvents(chunks, callbacks, highDemandFired)
         }
       })
       .catch((err: unknown) => {
@@ -600,6 +597,24 @@ export const createApiClient = (config: ApiClientConfig) => {
     await throwOnError(res, 'Failed to update presence')
   }
 
+  // ── Import jobs ────────────────────────────────────────────────────────────
+
+  const enqueueImportJob = async (data: ImportJobEnqueue): Promise<ImportJobOut> => {
+    const res = await apiFetch('/api/imports/jobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    await throwOnError(res, 'Failed to enqueue import job')
+    return res.json() as Promise<ImportJobOut>
+  }
+
+  const getImportJob = async (id: string): Promise<ImportJobOut> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}`)
+    await throwOnError(res, 'Failed to get import job')
+    return res.json() as Promise<ImportJobOut>
+  }
+
   return {
     saveRecipe,
     updateRecipe,
@@ -639,6 +654,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     streamImportFetch,
     streamTextImportFetch,
     streamImageImportFetch,
+    enqueueImportJob,
+    getImportJob,
     listShoppingList,
     addShoppingListItems,
     updateShoppingListItem,

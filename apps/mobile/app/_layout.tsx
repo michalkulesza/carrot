@@ -1,12 +1,14 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Sentry from '@sentry/react-native'
+import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { consumePendingShare, hasPendingShare } from '../src/utils/pendingShare'
+import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
 
 if (!__DEV__) {
   Sentry.init({
@@ -35,6 +37,64 @@ function RootLayoutNav() {
   const router = useRouter()
   const qc = useQueryClient()
   const [processingShare, setProcessingShare] = useState(false)
+  const { push: pushNotif } = useNotificationHistory()
+  const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
+
+  // Handle APNs pushes from the background import worker
+  useEffect(() => {
+    // Foreground: add to in-app bell without navigating
+    const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data as Record<string, unknown>
+      const type = data?.type as string | undefined
+      if (type === 'recipe_imported') {
+        pushNotif({
+          type: 'recipe_imported',
+          title: notification.request.content.title ?? t('bell.recipeImported'),
+          body: notification.request.content.body ?? t('bell.recipeImportedBody'),
+          recipe_id: data.recipe_id as string | undefined,
+        })
+        qc.invalidateQueries()
+      } else if (type === 'recipe_failed') {
+        pushNotif({
+          type: 'recipe_failed',
+          title: notification.request.content.title ?? t('bell.recipeImportFailed'),
+          body: notification.request.content.body ?? t('bell.recipeImportFailedBody'),
+          job_id: data.job_id as string | undefined,
+          job_kind: data.job_kind as string | undefined,
+          job_input: data.job_input as Record<string, string> | undefined,
+        })
+      }
+    })
+
+    responseListenerRef.current = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, unknown>
+      const type = data?.type as string | undefined
+      if (type === 'recipe_imported') {
+        pushNotif({
+          type: 'recipe_imported',
+          title: response.notification.request.content.title ?? t('bell.recipeImported'),
+          body: response.notification.request.content.body ?? t('bell.recipeImportedBody'),
+          recipe_id: data.recipe_id as string | undefined,
+        })
+        if (data.recipe_id) {
+          router.push(`/recipe/${data.recipe_id as string}`)
+        }
+      } else if (type === 'recipe_failed') {
+        pushNotif({
+          type: 'recipe_failed',
+          title: response.notification.request.content.title ?? t('bell.recipeImportFailed'),
+          body: response.notification.request.content.body ?? t('bell.recipeImportFailedBody'),
+          job_id: data.job_id as string | undefined,
+          job_kind: data.job_kind as string | undefined,
+          job_input: data.job_input as Record<string, string> | undefined,
+        })
+      }
+    })
+    return () => {
+      receivedSub.remove()
+      responseListenerRef.current?.remove()
+    }
+  }, [pushNotif, qc, router, t])
 
   useEffect(() => {
     if (loading) return

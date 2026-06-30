@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import Awaitable
 from typing import Callable, TypeVar
 
 from google import genai
@@ -19,15 +20,29 @@ _DEFAULT_MODEL = "gemini-2.5-flash"
 _T = TypeVar("_T")
 
 
-def _retry_delays():
-    for d in (1, 2, 4):
-        yield d
-    while True:
-        yield 8
+def _retry_delays(generous: bool = False):
+    if generous:
+        for d in (1, 2, 4, 8, 16, 30, 60):
+            yield d
+        while True:
+            yield 60
+    else:
+        for d in (1, 2, 4):
+            yield d
+        while True:
+            yield 8
 
 
-async def _with_retry(fn: Callable[[], _T]) -> _T:
-    for attempt, delay in enumerate(_retry_delays(), start=1):
+async def _with_retry(
+    fn: Callable[[], _T],
+    on_high_demand: Callable[[], Awaitable[None]] | None = None,
+    generous: bool = False,
+    max_attempts: int = 200,
+) -> _T:
+    high_demand_notified = False
+    for attempt, delay in enumerate(_retry_delays(generous=generous), start=1):
+        if attempt > max_attempts:
+            raise RuntimeError(f"Gemini: exceeded {max_attempts} retry attempts")
         try:
             return fn()
         except Exception as exc:
@@ -35,6 +50,9 @@ async def _with_retry(fn: Callable[[], _T]) -> _T:
             is_transient = "503" in msg or "UNAVAILABLE" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg
             if not is_transient:
                 raise
+            if on_high_demand is not None and not high_demand_notified:
+                high_demand_notified = True
+                await on_high_demand()
             log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
             await asyncio.sleep(delay)
 
@@ -124,6 +142,8 @@ async def extract_recipe(
     model: str = _DEFAULT_MODEL,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
+    on_high_demand: Callable[[], Awaitable[None]] | None = None,
+    generous: bool = False,
 ) -> RecipeExtraction:
     parts = []
     if source_hint:
@@ -136,15 +156,19 @@ async def extract_recipe(
     prompt = "\n\n".join(parts)
 
     client = _build_client()
-    response = await _with_retry(lambda: client.models.generate_content(
-        model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=_SYSTEM,
-            response_mime_type="application/json",
-            response_schema=RecipeExtraction,
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM,
+                response_mime_type="application/json",
+                response_schema=RecipeExtraction,
+            ),
         ),
-    ))
+        on_high_demand=on_high_demand,
+        generous=generous,
+    )
 
     raw = response.text
     log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
@@ -158,6 +182,8 @@ async def extract_recipe_from_image(
     model: str = _DEFAULT_MODEL,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
+    on_high_demand: Callable[[], Awaitable[None]] | None = None,
+    generous: bool = False,
 ) -> RecipeExtraction:
     parts_text = []
     if available_tags:
@@ -174,18 +200,22 @@ async def extract_recipe_from_image(
     text_prompt = "\n\n".join(parts_text)
 
     client = _build_client()
-    response = await _with_retry(lambda: client.models.generate_content(
-        model=model,
-        contents=[
-            types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data)),
-            text_prompt,
-        ],
-        config=types.GenerateContentConfig(
-            system_instruction=_SYSTEM,
-            response_mime_type="application/json",
-            response_schema=RecipeExtraction,
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=model,
+            contents=[
+                types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data)),
+                text_prompt,
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=_SYSTEM,
+                response_mime_type="application/json",
+                response_schema=RecipeExtraction,
+            ),
         ),
-    ))
+        on_high_demand=on_high_demand,
+        generous=generous,
+    )
 
     raw = response.text
     log.debug("Gemini image extraction raw: %s", raw[:500])

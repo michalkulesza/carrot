@@ -3,6 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import { colors } from '../theme/colors'
 import {
   useTimers,
@@ -15,8 +16,9 @@ import { useApiClient } from '@platekeeper/shared/api/context'
 
 const BellMenu = () => {
   const { t } = useTranslation()
+  const router = useRouter()
   const { timers, pauseTimer, resumeTimer, cancelTimer } = useTimers()
-  const { items: notifHistory, clearAll: clearNotifHistory } = useNotificationHistory()
+  const { items: notifHistory, dismiss: dismissNotif, clearAll: clearNotifHistory } = useNotificationHistory()
   const { invitations, refetchHouseholds, refetchInvitations } = useHousehold()
   const api = useApiClient()
 
@@ -72,6 +74,25 @@ const BellMenu = () => {
       })
     }
 
+    for (const notif of notifHistory) {
+      if (notif.type === 'recipe_imported') {
+        items.push({
+          id: `recipe-imported-${notif.id}`,
+          title: notif.title,
+          subtitle: notif.body,
+          image: 'checkmark.circle',
+        })
+      } else if (notif.type === 'recipe_failed') {
+        items.push({
+          id: `recipe-failed-${notif.id}`,
+          title: notif.title,
+          subtitle: notif.body,
+          image: 'exclamationmark.circle',
+          attributes: { destructive: true },
+        })
+      }
+    }
+
     if (notifHistory.length > 0) {
       items.push({
         id: 'clear-history',
@@ -108,11 +129,34 @@ const BellMenu = () => {
         } catch {
           // ignore
         }
+      } else if (id.startsWith('recipe-imported-')) {
+        const notifId = id.slice('recipe-imported-'.length)
+        const notif = notifHistory.find((n) => n.id === notifId)
+        if (notif?.recipe_id) {
+          router.push(`/recipe/${notif.recipe_id}`)
+        }
+        dismissNotif(notifId)
+      } else if (id.startsWith('recipe-failed-')) {
+        const notifId = id.slice('recipe-failed-'.length)
+        const notif = notifHistory.find((n) => n.id === notifId)
+        if (notif?.job_kind && notif?.job_input) {
+          // Re-open import screen with the original input pre-filled
+          const kind = notif.job_kind
+          const inp = notif.job_input
+          if (kind === 'url' && inp.url) {
+            router.push(`/import-recipe?type=url&value=${encodeURIComponent(inp.url)}`)
+          } else if (kind === 'text' && inp.text) {
+            router.push(`/import-recipe?type=text&value=${encodeURIComponent(inp.text)}`)
+          } else {
+            router.push('/import-recipe')
+          }
+        }
+        dismissNotif(notifId)
       } else if (id === 'clear-history') {
         clearNotifHistory()
       }
     },
-    [pauseTimer, resumeTimer, cancelTimer, api, refetchInvitations, refetchHouseholds, clearNotifHistory, t],
+    [pauseTimer, resumeTimer, cancelTimer, api, refetchInvitations, refetchHouseholds, clearNotifHistory, dismissNotif, notifHistory, router, t],
   )
 
   return (

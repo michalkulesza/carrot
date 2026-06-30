@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -9,7 +10,17 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
-from api.models import Household, ImportRequest, ImportResult, Tag, UserPreferences
+from api.models import (
+    Household,
+    ImportJob,
+    ImportJobCreate,
+    ImportJobOut,
+    ImportJobStatus,
+    ImportRequest,
+    ImportResult,
+    Tag,
+    UserPreferences,
+)
 from api.services.pipeline import (
     run_image_import,
     run_image_import_stream,
@@ -142,3 +153,38 @@ async def stream_image_import(
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── Background import jobs ─────────────────────────────────────────────────────
+
+@router.post("/jobs", response_model=ImportJobOut, status_code=201)
+async def enqueue_import_job(
+    body: ImportJobCreate,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> ImportJobOut:
+    job = ImportJob(
+        user_id=user.id,
+        status=ImportJobStatus.PENDING,
+        kind=body.kind,
+        input=body.input,
+        model=body.model,
+        activity_push_token=body.activity_push_token,
+        device_push_token=body.device_push_token,
+    )
+    session.add(job)
+    await session.commit()
+    await session.refresh(job)
+    return ImportJobOut.model_validate(job)
+
+
+@router.get("/jobs/{job_id}", response_model=ImportJobOut)
+async def get_import_job(
+    job_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> ImportJobOut:
+    job = await session.get(ImportJob, job_id)
+    if job is None or job.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return ImportJobOut.model_validate(job)

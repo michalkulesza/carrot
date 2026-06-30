@@ -143,7 +143,11 @@
     "from": "Od {{name}}",
     "history": "Historia",
     "timerDone": "Minutnik gotowy",
-    "household": "Gospodarstwo"
+    "household": "Gospodarstwo",
+    "recipeImported": "Przepis dodany",
+    "recipeImportedBody": "Kliknij, aby wyświetlić nowy przepis.",
+    "recipeImportFailed": "Import nieudany",
+    "recipeImportFailedBody": "Kliknij, aby spróbować ponownie."
   },
   "settings": {
     "title": "Ustawienia",
@@ -305,6 +309,10 @@
     "addTag": "Dodaj tag"
   },
   "addRecipe": {
+    "highDemandTitle": "Wysokie obciążenie",
+    "highDemandMessage": "Gemini jest teraz zajęty. Dokończ import w tle i powiadomimy Cię, gdy zostanie zakończony — nawet jeśli zamkniesz aplikację.",
+    "highDemandAccept": "Przetwórz w tle",
+    "failedToEnqueueJob": "Nie udało się zaplanować importu w tle",
     "urlPlaceholder": "URL z Instagrama, TikToka lub dowolnej strony z przepisami",
     "editRecipe": "Edytuj przepis",
     "importRecipe": "Importuj przepis",
