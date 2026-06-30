@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
+import { Feather, Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as KeepAwake from 'expo-keep-awake'
 import * as Haptics from 'expo-haptics'
@@ -176,11 +176,15 @@ const StepText = ({
   stepRefs,
   durationMatch,
   timerProps,
+  fontSize = 17,
+  lineHeight = 22,
 }: {
   step: string
   stepRefs: StepIngredientRef[]
   durationMatch?: DurationMatch | null
   timerProps?: Omit<React.ComponentProps<typeof TimerSpan>, 'seconds'>
+  fontSize?: number
+  lineHeight?: number
 }) => {
   const segments = useMemo(
     () => buildSegments(step, stepRefs, durationMatch ?? null),
@@ -188,7 +192,7 @@ const StepText = ({
   )
 
   return (
-    <Text style={styles.stepText}>
+    <Text style={[styles.stepText, { fontSize, lineHeight }]}>
       {segments.map((seg, i) => {
         if (seg.type === 'text') return <Text key={i}>{seg.text}</Text>
         if (seg.type === 'mention') {
@@ -213,6 +217,8 @@ const StepRow = ({
   stepRefs,
   rawIngredients,
   showStepQty = true,
+  fontSize = 17,
+  lineHeight = 22,
 }: {
   step: string
   index: number
@@ -221,6 +227,8 @@ const StepRow = ({
   stepRefs: StepIngredientRef[]
   rawIngredients: string[]
   showStepQty?: boolean
+  fontSize?: number
+  lineHeight?: number
 }) => {
   const { t } = useTranslation()
   const durationMatch = useMemo(() => parseDurationMatch(step), [step])
@@ -248,6 +256,8 @@ const StepRow = ({
               ? { timerId, recipe, componentIndex, stepIndex: index, stepText: step }
               : undefined
           }
+          fontSize={fontSize}
+          lineHeight={lineHeight}
         />
         {showStepQty && stepIngredients.length > 0 && (
           <View style={styles.stepIngList}>
@@ -276,11 +286,15 @@ const IngredientRow = ({
   addMode = false,
   isAdded = false,
   onAdd,
+  fontSize = 17,
+  lineHeight = 22,
 }: {
   ingredient: Ingredient
   addMode?: boolean
   isAdded?: boolean
   onAdd?: () => void
+  fontSize?: number
+  lineHeight?: number
 }) => {
   const { t } = useTranslation()
   const parts = [ingredient.qty, ingredient.unit, ingredient.name].filter(Boolean).join(' ')
@@ -288,7 +302,7 @@ const IngredientRow = ({
   return (
     <View style={styles.ingredientRow}>
       <Text style={styles.bullet}>{'•'}</Text>
-      <Text style={styles.ingredientText}>
+      <Text style={[styles.ingredientText, { fontSize, lineHeight }]}>
         {parts}
         {note}
       </Text>
@@ -317,6 +331,8 @@ const ComponentSection = ({
   sessionAdded,
   onAdd,
   onAddAll,
+  fontSize = 17,
+  lineHeight = 22,
 }: {
   component: SaveComponent
   index: number
@@ -326,6 +342,8 @@ const ComponentSection = ({
   sessionAdded?: Set<string>
   onAdd?: (key: string, text: string) => void
   onAddAll?: (keys: string[], texts: string[]) => void
+  fontSize?: number
+  lineHeight?: number
 }) => {
   const { t } = useTranslation()
   const ingredients = useMemo(
@@ -394,6 +412,8 @@ const ComponentSection = ({
               addMode={addMode}
               isAdded={sessionAdded?.has(`${index}-${i}`) ?? false}
               onAdd={() => onAdd?.(`${index}-${i}`, formatForList(ing))}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
             />
           ))}
         </View>
@@ -412,6 +432,8 @@ const ComponentSection = ({
               stepRefs={stepRefs[i] ?? []}
               rawIngredients={component.ingredients}
               showStepQty={showStepQty}
+              fontSize={fontSize}
+              lineHeight={lineHeight}
             />
           ))}
         </View>
@@ -425,6 +447,10 @@ const ComponentSection = ({
 const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
 const KEEP_AWAKE_STORAGE_KEY = 'recipe-keep-screen-default'
 const SHOW_STEP_QTY_STORAGE_KEY = 'recipe-show-step-qty'
+const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
+
+const FONT_SIZES = [13, 16, 17, 20, 22] as const
+const LINE_HEIGHTS = [18, 21, 22, 25, 28] as const
 
 const RecipeDetailScreen = () => {
   const { id: recipeId } = useLocalSearchParams<{ id: string }>()
@@ -435,6 +461,7 @@ const RecipeDetailScreen = () => {
   const { addItems } = useShoppingList()
   const [keepScreenOn, setKeepScreenOn] = useState(false)
   const [showStepQty, setShowStepQty] = useState(true)
+  const [fontSizeIndex, setFontSizeIndex] = useState(2)
   const [addMode, setAddMode] = useState(false)
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const insets = useSafeAreaInsets()
@@ -448,6 +475,9 @@ const RecipeDetailScreen = () => {
     AsyncStorage.getItem(SHOW_STEP_QTY_STORAGE_KEY).then((val) => {
       if (val !== null) setShowStepQty(val === '1')
     })
+    AsyncStorage.getItem(FONT_SIZE_STORAGE_KEY).then((val) => {
+      if (val !== null) setFontSizeIndex(Number(val))
+    })
     return () => { KeepAwake.deactivateKeepAwake(KEEP_AWAKE_RECIPE_TAG) }
   }, [])
 
@@ -456,6 +486,12 @@ const RecipeDetailScreen = () => {
     void AsyncStorage.setItem(KEEP_AWAKE_STORAGE_KEY, val ? '1' : '0')
     if (val) void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_RECIPE_TAG)
     else KeepAwake.deactivateKeepAwake(KEEP_AWAKE_RECIPE_TAG)
+  }, [])
+
+  const handleFontSizeChange = useCallback((index: number) => {
+    setFontSizeIndex(index)
+    void AsyncStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index))
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
   }, [])
 
   const recipe: RecipeOut | undefined = useMemo(
@@ -619,12 +655,38 @@ const RecipeDetailScreen = () => {
                 accessibilityLabel={t('settings.showQuantityUnderStep')}
               />
             </View>
+            <View style={styles.toggleDivider} />
+            <View style={styles.keepScreenRow}>
+              <View style={styles.fontSizeLabelRow}>
+                <Ionicons name="text" size={16} color={colors.secondaryLabel} />
+                <Text style={styles.keepScreenLabel}>{t('settings.textSize')}</Text>
+              </View>
+              <View style={styles.fontSizeControl}>
+                <Text style={styles.fontSizeASmall}>A</Text>
+                <View style={styles.fontSizeTrack}>
+                  <View style={styles.fontSizeTrackLine} />
+                  {FONT_SIZES.map((_, i) => (
+                    <Pressable
+                      key={i}
+                      onPress={() => handleFontSizeChange(i)}
+                      hitSlop={10}
+                      style={styles.fontSizeDotWrapper}
+                      accessibilityRole="radio"
+                      accessibilityLabel={`${t('settings.textSize')} ${i + 1}`}
+                    >
+                      <View style={[styles.fontSizeDot, fontSizeIndex === i && styles.fontSizeDotActive]} />
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={styles.fontSizeALarge}>A</Text>
+              </View>
+            </View>
           </View>
 
           {recipe.notes ? (
             <View style={styles.notesBlock}>
               <Text style={styles.sectionLabel}>{t('recipes.notes')}</Text>
-              <Text style={styles.notesText}>{recipe.notes}</Text>
+              <Text style={[styles.notesText, { fontSize: FONT_SIZES[fontSizeIndex], lineHeight: LINE_HEIGHTS[fontSizeIndex] }]}>{recipe.notes}</Text>
             </View>
           ) : null}
 
@@ -639,6 +701,8 @@ const RecipeDetailScreen = () => {
               sessionAdded={sessionAdded}
               onAdd={handleAddIngredient}
               onAddAll={handleAddAll}
+              fontSize={FONT_SIZES[fontSizeIndex]}
+              lineHeight={LINE_HEIGHTS[fontSizeIndex]}
             />
           ))}
         </View>
@@ -714,6 +778,36 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   keepScreenLabel: { fontSize: 16, color: colors.label },
+  fontSizeLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  fontSizeControl: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  fontSizeTrack: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 120,
+    position: 'relative',
+  },
+  fontSizeTrackLine: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    height: 1.5,
+    backgroundColor: colors.separator,
+  },
+  fontSizeDotWrapper: { flex: 1, alignItems: 'center', paddingVertical: 8 },
+  fontSizeDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: colors.separator,
+    backgroundColor: colors.background,
+  },
+  fontSizeDotActive: {
+    borderColor: colors.blue,
+    backgroundColor: colors.blue,
+  },
+  fontSizeASmall: { fontSize: 13, color: colors.secondaryLabel, fontWeight: '400' },
+  fontSizeALarge: { fontSize: 20, color: colors.secondaryLabel, fontWeight: '400' },
   notesBlock: { marginBottom: 16 },
   notesText: { fontSize: 17, color: colors.secondaryLabel, lineHeight: 22 },
   componentBlock: { marginTop: 8 },
