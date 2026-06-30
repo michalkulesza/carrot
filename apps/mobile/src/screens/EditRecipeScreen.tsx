@@ -444,17 +444,20 @@ const EditRecipeScreen = () => {
           <Pressable
             onPress={handlePickImage}
             disabled={uploadingThumb}
+            style={({ pressed }) => [styles.thumbnailPreview, pressed && { opacity: 0.8 }]}
             accessibilityLabel={t('common.changePhoto')}
             accessibilityRole="button"
           >
             <Image
               source={{ uri: proxyThumbnailUrl(state.thumbnail_url) ?? undefined }}
-              style={styles.thumbnailPreview}
+              style={StyleSheet.absoluteFill}
               resizeMode="cover"
             />
-            <Text style={styles.changePhotoText}>
-              {uploadingThumb ? t('common.uploading') : t('common.changePhoto')}
-            </Text>
+            <View style={styles.changePhotoOverlay}>
+              <Text style={styles.changePhotoText}>
+                {uploadingThumb ? t('common.uploading') : t('common.changePhoto')}
+              </Text>
+            </View>
           </Pressable>
         ) : (
           <Pressable
@@ -637,12 +640,19 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 8,
     backgroundColor: colors.secondaryBackground,
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  changePhotoOverlay: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
   },
   changePhotoText: {
     fontSize: 13,
-    color: colors.blue,
-    marginTop: 6,
-    textAlign: 'center',
+    color: '#ffffff',
+    fontWeight: '600',
   },
   thumbnailPlaceholder: {
     height: 100,
