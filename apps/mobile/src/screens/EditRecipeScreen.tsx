@@ -19,6 +19,8 @@ import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
+import { useHeaderHeight } from 'expo-router/react-navigation'
+import { Ionicons } from '@expo/vector-icons'
 import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { useApiClient } from '@platekeeper/shared/api/context'
@@ -169,6 +171,7 @@ const EditRecipeScreen = () => {
   const { tags, create: createTagMutation } = useTags()
 
   const recipe = useMemo(() => recipes.find((r) => r.id === recipeId), [recipes, recipeId])
+  const headerHeight = useHeaderHeight()
 
   const [state, setState] = useState<EditState | null>(null)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
@@ -208,10 +211,10 @@ const EditRecipeScreen = () => {
             ])
           }}
           hitSlop={8}
-          style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
+          style={({ pressed }) => [styles.headerBackBtn, pressed && { opacity: 0.5 }]}
           accessibilityLabel={t('common.back')}
         >
-          <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
+          <Ionicons name="chevron-back" size={28} color={PlatformColor('systemBlue') as unknown as string} />
         </Pressable>
       ),
     })
@@ -394,11 +397,12 @@ const EditRecipeScreen = () => {
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={88}
+      keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.content}
+        contentInsetAdjustmentBehavior="automatic"
         keyboardShouldPersistTaps="handled"
       >
         {/* Title */}
@@ -602,8 +606,7 @@ const EditRecipeScreen = () => {
 
 const styles = StyleSheet.create({
   headerBackBtn: {
-    fontSize: 17,
-    color: PlatformColor('systemBlue') as unknown as string,
+    marginLeft: -8,
   },
   flex: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
