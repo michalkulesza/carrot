@@ -238,7 +238,8 @@
     "metric": "Metryczny",
     "imperial": "Imperialny",
     "useMetricSystem": "Używaj systemu metrycznego",
-    "useMetricSystemDesc": "Gramy, kilogramy, mililitry i stopnie Celsjusza"
+    "useMetricSystemDesc": "Gramy, kilogramy, mililitry i stopnie Celsjusza",
+    "textSize": "Rozmiar tekstu"
   },
   "allergens": {
     "gluten": "Zboża zawierające gluten",

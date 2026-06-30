@@ -230,7 +230,8 @@
     "metric": "Métrique",
     "imperial": "Impérial",
     "useMetricSystem": "Utiliser le système métrique",
-    "useMetricSystemDesc": "Grammes, kilogrammes, millilitres et Celsius"
+    "useMetricSystemDesc": "Grammes, kilogrammes, millilitres et Celsius",
+    "textSize": "Taille du texte"
   },
   "allergens": {
     "gluten": "Céréales contenant du gluten",
