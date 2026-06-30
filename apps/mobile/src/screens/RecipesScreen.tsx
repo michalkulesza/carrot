@@ -5,6 +5,7 @@ import {
   FlatList,
   Image,
   ListRenderItemInfo,
+  PlatformColor,
   Pressable,
   StyleSheet,
   Text,
@@ -28,6 +29,7 @@ import BellMenu from '../components/BellMenu'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
+import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
 
 type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'edited_newest' | 'edited_oldest'
 
@@ -40,6 +42,27 @@ const SORT_OPTIONS: { key: SortMode; labelKey: string }[] = [
   { key: 'title_desc', labelKey: 'recipes.sortTitleZA' },
 ]
 
+const PendingJobCard = ({ notif }: { notif: NotificationItem }) => {
+  const { t } = useTranslation()
+  const sourceKey = `recipes.extractingFrom_${notif.job_kind ?? 'image'}` as const
+  const startedAt = useMemo(() => {
+    const d = new Date(notif.timestamp)
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }, [notif.timestamp])
+  return (
+    <View style={styles.pendingCard}>
+      <View style={styles.pendingImageWrap}>
+        <Feather name="clock" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
+      </View>
+      <View style={styles.pendingBody}>
+        <Text style={styles.pendingTitle}>{t('recipes.extractingRecipe')}</Text>
+        <Text style={styles.pendingMeta}>{t(sourceKey)}  ·  {startedAt}</Text>
+      </View>
+      <ActivityIndicator size="small" color={colors.brand} />
+    </View>
+  )
+}
+
 const RecipesScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
@@ -50,6 +73,7 @@ const RecipesScreen = () => {
   const { tags } = useTags()
   const api = useApiClient()
   const qc = useQueryClient()
+  const { items: notifItems } = useNotificationHistory()
   const [query, setQuery] = useState('')
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [filterFavourites, setFilterFavourites] = useState(false)
@@ -189,6 +213,11 @@ const RecipesScreen = () => {
         is_favourite: favouriteOverrides.has(r.id) ? favouriteOverrides.get(r.id)! : r.is_favourite,
       })),
     [recipes, favouriteOverrides],
+  )
+
+  const pendingJobs = useMemo(
+    () => notifItems.filter((n) => n.type === 'recipe_importing'),
+    [notifItems],
   )
 
   const filtered = useMemo(() => {
@@ -402,6 +431,15 @@ const RecipesScreen = () => {
         renderItem={renderRecipe}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingTop: tagBarHeight, paddingBottom: insets.bottom + 24 }}
+        ListHeaderComponent={
+          pendingJobs.length > 0 ? (
+            <View>
+              {pendingJobs.map((notif) => (
+                <PendingJobCard key={notif.id} notif={notif} />
+              ))}
+            </View>
+          ) : null
+        }
         ListFooterComponent={
           filtered.length === 0 ? (
             <View style={styles.empty}>
@@ -542,6 +580,28 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
   },
   swipeActionText: { color: colors.background, fontSize: 13, fontWeight: '600' },
+  pendingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    marginHorizontal: 16,
+    marginTop: 8,
+    padding: 12,
+    gap: 12,
+    opacity: 0.85,
+  },
+  pendingImageWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    backgroundColor: colors.opaqueSeparator,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingBody: { flex: 1 },
+  pendingTitle: { fontSize: 16, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  pendingMeta: { fontSize: 12, color: colors.secondaryLabel },
 })
 
 export default RecipesScreen

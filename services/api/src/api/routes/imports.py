@@ -26,7 +26,9 @@ from api.services.pipeline import (
     run_image_import_stream,
     run_import,
     run_import_stream,
+    run_text_import,
     run_text_import_stream,
+    run_url_import,
 )
 from api.users import User, current_active_user
 
@@ -88,6 +90,43 @@ async def stream_import(
 class TextImportBody(BaseModel):
     text: str
     model: str = "gemini-2.5-flash-lite"
+
+
+class UrlImportBody(BaseModel):
+    url: str
+    model: str = "gemini-2.5-flash-lite"
+
+
+@router.post("/url", response_model=ImportResult)
+async def create_url_import(
+    body: UrlImportBody,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> ImportResult:
+    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    try:
+        return await asyncio.wait_for(
+            run_url_import(body.url, model=body.model, available_tags=available_tags, allergens=allergens or None),
+            timeout=50.0,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=503, detail="Import timed out, please try again.")
+
+
+@router.post("/text", response_model=ImportResult)
+async def create_text_import(
+    body: TextImportBody,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> ImportResult:
+    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    try:
+        return await asyncio.wait_for(
+            run_text_import(body.text, model=body.model, available_tags=available_tags, allergens=allergens or None),
+            timeout=45.0,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=503, detail="Extraction timed out, please try again.")
 
 
 @router.post("/stream-text")

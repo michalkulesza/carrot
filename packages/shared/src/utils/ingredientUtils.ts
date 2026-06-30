@@ -9,7 +9,7 @@ export interface StructuredIngredient {
 }
 
 export const parseIngredient = (s: string): StructuredIngredient => {
-  const trimmed = s.trim()
+  const trimmed = (s ?? '').trim()
   if (!trimmed) return { qty: '', unit: '', name: '', note: '' }
   let rest = trimmed
   let note = ''

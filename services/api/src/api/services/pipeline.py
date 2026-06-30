@@ -470,3 +470,31 @@ async def run_image_import(
             result = ImportResult.model_validate(event["result"])
     assert result is not None
     return result
+
+
+async def run_url_import(
+    url: str,
+    model: str = "gemini-2.5-flash-lite",
+    available_tags: list[str] | None = None,
+    allergens: list[str] | None = None,
+) -> ImportResult:
+    result: ImportResult | None = None
+    async for event in run_import_stream(url, model=model, available_tags=available_tags, allergens=allergens):
+        if event["type"] == "done":
+            result = ImportResult.model_validate(event["result"])
+    assert result is not None
+    return result
+
+
+async def run_text_import(
+    text: str,
+    model: str = "gemini-2.5-flash-lite",
+    available_tags: list[str] | None = None,
+    allergens: list[str] | None = None,
+) -> ImportResult:
+    result: ImportResult | None = None
+    async for event in run_text_import_stream(text, model=model, available_tags=available_tags, allergens=allergens):
+        if event["type"] == "done":
+            result = ImportResult.model_validate(event["result"])
+    assert result is not None
+    return result

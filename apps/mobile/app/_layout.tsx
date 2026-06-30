@@ -184,8 +184,20 @@ function RootLayoutNav() {
       setProcessingShare(true)
       try {
         const pending = await consumePendingShare()
-        if (pending) {
-          router.push({ pathname: '/import-recipe', params: pending })
+        if (!pending) return
+        if (pending.type === 'job') {
+          // Extension enqueued a background job — register it in the bell so the polling
+          // loop picks it up and the recipe list shows a placeholder.
+          pushNotif({
+            type: 'recipe_importing',
+            title: t('bell.recipeImporting'),
+            body: t('bell.recipeImportingBody'),
+            job_id: pending.job_id,
+            job_kind: pending.job_kind,
+            job_input: pending.job_input,
+          })
+        } else {
+          router.push({ pathname: '/import-recipe', params: { type: pending.type, value: pending.value } })
         }
       } finally {
         setProcessingShare(false)

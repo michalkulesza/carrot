@@ -3,7 +3,9 @@ import { File, Paths } from 'expo-file-system'
 export const SHARE_APP_GROUP = 'group.com.kulesza.platekeeper'
 export const PENDING_SHARE_FILENAME = 'shared_payload.json'
 
-export type PendingShare = { type: string; value: string }
+export type PendingShare =
+  | { type: 'image' | 'url' | 'text'; value: string }
+  | { type: 'job'; job_id: string; job_kind: string; job_input: Record<string, string> }
 
 // Cheap sync check so callers can decide whether to block the UI before doing the
 // (slower, async) consume — avoids flashing a loading state on every foreground when
@@ -25,9 +27,9 @@ export async function consumePendingShare(): Promise<PendingShare | null> {
   const manifestFile = new File(container, PENDING_SHARE_FILENAME)
   if (!manifestFile.exists) return null
 
-  let manifest: { type?: string; value?: string } | null = null
+  let manifest: Record<string, unknown> | null = null
   try {
-    manifest = await manifestFile.json()
+    manifest = await manifestFile.json() as Record<string, unknown>
   } catch {
     manifest = null
   }
@@ -37,10 +39,21 @@ export async function consumePendingShare(): Promise<PendingShare | null> {
     // best-effort cleanup
   }
 
-  if (!manifest?.type || !manifest.value) return null
+  if (!manifest?.type) return null
+
+  if (manifest.type === 'job') {
+    const job_id = manifest.job_id as string | undefined
+    const job_kind = manifest.job_kind as string | undefined
+    const job_input = manifest.job_input as Record<string, string> | undefined
+    if (!job_id || !job_kind || !job_input) return null
+    return { type: 'job', job_id, job_kind, job_input }
+  }
+
+  if (!manifest.value) return null
+  const value = manifest.value as string
 
   if (manifest.type === 'image') {
-    const imageFile = new File(container, manifest.value)
+    const imageFile = new File(container, value)
     if (!imageFile.exists) return null
     try {
       const base64 = await imageFile.base64()
@@ -55,5 +68,5 @@ export async function consumePendingShare(): Promise<PendingShare | null> {
     }
   }
 
-  return { type: manifest.type, value: manifest.value }
+  return { type: manifest.type as 'url' | 'text', value }
 }
