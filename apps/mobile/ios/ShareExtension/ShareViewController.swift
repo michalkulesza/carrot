@@ -510,23 +510,24 @@ final class ShareViewController: UIViewController {
             return
         }
 
-        // Write the manifest immediately so the main app can pick up the share even if iOS
-        // kills this extension process before recognizeImage() returns.
-        persistPendingShare(type: "image", value: sharedImageFilename)
-
         guard let auth = Self.loadSharedAuth(containerURL: containerURL) else {
             NSLog("[ShareExtension] no shared auth found — falling back to persist+deep-link")
+            // Write manifest only on fallback so the main app doesn't re-process on success.
+            persistPendingShare(type: "image", value: sharedImageFilename)
             openApp(type: "image", value: sharedImageFilename)
             return
         }
 
+        // base64 encoding is CPU-bound — do it here on the background thread, then
+        // hand off to main for all UI work and the network request.
         let imageBase64 = jpegData.base64EncodedString()
         let mimeType = "image/jpeg"
         DispatchQueue.main.async { [weak self] in
-            self?.imageView.image = UIImage(data: jpegData)
-            self?.imageView.isHidden = false
+            guard let self else { return }
+            self.imageView.image = UIImage(data: jpegData)
+            self.imageView.isHidden = false
+            self.startImageExtraction(imageBase64: imageBase64, mimeType: mimeType, auth: auth)
         }
-        startImageExtraction(imageBase64: imageBase64, mimeType: mimeType, auth: auth)
     }
 
     private func startImageExtraction(imageBase64: String, mimeType: String, auth: SharedAuth, attempt: Int = 1) {
