@@ -79,26 +79,23 @@ const BellMenu = () => {
         case 'recipe_importing':
           items.push({
             id: `recipe-importing-${notif.id}`,
-            title: notif.title,
+            title: `⏳ ${notif.title}`,
             subtitle: notif.body,
-            image: 'arrow.down.circle',
             attributes: { disabled: true },
           })
           break
         case 'recipe_imported':
           items.push({
             id: `recipe-imported-${notif.id}`,
-            title: notif.title,
+            title: `✅ ${notif.title}`,
             subtitle: notif.body,
-            image: 'checkmark.circle.fill',
           })
           break
         case 'recipe_failed':
           items.push({
             id: `recipe-failed-${notif.id}`,
-            title: notif.title,
+            title: `❌ ${notif.title}`,
             subtitle: notif.body,
-            image: 'xmark.circle.fill',
             attributes: { destructive: true },
           })
           break
