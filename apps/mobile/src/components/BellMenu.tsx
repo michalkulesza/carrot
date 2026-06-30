@@ -37,7 +37,7 @@ const BellMenu = () => {
       const isRunning = timer.status === 'running'
       items.push({
         id: `timer-${timer.id}`,
-        title: timer.recipeTitle,
+        title: `⏱ ${timer.recipeTitle}`,
         subtitle: isRunning
           ? formatCountdown(remaining)
           : `${t('timers.timerPaused')} · ${formatCountdown(remaining)}`,
