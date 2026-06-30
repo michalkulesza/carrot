@@ -1,7 +1,8 @@
+import asyncio
 import base64
 import json
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy import or_, select
@@ -111,9 +112,16 @@ async def create_image_import(
 ) -> ImportResult:
     image_data = base64.b64decode(body.image_base64)
     available_tags, allergens = await _get_tags_and_allergens(user, session)
-    return await run_image_import(
-        image_data, body.mime_type, model=body.model, available_tags=available_tags, allergens=allergens or None,
-    )
+    try:
+        return await asyncio.wait_for(
+            run_image_import(
+                image_data, body.mime_type, model=body.model,
+                available_tags=available_tags, allergens=allergens or None,
+            ),
+            timeout=35.0,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=503, detail="Recognition timed out, please try again.")
 
 
 @router.post("/stream-image")
