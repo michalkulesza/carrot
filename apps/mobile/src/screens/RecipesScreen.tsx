@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 10,
   },
   cardBody: { flex: 1, padding: 12, justifyContent: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  cardTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
   cardTags: { fontSize: 12, color: colors.brand, marginBottom: 2, marginTop: 1 },
   cardTagsEmpty: { color: colors.tertiaryLabel },
   cardMeta: { fontSize: 12, color: colors.tertiaryLabel },
