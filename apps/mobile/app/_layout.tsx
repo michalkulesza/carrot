@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Sentry from '@sentry/react-native'
+import { useQueryClient } from '@tanstack/react-query'
 import { consumePendingShare, hasPendingShare } from '../src/utils/pendingShare'
 
 if (!__DEV__) {
@@ -32,6 +33,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()
+  const qc = useQueryClient()
   const [processingShare, setProcessingShare] = useState(false)
 
   useEffect(() => {
@@ -73,6 +75,16 @@ function RootLayoutNav() {
     })
     return () => subscription.remove()
   }, [loading, user])
+
+  // Invalidate all cached queries when the app returns to the foreground so that data
+  // saved externally (e.g. via the Share Extension) appears without a manual pull-to-refresh.
+  useEffect(() => {
+    if (loading || !user) return
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') qc.invalidateQueries()
+    })
+    return () => subscription.remove()
+  }, [loading, user, qc])
 
   return (
     <>
