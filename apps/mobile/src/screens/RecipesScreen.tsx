@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Image,
   ListRenderItemInfo,
   Pressable,
@@ -395,11 +396,10 @@ const RecipesScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <Reanimated.FlatList
+      <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderRecipe}
-        itemLayoutAnimation={LinearTransition.springify().damping(20)}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={{ paddingTop: tagBarHeight, paddingBottom: insets.bottom + 24 }}
         ListFooterComponent={
