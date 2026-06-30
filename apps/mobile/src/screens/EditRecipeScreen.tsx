@@ -33,7 +33,7 @@ import {
 import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
-import { proxyThumbnailUrl } from '../api/thumbnailUrl'
+import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { getToken } from '../api/client'
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? ''
@@ -177,6 +177,7 @@ const EditRecipeScreen = () => {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [saving, setSaving] = useState(false)
   const [uploadingThumb, setUploadingThumb] = useState(false)
+  const [thumbErrored, setThumbErrored] = useState(false)
   const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
 
   useEffect(() => {
@@ -340,6 +341,7 @@ const EditRecipeScreen = () => {
       if (!response.ok) throw new Error('Upload failed')
       const data = (await response.json()) as { url: string }
       setState((s) => s && { ...s, thumbnail_url: data.url })
+      setThumbErrored(false)
     } catch (err) {
       Alert.alert(t('common.ok'), err instanceof Error ? err.message : 'Upload failed')
     } finally {
@@ -440,38 +442,40 @@ const EditRecipeScreen = () => {
 
         {/* Thumbnail */}
         <Text style={styles.fieldLabel}>{t('common.thumbnail')}</Text>
-        {state.thumbnail_url ? (
-          <Pressable
-            onPress={handlePickImage}
-            disabled={uploadingThumb}
-            style={({ pressed }) => [styles.thumbnailPreview, pressed && { opacity: 0.8 }]}
-            accessibilityLabel={t('common.changePhoto')}
-            accessibilityRole="button"
-          >
+        <Pressable
+          onPress={handlePickImage}
+          disabled={uploadingThumb}
+          style={({ pressed }) => [styles.thumbnailPreview, pressed && { opacity: 0.8 }]}
+          accessibilityLabel={state.thumbnail_url ? t('common.changePhoto') : t('common.addPhoto')}
+          accessibilityRole="button"
+        >
+          {/* Show actual photo, fall back to placeholder on error, or placeholder when no URL */}
+          {state.thumbnail_url && !thumbErrored ? (
             <Image
               source={{ uri: proxyThumbnailUrl(state.thumbnail_url) ?? undefined }}
               style={StyleSheet.absoluteFill}
               resizeMode="cover"
+              onError={() => setThumbErrored(true)}
             />
-            <View style={styles.changePhotoOverlay}>
-              <Text style={styles.changePhotoText}>
-                {uploadingThumb ? t('common.uploading') : t('common.changePhoto')}
-              </Text>
-            </View>
-          </Pressable>
-        ) : (
-          <Pressable
-            style={({ pressed }) => [styles.thumbnailPlaceholder, pressed && { opacity: 0.7 }]}
-            onPress={handlePickImage}
-            disabled={uploadingThumb}
-            accessibilityLabel={t('common.addPhoto')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.addPhotoText}>
-              {uploadingThumb ? t('common.uploading') : `+ ${t('common.addPhoto')}`}
+          ) : PLACEHOLDER_URL ? (
+            <Image
+              source={{ uri: PLACEHOLDER_URL }}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.thumbnailPlaceholderBg]} />
+          )}
+          <View style={styles.changePhotoOverlay}>
+            <Text style={styles.changePhotoText}>
+              {uploadingThumb
+                ? t('common.uploading')
+                : state.thumbnail_url
+                  ? t('common.changePhoto')
+                  : `+ ${t('common.addPhoto')}`}
             </Text>
-          </Pressable>
-        )}
+          </View>
+        </Pressable>
 
         {/* Notes */}
         <Text style={styles.fieldLabel}>{t('recipes.notes')}</Text>
@@ -654,20 +658,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '600',
   },
-  thumbnailPlaceholder: {
-    height: 100,
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+  thumbnailPlaceholderBg: {
     backgroundColor: colors.secondaryBackground,
-  },
-  addPhotoText: {
-    fontSize: 16,
-    color: colors.blue,
-    fontWeight: '500',
   },
   row: { flexDirection: 'row', gap: 12 },
   halfField: { flex: 1 },
