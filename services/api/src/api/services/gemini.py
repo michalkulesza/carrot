@@ -50,7 +50,7 @@ async def _with_retry(
             is_transient = "503" in msg or "UNAVAILABLE" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg
             if not is_transient:
                 raise
-            if on_high_demand is not None and not high_demand_notified:
+            if on_high_demand is not None and not high_demand_notified and attempt >= 3:
                 high_demand_notified = True
                 await on_high_demand()
             log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
