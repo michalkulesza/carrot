@@ -363,3 +363,20 @@ async def run_import(url: str, model: str = "gemini-2.5-flash-lite") -> ImportRe
             result = ImportResult.model_validate(event["result"])
     assert result is not None
     return result
+
+
+async def run_image_import(
+    image_data: bytes,
+    mime_type: str,
+    model: str = "gemini-2.5-flash-lite",
+    available_tags: list[str] | None = None,
+    allergens: list[str] | None = None,
+) -> ImportResult:
+    result: ImportResult | None = None
+    async for event in run_image_import_stream(
+        image_data, mime_type, model=model, available_tags=available_tags, allergens=allergens,
+    ):
+        if event["type"] == "done":
+            result = ImportResult.model_validate(event["result"])
+    assert result is not None
+    return result

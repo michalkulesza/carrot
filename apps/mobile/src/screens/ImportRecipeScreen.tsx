@@ -794,7 +794,7 @@ const QuickUrlInputRow = ({
         </Pressable>
       </View>
       <Pressable
-        style={({ pressed }) => [styles.primaryBtn, styles.accentBtn, !url.trim() && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [styles.primaryBtn, !url.trim() && styles.btnDisabled, pressed && { opacity: 0.7 }]}
         onPress={onImport}
         disabled={!url.trim()}
         accessibilityLabel={t('addRecipe.import')}
@@ -1084,6 +1084,9 @@ const ImportRecipeScreen = () => {
     } else if (sharedTypeParam === 'text') {
       setMode('text')
       setPastedText(sharedValueParam)
+    } else if (sharedTypeParam === 'image') {
+      setMode('gallery')
+      startImageImport(sharedValueParam, 'image/jpeg')
     }
   }, [sharedTypeParam, sharedValueParam])
 
@@ -1103,47 +1106,44 @@ const ImportRecipeScreen = () => {
     return () => sub.remove()
   }, [editable])
 
+  const renderBackButton = useCallback(
+    (onPress: () => void) => () => (
+      <Pressable
+        onPress={onPress}
+        hitSlop={8}
+        style={({ pressed }) => [styles.headerBackBtnWrap, pressed && { opacity: 0.5 }]}
+        accessibilityLabel={t('common.back')}
+      >
+        <Feather name="chevron-left" size={24} color={PlatformColor('label') as unknown as string} style={styles.headerBackChevron} />
+        <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
+      </Pressable>
+    ),
+    [t],
+  )
+
   useLayoutEffect(() => {
     if (editable) {
       navigation.setOptions({
         gestureEnabled: false,
-        headerLeft: () => (
-          <Pressable
-            onPress={() => {
-              Alert.alert(t('addRecipe.discard'), undefined, [
-                { text: t('common.cancel'), style: 'cancel' },
-                { text: t('addRecipe.discard'), style: 'destructive', onPress: () => navigation.goBack() },
-              ])
-            }}
-            hitSlop={8}
-            style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
-            accessibilityLabel={t('common.back')}
-          >
-            <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
-          </Pressable>
-        ),
+        headerLeft: renderBackButton(() => {
+          Alert.alert(t('addRecipe.discard'), t('addRecipe.discardMessage'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('addRecipe.discard'), style: 'destructive', onPress: () => { reset(); setMode(null) } },
+          ])
+        }),
       })
     } else if (mode) {
       navigation.setOptions({
         gestureEnabled: true,
-        headerLeft: () => (
-          <Pressable
-            onPress={() => { reset(); setMode(null) }}
-            hitSlop={8}
-            style={({ pressed }) => [{ paddingHorizontal: 4 }, pressed && { opacity: 0.5 }]}
-            accessibilityLabel={t('common.cancel')}
-          >
-            <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
-          </Pressable>
-        ),
+        headerLeft: renderBackButton(() => { reset(); setMode(null) }),
       })
     } else {
       navigation.setOptions({
         gestureEnabled: true,
-        headerLeft: undefined,
+        headerLeft: renderBackButton(() => navigation.goBack()),
       })
     }
-  }, [navigation, mode, editable, t])
+  }, [navigation, mode, editable, t, renderBackButton])
 
   const handlePasteUrl = async () => {
     const text = await Clipboard.getStringAsync()
@@ -1181,7 +1181,14 @@ const ImportRecipeScreen = () => {
         ),
       )
     } else {
-      setError(res.error ?? t('addRecipe.importFailed'))
+      const message = res.error ?? t('addRecipe.importFailed')
+      // Camera/gallery imports leave the user looking at a blank import screen with no
+      // input to correct (unlike a URL/text typo), so a passive inline error is easy to
+      // miss — surface it as an alert too.
+      if (mode === 'camera' || mode === 'gallery') {
+        Alert.alert(t('addRecipe.importFailed'), message)
+      }
+      setError(message)
     }
     setLoading(false)
   }
@@ -1537,9 +1544,16 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 120 },
 
   // Header back button
+  headerBackBtnWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: -8,
+    paddingHorizontal: 4,
+  },
+  headerBackChevron: { marginRight: -4 },
   headerBackBtn: {
     fontSize: 17,
-    color: PlatformColor('systemBlue') as unknown as string,
+    color: PlatformColor('label') as unknown as string,
   },
 
   // Quick URL input
@@ -1721,7 +1735,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtnText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, fontWeight: '500' },
   primaryBtn: {
-    backgroundColor: colors.brand,
+    backgroundColor: colors.blue,
     borderRadius: 10,
     paddingVertical: 13,
     alignItems: 'center',
@@ -1729,7 +1743,6 @@ const styles = StyleSheet.create({
     minHeight: 46,
   },
   primaryBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
-  accentBtn: { backgroundColor: PlatformColor('systemBlue') as unknown as string },
   btnDisabled: { opacity: 0.4 },
 
   // Editable view

@@ -1,10 +1,11 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Sentry from '@sentry/react-native'
+import { consumePendingShare, hasPendingShare } from '../src/utils/pendingShare'
 
 if (!__DEV__) {
   Sentry.init({
@@ -31,6 +32,7 @@ function RootLayoutNav() {
   const { user, loading } = useAuth()
   const segments = useSegments()
   const router = useRouter()
+  const [processingShare, setProcessingShare] = useState(false)
 
   useEffect(() => {
     if (loading) return
@@ -42,6 +44,36 @@ function RootLayoutNav() {
     }
   }, [user, loading, segments])
 
+  // Fallback for the Share Extension: some host apps (e.g. Photos) decline to relay the
+  // extension's deep link, so the share would otherwise be silently lost. The extension always
+  // also persists the share to the App Group container, which we poll for here on launch and
+  // every time the app comes back to the foreground.
+  useEffect(() => {
+    if (loading || !user) return
+
+    const checkPendingShare = async () => {
+      // Consuming is async (file read + base64 decode); block interaction for that brief
+      // window so a manual tap (e.g. the "+" add-recipe button) can't push its own screen
+      // a moment before this pushes another import-recipe screen on top of it.
+      if (!hasPendingShare()) return
+      setProcessingShare(true)
+      try {
+        const pending = await consumePendingShare()
+        if (pending) {
+          router.push({ pathname: '/import-recipe', params: pending })
+        }
+      } finally {
+        setProcessingShare(false)
+      }
+    }
+
+    checkPendingShare()
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkPendingShare()
+    })
+    return () => subscription.remove()
+  }, [loading, user])
+
   return (
     <>
       <Stack screenOptions={{ headerBackTitle: t('common.back'), headerTransparent: true, headerShadowVisible: false }}>
@@ -52,7 +84,7 @@ function RootLayoutNav() {
         <Stack.Screen name="recipe/[id]/edit" options={{ title: '' }} />
         <Stack.Screen name="household/[id]" options={{ title: '' }} />
       </Stack>
-      {loading && (
+      {(loading || processingShare) && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" />
         </View>
