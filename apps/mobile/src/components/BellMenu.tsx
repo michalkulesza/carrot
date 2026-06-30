@@ -3,7 +3,7 @@ import { Alert, StyleSheet, Text, View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { useRouter, usePathname } from 'expo-router'
 import { colors } from '../theme/colors'
 import {
   useTimers,
@@ -17,6 +17,7 @@ import { useApiClient } from '@platekeeper/shared/api/context'
 const BellMenu = () => {
   const { t } = useTranslation()
   const router = useRouter()
+  const pathname = usePathname()
   const { timers, pauseTimer, resumeTimer, cancelTimer } = useTimers()
   const { items: notifHistory, dismiss: dismissNotif, clearAll: clearNotifHistory } = useNotificationHistory()
   const { invitations, refetchHouseholds, refetchInvitations } = useHousehold()
@@ -45,7 +46,7 @@ const BellMenu = () => {
           isRunning
             ? { id: `timer-pause-${timer.id}`, title: t('common.pause'), image: 'pause.circle' }
             : { id: `timer-resume-${timer.id}`, title: t('common.resume'), image: 'play.circle' },
-          { id: `timer-goto-${timer.id}`, title: t('timers.goToRecipe'), image: 'arrow.right.circle' },
+          ...(pathname === `/recipe/${timer.recipeId}` ? [] : [{ id: `timer-goto-${timer.id}`, title: t('timers.goToRecipe'), image: 'arrow.right.circle' }]),
           {
             id: `timer-cancel-${timer.id}`,
             title: t('common.cancel'),
@@ -111,7 +112,7 @@ const BellMenu = () => {
     }
 
     return items
-  }, [timerList, invitations, notifHistory, totalCount, t])
+  }, [timerList, invitations, notifHistory, totalCount, pathname, t])
 
   const handleAction = useCallback(
     async ({ nativeEvent }: { nativeEvent: { event: string } }) => {
