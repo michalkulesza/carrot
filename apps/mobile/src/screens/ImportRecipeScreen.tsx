@@ -1142,7 +1142,14 @@ const ImportRecipeScreen = () => {
     } else if (mode) {
       navigation.setOptions({
         gestureEnabled: true,
-        headerLeft: renderBackButton(() => { reset(); setMode(null) }),
+        headerLeft: renderBackButton(() => {
+          reset()
+          if (loading) {
+            navigation.goBack()
+          } else {
+            setMode(null)
+          }
+        }),
       })
     } else {
       navigation.setOptions({
@@ -1150,7 +1157,7 @@ const ImportRecipeScreen = () => {
         headerLeft: renderBackButton(() => navigation.goBack()),
       })
     }
-  }, [navigation, mode, editable, t, renderBackButton])
+  }, [navigation, mode, editable, loading, t, renderBackButton])
 
   const handlePasteUrl = async () => {
     const text = await Clipboard.getStringAsync()
