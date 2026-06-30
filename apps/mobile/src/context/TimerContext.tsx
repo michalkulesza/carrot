@@ -204,17 +204,15 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     const interval = setInterval(() => {
       setTimers((prev) => {
         let changed = false
-        let hasRunning = false
         const next = new Map(prev)
         for (const [tid, t] of next) {
           if (t.status !== 'running') continue
-          hasRunning = true
           if (getRemainingSeconds(t) === 0) {
             next.set(tid, { ...t, status: 'done', remainingAtStart: 0, startedAt: null })
             changed = true
           }
         }
-        return hasRunning || changed ? new Map(next) : prev
+        return changed ? next : prev
       })
     }, 1000)
     return () => clearInterval(interval)

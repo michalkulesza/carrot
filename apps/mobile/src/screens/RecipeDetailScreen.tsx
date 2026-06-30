@@ -70,6 +70,12 @@ const TimerSpan = ({
   const { t } = useTranslation()
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers()
   const timer = timers.get(timerId)
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    if (timer?.status !== 'running') return
+    const id = setInterval(() => setTick((n) => n + 1), 1000)
+    return () => clearInterval(id)
+  }, [timer?.status])
 
   if (!timer) {
     return (
