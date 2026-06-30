@@ -303,6 +303,7 @@
     "personal": "Personnel"
   },
   "tags": {
+    "tags": "Tags",
     "noTags": "Aucun tag",
     "searchOrCreate": "Rechercher ou créer…",
     "creating": "Création…",

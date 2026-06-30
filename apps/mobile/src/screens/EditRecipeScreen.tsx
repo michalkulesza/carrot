@@ -200,6 +200,10 @@ const EditRecipeScreen = () => {
   }, [recipe, state])
 
   useLayoutEffect(() => {
+    navigation.setOptions({ headerBackVisible: false })
+  }, [navigation])
+
+  useLayoutEffect(() => {
     if (!state) return
     navigation.setOptions({
       gestureEnabled: false,
