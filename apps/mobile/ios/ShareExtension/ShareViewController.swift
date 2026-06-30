@@ -160,6 +160,14 @@ final class ShareViewController: UIViewController {
 
     // Recognized recipe + the original photo, kept around so Save can be retried on failure.
     private var pendingSave: (recipe: RecipeExtraction, thumbnailUrl: String?, imageBase64: String, mimeType: String, auth: SharedAuth)?
+    // In-flight network task — cancelled when the share sheet is dismissed.
+    private var activeTask: URLSessionDataTask?
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        activeTask?.cancel()
+        activeTask = nil
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -271,6 +279,7 @@ final class ShareViewController: UIViewController {
         doneButton.isHidden = true
         detailLabel.isHidden = true
 
+        activeTask?.cancel()
         NSLog("[ShareExtension] startURLTextExtraction type=\(shareType) attempt=\(attempt)")
 
         let completion: (Result<ImportResultDTO, Error>) -> Void = { [weak self] outcome in
@@ -492,6 +501,7 @@ final class ShareViewController: UIViewController {
         doneButton.isHidden = true
         detailLabel.isHidden = true
 
+        activeTask?.cancel()
         NSLog("[ShareExtension] startImageExtraction attempt=\(attempt)")
 
         recognizeImage(auth: auth, imageBase64: imageBase64, mimeType: mimeType) { [weak self] outcome in
@@ -691,7 +701,7 @@ final class ShareViewController: UIViewController {
         _ request: URLRequest,
         completion: @escaping (Result<ImportResultDTO, Error>) -> Void
     ) {
-        URLSession.shared.dataTask(with: request) { data, response, error in
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error {
                 completion(.failure(error))
                 return
@@ -708,7 +718,9 @@ final class ShareViewController: UIViewController {
             } catch {
                 completion(.failure(error))
             }
-        }.resume()
+        }
+        activeTask = task
+        task.resume()
     }
 
     private func saveRecipe(auth: SharedAuth, body: RecipeSaveRequestDTO, completion: @escaping (Result<Void, Error>) -> Void) {
