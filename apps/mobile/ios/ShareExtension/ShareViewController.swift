@@ -100,7 +100,7 @@ final class ShareViewController: UIViewController {
 
     private let statusLabel: UILabel = {
         let l = UILabel()
-        l.text = "Opening PlateKeeper…"
+        l.text = "Loading…"
         l.font = .systemFont(ofSize: 16, weight: .semibold)
         l.textColor = .label
         l.textAlignment = .center
@@ -202,12 +202,28 @@ final class ShareViewController: UIViewController {
 
             if let textProvider = providers.first(where: { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }) {
                 NSLog("[ShareExtension] matched text provider")
-                textProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier) { [weak self] result, _ in
+                textProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier) { [weak self] result, error in
                     guard let self else { return }
-                    guard let text = result as? String else {
+                    NSLog("[ShareExtension] text loadItem result type=\(type(of: result as Any)) error=\(String(describing: error))")
+
+                    // loadItem can return String, URL (temp file), or Data depending on the source app.
+                    let text: String?
+                    if let s = result as? String {
+                        text = s
+                    } else if let url = result as? URL, let s = try? String(contentsOf: url, encoding: .utf8) {
+                        text = s
+                    } else if let data = result as? Data, let s = String(data: data, encoding: .utf8) {
+                        text = s
+                    } else {
+                        text = nil
+                    }
+
+                    guard let text, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                        NSLog("[ShareExtension] text result was empty or unreadable")
                         self.complete()
                         return
                     }
+
                     // Some apps (Instagram, X) share a link as plain text — detect it and
                     // route accordingly so the main app opens the correct import mode.
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
