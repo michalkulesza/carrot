@@ -9,7 +9,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
 from api.models import Household, ImportRequest, ImportResult, Tag, UserPreferences
-from api.services.pipeline import run_image_import_stream, run_import, run_import_stream, run_text_import_stream
+from api.services.pipeline import (
+    run_image_import,
+    run_image_import_stream,
+    run_import,
+    run_import_stream,
+    run_text_import_stream,
+)
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/imports", tags=["imports"])
@@ -95,6 +101,19 @@ class ImageImportBody(BaseModel):
     image_base64: str
     mime_type: str = "image/jpeg"
     model: str = "gemini-2.5-flash-lite"
+
+
+@router.post("/image", response_model=ImportResult)
+async def create_image_import(
+    body: ImageImportBody,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> ImportResult:
+    image_data = base64.b64decode(body.image_base64)
+    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    return await run_image_import(
+        image_data, body.mime_type, model=body.model, available_tags=available_tags, allergens=allergens or None,
+    )
 
 
 @router.post("/stream-image")

@@ -166,7 +166,10 @@ async def extract_recipe_from_image(
         parts_text.append(f"Allergens to check: {', '.join(allergens)}")
     parts_text.append(
         "Extract the recipe from this image. "
-        "This may be a photo of a cookbook page, recipe card, handwritten recipe, or screenshot."
+        "This may be a photo of a cookbook page, recipe card, handwritten recipe, or screenshot. "
+        "If the image does not contain a recipe (e.g. it's an unrelated photo, a meme, or text "
+        "with no ingredients or steps), return null title and an empty components array — do not "
+        "invent a recipe."
     )
     text_prompt = "\n\n".join(parts_text)
 

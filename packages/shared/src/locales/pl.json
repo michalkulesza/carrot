@@ -318,6 +318,7 @@
     "adaptedBy": "Zaadaptowany przez: @{{handle}}",
     "alsoAddToPrivate": "Dodaj też do moich prywatnych przepisów",
     "discard": "Odrzuć",
+    "discardMessage": "Twój postęp zostanie utracony.",
     "import": "Importuj",
     "recipeSaved": "Przepis zapisany",
     "failedToSave": "Nie udało się zapisać przepisu",

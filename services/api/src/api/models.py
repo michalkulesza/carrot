@@ -201,7 +201,7 @@ class ImportRequest(BaseModel):
 class ImportMetadata(BaseModel):
     creator_handle: str | None = None
     thumbnail_url: str | None = None
-    source_url: str
+    source_url: str | None = None
 
 
 class ImportStage(StrEnum):

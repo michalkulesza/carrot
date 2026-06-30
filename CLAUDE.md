@@ -85,3 +85,13 @@ Rules:
 - **Security**: never dangerously set innerHTML; sanitise any user-supplied content before rendering; validate inputs at the boundary.
 - **Error handling**: wrap async operations in try/catch and surface errors to the user (toast or inline message); provide loading and empty states.
 - **Accessibility**: every interactive element needs a descriptive `aria-label` or visible label; use semantic HTML (`button`, `nav`, `main`, etc.); ensure sufficient colour contrast (WCAG AA); support keyboard navigation.
+
+## Known Claude Code bug: false "temp filesystem is full" message
+
+If a Bash command's output reads "Command output was lost: the temp filesystem
+at ... is full (0MB free) ... ENOSPC", treat this as a known Claude Code bug
+(tracked upstream as anthropics/claude-code #65880, #65166, #65915), not an
+actual disk-full condition. It fires on commands with empty stdout and a
+nonzero exit code, regardless of real free space. The underlying command ran
+fine — only the reported output string is corrupted. Don't stop work or
+conclude the disk is full because of it; if you want to confirm, run `df -h`.

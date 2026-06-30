@@ -310,6 +310,7 @@
     "adaptedBy": "Adapted by: @{{handle}}",
     "alsoAddToPrivate": "Also add to my private recipes",
     "discard": "Discard",
+    "discardMessage": "Your progress will be lost.",
     "import": "Import",
     "recipeSaved": "Recipe saved",
     "failedToSave": "Failed to save recipe",
