@@ -81,7 +81,7 @@ const BellMenu = () => {
           id: `recipe-importing-${notif.id}`,
           title: notif.title,
           subtitle: notif.body,
-          image: 'arrow.clockwise',
+          image: 'arrow.down.circle',
           attributes: { disabled: true },
         })
       } else if (notif.type === 'recipe_imported') {
@@ -89,14 +89,14 @@ const BellMenu = () => {
           id: `recipe-imported-${notif.id}`,
           title: notif.title,
           subtitle: notif.body,
-          image: 'checkmark.circle',
+          image: 'checkmark.circle.fill',
         })
       } else if (notif.type === 'recipe_failed') {
         items.push({
           id: `recipe-failed-${notif.id}`,
           title: notif.title,
           subtitle: notif.body,
-          image: 'exclamationmark.circle',
+          image: 'xmark.circle.fill',
           attributes: { destructive: true },
         })
       }
