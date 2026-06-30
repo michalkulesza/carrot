@@ -94,9 +94,9 @@ const scheduleNotif = async (t: TimerEntry): Promise<string | null> => {
   try {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: `✓ Done — ${t.recipeTitle}`,
-        body:
-          t.stepText.length > 80 ? t.stepText.slice(0, 77) + '…' : t.stepText,
+        title: '⏱️ Timer done',
+        subtitle: t.recipeTitle.length > 50 ? t.recipeTitle.slice(0, 47) + '…' : t.recipeTitle,
+        body: t.stepText.length > 80 ? t.stepText.slice(0, 77) + '…' : t.stepText,
         data: { timerId: t.id },
       },
       trigger: {
