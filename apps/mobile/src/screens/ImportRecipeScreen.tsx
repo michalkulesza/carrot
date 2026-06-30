@@ -956,7 +956,8 @@ const TextPasteView = ({
           disabled={loading}
           accessibilityLabel={t('addRecipe.paste')}
         >
-          <Text style={styles.pasteBtnText}>{t('addRecipe.paste')}</Text>
+          <Feather name="clipboard" size={16} color={PlatformColor('systemBlue') as unknown as string} />
+          <Text style={styles.textPasteBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
       {progressSteps.length > 0 && (
@@ -1743,19 +1744,27 @@ const styles = StyleSheet.create({
     paddingTop: 11,
     paddingBottom: 11,
     fontSize: 16,
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    backgroundColor: PlatformColor('systemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
     minHeight: 200,
     textAlignVertical: 'top',
   },
   textPasteInlineBtn: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  textPasteBtnText: {
+    fontSize: 16,
+    color: PlatformColor('systemBlue') as unknown as string,
+    fontWeight: '500',
   },
 
   // Share tip card
