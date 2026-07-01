@@ -332,6 +332,8 @@
     "alsoAddToPrivate": "Añadir también a mis recetas privadas",
     "discard": "Descartar",
     "discardMessage": "Se perderá tu progreso.",
+    "discardChangesTitle": "¿Descartar cambios?",
+    "discardChangesMessage": "Tus cambios se perderán.",
     "import": "Importar",
     "recipeSaved": "Receta guardada",
     "failedToSave": "No se pudo guardar la receta",

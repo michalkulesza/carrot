@@ -31,7 +31,7 @@ import {
 } from '../context/TimerContext'
 import BellMenu from '../components/BellMenu'
 import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@platekeeper/shared/types'
-import { displayIngredient, buildClientStepRefs } from '@platekeeper/shared/utils/ingredientUtils'
+import { displayIngredient, buildClientStepRefs, serializeIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
@@ -361,8 +361,11 @@ const ComponentSection = ({
     () =>
       component.step_ingredient_refs != null
         ? component.step_ingredient_refs
-        : buildClientStepRefs(component.steps, component.ingredients),
-    [component.step_ingredient_refs, component.steps, component.ingredients],
+        : buildClientStepRefs(
+            component.steps,
+            ingredients.map((ing) => serializeIngredient(ing)),
+          ),
+    [component.step_ingredient_refs, component.steps, ingredients],
   )
 
   const handleAddAll = useCallback(() => {
@@ -430,7 +433,7 @@ const ComponentSection = ({
               recipe={recipe}
               componentIndex={index}
               stepRefs={stepRefs[i] ?? []}
-              rawIngredients={component.ingredients}
+              rawIngredients={ingredients.map((ing) => serializeIngredient(ing))}
               showStepQty={showStepQty}
               fontSize={fontSize}
               lineHeight={lineHeight}

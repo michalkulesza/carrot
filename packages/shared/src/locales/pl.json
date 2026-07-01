@@ -340,6 +340,8 @@
     "alsoAddToPrivate": "Dodaj też do moich prywatnych przepisów",
     "discard": "Odrzuć",
     "discardMessage": "Twój postęp zostanie utracony.",
+    "discardChangesTitle": "Odrzucić zmiany?",
+    "discardChangesMessage": "Twoje zmiany zostaną utracone.",
     "import": "Importuj",
     "recipeSaved": "Przepis zapisany",
     "failedToSave": "Nie udało się zapisać przepisu",

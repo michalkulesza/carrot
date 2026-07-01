@@ -332,6 +332,8 @@
     "alsoAddToPrivate": "Also add to my private recipes",
     "discard": "Discard",
     "discardMessage": "Your progress will be lost.",
+    "discardChangesTitle": "Discard changes?",
+    "discardChangesMessage": "Your changes will be lost.",
     "import": "Import",
     "recipeSaved": "Recipe saved",
     "failedToSave": "Failed to save recipe",

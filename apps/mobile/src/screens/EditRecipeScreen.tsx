@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   FlatList,
@@ -176,13 +176,15 @@ const EditRecipeScreen = () => {
   const [state, setState] = useState<EditState | null>(null)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [saving, setSaving] = useState(false)
+  const savedState = useRef<EditState | null>(null)
+  const savedTags = useRef<Tag[]>([])
   const [uploadingThumb, setUploadingThumb] = useState(false)
   const [thumbErrored, setThumbErrored] = useState(false)
   const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
 
   useEffect(() => {
     if (!recipe || state) return
-    setState({
+    const initial: EditState = {
       title: recipe.title,
       servings: recipe.servings?.toString() ?? '',
       kcal: recipe.kcal_per_serving?.toString() ?? '',
@@ -192,10 +194,15 @@ const EditRecipeScreen = () => {
       components: recipe.components.map((c) => ({
         name: c.name,
         yield_note: c.yield_note,
-        ingredients: (c.ingredients as string[]).map(parseIngredient),
+        ingredients: (c.ingredients as Array<string | StructuredIngredient>).map((raw) =>
+          typeof raw === 'string' ? parseIngredient(raw) : raw,
+        ),
         steps: c.steps,
       })),
-    })
+    }
+    setState(initial)
+    savedState.current = initial
+    savedTags.current = recipe.tags
     setSelectedTags(recipe.tags)
   }, [recipe, state])
 
@@ -210,7 +217,17 @@ const EditRecipeScreen = () => {
       headerLeft: () => (
         <Pressable
           onPress={() => {
-            Alert.alert(t('addRecipe.discard'), undefined, [
+            const isStateDirty =
+              !savedState.current ||
+              JSON.stringify(state) !== JSON.stringify(savedState.current)
+            const isTagsDirty =
+              selectedTags.map((tag) => tag.id).sort().join(',') !==
+              savedTags.current.map((tag) => tag.id).sort().join(',')
+            if (!isStateDirty && !isTagsDirty) {
+              navigation.goBack()
+              return
+            }
+            Alert.alert(t('addRecipe.discardChangesTitle'), t('addRecipe.discardChangesMessage'), [
               { text: t('common.cancel'), style: 'cancel' },
               { text: t('addRecipe.discard'), style: 'destructive', onPress: () => navigation.goBack() },
             ])
@@ -219,11 +236,11 @@ const EditRecipeScreen = () => {
           style={({ pressed }) => [styles.headerBackBtn, pressed && { opacity: 0.5 }]}
           accessibilityLabel={t('common.back')}
         >
-          <Ionicons name="chevron-back" size={28} color={PlatformColor('systemBlue') as unknown as string} />
+          <Ionicons name="chevron-back" size={28} color={PlatformColor('label') as unknown as string} />
         </Pressable>
       ),
     })
-  }, [navigation, state, t])
+  }, [navigation, state, selectedTags, t])
 
   const updateComp = useCallback(
     (ci: number, patch: Partial<EditComponent>) => {

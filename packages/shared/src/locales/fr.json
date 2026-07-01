@@ -332,6 +332,8 @@
     "alsoAddToPrivate": "Ajouter aussi à mes recettes privées",
     "discard": "Abandonner",
     "discardMessage": "Votre progression sera perdue.",
+    "discardChangesTitle": "Abandonner les modifications ?",
+    "discardChangesMessage": "Vos modifications seront perdues.",
     "import": "Importer",
     "recipeSaved": "Recette enregistrée",
     "failedToSave": "Impossible d'enregistrer la recette",

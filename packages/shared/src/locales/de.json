@@ -332,6 +332,8 @@
     "alsoAddToPrivate": "Auch zu meinen privaten Rezepten hinzufügen",
     "discard": "Verwerfen",
     "discardMessage": "Dein Fortschritt geht verloren.",
+    "discardChangesTitle": "Änderungen verwerfen?",
+    "discardChangesMessage": "Deine Änderungen gehen verloren.",
     "import": "Importieren",
     "recipeSaved": "Rezept gespeichert",
     "failedToSave": "Rezept konnte nicht gespeichert werden",
