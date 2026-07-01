@@ -346,6 +346,7 @@
     "import": "Importuj",
     "recipeSaved": "Przepis zapisany",
     "failedToSave": "Nie udało się zapisać przepisu",
+    "saveError": "Nie udało się zapisać zmian. Spróbuj ponownie.",
     "recipeAddedToHousehold": "Przepis dodany do gospodarstwa domowego",
     "failedToAdd": "Nie udało się dodać przepisu",
     "addIngredient": "Dodaj składnik",

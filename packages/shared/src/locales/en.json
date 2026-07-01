@@ -338,6 +338,7 @@
     "import": "Import",
     "recipeSaved": "Recipe saved",
     "failedToSave": "Failed to save recipe",
+    "saveError": "Couldn't save your changes. Please try again.",
     "recipeAddedToHousehold": "Recipe added to household",
     "failedToAdd": "Failed to add recipe",
     "addIngredient": "Add ingredient",

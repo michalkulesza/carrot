@@ -408,11 +408,8 @@ const EditRecipeScreen = () => {
       })
       await qc.invalidateQueries({ queryKey: ['recipes'] })
       router.back()
-    } catch (err) {
-      Alert.alert(
-        t('common.ok'),
-        err instanceof Error ? err.message : t('addRecipe.failedToSave'),
-      )
+    } catch {
+      Alert.alert(t('common.ok'), t('addRecipe.saveError'))
     } finally {
       setSaving(false)
     }

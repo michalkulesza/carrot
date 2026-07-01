@@ -338,6 +338,7 @@
     "import": "Importer",
     "recipeSaved": "Recette enregistrée",
     "failedToSave": "Impossible d'enregistrer la recette",
+    "saveError": "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
     "recipeAddedToHousehold": "Recette ajoutée au foyer",
     "failedToAdd": "Impossible d'ajouter la recette",
     "addIngredient": "Ajouter un ingrédient",
