@@ -11,6 +11,7 @@ from sqlalchemy import select
 from api.config import settings
 from api.database import Base, async_session_maker, engine
 from api.models import Tag
+from api.routes.auth import router as auth_verify_router
 from api.routes.allergens import router as allergens_router
 from api.routes.export import router as export_router
 from api.routes.households import router as households_router
@@ -87,6 +88,9 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS language VARCHAR(10) NOT NULL DEFAULT 'en'"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS unit_system VARCHAR(20) NOT NULL DEFAULT 'metric'"))
+        await conn.execute(text("UPDATE users SET is_verified = TRUE WHERE is_verified = FALSE"))
+        await conn.execute(text("ALTER TABLE household_invitations ADD COLUMN IF NOT EXISTS invited_email VARCHAR(320)"))
+        await conn.execute(text("ALTER TABLE household_invitations ALTER COLUMN invited_user_id DROP NOT NULL"))
     await _seed_demo_user()
     await _seed_default_tags()
     worker_task = asyncio.create_task(import_worker.run())
@@ -108,6 +112,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_verify_router, prefix="/api/auth", tags=["auth"])
 app.include_router(allergens_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
@@ -121,12 +126,12 @@ app.include_router(shopping_list_router, prefix="/api")
 app.include_router(tags_router, prefix="/api")
 
 app.include_router(
-    fastapi_users_instance.get_auth_router(auth_backend),
+    fastapi_users_instance.get_auth_router(auth_backend, requires_verification=True),
     prefix="/api/auth/cookie",
     tags=["auth"],
 )
 app.include_router(
-    fastapi_users_instance.get_auth_router(jwt_backend),
+    fastapi_users_instance.get_auth_router(jwt_backend, requires_verification=True),
     prefix="/api/auth/jwt",
     tags=["auth"],
 )

@@ -127,7 +127,16 @@
     "tagline": "Twoja osobista biblioteka przepisów",
     "demoAccount": "Użyj konta demo",
     "demoAlt": "Użyj demo alt",
-    "chooseLanguage": "Wybierz język"
+    "chooseLanguage": "Wybierz język",
+    "verifyTitle": "Sprawdź pocztę",
+    "verifySubtitle": "Wpisz 6-cyfrowy kod wysłany na {{email}}",
+    "codePlaceholder": "000000",
+    "verify": "Zweryfikuj",
+    "verifying": "Weryfikacja…",
+    "resendCode": "Wyślij ponownie",
+    "resendIn": "Wyślij ponownie za {{seconds}}s",
+    "invalidCode": "Nieprawidłowy lub wygasły kod.",
+    "notVerifiedError": "Najpierw zweryfikuj swój adres e-mail."
   },
   "timers": {
     "startTimer": "Uruchom minutnik",

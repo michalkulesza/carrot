@@ -340,10 +340,32 @@ export const createApiClient = (config: ApiClientConfig) => {
     if (!res.ok) throw new Error('Failed to decline invitation')
   }
 
+  // ── Email verification ────────────────────────────────────────────────────
+
+  const verifyCode = async (email: string, code: string): Promise<void> => {
+    const res = await fetch(`${baseUrl}/api/auth/verify-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+      credentials,
+    })
+    await throwOnError(res, 'Verification failed')
+  }
+
+  const requestVerifyCode = async (email: string): Promise<void> => {
+    await fetch(`${baseUrl}/api/auth/request-verify-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+      credentials,
+    })
+  }
+
   // ── Auth ───────────────────────────────────────────────────────────────────
 
   const ERROR_MESSAGES: Record<string, string> = {
     LOGIN_BAD_CREDENTIALS: 'Invalid email or password.',
+    LOGIN_USER_NOT_VERIFIED: 'LOGIN_USER_NOT_VERIFIED',
     REGISTER_USER_ALREADY_EXISTS: 'An account with this email already exists.',
     REGISTER_INVALID_PASSWORD: 'Password must be at least 3 characters.',
   }
@@ -659,6 +681,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     listInvitations,
     acceptInvitation,
     declineInvitation,
+    verifyCode,
+    requestVerifyCode,
     login,
     register,
     logout,

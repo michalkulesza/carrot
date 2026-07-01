@@ -1,6 +1,9 @@
+import hashlib
+import secrets
 import uuid
+from datetime import datetime, timedelta
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, CookieTransport, JWTStrategy
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
@@ -12,7 +15,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from api.config import settings
-from api.database import Base, get_async_session
+from api.database import Base, async_session_maker, get_async_session
 
 
 class User(SQLAlchemyBaseUserTableUUID, Base):
@@ -45,6 +48,20 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = settings.secret
     verification_token_secret = settings.secret
+
+    async def on_after_register(self, user: User, request: Request | None = None) -> None:
+        from api.models import VerificationCode
+        from api.services.email import send_verification_code
+
+        code = "".join(secrets.choice("0123456789") for _ in range(6))
+        code_hash = hashlib.sha256(code.encode()).hexdigest()
+        expires_at = datetime.utcnow() + timedelta(minutes=15)
+
+        async with async_session_maker() as session:
+            session.add(VerificationCode(user_id=user.id, code_hash=code_hash, expires_at=expires_at))
+            await session.commit()
+
+        await send_verification_code(user.email, code)
 
 
 async def get_user_manager(user_db: SQLAlchemyUserDatabase = Depends(get_user_db)):

@@ -125,7 +125,16 @@
     "tagline": "Deine persönliche Rezeptbibliothek",
     "demoAccount": "Demo-Konto verwenden",
     "demoAlt": "Demo Alt verwenden",
-    "chooseLanguage": "Sprache wählen"
+    "chooseLanguage": "Sprache wählen",
+    "verifyTitle": "E-Mail prüfen",
+    "verifySubtitle": "Gib den 6-stelligen Code ein, der an {{email}} gesendet wurde",
+    "codePlaceholder": "000000",
+    "verify": "Bestätigen",
+    "verifying": "Bestätigung…",
+    "resendCode": "Code erneut senden",
+    "resendIn": "Erneut senden in {{seconds}}s",
+    "invalidCode": "Ungültiger oder abgelaufener Code.",
+    "notVerifiedError": "Bitte bestätige deine E-Mail-Adresse, bevor du dich anmeldest."
   },
   "timers": {
     "startTimer": "Timer starten",

@@ -268,43 +268,77 @@ async def invite_user(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
+    from api.services.email import send_household_invitation
+
     await _require_member(session, household_id, user.id)
 
+    household_result = await session.execute(
+        select(Household).where(Household.id == household_id)
+    )
+    household = household_result.scalar_one_or_none()
+    if household is None:
+        raise HTTPException(status_code=404, detail="Household not found")
+
+    email = body.email.lower().strip()
+    inviter_name = user.nickname or user.email
+
     target_result = await session.execute(
-        select(User).where(User.email == body.email.lower().strip())
+        select(User).where(User.email == email)
     )
     target = target_result.scalar_one_or_none()
-    if target is None:
-        raise HTTPException(status_code=404, detail="No user found with that email")
-    if target.id == user.id:
-        raise HTTPException(status_code=400, detail="Cannot invite yourself")
 
-    already_member = await session.execute(
-        select(HouseholdMember).where(
-            HouseholdMember.household_id == household_id,
-            HouseholdMember.user_id == target.id,
+    if target is not None:
+        if target.id == user.id:
+            raise HTTPException(status_code=400, detail="Cannot invite yourself")
+
+        already_member = await session.execute(
+            select(HouseholdMember).where(
+                HouseholdMember.household_id == household_id,
+                HouseholdMember.user_id == target.id,
+            )
         )
-    )
-    if already_member.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=400, detail="User is already a member")
+        if already_member.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="User is already a member")
 
-    pending = await session.execute(
-        select(HouseholdInvitation).where(
-            HouseholdInvitation.household_id == household_id,
-            HouseholdInvitation.invited_user_id == target.id,
-            HouseholdInvitation.status == InvitationStatus.PENDING,
+        pending = await session.execute(
+            select(HouseholdInvitation).where(
+                HouseholdInvitation.household_id == household_id,
+                HouseholdInvitation.invited_user_id == target.id,
+                HouseholdInvitation.status == InvitationStatus.PENDING,
+            )
         )
-    )
-    if pending.scalar_one_or_none() is not None:
-        raise HTTPException(status_code=400, detail="Invitation already pending")
+        if pending.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="Invitation already pending")
 
-    session.add(HouseholdInvitation(
-        household_id=household_id,
-        invited_user_id=target.id,
-        invited_by_user_id=user.id,
-        status=InvitationStatus.PENDING,
-    ))
+        session.add(HouseholdInvitation(
+            household_id=household_id,
+            invited_user_id=target.id,
+            invited_email=email,
+            invited_by_user_id=user.id,
+            status=InvitationStatus.PENDING,
+        ))
+    else:
+        pending_email = await session.execute(
+            select(HouseholdInvitation).where(
+                HouseholdInvitation.household_id == household_id,
+                HouseholdInvitation.invited_email == email,
+                HouseholdInvitation.invited_user_id.is_(None),
+                HouseholdInvitation.status == InvitationStatus.PENDING,
+            )
+        )
+        if pending_email.scalar_one_or_none() is not None:
+            raise HTTPException(status_code=400, detail="Invitation already pending")
+
+        session.add(HouseholdInvitation(
+            household_id=household_id,
+            invited_user_id=None,
+            invited_email=email,
+            invited_by_user_id=user.id,
+            status=InvitationStatus.PENDING,
+        ))
+
     await session.commit()
+    await send_household_invitation(email, household.name, inviter_name)
     return {"detail": "Invitation sent"}
 
 

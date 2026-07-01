@@ -125,7 +125,16 @@
     "tagline": "Your personal recipe library",
     "demoAccount": "Use demo account",
     "demoAlt": "Use demo alt",
-    "chooseLanguage": "Choose language"
+    "chooseLanguage": "Choose language",
+    "verifyTitle": "Check your email",
+    "verifySubtitle": "Enter the 6-digit code sent to {{email}}",
+    "codePlaceholder": "000000",
+    "verify": "Verify",
+    "verifying": "Verifying…",
+    "resendCode": "Resend code",
+    "resendIn": "Resend in {{seconds}}s",
+    "invalidCode": "Invalid or expired code.",
+    "notVerifiedError": "Please verify your email before signing in."
   },
   "timers": {
     "timerDone_one": "Timer done",

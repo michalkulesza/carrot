@@ -5,6 +5,8 @@ import { useRouter } from 'expo-router'
 import { useAuth } from '../../context/AuthContext'
 import { colors } from '../../theme/colors'
 
+const NOT_VERIFIED = 'LOGIN_USER_NOT_VERIFIED'
+
 const LoginScreen = () => {
   const router = useRouter()
   const { t } = useTranslation()
@@ -31,7 +33,8 @@ const LoginScreen = () => {
     try {
       await login(email, password)
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('auth.signIn') + ' failed')
+      const msg = e instanceof Error ? e.message : ''
+      setError(msg === NOT_VERIFIED ? t('auth.notVerifiedError') : (msg || t('auth.signIn') + ' failed'))
     } finally {
       setSubmitting(false)
     }

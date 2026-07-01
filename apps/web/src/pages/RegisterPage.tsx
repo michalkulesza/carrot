@@ -21,7 +21,7 @@ export default function RegisterPage() {
     setLoading(true)
     try {
       await register({ email, password, nickname: nickname || undefined })
-      navigate('/', { replace: true })
+      navigate('/verify', { replace: true })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed.')
     } finally {

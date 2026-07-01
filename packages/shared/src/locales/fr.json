@@ -125,7 +125,16 @@
     "tagline": "Votre bibliothèque de recettes personnelle",
     "demoAccount": "Utiliser le compte démo",
     "demoAlt": "Utiliser démo alt",
-    "chooseLanguage": "Choisir la langue"
+    "chooseLanguage": "Choisir la langue",
+    "verifyTitle": "Vérifiez votre email",
+    "verifySubtitle": "Entrez le code à 6 chiffres envoyé à {{email}}",
+    "codePlaceholder": "000000",
+    "verify": "Vérifier",
+    "verifying": "Vérification…",
+    "resendCode": "Renvoyer le code",
+    "resendIn": "Renvoyer dans {{seconds}}s",
+    "invalidCode": "Code invalide ou expiré.",
+    "notVerifiedError": "Veuillez vérifier votre email avant de vous connecter."
   },
   "timers": {
     "startTimer": "Démarrer le minuteur",

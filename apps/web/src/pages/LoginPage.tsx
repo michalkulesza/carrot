@@ -22,7 +22,12 @@ export default function LoginPage() {
       await login(email, password)
       navigate('/', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed.')
+      const msg = err instanceof Error ? err.message : 'Login failed.'
+      if (msg === 'LOGIN_USER_NOT_VERIFIED') {
+        navigate('/verify', { replace: true })
+        return
+      }
+      setError(msg)
     } finally {
       setLoading(false)
     }

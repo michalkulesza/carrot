@@ -36,5 +36,13 @@ class Settings(BaseSettings):
     def r2_configured(self) -> bool:
         return bool(self.r2_endpoint_url and self.r2_access_key_id and self.r2_bucket_name)
 
+    # Email (Resend — optional; console fallback when unset)
+    resend_api_key: str = ""
+    email_from: str = ""
+
+    @property
+    def email_configured(self) -> bool:
+        return bool(self.resend_api_key and self.email_from)
+
 
 settings = Settings()  # type: ignore[call-arg]

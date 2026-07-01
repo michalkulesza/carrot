@@ -32,7 +32,7 @@ const queryClient = new QueryClient()
 
 function RootLayoutNav() {
   const { t } = useTranslation()
-  const { user, loading } = useAuth()
+  const { user, loading, pendingEmail } = useAuth()
   const segments = useSegments()
   const router = useRouter()
   const qc = useQueryClient()
@@ -162,12 +162,15 @@ function RootLayoutNav() {
   useEffect(() => {
     if (loading) return
     const inAuth = segments[0] === '(auth)'
-    if (!user && !inAuth) {
+    const inVerify = segments[1] === 'verify'
+    if (!user && pendingEmail && !inVerify) {
+      router.replace('/(auth)/verify')
+    } else if (!user && !pendingEmail && !inAuth) {
       router.replace('/(auth)/login')
     } else if (user && inAuth) {
       router.replace('/(tabs)')
     }
-  }, [user, loading, segments])
+  }, [user, loading, pendingEmail, segments])
 
   // Fallback for the Share Extension: some host apps (e.g. Photos) decline to relay the
   // extension's deep link, so the share would otherwise be silently lost. The extension always

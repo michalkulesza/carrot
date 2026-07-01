@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import { mobileClient, setToken } from '../api/client'
 import type { AuthUser, RegisterData } from '@platekeeper/shared/types'
@@ -8,8 +8,11 @@ const TOKEN_KEY = 'pk_auth_token'
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
+  pendingEmail: string | null
   login: (email: string, password: string) => Promise<void>
   register: (data: RegisterData) => Promise<void>
+  verifyCode: (email: string, code: string) => Promise<void>
+  resendCode: (email: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -19,6 +22,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
+  const pendingPasswordRef = useRef<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -37,19 +42,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
-    const result = await mobileClient.login(email, password)
-    if (result?.access_token) {
-      await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
-      setToken(result.access_token)
+    try {
+      const result = await mobileClient.login(email, password)
+      if (result?.access_token) {
+        await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
+        setToken(result.access_token)
+      }
+      const me = await mobileClient.getMe()
+      setUser(me)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : ''
+      if (msg === 'LOGIN_USER_NOT_VERIFIED') {
+        pendingPasswordRef.current = password
+        setPendingEmail(email)
+      }
+      throw e
     }
-    const me = await mobileClient.getMe()
-    setUser(me)
   }, [])
 
   const register = useCallback(async (data: RegisterData): Promise<void> => {
     await mobileClient.register(data)
-    await login(data.email, data.password)
+    pendingPasswordRef.current = data.password
+    setPendingEmail(data.email)
+  }, [])
+
+  const verifyCode = useCallback(async (email: string, code: string): Promise<void> => {
+    await mobileClient.verifyCode(email, code)
+    const pwd = pendingPasswordRef.current
+    if (pwd) {
+      await login(email, pwd)
+      pendingPasswordRef.current = null
+      setPendingEmail(null)
+    }
   }, [login])
+
+  const resendCode = useCallback(async (email: string): Promise<void> => {
+    await mobileClient.requestVerifyCode(email)
+  }, [])
 
   const logout = useCallback(async (): Promise<void> => {
     await mobileClient.logout().catch(() => {})
@@ -64,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, pendingEmail, login, register, verifyCode, resendCode, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
