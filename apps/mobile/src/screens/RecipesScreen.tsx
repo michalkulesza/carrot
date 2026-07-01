@@ -30,6 +30,7 @@ import GlassViewSafe from '../components/GlassViewSafe'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
+import { useScreenLoading } from '../hooks/useScreenLoading'
 
 const ThumbnailImage = ({ url, style }: { url: string; style: object }) => {
   const [errored, setErrored] = useState(false)
@@ -86,6 +87,7 @@ const RecipesScreen = () => {
   const insets = useSafeAreaInsets()
   const headerHeight = useHeaderHeight()
   const { recipes, isLoading, error } = useRecipes()
+  const { busy, showSpinner } = useScreenLoading(isLoading)
   const { tags } = useTags()
   const api = useApiClient()
   const qc = useQueryClient()
@@ -419,10 +421,12 @@ const RecipesScreen = () => {
     [filterFavourites, t],
   )
 
-  if (isLoading) {
+  if (busy) {
+    // Only draw our own spinner once auth is ready — during auth bootstrap the
+    // root loadingOverlay in app/_layout.tsx is the single loader.
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" accessibilityLabel={t('common.loading')} />
+        {showSpinner && <ActivityIndicator size="large" accessibilityLabel={t('common.loading')} />}
       </View>
     )
   }

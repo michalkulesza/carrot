@@ -32,6 +32,7 @@ import { getToken } from '../api/client'
 import BellMenu from '../components/BellMenu'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
+import { useScreenLoading } from '../hooks/useScreenLoading'
 
 const DAYS_BEFORE = 60
 const DAYS_AFTER = 180
@@ -364,6 +365,8 @@ const MealPlanScreen = () => {
   }, [queries])
 
   const isLoading = queries.some((q) => q.isLoading)
+  // Gate our own spinner on auth being ready so it doesn't stack with the root loadingOverlay.
+  const { showSpinner } = useScreenLoading(isLoading)
 
   const setEntry = useMutation({
     mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
@@ -519,7 +522,7 @@ const MealPlanScreen = () => {
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 
-      {isLoading && (
+      {showSpinner && (
         <View style={styles.loadingOverlay} pointerEvents="none">
           <ActivityIndicator size="small" color={colors.brand} />
         </View>

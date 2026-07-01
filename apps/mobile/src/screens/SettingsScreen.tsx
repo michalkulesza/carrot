@@ -26,6 +26,7 @@ import { useApiClient } from '@platekeeper/shared/api/context'
 import { useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
 import type { UserPreferences, AllergenData } from '@platekeeper/shared/types'
 import { useAuth } from '../context/AuthContext'
+import { useScreenLoading } from '../hooks/useScreenLoading'
 import { useHousehold } from '../context/HouseholdContext'
 import { useTimers } from '../context/TimerContext'
 import { persistLanguage } from '../i18n'
@@ -75,10 +76,11 @@ const SectionHeader = ({ label }: { label: string }) => (
 const StatsSection = () => {
   const { t } = useTranslation()
   const { data: stats, isLoading } = useRecipeStats()
+  const { showSpinner } = useScreenLoading(isLoading)
 
   return (
     <View style={styles.statsRow}>
-      {isLoading ? (
+      {showSpinner ? (
         <ActivityIndicator accessibilityLabel={t('common.loading')} />
       ) : (
         <>
@@ -338,6 +340,7 @@ const SettingsScreen = () => {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const { preferences, isLoading, error, update } = usePreferences()
+  const { showSpinner } = useScreenLoading(isLoading)
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold()
   const { create: createHousehold } = useHouseholds()
   const api = useApiClient()
@@ -483,7 +486,7 @@ const SettingsScreen = () => {
 
       {/* Preferences */}
       <SectionHeader label={t('settings.preferences')} />
-      {isLoading ? (
+      {showSpinner ? (
         <View style={styles.loadingRow}>
           <ActivityIndicator accessibilityLabel={t('common.loading')} />
         </View>
