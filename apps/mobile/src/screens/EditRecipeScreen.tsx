@@ -25,7 +25,7 @@ import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { useApiClient } from '@platekeeper/shared/api/context'
 import { UNITS } from '@platekeeper/shared/types'
-import type { Tag } from '@platekeeper/shared/types'
+import type { Tag, RecipeOut } from '@platekeeper/shared/types'
 import {
   parseIngredient,
   serializeIngredient,
@@ -388,7 +388,7 @@ const EditRecipeScreen = () => {
     if (!state) return
     setSaving(true)
     try {
-      await api.updateRecipe(recipeId, {
+      const updated = await api.updateRecipe(recipeId, {
         title: state.title,
         servings: state.servings !== '' ? Number(state.servings) : null,
         kcal_per_serving: state.kcal !== '' ? Number(state.kcal) : null,
@@ -406,7 +406,9 @@ const EditRecipeScreen = () => {
         })),
         tag_ids: selectedTags.map((tag) => tag.id),
       })
-      await qc.invalidateQueries({ queryKey: ['recipes'] })
+      qc.setQueryData<RecipeOut[]>(['recipes'], (prev) =>
+        prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
+      )
       router.back()
     } catch {
       Alert.alert(t('common.ok'), t('addRecipe.saveError'))
