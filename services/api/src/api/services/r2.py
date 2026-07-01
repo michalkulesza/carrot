@@ -20,6 +20,8 @@ def _s3_client():
 
 def upload_image(data: bytes, recipe_id: str) -> str:
     from PIL import Image
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
 
     img = Image.open(io.BytesIO(data))
     if img.mode != "RGB":
