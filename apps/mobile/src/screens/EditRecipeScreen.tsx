@@ -352,16 +352,23 @@ const EditRecipeScreen = () => {
         name: 'thumbnail.jpg',
       } as unknown as Blob)
       const token = getToken()
-      const response = await fetch(
-        `${API_BASE}/api/images/thumbnail?recipe_id=${encodeURIComponent(recipeId)}`,
-        {
-          method: 'POST',
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          body: formData,
-        },
-      )
-      if (!response.ok) throw new Error('Upload failed')
-      const data = (await response.json()) as { url: string }
+      const url = `${API_BASE}/api/images/thumbnail?recipe_id=${encodeURIComponent(recipeId)}`
+      // fetch + Hermes FormData rejects the {uri,type,name} blob shape;
+      // XHR's native RCTNetworking layer handles it correctly.
+      const data = await new Promise<{ url: string }>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', url)
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText) as { url: string })
+          } else {
+            reject(new Error('Upload failed'))
+          }
+        }
+        xhr.onerror = () => reject(new Error('Upload failed'))
+        xhr.send(formData)
+      })
       setState((s) => s && { ...s, thumbnail_url: data.url })
       setThumbErrored(false)
     } catch (err) {
