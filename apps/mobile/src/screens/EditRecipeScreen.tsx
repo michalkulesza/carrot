@@ -179,6 +179,7 @@ const EditRecipeScreen = () => {
   const savedState = useRef<EditState | null>(null)
   const savedTags = useRef<Tag[]>([])
   const [uploadingThumb, setUploadingThumb] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [thumbErrored, setThumbErrored] = useState(false)
   const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
 
@@ -343,6 +344,7 @@ const EditRecipeScreen = () => {
 
     const asset = result.assets[0]
     setUploadingThumb(true)
+    setUploadProgress(0)
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
       const formData = new FormData()
@@ -359,6 +361,9 @@ const EditRecipeScreen = () => {
         const xhr = new XMLHttpRequest()
         xhr.open('POST', url)
         if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(e.loaded / e.total)
+        }
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(JSON.parse(xhr.responseText) as { url: string })
@@ -371,10 +376,11 @@ const EditRecipeScreen = () => {
       })
       setState((s) => s && { ...s, thumbnail_url: data.url })
       setThumbErrored(false)
-    } catch (err) {
-      Alert.alert(t('common.ok'), err instanceof Error ? err.message : 'Upload failed')
+    } catch {
+      Alert.alert(t('common.ok'), t('common.uploadFailed'))
     } finally {
       setUploadingThumb(false)
+      setUploadProgress(0)
     }
   }, [recipeId, t])
 
@@ -496,13 +502,18 @@ const EditRecipeScreen = () => {
             <View style={[StyleSheet.absoluteFill, styles.thumbnailPlaceholderBg]} />
           )}
           <View style={styles.changePhotoOverlay}>
-            <Text style={styles.changePhotoText}>
-              {uploadingThumb
-                ? t('common.uploading')
-                : state.thumbnail_url
-                  ? t('common.changePhoto')
-                  : `+ ${t('common.addPhoto')}`}
-            </Text>
+            {uploadingThumb ? (
+              <>
+                <Text style={styles.changePhotoText}>{t('common.uploading')}</Text>
+                <View style={styles.progressTrack}>
+                  <View style={[styles.progressFill, { width: `${Math.round(uploadProgress * 100)}%` }]} />
+                </View>
+              </>
+            ) : (
+              <Text style={styles.changePhotoText}>
+                {state.thumbnail_url ? t('common.changePhoto') : `+ ${t('common.addPhoto')}`}
+              </Text>
+            )}
           </View>
         </Pressable>
 
@@ -692,6 +703,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#ffffff',
     fontWeight: '600',
+  },
+  progressTrack: {
+    marginTop: 6,
+    width: '100%',
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: '#ffffff',
   },
   thumbnailPlaceholderBg: {
     backgroundColor: colors.secondaryBackground,

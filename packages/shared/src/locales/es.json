@@ -29,6 +29,7 @@
     "addPhoto": "Añadir foto",
     "changePhoto": "Cambiar foto",
     "uploading": "Subiendo…",
+    "uploadFailed": "No se pudo subir la foto. Por favor, inténtalo de nuevo.",
     "invalidImageUrl": "URL no válida. Introduce una dirección https:// válida."
   },
   "recipes": {
