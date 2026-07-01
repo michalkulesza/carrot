@@ -237,6 +237,7 @@ const EditRecipeScreen = () => {
           accessibilityLabel={t('common.back')}
         >
           <Ionicons name="chevron-back" size={28} color={PlatformColor('label') as unknown as string} />
+          <Text style={styles.headerBackText}>{t('common.back')}</Text>
         </Pressable>
       ),
     })
@@ -634,7 +635,13 @@ const EditRecipeScreen = () => {
 
 const styles = StyleSheet.create({
   headerBackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: -8,
+  },
+  headerBackText: {
+    fontSize: 17,
+    color: PlatformColor('label'),
   },
   flex: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
