@@ -100,8 +100,10 @@ const BugReportScreen = () => {
             : [],
         },
       )
-      const flushed = await Sentry.flush()
-      if (!flushed) throw new Error('flush-timeout')
+      if (!__DEV__) {
+        const flushed = await Sentry.flush()
+        if (!flushed) throw new Error('flush-timeout')
+      }
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       Alert.alert(t('bugReport.success'), undefined, [{ text: t('common.ok'), onPress: () => router.back() }])
     } catch (err) {
