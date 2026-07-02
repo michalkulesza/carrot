@@ -6,6 +6,10 @@ import type { ShoppingListItem, PresenceUser } from '../types'
 const QUERY_KEY = ['shopping-list'] as const
 const KEEPALIVE_INTERVAL_MS = 8_000
 
+// Monotonic counter so rapid successive adds never collide on the same
+// millisecond (Date.now() alone isn't unique enough for fast typing).
+let tempIdCounter = 0
+
 export const useShoppingList = () => {
   const api = useApiClient()
   const qc = useQueryClient()
@@ -62,7 +66,7 @@ export const useShoppingList = () => {
       const maxPos = prev.filter((i) => !i.completed).reduce((m, i) => Math.max(m, i.position), -1)
       const now = new Date().toISOString()
       const optimistic: ShoppingListItem[] = items.map((text, idx) => ({
-        id: `temp-${Date.now()}-${idx}`,
+        id: `temp-${Date.now()}-${idx}-${tempIdCounter++}`,
         user_id: '',
         household_id: null,
         text,

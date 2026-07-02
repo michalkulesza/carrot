@@ -423,7 +423,6 @@
   "shoppingList": {
     "title": "Shopping List",
     "comingSoon": "Shopping list coming soon.",
-    "emptyList": "Your list is empty.",
     "addItemPlaceholder": "Add item…",
     "completedSection": "completed",
     "clearCompleted": "Clear completed",
