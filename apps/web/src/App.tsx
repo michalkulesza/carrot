@@ -8,6 +8,7 @@ import AppShell from './components/AppShell'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import VerifyPage from './pages/VerifyPage'
+import CompleteProfilePage from './pages/CompleteProfilePage'
 import { webClient } from './api/client'
 
 const queryClient = new QueryClient()
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify" element={<VerifyPage />} />
+          <Route path="/complete-profile" element={<CompleteProfilePage />} />
           <Route
             path="/*"
             element={

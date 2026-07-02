@@ -1,3 +1,9 @@
+> **Note (2026-07-02):** The signup portion of this doc (register → verify →
+> auto-login) is superseded by
+> [`signup-flow-restructure.md`](./signup-flow-restructure.md), which moves
+> email verification *before* account creation. Invitation claiming, the
+> email service, and resend/cooldown mechanics described here still apply.
+
 # PlateKeeper — Email Verification & Household Email Invitations
 
 Adds transactional email to the API and three user-facing capabilities:

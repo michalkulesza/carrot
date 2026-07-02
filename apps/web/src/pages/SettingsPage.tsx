@@ -831,6 +831,7 @@ const SettingsPage = ({
   const [importResult, setImportResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [managingHousehold, setManagingHousehold] =
     useState<HouseholdOut | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -838,6 +839,7 @@ const SettingsPage = ({
   const displayName = user?.nickname || user?.email || ''
 
   const handleLogout = async () => {
+    setLogoutConfirmOpen(false)
     setLoggingOut(true)
     await logout()
   }
@@ -1026,7 +1028,7 @@ const SettingsPage = ({
             <Button
               size="sm"
               variant="danger-soft"
-              onPress={handleLogout}
+              onPress={() => setLogoutConfirmOpen(true)}
               isDisabled={loggingOut}
             >
               {loggingOut ? t('settings.loggingOut') : t('settings.logOut')}
@@ -1222,6 +1224,29 @@ const SettingsPage = ({
           onChanged={refetchHouseholds}
         />
       )}
+
+      <Modal
+        isOpen={logoutConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) setLogoutConfirmOpen(false)
+        }}
+      >
+        <ModalBackdrop isDismissable>
+          <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+            <ModalDialog>
+              <ModalHeader>{t('settings.logOutConfirmTitle')}</ModalHeader>
+              <ModalFooter>
+                <Button variant="tertiary" onPress={() => setLogoutConfirmOpen(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button variant="danger" onPress={handleLogout}>
+                  {t('settings.logOut')}
+                </Button>
+              </ModalFooter>
+            </ModalDialog>
+          </ModalContainer>
+        </ModalBackdrop>
+      </Modal>
     </>
   )
 }

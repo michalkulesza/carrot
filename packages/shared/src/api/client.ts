@@ -15,7 +15,6 @@ import type {
   ImportJobEnqueue,
   ImportJobOut,
   AuthUser,
-  RegisterData,
   ShoppingListItem,
   PresenceUser,
 } from '../types'
@@ -340,34 +339,57 @@ export const createApiClient = (config: ApiClientConfig) => {
     if (!res.ok) throw new Error('Failed to decline invitation')
   }
 
-  // ── Email verification ────────────────────────────────────────────────────
+  // ── Signup (verify-before-account) ────────────────────────────────────────
 
-  const verifyCode = async (email: string, code: string): Promise<void> => {
-    const res = await fetch(`${baseUrl}/api/auth/verify-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code }),
-      credentials,
-    })
-    await throwOnError(res, 'Verification failed')
-  }
-
-  const requestVerifyCode = async (email: string): Promise<void> => {
-    await fetch(`${baseUrl}/api/auth/request-verify-code`, {
+  const requestSignupCode = async (email: string): Promise<void> => {
+    const res = await fetch(`${baseUrl}/api/auth/request-signup-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
       credentials,
     })
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { detail?: unknown }
+      throw new Error(parseAuthError(err.detail))
+    }
+  }
+
+  const verifySignupCode = async (email: string, code: string): Promise<{ token: string }> => {
+    const res = await fetch(`${baseUrl}/api/auth/verify-signup-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+      credentials,
+    })
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { detail?: unknown }
+      throw new Error(parseAuthError(err.detail))
+    }
+    return res.json() as Promise<{ token: string }>
+  }
+
+  const completeSignup = async (
+    token: string,
+    password: string,
+    nickname?: string
+  ): Promise<{ access_token: string; token_type: string }> => {
+    const res = await fetch(`${baseUrl}/api/auth/complete-signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password, nickname: nickname ?? null }),
+      credentials,
+    })
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { detail?: unknown }
+      throw new Error(parseAuthError(err.detail))
+    }
+    return res.json() as Promise<{ access_token: string; token_type: string }>
   }
 
   // ── Auth ───────────────────────────────────────────────────────────────────
 
   const ERROR_MESSAGES: Record<string, string> = {
     LOGIN_BAD_CREDENTIALS: 'Invalid email or password.',
-    LOGIN_USER_NOT_VERIFIED: 'LOGIN_USER_NOT_VERIFIED',
-    REGISTER_USER_ALREADY_EXISTS: 'An account with this email already exists.',
-    REGISTER_INVALID_PASSWORD: 'Password must be at least 3 characters.',
   }
 
   const parseAuthError = (detail: unknown): string => {
@@ -397,20 +419,6 @@ export const createApiClient = (config: ApiClientConfig) => {
     } catch {
       return null
     }
-  }
-
-  const register = async (data: RegisterData): Promise<AuthUser> => {
-    const res = await fetch(`${baseUrl}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-      credentials,
-    })
-    if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as { detail?: unknown }
-      throw new Error(parseAuthError(err.detail))
-    }
-    return res.json() as Promise<AuthUser>
   }
 
   const logout = async (): Promise<void> => {
@@ -681,10 +689,10 @@ export const createApiClient = (config: ApiClientConfig) => {
     listInvitations,
     acceptInvitation,
     declineInvitation,
-    verifyCode,
-    requestVerifyCode,
+    requestSignupCode,
+    verifySignupCode,
+    completeSignup,
     login,
-    register,
     logout,
     getMe,
     streamImportFetch,

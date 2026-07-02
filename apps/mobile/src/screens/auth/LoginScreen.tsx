@@ -68,7 +68,7 @@ const LoginScreen = () => {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          autoComplete="password"
+          autoComplete="current-password"
           textContentType="password"
           returnKeyType="done"
           accessibilityLabel={t('auth.password')}

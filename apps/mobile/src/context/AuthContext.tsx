@@ -1,18 +1,25 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import { mobileClient, setToken } from '../api/client'
-import type { AuthUser, RegisterData } from '@platekeeper/shared/types'
+import type { AuthUser } from '@platekeeper/shared/types'
 
 const TOKEN_KEY = 'pk_auth_token'
+const PENDING_SIGNUP_KEY = 'pk_pending_signup'
+
+interface PendingSignup {
+  email: string
+  token: string
+}
 
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
-  pendingEmail: string | null
+  signupEmail: string | null
+  signupToken: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
-  verifyCode: (email: string, code: string) => Promise<void>
-  resendCode: (email: string) => Promise<void>
+  requestSignupCode: (email: string) => Promise<void>
+  verifySignupCode: (email: string, code: string) => Promise<void>
+  completeSignup: (password: string, nickname?: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -22,8 +29,8 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-  const pendingPasswordRef = useRef<string | null>(null)
+  const [signupEmail, setSignupEmail] = useState<string | null>(null)
+  const [signupToken, setSignupToken] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
@@ -34,6 +41,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const me = await mobileClient.getMe()
           setUser(me)
         }
+        if (!stored) {
+          const pendingRaw = await SecureStore.getItemAsync(PENDING_SIGNUP_KEY)
+          if (pendingRaw) {
+            const pending = JSON.parse(pendingRaw) as PendingSignup
+            setSignupEmail(pending.email)
+            setSignupToken(pending.token)
+          }
+        }
       } finally {
         setLoading(false)
       }
@@ -42,43 +57,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const login = useCallback(async (email: string, password: string): Promise<void> => {
-    try {
-      const result = await mobileClient.login(email, password)
-      if (result?.access_token) {
-        await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
-        setToken(result.access_token)
-      }
-      const me = await mobileClient.getMe()
-      setUser(me)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : ''
-      if (msg === 'LOGIN_USER_NOT_VERIFIED') {
-        pendingPasswordRef.current = password
-        setPendingEmail(email)
-      }
-      throw e
+    const result = await mobileClient.login(email, password)
+    if (result?.access_token) {
+      await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
+      setToken(result.access_token)
     }
+    const me = await mobileClient.getMe()
+    setUser(me)
   }, [])
 
-  const register = useCallback(async (data: RegisterData): Promise<void> => {
-    await mobileClient.register(data)
-    pendingPasswordRef.current = data.password
-    setPendingEmail(data.email)
+  const requestSignupCode = useCallback(async (email: string): Promise<void> => {
+    await mobileClient.requestSignupCode(email)
+    setSignupEmail(email)
+    setSignupToken(null)
+    await SecureStore.deleteItemAsync(PENDING_SIGNUP_KEY)
   }, [])
 
-  const verifyCode = useCallback(async (email: string, code: string): Promise<void> => {
-    await mobileClient.verifyCode(email, code)
-    const pwd = pendingPasswordRef.current
-    if (pwd) {
-      await login(email, pwd)
-      pendingPasswordRef.current = null
-      setPendingEmail(null)
-    }
-  }, [login])
-
-  const resendCode = useCallback(async (email: string): Promise<void> => {
-    await mobileClient.requestVerifyCode(email)
+  const verifySignupCode = useCallback(async (email: string, code: string): Promise<void> => {
+    const { token } = await mobileClient.verifySignupCode(email, code)
+    setSignupEmail(email)
+    setSignupToken(token)
+    await SecureStore.setItemAsync(PENDING_SIGNUP_KEY, JSON.stringify({ email, token }))
   }, [])
+
+  const completeSignup = useCallback(async (password: string, nickname?: string): Promise<void> => {
+    if (!signupToken) throw new Error('No pending signup')
+    const result = await mobileClient.completeSignup(signupToken, password, nickname)
+    await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
+    setToken(result.access_token)
+    await SecureStore.deleteItemAsync(PENDING_SIGNUP_KEY)
+    setSignupEmail(null)
+    setSignupToken(null)
+    const me = await mobileClient.getMe()
+    setUser(me)
+  }, [signupToken])
 
   const logout = useCallback(async (): Promise<void> => {
     await mobileClient.logout().catch(() => {})
@@ -93,7 +105,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, pendingEmail, login, register, verifyCode, resendCode, logout, refreshUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signupEmail,
+        signupToken,
+        login,
+        requestSignupCode,
+        verifySignupCode,
+        completeSignup,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   )

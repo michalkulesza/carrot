@@ -22,6 +22,7 @@ from api.routes.preferences import router as preferences_router
 from api.routes.proxy import router as proxy_router
 from api.routes.recipes import router as recipes_router
 from api.routes.shopping_list import router as shopping_list_router
+from api.routes.signup import router as signup_router
 from api.routes.tags import router as tags_router
 from api.services import import_worker
 from api.users import (
@@ -88,7 +89,6 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS language VARCHAR(10) NOT NULL DEFAULT 'en'"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS unit_system VARCHAR(20) NOT NULL DEFAULT 'metric'"))
-        await conn.execute(text("UPDATE users SET is_verified = TRUE WHERE is_verified = FALSE"))
         await conn.execute(text("ALTER TABLE household_invitations ADD COLUMN IF NOT EXISTS invited_email VARCHAR(320)"))
         await conn.execute(text("ALTER TABLE household_invitations ALTER COLUMN invited_user_id DROP NOT NULL"))
     await _seed_demo_user()
@@ -113,6 +113,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_verify_router, prefix="/api/auth", tags=["auth"])
+app.include_router(signup_router, prefix="/api/auth", tags=["auth"])
 app.include_router(allergens_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
@@ -133,11 +134,6 @@ app.include_router(
 app.include_router(
     fastapi_users_instance.get_auth_router(jwt_backend, requires_verification=True),
     prefix="/api/auth/jwt",
-    tags=["auth"],
-)
-app.include_router(
-    fastapi_users_instance.get_register_router(UserRead, UserCreate),
-    prefix="/api/auth",
     tags=["auth"],
 )
 app.include_router(

@@ -414,6 +414,13 @@ const SettingsScreen = () => {
     )
   }, [t, handleWeekStartChange])
 
+  const handleLogout = useCallback(() => {
+    Alert.alert(t('settings.logOutConfirmTitle'), undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('settings.logOut'), style: 'destructive', onPress: () => void logout() },
+    ])
+  }, [t, logout])
+
   const handleCreateHousehold = useCallback(() => {
     Alert.prompt(
       t('settings.newHouseholdTitle'),
@@ -487,7 +494,7 @@ const SettingsScreen = () => {
         )}
         <Pressable
           style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
-          onPress={logout}
+          onPress={handleLogout}
           accessibilityLabel={t('settings.logOut')}
           accessibilityRole="button"
         >

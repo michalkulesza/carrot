@@ -214,12 +214,6 @@ export interface AuthUser {
   active_household_id: string | null
 }
 
-export interface RegisterData {
-  email: string
-  password: string
-  nickname?: string
-}
-
 export interface ShoppingListItem {
   id: string
   user_id: string

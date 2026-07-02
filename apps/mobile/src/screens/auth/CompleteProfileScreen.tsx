@@ -1,31 +1,25 @@
 import { useState } from 'react'
-import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import { StyleSheet, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { useRouter } from 'expo-router'
 import { useAuth } from '../../context/AuthContext'
 import { colors } from '../../theme/colors'
 
-const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
-
-const RegisterScreen = () => {
-  const router = useRouter()
+const CompleteProfileScreen = () => {
   const { t } = useTranslation()
-  const { requestSignupCode } = useAuth()
-  const [email, setEmail] = useState('')
+  const { completeSignup } = useAuth()
+  const [password, setPassword] = useState('')
+  const [nickname, setNickname] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleContinue = async () => {
-    if (!email) return
+  const handleSubmit = async () => {
+    if (!password || submitting) return
     setError(null)
     setSubmitting(true)
     try {
-      await requestSignupCode(email)
-      router.push('/(auth)/verify')
+      await completeSignup(password, nickname || undefined)
     } catch (e) {
-      const msg = e instanceof Error ? e.message : ''
-      setError(msg === ACCOUNT_EXISTS ? t('auth.accountExistsError') : (msg || t('auth.createAccount') + ' failed'))
-    } finally {
+      setError(e instanceof Error ? e.message : t('auth.createAccount') + ' failed')
       setSubmitting(false)
     }
   }
@@ -33,46 +27,47 @@ const RegisterScreen = () => {
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{t('auth.createAccount')}</Text>
-        <Text style={styles.subtitle}>{t('auth.signupEmailSubtitle')}</Text>
+        <Text style={styles.title}>{t('auth.completeProfileTitle')}</Text>
+        <Text style={styles.subtitle}>{t('auth.completeProfileSubtitle')}</Text>
 
         {error && <Text style={styles.error}>{error}</Text>}
 
         <TextInput
           style={styles.input}
-          placeholder={t('auth.email')}
+          placeholder={t('auth.password')}
           placeholderTextColor={colors.placeholderText}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
+          returnKeyType="next"
+          accessibilityLabel={t('auth.password')}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder={t('auth.nickname')}
+          placeholderTextColor={colors.placeholderText}
+          value={nickname}
+          onChangeText={setNickname}
+          autoCapitalize="words"
           autoCorrect={false}
-          autoComplete="email"
-          textContentType="emailAddress"
+          textContentType="username"
           returnKeyType="done"
-          onSubmitEditing={handleContinue}
-          accessibilityLabel={t('auth.email')}
+          onSubmitEditing={handleSubmit}
+          accessibilityLabel={t('auth.nickname')}
         />
 
         <Pressable
           style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
-          onPress={handleContinue}
-          disabled={submitting || !email}
-          accessibilityLabel={t('auth.continue')}
+          onPress={handleSubmit}
+          disabled={submitting || !password}
+          accessibilityLabel={t('auth.createAccount')}
           accessibilityRole="button"
         >
           <Text style={styles.buttonPrimaryText}>
-            {submitting ? t('auth.creating') : t('auth.continue')}
+            {submitting ? t('auth.creating') : t('auth.createAccount')}
           </Text>
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
-          onPress={() => router.back()}
-          accessibilityLabel={t('auth.alreadyHaveAccount')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.buttonOutlineText}>{t('auth.alreadyHaveAccount')}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -98,7 +93,6 @@ const styles = StyleSheet.create({
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
   buttonPrimary: { backgroundColor: colors.blue },
   buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
-  buttonOutlineText: { color: colors.secondaryLabel, fontSize: 16 },
 })
 
-export default RegisterScreen
+export default CompleteProfileScreen

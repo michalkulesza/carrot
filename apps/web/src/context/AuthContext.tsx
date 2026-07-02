@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -10,38 +9,60 @@ import {
   getMe,
   login as apiLogin,
   logout as apiLogout,
-  register as apiRegister,
-  verifyCode as apiVerifyCode,
-  requestVerifyCode as apiRequestVerifyCode,
+  requestSignupCode as apiRequestSignupCode,
+  verifySignupCode as apiVerifySignupCode,
+  completeSignup as apiCompleteSignup,
   type AuthUser,
-  type RegisterData,
 } from '../api/auth'
 
-const NOT_VERIFIED = 'LOGIN_USER_NOT_VERIFIED'
+const PENDING_SIGNUP_KEY = 'pk_pending_signup'
+
+interface PendingSignup {
+  email: string
+  token: string
+}
 
 interface AuthContextValue {
   user: AuthUser | null
   loading: boolean
-  pendingEmail: string | null
+  signupEmail: string | null
+  signupToken: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
-  verifyCode: (email: string, code: string) => Promise<void>
-  resendCode: (email: string) => Promise<void>
+  requestSignupCode: (email: string) => Promise<void>
+  verifySignupCode: (email: string, code: string) => Promise<void>
+  completeSignup: (password: string, nickname?: string) => Promise<void>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+const loadPendingSignup = (): PendingSignup | null => {
+  const raw = localStorage.getItem(PENDING_SIGNUP_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as PendingSignup
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [pendingEmail, setPendingEmail] = useState<string | null>(null)
-  const pendingPasswordRef = useRef<string | null>(null)
+  const [signupEmail, setSignupEmail] = useState<string | null>(null)
+  const [signupToken, setSignupToken] = useState<string | null>(null)
 
   useEffect(() => {
     getMe().then((u) => {
       setUser(u)
+      if (!u) {
+        const pending = loadPendingSignup()
+        if (pending) {
+          setSignupEmail(pending.email)
+          setSignupToken(pending.token)
+        }
+      }
       setLoading(false)
     })
   }, [])
@@ -52,38 +73,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function login(email: string, password: string) {
-    try {
-      await apiLogin(email, password)
-      setUser(await getMe())
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : ''
-      if (msg === NOT_VERIFIED) {
-        pendingPasswordRef.current = password
-        setPendingEmail(email)
-      }
-      throw e
-    }
+    await apiLogin(email, password)
+    setUser(await getMe())
   }
 
-  async function register(data: RegisterData) {
-    await apiRegister(data)
-    pendingPasswordRef.current = data.password
-    setPendingEmail(data.email)
+  async function requestSignupCode(email: string) {
+    await apiRequestSignupCode(email)
+    setSignupEmail(email)
+    setSignupToken(null)
+    localStorage.removeItem(PENDING_SIGNUP_KEY)
   }
 
-  async function verifyCode(email: string, code: string) {
-    await apiVerifyCode(email, code)
-    const pwd = pendingPasswordRef.current
-    if (pwd) {
-      await apiLogin(email, pwd)
-      pendingPasswordRef.current = null
-      setPendingEmail(null)
-      setUser(await getMe())
-    }
+  async function verifySignupCode(email: string, code: string) {
+    const { token } = await apiVerifySignupCode(email, code)
+    setSignupEmail(email)
+    setSignupToken(token)
+    localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify({ email, token }))
   }
 
-  async function resendCode(email: string) {
-    await apiRequestVerifyCode(email)
+  async function completeSignup(password: string, nickname?: string) {
+    if (!signupToken) throw new Error('No pending signup')
+    await apiCompleteSignup(signupToken, password, nickname)
+    localStorage.removeItem(PENDING_SIGNUP_KEY)
+    setSignupEmail(null)
+    setSignupToken(null)
+    setUser(await getMe())
   }
 
   async function logout() {
@@ -93,7 +107,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, pendingEmail, login, register, verifyCode, resendCode, logout, refreshUser }}
+      value={{
+        user,
+        loading,
+        signupEmail,
+        signupToken,
+        login,
+        requestSignupCode,
+        verifySignupCode,
+        completeSignup,
+        logout,
+        refreshUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

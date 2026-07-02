@@ -16,9 +16,15 @@ import { useAuth } from '../../context/AuthContext'
 
 const RESEND_COOLDOWN = 60
 
+const ERROR_KEYS: Record<string, string> = {
+  SIGNUP_CODE_INVALID: 'auth.codeInvalid',
+  SIGNUP_CODE_EXPIRED: 'auth.codeExpired',
+  SIGNUP_CODE_TOO_MANY_ATTEMPTS: 'auth.codeTooManyAttempts',
+}
+
 const VerifyScreen = () => {
   const { t } = useTranslation()
-  const { pendingEmail, verifyCode, resendCode } = useAuth()
+  const { signupEmail, verifySignupCode, requestSignupCode } = useAuth()
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
@@ -30,10 +36,10 @@ const VerifyScreen = () => {
   const inputRef = useRef<TextInput>(null)
 
   useEffect(() => {
-    if (!pendingEmail) {
+    if (!signupEmail) {
       router.replace('/(auth)/login')
     }
-  }, [pendingEmail])
+  }, [signupEmail])
 
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 300)
@@ -55,15 +61,17 @@ const VerifyScreen = () => {
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
 
   const handleVerify = async () => {
-    if (!pendingEmail || code.length < 6 || submitting) return
+    if (!signupEmail || code.length < 6 || submitting) return
     setError(null)
     setSubmitting(true)
     try {
-      await verifyCode(pendingEmail, code)
+      await verifySignupCode(signupEmail, code)
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      router.push('/(auth)/complete-profile')
     } catch (e) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-      setError(e instanceof Error ? e.message : t('auth.invalidCode'))
+      const msg = e instanceof Error ? e.message : ''
+      setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
       setCode('')
     } finally {
       setSubmitting(false)
@@ -71,13 +79,13 @@ const VerifyScreen = () => {
   }
 
   const handleResend = async () => {
-    if (!pendingEmail || cooldown > 0) return
+    if (!signupEmail || cooldown > 0) return
     try {
-      await resendCode(pendingEmail)
+      await requestSignupCode(signupEmail)
       startCooldown()
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     } catch {
-      // request-verify-code always returns 200; ignore errors
+      // ignore — cooldown UI already reflects the attempt
     }
   }
 
@@ -86,7 +94,7 @@ const VerifyScreen = () => {
       <View style={styles.content}>
         <Text style={styles.title}>{t('auth.verifyTitle')}</Text>
         <Text style={styles.subtitle}>
-          {t('auth.verifySubtitle', { email: pendingEmail ?? '' })}
+          {t('auth.verifySubtitle', { email: signupEmail ?? '' })}
         </Text>
 
         <TextInput

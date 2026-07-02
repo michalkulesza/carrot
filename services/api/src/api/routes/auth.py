@@ -6,11 +6,12 @@ from datetime import datetime, timedelta
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, select
 
 from api.database import async_session_maker
-from api.models import HouseholdInvitation, InvitationStatus, VerificationCode
+from api.models import VerificationCode
 from api.services.email import send_verification_code
+from api.services.invitations import claim_email_invitations
 from api.users import User
 
 router = APIRouter()
@@ -23,16 +24,6 @@ class VerifyCodeRequest(BaseModel):
 
 class RequestVerifyCodeRequest(BaseModel):
     email: str
-
-
-async def _claim_email_invitations(session, user: User) -> None:
-    await session.execute(
-        update(HouseholdInvitation)
-        .where(HouseholdInvitation.invited_email == user.email.lower())
-        .where(HouseholdInvitation.status == InvitationStatus.PENDING)
-        .where(HouseholdInvitation.invited_user_id.is_(None))
-        .values(invited_user_id=user.id)
-    )
 
 
 @router.post("/verify-code", status_code=200)
@@ -74,7 +65,7 @@ async def verify_code(body: VerifyCodeRequest) -> dict:
         await session.execute(
             delete(VerificationCode).where(VerificationCode.user_id == user.id)
         )
-        await _claim_email_invitations(session, user)
+        await claim_email_invitations(session, user)
         await session.commit()
 
     return {"detail": "Email verified"}

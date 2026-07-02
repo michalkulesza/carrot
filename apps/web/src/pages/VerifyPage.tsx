@@ -6,8 +6,14 @@ import { useAuth } from '../context/AuthContext'
 
 const RESEND_COOLDOWN = 60
 
+const ERROR_KEYS: Record<string, string> = {
+  SIGNUP_CODE_INVALID: 'auth.codeInvalid',
+  SIGNUP_CODE_EXPIRED: 'auth.codeExpired',
+  SIGNUP_CODE_TOO_MANY_ATTEMPTS: 'auth.codeTooManyAttempts',
+}
+
 export default function VerifyPage() {
-  const { pendingEmail, verifyCode, resendCode } = useAuth()
+  const { signupEmail, verifySignupCode, requestSignupCode } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
 
@@ -18,8 +24,8 @@ export default function VerifyPage() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    if (!pendingEmail) navigate('/login', { replace: true })
-  }, [pendingEmail, navigate])
+    if (!signupEmail) navigate('/register', { replace: true })
+  }, [signupEmail, navigate])
 
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
 
@@ -35,14 +41,15 @@ export default function VerifyPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!pendingEmail || code.length < 6) return
+    if (!signupEmail || code.length < 6) return
     setError(null)
     setLoading(true)
     try {
-      await verifyCode(pendingEmail, code)
-      navigate('/', { replace: true })
+      await verifySignupCode(signupEmail, code)
+      navigate('/complete-profile', { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.invalidCode'))
+      const msg = err instanceof Error ? err.message : ''
+      setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
       setCode('')
     } finally {
       setLoading(false)
@@ -50,12 +57,12 @@ export default function VerifyPage() {
   }
 
   async function handleResend() {
-    if (!pendingEmail || cooldown > 0) return
+    if (!signupEmail || cooldown > 0) return
     try {
-      await resendCode(pendingEmail)
+      await requestSignupCode(signupEmail)
       startCooldown()
     } catch {
-      // request-verify-code always returns 200; ignore
+      // ignore — cooldown UI already reflects the attempt
     }
   }
 
@@ -71,7 +78,7 @@ export default function VerifyPage() {
             <div>
               <h2 className="text-xl font-semibold">{t('auth.verifyTitle')}</h2>
               <p className="text-sm text-zinc-600 mt-1">
-                {t('auth.verifySubtitle', { email: pendingEmail ?? '' })}
+                {t('auth.verifySubtitle', { email: signupEmail ?? '' })}
               </p>
             </div>
 
