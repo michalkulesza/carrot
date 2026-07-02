@@ -26,6 +26,7 @@ import type { RecipeOut, Tag } from '@platekeeper/shared/types'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { Feather } from '@expo/vector-icons'
 import BellMenu from '../components/BellMenu'
+import BugReportButton from '../components/BugReportButton'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
@@ -218,6 +219,7 @@ const RecipesScreen = () => {
               <Feather name="sliders" size={22} color={colors.secondaryLabel} />
             </View>
           </MenuView>
+          <BugReportButton />
           <BellMenu />
         </View>
       ),

@@ -30,6 +30,7 @@ import type { MealPlanEntry, RecipeOut } from '@platekeeper/shared/types'
 import { toYYYYMM, toISODate, formatWeekdayShort, formatMonthYear } from '@platekeeper/shared/utils/dateUtils'
 import { getToken } from '../api/client'
 import BellMenu from '../components/BellMenu'
+import BugReportButton from '../components/BugReportButton'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 import { useScreenLoading } from '../hooks/useScreenLoading'
@@ -302,6 +303,7 @@ const MealPlanScreen = () => {
           >
             <Feather name="printer" size={22} color={colors.secondaryLabel} />
           </Pressable>
+          <BugReportButton />
           <BellMenu />
         </View>
       ),

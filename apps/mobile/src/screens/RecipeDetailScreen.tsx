@@ -30,6 +30,7 @@ import {
   type DurationMatch,
 } from '../context/TimerContext'
 import BellMenu from '../components/BellMenu'
+import BugReportButton from '../components/BugReportButton'
 import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@platekeeper/shared/types'
 import { displayIngredient, buildClientStepRefs, serializeIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
@@ -548,6 +549,7 @@ const RecipeDetailScreen = () => {
           >
             <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
           </Pressable>
+          <BugReportButton />
           <BellMenu />
         </View>
       ),

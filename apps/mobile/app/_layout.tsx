@@ -9,6 +9,7 @@ import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { consumePendingShare, hasPendingShare } from '../src/utils/pendingShare'
 import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
+import BugReportButton from '../src/components/BugReportButton'
 
 if (!__DEV__) {
   Sentry.init({
@@ -229,10 +230,17 @@ function RootLayoutNav() {
       <Stack screenOptions={{ headerBackTitle: t('common.back'), headerTransparent: true, headerShadowVisible: false }}>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="import-recipe" options={{ title: t('addRecipe.addRecipe') }} />
-        <Stack.Screen name="recipe/[id]" options={{ title: '' }} />
-        <Stack.Screen name="recipe/[id]/edit" options={{ title: t('addRecipe.editRecipe') }} />
-        <Stack.Screen name="household/[id]" options={{ title: '' }} />
+        <Stack.Screen
+          name="import-recipe"
+          options={{ title: t('addRecipe.addRecipe'), headerRight: () => <BugReportButton /> }}
+        />
+        <Stack.Screen name="recipe/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
+        <Stack.Screen
+          name="recipe/[id]/edit"
+          options={{ title: t('addRecipe.editRecipe'), headerRight: () => <BugReportButton /> }}
+        />
+        <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
+        <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
       </Stack>
       {(loading || processingShare) && (
         <View style={styles.loadingOverlay}>

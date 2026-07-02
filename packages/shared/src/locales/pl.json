@@ -169,6 +169,18 @@
     "recipeImportFailed": "Import nieudany",
     "recipeImportFailedBody": "Kliknij, aby spróbować ponownie."
   },
+  "bugReport": {
+    "title": "Zgłoś problem",
+    "descriptionLabel": "Co poszło nie tak?",
+    "descriptionPlaceholder": "Opisz problem…",
+    "emailLabel": "E-mail",
+    "screenshot": "Zrzut ekranu",
+    "removeScreenshot": "Usuń zrzut ekranu",
+    "submit": "Wyślij zgłoszenie",
+    "submitting": "Wysyłanie…",
+    "success": "Dziękujemy! Zgłoszenie zostało wysłane.",
+    "sendFailed": "Nie udało się wysłać — sprawdź połączenie i spróbuj ponownie."
+  },
   "settings": {
     "title": "Ustawienia",
     "language": "Język",

@@ -165,6 +165,18 @@
     "recipeImportFailed": "Échec de l'import",
     "recipeImportFailedBody": "Appuyez pour réessayer."
   },
+  "bugReport": {
+    "title": "Signaler un problème",
+    "descriptionLabel": "Qu'est-ce qui n'a pas fonctionné ?",
+    "descriptionPlaceholder": "Décrivez le problème…",
+    "emailLabel": "E-mail",
+    "screenshot": "Capture d'écran",
+    "removeScreenshot": "Supprimer la capture d'écran",
+    "submit": "Envoyer le rapport",
+    "submitting": "Envoi en cours…",
+    "success": "Merci ! Votre rapport a été envoyé.",
+    "sendFailed": "Échec de l'envoi — vérifiez votre connexion et réessayez."
+  },
   "settings": {
     "title": "Paramètres",
     "language": "Langue",

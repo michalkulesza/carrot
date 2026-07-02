@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import BellMenu from '../components/BellMenu'
+import BugReportButton from '../components/BugReportButton'
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -458,7 +459,17 @@ const SettingsScreen = () => {
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen options={{ title: t('nav.settings'), headerRight: () => <BellMenu /> }} />
+      <Stack.Screen
+        options={{
+          title: t('nav.settings'),
+          headerRight: () => (
+            <View style={styles.headerRight}>
+              <BugReportButton />
+              <BellMenu />
+            </View>
+          ),
+        }}
+      />
       {/* Stats */}
       <SectionHeader label={t('settings.stats')} />
       <StatsSection />
@@ -678,6 +689,7 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.secondaryBackground },
   content: { paddingBottom: 48 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: 16,

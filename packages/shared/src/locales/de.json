@@ -165,6 +165,18 @@
     "recipeImportFailed": "Import fehlgeschlagen",
     "recipeImportFailedBody": "Tippen, um es erneut zu versuchen."
   },
+  "bugReport": {
+    "title": "Problem melden",
+    "descriptionLabel": "Was ist schiefgelaufen?",
+    "descriptionPlaceholder": "Beschreibe das Problem…",
+    "emailLabel": "E-Mail",
+    "screenshot": "Screenshot",
+    "removeScreenshot": "Screenshot entfernen",
+    "submit": "Bericht senden",
+    "submitting": "Wird gesendet…",
+    "success": "Danke! Dein Bericht wurde gesendet.",
+    "sendFailed": "Senden fehlgeschlagen — überprüfe deine Verbindung und versuche es erneut."
+  },
   "settings": {
     "title": "Einstellungen",
     "language": "Sprache",

@@ -165,6 +165,18 @@
     "recipeImportFailed": "Import failed",
     "recipeImportFailedBody": "Tap to retry."
   },
+  "bugReport": {
+    "title": "Report a problem",
+    "descriptionLabel": "What went wrong?",
+    "descriptionPlaceholder": "Describe the issue…",
+    "emailLabel": "Email",
+    "screenshot": "Screenshot",
+    "removeScreenshot": "Remove screenshot",
+    "submit": "Send report",
+    "submitting": "Sending…",
+    "success": "Thanks! Your report was sent.",
+    "sendFailed": "Couldn't send — check your connection and try again."
+  },
   "settings": {
     "title": "Settings",
     "language": "Language",
