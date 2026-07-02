@@ -116,20 +116,9 @@ Sentry.init({ dsn: process.env.EXPO_PUBLIC_SENTRY_DSN, enabled: !__DEV__ })
 
 **Files to touch:** `app/_layout.tsx`, `ImportRecipeScreen.tsx`, all 5 locale files, `eas.json`.
 
-### 9. Dev / prod environment files
+### 9. Dev / prod environment files — rejected
 
-Currently `.env` is manually commented/uncommented to switch between the local API and production. `pnpm dev:ios` already starts the local API, so the env should switch automatically.
-
-**Plan:**
-- Rename `apps/mobile/.env` → `apps/mobile/.env.development` with the local IP URL.
-- Create `apps/mobile/.env.production` with the production URL.
-- Rename `apps/mobile/.env.example` → `apps/mobile/.env.development.example` (template with `http://192.168.1.x:8088`).
-- Add `.env.development` to `.gitignore` (IP is machine/network-specific); commit `.env.production` (public URL is fine).
-- Remove the duplicate `EXPO_PUBLIC_API_URL` from `eas.json` `env` blocks — `.env.production` covers it and EAS respects it.
-
-**How it works:** `expo run:ios` (called by `pnpm dev:ios`) sets `NODE_ENV=development` and Expo auto-loads `.env.development`. EAS production builds set `NODE_ENV=production` and load `.env.production`. No more manual commenting.
-
-**Files to touch:** `apps/mobile/.env` (rename/delete), `apps/mobile/.env.development` (new), `apps/mobile/.env.production` (new), `apps/mobile/.gitignore` or root `.gitignore`, `apps/mobile/eas.json` (clean up duplicate env vars).
+A `.env.development` / `.env.production` split was tried and reverted: single-developer, single-machine setup, and the split added file-management overhead with no real benefit. Reverted to one `apps/mobile/.env` (gitignored, real values) + `apps/mobile/.env.example` (committed template). `build:ios`/`build:android` scripts source `.env` automatically (`set -a && . ./.env && set +a`) so secrets like `SENTRY_AUTH_TOKEN` reach the local `eas build --local` archive step without manual `export`.
 
 ---
 
@@ -218,7 +207,7 @@ EAS manages the distribution certificate and provisioning profile automatically 
 | 7a | Gate raw error messages behind `__DEV__` | ❌ Not done | Important |
 | 7b | Add Sentry crash reporting | ❌ Not done | Important |
 | 8 | Remove placeholder Expo assets | ❌ Not done | Cleanup |
-| 9 | Dev/prod `.env` split tied to `pnpm dev:ios` | ❌ Not done | Important |
+| 9 | Dev/prod `.env` split tied to `pnpm dev:ios` | 🚫 Rejected — see item 9 notes | Important |
 | 10 | Household name field: remove "(optional)" label | ❌ Not done | Bug |
 | 11 | Import modal back button shows "Add Recipe" | ❌ Not done | Bug |
 | 12 | Header buttons: extra right margin vs left | ❌ Not done | Bug |
