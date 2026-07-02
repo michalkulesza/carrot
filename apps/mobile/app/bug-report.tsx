@@ -13,6 +13,7 @@ import {
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useHeaderHeight } from 'expo-router/react-navigation'
 import * as Haptics from 'expo-haptics'
 import * as Sentry from '@sentry/react-native'
 import Constants from 'expo-constants'
@@ -46,6 +47,7 @@ const BugReportScreen = () => {
   const { t } = useTranslation()
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const headerHeight = useHeaderHeight()
   const { user } = useAuth()
   const { activeHouseholdId } = useHousehold()
   const params = useLocalSearchParams<{ route?: string }>()
@@ -122,7 +124,7 @@ const BugReportScreen = () => {
         }}
       />
       <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.container, { paddingTop: headerHeight + 16, paddingBottom: insets.bottom + 16 }]}>
           {error && <Text style={styles.error}>{error}</Text>}
 
           <Text style={styles.label}>{t('bugReport.descriptionLabel')}</Text>
@@ -195,7 +197,7 @@ const BugReportScreen = () => {
 
 const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.background },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: 16 },
+  container: { flex: 1, paddingHorizontal: 20 },
   cancelText: { color: colors.blue, fontSize: 16 },
   error: { color: colors.red, marginBottom: 12, fontSize: 13 },
   label: {
