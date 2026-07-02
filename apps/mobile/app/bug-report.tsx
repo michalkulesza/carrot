@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '../src/theme/colors'
 import { useAuth } from '../src/context/AuthContext'
 import { useHousehold } from '../src/context/HouseholdContext'
+import { takeBugReportScreenshot } from '../src/lib/bugReportScreenshot'
 
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
@@ -48,17 +49,35 @@ const BugReportScreen = () => {
   const insets = useSafeAreaInsets()
   const { user } = useAuth()
   const { activeHouseholdId } = useHousehold()
-  const params = useLocalSearchParams<{ shot?: string; route?: string }>()
+  const params = useLocalSearchParams<{ route?: string }>()
 
   const [description, setDescription] = useState('')
   const [email, setEmail] = useState(user?.email ?? '')
-  const [shot, setShot] = useState(params.shot)
+  const [shot, setShot] = useState<string | undefined>(undefined)
+  const [capturingShot, setCapturingShot] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const canSubmit = description.trim().length > 0 && !submitting
 
   const handleRemoveScreenshot = useCallback(() => setShot(undefined), [])
+
+  useEffect(() => {
+    const pending = takeBugReportScreenshot()
+    if (!pending) {
+      setCapturingShot(false)
+      return
+    }
+    let cancelled = false
+    pending.then((result) => {
+      if (cancelled) return
+      setShot(result)
+      setCapturingShot(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSubmit = useCallback(async () => {
     if (!canSubmit) return
@@ -138,7 +157,16 @@ const BugReportScreen = () => {
             accessibilityLabel={t('bugReport.emailLabel')}
           />
 
-          {shot && (
+          {capturingShot && (
+            <View style={styles.screenshotWrap}>
+              <Text style={styles.label}>{t('bugReport.screenshot')}</Text>
+              <View style={[styles.thumb, styles.thumbLoading]}>
+                <ActivityIndicator color={colors.secondaryLabel} />
+              </View>
+            </View>
+          )}
+
+          {!capturingShot && shot && (
             <View style={styles.screenshotWrap}>
               <Text style={styles.label}>{t('bugReport.screenshot')}</Text>
               <View style={styles.screenshotRow}>
@@ -219,6 +247,7 @@ const styles = StyleSheet.create({
   screenshotWrap: { marginBottom: 20 },
   screenshotRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   thumb: { width: 80, height: 140, borderRadius: 8, backgroundColor: colors.secondaryBackground },
+  thumbLoading: { alignItems: 'center', justifyContent: 'center' },
   removeBtn: { padding: 4 },
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', backgroundColor: colors.blue },
   buttonDisabled: { backgroundColor: colors.gray4 },

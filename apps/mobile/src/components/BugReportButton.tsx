@@ -1,34 +1,25 @@
 import { useCallback, useRef } from 'react'
-import { Dimensions, Pressable, StyleSheet } from 'react-native'
+import { Pressable, StyleSheet } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
-import { captureScreen } from 'react-native-view-shot'
 import { colors } from '../theme/colors'
+import { startBugReportScreenshot } from '../lib/bugReportScreenshot'
 
 const BugReportButton = () => {
   const { t } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
-  const isCapturingRef = useRef(false)
+  const isNavigatingRef = useRef(false)
 
-  const handlePress = useCallback(async () => {
-    if (isCapturingRef.current) return
-    isCapturingRef.current = true
-    let shot: string | undefined
-    try {
-      shot = await captureScreen({
-        format: 'jpg',
-        quality: 0.5,
-        result: 'base64',
-        width: Math.round(Dimensions.get('window').width),
-      })
-    } catch {
-      shot = undefined
-    } finally {
-      isCapturingRef.current = false
-    }
-    router.push({ pathname: '/bug-report', params: { route: pathname, ...(shot ? { shot } : {}) } })
+  const handlePress = useCallback(() => {
+    if (isNavigatingRef.current) return
+    isNavigatingRef.current = true
+    startBugReportScreenshot()
+    router.push({ pathname: '/bug-report', params: { route: pathname } })
+    setTimeout(() => {
+      isNavigatingRef.current = false
+    }, 500)
   }, [router, pathname])
 
   return (
