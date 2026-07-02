@@ -12,7 +12,7 @@ export default function ShoppingTab() {
     <>
       <Stack.Screen
         options={{
-          title: t('nav.shopping'),
+          title: t('shoppingList.title'),
           headerRight: () => (
             <View style={styles.headerRight}>
               <BugReportButton />

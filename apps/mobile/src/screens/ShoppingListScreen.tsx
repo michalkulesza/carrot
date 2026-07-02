@@ -1,12 +1,14 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ActionSheetIOS,
   ActivityIndicator,
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
   View,
+  type LayoutChangeEvent,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
@@ -77,7 +79,15 @@ const PresenceBar = ({ users, currentUserId }: { users: PresenceUser[]; currentU
 // Keeps its text in local state so typing never re-renders the parent list —
 // otherwise the FlatList footer remounts on each keystroke and the input loses focus.
 
-const AddItemRow = ({ onAdd }: { onAdd: (text: string) => void }) => {
+const AddItemRow = ({
+  onAdd,
+  onFocusInput,
+  onBlurInput,
+}: {
+  onAdd: (text: string) => void
+  onFocusInput: () => void
+  onBlurInput: () => void
+}) => {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const inputRef = useRef<TextInput>(null)
@@ -102,6 +112,8 @@ const AddItemRow = ({ onAdd }: { onAdd: (text: string) => void }) => {
         style={styles.addInput}
         value={text}
         onChangeText={setText}
+        onFocus={onFocusInput}
+        onBlur={onBlurInput}
         placeholder={t('shoppingList.addItemPlaceholder')}
         placeholderTextColor={colors.placeholderText}
         returnKeyType="done"
@@ -114,32 +126,36 @@ const AddItemRow = ({ onAdd }: { onAdd: (text: string) => void }) => {
   )
 }
 
-// ── List footer (add row + completed section) ─────────────────────────────────
+// ── List footer (add row + completed section) ────────────────────────────────
 // Defined at module scope so its component *type* is stable across renders. The
-// footer is passed to the list as a JSX element with fresh props each render, so
-// React reconciles (re-renders) instead of remounting — which is what keeps the
-// AddItemRow's TextInput from losing focus on every SSE-driven re-render.
+// add row lives here, right after the unchecked items and before the completed
+// section, so it stays the last "unchecked" row and new items get added above it.
 
 const ShoppingListFooter = ({
   completedItems,
   onAdd,
+  onFocusInput,
+  onBlurInput,
   onToggle,
   onClearCompleted,
   renderRightDelete,
   bottomInset,
+  onFooterLayout,
 }: {
   completedItems: ShoppingListItem[]
   onAdd: (text: string) => void
+  onFocusInput: () => void
+  onBlurInput: () => void
   onToggle: (id: string, completed: boolean) => void
   onClearCompleted: () => void
   renderRightDelete: (id: string, locked: boolean) => () => ReactNode
   bottomInset: number
+  onFooterLayout: (event: LayoutChangeEvent) => void
 }) => {
   const { t } = useTranslation()
   return (
-    <View>
-      {/* Inline add row */}
-      <AddItemRow onAdd={onAdd} />
+    <View onLayout={onFooterLayout}>
+      <AddItemRow onAdd={onAdd} onFocusInput={onFocusInput} onBlurInput={onBlurInput} />
 
       {/* Completed section */}
       {completedItems.length > 0 && (
@@ -194,6 +210,75 @@ const ShoppingListScreen = () => {
   const listTopInset = navBarInset + 12
   // Clear the native tab bar so the last rows aren't hidden underneath it.
   const listBottomInset = insets.bottom + TAB_BAR_HEIGHT
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DraggableFlatList's ref type doesn't match its actual (gesture-handler) FlatList instance.
+  const flatListRef = useRef<any>(null)
+  // Total height of the FlatList's scrollable content, from onContentSizeChange.
+  const contentHeightRef = useRef(0)
+  // Rendered height of the footer (add row + optional completed section +
+  // bottom spacer), from its own onLayout. Since the add row is the very
+  // first element inside the footer, its absolute top within the scrollable
+  // content is always (contentHeight - footerHeight) — both are plain
+  // heights, not positions relative to some ambiguous wrapper, so this is
+  // exact regardless of how FlatList nests the header/footer internally.
+  const footerHeightRef = useRef(0)
+  // Whether the add-item input currently has focus — while true, every
+  // layout change (e.g. a new item pushing the row down) re-triggers the
+  // scroll so the row stays visible.
+  const isAddInputFocusedRef = useRef(false)
+  // Real keyboard height, added as extra bottom padding to the list's content
+  // so there is always genuine scrollable room to bring the add row above the
+  // keyboard — rather than relying on the container merely shrinking (which
+  // may not actually grow the scrollable range for this animated/gesture-
+  // wrapped FlatList in time for an immediate scrollToOffset call).
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height)
+    })
+    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
+      setKeyboardHeight(0)
+    })
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [])
+
+  const scrollToAddRow = useCallback(() => {
+    const addRowTop = contentHeightRef.current - footerHeightRef.current
+    const offset = Math.max(addRowTop - navBarInset, 0)
+    flatListRef.current?.scrollToOffset({ offset, animated: true })
+  }, [navBarInset])
+
+  const handleContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      contentHeightRef.current = height
+      if (isAddInputFocusedRef.current) scrollToAddRow()
+    },
+    [scrollToAddRow]
+  )
+
+  const handleFooterLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      footerHeightRef.current = event.nativeEvent.layout.height
+      if (isAddInputFocusedRef.current) scrollToAddRow()
+    },
+    [scrollToAddRow]
+  )
+
+  const handleFocusInput = useCallback(() => {
+    isAddInputFocusedRef.current = true
+    // Wait a beat for the extra keyboard-height padding (set via state above)
+    // to actually apply to the list's layout before scrolling to it.
+    setTimeout(scrollToAddRow, 50)
+    setTimeout(scrollToAddRow, 350)
+  }, [scrollToAddRow])
+
+  const handleBlurInput = useCallback(() => {
+    isAddInputFocusedRef.current = false
+  }, [])
 
   const {
     incompleteItems,
@@ -381,6 +466,7 @@ const ShoppingListScreen = () => {
   return (
     <View style={styles.screen}>
       <DraggableFlatList
+        ref={flatListRef}
         data={incompleteItems}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
@@ -391,23 +477,19 @@ const ShoppingListScreen = () => {
           <ShoppingListFooter
             completedItems={completedItems}
             onAdd={handleAdd}
+            onFocusInput={handleFocusInput}
+            onBlurInput={handleBlurInput}
             onToggle={handleToggle}
             onClearCompleted={handleClearCompleted}
             renderRightDelete={renderRightDelete}
             bottomInset={listBottomInset}
+            onFooterLayout={handleFooterLayout}
           />
         }
         contentInsetAdjustmentBehavior="never"
         scrollIndicatorInsets={{ top: navBarInset, bottom: listBottomInset }}
-        contentContainerStyle={[styles.listContent, { paddingTop: listTopInset }]}
-        ListEmptyComponent={
-          completedItems.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Feather name="shopping-cart" size={44} color={colors.gray3} />
-              <Text style={styles.emptyText}>{t('shoppingList.emptyList')}</Text>
-            </View>
-          ) : null
-        }
+        contentContainerStyle={[styles.listContent, { paddingTop: listTopInset, paddingBottom: keyboardHeight }]}
+        onContentSizeChange={handleContentSizeChange}
       />
     </View>
   )
@@ -610,19 +692,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: colors.blue,
-  },
-
-  // ── Empty state ───────────────────────────────────────────────────────────
-  emptyContainer: {
-    flex: 1,
-    paddingTop: 80,
-    alignItems: 'center',
-    gap: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: colors.secondaryLabel,
-    textAlign: 'center',
   },
 })
 
