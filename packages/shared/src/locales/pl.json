@@ -373,6 +373,7 @@
     "recipeUrl": "URL przepisu",
     "paste": "Wklej",
     "importFailed": "Import nieudany",
+    "couldNotExtract": "Nie udało się wyodrębnić przepisu z tego URL. Skopiuj tekst przepisu i użyj zamiast tego opcji \"Z tekstu\".",
     "by": "Przez: @{{handle}}",
     "adaptedBy": "Zaadaptowany przez: @{{handle}}",
     "alsoAddToPrivate": "Dodaj też do moich prywatnych przepisów",

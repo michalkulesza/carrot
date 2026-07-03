@@ -280,29 +280,37 @@ const AllergenPopover = ({
   )
 }
 
-// ── Progress list ────────────────────────────────────────────────────────────
+// ── Progress bar ─────────────────────────────────────────────────────────────
 
-const ProgressList = ({ steps }: { steps: StepState[] }) => {
+// Client-side heuristic mapping of stage keys to progress fractions, kept in
+// sync with the equivalent STAGE_PROGRESS table in
+// apps/mobile/src/screens/ImportRecipeScreen.tsx — the backend only emits
+// discrete named stages, no numeric progress value.
+const STAGE_PROGRESS: Record<string, number> = {
+  fetching_page: 0.25,
+  analyzing_page: 0.7,
+  fetching_metadata: 0.15,
+  checking_description: 0.35,
+  checking_links: 0.55,
+  fetching_transcript: 0.65,
+  analyzing_transcript: 0.82,
+  analyzing_text: 0.7,
+  analyzing_image: 0.7,
+}
+
+const ImportProgressBar = ({ steps }: { steps: StepState[] }) => {
   if (steps.length === 0) return null
+  const current = steps[steps.length - 1]
+  const fraction =
+    current.status === 'done' ? 1 : (STAGE_PROGRESS[current.key] ?? 0.5)
 
   return (
-    <ul className="list-none p-0 m-0 space-y-1 mt-3">
-      {steps.map((s) => (
-        <li
-          key={s.key}
-          className={`flex items-center gap-2 text-sm ${
-            s.status === 'active'
-              ? 'text-primary font-semibold'
-              : 'text-zinc-500'
-          }`}
-        >
-          <span className="w-4 text-center">
-            {s.status === 'done' ? '✓' : '⋯'}
-          </span>
-          {s.label}
-        </li>
-      ))}
-    </ul>
+    <div className="mt-3 h-1.5 w-full rounded-full bg-zinc-200 overflow-hidden">
+      <div
+        className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+        style={{ width: `${fraction * 100}%` }}
+      />
+    </div>
   )
 }
 
@@ -721,6 +729,7 @@ const EditableRecipeView = ({
                     <EditLine
                       value={step}
                       onChange={(v) => setStep(ci, si, v)}
+                      multiline
                     />
                   </li>
                 ))}
@@ -922,7 +931,11 @@ const AddRecipeModal = ({
           )
           setSelectedTags(suggested)
         } else {
-          setError(res.error ?? t('addRecipe.importFailed'))
+          setError(
+            res.error === 'extraction_failed' || !res.error
+              ? t('addRecipe.couldNotExtract')
+              : res.error
+          )
         }
         setLoading(false)
       },
@@ -969,7 +982,7 @@ const AddRecipeModal = ({
           scroll="inside"
           className="!rounded-xl overflow-hidden"
         >
-          <ModalDialog>
+          <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[700px]">
             <ModalHeader>
               {parsed ? t('addRecipe.editRecipe') : t('addRecipe.importRecipe')}
             </ModalHeader>
@@ -1176,7 +1189,7 @@ const AddRecipeModal = ({
                 </div>
               )}
 
-              <ProgressList steps={progressSteps} />
+              {!parsed && !error && <ImportProgressBar steps={progressSteps} />}
 
               {error && (
                 <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mt-2">

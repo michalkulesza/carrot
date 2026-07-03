@@ -365,6 +365,7 @@
     "recipeUrl": "Rezept-URL",
     "paste": "Einfügen",
     "importFailed": "Import fehlgeschlagen",
+    "couldNotExtract": "Wir konnten kein Rezept von dieser URL extrahieren. Bitte kopiere den Rezepttext und verwende stattdessen \"Aus Text\".",
     "by": "Von: @{{handle}}",
     "adaptedBy": "Angepasst von: @{{handle}}",
     "alsoAddToPrivate": "Auch zu meinen privaten Rezepten hinzufügen",

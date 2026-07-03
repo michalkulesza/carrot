@@ -365,6 +365,7 @@
     "recipeUrl": "Recipe URL",
     "paste": "Paste",
     "importFailed": "Import failed",
+    "couldNotExtract": "We couldn't extract a recipe from this URL. Please copy the recipe text and use \"From Text\" instead.",
     "by": "By: @{{handle}}",
     "adaptedBy": "Adapted by: @{{handle}}",
     "alsoAddToPrivate": "Also add to my private recipes",

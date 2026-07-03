@@ -102,8 +102,11 @@ Examples:
 For multi-component recipes (e.g. "for the sauce:", "for the marinade:"),
 create a separate component for each section.
 
-servings: extract from the text if stated. If not stated, estimate a reasonable
-serving count based on the ingredient quantities and dish type.
+servings: extract from the text if stated, as a single integer. If a range is
+given (e.g. "4 to 6 servings", "4-6 servings"), use the midpoint rounded to the
+nearest whole number (e.g. "4 to 6" → 5) — never concatenate the range into one
+number (e.g. "4 to 6" is NOT 46). If not stated, estimate a reasonable serving
+count based on the ingredient quantities and dish type.
 
 kcal_per_serving: extract from the text if stated. If not stated, estimate based
 on the ingredients and typical preparation. Provide a realistic round number.

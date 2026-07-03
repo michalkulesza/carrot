@@ -26,6 +26,11 @@ from api.services.scraper import ReelMetadata, scraper
 
 log = logging.getLogger(__name__)
 
+# Stable error code sent to the client instead of raw exception text (network
+# errors, HTTP status details, etc. shouldn't leak into the UI). The frontend
+# maps this to a translated, actionable message.
+IMPORT_ERROR_CODE = "extraction_failed"
+
 
 async def _run_gemini(
     coro_factory: Callable[[Callable[[], Awaitable[None]]], Any],
@@ -95,10 +100,12 @@ def _jsonld_to_extraction(data: dict) -> RecipeExtraction:
     if isinstance(servings_raw, int):
         servings = servings_raw
     elif isinstance(servings_raw, str):
-        try:
-            servings = int("".join(c for c in servings_raw if c.isdigit()) or "0") or None
-        except ValueError:
-            pass
+        numbers = [int(n) for n in re.findall(r"\d+", servings_raw)]
+        if len(numbers) >= 2:
+            # e.g. "4 to 6 servings" or "4-6 servings" -> midpoint, not "46"
+            servings = round((numbers[0] + numbers[1]) / 2)
+        elif numbers:
+            servings = numbers[0]
 
     kcal: int | None = None
     calories_raw = (data.get("nutrition") or {}).get("calories")
@@ -254,10 +261,11 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
                 r.raise_for_status()
                 html = r.text
         except Exception as exc:
+            log.warning("Could not fetch page %s: %s", url, exc)
             yield _done_event(ImportResult(
                 stage=ImportStage.FAILED,
                 metadata=ImportMetadata(source_url=url),
-                error=f"Could not fetch page: {exc}",
+                error=IMPORT_ERROR_CODE,
             ))
             return
 
@@ -298,13 +306,14 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
                 yield _done_event(ImportResult(
                     stage=ImportStage.FAILED,
                     metadata=meta,
-                    error="Could not extract a recipe from this page.",
+                    error=IMPORT_ERROR_CODE,
                 ))
         except Exception as exc:
+            log.warning("Gemini extraction failed for %s: %s", url, exc)
             yield _done_event(ImportResult(
                 stage=ImportStage.FAILED,
                 metadata=meta,
-                error=f"Gemini extraction failed: {exc}",
+                error=IMPORT_ERROR_CODE,
             ))
         return
 
@@ -313,10 +322,11 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
     try:
         metadata: ReelMetadata = await scraper.fetch_reel(url)
     except Exception as exc:
+        log.warning("Could not fetch reel %s: %s", url, exc)
         yield _done_event(ImportResult(
             stage=ImportStage.FAILED,
             metadata=ImportMetadata(source_url=url),
-            error=f"Could not fetch reel: {exc}",
+            error=IMPORT_ERROR_CODE,
         ))
         return
 
@@ -391,7 +401,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
     yield _done_event(ImportResult(
         stage=ImportStage.FAILED,
         metadata=meta,
-        error="Could not extract a recipe from this reel.",
+        error=IMPORT_ERROR_CODE,
     ))
 
 

@@ -365,6 +365,7 @@
     "recipeUrl": "URL de la recette",
     "paste": "Coller",
     "importFailed": "Échec de l'importation",
+    "couldNotExtract": "Nous n'avons pas pu extraire de recette depuis cette URL. Copiez le texte de la recette et utilisez plutôt \"Depuis un texte\".",
     "by": "Par : @{{handle}}",
     "adaptedBy": "Adapté par : @{{handle}}",
     "alsoAddToPrivate": "Ajouter aussi à mes recettes privées",
