@@ -35,7 +35,7 @@ export default function RegisterPage() {
       <LanguageSwitcher />
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">PlateKeeper</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Carrot</h1>
           <p className="text-zinc-600 mt-1 text-sm">{t('auth.tagline')}</p>
         </div>
 

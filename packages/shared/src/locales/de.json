@@ -396,8 +396,8 @@
     "webviewTitle": "Anmelden",
     "webviewHint": "Melde dich an, falls die Seite es erfordert, und tippe dann auf ✓, um das Rezept zu extrahieren.",
     "useThisPage": "Diese Seite verwenden",
-    "shareTitle": "An PlateKeeper teilen",
-    "shareInstructions": "Öffne eine App, tippe auf Teilen und wähle PlateKeeper. Oder kopiere eine URL und füge sie unten ein.",
+    "shareTitle": "An Carrot teilen",
+    "shareInstructions": "Öffne eine App, tippe auf Teilen und wähle Carrot. Oder kopiere eine URL und füge sie unten ein.",
     "shareUrlLabel": "Oder URL hier einfügen",
     "cameraPermissionDenied": "Kamerazugriff erforderlich",
     "cameraPermissionDeniedMsg": "Bitte aktiviere den Kamerazugriff in den Einstellungen.",
@@ -408,7 +408,7 @@
     "fromUrl": "Von URL",
     "fromImage": "Von Bild",
     "fromText": "Von Text",
-    "shareTip": "💡 Wusstest du? In Safari, Instagram oder jeder anderen App — tippe auf Teilen und wähle PlateKeeper, um sofort zu importieren."
+    "shareTip": "💡 Wusstest du? In Safari, Instagram oder jeder anderen App — tippe auf Teilen und wähle Carrot, um sofort zu importieren."
   },
   "shoppingList": {
     "title": "Einkaufsliste",

@@ -1,4 +1,4 @@
-# PlateKeeper
+# Carrot
 
 Recipe management app. Frontend: React + Vite. Backend: FastAPI. Database: PostgreSQL.
 

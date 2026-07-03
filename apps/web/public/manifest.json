@@ -1,6 +1,6 @@
 {
-  "name": "PlateKeeper",
-  "short_name": "PlateKeeper",
+  "name": "Carrot",
+  "short_name": "Carrot",
   "description": "Save and organize recipes from Instagram and TikTok",
   "start_url": "/",
   "display": "standalone",
