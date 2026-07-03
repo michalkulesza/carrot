@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext'
 import { HouseholdProvider } from '../context/HouseholdContext'
 import { TimerProvider } from '../context/TimerContext'
 import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
+import { DebugModeProvider } from '../context/DebugModeContext'
 import { useRecipes, useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
@@ -92,6 +93,7 @@ const AppShell = () => {
     <NotificationHistoryProvider>
       <TimerProvider>
         <HouseholdProvider>
+          <DebugModeProvider>
           <div className="min-h-screen bg-background md:bg-zinc-100">
             {/* Centered max-width container — flex row on desktop, block on mobile */}
             <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
@@ -163,6 +165,7 @@ const AppShell = () => {
             <ResumeTimersModal />
             <ExpiredTimersModal />
           </div>
+          </DebugModeProvider>
         </HouseholdProvider>
       </TimerProvider>
     </NotificationHistoryProvider>

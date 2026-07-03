@@ -39,6 +39,7 @@ import {
 } from '../api/client'
 import TagRow from './TagRow'
 import { proxyUrl, PLACEHOLDER_URL } from '../utils/imageUtils'
+import { useDebugMode } from '../context/DebugModeContext'
 
 // ── Allergen popover ──────────────────────────────────────────────────────────
 
@@ -911,6 +912,7 @@ const RecipeDetailModal = ({
   scrollToStep,
 }: RecipeDetailModalProps) => {
   const { t } = useTranslation()
+  const { enabled: debugMode } = useDebugMode()
   const wakeLock = useScreenWakeLock()
   const [mode, setMode] = useState<Mode>('view')
   const [draft, setDraft] = useState<EditState | null>(null)
@@ -1429,6 +1431,24 @@ const RecipeDetailModal = ({
                         {t('recipes.source')}
                       </a>
                     )}
+                  </div>
+                )}
+
+                {debugMode && r.debug_model && (
+                  <div className="flex flex-col gap-0.5 rounded-lg bg-zinc-50 px-3 py-2">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                      {t('recipes.debugInfo')}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {t('recipes.debugModel')}: {r.debug_model}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {t('recipes.debugTokens')}: {r.debug_total_tokens ?? '—'}
+                      {' '}
+                      ({t('recipes.debugInputTokens')} {r.debug_input_tokens ?? '—'}
+                      {' · '}
+                      {t('recipes.debugOutputTokens')} {r.debug_output_tokens ?? '—'})
+                    </span>
                   </div>
                 )}
 

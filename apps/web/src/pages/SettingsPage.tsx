@@ -40,6 +40,7 @@ import {
 } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
+import { useDebugMode } from '../context/DebugModeContext'
 
 const StatCard = ({
   value,
@@ -822,6 +823,7 @@ const SettingsPage = ({
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold()
   const { t, i18n } = useTranslation()
+  const { enabled: debugMode, setEnabled: setDebugMode } = useDebugMode()
   const [wakeLockDefault, setWakeLockDefault] = useState(
     () => localStorage.getItem('wakelock-default') === '1'
   )
@@ -1153,6 +1155,19 @@ const SettingsPage = ({
                 </Switch>
               </div>
             )}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
+              <div>
+                <p className="text-sm font-medium">{t('settings.debugMode')}</p>
+                <p className="text-xs text-zinc-400">
+                  {t('settings.debugModeDesc')}
+                </p>
+              </div>
+              <Switch size="sm" isSelected={debugMode} onChange={setDebugMode}>
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
           </div>
         </section>
 
