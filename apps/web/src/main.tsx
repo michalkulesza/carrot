@@ -9,7 +9,15 @@ import ErrorBoundary from './components/ErrorBoundary'
 Sentry.init({
   dsn: 'https://c99c9d4ee4dcc9a6b30e23963716751d@o4511350064611328.ingest.de.sentry.io/4511571143295056',
   tracesSampleRate: 1.0,
-  integrations: [Sentry.browserTracingIntegration()],
+  integrations: [
+    Sentry.browserTracingIntegration(),
+    Sentry.feedbackIntegration({
+      autoInject: true,
+      showName: false,
+      enableScreenshot: true,
+      colorScheme: 'system',
+    }),
+  ],
 })
 
 if ('serviceWorker' in navigator) {
