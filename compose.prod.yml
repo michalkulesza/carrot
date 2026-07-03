@@ -35,5 +35,16 @@ services:
       timeout: 5s
       retries: 5
 
+  web:
+    image: ghcr.io/michalkulesza/platekeeper-web:latest
+    ports:
+      - "127.0.0.1:8089:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
