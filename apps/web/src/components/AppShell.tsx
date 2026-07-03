@@ -148,7 +148,7 @@ const AppShell = () => {
             {/* Desktop FAB — fixed bottom-right */}
             <button
               onClick={openAddRecipe}
-              className="hidden md:flex fixed bottom-8 right-8 w-14 h-14 rounded-full bg-primary text-white shadow-xl items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-transform z-40"
+              className="hidden md:flex fixed bottom-24 right-8 w-14 h-14 rounded-full bg-primary text-white shadow-xl items-center justify-center text-2xl hover:scale-105 active:scale-95 transition-transform z-40"
               aria-label="Add recipe"
             >
               <Plus size={20} strokeWidth={2.5} />
