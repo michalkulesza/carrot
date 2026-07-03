@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Sun } from 'react-feather'
+import { Link, ShoppingCart, Sun } from 'react-feather'
 import { useTranslation } from 'react-i18next'
+import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
 import {
   useTimers,
   getRemainingSeconds,
@@ -291,6 +292,12 @@ const displayIngredient = (s: string, t: (key: string, opts: { defaultValue: str
   const parsed = parseIngredient(s)
   if (!parsed.unit) return s
   return serializeIngredient({ ...parsed, unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }) })
+}
+
+// Note is intentionally dropped — shopping list entries are qty/unit/name only.
+const formatForShoppingList = (s: string): string => {
+  const { qty, unit, name } = parseIngredient(s)
+  return [qty, unit, name].filter(Boolean).join(' ')
 }
 
 const IngredientEditor = ({
@@ -699,6 +706,10 @@ const ViewComponent = ({
   recipeId,
   recipeTitle,
   componentIndex,
+  addMode = false,
+  sessionAdded,
+  onAddIngredient,
+  onAddAllIngredients,
 }: {
   comp: SaveComponent
   single: boolean
@@ -708,6 +719,10 @@ const ViewComponent = ({
   recipeId: string
   recipeTitle: string
   componentIndex: number
+  addMode?: boolean
+  sessionAdded?: Set<string>
+  onAddIngredient?: (ii: number) => void
+  onAddAllIngredients?: () => void
 }) => {
   const { t } = useTranslation()
 
@@ -756,12 +771,34 @@ const ViewComponent = ({
       )}
       {comp.ingredients.length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
-            {t('recipes.sectionIngredients')}
-          </p>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-semibold uppercase text-zinc-400">
+              {t('recipes.sectionIngredients')}
+            </p>
+            {addMode &&
+              (() => {
+                const allAdded = comp.ingredients.every((_, i) =>
+                  sessionAdded?.has(`${componentIndex}-${i}`)
+                )
+
+                return (
+                  <button
+                    type="button"
+                    onClick={onAddAllIngredients}
+                    disabled={allAdded}
+                    className="text-xs font-medium text-primary hover:underline disabled:text-zinc-300 disabled:no-underline"
+                  >
+                    {allAdded
+                      ? t('shoppingList.addedToList')
+                      : t('shoppingList.addAll')}
+                  </button>
+                )
+              })()}
+          </div>
           <ul className="space-y-1 mb-3">
             {comp.ingredients.map((ing, i) => {
               const flag = comp.ingredient_flags?.[i]
+              const added = sessionAdded?.has(`${componentIndex}-${i}`) ?? false
 
               return (
                 <li key={i} className="flex items-start gap-2 text-sm">
@@ -774,6 +811,42 @@ const ViewComponent = ({
                       onReplace={() => onReplaceIngredient(i)}
                       onRestore={() => onRestoreIngredient(i)}
                     />
+                  )}
+                  {addMode && (
+                    <button
+                      type="button"
+                      onClick={added ? undefined : () => onAddIngredient?.(i)}
+                      aria-label={
+                        added
+                          ? t('shoppingList.addedToList')
+                          : t('shoppingList.addToList')
+                      }
+                      className={`shrink-0 mt-0.5 ${added ? 'text-emerald-500' : 'text-primary hover:text-primary-600'}`}
+                    >
+                      {added ? (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M12 5v14M5 12h14" />
+                        </svg>
+                      )}
+                    </button>
                   )}
                 </li>
               )
@@ -914,7 +987,10 @@ const RecipeDetailModal = ({
   const { t } = useTranslation()
   const { enabled: debugMode } = useDebugMode()
   const wakeLock = useScreenWakeLock()
+  const { addItems: addShoppingListItems } = useShoppingList()
   const [mode, setMode] = useState<Mode>('view')
+  const [addMode, setAddMode] = useState(false)
+  const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const [draft, setDraft] = useState<EditState | null>(null)
   const [localTags, setLocalTags] = useState<Tag[]>([])
   const [busy, setBusy] = useState(false)
@@ -932,6 +1008,8 @@ const RecipeDetailModal = ({
       setLocalNotes(recipe.notes ?? '')
       savedNotesRef.current = recipe.notes ?? ''
       setMode(initialMode ?? 'view')
+      setAddMode(false)
+      setSessionAdded(new Set())
       setError(null)
     }
   }, [recipe?.id, initialMode])
@@ -951,19 +1029,12 @@ const RecipeDetailModal = ({
     return () => clearTimeout(timer)
   }, [recipe?.id, scrollToStep])
 
-  if (!recipe || !draft) return null
-  const r = recipe
-
-  const displayThumb =
-    mode === 'editing' ? draft.thumbnail_url : r.thumbnail_url
-  const proxied = proxyUrl(displayThumb)
-
   const handleThumbnailFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file || !recipe) return
     setImgUploading(true)
     try {
-      const result = await uploadThumbnail(file, r.id)
+      const result = await uploadThumbnail(file, recipe.id)
       setDraft((d) => (d ? { ...d, thumbnail_url: result.url } : d))
     } catch {
       // keep existing thumbnail on failure
@@ -971,7 +1042,14 @@ const RecipeDetailModal = ({
       setImgUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
-  }, [r.id])
+  }, [recipe])
+
+  if (!recipe || !draft) return null
+  const r = recipe
+
+  const displayThumb =
+    mode === 'editing' ? draft.thumbnail_url : r.thumbnail_url
+  const proxied = proxyUrl(displayThumb)
 
   const components =
     mode === 'editing' ? draft.components : (r.components as SaveComponent[])
@@ -1198,6 +1276,29 @@ const RecipeDetailModal = ({
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleAddIngredient = (ci: number, ii: number) => {
+    const comp = (r.components as SaveComponent[])[ci]
+    const text = formatForShoppingList(comp.ingredients[ii])
+    addShoppingListItems.mutate([text])
+    setSessionAdded((prev) => new Set(prev).add(`${ci}-${ii}`))
+  }
+
+  const handleAddAllIngredients = (ci: number) => {
+    const comp = (r.components as SaveComponent[])[ci]
+    const keys: string[] = []
+    const texts: string[] = []
+    comp.ingredients.forEach((ing, ii) => {
+      const key = `${ci}-${ii}`
+      if (!sessionAdded.has(key)) {
+        keys.push(key)
+        texts.push(formatForShoppingList(ing))
+      }
+    })
+    if (texts.length === 0) return
+    addShoppingListItems.mutate(texts)
+    setSessionAdded((prev) => new Set([...prev, ...keys]))
   }
 
   const cancelMode = () => {
@@ -1469,6 +1570,14 @@ const RecipeDetailModal = ({
                     >
                       {t('recipes.remove')}
                     </Button>
+                    <Button
+                      size="sm"
+                      variant={addMode ? 'primary' : 'secondary'}
+                      onPress={() => setAddMode((v) => !v)}
+                    >
+                      <ShoppingCart className="w-3.5 h-3.5" />
+                      {t('shoppingList.addToList')}
+                    </Button>
                     {'wakeLock' in navigator && (
                       <button
                         type="button"
@@ -1547,6 +1656,10 @@ const RecipeDetailModal = ({
                       recipeId={r.id}
                       recipeTitle={r.title}
                       componentIndex={ci}
+                      addMode={addMode}
+                      sessionAdded={sessionAdded}
+                      onAddIngredient={(ii) => handleAddIngredient(ci, ii)}
+                      onAddAllIngredients={() => handleAddAllIngredients(ci)}
                     />
                   ))}
 
