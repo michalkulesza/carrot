@@ -28,10 +28,8 @@ export type {
 } from '@platekeeper/shared/types'
 export { UNITS } from '@platekeeper/shared/types'
 
-const API_URL = ((import.meta as unknown as { env: Record<string, string> }).env.VITE_API_URL) ?? ''
-
 export const webClient = createApiClient({
-  baseUrl: API_URL,
+  baseUrl: '',
   getAuthHeaders: () => ({}),
   credentials: 'include',
 })
