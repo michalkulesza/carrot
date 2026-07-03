@@ -396,8 +396,8 @@
     "webviewTitle": "Iniciar sesión",
     "webviewHint": "Inicia sesión si la página lo requiere y luego toca ✓ para extraer la receta.",
     "useThisPage": "Usar esta página",
-    "shareTitle": "Compartir con PlateKeeper",
-    "shareInstructions": "Abre cualquier app, toca el botón de compartir y elige PlateKeeper. O copia una URL y pégala abajo.",
+    "shareTitle": "Compartir con Carrot",
+    "shareInstructions": "Abre cualquier app, toca el botón de compartir y elige Carrot. O copia una URL y pégala abajo.",
     "shareUrlLabel": "O pega la URL aquí",
     "cameraPermissionDenied": "Acceso a la cámara requerido",
     "cameraPermissionDeniedMsg": "Activa el acceso a la cámara en Ajustes para tomar fotos de recetas.",
@@ -408,7 +408,7 @@
     "fromUrl": "Desde URL",
     "fromImage": "Desde imagen",
     "fromText": "Desde texto",
-    "shareTip": "💡 ¿Sabías que? En Safari, Instagram o cualquier app — toca Compartir y elige PlateKeeper para importar al instante."
+    "shareTip": "💡 ¿Sabías que? En Safari, Instagram o cualquier app — toca Compartir y elige Carrot para importar al instante."
   },
   "shoppingList": {
     "title": "Lista de compras",

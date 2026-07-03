@@ -106,7 +106,7 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(title="PlateKeeper API", lifespan=lifespan)
+app = FastAPI(title="Carrot API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

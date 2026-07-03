@@ -39,7 +39,7 @@ export default function Sidebar() {
         className={`flex items-center mb-5 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}
       >
         {!collapsed && (
-          <span className="text-lg font-bold tracking-tight">PlateKeeper</span>
+          <span className="text-lg font-bold tracking-tight">Carrot</span>
         )}
         <button
           type="button"

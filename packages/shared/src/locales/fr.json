@@ -396,8 +396,8 @@
     "webviewTitle": "Connexion",
     "webviewHint": "Connectez-vous si la page le requiert, puis appuyez sur ✓ pour extraire la recette.",
     "useThisPage": "Utiliser cette page",
-    "shareTitle": "Partager avec PlateKeeper",
-    "shareInstructions": "Ouvrez une app, appuyez sur Partager et choisissez PlateKeeper. Ou copiez une URL et collez-la ci-dessous.",
+    "shareTitle": "Partager avec Carrot",
+    "shareInstructions": "Ouvrez une app, appuyez sur Partager et choisissez Carrot. Ou copiez une URL et collez-la ci-dessous.",
     "shareUrlLabel": "Ou coller l'URL ici",
     "cameraPermissionDenied": "Accès à la caméra requis",
     "cameraPermissionDeniedMsg": "Veuillez activer l'accès à la caméra dans les Réglages.",
@@ -408,7 +408,7 @@
     "fromUrl": "Depuis URL",
     "fromImage": "Depuis image",
     "fromText": "Depuis texte",
-    "shareTip": "💡 Le saviez-vous ? Dans Safari, Instagram ou toute app — appuyez sur Partager et choisissez PlateKeeper pour importer instantanément."
+    "shareTip": "💡 Le saviez-vous ? Dans Safari, Instagram ou toute app — appuyez sur Partager et choisissez Carrot pour importer instantanément."
   },
   "shoppingList": {
     "title": "Liste de courses",

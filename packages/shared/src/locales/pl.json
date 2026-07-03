@@ -404,8 +404,8 @@
     "webviewTitle": "Logowanie",
     "webviewHint": "Zaloguj się, jeśli strona tego wymaga, a następnie dotknij ✓, aby wyodrębnić przepis.",
     "useThisPage": "Użyj tej strony",
-    "shareTitle": "Udostępnij do PlateKeeper",
-    "shareInstructions": "Otwórz dowolną aplikację, dotknij przycisku udostępniania i wybierz PlateKeeper. Możesz też skopiować URL i wkleić go poniżej.",
+    "shareTitle": "Udostępnij do Carrot",
+    "shareInstructions": "Otwórz dowolną aplikację, dotknij przycisku udostępniania i wybierz Carrot. Możesz też skopiować URL i wkleić go poniżej.",
     "shareUrlLabel": "Lub wklej URL tutaj",
     "cameraPermissionDenied": "Wymagany dostęp do kamery",
     "cameraPermissionDeniedMsg": "Włącz dostęp do kamery w Ustawieniach, aby robić zdjęcia przepisów.",
@@ -416,7 +416,7 @@
     "fromUrl": "Z URL",
     "fromImage": "Ze zdjęcia",
     "fromText": "Z tekstu",
-    "shareTip": "💡 Czy wiesz? W Safari, Instagramie lub dowolnej aplikacji — dotknij Udostępnij i wybierz PlateKeeper, aby natychmiast zaimportować."
+    "shareTip": "💡 Czy wiesz? W Safari, Instagramie lub dowolnej aplikacji — dotknij Udostępnij i wybierz Carrot, aby natychmiast zaimportować."
   },
   "shoppingList": {
     "title": "Lista zakupów",

@@ -36,7 +36,7 @@ export default function CompleteProfilePage() {
     <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">PlateKeeper</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Carrot</h1>
         </div>
 
         <Card>
