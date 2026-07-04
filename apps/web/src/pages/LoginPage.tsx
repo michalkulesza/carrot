@@ -13,45 +13,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [, setSecretStage] = useState({
-    email: false,
-    password: false,
-    taps: 0,
-  })
-  const [showDemoButtons, setShowDemoButtons] = useState(false)
-
-  function handleEmailFocus() {
-    setSecretStage((s) =>
-      !s.email && !s.password && s.taps === 0
-        ? { ...s, email: true }
-        : { email: false, password: false, taps: 0 }
-    )
-  }
-
-  function handlePasswordFocus() {
-    setSecretStage((s) =>
-      s.email && !s.password && s.taps === 0
-        ? { ...s, password: true }
-        : { email: false, password: false, taps: 0 }
-    )
-  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    setSecretStage((s) => {
-      if (!s.email || !s.password || email || password) {
-        return { email: false, password: false, taps: 0 }
-      }
-      const taps = s.taps + 1
-
-      if (taps >= 5) {
-        setShowDemoButtons(true)
-
-        return { email: false, password: false, taps: 0 }
-      }
-
-      return { ...s, taps }
-    })
     if (!email || !password) return
     setError(null)
     setLoading(true)
@@ -66,11 +30,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  function fillDemo() {
-    setEmail('demo@demo.com')
-    setPassword('demo')
   }
 
   return (
@@ -96,7 +55,6 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  onFocus={handleEmailFocus}
                   autoComplete="email"
                   className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
@@ -110,7 +68,6 @@ export default function LoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  onFocus={handlePasswordFocus}
                   autoComplete="current-password"
                   className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
@@ -127,32 +84,6 @@ export default function LoginPage() {
                 {loading ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
             </form>
-
-            {showDemoButtons && (
-              <>
-                <div className="flex items-center gap-2 text-xs text-zinc-600">
-                  <div className="flex-1 h-px bg-zinc-200" />
-                  <span>or</span>
-                  <div className="flex-1 h-px bg-zinc-200" />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button variant="secondary" fullWidth onPress={fillDemo}>
-                    {t('auth.demoAccount')}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onPress={() => {
-                      setEmail('alt@demo.com')
-                      setPassword('demo')
-                    }}
-                  >
-                    {t('auth.demoAlt')}
-                  </Button>
-                </div>
-              </>
-            )}
 
             <p className="text-center text-sm text-zinc-600">
               {t('auth.noAccount')}{' '}
