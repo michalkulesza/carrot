@@ -2,6 +2,10 @@
 - After each successful task make a commit with a message. If not sure if feature is fully completed, ask user.
 - When implementing a plan from .md include that file in the commit
 
+# Production VPS access
+- The `myvps` SSH host (~/.ssh/config, root@167.235.18.105, key `~/.ssh/platekeeper_deploy`) is available for debugging production issues — use `ssh myvps` freely to check `docker ps`, `docker logs <container>`, Caddy config/logs (`/etc/caddy/Caddyfile`, `sudo journalctl -u caddy`), etc.
+- Caddy on that host terminates TLS for all `*.carrot.xcxz.xyz` domains; `app.carrot.xcxz.xyz` routes `/api/*` to the API container (127.0.0.1:8088) and everything else to the web container (127.0.0.1:8089). There is no separate `api.carrot.xcxz.xyz` host — don't point `API_PROXY_TARGET` or similar config at it.
+
 # Code conventions
 
 ## Data fetching
