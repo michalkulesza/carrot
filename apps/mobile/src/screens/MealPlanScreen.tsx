@@ -290,7 +290,6 @@ const MealPlanScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: t('nav.mealPlan'),
-      headerTitleAlign: 'center',
       headerRight: () => (
         <View style={styles.headerRight}>
           <Pressable
