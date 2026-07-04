@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
 import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
@@ -15,26 +15,6 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [secretStage, setSecretStage] = useState({ email: false, password: false, taps: 0 })
-  const [showDemoButtons, setShowDemoButtons] = useState(false)
-
-  const handleEmailFocus = useCallback(() => {
-    setSecretStage((s) => (!s.email && !s.password && s.taps === 0 ? { ...s, email: true } : { email: false, password: false, taps: 0 }))
-  }, [])
-
-  const handlePasswordFocus = useCallback(() => {
-    setSecretStage((s) => (s.email && !s.password && s.taps === 0 ? { ...s, password: true } : { email: false, password: false, taps: 0 }))
-  }, [])
-
-  const fillDemo = useCallback(() => {
-    setEmail('demo@demo.com')
-    setPassword('demo')
-  }, [])
-
-  const fillDemoAlt = useCallback(() => {
-    setEmail('alt@demo.com')
-    setPassword('demo')
-  }, [])
 
   const handleLogin = async () => {
     if (!email || !password) return
@@ -50,19 +30,6 @@ const LoginScreen = () => {
     }
   }
 
-  const handleSignInPress = () => {
-    handleLogin()
-    setSecretStage((s) => {
-      if (!s.email || !s.password || email || password) return { email: false, password: false, taps: 0 }
-      const taps = s.taps + 1
-      if (taps >= 5) {
-        setShowDemoButtons(true)
-        return { email: false, password: false, taps: 0 }
-      }
-      return { ...s, taps }
-    })
-  }
-
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <View style={styles.container}>
@@ -76,7 +43,6 @@ const LoginScreen = () => {
           placeholderTextColor={colors.placeholderText}
           value={email}
           onChangeText={setEmail}
-          onFocus={handleEmailFocus}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -91,7 +57,6 @@ const LoginScreen = () => {
           placeholderTextColor={colors.placeholderText}
           value={password}
           onChangeText={setPassword}
-          onFocus={handlePasswordFocus}
           secureTextEntry
           autoComplete="current-password"
           textContentType="password"
@@ -101,7 +66,7 @@ const LoginScreen = () => {
 
         <Pressable
           style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
-          onPress={handleSignInPress}
+          onPress={handleLogin}
           disabled={submitting}
           accessibilityLabel={t('auth.signIn')}
           accessibilityRole="button"
@@ -110,27 +75,6 @@ const LoginScreen = () => {
             {submitting ? t('auth.signingIn') : t('auth.signIn')}
           </Text>
         </Pressable>
-
-        {showDemoButtons && (
-          <View style={styles.demoRow}>
-            <Pressable
-              style={({ pressed }) => [styles.demoBtn, styles.buttonDemo, pressed && { opacity: 0.7 }]}
-              onPress={fillDemo}
-              accessibilityLabel={t('auth.demoAccount')}
-              accessibilityRole="button"
-            >
-              <Text style={styles.buttonDemoText}>{t('auth.demoAccount')}</Text>
-            </Pressable>
-            <Pressable
-              style={({ pressed }) => [styles.demoBtn, styles.buttonDemo, pressed && { opacity: 0.7 }]}
-              onPress={fillDemoAlt}
-              accessibilityLabel={t('auth.demoAlt')}
-              accessibilityRole="button"
-            >
-              <Text style={styles.buttonDemoText}>{t('auth.demoAlt')}</Text>
-            </Pressable>
-          </View>
-        )}
 
         <Pressable
           style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
@@ -163,10 +107,6 @@ const styles = StyleSheet.create({
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
   buttonPrimary: { backgroundColor: colors.blue },
   buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
-  demoRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  demoBtn: { flex: 1, borderRadius: 8, paddingVertical: 14, alignItems: 'center' },
-  buttonDemo: { borderWidth: 1, borderColor: colors.opaqueSeparator },
-  buttonDemoText: { color: colors.secondaryLabel, fontSize: 16 },
   buttonOutlineText: { color: colors.secondaryLabel, fontSize: 16 },
 })
 
