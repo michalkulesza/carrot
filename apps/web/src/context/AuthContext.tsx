@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import * as Sentry from '@sentry/react'
 import {
   getMe,
   login as apiLogin,
@@ -14,6 +15,10 @@ import {
   completeSignup as apiCompleteSignup,
   type AuthUser,
 } from '../api/auth'
+
+const syncSentryUser = (u: AuthUser | null) => {
+  Sentry.setUser(u ? { id: u.id, email: u.email } : null)
+}
 
 const PENDING_SIGNUP_KEY = 'pk_pending_signup'
 
@@ -56,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     getMe().then((u) => {
       setUser(u)
+      syncSentryUser(u)
       if (!u) {
         const pending = loadPendingSignup()
         if (pending) {
@@ -70,11 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function refreshUser() {
     const u = await getMe()
     setUser(u)
+    syncSentryUser(u)
   }
 
   async function login(email: string, password: string) {
     await apiLogin(email, password)
-    setUser(await getMe())
+    const u = await getMe()
+    setUser(u)
+    syncSentryUser(u)
   }
 
   async function requestSignupCode(email: string) {
@@ -97,12 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(PENDING_SIGNUP_KEY)
     setSignupEmail(null)
     setSignupToken(null)
-    setUser(await getMe())
+    const u = await getMe()
+    setUser(u)
+    syncSentryUser(u)
   }
 
   async function logout() {
     await apiLogout()
     setUser(null)
+    syncSentryUser(null)
   }
 
   return (

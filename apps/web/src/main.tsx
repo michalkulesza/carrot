@@ -14,6 +14,8 @@ Sentry.init({
     Sentry.feedbackIntegration({
       autoInject: true,
       showName: false,
+      showEmail: false,
+      useSentryUser: { email: 'email' },
       enableScreenshot: true,
       colorScheme: 'system',
     }),
