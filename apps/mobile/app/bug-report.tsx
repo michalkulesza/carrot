@@ -53,7 +53,6 @@ const BugReportScreen = () => {
   const params = useLocalSearchParams<{ route?: string }>()
 
   const [description, setDescription] = useState('')
-  const [email, setEmail] = useState(user?.email ?? '')
   const [shot, setShot] = useState<string | undefined>(undefined)
   const [capturingShot, setCapturingShot] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -85,7 +84,7 @@ const BugReportScreen = () => {
     try {
       const appVersion = `${Constants.expoConfig?.version ?? ''} (${Constants.expoConfig?.ios?.buildNumber ?? ''})`
       Sentry.captureFeedback(
-        { message: description.trim(), email: email.trim() || undefined },
+        { message: description.trim(), email: user?.email || undefined },
         {
           captureContext: {
             tags: {
@@ -112,7 +111,7 @@ const BugReportScreen = () => {
       setError(t('bugReport.sendFailed'))
       setSubmitting(false)
     }
-  }, [canSubmit, description, email, params.route, user, activeHouseholdId, shot, router, t])
+  }, [canSubmit, description, params.route, user, activeHouseholdId, shot, router, t])
 
   return (
     <>
@@ -141,22 +140,6 @@ const BugReportScreen = () => {
             autoFocus
             textAlignVertical="top"
             accessibilityLabel={t('bugReport.descriptionLabel')}
-          />
-
-          <Text style={styles.label}>{t('bugReport.emailLabel')}</Text>
-          <TextInput
-            style={styles.input}
-            placeholder={t('bugReport.emailLabel')}
-            placeholderTextColor={colors.placeholderText}
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-            textContentType="emailAddress"
-            returnKeyType="done"
-            accessibilityLabel={t('bugReport.emailLabel')}
           />
 
           {capturingShot && (
@@ -210,17 +193,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 20,
-    color: colors.label,
-    backgroundColor: colors.background,
   },
   textArea: {
     borderWidth: 1,
