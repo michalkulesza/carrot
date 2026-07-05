@@ -56,7 +56,12 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     const [justAssigned, setJustAssigned] = useState<string | null>(null)
 
     const monthKey = toYYYYMM(visibleMonth)
-    const { setEntry } = useMealPlan(monthKey)
+    const { entries, setEntry } = useMealPlan(monthKey)
+
+    const assignedDates = useMemo(
+      () => new Set(entries.filter((e) => e.recipe.id === recipeId).map((e) => e.date)),
+      [entries, recipeId],
+    )
 
     useImperativeHandle(ref, () => ({
       present: () => {
@@ -161,7 +166,8 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
                   if (!date) return <View key={i} style={styles.dayCell} />
                   const isoDate = toISODate(date)
                   const isToday = isoDate === todayIso
-                  const isAssigned = justAssigned === isoDate
+                  const isJustAssigned = justAssigned === isoDate
+                  const isAlreadyAssigned = !isJustAssigned && assignedDates.has(isoDate)
                   return (
                     <Pressable
                       key={i}
@@ -178,13 +184,20 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
                         style={[
                           styles.dayCircle,
                           isToday && styles.dayCircleToday,
-                          isAssigned && styles.dayCircleAssigned,
+                          isAlreadyAssigned && styles.dayCircleAlreadyAssigned,
+                          isJustAssigned && styles.dayCircleAssigned,
                         ]}
                       >
-                        {isAssigned ? (
+                        {isJustAssigned ? (
                           <Feather name="check" size={16} color="#ffffff" />
                         ) : (
-                          <Text style={[styles.dayNum, isToday && styles.dayNumToday]}>
+                          <Text
+                            style={[
+                              styles.dayNum,
+                              isToday && styles.dayNumToday,
+                              isAlreadyAssigned && styles.dayNumAlreadyAssigned,
+                            ]}
+                          >
                             {date.getDate()}
                           </Text>
                         )}
@@ -263,6 +276,11 @@ const styles = StyleSheet.create({
   dayCircleAssigned: {
     backgroundColor: colors.green,
   },
+  dayCircleAlreadyAssigned: {
+    borderWidth: 1.5,
+    borderColor: colors.green,
+  },
   dayNum: { fontSize: 16, color: colors.label },
   dayNumToday: { color: colors.blue, fontWeight: '600' },
+  dayNumAlreadyAssigned: { color: colors.green, fontWeight: '600' },
 })

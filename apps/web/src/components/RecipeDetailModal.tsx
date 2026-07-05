@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, ShoppingCart, Sun } from 'react-feather'
+import { Calendar, Edit2, Link, ShoppingCart, Sun, Trash2 } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
 import {
@@ -39,6 +39,7 @@ import {
   uploadThumbnail,
 } from '../api/client'
 import TagRow from './TagRow'
+import AssignToMealPlanModal from './AssignToMealPlanModal'
 import { proxyUrl, PLACEHOLDER_URL } from '../utils/imageUtils'
 import { useDebugMode } from '../context/DebugModeContext'
 
@@ -994,6 +995,7 @@ const RecipeDetailModal = ({
   const { addItems: addShoppingListItems } = useShoppingList()
   const [mode, setMode] = useState<Mode>('view')
   const [addMode, setAddMode] = useState(false)
+  const [mealPlanOpen, setMealPlanOpen] = useState(false)
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const [draft, setDraft] = useState<EditState | null>(null)
   const [localTags, setLocalTags] = useState<Tag[]>([])
@@ -1013,6 +1015,7 @@ const RecipeDetailModal = ({
       savedNotesRef.current = recipe.notes ?? ''
       setMode(initialMode ?? 'view')
       setAddMode(false)
+      setMealPlanOpen(false)
       setSessionAdded(new Set())
       setError(null)
     }
@@ -1318,13 +1321,56 @@ const RecipeDetailModal = ({
     onClose()
   }
 
+  const headerActionButtons = mode === 'view' && (
+    <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+      <button
+        type="button"
+        onClick={() => setMode('editing')}
+        aria-label={t('common.edit')}
+        className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors backdrop-blur-sm"
+      >
+        <Edit2 className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode('confirming')}
+        aria-label={t('recipes.remove')}
+        className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-danger/80 transition-colors backdrop-blur-sm"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  )
+
+  const headerActionButtonsLight = mode === 'view' && (
+    <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+      <button
+        type="button"
+        onClick={() => setMode('editing')}
+        aria-label={t('common.edit')}
+        className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors"
+      >
+        <Edit2 className="w-4 h-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setMode('confirming')}
+        aria-label={t('recipes.remove')}
+        className="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-100 text-danger hover:bg-danger-100 transition-colors"
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    </div>
+  )
+
   return (
-    <Modal
-      isOpen={!!recipe}
-      onOpenChange={(open) => {
-        if (!open) handleClose()
-      }}
-    >
+    <>
+      <Modal
+        isOpen={!!recipe}
+        onOpenChange={(open) => {
+          if (!open) handleClose()
+        }}
+      >
       <ModalBackdrop isDismissable>
         <ModalContainer
           size="lg"
@@ -1355,6 +1401,8 @@ const RecipeDetailModal = ({
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
+
+                  {headerActionButtons}
 
                   {/* Edit-image button (editing only) */}
                   {mode === 'editing' && (
@@ -1398,7 +1446,8 @@ const RecipeDetailModal = ({
                 </div>
               ) : (
                 /* No image: plain title block */
-                <div className={`px-5 pt-5 pb-1 ${headerBg}`}>
+                <div className={`relative px-5 pt-5 pb-1 ${mode === 'view' ? 'pr-20' : ''} ${headerBg}`}>
+                  {headerActionButtonsLight}
                   {mode === 'editing' ? (
                     <EditLine
                       value={draft.title}
@@ -1562,25 +1611,19 @@ const RecipeDetailModal = ({
                   <div className="flex gap-2 pt-0.5 items-center">
                     <Button
                       size="sm"
-                      variant="secondary"
-                      onPress={() => setMode('editing')}
-                    >
-                      {t('common.edit')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger-soft"
-                      onPress={() => setMode('confirming')}
-                    >
-                      {t('recipes.remove')}
-                    </Button>
-                    <Button
-                      size="sm"
                       variant={addMode ? 'primary' : 'secondary'}
                       onPress={() => setAddMode((v) => !v)}
                     >
                       <ShoppingCart className="w-3.5 h-3.5" />
                       {t('shoppingList.addToList')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onPress={() => setMealPlanOpen(true)}
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      {t('mealPlan.addToMealPlan')}
                     </Button>
                     {'wakeLock' in navigator && (
                       <span
@@ -1765,7 +1808,14 @@ const RecipeDetailModal = ({
           </ModalDialog>
         </ModalContainer>
       </ModalBackdrop>
-    </Modal>
+      </Modal>
+
+      <AssignToMealPlanModal
+        isOpen={mealPlanOpen}
+        onClose={() => setMealPlanOpen(false)}
+        recipeId={r.id}
+      />
+    </>
   )
 }
 
