@@ -28,6 +28,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@platekeeper/shared/api/context'
 import { useNotificationHistory } from '../context/NotificationHistoryContext'
+import BugReportButton from '../components/BugReportButton'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { UNITS } from '@platekeeper/shared/types'
@@ -434,10 +435,15 @@ const IngredientEditor = ({
   )
 }
 
-// ── EditableRecipeView ─────────────────────────────────────────────────────────
+// ── RecipeFormView ──────────────────────────────────────────────────────────────
+// Renders the imported recipe styled like the saved-recipe detail screen — as a
+// read-only preview (editing=false) right after import, or in-place as an
+// editable form (editing=true) once the user taps the header edit button. Both
+// modes share the same layout so switching between them doesn't jump the UI.
 
-const EditableRecipeView = ({
+const RecipeFormView = ({
   recipe,
+  editing,
   onChange,
   selectedTags,
   selectedTagIds,
@@ -446,9 +452,9 @@ const EditableRecipeView = ({
   onTagRemove,
   onTagCreate,
   activeAllergens,
-  allowEditing = false,
 }: {
   recipe: EditableRecipe
+  editing: boolean
   onChange: (r: EditableRecipe) => void
   selectedTags: Tag[]
   selectedTagIds: Set<string>
@@ -457,9 +463,9 @@ const EditableRecipeView = ({
   onTagRemove: (tagId: string) => void
   onTagCreate: (name: string) => Promise<Tag>
   activeAllergens: string[]
-  allowEditing?: boolean
 }) => {
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
   const [showTagPicker, setShowTagPicker] = useState(false)
   const [showImgEdit, setShowImgEdit] = useState(false)
@@ -564,36 +570,41 @@ const EditableRecipeView = ({
     ? (recipe.components[unitPickerTarget.ci]?.ingredients[unitPickerTarget.ii]?.unit ?? '')
     : ''
 
+  const hasImage = !!recipe.thumbnail_url
+
   return (
-    <View style={styles.editView}>
-      {/* Thumbnail + title */}
-      <View style={styles.titleRow}>
+    <View>
+      {hasImage ? (
+        <View>
+          <Image
+            source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url!)! }}
+            style={styles.previewHeroImage}
+            accessibilityLabel={recipe.title}
+            resizeMode="cover"
+          />
+          {editing && (
+            <Pressable
+              style={({ pressed }) => [styles.previewHeroEditBtn, pressed && { opacity: 0.7 }]}
+              onPress={() => { setImgDraft(recipe.thumbnail_url ?? ''); setShowImgEdit(true) }}
+              accessibilityLabel={t('common.thumbnail')}
+            >
+              <Feather name="camera" size={14} color="#ffffff" />
+              <Text style={styles.previewHeroEditText}>{t('common.edit')}</Text>
+            </Pressable>
+          )}
+        </View>
+      ) : editing ? (
         <Pressable
-          style={({ pressed }) => [styles.thumbBtn, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.previewHeroImage, styles.previewHeroPlaceholder, pressed && { opacity: 0.7 }]}
           onPress={() => { setImgDraft(recipe.thumbnail_url ?? ''); setShowImgEdit(true) }}
           accessibilityLabel={t('common.thumbnail')}
         >
-          {recipe.thumbnail_url ? (
-            <Image source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url)! }} style={styles.thumbImg} resizeMode="cover" />
-          ) : (
-            <View style={styles.thumbPlaceholder}>
-              <Text style={styles.thumbIcon}>🖼</Text>
-            </View>
-          )}
-          <View style={styles.thumbEditBadge}>
-            <Text style={styles.thumbEditText}>{t('common.edit')}</Text>
-          </View>
+          <Text style={styles.thumbIcon}>🖼</Text>
+          <Text style={styles.previewHeroPlaceholderText}>{t('common.addPhoto')}</Text>
         </Pressable>
-        <TextInput
-          style={styles.titleInput}
-          value={recipe.title}
-          onChangeText={(v) => onChange({ ...recipe, title: v })}
-          multiline
-          placeholder={t('addRecipe.newRecipe')}
-          placeholderTextColor={PlatformColor('placeholderText') as unknown as string}
-          accessibilityLabel="recipe title"
-        />
-      </View>
+      ) : (
+        <View style={{ height: insets.top + 56 }} />
+      )}
 
       {/* Image URL edit modal */}
       <Modal visible={showImgEdit} transparent animationType="fade" onRequestClose={() => setShowImgEdit(false)}>
@@ -639,158 +650,215 @@ const EditableRecipeView = ({
         </View>
       </Modal>
 
-      {/* Servings + kcal pills */}
-      <View style={styles.metaRow}>
-        <View style={styles.servingsPill}>
-          <Text style={styles.servingsLabel}>{t('recipes.serves')}</Text>
+      <View style={styles.previewCard}>
+        {editing ? (
           <TextInput
-            style={styles.servingsInput}
-            value={recipe.servings}
-            onChangeText={(v) => onChange({ ...recipe, servings: v })}
-            keyboardType="number-pad"
-            placeholder="—"
-            placeholderTextColor={colors.brand}
-            accessibilityLabel={t('recipes.serves')}
+            style={[styles.previewTitle, styles.previewTitleInput]}
+            value={recipe.title}
+            onChangeText={(v) => onChange({ ...recipe, title: v })}
+            multiline
+            placeholder={t('addRecipe.newRecipe')}
+            placeholderTextColor={PlatformColor('placeholderText') as unknown as string}
+            accessibilityLabel="recipe title"
           />
-        </View>
-        <View style={styles.kcalPill}>
-          <TextInput
-            style={styles.kcalInput}
-            value={recipe.kcal}
-            onChangeText={(v) => onChange({ ...recipe, kcal: v })}
-            keyboardType="number-pad"
-            placeholder="—"
-            placeholderTextColor={PlatformColor('systemOrange') as unknown as string}
-            accessibilityLabel={t('recipes.kcalPerServing')}
-          />
-          <Text style={styles.kcalLabel}>{t('recipes.kcalPerServing')}</Text>
-        </View>
-      </View>
+        ) : (
+          <Text style={styles.previewTitle}>{recipe.title || t('addRecipe.newRecipe')}</Text>
+        )}
 
-      {/* Creator / source */}
-      {(recipe.creator_handle || recipe.source_url) && (
-        <View style={styles.sourceRow}>
-          {recipe.creator_handle ? (
-            <Text style={styles.sourcePill}>{t('addRecipe.by', { handle: recipe.creator_handle })}</Text>
-          ) : null}
-          {recipe.source_url ? (
-            <Text style={styles.sourcePill} numberOfLines={1}>{recipe.source_url}</Text>
-          ) : null}
-        </View>
-      )}
-
-      {/* Tags */}
-      <View style={styles.tagsSection}>
-        <View style={styles.tagsRow}>
-          {selectedTags.map((tag) => (
-            <Pressable
-              key={tag.id}
-              style={({ pressed }) => [styles.tagChip, pressed && { opacity: 0.7 }]}
-              onPress={() => onTagRemove(tag.id)}
-              accessibilityLabel={`${tag.name}, tap to remove`}
-            >
-              <Text style={styles.tagChipText}>{tTag(tag.name, t)} ×</Text>
-            </Pressable>
-          ))}
-          <Pressable
-            style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
-            onPress={() => setShowTagPicker(true)}
-            accessibilityLabel={t('tags.addTag')}
-          >
-            <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <TagPickerModal
-        visible={showTagPicker}
-        allTags={allTags}
-        selectedIds={selectedTagIds}
-        onAdd={onTagAdd}
-        onRemove={onTagRemove}
-        onCreate={onTagCreate}
-        onClose={() => setShowTagPicker(false)}
-      />
-      <UnitPickerModal
-        visible={unitPickerTarget != null}
-        selected={currentUnit}
-        onSelect={(unit) => {
-          if (unitPickerTarget == null) return
-          setIngredient(unitPickerTarget.ci, unitPickerTarget.ii, {
-            ...recipe.components[unitPickerTarget.ci].ingredients[unitPickerTarget.ii],
-            unit,
-          })
-        }}
-        onClose={() => setUnitPickerTarget(null)}
-      />
-
-      {/* Recipe components */}
-      {recipe.components.map((comp, ci) => (
-        <View key={ci} style={styles.componentBlock}>
-          {recipe.components.length > 1 && (
-            <Text style={styles.componentTitle}>{comp.name}</Text>
-          )}
-
-          {/* Ingredients */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
-            {comp.ingredients.map((ing, ii) => (
-              <IngredientEditor
-                key={ii}
-                value={ing}
-                flag={comp.ingredient_flags[ii] ?? null}
-                activeAllergens={activeAllergens}
-                onChange={(v) => setIngredient(ci, ii, v)}
-                onUnitPress={() => setUnitPickerTarget({ ci, ii })}
-                onReplace={() => handleReplaceAllergen(ci, ii)}
-                onRestore={() => handleRestoreAllergen(ci, ii)}
-                onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
-              />
-            ))}
-            <Pressable
-              style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
-              onPress={() => addIngredient(ci)}
-              accessibilityLabel={t('addRecipe.addIngredient')}
-            >
-              <Text style={styles.addRowBtnText}>+ {t('addRecipe.addIngredient')}</Text>
-            </Pressable>
+        {(selectedTags.length > 0 || editing) && (
+          <View style={styles.previewTagRow}>
+            {selectedTags.map((tag) =>
+              editing ? (
+                <Pressable
+                  key={tag.id}
+                  style={({ pressed }) => [styles.previewTag, pressed && { opacity: 0.7 }]}
+                  onPress={() => onTagRemove(tag.id)}
+                  accessibilityLabel={`${tag.name}, tap to remove`}
+                >
+                  <Text style={styles.previewTagText}>{tTag(tag.name, t)} ×</Text>
+                </Pressable>
+              ) : (
+                <View key={tag.id} style={styles.previewTag}>
+                  <Text style={styles.previewTagText}>{tTag(tag.name, t)}</Text>
+                </View>
+              ),
+            )}
+            {editing && (
+              <Pressable
+                style={({ pressed }) => [styles.previewAddTagBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => setShowTagPicker(true)}
+                accessibilityLabel={t('tags.addTag')}
+              >
+                <Text style={styles.previewAddTagText}>+ {t('tags.addTag')}</Text>
+              </Pressable>
+            )}
           </View>
+        )}
 
-          {/* Steps */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>{t('recipes.steps')}</Text>
-            {comp.steps.map((step, si) => (
-              <View key={si} style={styles.stepRow}>
-                <Text style={styles.stepNum}>{si + 1}.</Text>
+        <View style={styles.previewMetaRow}>
+          {editing ? (
+            <>
+              <View style={styles.previewMetaEditItem}>
+                <Text style={styles.previewMetaItem}>{t('recipes.serves')}:</Text>
                 <TextInput
-                  style={styles.stepInput}
-                  value={step}
-                  onChangeText={(v) => setStep(ci, si, v)}
-                  multiline
-                  accessibilityLabel={`${t('common.step')} ${si + 1}`}
+                  style={styles.previewMetaInput}
+                  value={recipe.servings}
+                  onChangeText={(v) => onChange({ ...recipe, servings: v })}
+                  keyboardType="number-pad"
+                  placeholder="—"
+                  accessibilityLabel={t('recipes.serves')}
                 />
-                {comp.steps.length > 1 && (
+              </View>
+              <View style={styles.previewMetaEditItem}>
+                <TextInput
+                  style={styles.previewMetaInput}
+                  value={recipe.kcal}
+                  onChangeText={(v) => onChange({ ...recipe, kcal: v })}
+                  keyboardType="number-pad"
+                  placeholder="—"
+                  accessibilityLabel={t('recipes.kcalPerServing')}
+                />
+                <Text style={styles.previewMetaItem}>{t('recipes.kcalPerServing')}</Text>
+              </View>
+            </>
+          ) : (
+            <>
+              {recipe.servings !== '' && (
+                <Text style={styles.previewMetaItem}>
+                  {t('recipes.serves')}: {recipe.servings}
+                </Text>
+              )}
+              {recipe.kcal !== '' && (
+                <Text style={styles.previewMetaItem}>
+                  {recipe.kcal} {t('recipes.kcalPerServing')}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
+
+        {(recipe.creator_handle || recipe.source_url) && (
+          <View style={styles.previewSourceRow}>
+            {recipe.creator_handle ? (
+              <Text style={styles.previewSourceText}>{t('addRecipe.by', { handle: recipe.creator_handle })}</Text>
+            ) : null}
+            {recipe.source_url ? (
+              <Text style={styles.previewSourceText} numberOfLines={1}>
+                {recipe.source_url}
+              </Text>
+            ) : null}
+          </View>
+        )}
+
+        <TagPickerModal
+          visible={showTagPicker}
+          allTags={allTags}
+          selectedIds={selectedTagIds}
+          onAdd={onTagAdd}
+          onRemove={onTagRemove}
+          onCreate={onTagCreate}
+          onClose={() => setShowTagPicker(false)}
+        />
+        <UnitPickerModal
+          visible={unitPickerTarget != null}
+          selected={currentUnit}
+          onSelect={(unit) => {
+            if (unitPickerTarget == null) return
+            setIngredient(unitPickerTarget.ci, unitPickerTarget.ii, {
+              ...recipe.components[unitPickerTarget.ci].ingredients[unitPickerTarget.ii],
+              unit,
+            })
+          }}
+          onClose={() => setUnitPickerTarget(null)}
+        />
+
+        {recipe.components.map((comp, ci) => (
+          <View key={ci} style={styles.previewComponentBlock}>
+            {recipe.components.length > 1 && comp.name ? (
+              <Text style={styles.previewComponentName}>{comp.name}</Text>
+            ) : null}
+
+            {(comp.ingredients.length > 0 || editing) && (
+              <View style={styles.previewSection}>
+                <Text style={styles.previewSectionLabel}>{t('recipes.sectionIngredients')}</Text>
+                {comp.ingredients.map((ing, ii) =>
+                  editing ? (
+                    <IngredientEditor
+                      key={ii}
+                      value={ing}
+                      flag={comp.ingredient_flags[ii] ?? null}
+                      activeAllergens={activeAllergens}
+                      onChange={(v) => setIngredient(ci, ii, v)}
+                      onUnitPress={() => setUnitPickerTarget({ ci, ii })}
+                      onReplace={() => handleReplaceAllergen(ci, ii)}
+                      onRestore={() => handleRestoreAllergen(ci, ii)}
+                      onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
+                    />
+                  ) : (
+                    <View key={ii} style={styles.previewIngredientRow}>
+                      <Text style={styles.previewBullet}>{'•'}</Text>
+                      <Text style={styles.previewIngredientText}>{serializeIngredient(ing)}</Text>
+                    </View>
+                  ),
+                )}
+                {editing && (
                   <Pressable
-                    style={({ pressed }) => [styles.stepRemoveBtn, pressed && { opacity: 0.6 }]}
-                    onPress={() => removeStep(ci, si)}
-                    hitSlop={8}
-                    accessibilityLabel={t('addRecipe.removeStep')}
+                    style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
+                    onPress={() => addIngredient(ci)}
+                    accessibilityLabel={t('addRecipe.addIngredient')}
                   >
-                    <Text style={styles.stepRemoveText}>−</Text>
+                    <Text style={styles.addRowBtnText}>+ {t('addRecipe.addIngredient')}</Text>
                   </Pressable>
                 )}
               </View>
-            ))}
-            <Pressable
-              style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
-              onPress={() => addStep(ci)}
-              accessibilityLabel={t('addRecipe.addStep')}
-            >
-              <Text style={styles.addRowBtnText}>+ {t('addRecipe.addStep')}</Text>
-            </Pressable>
+            )}
+
+            {(comp.steps.length > 0 || editing) && (
+              <View style={styles.previewSection}>
+                <Text style={styles.previewSectionLabel}>{t('recipes.steps')}</Text>
+                {comp.steps.map((step, si) =>
+                  editing ? (
+                    <View key={si} style={styles.previewStepEditRow}>
+                      <Text style={styles.previewStepNum}>{si + 1}.</Text>
+                      <TextInput
+                        style={styles.previewStepInput}
+                        value={step}
+                        onChangeText={(v) => setStep(ci, si, v)}
+                        multiline
+                        accessibilityLabel={`${t('common.step')} ${si + 1}`}
+                      />
+                      {comp.steps.length > 1 && (
+                        <Pressable
+                          style={({ pressed }) => [styles.stepRemoveBtn, pressed && { opacity: 0.6 }]}
+                          onPress={() => removeStep(ci, si)}
+                          hitSlop={8}
+                          accessibilityLabel={t('addRecipe.removeStep')}
+                        >
+                          <Text style={styles.stepRemoveText}>−</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  ) : (
+                    <View key={si} style={styles.previewStepRow}>
+                      <Text style={styles.previewStepNum}>{si + 1}.</Text>
+                      <Text style={styles.previewStepText}>{step}</Text>
+                    </View>
+                  ),
+                )}
+                {editing && (
+                  <Pressable
+                    style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
+                    onPress={() => addStep(ci)}
+                    accessibilityLabel={t('addRecipe.addStep')}
+                  >
+                    <Text style={styles.addRowBtnText}>+ {t('addRecipe.addStep')}</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
           </View>
-        </View>
-      ))}
+        ))}
+      </View>
     </View>
   )
 }
@@ -1068,6 +1136,7 @@ const ImportRecipeScreen = () => {
   const [saving, setSaving] = useState(false)
   const progressAnim = useRef(new Animated.Value(0)).current
   const [editable, setEditable] = useState<EditableRecipe | null>(null)
+  const [previewMode, setPreviewMode] = useState(false)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [error, setError] = useState<string | null>(null)
   const cancelRef = useRef<(() => void) | null>(null)
@@ -1131,7 +1200,14 @@ const ImportRecipeScreen = () => {
     if (editable) {
       navigation.setOptions({
         gestureEnabled: false,
+        headerTransparent: true,
+        headerTitle: '',
+        headerShadowVisible: false,
         headerLeft: renderBackButton(() => {
+          if (!previewMode && mode !== 'scratch') {
+            setPreviewMode(true)
+            return
+          }
           if (isBlankRecipe(editable)) {
             reset()
             setMode(null)
@@ -1142,10 +1218,26 @@ const ImportRecipeScreen = () => {
             { text: t('addRecipe.discard'), style: 'destructive', onPress: () => { reset(); setMode(null) } },
           ])
         }),
+        headerRight: previewMode
+          ? () => (
+              <Pressable
+                onPress={() => setPreviewMode(false)}
+                hitSlop={8}
+                style={({ pressed }) => [styles.headerEditBtn, pressed && { opacity: 0.5 }]}
+                accessibilityLabel={t('common.edit')}
+                accessibilityRole="button"
+              >
+                <Feather name="edit-2" size={22} color={PlatformColor('secondaryLabel') as unknown as string} />
+              </Pressable>
+            )
+          : () => <BugReportButton />,
       })
     } else if (mode) {
       navigation.setOptions({
         gestureEnabled: true,
+        headerTransparent: false,
+        headerTitle: t('addRecipe.addRecipe'),
+        headerShadowVisible: false,
         headerLeft: renderBackButton(() => {
           reset()
           if (loading) {
@@ -1154,14 +1246,19 @@ const ImportRecipeScreen = () => {
             setMode(null)
           }
         }),
+        headerRight: () => <BugReportButton />,
       })
     } else {
       navigation.setOptions({
         gestureEnabled: true,
+        headerTransparent: false,
+        headerTitle: t('addRecipe.addRecipe'),
+        headerShadowVisible: false,
         headerLeft: renderBackButton(() => navigation.goBack()),
+        headerRight: () => <BugReportButton />,
       })
     }
-  }, [navigation, mode, editable, loading, t, renderBackButton])
+  }, [navigation, mode, editable, previewMode, loading, t, renderBackButton])
 
   const handlePasteUrl = async () => {
     const text = await Clipboard.getStringAsync()
@@ -1178,6 +1275,7 @@ const ImportRecipeScreen = () => {
     setLoading(false)
     progressAnim.setValue(0)
     setEditable(null)
+    setPreviewMode(false)
     setSelectedTags([])
     setError(null)
     setUrl('')
@@ -1193,6 +1291,7 @@ const ImportRecipeScreen = () => {
       }
       pendingThumbRef.current = null
       setEditable(editableRecipe)
+      setPreviewMode(true)
       setSelectedTags(
         tags.filter((tag) =>
           editableRecipe.suggestedTagNames.some((name) => name.toLowerCase() === tag.name.toLowerCase()),
@@ -1390,7 +1489,7 @@ const ImportRecipeScreen = () => {
     switch (selectedMode) {
       case 'camera':  handleCamera(); break
       case 'gallery': handleGallery(); break
-      case 'scratch': setEditable(blankRecipe()); break
+      case 'scratch': setEditable(blankRecipe()); setPreviewMode(false); break
     }
   }
 
@@ -1453,7 +1552,7 @@ const ImportRecipeScreen = () => {
       <ScrollView
         style={styles.flex}
         contentContainerStyle={styles.scrollContent}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior={editable ? 'never' : 'automatic'}
         keyboardShouldPersistTaps="handled"
       >
         {/* Picker — shown when no mode selected and no editable */}
@@ -1513,10 +1612,11 @@ const ImportRecipeScreen = () => {
           </View>
         )}
 
-        {/* Editable recipe view */}
+        {/* Imported recipe view — read-only preview or in-place edit form */}
         {editable && (
-          <EditableRecipeView
+          <RecipeFormView
             recipe={editable}
+            editing={!previewMode}
             onChange={setEditable}
             selectedTags={selectedTags}
             selectedTagIds={selectedTagIds}
@@ -1525,7 +1625,6 @@ const ImportRecipeScreen = () => {
             onTagRemove={handleTagRemove}
             onTagCreate={handleTagCreate}
             activeAllergens={activeAllergens}
-            allowEditing={mode === 'scratch'}
           />
         )}
 
@@ -1638,6 +1737,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: PlatformColor('label') as unknown as string,
   },
+  headerEditBtn: { paddingHorizontal: 8, paddingVertical: 4 },
 
   // Quick URL input
   quickUrlSection: { paddingTop: 8, paddingHorizontal: 16, gap: 10 },
@@ -1851,41 +1951,126 @@ const styles = StyleSheet.create({
   primaryBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
   btnDisabled: { opacity: 0.4 },
 
-  // Editable view
-  editView: { padding: 16 },
-
-  // Title row
-  titleRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start', marginBottom: 12 },
-  thumbBtn: {
-    width: 68,
-    height: 68,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-  },
-  thumbImg: { width: 68, height: 68 },
-  thumbPlaceholder: { width: 68, height: 68, alignItems: 'center', justifyContent: 'center' },
-  thumbIcon: { fontSize: 28 },
-  thumbEditBadge: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  thumbEditText: { fontSize: 8, color: '#fff', fontWeight: '700', letterSpacing: 0.5 },
-  titleInput: {
-    flex: 1,
-    fontSize: 20,
+  // Read-only import preview (mirrors saved-recipe detail screen)
+  previewHeroImage: { width: '100%', aspectRatio: 4 / 3 },
+  previewCard: { paddingHorizontal: 16, paddingTop: 20 },
+  previewTitle: {
+    fontSize: 28,
     fontWeight: '700',
     color: PlatformColor('label') as unknown as string,
+    marginBottom: 10,
+    lineHeight: 34,
+  },
+  previewTagRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12, gap: 6 },
+  previewTag: {
+    backgroundColor: colors.brandLight,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  previewTagText: { color: colors.brand, fontSize: 12, fontWeight: '500' },
+  previewMetaRow: { flexDirection: 'row', marginBottom: 10, gap: 16 },
+  previewMetaItem: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
+  previewSourceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  previewSourceText: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
+  previewComponentBlock: { marginTop: 8 },
+  previewComponentName: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: PlatformColor('label') as unknown as string,
+    marginBottom: 12,
+    lineHeight: 25,
+  },
+  previewSection: { marginBottom: 16 },
+  previewSectionLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: PlatformColor('secondaryLabel') as unknown as string,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  previewIngredientRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 6 },
+  previewBullet: { color: PlatformColor('tertiaryLabel') as unknown as string, marginRight: 8, marginTop: 1 },
+  previewIngredientText: {
+    flex: 1,
+    fontSize: 17,
+    color: PlatformColor('label') as unknown as string,
+    lineHeight: 22,
+  },
+  previewStepRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 14 },
+  previewStepNum: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.blue,
+    width: 28,
+    marginTop: 1,
+  },
+  previewStepText: {
+    flex: 1,
+    fontSize: 17,
+    color: PlatformColor('label') as unknown as string,
+    lineHeight: 22,
+  },
+
+  // Edit-mode variants of the preview above (same layout, editable fields)
+  previewHeroPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+  },
+  previewHeroPlaceholderText: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
+  previewHeroEditBtn: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  previewHeroEditText: { fontSize: 12, color: '#ffffff', fontWeight: '600' },
+  previewTitleInput: {
     borderBottomWidth: 1,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
     paddingBottom: 4,
-    lineHeight: 26,
   },
+  previewAddTagBtn: {
+    borderWidth: 1,
+    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  previewAddTagText: { fontSize: 12, color: PlatformColor('secondaryLabel') as unknown as string },
+  previewMetaEditItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  previewMetaInput: {
+    fontSize: 13,
+    color: PlatformColor('label') as unknown as string,
+    borderBottomWidth: 1,
+    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
+    minWidth: 28,
+    padding: 0,
+    textAlign: 'center',
+  },
+  previewStepEditRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
+  previewStepInput: {
+    flex: 1,
+    fontSize: 17,
+    color: PlatformColor('label') as unknown as string,
+    lineHeight: 22,
+    borderBottomWidth: 1,
+    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+
+  thumbIcon: { fontSize: 28 },
 
   // Image edit modal
   imgEditOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 },
@@ -1921,72 +2106,6 @@ const styles = StyleSheet.create({
   imgCancelText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
   imgSaveBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: colors.brand },
   imgSaveText: { fontSize: 16, color: '#fff', fontWeight: '600' },
-
-  // Meta pills
-  metaRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  servingsPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.brandLight,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  servingsLabel: { fontSize: 12, color: colors.brand, fontWeight: '500' },
-  servingsInput: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.brand,
-    minWidth: 24,
-    textAlign: 'center',
-    padding: 0,
-  },
-  kcalPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: PlatformColor('systemFill') as unknown as string,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  kcalInput: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: PlatformColor('systemOrange') as unknown as string,
-    minWidth: 32,
-    textAlign: 'center',
-    padding: 0,
-  },
-  kcalLabel: { fontSize: 12, color: PlatformColor('systemOrange') as unknown as string, fontWeight: '500' },
-
-  // Source badges
-  sourceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
-  sourcePill: {
-    fontSize: 11,
-    color: PlatformColor('secondaryLabel') as unknown as string,
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    maxWidth: 220,
-  },
-
-  // Tags section
-  tagsSection: { marginBottom: 16 },
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  tagChip: { backgroundColor: colors.brandLight, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
-  tagChipText: { fontSize: 12, color: colors.brand, fontWeight: '500' },
-  addTagBtn: {
-    borderWidth: 1,
-    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderStyle: 'dashed',
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  addTagBtnText: { fontSize: 12, color: PlatformColor('secondaryLabel') as unknown as string },
 
   // Tag picker modal
   tagModalWrap: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
@@ -2139,41 +2258,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Component sections
-  componentBlock: { marginTop: 16 },
-  componentTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: PlatformColor('secondaryLabel') as unknown as string,
-    marginBottom: 10,
-  },
-  section: { marginBottom: 14 },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: PlatformColor('tertiaryLabel') as unknown as string,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 6,
-  },
-  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
-  stepNum: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: PlatformColor('systemBlue') as unknown as string,
-    width: 24,
-    marginTop: 3,
-  },
-  stepInput: {
-    flex: 1,
-    fontSize: 16,
-    color: PlatformColor('label') as unknown as string,
-    lineHeight: 20,
-    borderBottomWidth: 1,
-    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-  },
   stepRemoveBtn: {
     width: 22,
     height: 22,
