@@ -180,7 +180,7 @@
     "title": "Problem melden",
     "descriptionLabel": "Was ist schiefgelaufen?",
     "descriptionPlaceholder": "Beschreibe das Problem…",
-    "screenshot": "Screenshot",
+    "screenshotNote": "Ein Screenshot wird automatisch angehängt.",
     "submit": "Bericht senden",
     "submitting": "Wird gesendet…",
     "success": "Danke! Dein Bericht wurde gesendet.",

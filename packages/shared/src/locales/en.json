@@ -180,7 +180,7 @@
     "title": "Report a problem",
     "descriptionLabel": "What went wrong?",
     "descriptionPlaceholder": "Describe the issue…",
-    "screenshot": "Screenshot",
+    "screenshotNote": "A screenshot of the current screen will be attached automatically.",
     "submit": "Send report",
     "submitting": "Sending…",
     "success": "Thanks! Your report was sent.",

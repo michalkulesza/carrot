@@ -180,7 +180,7 @@
     "title": "Reportar un problema",
     "descriptionLabel": "¿Qué salió mal?",
     "descriptionPlaceholder": "Describe el problema…",
-    "screenshot": "Captura de pantalla",
+    "screenshotNote": "Se adjuntará una captura de pantalla automáticamente.",
     "submit": "Enviar reporte",
     "submitting": "Enviando…",
     "success": "¡Gracias! Tu reporte fue enviado.",

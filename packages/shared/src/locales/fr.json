@@ -180,7 +180,7 @@
     "title": "Signaler un problème",
     "descriptionLabel": "Qu'est-ce qui n'a pas fonctionné ?",
     "descriptionPlaceholder": "Décrivez le problème…",
-    "screenshot": "Capture d'écran",
+    "screenshotNote": "Une capture d'écran sera jointe automatiquement.",
     "submit": "Envoyer le rapport",
     "submitting": "Envoi en cours…",
     "success": "Merci ! Votre rapport a été envoyé.",

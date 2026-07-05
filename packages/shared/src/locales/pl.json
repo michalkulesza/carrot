@@ -184,7 +184,7 @@
     "title": "Zgłoś problem",
     "descriptionLabel": "Co poszło nie tak?",
     "descriptionPlaceholder": "Opisz problem…",
-    "screenshot": "Zrzut ekranu",
+    "screenshotNote": "Zrzut ekranu zostanie dołączony automatycznie.",
     "submit": "Wyślij zgłoszenie",
     "submitting": "Wysyłanie…",
     "success": "Dziękujemy! Zgłoszenie zostało wysłane.",

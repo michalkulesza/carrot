@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -142,20 +141,8 @@ const BugReportScreen = () => {
             accessibilityLabel={t('bugReport.descriptionLabel')}
           />
 
-          {capturingShot && (
-            <View style={styles.screenshotWrap}>
-              <Text style={styles.label}>{t('bugReport.screenshot')}</Text>
-              <View style={[styles.thumb, styles.thumbLoading]}>
-                <ActivityIndicator color={colors.secondaryLabel} />
-              </View>
-            </View>
-          )}
-
-          {!capturingShot && shot && (
-            <View style={styles.screenshotWrap}>
-              <Text style={styles.label}>{t('bugReport.screenshot')}</Text>
-              <Image source={{ uri: `data:image/jpeg;base64,${shot}` }} style={styles.thumb} />
-            </View>
+          {(capturingShot || shot) && (
+            <Text style={styles.screenshotNote}>{t('bugReport.screenshotNote')}</Text>
           )}
 
           <Pressable
@@ -207,9 +194,11 @@ const styles = StyleSheet.create({
     color: colors.label,
     backgroundColor: colors.background,
   },
-  screenshotWrap: { marginBottom: 20 },
-  thumb: { width: 80, height: 140, borderRadius: 8, backgroundColor: colors.secondaryBackground },
-  thumbLoading: { alignItems: 'center', justifyContent: 'center' },
+  screenshotNote: {
+    fontSize: 13,
+    color: colors.secondaryLabel,
+    marginBottom: 20,
+  },
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', backgroundColor: colors.blue },
   buttonDisabled: { backgroundColor: colors.gray4 },
   buttonText: { color: colors.background, fontSize: 16, fontWeight: '600' },
