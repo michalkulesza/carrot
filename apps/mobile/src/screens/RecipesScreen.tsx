@@ -32,6 +32,9 @@ import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
 import { useScreenLoading } from '../hooks/useScreenLoading'
+import { useHousehold } from '../context/HouseholdContext'
+
+const PERSONAL_MENU_ID = '__personal__'
 
 const ThumbnailImage = ({ url, style }: { url: string; style: object }) => {
   const [errored, setErrored] = useState(false)
@@ -90,6 +93,7 @@ const RecipesScreen = () => {
   const { recipes, isLoading, error } = useRecipes()
   const { busy, showSpinner } = useScreenLoading(isLoading)
   const { tags } = useTags()
+  const { households, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
   const api = useApiClient()
   const qc = useQueryClient()
   const { items: notifItems } = useNotificationHistory()
@@ -185,6 +189,30 @@ const RecipesScreen = () => {
     [],
   )
 
+  const householdMenuActions = useMemo(
+    () => [
+      {
+        id: PERSONAL_MENU_ID,
+        title: t('households.personal'),
+        state: (activeHouseholdId === null ? 'on' : 'off') as 'on' | 'off',
+      },
+      ...households.map((h) => ({
+        id: h.id,
+        title: h.name,
+        state: (h.id === activeHouseholdId ? 'on' : 'off') as 'on' | 'off',
+      })),
+    ],
+    [households, activeHouseholdId, t],
+  )
+
+  const handleHouseholdAction = useCallback(
+    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
+      const id = nativeEvent.event === PERSONAL_MENU_ID ? null : nativeEvent.event
+      if (id !== activeHouseholdId) void switchHousehold(id)
+    },
+    [activeHouseholdId, switchHousehold],
+  )
+
   const handleSearchChangeText = useCallback(
     (e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text),
     [],
@@ -194,6 +222,25 @@ const RecipesScreen = () => {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: t('nav.recipes'),
+      headerTitle: () => (
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerTitleText} numberOfLines={1}>
+            {t('nav.recipes')}
+          </Text>
+          <MenuView
+            title={t('households.switchContext')}
+            actions={householdMenuActions}
+            onPressAction={handleHouseholdAction}
+          >
+            <View style={styles.householdSwitcher}>
+              <Text style={styles.householdSwitcherText} numberOfLines={1}>
+                {activeHousehold ? activeHousehold.name : t('households.personal')}
+              </Text>
+              <Feather name="chevron-down" size={13} color={colors.secondaryLabel} />
+            </View>
+          </MenuView>
+        </View>
+      ),
       headerSearchBarOptions: {
         placeholder: t('recipes.searchPlaceholder'),
         onChangeText: handleSearchChangeText,
@@ -224,7 +271,18 @@ const RecipesScreen = () => {
         </View>
       ),
     })
-  }, [navigation, filterMenuActions, handleFilterAction, handleSearchChangeText, handleSearchCancel, t, router])
+  }, [
+    navigation,
+    filterMenuActions,
+    handleFilterAction,
+    householdMenuActions,
+    handleHouseholdAction,
+    activeHousehold,
+    handleSearchChangeText,
+    handleSearchCancel,
+    t,
+    router,
+  ])
 
   const recipesWithOverrides = useMemo(
     () =>
@@ -503,6 +561,20 @@ const RecipesScreen = () => {
 }
 
 const styles = StyleSheet.create({
+  headerTitleWrap: { flexDirection: 'column', alignItems: 'flex-start' },
+  headerTitleText: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: colors.label,
+  },
+  householdSwitcher: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 1 },
+  householdSwitcherText: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '400',
+    color: colors.secondaryLabel,
+  },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4 },
   headerAddText: {

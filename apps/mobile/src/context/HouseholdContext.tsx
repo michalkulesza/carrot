@@ -9,12 +9,14 @@ import type { HouseholdOut, InvitationOut } from '@platekeeper/shared/types'
 import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
 import { useInvitations } from '@platekeeper/shared/hooks/useInvitations'
 import { useAuth } from './AuthContext'
+import { mobileClient } from '../api/client'
 
 interface HouseholdContextValue {
   households: HouseholdOut[]
   activeHouseholdId: string | null
   activeHousehold: HouseholdOut | null
   invitations: InvitationOut[]
+  switchHousehold: (id: string | null) => Promise<void>
   refetchHouseholds: () => void
   refetchInvitations: () => void
 }
@@ -22,7 +24,7 @@ interface HouseholdContextValue {
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
 export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const qc = useQC()
 
   const { households } = useHouseholds()
@@ -40,6 +42,11 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     void qc.invalidateQueries({ queryKey: ['invitations'] })
   }, [qc])
 
+  const switchHousehold = useCallback(async (id: string | null) => {
+    await mobileClient.switchHousehold(id)
+    await refreshUser()
+  }, [refreshUser])
+
   return (
     <HouseholdContext.Provider
       value={{
@@ -47,6 +54,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
         activeHouseholdId,
         activeHousehold,
         invitations,
+        switchHousehold,
         refetchHouseholds,
         refetchInvitations,
       }}
