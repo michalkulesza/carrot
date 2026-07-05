@@ -1,26 +1,35 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   Image,
+  KeyboardAvoidingView,
   Linking,
+  Platform,
+  PlatformColor,
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from 'react-native'
 
 import { useTranslation } from 'react-i18next'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as ImagePicker from 'expo-image-picker'
 import * as KeepAwake from 'expo-keep-awake'
 import * as Haptics from 'expo-haptics'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
+import { useNavigation, useLocalSearchParams } from 'expo-router'
+import { useApiClient } from '@platekeeper/shared/api/context'
 import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
 import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
+import { useTags } from '@platekeeper/shared/hooks/useTags'
 import {
   parseDurationMatch,
   formatDurationLabel,
@@ -35,12 +44,20 @@ import AddToMealPlanSheet, { type AddToMealPlanSheetHandle } from '../components
 import AddIngredientToShoppingListSheet, {
   type AddIngredientToShoppingListSheetHandle,
 } from '../components/AddIngredientToShoppingListSheet'
-import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@platekeeper/shared/types'
+import { UnitPickerModal, TagPickerModal, IngredientEditor } from '../components/RecipeFieldEditors'
+import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef, Tag } from '@platekeeper/shared/types'
 import { useDebugMode } from '../context/DebugModeContext'
-import { displayIngredient, buildClientStepRefs, serializeIngredient } from '@platekeeper/shared/utils/ingredientUtils'
+import {
+  displayIngredient,
+  buildClientStepRefs,
+  serializeIngredient,
+  parseIngredient,
+} from '@platekeeper/shared/utils/ingredientUtils'
+import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
 import { tTag } from '@platekeeper/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
+import { uploadThumbnailImage } from '../api/uploadThumbnail'
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window')
 
@@ -55,6 +72,40 @@ const extractDisplayUrl = (url: string) => {
 }
 
 const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
+
+// ── Edit draft ──────────────────────────────────────────────────────────────────
+
+interface EditComponent {
+  name: string
+  yield_note: string
+  ingredients: StructuredIngredient[]
+  steps: string[]
+}
+
+interface EditDraft {
+  title: string
+  servings: string
+  kcal: string
+  notes: string
+  thumbnail_url: string | null
+  components: EditComponent[]
+}
+
+const buildDraft = (recipe: RecipeOut): EditDraft => ({
+  title: recipe.title,
+  servings: recipe.servings?.toString() ?? '',
+  kcal: recipe.kcal_per_serving?.toString() ?? '',
+  notes: recipe.notes ?? '',
+  thumbnail_url: recipe.thumbnail_url,
+  components: recipe.components.map((c) => ({
+    name: c.name ?? '',
+    yield_note: c.yield_note ?? '',
+    ingredients: (c.ingredients as Array<string | StructuredIngredient>).map((raw) =>
+      typeof raw === 'string' ? parseIngredient(raw) : raw,
+    ),
+    steps: c.steps,
+  })),
+})
 
 // ── Timer button for a step ────────────────────────────────────────────────────
 
@@ -462,12 +513,14 @@ const FONT_SIZES = [13, 16, 17, 20, 22] as const
 const LINE_HEIGHTS = [18, 21, 22, 25, 28] as const
 
 const RecipeDetailScreen = () => {
-  const { id: recipeId } = useLocalSearchParams<{ id: string }>()
+  const { id: recipeId, edit: autoEditParam } = useLocalSearchParams<{ id: string; edit?: string }>()
   const navigation = useNavigation()
-  const router = useRouter()
   const { t } = useTranslation()
+  const api = useApiClient()
+  const qc = useQueryClient()
   const { recipes, isLoading, error } = useRecipes()
   const { addItems } = useShoppingList()
+  const { tags: allTags, create: createTagMutation } = useTags()
   const [keepScreenOn, setKeepScreenOn] = useState(false)
   const [showStepQty, setShowStepQty] = useState(true)
   const [fontSizeIndex, setFontSizeIndex] = useState(2)
@@ -479,6 +532,19 @@ const RecipeDetailScreen = () => {
   const mealPlanSheetRef = useRef<AddToMealPlanSheetHandle>(null)
   const addIngredientSheetRef = useRef<AddIngredientToShoppingListSheetHandle>(null)
   const pendingIngredientKeyRef = useRef<string | null>(null)
+
+  // Edit mode — same layout as the read view, with editable fields in place
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState<EditDraft | null>(null)
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [saving, setSaving] = useState(false)
+  const [unitPickerTarget, setUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
+  const [showTagPicker, setShowTagPicker] = useState(false)
+  const [uploadingThumb, setUploadingThumb] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [thumbErrored, setThumbErrored] = useState(false)
+  const savedDraftRef = useRef<EditDraft | null>(null)
+  const savedTagsRef = useRef<Tag[]>([])
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_STORAGE_KEY).then((val) => {
@@ -514,8 +580,178 @@ const RecipeDetailScreen = () => {
   )
 
   const handleEdit = useCallback(() => {
-    router.push({ pathname: '/recipe/[id]/edit', params: { id: recipeId } })
-  }, [router, recipeId])
+    if (!recipe) return
+    const initial = buildDraft(recipe)
+    setDraft(initial)
+    savedDraftRef.current = initial
+    setSelectedTags(recipe.tags)
+    savedTagsRef.current = recipe.tags
+    setThumbErrored(false)
+    setEditing(true)
+  }, [recipe])
+
+  const autoEditAppliedRef = useRef(false)
+  useEffect(() => {
+    if (autoEditParam === '1' && recipe && !autoEditAppliedRef.current) {
+      autoEditAppliedRef.current = true
+      handleEdit()
+    }
+  }, [autoEditParam, recipe, handleEdit])
+
+  const isEditDirty = useCallback(() => {
+    const isStateDirty = JSON.stringify(draft) !== JSON.stringify(savedDraftRef.current)
+    const isTagsDirty =
+      selectedTags.map((tag) => tag.id).sort().join(',') !==
+      savedTagsRef.current.map((tag) => tag.id).sort().join(',')
+    return isStateDirty || isTagsDirty
+  }, [draft, selectedTags])
+
+  const handleCancelEdit = useCallback(() => {
+    if (!isEditDirty()) {
+      setEditing(false)
+      return
+    }
+    Alert.alert(t('addRecipe.discardChangesTitle'), t('addRecipe.discardChangesMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('addRecipe.discard'), style: 'destructive', onPress: () => setEditing(false) },
+    ])
+  }, [isEditDirty, t])
+
+  const updateComp = useCallback((ci: number, patch: Partial<EditComponent>) => {
+    setDraft((prev) => prev && { ...prev, components: prev.components.map((c, i) => (i === ci ? { ...c, ...patch } : c)) })
+  }, [])
+
+  const setIngredient = useCallback((ci: number, ii: number, val: StructuredIngredient) => {
+    setDraft((prev) => prev && {
+      ...prev,
+      components: prev.components.map((c, i) =>
+        i === ci ? { ...c, ingredients: c.ingredients.map((ing, j) => (j === ii ? val : ing)) } : c,
+      ),
+    })
+  }, [])
+
+  const addIngredient = useCallback((ci: number) => {
+    setDraft((prev) => prev && {
+      ...prev,
+      components: prev.components.map((c, i) =>
+        i === ci ? { ...c, ingredients: [...c.ingredients, { qty: '', unit: '', name: '', note: '' }] } : c,
+      ),
+    })
+  }, [])
+
+  const removeIngredient = useCallback((ci: number, ii: number) => {
+    setDraft((prev) => {
+      if (!prev) return prev
+      if (prev.components[ci].ingredients.length <= 1) return prev
+      return {
+        ...prev,
+        components: prev.components.map((c, i) =>
+          i === ci ? { ...c, ingredients: c.ingredients.filter((_, j) => j !== ii) } : c,
+        ),
+      }
+    })
+  }, [])
+
+  const setStep = useCallback((ci: number, si: number, val: string) => {
+    setDraft((prev) => prev && {
+      ...prev,
+      components: prev.components.map((c, i) =>
+        i === ci ? { ...c, steps: c.steps.map((s, j) => (j === si ? val : s)) } : c,
+      ),
+    })
+  }, [])
+
+  const addStep = useCallback((ci: number) => {
+    setDraft((prev) => prev && {
+      ...prev,
+      components: prev.components.map((c, i) => (i === ci ? { ...c, steps: [...c.steps, ''] } : c)),
+    })
+  }, [])
+
+  const removeStep = useCallback((ci: number, si: number) => {
+    setDraft((prev) => {
+      if (!prev) return prev
+      if (prev.components[ci].steps.length <= 1) return prev
+      return {
+        ...prev,
+        components: prev.components.map((c, i) => (i === ci ? { ...c, steps: c.steps.filter((_, j) => j !== si) } : c)),
+      }
+    })
+  }, [])
+
+  const currentUnit = unitPickerTarget != null
+    ? (draft?.components[unitPickerTarget.ci]?.ingredients[unitPickerTarget.ii]?.unit ?? '')
+    : ''
+
+  const handleTagAdd = useCallback((tag: Tag) => setSelectedTags((prev) => [...prev, tag]), [])
+  const handleTagRemove = useCallback((id: string) => setSelectedTags((prev) => prev.filter((tag) => tag.id !== id)), [])
+  const selectedTagIds = useMemo(() => new Set(selectedTags.map((tag) => tag.id)), [selectedTags])
+  const handleTagCreate = useCallback(
+    async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name),
+    [createTagMutation],
+  )
+
+  const handlePickThumbnail = useCallback(async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert(t('recipes.galleryPermissionDenied'), t('recipes.galleryPermissionDeniedMsg'))
+      return
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.9,
+      allowsEditing: false,
+    })
+    if (result.canceled || !result.assets[0]) return
+
+    const asset = result.assets[0]
+    setUploadingThumb(true)
+    setUploadProgress(0)
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    try {
+      const data = await uploadThumbnailImage(recipeId, asset, setUploadProgress)
+      setDraft((prev) => prev && { ...prev, thumbnail_url: data.url })
+      setThumbErrored(false)
+    } catch {
+      Alert.alert(t('common.ok'), t('common.uploadFailed'))
+    } finally {
+      setUploadingThumb(false)
+      setUploadProgress(0)
+    }
+  }, [recipeId, t])
+
+  const handleSaveEdit = useCallback(async () => {
+    if (!draft || !recipe) return
+    setSaving(true)
+    try {
+      const updated = await api.updateRecipe(recipeId, {
+        title: draft.title,
+        servings: draft.servings !== '' ? Number(draft.servings) : null,
+        kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
+        thumbnail_url: draft.thumbnail_url || null,
+        source_url: recipe.source_url ?? null,
+        notes: draft.notes || null,
+        creator_handle: recipe.creator_handle ?? null,
+        components: draft.components.map((c) => ({
+          name: c.name ?? '',
+          yield_note: c.yield_note ?? '',
+          ingredients: c.ingredients.filter((ing) => ing.name).map(serializeIngredient),
+          steps: c.steps.filter(Boolean),
+          ingredient_flags: [],
+          step_ingredient_refs: null,
+        })),
+        tag_ids: selectedTags.map((tag) => tag.id),
+      })
+      qc.setQueryData<RecipeOut[]>(['recipes'], (prev) =>
+        prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
+      )
+      setEditing(false)
+    } catch {
+      Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+    } finally {
+      setSaving(false)
+    }
+  }, [draft, recipe, api, recipeId, selectedTags, qc, t])
 
   const handleOpenMealPlanSheet = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -548,43 +784,71 @@ const RecipeDetailScreen = () => {
   )
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTransparent: true,
-      headerTitle: '',
-      headerShadowVisible: false,
-      headerRight: () => (
-        <View style={styles.headerBtns}>
+    if (editing) {
+      navigation.setOptions({
+        gestureEnabled: false,
+        headerTransparent: true,
+        headerTitle: '',
+        headerShadowVisible: false,
+        headerLeft: () => (
           <Pressable
-            onPress={() => setAddMode((prev) => !prev)}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('shoppingList.addToList')}
-            accessibilityRole="button"
-          >
-            <Feather name="shopping-cart" size={20} color={addMode ? colors.blue : colors.secondaryLabel} />
-          </Pressable>
-          <Pressable
-            onPress={handleOpenMealPlanSheet}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('mealPlan.addToMealPlan')}
-            accessibilityRole="button"
+            onPress={handleCancelEdit}
             hitSlop={8}
+            style={({ pressed }) => [styles.headerBackBtn, pressed && { opacity: 0.5 }]}
+            accessibilityLabel={t('common.back')}
           >
-            <Feather name="calendar" size={20} color={colors.secondaryLabel} />
+            <Ionicons name="chevron-back" size={28} color={PlatformColor('label') as unknown as string} />
+            <Text style={styles.headerBackText}>{t('common.back')}</Text>
           </Pressable>
-          <Pressable
-            onPress={handleEdit}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('common.edit')}
-            accessibilityRole="button"
-          >
-            <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
-          </Pressable>
-          <BugReportButton />
-          <BellMenu />
-        </View>
-      ),
-    })
-  }, [navigation, handleEdit, handleOpenMealPlanSheet, addMode, recipe, t])
+        ),
+        headerRight: () => (
+          <View style={styles.headerBtns}>
+            <BugReportButton />
+            <BellMenu />
+          </View>
+        ),
+      })
+    } else {
+      navigation.setOptions({
+        gestureEnabled: true,
+        headerTransparent: true,
+        headerTitle: '',
+        headerShadowVisible: false,
+        headerLeft: undefined,
+        headerRight: () => (
+          <View style={styles.headerBtns}>
+            <Pressable
+              onPress={() => setAddMode((prev) => !prev)}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={t('shoppingList.addToList')}
+              accessibilityRole="button"
+            >
+              <Feather name="shopping-cart" size={20} color={addMode ? colors.blue : colors.secondaryLabel} />
+            </Pressable>
+            <Pressable
+              onPress={handleOpenMealPlanSheet}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={t('mealPlan.addToMealPlan')}
+              accessibilityRole="button"
+              hitSlop={8}
+            >
+              <Feather name="calendar" size={20} color={colors.secondaryLabel} />
+            </Pressable>
+            <Pressable
+              onPress={handleEdit}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={t('common.edit')}
+              accessibilityRole="button"
+            >
+              <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
+            </Pressable>
+            <BugReportButton />
+            <BellMenu />
+          </View>
+        ),
+      })
+    }
+  }, [navigation, editing, handleEdit, handleCancelEdit, handleOpenMealPlanSheet, addMode, recipe, t])
 
   if (isLoading) {
     return (
@@ -611,6 +875,248 @@ const RecipeDetailScreen = () => {
   }
 
   const hasImage = !!recipe.thumbnail_url
+
+  if (editing && draft) {
+    return (
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={insets.top + 56}
+      >
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
+          contentInsetAdjustmentBehavior="never"
+          keyboardShouldPersistTaps="handled"
+        >
+          {draft.thumbnail_url && !thumbErrored ? (
+            <View>
+              <Image
+                source={{ uri: proxyThumbnailUrl(draft.thumbnail_url)! }}
+                style={styles.heroImage}
+                accessibilityLabel={draft.title}
+                resizeMode="cover"
+                onError={() => setThumbErrored(true)}
+              />
+              <Pressable
+                style={({ pressed }) => [styles.heroEditBtn, pressed && { opacity: 0.7 }]}
+                onPress={handlePickThumbnail}
+                disabled={uploadingThumb}
+                accessibilityLabel={t('common.changePhoto')}
+              >
+                {uploadingThumb ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Feather name="camera" size={14} color="#ffffff" />
+                )}
+                <Text style={styles.heroEditText}>
+                  {uploadingThumb ? t('common.uploading') : t('common.changePhoto')}
+                </Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.heroImage, styles.heroPlaceholder, pressed && { opacity: 0.7 }]}
+              onPress={handlePickThumbnail}
+              disabled={uploadingThumb}
+              accessibilityLabel={t('common.addPhoto')}
+            >
+              {uploadingThumb ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <>
+                  <Feather name="camera" size={28} color={colors.secondaryLabel} />
+                  <Text style={styles.heroPlaceholderText}>{t('common.addPhoto')}</Text>
+                </>
+              )}
+            </Pressable>
+          )}
+
+          <View style={styles.card}>
+            <TextInput
+              style={[styles.title, styles.titleInput]}
+              value={draft.title}
+              onChangeText={(v) => setDraft((prev) => prev && { ...prev, title: v })}
+              multiline
+              accessibilityLabel={t('recipes.colTitle')}
+            />
+
+            <View style={styles.tagRow}>
+              {selectedTags.map((tag) => (
+                <Pressable
+                  key={tag.id}
+                  style={({ pressed }) => [styles.tag, pressed && { opacity: 0.7 }]}
+                  onPress={() => handleTagRemove(tag.id)}
+                  accessibilityLabel={`${tag.name}, tap to remove`}
+                >
+                  <Text style={styles.tagText}>{tTag(tag.name, t)} ×</Text>
+                </Pressable>
+              ))}
+              <Pressable
+                style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
+                onPress={() => setShowTagPicker(true)}
+                accessibilityLabel={t('tags.addTag')}
+              >
+                <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.metaRow}>
+              <View style={styles.metaEditItem}>
+                <Text style={styles.metaItem}>{t('recipes.serves')}:</Text>
+                <TextInput
+                  style={styles.metaInput}
+                  value={draft.servings}
+                  onChangeText={(v) => setDraft((prev) => prev && { ...prev, servings: v })}
+                  keyboardType="number-pad"
+                  placeholder="—"
+                  accessibilityLabel={t('recipes.serves')}
+                />
+              </View>
+              <View style={styles.metaEditItem}>
+                <TextInput
+                  style={styles.metaInput}
+                  value={draft.kcal}
+                  onChangeText={(v) => setDraft((prev) => prev && { ...prev, kcal: v })}
+                  keyboardType="number-pad"
+                  placeholder="—"
+                  accessibilityLabel={t('recipes.kcalPerServing')}
+                />
+                <Text style={styles.metaItem}>{t('recipes.kcalPerServing')}</Text>
+              </View>
+            </View>
+
+            <TagPickerModal
+              visible={showTagPicker}
+              allTags={allTags}
+              selectedIds={selectedTagIds}
+              onAdd={handleTagAdd}
+              onRemove={handleTagRemove}
+              onCreate={handleTagCreate}
+              onClose={() => setShowTagPicker(false)}
+            />
+            <UnitPickerModal
+              visible={unitPickerTarget != null}
+              selected={currentUnit}
+              onSelect={(unit) => {
+                if (unitPickerTarget == null) return
+                setIngredient(unitPickerTarget.ci, unitPickerTarget.ii, {
+                  ...draft.components[unitPickerTarget.ci].ingredients[unitPickerTarget.ii],
+                  unit,
+                })
+              }}
+              onClose={() => setUnitPickerTarget(null)}
+            />
+
+            <View style={styles.notesBlock}>
+              <Text style={styles.sectionLabel}>{t('recipes.notes')}</Text>
+              <TextInput
+                style={[styles.notesText, styles.notesInput]}
+                value={draft.notes}
+                onChangeText={(v) => setDraft((prev) => prev && { ...prev, notes: v })}
+                multiline
+                placeholder={t('common.addPrivateNotes')}
+                accessibilityLabel={t('recipes.notes')}
+              />
+            </View>
+
+            {draft.components.map((comp, ci) => (
+              <View key={ci} style={styles.componentBlock}>
+                {draft.components.length > 1 && (
+                  <TextInput
+                    style={[styles.componentName, styles.componentNameInput]}
+                    value={comp.name}
+                    onChangeText={(v) => updateComp(ci, { name: v })}
+                    accessibilityLabel={t('settings.nameLabel')}
+                  />
+                )}
+
+                <View style={styles.section}>
+                  <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
+                  {comp.ingredients.map((ing, ii) => (
+                    <IngredientEditor
+                      key={ii}
+                      value={ing}
+                      flag={null}
+                      activeAllergens={[]}
+                      onChange={(v) => setIngredient(ci, ii, v)}
+                      onUnitPress={() => setUnitPickerTarget({ ci, ii })}
+                      onReplace={() => {}}
+                      onRestore={() => {}}
+                      onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
+                    />
+                  ))}
+                  <Pressable
+                    style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
+                    onPress={() => addIngredient(ci)}
+                    accessibilityLabel={t('addRecipe.addIngredient')}
+                  >
+                    <Text style={styles.addRowBtnText}>+ {t('addRecipe.addIngredient')}</Text>
+                  </Pressable>
+                </View>
+
+                <View style={styles.section}>
+                  <Text style={styles.sectionLabel}>{t('recipes.steps')}</Text>
+                  {comp.steps.map((step, si) => (
+                    <View key={si} style={styles.stepEditRow}>
+                      <Text style={styles.stepNum}>{si + 1}.</Text>
+                      <TextInput
+                        style={styles.stepInput}
+                        value={step}
+                        onChangeText={(v) => setStep(ci, si, v)}
+                        multiline
+                        accessibilityLabel={`${t('common.step')} ${si + 1}`}
+                      />
+                      {comp.steps.length > 1 && (
+                        <Pressable
+                          style={({ pressed }) => [styles.stepRemoveBtn, pressed && { opacity: 0.6 }]}
+                          onPress={() => removeStep(ci, si)}
+                          hitSlop={8}
+                          accessibilityLabel={t('addRecipe.removeStep')}
+                        >
+                          <Text style={styles.stepRemoveText}>−</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  ))}
+                  <Pressable
+                    style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
+                    onPress={() => addStep(ci)}
+                    accessibilityLabel={t('addRecipe.addStep')}
+                  >
+                    <Text style={styles.addRowBtnText}>+ {t('addRecipe.addStep')}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+
+        <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+          <Pressable
+            style={({ pressed }) => [styles.secondaryBtn, styles.flex, pressed && { opacity: 0.7 }]}
+            onPress={handleCancelEdit}
+            disabled={saving}
+            accessibilityLabel={t('common.cancel')}
+          >
+            <Text style={styles.secondaryBtnText}>{t('common.cancel')}</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.primaryBtn, styles.flex, saving && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+            onPress={handleSaveEdit}
+            disabled={saving}
+            accessibilityLabel={t('common.save')}
+          >
+            {saving ? (
+              <ActivityIndicator color="#ffffff" size="small" />
+            ) : (
+              <Text style={styles.primaryBtnText}>{t('common.save')}</Text>
+            )}
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -938,6 +1444,115 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: colors.secondaryLabel,
   },
+
+  // Edit mode
+  flex: { flex: 1 },
+  headerBackBtn: { flexDirection: 'row', alignItems: 'center', marginLeft: -8 },
+  headerBackText: { fontSize: 17, color: colors.label },
+  heroEditBtn: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  heroEditText: { fontSize: 12, color: '#ffffff', fontWeight: '600' },
+  heroPlaceholder: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colors.gray6,
+  },
+  heroPlaceholderText: { fontSize: 13, color: colors.secondaryLabel },
+  titleInput: {
+    borderBottomWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    paddingBottom: 4,
+  },
+  addTagBtn: {
+    borderWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  addTagBtnText: { fontSize: 12, color: colors.secondaryLabel },
+  metaEditItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  metaInput: {
+    fontSize: 13,
+    color: colors.label,
+    borderBottomWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    minWidth: 28,
+    padding: 0,
+    textAlign: 'center',
+  },
+  notesInput: {
+    borderWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    borderRadius: 8,
+    padding: 8,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  componentNameInput: {
+    borderBottomWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    paddingBottom: 4,
+  },
+  addRowBtn: { paddingVertical: 8 },
+  addRowBtnText: { fontSize: 16, color: colors.blue, fontWeight: '500' },
+  stepEditRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
+  stepInput: {
+    flex: 1,
+    fontSize: 17,
+    color: colors.label,
+    lineHeight: 22,
+    borderBottomWidth: 1,
+    borderColor: colors.opaqueSeparator,
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+  },
+  stepRemoveBtn: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: colors.red,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 3,
+  },
+  stepRemoveText: { fontSize: 16, color: '#fff', fontWeight: '600', lineHeight: 20 },
+  actionBar: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+    backgroundColor: colors.background,
+  },
+  secondaryBtn: {
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: colors.gray6,
+  },
+  secondaryBtnText: { fontSize: 16, color: colors.label, fontWeight: '500' },
+  primaryBtn: {
+    borderRadius: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: colors.blue,
+  },
+  primaryBtnText: { fontSize: 16, color: '#ffffff', fontWeight: '600' },
+  btnDisabled: { opacity: 0.5 },
 })
 
 export default RecipeDetailScreen

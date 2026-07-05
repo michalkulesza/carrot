@@ -150,7 +150,7 @@ const RecipesScreen = () => {
           style={({ pressed }) => [styles.swipeEdit, pressed && { opacity: 0.7 }]}
           onPress={() => {
             swipeableRefs.current.get(item.id)?.close()
-            router.push({ pathname: '/recipe/[id]/edit', params: { id: item.id } })
+            router.push({ pathname: '/recipe/[id]', params: { id: item.id, edit: '1' } })
           }}
           accessibilityLabel={t('common.edit')}
           accessibilityRole="button"

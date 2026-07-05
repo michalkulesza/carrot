@@ -247,10 +247,6 @@ function RootLayoutNav() {
         />
         <Stack.Screen name="webview-import" options={{ title: t('addRecipe.webviewTitle') }} />
         <Stack.Screen name="recipe/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
-        <Stack.Screen
-          name="recipe/[id]/edit"
-          options={{ title: t('addRecipe.editRecipe'), headerRight: () => <BugReportButton /> }}
-        />
         <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
         <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
       </Stack>
