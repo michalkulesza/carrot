@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
@@ -31,6 +31,10 @@ import {
 } from '../context/TimerContext'
 import BellMenu from '../components/BellMenu'
 import BugReportButton from '../components/BugReportButton'
+import AddToMealPlanSheet, { type AddToMealPlanSheetHandle } from '../components/AddToMealPlanSheet'
+import AddIngredientToShoppingListSheet, {
+  type AddIngredientToShoppingListSheetHandle,
+} from '../components/AddIngredientToShoppingListSheet'
 import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef } from '@platekeeper/shared/types'
 import { useDebugMode } from '../context/DebugModeContext'
 import { displayIngredient, buildClientStepRefs, serializeIngredient } from '@platekeeper/shared/utils/ingredientUtils'
@@ -472,6 +476,9 @@ const RecipeDetailScreen = () => {
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const insets = useSafeAreaInsets()
   const { enabled: debugMode } = useDebugMode()
+  const mealPlanSheetRef = useRef<AddToMealPlanSheetHandle>(null)
+  const addIngredientSheetRef = useRef<AddIngredientToShoppingListSheetHandle>(null)
+  const pendingIngredientKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_STORAGE_KEY).then((val) => {
@@ -510,11 +517,23 @@ const RecipeDetailScreen = () => {
     router.push({ pathname: '/recipe/[id]/edit', params: { id: recipeId } })
   }, [router, recipeId])
 
-  const handleAddIngredient = useCallback(
-    (key: string, text: string) => {
+  const handleOpenMealPlanSheet = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    mealPlanSheetRef.current?.present()
+  }, [])
+
+  const handleAddIngredient = useCallback((key: string, text: string) => {
+    pendingIngredientKeyRef.current = key
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    addIngredientSheetRef.current?.present(text)
+  }, [])
+
+  const handleConfirmAddIngredient = useCallback(
+    (text: string) => {
       addItems.mutate([text])
-      setSessionAdded((prev) => new Set([...prev, key]))
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      const key = pendingIngredientKeyRef.current
+      if (key) setSessionAdded((prev) => new Set([...prev, key]))
+      pendingIngredientKeyRef.current = null
     },
     [addItems],
   )
@@ -544,6 +563,15 @@ const RecipeDetailScreen = () => {
             <Feather name="shopping-cart" size={20} color={addMode ? colors.blue : colors.secondaryLabel} />
           </Pressable>
           <Pressable
+            onPress={handleOpenMealPlanSheet}
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('mealPlan.addToMealPlan')}
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Feather name="calendar" size={20} color={colors.secondaryLabel} />
+          </Pressable>
+          <Pressable
             onPress={handleEdit}
             style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
             accessibilityLabel={t('common.edit')}
@@ -556,7 +584,7 @@ const RecipeDetailScreen = () => {
         </View>
       ),
     })
-  }, [navigation, handleEdit, addMode, recipe, t])
+  }, [navigation, handleEdit, handleOpenMealPlanSheet, addMode, recipe, t])
 
   if (isLoading) {
     return (
@@ -734,6 +762,8 @@ const RecipeDetailScreen = () => {
           ))}
         </View>
       </ScrollView>
+      <AddToMealPlanSheet ref={mealPlanSheetRef} recipeId={recipe.id} />
+      <AddIngredientToShoppingListSheet ref={addIngredientSheetRef} onConfirm={handleConfirmAddIngredient} />
     </View>
   )
 }
