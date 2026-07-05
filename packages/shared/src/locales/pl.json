@@ -328,6 +328,7 @@
   "mealPlan": {
     "title": "Plan posiłków",
     "addDish": "Dodaj posiłek",
+    "addToMealPlan": "Dodaj do planu posiłków",
     "today": "Dziś",
     "print": "Drukuj",
     "exportXlsx": "Eksportuj jako xlsx",

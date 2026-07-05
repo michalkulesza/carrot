@@ -320,6 +320,7 @@
   "mealPlan": {
     "title": "Meal Plan",
     "addDish": "Add a dish",
+    "addToMealPlan": "Add to meal plan",
     "today": "Today",
     "print": "Print",
     "exportXlsx": "Export as xlsx",
