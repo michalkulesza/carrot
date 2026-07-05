@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
 import { useMealPlan } from '@platekeeper/shared/hooks/useMealPlan'
+import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
 import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@platekeeper/shared/utils/dateUtils'
 import { colors } from '../theme/colors'
 
@@ -21,20 +22,30 @@ const SNAP_POINTS = ['58%']
 
 const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1)
 
-const buildMonthGrid = (monthDate: Date): (Date | null)[] => {
+const buildMonthGrid = (monthDate: Date, weekStart: number): (Date | null)[] => {
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
   const firstWeekday = new Date(year, month, 1).getDay()
+  const startPad = (firstWeekday - weekStart + 7) % 7
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const cells: (Date | null)[] = []
-  for (let i = 0; i < firstWeekday; i++) cells.push(null)
+  for (let i = 0; i < startPad; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d))
+  while (cells.length % 7 !== 0) cells.push(null)
   return cells
+}
+
+const chunk = <T,>(arr: T[], size: number): T[][] => {
+  const rows: T[][] = []
+  for (let i = 0; i < arr.length; i += size) rows.push(arr.slice(i, i + size))
+  return rows
 }
 
 const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanSheetProps>(
   ({ recipeId }, ref) => {
     const { t, i18n } = useTranslation()
+    const { preferences } = usePreferences()
+    const weekStart = preferences?.week_start_day ?? 1
     const sheetRef = useRef<BottomSheetModal>(null)
     const today = useMemo(() => {
       const d = new Date()
@@ -94,10 +105,11 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
       [setEntry, recipeId],
     )
 
-    const cells = useMemo(() => buildMonthGrid(visibleMonth), [visibleMonth])
+    const cells = useMemo(() => buildMonthGrid(visibleMonth, weekStart), [visibleMonth, weekStart])
+    const rows = useMemo(() => chunk(cells, 7), [cells])
     const weekdayLabels = useMemo(
-      () => Array.from({ length: 7 }, (_, i) => weekdayShortByIndex(i, i18n.language)),
-      [i18n.language],
+      () => Array.from({ length: 7 }, (_, i) => weekdayShortByIndex((weekStart + i) % 7, i18n.language)),
+      [weekStart, i18n.language],
     )
     const todayIso = useMemo(() => toISODate(today), [today])
 
@@ -143,41 +155,45 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
           </View>
 
           <View style={styles.grid}>
-            {cells.map((date, i) => {
-              if (!date) return <View key={i} style={styles.dayCell} />
-              const isoDate = toISODate(date)
-              const isToday = isoDate === todayIso
-              const isAssigned = justAssigned === isoDate
-              return (
-                <Pressable
-                  key={i}
-                  onPress={() => handleSelectDate(date)}
-                  disabled={setEntry.isPending}
-                  style={({ pressed }) => [
-                    styles.dayCell,
-                    pressed && { opacity: 0.6 },
-                  ]}
-                  accessibilityLabel={`${date.getDate()} ${formatMonthYear(date, i18n.language)}`}
-                  accessibilityRole="button"
-                >
-                  <View
-                    style={[
-                      styles.dayCircle,
-                      isToday && styles.dayCircleToday,
-                      isAssigned && styles.dayCircleAssigned,
-                    ]}
-                  >
-                    {isAssigned ? (
-                      <Feather name="check" size={16} color="#ffffff" />
-                    ) : (
-                      <Text style={[styles.dayNum, isToday && styles.dayNumToday]}>
-                        {date.getDate()}
-                      </Text>
-                    )}
-                  </View>
-                </Pressable>
-              )
-            })}
+            {rows.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.gridRow}>
+                {row.map((date, i) => {
+                  if (!date) return <View key={i} style={styles.dayCell} />
+                  const isoDate = toISODate(date)
+                  const isToday = isoDate === todayIso
+                  const isAssigned = justAssigned === isoDate
+                  return (
+                    <Pressable
+                      key={i}
+                      onPress={() => handleSelectDate(date)}
+                      disabled={setEntry.isPending}
+                      style={({ pressed }) => [
+                        styles.dayCell,
+                        pressed && { opacity: 0.6 },
+                      ]}
+                      accessibilityLabel={`${date.getDate()} ${formatMonthYear(date, i18n.language)}`}
+                      accessibilityRole="button"
+                    >
+                      <View
+                        style={[
+                          styles.dayCircle,
+                          isToday && styles.dayCircleToday,
+                          isAssigned && styles.dayCircleAssigned,
+                        ]}
+                      >
+                        {isAssigned ? (
+                          <Feather name="check" size={16} color="#ffffff" />
+                        ) : (
+                          <Text style={[styles.dayNum, isToday && styles.dayNumToday]}>
+                            {date.getDate()}
+                          </Text>
+                        )}
+                      </View>
+                    </Pressable>
+                  )
+                })}
+              </View>
+            ))}
           </View>
         </View>
       </BottomSheetModal>
@@ -222,11 +238,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   grid: {
+    flexDirection: 'column',
+  },
+  gridRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   dayCell: {
-    width: `${100 / 7}%`,
+    flex: 1,
     aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
