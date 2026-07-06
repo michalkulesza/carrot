@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import Depends, HTTPException, status
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
+from fastapi_users import BaseUserManager, FastAPIUsers, InvalidPasswordException, UUIDIDMixin
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, CookieTransport, JWTStrategy
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from fastapi_users import schemas
@@ -50,6 +50,10 @@ SHOWCASE_EMAIL = "showcase@demo.com"
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = settings.secret
     verification_token_secret = settings.secret
+
+    async def validate_password(self, password: str, user) -> None:
+        if len(password) < 8:
+            raise InvalidPasswordException(reason="PASSWORD_TOO_SHORT")
 
     async def update(self, user_update, user, safe: bool = False, request=None):
         if user.email == SHOWCASE_EMAIL and (user_update.email or user_update.password):

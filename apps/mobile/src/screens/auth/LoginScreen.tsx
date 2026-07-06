@@ -2,26 +2,37 @@ import { useState } from 'react'
 import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
+import { Controller, useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
 import { colors } from '../../theme/colors'
+import { EMAIL_PATTERN } from '../../utils/validation'
 
 const NOT_VERIFIED = 'LOGIN_USER_NOT_VERIFIED'
+
+interface LoginFormValues {
+  email: string
+  password: string
+}
 
 const LoginScreen = () => {
   const router = useRouter()
   const { t } = useTranslation()
   const { login } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleLogin = async () => {
-    if (!email || !password) return
+  const {
+    control,
+    handleSubmit,
+    clearErrors,
+    formState: { errors },
+  } = useForm<LoginFormValues>({ defaultValues: { email: '', password: '' } })
+
+  const onSubmit = async (values: LoginFormValues) => {
     setError(null)
     setSubmitting(true)
     try {
-      await login(email, password)
+      await login(values.email, values.password)
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
       setError(msg === NOT_VERIFIED ? t('auth.notVerifiedError') : (msg || t('auth.signIn') + ' failed'))
@@ -37,36 +48,67 @@ const LoginScreen = () => {
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.email')}
-          placeholderTextColor={colors.placeholderText}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="email"
-          textContentType="emailAddress"
-          returnKeyType="next"
-          accessibilityLabel={t('auth.email')}
+        <Controller
+          control={control}
+          name="email"
+          rules={{
+            required: t('auth.emailRequired'),
+            pattern: { value: EMAIL_PATTERN, message: t('auth.emailInvalid') },
+          }}
+          render={({ field: { value, onChange } }) => (
+            <View style={styles.field}>
+              <TextInput
+                style={styles.input}
+                placeholder={t('auth.email')}
+                placeholderTextColor={colors.placeholderText}
+                value={value}
+                onChangeText={(v) => {
+                  clearErrors('email')
+                  onChange(v)
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                returnKeyType="next"
+                accessibilityLabel={t('auth.email')}
+              />
+              {errors.email && <Text style={styles.fieldError}>{errors.email.message}</Text>}
+            </View>
+          )}
         />
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.password')}
-          placeholderTextColor={colors.placeholderText}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="current-password"
-          textContentType="password"
-          returnKeyType="done"
-          accessibilityLabel={t('auth.password')}
+
+        <Controller
+          control={control}
+          name="password"
+          rules={{ required: t('auth.passwordRequired') }}
+          render={({ field: { value, onChange } }) => (
+            <View style={styles.field}>
+              <TextInput
+                style={styles.input}
+                placeholder={t('auth.password')}
+                placeholderTextColor={colors.placeholderText}
+                value={value}
+                onChangeText={(v) => {
+                  clearErrors('password')
+                  onChange(v)
+                }}
+                secureTextEntry
+                autoComplete="current-password"
+                textContentType="password"
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit(onSubmit)}
+                accessibilityLabel={t('auth.password')}
+              />
+              {errors.password && <Text style={styles.fieldError}>{errors.password.message}</Text>}
+            </View>
+          )}
         />
 
         <Pressable
           style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
-          onPress={handleLogin}
+          onPress={handleSubmit(onSubmit)}
           disabled={submitting}
           accessibilityLabel={t('auth.signIn')}
           accessibilityRole="button"
@@ -94,6 +136,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
   tagline: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 40, color: colors.label },
   error: { color: colors.red, marginBottom: 12, textAlign: 'center' },
+  field: { marginBottom: 14 },
+  fieldError: { color: colors.red, fontSize: 13, marginTop: 4 },
   input: {
     borderWidth: 1,
     borderColor: colors.opaqueSeparator,
@@ -101,7 +145,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 14,
     backgroundColor: colors.background,
   },
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },

@@ -2,25 +2,36 @@ import { useState } from 'react'
 import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
+import { Controller, useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
 import { colors } from '../../theme/colors'
+import { EMAIL_PATTERN } from '../../utils/validation'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
+
+interface RegisterFormValues {
+  email: string
+}
 
 const RegisterScreen = () => {
   const router = useRouter()
   const { t } = useTranslation()
   const { requestSignupCode } = useAuth()
-  const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const handleContinue = async () => {
-    if (!email) return
+  const {
+    control,
+    handleSubmit,
+    clearErrors,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({ defaultValues: { email: '' } })
+
+  const onSubmit = async (values: RegisterFormValues) => {
     setError(null)
     setSubmitting(true)
     try {
-      await requestSignupCode(email)
+      await requestSignupCode(values.email)
       router.push('/(auth)/verify')
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
@@ -38,26 +49,42 @@ const RegisterScreen = () => {
 
         {error && <Text style={styles.error}>{error}</Text>}
 
-        <TextInput
-          style={styles.input}
-          placeholder={t('auth.email')}
-          placeholderTextColor={colors.placeholderText}
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="email"
-          textContentType="emailAddress"
-          returnKeyType="done"
-          onSubmitEditing={handleContinue}
-          accessibilityLabel={t('auth.email')}
+        <Controller
+          control={control}
+          name="email"
+          rules={{
+            required: t('auth.emailRequired'),
+            pattern: { value: EMAIL_PATTERN, message: t('auth.emailInvalid') },
+          }}
+          render={({ field: { value, onChange } }) => (
+            <View style={styles.field}>
+              <TextInput
+                style={styles.input}
+                placeholder={t('auth.email')}
+                placeholderTextColor={colors.placeholderText}
+                value={value}
+                onChangeText={(v) => {
+                  clearErrors('email')
+                  onChange(v)
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                textContentType="emailAddress"
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit(onSubmit)}
+                accessibilityLabel={t('auth.email')}
+              />
+              {errors.email && <Text style={styles.fieldError}>{errors.email.message}</Text>}
+            </View>
+          )}
         />
 
         <Pressable
           style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
-          onPress={handleContinue}
-          disabled={submitting || !email}
+          onPress={handleSubmit(onSubmit)}
+          disabled={submitting}
           accessibilityLabel={t('auth.continue')}
           accessibilityRole="button"
         >
@@ -85,6 +112,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 8, color: colors.label },
   subtitle: { fontSize: 16, textAlign: 'center', marginBottom: 32, color: colors.secondaryLabel },
   error: { color: colors.red, marginBottom: 12, textAlign: 'center' },
+  field: { marginBottom: 14 },
+  fieldError: { color: colors.red, fontSize: 13, marginTop: 4 },
   input: {
     borderWidth: 1,
     borderColor: colors.opaqueSeparator,
@@ -92,7 +121,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 14,
     backgroundColor: colors.background,
   },
   button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },

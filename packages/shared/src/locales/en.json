@@ -16,6 +16,7 @@
     "accept": "Accept",
     "decline": "Decline",
     "clearAll": "Clear all",
+    "done": "Done",
     "doneCheck": "Done ✓",
     "goToStep": "Go to step ↗",
     "view": "View",
@@ -145,7 +146,13 @@
     "codeInvalid": "Invalid code. Please try again.",
     "codeExpired": "This code has expired. Request a new one.",
     "codeTooManyAttempts": "Too many attempts. Request a new code.",
-    "notVerifiedError": "Please verify your email before signing in."
+    "notVerifiedError": "Please verify your email before signing in.",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Enter a valid email address",
+    "passwordRequired": "Password is required",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "nicknameTooLong": "Nickname must be 50 characters or fewer",
+    "codeRequired": "Enter the 6-digit code"
   },
   "timers": {
     "timerDone_one": "Timer done",

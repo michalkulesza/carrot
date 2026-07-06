@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 import jwt
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi_users.exceptions import InvalidPasswordException
 from pydantic import BaseModel
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -137,9 +138,12 @@ async def complete_signup(
     if existing_user.scalar_one_or_none() is not None:
         raise HTTPException(status_code=400, detail="ACCOUNT_EXISTS")
 
-    user = await user_manager.create(
-        UserCreate(email=email, password=body.password, nickname=body.nickname, is_verified=True)
-    )
+    try:
+        user = await user_manager.create(
+            UserCreate(email=email, password=body.password, nickname=body.nickname, is_verified=True)
+        )
+    except InvalidPasswordException as exc:
+        raise HTTPException(status_code=400, detail=exc.reason)
 
     await session.execute(delete(PendingSignup).where(PendingSignup.email == email))
     await claim_email_invitations(session, user)

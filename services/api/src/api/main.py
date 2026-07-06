@@ -61,8 +61,8 @@ async def _seed_demo_user() -> None:
         user_db = SQLAlchemyUserDatabase(session, User)
         manager = UserManager(user_db)
         for user_data in [
-            UserCreate(email="demo@demo.com", password="demo", nickname="justahacker", is_verified=True),
-            UserCreate(email="alt@demo.com", password="demo", nickname="Demo Alt", is_verified=True),
+            UserCreate(email="demo@demo.com", password="demo1234", nickname="justahacker", is_verified=True),
+            UserCreate(email="alt@demo.com", password="demo1234", nickname="Demo Alt", is_verified=True),
         ]:
             try:
                 await manager.create(user_data)

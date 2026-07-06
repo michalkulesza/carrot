@@ -16,6 +16,7 @@
     "accept": "Accepter",
     "decline": "Refuser",
     "clearAll": "Tout effacer",
+    "done": "Terminé",
     "doneCheck": "Terminé ✓",
     "goToStep": "Aller à l'étape ↗",
     "view": "Voir",
@@ -145,7 +146,13 @@
     "codeInvalid": "Code invalide. Veuillez réessayer.",
     "codeExpired": "Ce code a expiré. Demandez-en un nouveau.",
     "codeTooManyAttempts": "Trop de tentatives. Demandez un nouveau code.",
-    "notVerifiedError": "Veuillez vérifier votre email avant de vous connecter."
+    "notVerifiedError": "Veuillez vérifier votre email avant de vous connecter.",
+    "emailRequired": "L'adresse email est requise",
+    "emailInvalid": "Saisissez une adresse email valide",
+    "passwordRequired": "Le mot de passe est requis",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "nicknameTooLong": "Le pseudo doit contenir 50 caractères maximum",
+    "codeRequired": "Saisissez le code à 6 chiffres"
   },
   "timers": {
     "startTimer": "Démarrer le minuteur",

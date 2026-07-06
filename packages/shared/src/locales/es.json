@@ -16,6 +16,7 @@
     "accept": "Aceptar",
     "decline": "Rechazar",
     "clearAll": "Borrar todo",
+    "done": "Listo",
     "doneCheck": "Listo ✓",
     "goToStep": "Ir al paso ↗",
     "view": "Ver",
@@ -145,7 +146,13 @@
     "codeInvalid": "Código no válido. Inténtalo de nuevo.",
     "codeExpired": "Este código ha caducado. Solicita uno nuevo.",
     "codeTooManyAttempts": "Demasiados intentos. Solicita un nuevo código.",
-    "notVerifiedError": "Por favor verifica tu correo antes de iniciar sesión."
+    "notVerifiedError": "Por favor verifica tu correo antes de iniciar sesión.",
+    "emailRequired": "El correo electrónico es obligatorio",
+    "emailInvalid": "Introduce un correo electrónico válido",
+    "passwordRequired": "La contraseña es obligatoria",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "nicknameTooLong": "El apodo debe tener 50 caracteres como máximo",
+    "codeRequired": "Introduce el código de 6 dígitos"
   },
   "timers": {
     "startTimer": "Iniciar temporizador",

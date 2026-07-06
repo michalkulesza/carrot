@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  InputAccessoryView,
   KeyboardAvoidingView,
+  Platform,
   PlatformColor,
   Pressable,
   StyleSheet,
@@ -12,14 +14,20 @@ import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Controller, useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
 
 const RESEND_COOLDOWN = 60
+const CODE_ACCESSORY_ID = 'verify-code-accessory'
 
 const ERROR_KEYS: Record<string, string> = {
   SIGNUP_CODE_INVALID: 'auth.codeInvalid',
   SIGNUP_CODE_EXPIRED: 'auth.codeExpired',
   SIGNUP_CODE_TOO_MANY_ATTEMPTS: 'auth.codeTooManyAttempts',
+}
+
+interface VerifyFormValues {
+  code: string
 }
 
 const VerifyScreen = () => {
@@ -28,12 +36,19 @@ const VerifyScreen = () => {
   const router = useRouter()
   const insets = useSafeAreaInsets()
 
-  const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [cooldown, setCooldown] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const inputRef = useRef<TextInput>(null)
+
+  const {
+    control,
+    handleSubmit,
+    clearErrors,
+    setValue,
+    formState: { errors },
+  } = useForm<VerifyFormValues>({ defaultValues: { code: '' } })
 
   useEffect(() => {
     if (!signupEmail) {
@@ -60,19 +75,19 @@ const VerifyScreen = () => {
 
   useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
 
-  const handleVerify = async () => {
-    if (!signupEmail || code.length < 6 || submitting) return
+  const onSubmit = async (values: VerifyFormValues) => {
+    if (!signupEmail) return
     setError(null)
     setSubmitting(true)
     try {
-      await verifySignupCode(signupEmail, code)
+      await verifySignupCode(signupEmail, values.code)
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       router.push('/(auth)/complete-profile')
     } catch (e) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       const msg = e instanceof Error ? e.message : ''
       setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
-      setCode('')
+      setValue('code', '')
     } finally {
       setSubmitting(false)
     }
@@ -97,35 +112,48 @@ const VerifyScreen = () => {
           {t('auth.verifySubtitle', { email: signupEmail ?? '' })}
         </Text>
 
-        <TextInput
-          ref={inputRef}
-          style={[styles.codeInput, error ? styles.codeInputError : null]}
-          value={code}
-          onChangeText={(v) => {
-            setError(null)
-            setCode(v.replace(/\D/g, '').slice(0, 6))
+        <Controller
+          control={control}
+          name="code"
+          rules={{
+            required: t('auth.codeRequired'),
+            minLength: { value: 6, message: t('auth.codeRequired') },
           }}
-          placeholder={t('auth.codePlaceholder')}
-          placeholderTextColor={PlatformColor('systemGray2') as unknown as string}
-          keyboardType="number-pad"
-          textContentType="oneTimeCode"
-          autoComplete="one-time-code"
-          maxLength={6}
-          returnKeyType="done"
-          onSubmitEditing={handleVerify}
-          editable={!submitting}
-          accessibilityLabel={t('auth.codePlaceholder')}
+          render={({ field: { value, onChange } }) => (
+            <>
+              <TextInput
+                ref={inputRef}
+                style={[styles.codeInput, (errors.code || error) ? styles.codeInputError : null]}
+                value={value}
+                onChangeText={(v) => {
+                  clearErrors('code')
+                  setError(null)
+                  onChange(v.replace(/\D/g, '').slice(0, 6))
+                }}
+                placeholder={t('auth.codePlaceholder')}
+                placeholderTextColor={PlatformColor('systemGray2') as unknown as string}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                autoComplete="one-time-code"
+                maxLength={6}
+                inputAccessoryViewID={Platform.OS === 'ios' ? CODE_ACCESSORY_ID : undefined}
+                editable={!submitting}
+                accessibilityLabel={t('auth.codePlaceholder')}
+              />
+              {errors.code && <Text style={styles.error}>{errors.code.message}</Text>}
+            </>
+          )}
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+        {!errors.code && error ? <Text style={styles.error}>{error}</Text> : null}
 
         <Pressable
-          onPress={handleVerify}
-          disabled={code.length < 6 || submitting}
+          onPress={handleSubmit(onSubmit)}
+          disabled={submitting}
           hitSlop={8}
           style={({ pressed }) => [
             styles.button,
-            (code.length < 6 || submitting) && styles.buttonDisabled,
+            submitting && styles.buttonDisabled,
             pressed && styles.buttonPressed,
           ]}
           accessibilityRole="button"
@@ -149,6 +177,16 @@ const VerifyScreen = () => {
           </Text>
         </Pressable>
       </View>
+
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={CODE_ACCESSORY_ID}>
+          <View style={styles.accessoryBar}>
+            <Pressable onPress={() => inputRef.current?.blur()} hitSlop={8}>
+              <Text style={styles.accessoryDoneText}>{t('common.done')}</Text>
+            </Pressable>
+          </View>
+        </InputAccessoryView>
+      )}
     </KeyboardAvoidingView>
   )
 }
@@ -234,5 +272,18 @@ const styles = StyleSheet.create({
   },
   resendTextDisabled: {
     color: PlatformColor('systemGray') as unknown as string,
+  },
+  accessoryBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+  },
+  accessoryDoneText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: PlatformColor('systemBlue') as unknown as string,
   },
 })
