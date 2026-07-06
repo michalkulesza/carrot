@@ -50,9 +50,8 @@ const LoginScreen = () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
       await loginWithGoogle()
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : ''
-      setError(msg || t('auth.signIn') + ' failed')
+    } catch {
+      setError(t('auth.googleSignInError'))
     } finally {
       setGoogleSubmitting(false)
     }

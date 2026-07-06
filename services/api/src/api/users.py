@@ -6,7 +6,7 @@ from fastapi_users import BaseUserManager, FastAPIUsers, InvalidPasswordExceptio
 from fastapi_users.authentication import AuthenticationBackend, BearerTransport, CookieTransport, JWTStrategy
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from fastapi_users import schemas
-from sqlalchemy import String, update
+from sqlalchemy import Boolean, String, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import DateTime, ForeignKey
@@ -25,6 +25,7 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
         nullable=True,
     )
     last_activity_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    google_account: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
 class UserRead(schemas.BaseUser[uuid.UUID]):
@@ -34,6 +35,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 class UserCreate(schemas.BaseUserCreate):
     nickname: str | None = None
+    google_account: bool = False
 
 
 class UserUpdate(schemas.BaseUserUpdate):

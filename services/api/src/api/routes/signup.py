@@ -72,8 +72,11 @@ async def request_signup_code(body: RequestSignupCodeRequest) -> dict:
     email = body.email.lower().strip()
 
     async with async_session_maker() as session:
-        existing_user = await session.execute(select(User).where(User.email == email))
-        if existing_user.scalar_one_or_none() is not None:
+        existing_user_result = await session.execute(select(User).where(User.email == email))
+        existing_user = existing_user_result.scalar_one_or_none()
+        if existing_user is not None:
+            if existing_user.google_account:
+                raise HTTPException(status_code=400, detail="ACCOUNT_EXISTS_GOOGLE")
             raise HTTPException(status_code=400, detail="ACCOUNT_EXISTS")
 
         latest_result = await session.execute(

@@ -10,6 +10,7 @@ import { colors } from '../../theme/colors'
 import { EMAIL_PATTERN } from '../../utils/validation'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
+const ACCOUNT_EXISTS_GOOGLE = 'ACCOUNT_EXISTS_GOOGLE'
 
 interface RegisterFormValues {
   email: string
@@ -38,7 +39,13 @@ const RegisterScreen = () => {
       router.push('/(auth)/verify')
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
-      setError(msg === ACCOUNT_EXISTS ? t('auth.accountExistsError') : (msg || t('auth.createAccount') + ' failed'))
+      if (msg === ACCOUNT_EXISTS_GOOGLE) {
+        setError(t('auth.accountExistsGoogleError'))
+      } else if (msg === ACCOUNT_EXISTS) {
+        setError(t('auth.accountExistsError'))
+      } else {
+        setError(msg || t('auth.createAccount') + ' failed')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -50,9 +57,8 @@ const RegisterScreen = () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     try {
       await loginWithGoogle()
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : ''
-      setError(msg || t('auth.createAccount') + ' failed')
+    } catch {
+      setError(t('auth.googleSignInError'))
     } finally {
       setGoogleSubmitting(false)
     }

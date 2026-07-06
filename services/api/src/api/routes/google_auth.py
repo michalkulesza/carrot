@@ -63,6 +63,7 @@ async def google_login(
                 password=secrets.token_urlsafe(32),
                 nickname=idinfo.get("name"),
                 is_verified=True,
+                google_account=True,
             )
         )
         await claim_email_invitations(session, user)

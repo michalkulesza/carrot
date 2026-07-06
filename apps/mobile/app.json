@@ -47,7 +47,24 @@
         }
       ],
       "@sentry/react-native",
-      "@react-native-google-signin/google-signin"
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.596430855267-efd23ces8frt74gp7ncpiiiq43ppfss2"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              { "name": "GoogleUtilities", "modular_headers": true },
+              { "name": "RecaptchaInterop", "modular_headers": true },
+              { "name": "AppCheckCore", "modular_headers": true }
+            ]
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {
