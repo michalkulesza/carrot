@@ -156,6 +156,20 @@ const isBlankRecipe = (r: EditableRecipe): boolean =>
       c.steps.every((s) => !s.trim()),
   )
 
+// Progress target per pipeline stage key (0..1) — the backend only emits discrete
+// named stages, no numeric progress value, so this is a heuristic approximation.
+const STAGE_PROGRESS: Record<string, number> = {
+  fetching_page: 0.25,
+  analyzing_page: 0.70,
+  fetching_metadata: 0.15,
+  checking_description: 0.35,
+  checking_links: 0.55,
+  fetching_transcript: 0.65,
+  analyzing_transcript: 0.82,
+  analyzing_text: 0.70,
+  analyzing_image: 0.70,
+}
+
 // ── RecipeImportSkeleton ────────────────────────────────────────────────────────
 // Shown in place of the recipe form while an import is streaming in. Mirrors the
 // exact layout of RecipeFormView/the saved-recipe detail screen so the transition
@@ -179,11 +193,24 @@ const useSkeletonPulse = () => {
 const INGREDIENT_BONE_WIDTHS = ['92%', '78%', '85%', '64%', '80%'] as const
 const STEP_BONE_COUNT = 3
 
-const RecipeImportSkeleton = ({ stageLabel }: { stageLabel: string | null }) => {
+const RecipeImportSkeleton = ({ progress }: { progress: Animated.Value }) => {
   const opacity = useSkeletonPulse()
   return (
     <View>
-      <Animated.View style={[styles.previewHeroImage, styles.skeletonBone, { opacity }]} />
+      <View style={[styles.previewHeroImage, styles.skeletonHeroWrap]}>
+        <Animated.View style={[StyleSheet.absoluteFill, styles.skeletonBone, { opacity }]} />
+        <View style={styles.skeletonProgressCard}>
+          <Ionicons name="restaurant-outline" size={22} color={PlatformColor('secondaryLabel') as unknown as string} />
+          <View style={styles.skeletonProgressTrack}>
+            <Animated.View
+              style={[
+                styles.skeletonProgressFill,
+                { width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+              ]}
+            />
+          </View>
+        </View>
+      </View>
       <View style={styles.previewCard}>
         <Animated.View style={[styles.skeletonBone, styles.skeletonTitleLine, { opacity, width: '70%' }]} />
         <Animated.View style={[styles.skeletonBone, styles.skeletonTitleLine, { opacity, width: '42%', marginBottom: 14 }]} />
@@ -222,13 +249,6 @@ const RecipeImportSkeleton = ({ stageLabel }: { stageLabel: string | null }) => 
           ))}
         </View>
       </View>
-
-      {stageLabel && (
-        <View style={styles.skeletonStageRow}>
-          <ActivityIndicator size="small" color={PlatformColor('secondaryLabel') as unknown as string} />
-          <Text style={styles.skeletonStageText}>{stageLabel}</Text>
-        </View>
-      )}
     </View>
   )
 }
@@ -909,7 +929,7 @@ const ImportRecipeScreen = () => {
   const [pastedText, setPastedText] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [stageLabel, setStageLabel] = useState<string | null>(null)
+  const progressAnim = useRef(new Animated.Value(0)).current
   const [editable, setEditable] = useState<EditableRecipe | null>(null)
   const [previewMode, setPreviewMode] = useState(false)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
@@ -1048,7 +1068,7 @@ const ImportRecipeScreen = () => {
   const reset = () => {
     cancelRef.current?.()
     setLoading(false)
-    setStageLabel(null)
+    progressAnim.setValue(0)
     setEditable(null)
     setPreviewMode(false)
     setSelectedTags([])
@@ -1073,7 +1093,10 @@ const ImportRecipeScreen = () => {
         ),
       )
     } else {
-      const message = res.error ?? t('addRecipe.importFailed')
+      const message =
+        res.error === 'extraction_failed' || !res.error
+          ? t('addRecipe.couldNotExtract')
+          : res.error
       // Camera/gallery imports leave the user looking at a blank import screen with no
       // input to correct (unlike a URL/text typo), so a passive inline error is easy to
       // miss — surface it as an alert too.
@@ -1102,7 +1125,7 @@ const ImportRecipeScreen = () => {
             // Abort the foreground stream
             cancelRef.current?.()
             setLoading(false)
-            setStageLabel(null)
+            progressAnim.setValue(0)
 
             // Get device push token for fallback notification
             let devicePushToken: string | null = null
@@ -1142,10 +1165,12 @@ const ImportRecipeScreen = () => {
   const startStreamCallbacks = () => ({
     onStage(stage: StageEvent) {
       console.log('[import] stage:', stage.key, '—', stage.label)
-      setStageLabel(stage.label)
+      const target = STAGE_PROGRESS[stage.key] ?? 0.5
+      Animated.timing(progressAnim, { toValue: target, duration: 400, useNativeDriver: false }).start()
     },
     onDone(res: ImportResult) {
       console.log('[import] done:', res.stage, res.error ?? 'ok')
+      Animated.timing(progressAnim, { toValue: 1, duration: 300, useNativeDriver: false }).start()
       applyImportResult(res)
     },
     onError(msg: string) {
@@ -1164,7 +1189,7 @@ const ImportRecipeScreen = () => {
     cancelRef.current?.()
     highDemandJobRef.current = { kind: 'url', input: { url: url.trim() } }
     highDemandOfferedRef.current = false
-    setStageLabel(null)
+    progressAnim.setValue(0)
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1183,7 +1208,7 @@ const ImportRecipeScreen = () => {
     cancelRef.current?.()
     highDemandJobRef.current = { kind: 'text', input: { text: pastedText.trim() } }
     highDemandOfferedRef.current = false
-    setStageLabel(null)
+    progressAnim.setValue(0)
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1248,7 +1273,7 @@ const ImportRecipeScreen = () => {
     highDemandJobRef.current = { kind: 'image', input: { image_base64: imageBase64, mime_type: mimeType } }
     highDemandOfferedRef.current = false
     pendingThumbRef.current = `data:${mimeType};base64,${imageBase64}`
-    setStageLabel(null)
+    progressAnim.setValue(0)
     setLoading(true)
     setError(null)
     setEditable(null)
@@ -1327,6 +1352,7 @@ const ImportRecipeScreen = () => {
         contentContainerStyle={styles.scrollContent}
         contentInsetAdjustmentBehavior={editable ? 'never' : 'automatic'}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={!(loading && !editable)}
       >
         {/* Picker — shown when no mode selected and no editable */}
         {!mode && !editable && (
@@ -1379,7 +1405,7 @@ const ImportRecipeScreen = () => {
         )}
 
         {/* Import in progress — skeleton preview of the recipe detail layout */}
-        {loading && !editable && <RecipeImportSkeleton stageLabel={stageLabel} />}
+        {loading && !editable && <RecipeImportSkeleton progress={progressAnim} />}
 
         {/* Imported recipe view — read-only preview or in-place edit form */}
         {editable && (
@@ -1670,15 +1696,32 @@ const styles = StyleSheet.create({
   skeletonIngredientLine: { height: 17, borderRadius: 5 },
   skeletonStepNum: { width: 20, height: 17, borderRadius: 5, marginRight: 8 },
   skeletonStepLine: { height: 17, borderRadius: 5 },
-  skeletonStageRow: {
-    flexDirection: 'row',
+  skeletonHeroWrap: { alignItems: 'center', justifyContent: 'center' },
+  skeletonProgressCard: {
+    width: 88,
+    height: 88,
+    borderRadius: 22,
+    backgroundColor: PlatformColor('systemBackground') as unknown as string,
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 24,
+    justifyContent: 'center',
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
-  skeletonStageText: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
+  skeletonProgressTrack: {
+    width: 48,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
+    overflow: 'hidden',
+  },
+  skeletonProgressFill: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.brand,
+  },
 
   // Error box
   errorBox: {

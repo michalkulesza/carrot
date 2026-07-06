@@ -285,14 +285,30 @@ const AllergenPopover = ({
 // layout of EditableRecipeView below so the transition into the real content,
 // once it arrives, doesn't jump.
 
+// Client-side heuristic mapping of stage keys to progress fractions, kept in
+// sync with the equivalent STAGE_PROGRESS table in
+// apps/mobile/src/screens/ImportRecipeScreen.tsx — the backend only emits
+// discrete named stages, no numeric progress value.
+const STAGE_PROGRESS: Record<string, number> = {
+  fetching_page: 0.25,
+  analyzing_page: 0.7,
+  fetching_metadata: 0.15,
+  checking_description: 0.35,
+  checking_links: 0.55,
+  fetching_transcript: 0.65,
+  analyzing_transcript: 0.82,
+  analyzing_text: 0.7,
+  analyzing_image: 0.7,
+}
+
 const Bone = ({ className = '', style }: { className?: string; style?: React.CSSProperties }) => (
   <div className={`rounded bg-zinc-100 animate-pulse ${className}`} style={style} />
 )
 
 const INGREDIENT_BONE_WIDTHS = ['92%', '78%', '85%', '64%', '80%']
 
-const RecipeImportSkeleton = ({ stageLabel }: { stageLabel: string | null }) => (
-  <div className="mt-4 border-t border-zinc-200 pt-4">
+const RecipeImportSkeleton = ({ progress }: { progress: number }) => (
+  <div className="relative mt-4 border-t border-zinc-200 pt-4">
     <div className="flex gap-3 items-start mb-2">
       <Bone className="w-16 h-16 rounded-lg shrink-0" />
       <div className="flex-1 min-w-0 flex flex-col gap-2 pt-1">
@@ -334,9 +350,17 @@ const RecipeImportSkeleton = ({ stageLabel }: { stageLabel: string | null }) => 
       ))}
     </ol>
 
-    {stageLabel && (
-      <p className="mt-4 text-xs text-zinc-400 text-center">{stageLabel}</p>
-    )}
+    <div className="absolute inset-0 flex items-center justify-center">
+      <div className="w-20 h-20 rounded-2xl bg-white shadow-lg border border-zinc-100 flex flex-col items-center justify-center gap-2.5">
+        <ImageIcon className="w-5 h-5 text-zinc-400" />
+        <div className="w-12 h-1 rounded-full bg-zinc-200 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+      </div>
+    </div>
   </div>
 )
 
@@ -994,6 +1018,12 @@ const AddRecipeModal = ({
   }
 
   const parsed = editable !== null
+  const lastStep = progressSteps[progressSteps.length - 1]
+  const importProgress = lastStep
+    ? lastStep.status === 'done'
+      ? 1
+      : (STAGE_PROGRESS[lastStep.key] ?? 0.5)
+    : 0
 
   return (
     <Modal
@@ -1216,9 +1246,7 @@ const AddRecipeModal = ({
               )}
 
               {!parsed && !error && loading && (
-                <RecipeImportSkeleton
-                  stageLabel={progressSteps[progressSteps.length - 1]?.label ?? null}
-                />
+                <RecipeImportSkeleton progress={importProgress} />
               )}
 
               {error && (
