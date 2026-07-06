@@ -4,16 +4,18 @@ import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import LanguageSwitcher from '../components/LanguageSwitcher'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
 
 export default function RegisterPage() {
-  const { requestSignupCode } = useAuth()
+  const { requestSignupCode, loginWithGoogle } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -24,9 +26,26 @@ export default function RegisterPage() {
       navigate('/verify', { replace: true })
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
-      setError(msg === ACCOUNT_EXISTS ? t('auth.accountExistsError') : (msg || 'Registration failed.'))
+      setError(
+        msg === ACCOUNT_EXISTS
+          ? t('auth.accountExistsError')
+          : msg || 'Registration failed.'
+      )
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGoogleCredential(idToken: string) {
+    setError(null)
+    setGoogleLoading(true)
+    try {
+      await loginWithGoogle(idToken)
+      navigate('/', { replace: true })
+    } catch {
+      setError(t('auth.googleSignInError'))
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -42,8 +61,12 @@ export default function RegisterPage() {
         <Card>
           <CardContent className="flex flex-col gap-4 p-6">
             <div>
-              <h2 className="text-xl font-semibold">{t('auth.createAccount')}</h2>
-              <p className="text-sm text-zinc-600 mt-1">{t('auth.signupEmailSubtitle')}</p>
+              <h2 className="text-xl font-semibold">
+                {t('auth.createAccount')}
+              </h2>
+              <p className="text-sm text-zinc-600 mt-1">
+                {t('auth.signupEmailSubtitle')}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -73,6 +96,25 @@ export default function RegisterPage() {
                 {loading ? t('auth.creating') : t('auth.continue')}
               </Button>
             </form>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
+              <span className="text-xs text-zinc-500">
+                {t('auth.orDivider')}
+              </span>
+              <div className="h-px flex-1 bg-zinc-200" />
+            </div>
+
+            {googleLoading ? (
+              <p className="text-center text-sm text-zinc-600">
+                {t('auth.creating')}
+              </p>
+            ) : (
+              <GoogleSignInButton
+                onCredential={handleGoogleCredential}
+                onError={() => setError(t('auth.googleSignInError'))}
+              />
+            )}
 
             <p className="text-center text-sm text-zinc-600">
               {t('auth.alreadyHaveAccount')}{' '}

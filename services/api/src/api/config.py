@@ -44,9 +44,10 @@ class Settings(BaseSettings):
     def email_configured(self) -> bool:
         return bool(self.resend_api_key and self.email_from)
 
-    # Google Sign-In (mobile) — client IDs used to verify Google ID tokens
+    # Google Sign-In — client IDs used to verify Google ID tokens
     google_ios_client_id: str = ""
     google_android_client_id: str = ""
+    google_web_client_id: str = ""
 
 
 settings = Settings()  # type: ignore[call-arg]

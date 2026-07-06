@@ -4,15 +4,17 @@ import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import LanguageSwitcher from '../components/LanguageSwitcher'
+import GoogleSignInButton from '../components/GoogleSignInButton'
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -29,6 +31,19 @@ export default function LoginPage() {
       )
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleGoogleCredential(idToken: string) {
+    setError(null)
+    setGoogleLoading(true)
+    try {
+      await loginWithGoogle(idToken)
+      navigate('/', { replace: true })
+    } catch {
+      setError(t('auth.googleSignInError'))
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -84,6 +99,25 @@ export default function LoginPage() {
                 {loading ? t('auth.signingIn') : t('auth.signIn')}
               </Button>
             </form>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
+              <span className="text-xs text-zinc-500">
+                {t('auth.orDivider')}
+              </span>
+              <div className="h-px flex-1 bg-zinc-200" />
+            </div>
+
+            {googleLoading ? (
+              <p className="text-center text-sm text-zinc-600">
+                {t('auth.signingIn')}
+              </p>
+            ) : (
+              <GoogleSignInButton
+                onCredential={handleGoogleCredential}
+                onError={() => setError(t('auth.googleSignInError'))}
+              />
+            )}
 
             <p className="text-center text-sm text-zinc-600">
               {t('auth.noAccount')}{' '}

@@ -1,4 +1,4 @@
-# PlateKeeper — Google Login/Signup (Mobile)
+# PlateKeeper — Google Login/Signup (Mobile + Web)
 
 Status legend: ☐ todo · ◐ in progress · ☑ done
 
@@ -12,7 +12,8 @@ verification step entirely — Google has already verified the user's email,
 so a successful Google sign-in should log the user in (creating an account
 on first use, with no code step) in one tap.
 
-Scope: **mobile only** (`apps/mobile`) for now, not web.
+Scope: originally mobile only (`apps/mobile`); web (`apps/web`) added afterwards using
+Google Identity Services (GIS) — see "Web (`apps/web`)" section below.
 
 ## Decisions
 
@@ -30,7 +31,6 @@ Scope: **mobile only** (`apps/mobile`) for now, not web.
 
 - No account-linking UI for email collisions.
 - No Android SHA-1 fingerprint automation — manual step via `eas credentials` when the user is ready to test Android.
-- No web client changes.
 
 ## Backend (`services/api`)
 
@@ -58,6 +58,27 @@ Scope: **mobile only** (`apps/mobile`) for now, not web.
 - **`LoginScreen.tsx` / `RegisterScreen.tsx`**: add a "Continue with Google" `Pressable` (AntDesign `google` icon from `@expo/vector-icons`, already a dependency) below the existing buttons, calling `loginWithGoogle()`, same `setError`/`setSubmitting` pattern plus a light haptic on press.
 - **Translations**: `auth.continueWithGoogle`, `auth.orDivider` added to all 5 locales in `packages/shared/src/locales/{en,pl,de,fr,es}.json`.
 
+## Web (`apps/web`)
+
+- **Library**: no npm dependency — loads Google Identity Services (GIS) directly via
+  `<script src="https://accounts.google.com/gsi/client">` in `index.html`. GIS renders its own
+  branded button and hands back a signed JWT (`credential`) through a JS callback; no popup/redirect
+  code to write.
+- **Backend**: reuses the same `POST /api/auth/google` route. `google_web_client_id` added to
+  `config.py` alongside the iOS/Android IDs so the GIS-issued token's `aud` (the web client ID)
+  passes verification.
+- **`.env` / `.env.example`**: add `VITE_GOOGLE_CLIENT_ID` (web client). This should be the *same*
+  Web OAuth client ID used as `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` on mobile — one Google Cloud OAuth
+  client, `GOOGLE_WEB_CLIENT_ID` on the API accepts tokens from both.
+- **New `src/components/GoogleSignInButton.tsx`**: polls for `window.google.accounts.id` (script
+  loads async/defer), then calls `initialize({ client_id, callback })` + `renderButton()` into a
+  container div. Renders nothing if `VITE_GOOGLE_CLIENT_ID` is unset.
+- **`src/api/auth.ts`**: add `loginWithGoogle(idToken)` wrapping `webClient.googleLogin`.
+- **`src/context/AuthContext.tsx`**: add `loginWithGoogle(idToken)` — calls the wrapper (sets the
+  `pk_auth` cookie server-side, cookie-based session like the rest of web auth) then `getMe()`.
+- **`LoginPage.tsx` / `RegisterPage.tsx`**: add an `orDivider` + `<GoogleSignInButton>` between the
+  form and the "switch to other page" link, reusing the existing `googleSignInError` translation.
+
 ## Build order
 
 1. Backend: dependency, config, `google_auth.py` route, router registration, `.env.example`.
@@ -70,4 +91,8 @@ Scope: **mobile only** (`apps/mobile`) for now, not web.
 
 - Backend: existing `pytest` suite, plus a manual check once a real device round-trip is possible (can't fabricate a valid Google-signed ID token locally).
 - Mobile: after prebuild + dev client build, exercise on a real device/simulator — fresh Google account (new account created, logged in) and repeat sign-in (existing account, straight login).
+- Web: needs `VITE_GOOGLE_CLIENT_ID` (browser) and `GOOGLE_WEB_CLIENT_ID` (API, same client ID)
+  set, plus that OAuth client's "Authorized JavaScript origins" in Google Cloud Console including
+  `http://localhost:5173` (dev) and the production origin — GIS refuses to render the button
+  otherwise. Exercise in a real browser: fresh Google account and repeat sign-in.
 - `npm run typecheck` / `lint` in `apps/mobile` and `packages/shared` after the edits.

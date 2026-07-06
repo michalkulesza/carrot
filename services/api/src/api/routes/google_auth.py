@@ -43,7 +43,11 @@ async def google_login(
     except ValueError:
         raise HTTPException(status_code=400, detail="GOOGLE_TOKEN_INVALID")
 
-    valid_client_ids = {settings.google_ios_client_id, settings.google_android_client_id}
+    valid_client_ids = {
+        settings.google_ios_client_id,
+        settings.google_android_client_id,
+        settings.google_web_client_id,
+    }
     if idinfo.get("aud") not in valid_client_ids:
         raise HTTPException(status_code=400, detail="GOOGLE_TOKEN_INVALID")
     if idinfo.get("iss") not in _VALID_ISSUERS:

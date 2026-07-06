@@ -9,6 +9,7 @@ import * as Sentry from '@sentry/react'
 import {
   getMe,
   login as apiLogin,
+  loginWithGoogle as apiLoginWithGoogle,
   logout as apiLogout,
   requestSignupCode as apiRequestSignupCode,
   verifySignupCode as apiVerifySignupCode,
@@ -33,6 +34,7 @@ interface AuthContextValue {
   signupEmail: string | null
   signupToken: string | null
   login: (email: string, password: string) => Promise<void>
+  loginWithGoogle: (idToken: string) => Promise<void>
   requestSignupCode: (email: string) => Promise<void>
   verifySignupCode: (email: string, code: string) => Promise<void>
   completeSignup: (password: string, nickname?: string) => Promise<void>
@@ -86,6 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     syncSentryUser(u)
   }
 
+  async function loginWithGoogle(idToken: string) {
+    await apiLoginWithGoogle(idToken)
+    const u = await getMe()
+    setUser(u)
+    syncSentryUser(u)
+  }
+
   async function requestSignupCode(email: string) {
     await apiRequestSignupCode(email)
     setSignupEmail(email)
@@ -125,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signupEmail,
         signupToken,
         login,
+        loginWithGoogle,
         requestSignupCode,
         verifySignupCode,
         completeSignup,
@@ -140,5 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
+
   return ctx
 }
