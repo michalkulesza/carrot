@@ -1147,13 +1147,19 @@ const ImportRecipeScreen = () => {
             setLoading(false)
             progressAnim.setValue(0)
 
-            // Get device push token for fallback notification
+            // Get device push token for fallback notification. On simulators this call
+            // commonly never resolves or rejects (no real APNs registration is possible),
+            // which would otherwise stall the entire background-job flow right here — race
+            // it against a timeout so a push-less environment can't block anything.
             let devicePushToken: string | null = null
             try {
-              const tokenData = await Notifications.getDevicePushTokenAsync()
+              const tokenData = await Promise.race([
+                Notifications.getDevicePushTokenAsync(),
+                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+              ])
               devicePushToken = tokenData.data
             } catch {
-              // Push token unavailable — job will run silently
+              // Push token unavailable or timed out — job will run silently
             }
 
             try {
