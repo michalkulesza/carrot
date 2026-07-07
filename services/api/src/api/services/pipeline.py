@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import re
 from collections.abc import AsyncGenerator, Callable, Awaitable
 from typing import Any
 from urllib.parse import urlparse
@@ -16,8 +15,6 @@ from api.models import (
     ImportMetadata,
     ImportResult,
     ImportStage,
-    Ingredient,
-    RecipeComponent,
     RecipeExtraction,
 )
 from api.services import cache as cache_svc
@@ -68,7 +65,8 @@ def _is_complete(recipe: RecipeExtraction) -> bool:
     return any(c.ingredients and c.steps for c in recipe.components)
 
 
-def _extract_jsonld_recipe(html: str) -> RecipeExtraction | None:
+def _find_jsonld_recipe(html: str) -> dict | None:
+    """Returns the raw schema.org Recipe dict from a page's JSON-LD, if present."""
     soup = BeautifulSoup(html, "html.parser")
     for tag in soup.find_all("script", type="application/ld+json"):
         try:
@@ -78,49 +76,45 @@ def _extract_jsonld_recipe(html: str) -> RecipeExtraction | None:
         items = data if isinstance(data, list) else [data]
         for item in items:
             if item.get("@type") == "Recipe":
-                return _jsonld_to_extraction(item)
+                return item
     return None
 
 
-def _jsonld_to_extraction(data: dict) -> RecipeExtraction:
-    ingredients = [
-        Ingredient(name=line)
-        for line in data.get("recipeIngredient", [])
-        if line.strip()
-    ]
+def _jsonld_recipe_steps(data: dict) -> list[str]:
     steps: list[str] = []
     for s in data.get("recipeInstructions", []):
-        if isinstance(s, str):
+        if isinstance(s, str) and s.strip():
             steps.append(s)
-        elif isinstance(s, dict):
-            steps.append(s.get("text", ""))
+        elif isinstance(s, dict) and s.get("text", "").strip():
+            steps.append(s["text"])
+    return steps
 
-    servings_raw = data.get("recipeYield")
-    servings: int | None = None
-    if isinstance(servings_raw, int):
-        servings = servings_raw
-    elif isinstance(servings_raw, str):
-        numbers = [int(n) for n in re.findall(r"\d+", servings_raw)]
-        if len(numbers) >= 2:
-            # e.g. "4 to 6 servings" or "4-6 servings" -> midpoint, not "46"
-            servings = round((numbers[0] + numbers[1]) / 2)
-        elif numbers:
-            servings = numbers[0]
 
-    kcal: int | None = None
-    calories_raw = (data.get("nutrition") or {}).get("calories")
-    if calories_raw:
-        m = re.search(r"\d+", str(calories_raw))
-        if m:
-            kcal = int(m.group())
+def _jsonld_recipe_is_complete(data: dict) -> bool:
+    ingredients = [i for i in data.get("recipeIngredient", []) if isinstance(i, str) and i.strip()]
+    return bool(ingredients) and bool(_jsonld_recipe_steps(data))
 
-    component = RecipeComponent(role="main", ingredients=ingredients, steps=steps)
-    return RecipeExtraction(
-        title=data.get("name"),
-        servings=servings,
-        kcal_per_serving=kcal,
-        components=[component] if (ingredients or steps) else [],
-    )
+
+def _jsonld_recipe_to_text(data: dict) -> str:
+    """Renders a schema.org Recipe dict as clean text for Gemini to extract from —
+    more reliable input than raw scraped page HTML since it's already structured."""
+    lines = []
+    if data.get("name"):
+        lines.append(f"Title: {data['name']}")
+    if data.get("recipeYield"):
+        lines.append(f"Servings: {data['recipeYield']}")
+    ingredients = [i for i in data.get("recipeIngredient", []) if isinstance(i, str) and i.strip()]
+    if ingredients:
+        lines.append("Ingredients:")
+        lines.extend(f"- {i}" for i in ingredients)
+    steps = _jsonld_recipe_steps(data)
+    if steps:
+        lines.append("Instructions:")
+        lines.extend(f"{i + 1}. {s}" for i, s in enumerate(steps))
+    calories = (data.get("nutrition") or {}).get("calories")
+    if calories:
+        lines.append(f"Calories: {calories} per serving")
+    return "\n".join(lines)
 
 
 def _is_social_url(url: str) -> bool:
@@ -176,25 +170,19 @@ async def _try_linked_url(
         log.warning("Failed to fetch linked URL %s: %s", url, exc)
         return None
 
-    jsonld = _extract_jsonld_recipe(html)
-
-    page_text = _strip_html(html)
-    if len(page_text) < 50:
-        return jsonld if jsonld and _is_complete(jsonld) else None
+    jsonld = _find_jsonld_recipe(html)
+    if jsonld and _jsonld_recipe_is_complete(jsonld):
+        source_text = _jsonld_recipe_to_text(jsonld)
+    else:
+        source_text = _strip_html(html)
+        if len(source_text) < 50:
+            return None
 
     result = await gemini_svc.extract_recipe(
-        page_text, source_hint="webpage", model=model,
+        source_text, source_hint="webpage", model=model,
         available_tags=available_tags, allergens=allergens,
         on_high_demand=on_high_demand, usage=usage,
     )
-    if jsonld and _is_complete(jsonld):
-        return jsonld.model_copy(update={
-            "kcal_per_serving": jsonld.kcal_per_serving if jsonld.kcal_per_serving is not None else result.kcal_per_serving,
-            "protein_per_serving": result.protein_per_serving,
-            "fat_per_serving": result.fat_per_serving,
-            "carbs_per_serving": result.carbs_per_serving,
-            "tags": result.tags,
-        })
     return result if _is_complete(result) else None
 
 
@@ -281,15 +269,23 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         domain = urlparse(url).netloc.removeprefix("www.")
         meta = ImportMetadata(source_url=url, thumbnail_url=thumbnail_url, creator_handle=domain)
 
-        jsonld = _extract_jsonld_recipe(html)
+        jsonld = _find_jsonld_recipe(html)
+        if jsonld and _jsonld_recipe_is_complete(jsonld):
+            # Structured JSON-LD is cleaner and more reliable input than scraped
+            # page text, but tags/macros/qty-unit-note parsing still only ever
+            # come from Gemini — JSON-LD carries none of that.
+            source_text = _jsonld_recipe_to_text(jsonld)
+            stage = ImportStage.LINK
+        else:
+            source_text = _strip_html(html)
+            stage = ImportStage.TRANSCRIPT
 
         yield _stage_event("analyzing_page", "Analyzing page with Gemini…")
-        page_text = _strip_html(html)
         try:
             result_out: list = []
             async for _ev in _run_gemini(
                 lambda on_hd: gemini_svc.extract_recipe(
-                    page_text, source_hint="webpage", model=model,
+                    source_text, source_hint="webpage", model=model,
                     available_tags=available_tags, allergens=allergens,
                     on_high_demand=on_hd, usage=usage,
                 ),
@@ -297,21 +293,8 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             ):
                 yield _ev
             result = result_out[0]
-            if jsonld and _is_complete(jsonld):
-                # Prefer the site's own declared calories over Gemini's estimate,
-                # but tags/macros only ever come from Gemini — JSON-LD has no tag
-                # data and _jsonld_to_extraction doesn't parse macro fields.
-                jsonld = jsonld.model_copy(update={
-                    "kcal_per_serving": jsonld.kcal_per_serving if jsonld.kcal_per_serving is not None else result.kcal_per_serving,
-                    "protein_per_serving": result.protein_per_serving,
-                    "fat_per_serving": result.fat_per_serving,
-                    "carbs_per_serving": result.carbs_per_serving,
-                    "tags": result.tags,
-                })
-                r = ImportResult(stage=ImportStage.LINK, recipe=jsonld, metadata=meta)
-                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
-            elif _is_complete(result):
-                r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
+            if _is_complete(result):
+                r = ImportResult(stage=stage, recipe=result, metadata=meta)
                 yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
             else:
                 yield _done_event(ImportResult(
