@@ -87,7 +87,7 @@ The text may be in any language — extract faithfully in the original language.
 Return JSON matching the provided schema. If no recipe content is present, return
 an object with null title and empty components array.
 
-For ingredients, always try to separate qty/unit/name/note. Use ONLY these units:
+For ingredients, always try to separate qty/unit/name. Use ONLY these units:
   """ + _ALLOWED_UNITS + """
   Convert any other unit to the closest allowed unit (e.g. oz → g, fl oz → ml).
   Convert temperatures in step text from °F to °C. Keep cups/tbsp as-is.
@@ -95,8 +95,8 @@ For ingredients, always try to separate qty/unit/name/note. Use ONLY these units
 
 Examples:
   "2 cups flour" → qty="2", unit="cup", name="flour"
-  "3 cloves garlic, minced" → qty="3", unit="clove", name="garlic", note="minced"
-  "salt to taste" → qty=null, unit=null, name="salt", note="to taste"
+  "3 cloves garlic, minced" → qty="3", unit="clove", name="garlic, minced"
+  "salt to taste" → qty=null, unit=null, name="salt, to taste"
   "1 oz butter" → qty="28", unit="g", name="butter"
 
 For multi-component recipes (e.g. "for the sauce:", "for the marinade:"),

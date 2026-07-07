@@ -23,7 +23,6 @@ export interface Ingredient {
   qty: string | null
   unit: Unit | null
   name: string
-  note: string | null
   allergen?: string | null
   substitute?: string | null
 }

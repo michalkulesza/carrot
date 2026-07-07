@@ -260,13 +260,6 @@ export const IngredientEditor = ({
           </Pressable>
         )}
       </View>
-      <TextInput
-        style={[styles.ingNote, onRemove && styles.ingNoteWithRemove]}
-        value={value.note}
-        onChangeText={(v) => onChange({ ...value, note: v })}
-        placeholder={t('units.noteLabel')}
-        accessibilityLabel={t('units.noteLabel')}
-      />
     </View>
   )
 }
@@ -399,15 +392,4 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   allergenText: { fontSize: 10, color: '#92400e', fontWeight: '600' },
-  ingNote: {
-    fontSize: 12,
-    color: PlatformColor('tertiaryLabel') as unknown as string,
-    borderBottomWidth: 1,
-    borderColor: PlatformColor('separator') as unknown as string,
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    fontStyle: 'italic',
-    marginLeft: 52,
-  },
-  ingNoteWithRemove: { marginLeft: 80 },
 })

@@ -116,11 +116,9 @@ const toEditable = (result: ImportResult, autoSubstitute: boolean): EditableReci
           const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
           const nameToUse = useSub ? ing.substitute! : ing.name
           if (!ing.qty) {
-            return parseIngredient(
-              [nameToUse, ing.note ? `(${ing.note})` : ''].filter(Boolean).join(' '),
-            )
+            return parseIngredient(nameToUse)
           }
-          return { qty: ing.qty ?? '', unit: ing.unit ?? '', name: nameToUse, note: ing.note ?? '' }
+          return { qty: ing.qty ?? '', unit: ing.unit ?? '', name: nameToUse }
         }),
         steps: c.steps,
         ingredient_flags: c.ingredients.map((ing) => ({
@@ -151,7 +149,7 @@ const blankRecipe = (): EditableRecipe => ({
   components: [{
     name: 'Main',
     yield_note: '',
-    ingredients: [{ qty: '', unit: '', name: '', note: '' }],
+    ingredients: [{ qty: '', unit: '', name: '' }],
     steps: [''],
     ingredient_flags: [null],
     step_ingredient_refs: null,
@@ -376,7 +374,7 @@ const RecipeFormView = ({
       components: recipe.components.map((c, ci2) =>
         ci2 !== ci ? c : {
           ...c,
-          ingredients: [...c.ingredients, { qty: '', unit: '', name: '', note: '' }],
+          ingredients: [...c.ingredients, { qty: '', unit: '', name: '' }],
           ingredient_flags: [...c.ingredient_flags, null],
         },
       ),

@@ -5,20 +5,12 @@ export interface StructuredIngredient {
   qty: string
   unit: string
   name: string
-  note: string
 }
 
 export const parseIngredient = (s: string): StructuredIngredient => {
   const trimmed = (s ?? '').trim()
-  if (!trimmed) return { qty: '', unit: '', name: '', note: '' }
-  let rest = trimmed
-  let note = ''
-  const noteMatch = rest.match(/^(.*?)\s*\(([^)]+)\)\s*$/)
-  if (noteMatch) {
-    rest = noteMatch[1].trim()
-    note = noteMatch[2]
-  }
-  const parts = rest.split(/\s+/)
+  if (!trimmed) return { qty: '', unit: '', name: '' }
+  const parts = trimmed.split(/\s+/)
   let idx = 0
   let qty = ''
   if (parts[idx] && /^[\d¼½¾⅓⅔⅛⅜⅝⅞.,/]+$/.test(parts[idx])) {
@@ -28,11 +20,11 @@ export const parseIngredient = (s: string): StructuredIngredient => {
   if (parts[idx] && (UNITS as readonly string[]).includes(parts[idx].toLowerCase())) {
     unit = parts[idx++].toLowerCase()
   }
-  return { qty, unit, name: parts.slice(idx).join(' '), note }
+  return { qty, unit, name: parts.slice(idx).join(' ') }
 }
 
 export const serializeIngredient = (ing: StructuredIngredient): string =>
-  [ing.qty, ing.unit, ing.name, ing.note ? `(${ing.note})` : ''].filter(Boolean).join(' ')
+  [ing.qty, ing.unit, ing.name].filter(Boolean).join(' ')
 
 export const displayIngredient = (
   s: string,

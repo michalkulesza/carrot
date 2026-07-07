@@ -362,13 +362,11 @@ const IngredientRow = ({
 }) => {
   const { t } = useTranslation()
   const parts = [ingredient.qty, ingredient.unit, ingredient.name].filter(Boolean).join(' ')
-  const note = ingredient.note ? ` (${ingredient.note})` : ''
   return (
     <View style={styles.ingredientRow}>
       <Text style={styles.bullet}>{'•'}</Text>
       <Text style={[styles.ingredientText, { fontSize, lineHeight }]}>
         {parts}
-        {note}
       </Text>
       {addMode && (
         <Pressable
@@ -414,7 +412,7 @@ const ComponentSection = ({
     () =>
       component.ingredients.map((raw) => {
         if (typeof raw === 'string') {
-          return { qty: null, unit: null, name: raw, note: null } as Ingredient
+          return { qty: null, unit: null, name: raw } as Ingredient
         }
         return raw as Ingredient
       }),
@@ -641,7 +639,7 @@ const RecipeDetailScreen = () => {
     setDraft((prev) => prev && {
       ...prev,
       components: prev.components.map((c, i) =>
-        i === ci ? { ...c, ingredients: [...c.ingredients, { qty: '', unit: '', name: '', note: '' }] } : c,
+        i === ci ? { ...c, ingredients: [...c.ingredients, { qty: '', unit: '', name: '' }] } : c,
       ),
     })
   }, [])

@@ -196,7 +196,6 @@ class Ingredient(BaseModel):
     qty: str | None = None
     unit: UnitEnum | None = None
     name: str
-    note: str | None = None
     allergen: str | None = None
     substitute: str | None = None
 

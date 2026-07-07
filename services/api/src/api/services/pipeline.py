@@ -197,7 +197,7 @@ def _done_event(result: ImportResult, cache_key: str | None = None) -> dict[str,
 
 
 def _ingredient_display(ing: Ingredient) -> str:
-    parts = [p for p in [ing.qty, ing.unit, ing.name, f"({ing.note})" if ing.note else None] if p]
+    parts = [p for p in [ing.qty, ing.unit, ing.name] if p]
     return " ".join(parts) if parts else ing.name
 
 

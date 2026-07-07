@@ -258,20 +258,12 @@ interface StructuredIngredient {
   qty: string
   unit: string
   name: string
-  note: string
 }
 
 const parseIngredient = (s: string): StructuredIngredient => {
   const trimmed = s.trim()
-  if (!trimmed) return { qty: '', unit: '', name: '', note: '' }
-  let rest = trimmed
-  let note = ''
-  const noteMatch = rest.match(/^(.*?)\s*\(([^)]+)\)\s*$/)
-  if (noteMatch) {
-    rest = noteMatch[1].trim()
-    note = noteMatch[2]
-  }
-  const parts = rest.split(/\s+/)
+  if (!trimmed) return { qty: '', unit: '', name: '' }
+  const parts = trimmed.split(/\s+/)
   let idx = 0
   let qty = ''
   if (parts[idx] && /^[\d¼½¾⅓⅔⅛⅜⅝⅞.,/]+$/.test(parts[idx])) {
@@ -281,13 +273,11 @@ const parseIngredient = (s: string): StructuredIngredient => {
   if (parts[idx] && (UNITS as readonly string[]).includes(parts[idx].toLowerCase())) {
     unit = parts[idx++].toLowerCase()
   }
-  return { qty, unit, name: parts.slice(idx).join(' '), note }
+  return { qty, unit, name: parts.slice(idx).join(' ') }
 }
 
 const serializeIngredient = (ing: StructuredIngredient): string => {
-  return [ing.qty, ing.unit, ing.name, ing.note ? `(${ing.note})` : '']
-    .filter(Boolean)
-    .join(' ')
+  return [ing.qty, ing.unit, ing.name].filter(Boolean).join(' ')
 }
 
 const displayIngredient = (s: string, t: (key: string, opts: { defaultValue: string }) => string): string => {
@@ -296,7 +286,6 @@ const displayIngredient = (s: string, t: (key: string, opts: { defaultValue: str
   return serializeIngredient({ ...parsed, unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }) })
 }
 
-// Note is intentionally dropped — shopping list entries are qty/unit/name only.
 const formatForShoppingList = (s: string): string => {
   const { qty, unit, name } = parseIngredient(s)
   return [qty, unit, name].filter(Boolean).join(' ')
@@ -349,14 +338,6 @@ const IngredientEditor = ({
         onChange={(e) => update('name', e.target.value)}
         aria-label="ingredient name"
         className={`${inputBase} flex-1 min-w-0`}
-      />
-      <input
-        type="text"
-        value={parts.note}
-        onChange={(e) => update('note', e.target.value)}
-        placeholder={t('units.noteLabel')}
-        aria-label={t('units.noteLabel')}
-        className={`${inputBase} w-16 text-zinc-400 italic shrink-0`}
       />
     </div>
   )
