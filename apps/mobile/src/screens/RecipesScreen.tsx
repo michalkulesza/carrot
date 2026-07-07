@@ -4,6 +4,7 @@ import {
   Alert,
   FlatList,
   Image,
+  LayoutAnimation,
   ListRenderItemInfo,
   PlatformColor,
   Pressable,
@@ -230,6 +231,14 @@ const RecipesScreen = () => {
   )
   const handleSearchCancel = useCallback(() => setQuery(''), [])
 
+  // The search bar's own reveal/dismiss is animated natively by UIKit, but the
+  // header height change it causes is only reflected in React on the next
+  // render — without this, the tag bar and list content snap to their new
+  // position instead of transitioning along with it.
+  const animateHeaderHeightChange = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+  }, [])
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: t('nav.recipes'),
@@ -256,6 +265,8 @@ const RecipesScreen = () => {
         placeholder: t('recipes.searchPlaceholder'),
         onChangeText: handleSearchChangeText,
         onCancelButtonPress: handleSearchCancel,
+        onFocus: animateHeaderHeightChange,
+        onBlur: animateHeaderHeightChange,
         autoCapitalize: 'none',
       },
       headerRight: () => (
@@ -291,6 +302,7 @@ const RecipesScreen = () => {
     activeHousehold,
     handleSearchChangeText,
     handleSearchCancel,
+    animateHeaderHeightChange,
     t,
     router,
   ])
