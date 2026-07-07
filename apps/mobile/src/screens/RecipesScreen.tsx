@@ -447,7 +447,7 @@ const RecipesScreen = () => {
                     item.protein_per_serving != null ? `${item.protein_per_serving}g ${t('recipes.protein')}` : null,
                     item.fat_per_serving != null ? `${item.fat_per_serving}g ${t('recipes.fat')}` : null,
                     item.carbs_per_serving != null ? `${item.carbs_per_serving}g ${t('recipes.carbs')}` : null,
-                  ].filter(Boolean).join('  ·  ')}
+                  ].filter(Boolean).join('   ')}
                 </Text>
               )}
             </View>
