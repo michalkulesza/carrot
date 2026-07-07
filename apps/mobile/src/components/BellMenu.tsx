@@ -113,11 +113,10 @@ const BellMenu = () => {
     if (visibleNotifCount > 0) {
       items.push({
         id: 'clear-history',
-        // No top-level item in this menu sets `image` (unlike subactions) — mixing an
-        // iconed row in with emoji-only ones makes iOS reserve a left icon column for
-        // every row, pushing all the other titles rightward. Use an emoji prefix instead
-        // to stay consistent with the rest of the list.
-        title: `🗑️ ${t('common.clearAll')}`,
+        // No `image` here (unlike subactions) — a native icon on this row alone makes iOS
+        // reserve a left icon column for every sibling row in the menu, pushing all the
+        // other titles rightward.
+        title: t('common.clearAll'),
         attributes: { destructive: true },
       })
     }
