@@ -944,6 +944,9 @@ const ImportRecipeScreen = () => {
   // High demand background job state
   const highDemandJobRef = useRef<{ kind: ImportJobKind; input: Record<string, string> } | null>(null)
   const highDemandOfferedRef = useRef(false)
+  // True once the foreground stream has resolved (success or error) — guards against
+  // offering/accepting a background job for an import that already finished on its own.
+  const streamDoneRef = useRef(false)
 
   const activeAllergens = useMemo(() => {
     const p = preferences?.personal_allergens
@@ -1116,7 +1119,7 @@ const ImportRecipeScreen = () => {
   }
 
   const handleHighDemand = useCallback(async () => {
-    if (highDemandOfferedRef.current || !highDemandJobRef.current) return
+    if (highDemandOfferedRef.current || !highDemandJobRef.current || streamDoneRef.current) return
     highDemandOfferedRef.current = true
 
     const job = highDemandJobRef.current
@@ -1129,6 +1132,11 @@ const ImportRecipeScreen = () => {
         {
           text: t('addRecipe.highDemandAccept'),
           onPress: async () => {
+            // The foreground stream may have finished on its own while this alert was
+            // sitting on screen (React Native can't auto-dismiss a native Alert) — if so,
+            // the result is already applied, so don't enqueue a redundant background job.
+            if (streamDoneRef.current) return
+
             // Abort the foreground stream
             cancelRef.current?.()
             setLoading(false)
@@ -1181,11 +1189,13 @@ const ImportRecipeScreen = () => {
     },
     onDone(res: ImportResult) {
       console.log('[import] done:', res.stage, res.error ?? 'ok')
+      streamDoneRef.current = true
       Animated.timing(progressAnim, { toValue: 1, duration: 300, useNativeDriver: false }).start()
       applyImportResult(res)
     },
     onError(msg: string) {
       console.log('[import] error:', msg)
+      streamDoneRef.current = true
       setError(msg)
       setLoading(false)
     },
@@ -1200,6 +1210,7 @@ const ImportRecipeScreen = () => {
     cancelRef.current?.()
     highDemandJobRef.current = { kind: 'url', input: { url: url.trim() } }
     highDemandOfferedRef.current = false
+    streamDoneRef.current = false
     progressAnim.setValue(0)
     setLoading(true)
     setError(null)
@@ -1219,6 +1230,7 @@ const ImportRecipeScreen = () => {
     cancelRef.current?.()
     highDemandJobRef.current = { kind: 'text', input: { text: pastedText.trim() } }
     highDemandOfferedRef.current = false
+    streamDoneRef.current = false
     progressAnim.setValue(0)
     setLoading(true)
     setError(null)
@@ -1283,6 +1295,7 @@ const ImportRecipeScreen = () => {
     cancelRef.current?.()
     highDemandJobRef.current = { kind: 'image', input: { image_base64: imageBase64, mime_type: mimeType } }
     highDemandOfferedRef.current = false
+    streamDoneRef.current = false
     pendingThumbRef.current = `data:${mimeType};base64,${imageBase64}`
     progressAnim.setValue(0)
     setLoading(true)
