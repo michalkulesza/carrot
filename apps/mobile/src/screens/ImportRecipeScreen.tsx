@@ -29,6 +29,7 @@ import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@platekeeper/shared/api/context'
 import { useNotificationHistory } from '../context/NotificationHistoryContext'
 import BugReportButton from '../components/BugReportButton'
+import NutritionBoxGrid from '../components/NutritionBoxGrid'
 import { UnitPickerModal, TagPickerModal, IngredientEditor } from '../components/RecipeFieldEditors'
 import { useTags } from '@platekeeper/shared/hooks/useTags'
 import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
@@ -231,12 +232,13 @@ const RecipeImportSkeleton = ({ progress }: { progress: Animated.Value }) => {
           ))}
         </View>
 
-        <View style={styles.previewMetaRow}>
-          <Animated.View style={[styles.skeletonBone, styles.skeletonMeta, { opacity, width: 64 }]} />
-          <Animated.View style={[styles.skeletonBone, styles.skeletonMeta, { opacity, width: 92 }]} />
-          <Animated.View style={[styles.skeletonBone, styles.skeletonMeta, { opacity, width: 78 }]} />
-          <Animated.View style={[styles.skeletonBone, styles.skeletonMeta, { opacity, width: 70 }]} />
-          <Animated.View style={[styles.skeletonBone, styles.skeletonMeta, { opacity, width: 78 }]} />
+        <View style={styles.skeletonMetaRow}>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <View key={i} style={styles.skeletonMetaBox}>
+              <Animated.View style={[styles.skeletonBone, styles.skeletonMetaNumber, { opacity }]} />
+              <Animated.View style={[styles.skeletonBone, styles.skeletonMetaLabel, { opacity }]} />
+            </View>
+          ))}
         </View>
 
         <View style={styles.previewSection}>
@@ -524,95 +526,38 @@ const RecipeFormView = ({
           </View>
         )}
 
-        <View style={styles.previewMetaRow}>
-          {editing ? (
-            <>
-              <View style={styles.previewMetaEditItem}>
-                <Text style={styles.previewMetaItem}>{t('recipes.serves')}:</Text>
-                <TextInput
-                  style={styles.previewMetaInput}
-                  value={recipe.servings}
-                  onChangeText={(v) => onChange({ ...recipe, servings: v })}
-                  keyboardType="number-pad"
-                  placeholder="—"
-                  accessibilityLabel={t('recipes.serves')}
-                />
-              </View>
-              <View style={styles.previewMetaEditItem}>
-                <TextInput
-                  style={styles.previewMetaInput}
-                  value={recipe.kcal}
-                  onChangeText={(v) => onChange({ ...recipe, kcal: v })}
-                  keyboardType="number-pad"
-                  placeholder="—"
-                  accessibilityLabel={t('recipes.kcalPerServing')}
-                />
-                <Text style={styles.previewMetaItem}>{t('recipes.kcalPerServing')}</Text>
-              </View>
-              <View style={styles.previewMetaEditItem}>
-                <TextInput
-                  style={styles.previewMetaInput}
-                  value={recipe.protein}
-                  onChangeText={(v) => onChange({ ...recipe, protein: v })}
-                  keyboardType="number-pad"
-                  placeholder="—"
-                  accessibilityLabel={t('recipes.proteinPerServing')}
-                />
-                <Text style={styles.previewMetaItem}>{t('recipes.proteinPerServing')}</Text>
-              </View>
-              <View style={styles.previewMetaEditItem}>
-                <TextInput
-                  style={styles.previewMetaInput}
-                  value={recipe.fat}
-                  onChangeText={(v) => onChange({ ...recipe, fat: v })}
-                  keyboardType="number-pad"
-                  placeholder="—"
-                  accessibilityLabel={t('recipes.fatPerServing')}
-                />
-                <Text style={styles.previewMetaItem}>{t('recipes.fatPerServing')}</Text>
-              </View>
-              <View style={styles.previewMetaEditItem}>
-                <TextInput
-                  style={styles.previewMetaInput}
-                  value={recipe.carbs}
-                  onChangeText={(v) => onChange({ ...recipe, carbs: v })}
-                  keyboardType="number-pad"
-                  placeholder="—"
-                  accessibilityLabel={t('recipes.carbsPerServing')}
-                />
-                <Text style={styles.previewMetaItem}>{t('recipes.carbsPerServing')}</Text>
-              </View>
-            </>
-          ) : (
-            <>
-              {recipe.servings !== '' && (
-                <Text style={styles.previewMetaItem}>
-                  {t('recipes.serves')}: {recipe.servings}
-                </Text>
-              )}
-              {recipe.kcal !== '' && (
-                <Text style={styles.previewMetaItem}>
-                  {recipe.kcal} {t('recipes.kcalPerServing')}
-                </Text>
-              )}
-              {recipe.protein !== '' && (
-                <Text style={styles.previewMetaItem}>
-                  {recipe.protein} {t('recipes.proteinPerServing')}
-                </Text>
-              )}
-              {recipe.fat !== '' && (
-                <Text style={styles.previewMetaItem}>
-                  {recipe.fat} {t('recipes.fatPerServing')}
-                </Text>
-              )}
-              {recipe.carbs !== '' && (
-                <Text style={styles.previewMetaItem}>
-                  {recipe.carbs} {t('recipes.carbsPerServing')}
-                </Text>
-              )}
-            </>
-          )}
-        </View>
+        <NutritionBoxGrid
+          editing={editing}
+          items={[
+            { label: t('recipes.serves'), value: recipe.servings, accessibilityLabel: t('recipes.serves') },
+            {
+              label: t(editing ? 'recipes.kcalPerServing' : 'recipes.colKcal'),
+              value: recipe.kcal,
+              accessibilityLabel: t('recipes.kcalPerServing'),
+            },
+            {
+              label: t(editing ? 'recipes.proteinPerServing' : 'recipes.protein'),
+              value: recipe.protein,
+              accessibilityLabel: t('recipes.proteinPerServing'),
+            },
+            {
+              label: t(editing ? 'recipes.fatPerServing' : 'recipes.fat'),
+              value: recipe.fat,
+              accessibilityLabel: t('recipes.fatPerServing'),
+            },
+            {
+              label: t(editing ? 'recipes.carbsPerServing' : 'recipes.carbs'),
+              value: recipe.carbs,
+              accessibilityLabel: t('recipes.carbsPerServing'),
+            },
+          ]}
+          onChangeValue={(index, value) => {
+            const key = (['servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
+            onChange({ ...recipe, [key]: value })
+          }}
+          disclaimerText={t('recipes.nutritionEstimateDisclaimer')}
+          disclaimerAccessibilityLabel={t('recipes.nutritionEstimateDisclaimer')}
+        />
 
         {(recipe.creator_handle || recipe.source_url) && (
           <View style={styles.previewSourceRow}>
@@ -1755,7 +1700,18 @@ const styles = StyleSheet.create({
   },
   skeletonTitleLine: { height: 26, borderRadius: 8, marginBottom: 8 },
   skeletonTag: { height: 22, borderRadius: 12 },
-  skeletonMeta: { height: 13, borderRadius: 4 },
+  skeletonMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  skeletonMetaBox: {
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    minWidth: 64,
+    gap: 4,
+  },
+  skeletonMetaNumber: { width: 28, height: 17, borderRadius: 5 },
+  skeletonMetaLabel: { width: 40, height: 13, borderRadius: 4 },
   skeletonLabel: { width: 90, height: 12, borderRadius: 4, marginBottom: 10 },
   skeletonBullet: { width: 6, height: 6, borderRadius: 3, marginRight: 8, marginTop: 8 },
   skeletonIngredientLine: { height: 17, borderRadius: 5 },
@@ -1856,8 +1812,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   previewTagText: { color: colors.brand, fontSize: 12, fontWeight: '500' },
-  previewMetaRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 10, gap: 16 },
-  previewMetaItem: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
   previewSourceRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   previewSourceText: { fontSize: 13, color: PlatformColor('secondaryLabel') as unknown as string },
   previewComponentBlock: { marginTop: 8 },
@@ -1935,16 +1889,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   previewAddTagText: { fontSize: 12, color: PlatformColor('secondaryLabel') as unknown as string },
-  previewMetaEditItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  previewMetaInput: {
-    fontSize: 13,
-    color: PlatformColor('label') as unknown as string,
-    borderBottomWidth: 1,
-    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    minWidth: 28,
-    padding: 0,
-    textAlign: 'center',
-  },
   previewStepEditRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginBottom: 8 },
   previewStepInput: {
     flex: 1,
