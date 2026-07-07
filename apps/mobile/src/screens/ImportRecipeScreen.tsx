@@ -1019,15 +1019,18 @@ const ImportRecipeScreen = () => {
         }),
         headerRight: previewMode
           ? () => (
-              <Pressable
-                onPress={() => setPreviewMode(false)}
-                hitSlop={8}
-                style={({ pressed }) => [styles.headerEditBtn, pressed && { opacity: 0.5 }]}
-                accessibilityLabel={t('common.edit')}
-                accessibilityRole="button"
-              >
-                <Feather name="edit-2" size={22} color={PlatformColor('secondaryLabel') as unknown as string} />
-              </Pressable>
+              <View style={styles.headerBtns}>
+                <Pressable
+                  onPress={() => setPreviewMode(false)}
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.headerEditBtn, pressed && { opacity: 0.5 }]}
+                  accessibilityLabel={t('common.edit')}
+                  accessibilityRole="button"
+                >
+                  <Feather name="edit-2" size={22} color={PlatformColor('secondaryLabel') as unknown as string} />
+                </Pressable>
+                <BugReportButton />
+              </View>
             )
           : () => <BugReportButton />,
       })
@@ -1541,6 +1544,7 @@ const styles = StyleSheet.create({
     color: PlatformColor('label') as unknown as string,
   },
   headerEditBtn: { paddingHorizontal: 8, paddingVertical: 4 },
+  headerBtns: { flexDirection: 'row', alignItems: 'center' },
 
   // Quick URL input
   quickUrlSection: { paddingTop: 8, paddingHorizontal: 16, gap: 10 },
