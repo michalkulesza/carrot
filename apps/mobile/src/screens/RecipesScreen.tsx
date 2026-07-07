@@ -426,22 +426,27 @@ const RecipesScreen = () => {
               <Text style={styles.cardTitle} numberOfLines={2}>
                 {item.title}
               </Text>
-              <Text
-                style={[styles.cardTags, item.tags.length === 0 && styles.cardTagsEmpty]}
-                numberOfLines={1}
-              >
-                {item.tags.length > 0
-                  ? item.tags.map((tg) => tTag(tg.name, t)).join(', ')
-                  : t('tags.noTags')}
-              </Text>
+              {item.tags.length > 0 ? (
+                <View style={styles.cardTagRow}>
+                  {item.tags.map((tg) => (
+                    <View key={tg.id} style={styles.cardTagPill}>
+                      <Text style={styles.cardTagPillText} numberOfLines={1}>
+                        {tTag(tg.name, t)}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={[styles.cardTags, styles.cardTagsEmpty]}>{t('tags.noTags')}</Text>
+              )}
               {(item.servings != null || item.kcal_per_serving != null || item.protein_per_serving != null || item.fat_per_serving != null || item.carbs_per_serving != null) && (
                 <Text style={styles.cardMeta}>
                   {[
                     item.servings != null ? `${t('recipes.serves')}: ${item.servings}` : null,
                     item.kcal_per_serving != null ? `${item.kcal_per_serving} kcal` : null,
-                    item.protein_per_serving != null ? `${item.protein_per_serving}g P` : null,
-                    item.fat_per_serving != null ? `${item.fat_per_serving}g F` : null,
-                    item.carbs_per_serving != null ? `${item.carbs_per_serving}g C` : null,
+                    item.protein_per_serving != null ? `${item.protein_per_serving}g ${t('recipes.protein')}` : null,
+                    item.fat_per_serving != null ? `${item.fat_per_serving}g ${t('recipes.fat')}` : null,
+                    item.carbs_per_serving != null ? `${item.carbs_per_serving}g ${t('recipes.carbs')}` : null,
                   ].filter(Boolean).join('  ·  ')}
                 </Text>
               )}
@@ -639,6 +644,14 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
   cardTags: { fontSize: 12, color: colors.brand, marginBottom: 2, marginTop: 1 },
   cardTagsEmpty: { color: colors.tertiaryLabel },
+  cardTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 2, marginTop: 1 },
+  cardTagPill: {
+    backgroundColor: colors.brandLight,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  cardTagPillText: { fontSize: 12, lineHeight: 16, color: colors.brand, fontWeight: '500' },
   cardMeta: { fontSize: 12, color: colors.tertiaryLabel },
   empty: { padding: 40, alignItems: 'center' },
   emptyText: {
