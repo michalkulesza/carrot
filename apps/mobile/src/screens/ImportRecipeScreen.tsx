@@ -1131,62 +1131,65 @@ const ImportRecipeScreen = () => {
         { text: t('addRecipe.highDemandWait'), style: 'cancel' },
         {
           text: t('addRecipe.highDemandAccept'),
-          onPress: async () => {
+          onPress: () => {
             // The foreground stream may have finished on its own while this alert was
             // sitting on screen (React Native can't auto-dismiss a native Alert) — if so,
             // the result is already applied, so don't enqueue a redundant background job.
             if (streamDoneRef.current) return
 
-            // Abort the foreground stream, but deliberately leave `loading` true — it keeps
-            // the import skeleton/progress bar on screen while we enqueue the job below,
-            // instead of flashing back to the blank url/text input for the second or two
-            // that takes. Only reset it if enqueueing fails (see catch below).
             cancelRef.current?.()
+            skipGuardRef.current = true
+            // Navigate home immediately — don't make the user stare at this screen while
+            // we wait on the push-token fetch and the enqueue network call below. Not
+            // router.back()/dismissTo(): the "open in browser" fallback can leave a second
+            // import-recipe screen underneath this one (WebViewImportScreen replaces
+            // itself with a fresh import-recipe rather than popping the original), and
+            // dismissTo requires an exact route-name match in the current stack's history
+            // which proved unreliable here. dismissAll() unconditionally pops everything,
+            // then replace() lands on home the same way the auth-redirect flow already
+            // does elsewhere in this codebase (app/_layout.tsx).
+            router.dismissAll()
+            router.replace('/(tabs)')
 
-            // Get device push token for fallback notification. On simulators this call
-            // commonly never resolves or rejects (no real APNs registration is possible),
-            // which would otherwise stall the entire background-job flow right here — race
-            // it against a timeout so a push-less environment can't block anything.
-            let devicePushToken: string | null = null
-            try {
-              const tokenData = await Promise.race([
-                Notifications.getDevicePushTokenAsync(),
-                new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
-              ])
-              devicePushToken = tokenData.data
-            } catch {
-              // Push token unavailable or timed out — job will run silently
-            }
+            // Push token + enqueue happen after navigation, so neither can delay landing
+            // on the home screen. This screen is unmounted by the time these resolve, so
+            // failures surface via a plain Alert rather than local error state.
+            void (async () => {
+              // Get device push token for fallback notification. On simulators this call
+              // commonly never resolves or rejects (no real APNs registration is possible)
+              // — race it against a timeout so a push-less environment can't block anything.
+              let devicePushToken: string | null = null
+              try {
+                const tokenData = await Promise.race([
+                  Notifications.getDevicePushTokenAsync(),
+                  new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000)),
+                ])
+                devicePushToken = tokenData.data
+              } catch {
+                // Push token unavailable or timed out — job will run silently
+              }
 
-            try {
-              const enqueued = await api.enqueueImportJob({
-                kind: job.kind,
-                input: job.input,
-                device_push_token: devicePushToken,
-              })
-              pushNotif({
-                type: 'recipe_importing',
-                title: t('bell.recipeImporting'),
-                body: t('bell.recipeImportingBody'),
-                job_id: enqueued.id,
-                job_kind: job.kind,
-                job_input: job.input,
-              })
-              skipGuardRef.current = true
-              // Not router.back()/dismissTo(): the "open in browser" fallback can leave a
-              // second import-recipe screen underneath this one (WebViewImportScreen
-              // replaces itself with a fresh import-recipe rather than popping the
-              // original), and dismissTo requires an exact route-name match in the current
-              // stack's history which proved unreliable here. dismissAll() unconditionally
-              // pops everything, then replace() lands on home the same way the auth-redirect
-              // flow already does elsewhere in this codebase (app/_layout.tsx).
-              router.dismissAll()
-              router.replace('/(tabs)')
-            } catch (err) {
-              setError(err instanceof Error ? err.message : t('addRecipe.failedToEnqueueJob'))
-              setLoading(false)
-              progressAnim.setValue(0)
-            }
+              try {
+                const enqueued = await api.enqueueImportJob({
+                  kind: job.kind,
+                  input: job.input,
+                  device_push_token: devicePushToken,
+                })
+                pushNotif({
+                  type: 'recipe_importing',
+                  title: t('bell.recipeImporting'),
+                  body: t('bell.recipeImportingBody'),
+                  job_id: enqueued.id,
+                  job_kind: job.kind,
+                  job_input: job.input,
+                })
+              } catch (err) {
+                Alert.alert(
+                  t('addRecipe.importFailed'),
+                  err instanceof Error ? err.message : t('addRecipe.failedToEnqueueJob'),
+                )
+              }
+            })()
           },
         },
       ],
