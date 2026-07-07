@@ -1,4 +1,4 @@
-import { Platform, PlatformColor } from 'react-native'
+import { DynamicColorIOS, Platform, PlatformColor } from 'react-native'
 
 const ios = (name: string, fallback: string): string =>
   (Platform.OS === 'ios' ? PlatformColor(name) : fallback) as unknown as string
@@ -39,4 +39,7 @@ export const colors = {
   // Brand (non-system, kept as-is)
   brand: '#cb6134',
   brandLight: '#f8e9e3',
+  brandText: (Platform.OS === 'ios'
+    ? DynamicColorIOS({ light: '#141212', dark: '#F4E7E7' })
+    : '#141212') as unknown as string,
 }
