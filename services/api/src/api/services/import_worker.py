@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 
 import httpx
-from sqlalchemy import or_, select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from api.database import async_session_maker
@@ -20,6 +20,7 @@ from api.models import (
     Tag,
     UserPreferences,
 )
+from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
 from api.services.pipeline import (
     run_image_import_stream,
@@ -33,17 +34,15 @@ _POLL_INTERVAL = 5.0   # seconds between polls when queue is empty
 _MAX_ATTEMPTS = 80     # declare failure after this many Gemini retries
 
 
-async def _get_tags_and_allergens(session, user_id: uuid.UUID):
+async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uuid.UUID | None):
     result = await session.execute(
-        select(Tag).where(or_(Tag.is_default.is_(True), Tag.user_id == user_id))
+        select(Tag).where(_tag_filter(user_id, household_id))
     )
     available_tags = [t.name for t in result.scalars().all()]
 
     allergens: list[str] = []
-    from api.users import User  # avoid circular import at module level
-    user = await session.get(User, user_id)
-    if user and user.active_household_id:
-        household = await session.get(Household, user.active_household_id)
+    if household_id:
+        household = await session.get(Household, household_id)
         if household and household.allergens:
             a = household.allergens
             allergens = list(a.get("predefined") or []) + list(a.get("custom") or [])
@@ -59,7 +58,7 @@ async def _get_tags_and_allergens(session, user_id: uuid.UUID):
     return available_tags, allergens
 
 
-async def _save_recipe(session, user_id: uuid.UUID, result) -> Recipe:
+async def _save_recipe(session, user_id: uuid.UUID, household_id: uuid.UUID | None, result) -> Recipe:
     """Save an ImportResult's recipe to the DB and return the new Recipe."""
     recipe_data = result.recipe
     meta = result.metadata
@@ -70,8 +69,8 @@ async def _save_recipe(session, user_id: uuid.UUID, result) -> Recipe:
     if recipe_data.tags:
         tag_result = await session.execute(
             select(Tag).where(
-                or_(Tag.is_default.is_(True), Tag.user_id == user_id),
-                Tag.name.in_(recipe_data.tags),
+                _tag_filter(user_id, household_id),
+                func.lower(Tag.name).in_([n.lower() for n in recipe_data.tags]),
             )
         )
         tags = list(tag_result.scalars().all())
@@ -122,7 +121,10 @@ async def _process_job(job: ImportJob) -> None:
 
     try:
         async with async_session_maker() as session:
-            available_tags, allergens = await _get_tags_and_allergens(session, job.user_id)
+            from api.users import User  # avoid circular import at module level
+            user = await session.get(User, job.user_id)
+            household_id = user.active_household_id if user else None
+            available_tags, allergens = await _get_tags_and_allergens(session, job.user_id, household_id)
 
         # Run the appropriate pipeline (draining the async generator)
         result = None
@@ -164,7 +166,7 @@ async def _process_job(job: ImportJob) -> None:
 
         # Save recipe
         async with async_session_maker() as session:
-            recipe = await _save_recipe(session, job.user_id, result)
+            recipe = await _save_recipe(session, job.user_id, household_id, result)
             recipe_id = recipe.id
 
         # Upload thumbnail to R2 (fire-and-forget, failure keeps original URL)
