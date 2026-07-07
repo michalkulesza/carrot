@@ -60,6 +60,8 @@ async def _with_retry(
     if settings.debug_force_high_demand and on_high_demand is not None:
         high_demand_notified = True
         await on_high_demand()
+    if settings.debug_artificial_delay_seconds > 0:
+        await asyncio.sleep(settings.debug_artificial_delay_seconds)
     for attempt, delay in enumerate(_retry_delays(generous=generous), start=1):
         if attempt > max_attempts:
             raise RuntimeError(f"Gemini: exceeded {max_attempts} retry attempts")
