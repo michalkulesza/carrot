@@ -97,10 +97,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.setItemAsync(TOKEN_KEY, result.access_token)
     setToken(result.access_token)
     await SecureStore.deleteItemAsync(PENDING_SIGNUP_KEY)
+    const me = await mobileClient.getMe()
+    // Clear the pending-signup state together with setting the user (same tick, batched)
+    // so screens never render the in-between state of "no token, no user" — that gap
+    // is what caused a login-screen flash before landing on the main app.
+    setUser(me)
     setSignupEmail(null)
     setSignupToken(null)
-    const me = await mobileClient.getMe()
-    setUser(me)
   }, [signupToken])
 
   const logout = useCallback(async (): Promise<void> => {

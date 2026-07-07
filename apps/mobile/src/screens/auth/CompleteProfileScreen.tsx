@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { StyleSheet, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
+import { Keyboard, StyleSheet, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
@@ -16,7 +16,7 @@ interface CompleteProfileFormValues {
 const CompleteProfileScreen = () => {
   const { t } = useTranslation()
   const router = useRouter()
-  const { signupToken, completeSignup } = useAuth()
+  const { signupToken, completeSignup, user } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -28,12 +28,18 @@ const CompleteProfileScreen = () => {
   } = useForm<CompleteProfileFormValues>({ defaultValues: { password: '', nickname: '' } })
 
   useEffect(() => {
-    if (!signupToken) {
+    // Once completeSignup succeeds, signupToken clears and `user` becomes set in the same
+    // render — don't bounce to login in that case, just let the root layout swap to the
+    // main app while this screen still shows its "creating account" loading state.
+    if (!signupToken && !user) {
       router.replace('/(auth)/login')
     }
-  }, [signupToken])
+  }, [signupToken, user])
 
   const onSubmit = async (values: CompleteProfileFormValues) => {
+    // Dismiss up front — otherwise the keyboard closing collides with the route
+    // transition to the main app and the password field visibly clears mid-swap.
+    Keyboard.dismiss()
     setError(null)
     setSubmitting(true)
     try {
