@@ -110,15 +110,9 @@ async def _save_recipe(session, user_id: uuid.UUID, household_id: uuid.UUID | No
 
 
 async def _process_job(job: ImportJob) -> None:
-    async with async_session_maker() as session:
-        # Mark running
-        await session.execute(
-            update(ImportJob)
-            .where(ImportJob.id == job.id)
-            .values(status=ImportJobStatus.RUNNING, attempts=job.attempts + 1, updated_at=datetime.utcnow())
-        )
-        await session.commit()
-
+    # _claim_job() already transitions the job to RUNNING (with attempts incremented) in the
+    # same transaction as claiming it — don't redo it here, a second write isn't needed and
+    # doing it separately was the source of a claim-twice race (see _claim_job's docstring).
     try:
         async with async_session_maker() as session:
             from api.users import User  # avoid circular import at module level
@@ -237,7 +231,16 @@ async def _process_job(job: ImportJob) -> None:
 
 
 async def _claim_job() -> ImportJob | None:
-    """Claim one pending job atomically."""
+    """Claim one pending job atomically.
+
+    The SELECT...FOR UPDATE lock only lasts for this transaction — it's released the moment
+    this function returns, whether or not anything actually changed in the DB. The run() loop
+    below doesn't await _process_job() before looping back to claim again, so if the RUNNING
+    transition happened in a later, separate transaction (as it used to, in _process_job), the
+    job would still read as PENDING to the next claim attempt and could be picked up twice,
+    each claim spawning its own extraction + save. Committing the RUNNING transition inside
+    this same transaction, before the lock is released, closes that window.
+    """
     async with async_session_maker() as session:
         result = await session.execute(
             select(ImportJob)
@@ -249,7 +252,12 @@ async def _claim_job() -> ImportJob | None:
         job = result.scalar_one_or_none()
         if job is None:
             return None
-        # Detach from session so it's usable outside
+        job.status = ImportJobStatus.RUNNING
+        job.attempts = job.attempts + 1
+        job.updated_at = datetime.utcnow()
+        await session.commit()
+        # Detach from session so it's usable outside (expire_on_commit=False on the session
+        # maker means the attributes we just set are still populated post-commit).
         session.expunge(job)
         return job
 
