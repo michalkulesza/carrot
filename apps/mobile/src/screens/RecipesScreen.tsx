@@ -1,10 +1,10 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Image,
-  LayoutAnimation,
   ListRenderItemInfo,
   PlatformColor,
   Pressable,
@@ -12,7 +12,15 @@ import {
   Text,
   View,
 } from 'react-native'
-import Reanimated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated'
+import Reanimated, {
+  Easing,
+  FadeInDown,
+  FadeOut,
+  LinearTransition,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { MenuView } from '@react-native-menu/menu'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useTranslation } from 'react-i18next'
@@ -37,6 +45,13 @@ import { useHousehold } from '../context/HouseholdContext'
 
 const PERSONAL_MENU_ID = '__personal__'
 const MANAGE_TIP_MENU_ID = '__manage_tip__'
+
+// The search bar's expanded header height can only be learned from a real focus event
+// (see comment near searchBarHeightRef below) — it's a fixed native constant for this
+// screen's header configuration, so once measured on this device it's persisted to disk
+// and never needs to be (re-)learned again, only on the very first search tap ever.
+const SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY = 'recipes-search-bar-height-delta'
+let learnedSearchBarHeightDelta: number | null = null
 
 const ThumbnailImage = ({ url, style }: { url: string; style: object }) => {
   const [errored, setErrored] = useState(false)
@@ -92,6 +107,24 @@ const RecipesScreen = () => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const headerHeight = useHeaderHeight()
+  const headerHeightSV = useSharedValue(headerHeight)
+  const tagBarHeightSV = useSharedValue(0)
+  const tagBarVisibleSV = useSharedValue(1)
+  const collapsedHeaderHeightRef = useRef(headerHeight)
+  const searchBarHeightRef = useRef<number | null>(learnedSearchBarHeightDelta)
+  const isSearchActiveRef = useRef(false)
+
+  useEffect(() => {
+    if (searchBarHeightRef.current != null) return
+    AsyncStorage.getItem(SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY).then((val) => {
+      if (val == null || searchBarHeightRef.current != null) return
+      const parsed = Number(val)
+      if (Number.isFinite(parsed)) {
+        searchBarHeightRef.current = parsed
+        learnedSearchBarHeightDelta = parsed
+      }
+    })
+  }, [])
   const { recipes, isLoading, error } = useRecipes()
   const { busy, showSpinner } = useScreenLoading(isLoading)
   const { tags } = useTags()
@@ -100,11 +133,11 @@ const RecipesScreen = () => {
   const qc = useQueryClient()
   const { items: notifItems } = useNotificationHistory()
   const [query, setQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
   const [filterFavourites, setFilterFavourites] = useState(false)
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [sort, setSort] = useState<SortMode>('newest')
-  const [tagBarHeight, setTagBarHeight] = useState(0)
   const swipeableRefs = useRef<Map<string, Swipeable>>(new Map())
   const openSwipeableId = useRef<string | null>(null)
   const seenIdsRef = useRef<Set<string>>(new Set())
@@ -231,13 +264,55 @@ const RecipesScreen = () => {
   )
   const handleSearchCancel = useCallback(() => setQuery(''), [])
 
-  // The search bar's own reveal/dismiss is animated natively by UIKit, but the
-  // header height change it causes is only reflected in React on the next
-  // render — without this, the tag bar and list content snap to their new
-  // position instead of transitioning along with it.
-  const animateHeaderHeightChange = useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
-  }, [])
+  // useHeaderHeight() only reports the search bar's expanded height once UIKit's own
+  // reveal animation has already finished, so animating off of it lags a full cycle
+  // behind the native motion. Instead, kick our animation off directly from onFocus/onBlur
+  // (which fire as the native animation starts) towards a learned expanded height, and use
+  // the headerHeight effect only to calibrate that height for next time.
+  useEffect(() => {
+    // All user-visible motion is driven by animateHeaderHeight() from onFocus/onBlur —
+    // this effect only calibrates/corrects, so it snaps instantly rather than running a
+    // second, separately-timed animation (which reads as a laggy "catch up").
+    if (isSearchActiveRef.current) {
+      const delta = headerHeight - collapsedHeaderHeightRef.current
+      if (delta !== searchBarHeightRef.current) {
+        searchBarHeightRef.current = delta
+        learnedSearchBarHeightDelta = delta
+        void AsyncStorage.setItem(SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY, String(delta))
+      }
+    } else {
+      collapsedHeaderHeightRef.current = headerHeight
+    }
+    headerHeightSV.value = headerHeight
+  }, [headerHeight, headerHeightSV])
+
+  const animateHeaderHeight = useCallback(
+    (active: boolean) => {
+      isSearchActiveRef.current = active
+      if (active && searchBarHeightRef.current == null) return // unknown height yet — effect above will animate once the real value lands
+      const target = active
+        ? collapsedHeaderHeightRef.current + (searchBarHeightRef.current ?? 0)
+        : collapsedHeaderHeightRef.current
+      headerHeightSV.value = withTiming(target, { duration: 300, easing: Easing.out(Easing.cubic) })
+    },
+    [headerHeightSV],
+  )
+  const handleSearchFocus = useCallback(() => {
+    // Kick the animation off before any setState — clearing the tag/favourites filters
+    // below triggers a re-render of the (possibly long) recipe list, and letting that run
+    // first delays the shared-value mutation reaching the UI thread, which reads as the
+    // tag bar fading late instead of immediately on tap.
+    tagBarVisibleSV.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) })
+    animateHeaderHeight(true)
+    setIsSearching(true)
+    setSelectedTagId(null)
+    setFilterFavourites(false)
+  }, [animateHeaderHeight, tagBarVisibleSV])
+  const handleSearchBlur = useCallback(() => {
+    tagBarVisibleSV.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) })
+    animateHeaderHeight(false)
+    setIsSearching(false)
+  }, [animateHeaderHeight, tagBarVisibleSV])
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -265,8 +340,8 @@ const RecipesScreen = () => {
         placeholder: t('recipes.searchPlaceholder'),
         onChangeText: handleSearchChangeText,
         onCancelButtonPress: handleSearchCancel,
-        onFocus: animateHeaderHeightChange,
-        onBlur: animateHeaderHeightChange,
+        onFocus: handleSearchFocus,
+        onBlur: handleSearchBlur,
         autoCapitalize: 'none',
       },
       headerRight: () => (
@@ -302,7 +377,8 @@ const RecipesScreen = () => {
     activeHousehold,
     handleSearchChangeText,
     handleSearchCancel,
-    animateHeaderHeightChange,
+    handleSearchFocus,
+    handleSearchBlur,
     t,
     router,
   ])
@@ -513,6 +589,14 @@ const RecipesScreen = () => {
     [filterFavourites, t],
   )
 
+  const tagBarPositionStyle = useAnimatedStyle(() => ({
+    top: headerHeightSV.value,
+    opacity: tagBarVisibleSV.value,
+  }))
+  const topSpacerStyle = useAnimatedStyle(() => ({
+    height: headerHeightSV.value + tagBarHeightSV.value * tagBarVisibleSV.value,
+  }))
+
   if (busy) {
     // Only draw our own spinner once auth is ready — during auth bootstrap the
     // root loadingOverlay in app/_layout.tsx is the single loader.
@@ -537,16 +621,19 @@ const RecipesScreen = () => {
         data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderRecipe}
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingTop: tagBarHeight, paddingBottom: insets.bottom + 24 }}
+        contentInsetAdjustmentBehavior="never"
+        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         ListHeaderComponent={
-          pendingJobs.length > 0 ? (
-            <View>
-              {pendingJobs.map((notif) => (
-                <PendingJobCard key={notif.id} notif={notif} />
-              ))}
-            </View>
-          ) : null
+          <View>
+            <Reanimated.View style={topSpacerStyle} />
+            {pendingJobs.length > 0 && (
+              <View>
+                {pendingJobs.map((notif) => (
+                  <PendingJobCard key={notif.id} notif={notif} />
+                ))}
+              </View>
+            )}
+          </View>
         }
         ListFooterComponent={
           filtered.length === 0 ? (
@@ -572,9 +659,10 @@ const RecipesScreen = () => {
           ) : null
         }
       />
-      <View
-        style={[styles.tagBar, { top: headerHeight }]}
-        onLayout={(e) => setTagBarHeight(e.nativeEvent.layout.height)}
+      <Reanimated.View
+        style={[styles.tagBar, tagBarPositionStyle]}
+        onLayout={(e) => { tagBarHeightSV.value = e.nativeEvent.layout.height }}
+        pointerEvents={isSearching ? 'none' : 'auto'}
       >
         {favChip}
         <View style={styles.tagBarDivider} />
@@ -587,7 +675,7 @@ const RecipesScreen = () => {
           style={styles.tagScrollArea}
           contentContainerStyle={styles.tagListContent}
         />
-      </View>
+      </Reanimated.View>
     </View>
   )
 }
