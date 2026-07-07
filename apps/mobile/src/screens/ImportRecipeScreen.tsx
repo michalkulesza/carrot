@@ -1354,7 +1354,7 @@ const ImportRecipeScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      style={styles.flex}
+      style={[styles.flex, styles.screenBackground]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={88}
     >
@@ -1528,7 +1528,8 @@ export default ImportRecipeScreen
 // ── Styles ─────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
+  flex: { flex: 1 },
+  screenBackground: { backgroundColor: colors.background },
   scrollContent: { paddingBottom: 120 },
 
   // Header back button
