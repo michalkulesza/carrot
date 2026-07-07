@@ -1158,7 +1158,11 @@ const ImportRecipeScreen = () => {
                 job_input: job.input,
               })
               skipGuardRef.current = true
-              router.back()
+              // Not router.back(): the "open in browser" fallback can leave a second
+              // import-recipe screen underneath this one (WebViewImportScreen replaces
+              // itself with a fresh import-recipe rather than popping the original), so a
+              // single pop can land back on a stale import screen instead of home.
+              router.dismissTo('/(tabs)')
             } catch (err) {
               setError(err instanceof Error ? err.message : t('addRecipe.failedToEnqueueJob'))
               setLoading(false)
