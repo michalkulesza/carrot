@@ -6,7 +6,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
@@ -21,6 +21,8 @@ from api.models import (
     Tag,
     UserPreferences,
 )
+from api.routes.context import get_active_household_id
+from api.routes.tags import _tag_filter
 from api.services.pipeline import (
     run_image_import,
     run_image_import_stream,
@@ -38,15 +40,16 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 async def _get_tags_and_allergens(
     user: User,
     session: AsyncSession,
+    household_id: uuid.UUID | None,
 ) -> tuple[list[str], list[str]]:
     result = await session.execute(
-        select(Tag).where(or_(Tag.is_default.is_(True), Tag.user_id == user.id))
+        select(Tag).where(_tag_filter(user.id, household_id))
     )
     available_tags = [t.name for t in result.scalars().all()]
 
     allergens: list[str] = []
-    if user.active_household_id:
-        household = await session.get(Household, user.active_household_id)
+    if household_id:
+        household = await session.get(Household, household_id)
         if household and household.allergens:
             a = household.allergens
             allergens = list(a.get("predefined") or []) + list(a.get("custom") or [])
@@ -73,8 +76,9 @@ async def stream_import(
     model: str = "gemini-2.5-flash-lite",
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> StreamingResponse:
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
 
     async def generate():
         async for event in run_import_stream(url, model=model, available_tags=available_tags, allergens=allergens or None):
@@ -102,8 +106,9 @@ async def create_url_import(
     body: UrlImportBody,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> ImportResult:
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
     try:
         return await asyncio.wait_for(
             run_url_import(body.url, model=body.model, available_tags=available_tags, allergens=allergens or None),
@@ -118,8 +123,9 @@ async def create_text_import(
     body: TextImportBody,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> ImportResult:
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
     try:
         return await asyncio.wait_for(
             run_text_import(body.text, model=body.model, available_tags=available_tags, allergens=allergens or None),
@@ -134,8 +140,9 @@ async def stream_text_import(
     body: TextImportBody,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> StreamingResponse:
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
 
     async def generate():
         async for event in run_text_import_stream(body.text, model=body.model, available_tags=available_tags, allergens=allergens or None):
@@ -159,9 +166,10 @@ async def create_image_import(
     body: ImageImportBody,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> ImportResult:
     image_data = base64.b64decode(body.image_base64)
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
     try:
         return await asyncio.wait_for(
             run_image_import(
@@ -179,9 +187,10 @@ async def stream_image_import(
     body: ImageImportBody,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> StreamingResponse:
     image_data = base64.b64decode(body.image_base64)
-    available_tags, allergens = await _get_tags_and_allergens(user, session)
+    available_tags, allergens = await _get_tags_and_allergens(user, session, household_id)
 
     async def generate():
         async for event in run_image_import_stream(image_data, body.mime_type, model=body.model, available_tags=available_tags, allergens=allergens or None):
