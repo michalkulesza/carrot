@@ -1132,20 +1132,16 @@ const ImportRecipeScreen = () => {
         {
           text: t('addRecipe.highDemandAccept'),
           onPress: async () => {
-            // TEMP DEBUG — remove once the navigation issue is confirmed fixed.
-            if (streamDoneRef.current) {
-              Alert.alert('DEBUG', 'Skipped: streamDoneRef was already true (stream finished before tap).')
-              return
-            }
-
             // The foreground stream may have finished on its own while this alert was
             // sitting on screen (React Native can't auto-dismiss a native Alert) — if so,
             // the result is already applied, so don't enqueue a redundant background job.
+            if (streamDoneRef.current) return
 
-            // Abort the foreground stream
+            // Abort the foreground stream, but deliberately leave `loading` true — it keeps
+            // the import skeleton/progress bar on screen while we enqueue the job below,
+            // instead of flashing back to the blank url/text input for the second or two
+            // that takes. Only reset it if enqueueing fails (see catch below).
             cancelRef.current?.()
-            setLoading(false)
-            progressAnim.setValue(0)
 
             // Get device push token for fallback notification. On simulators this call
             // commonly never resolves or rejects (no real APNs registration is possible),
@@ -1168,8 +1164,6 @@ const ImportRecipeScreen = () => {
                 input: job.input,
                 device_push_token: devicePushToken,
               })
-              // TEMP DEBUG
-              Alert.alert('DEBUG', `Enqueued job ${enqueued.id}, about to navigate home`)
               pushNotif({
                 type: 'recipe_importing',
                 title: t('bell.recipeImporting'),
@@ -1189,13 +1183,9 @@ const ImportRecipeScreen = () => {
               router.dismissAll()
               router.replace('/(tabs)')
             } catch (err) {
-              // TEMP DEBUG
-              Alert.alert(
-                'DEBUG: enqueue/nav failed',
-                err instanceof Error ? `${err.name}: ${err.message}` : String(err),
-              )
               setError(err instanceof Error ? err.message : t('addRecipe.failedToEnqueueJob'))
               setLoading(false)
+              progressAnim.setValue(0)
             }
           },
         },
