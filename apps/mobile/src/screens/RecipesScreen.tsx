@@ -39,7 +39,6 @@ import BugReportButton from '../components/BugReportButton'
 import GlassViewSafe from '../components/GlassViewSafe'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
-import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
 import { useScreenLoading } from '../hooks/useScreenLoading'
 import { useHousehold } from '../context/HouseholdContext'
 
@@ -80,27 +79,6 @@ const SORT_OPTIONS: { key: SortMode; labelKey: string }[] = [
   { key: 'title_desc', labelKey: 'recipes.sortTitleZA' },
 ]
 
-const PendingJobCard = ({ notif }: { notif: NotificationItem }) => {
-  const { t } = useTranslation()
-  const sourceKey = `recipes.extractingFrom_${notif.job_kind ?? 'image'}` as const
-  const startedAt = useMemo(() => {
-    const d = new Date(notif.timestamp)
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }, [notif.timestamp])
-  return (
-    <View style={styles.pendingCard}>
-      <View style={styles.pendingImageWrap}>
-        <Feather name="clock" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
-      </View>
-      <View style={styles.pendingBody}>
-        <Text style={styles.pendingTitle}>{t('recipes.extractingRecipe')}</Text>
-        <Text style={styles.pendingMeta}>{t(sourceKey)}  ·  {startedAt}</Text>
-      </View>
-      <ActivityIndicator size="small" color={colors.brand} />
-    </View>
-  )
-}
-
 const RecipesScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
@@ -131,7 +109,6 @@ const RecipesScreen = () => {
   const { households, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
   const api = useApiClient()
   const qc = useQueryClient()
-  const { items: notifItems } = useNotificationHistory()
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
@@ -392,11 +369,6 @@ const RecipesScreen = () => {
     [recipes, favouriteOverrides],
   )
 
-  const pendingJobs = useMemo(
-    () => notifItems.filter((n) => n.type === 'recipe_importing'),
-    [notifItems],
-  )
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const base = recipesWithOverrides.filter((r) => {
@@ -626,13 +598,6 @@ const RecipesScreen = () => {
         ListHeaderComponent={
           <View>
             <Reanimated.View style={topSpacerStyle} />
-            {pendingJobs.length > 0 && (
-              <View>
-                {pendingJobs.map((notif) => (
-                  <PendingJobCard key={notif.id} notif={notif} />
-                ))}
-              </View>
-            )}
           </View>
         }
         ListFooterComponent={
@@ -798,28 +763,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 10,
   },
   swipeActionText: { color: colors.background, fontSize: 13, fontWeight: '600' },
-  pendingCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    marginHorizontal: 16,
-    marginTop: 8,
-    padding: 12,
-    gap: 12,
-    opacity: 0.85,
-  },
-  pendingImageWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
-    backgroundColor: colors.opaqueSeparator,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pendingBody: { flex: 1 },
-  pendingTitle: { fontSize: 16, fontWeight: '600', color: colors.label, marginBottom: 4 },
-  pendingMeta: { fontSize: 12, color: colors.secondaryLabel },
 })
 
 export default RecipesScreen

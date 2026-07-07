@@ -26,7 +26,14 @@ const BellMenu = () => {
   const api = useApiClient()
 
   const timerList = useMemo(() => [...timers.values()], [timers])
-  const totalCount = timerList.length + invitations.length + leaveNotifications.length + notifHistory.length
+  // recipe_importing entries exist only so app/_layout.tsx's poller knows which jobs to
+  // check — intentionally not surfaced here; only the eventual imported/failed result
+  // should notify the user.
+  const visibleNotifCount = useMemo(
+    () => notifHistory.filter((n) => n.type !== 'recipe_importing').length,
+    [notifHistory],
+  )
+  const totalCount = timerList.length + invitations.length + leaveNotifications.length + visibleNotifCount
 
   const actions = useMemo(() => {
     if (totalCount === 0) {
@@ -85,14 +92,6 @@ const BellMenu = () => {
 
     for (const notif of notifHistory) {
       switch (notif.type) {
-        case 'recipe_importing':
-          items.push({
-            id: `recipe-importing-${notif.id}`,
-            title: `⏳ ${notif.title}`,
-            subtitle: notif.body,
-            attributes: { disabled: true },
-          })
-          break
         case 'recipe_imported':
           items.push({
             id: `recipe-imported-${notif.id}`,
@@ -111,7 +110,7 @@ const BellMenu = () => {
       }
     }
 
-    if (notifHistory.length > 0) {
+    if (visibleNotifCount > 0) {
       items.push({
         id: 'clear-history',
         title: t('common.clearAll'),
