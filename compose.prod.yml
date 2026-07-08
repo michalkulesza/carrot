@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ghcr.io/michalkulesza/platekeeper-api:latest
+    image: ghcr.io/michalkulesza/carrot-api:latest
     env_file: .env
     environment:
       R2_ENDPOINT_URL: ${R2_ENDPOINT_URL:-}
@@ -36,7 +36,7 @@ services:
       retries: 5
 
   web:
-    image: ghcr.io/michalkulesza/platekeeper-web:latest
+    image: ghcr.io/michalkulesza/carrot-web:latest
     ports:
       - "127.0.0.1:8089:80"
     restart: unless-stopped
@@ -47,7 +47,7 @@ services:
       retries: 5
 
   showcase:
-    image: ghcr.io/michalkulesza/platekeeper-showcase:latest
+    image: ghcr.io/michalkulesza/carrot-showcase:latest
     ports:
       - "127.0.0.1:8090:80"
     restart: unless-stopped
@@ -59,3 +59,4 @@ services:
 
 volumes:
   postgres_data:
+    name: platekeeper_postgres_data
