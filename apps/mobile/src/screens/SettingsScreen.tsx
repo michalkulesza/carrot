@@ -58,6 +58,8 @@ const APPEARANCE_OPTIONS: { value: AppearanceMode; labelKey: string }[] = [
   { value: 'dark', labelKey: 'settings.appearanceDark' },
 ]
 
+const DEVELOPER_SETTINGS_EMAIL = 'kulesza.michal@gmail.com'
+
 const ALLERGEN_KEYS = [
   'gluten', 'crustaceans', 'tree nuts', 'celery', 'mustard',
   'sulphites', 'lupin', 'molluscs', 'eggs', 'fish',
@@ -599,31 +601,6 @@ const SettingsScreen = () => {
             </Pressable>
           </View>
 
-          {/* Appearance */}
-          <View style={styles.card}>
-            <MenuView
-              title={t('settings.appearance')}
-              onPressAction={({ nativeEvent }) => {
-                setAppearanceMode(nativeEvent.event as AppearanceMode)
-              }}
-              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
-                id: value,
-                title: t(labelKey),
-                state: appearanceMode === value ? 'on' : 'off',
-              }))}
-            >
-              <View style={styles.pickerRow}>
-                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
-                <View style={styles.pickerRight}>
-                  <Text style={styles.pickerValue}>
-                    {t(APPEARANCE_OPTIONS.find(o => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem')}
-                  </Text>
-                  <Text style={styles.pickerChevron}>›</Text>
-                </View>
-              </View>
-            </MenuView>
-          </View>
-
           {/* Unit system */}
           <View style={styles.card}>
             <View style={styles.switchRow}>
@@ -740,20 +717,45 @@ const SettingsScreen = () => {
       </View>
 
       {/* Developer */}
-      <SectionHeader label={t('settings.developer')} />
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t('settings.debugMode')}</Text>
-            <Text style={styles.cardDesc}>{t('settings.debugModeDesc')}</Text>
+      {user?.email === DEVELOPER_SETTINGS_EMAIL && (
+        <>
+          <SectionHeader label={t('settings.developer')} />
+          <View style={styles.card}>
+            <MenuView
+              title={t('settings.appearance')}
+              onPressAction={({ nativeEvent }) => {
+                setAppearanceMode(nativeEvent.event as AppearanceMode)
+              }}
+              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
+                id: value,
+                title: t(labelKey),
+                state: appearanceMode === value ? 'on' : 'off',
+              }))}
+            >
+              <View style={[styles.pickerRow, styles.switchRowBorder]}>
+                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
+                <View style={styles.pickerRight}>
+                  <Text style={styles.pickerValue}>
+                    {t(APPEARANCE_OPTIONS.find(o => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem')}
+                  </Text>
+                  <Text style={styles.pickerChevron}>›</Text>
+                </View>
+              </View>
+            </MenuView>
+            <View style={styles.switchRow}>
+              <View style={styles.switchLabelBlock}>
+                <Text style={styles.switchLabel}>{t('settings.debugMode')}</Text>
+                <Text style={styles.cardDesc}>{t('settings.debugModeDesc')}</Text>
+              </View>
+              <Switch
+                value={debugMode}
+                onValueChange={setDebugMode}
+                accessibilityLabel={t('settings.debugMode')}
+              />
+            </View>
           </View>
-          <Switch
-            value={debugMode}
-            onValueChange={setDebugMode}
-            accessibilityLabel={t('settings.debugMode')}
-          />
-        </View>
-      </View>
+        </>
+      )}
     </ScrollView>
   )
 }
