@@ -160,7 +160,6 @@ const ShoppingListFooter = ({
       {/* Completed section */}
       {completedItems.length > 0 && (
         <View>
-          <View style={styles.sectionDivider} />
           <View style={styles.completedHeader}>
             <Text style={styles.completedLabel}>
               {completedItems.length} {t('shoppingList.completedSection')}
@@ -662,14 +661,6 @@ const styles = StyleSheet.create({
   },
 
   // ── Completed section ─────────────────────────────────────────────────────
-  sectionDivider: {
-    height: 28,
-    backgroundColor: colors.secondaryBackground,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.separator,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
   completedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -689,8 +680,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   clearBtn: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 21,
     color: colors.blue,
   },
 })
