@@ -715,7 +715,7 @@ const RecipesScreen = () => {
 }
 
 const styles = StyleSheet.create({
-  headerTitleWrap: { flexDirection: 'column', alignItems: 'flex-start' },
+  headerTitleWrap: { width: '100%', flexDirection: 'column', alignItems: 'flex-start' },
   headerTitleText: {
     fontSize: 17,
     lineHeight: 22,
