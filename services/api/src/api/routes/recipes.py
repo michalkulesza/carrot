@@ -442,5 +442,11 @@ async def delete_recipe(
     recipe = result.scalar_one_or_none()
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    thumbnail_url = recipe.thumbnail_url
     await session.delete(recipe)
     await session.commit()
+
+    if thumbnail_url and settings.r2_configured:
+        import asyncio
+        from api.services import r2
+        asyncio.create_task(asyncio.to_thread(r2.delete_image, thumbnail_url))

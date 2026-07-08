@@ -7,10 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from fastapi_users.exceptions import UserAlreadyExists
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
-from api.database import Base, async_session_maker, engine
-from api.models import Tag
+from api.database import Base, async_session_maker, engine, get_async_session
+from api.models import Recipe, Tag
+from api.services import r2
 from api.routes.auth import router as auth_verify_router
 from api.routes.allergens import router as allergens_router
 from api.routes.export import router as export_router
@@ -166,6 +168,20 @@ async def update_me(
     user_manager: UserManager = Depends(get_user_manager),
 ) -> User:
     return await user_manager.update(user_update, user, safe=True)
+
+
+@me_router.delete("/me", status_code=204)
+async def delete_me(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    user_manager: UserManager = Depends(get_user_manager),
+) -> None:
+    if settings.r2_configured:
+        result = await session.execute(select(Recipe.thumbnail_url).where(Recipe.user_id == user.id))
+        for (thumbnail_url,) in result.all():
+            if thumbnail_url:
+                asyncio.create_task(asyncio.to_thread(r2.delete_image, thumbnail_url))
+    await user_manager.delete(user)
 
 
 app.include_router(me_router, prefix="/api/users", tags=["users"])
