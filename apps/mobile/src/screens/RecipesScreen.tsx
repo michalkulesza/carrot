@@ -96,7 +96,9 @@ const PendingJobCard = ({ notif }: { notif: NotificationItem }) => {
         <Text style={styles.pendingTitle}>{t('recipes.extractingRecipe')}</Text>
         <Text style={styles.pendingMeta}>{t(sourceKey)}  ·  {startedAt}</Text>
       </View>
-      <ActivityIndicator size="small" color={colors.brand} />
+      <View style={styles.pendingSpinnerWrap}>
+        <ActivityIndicator size="small" color={colors.brand} />
+      </View>
     </View>
   )
 }
@@ -800,26 +802,25 @@ const styles = StyleSheet.create({
   swipeActionText: { color: colors.background, fontSize: 13, fontWeight: '600' },
   pendingCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.background,
     borderRadius: 10,
     marginHorizontal: 16,
     marginTop: 8,
-    padding: 12,
-    gap: 12,
     opacity: 0.85,
   },
   pendingImageWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 10,
+    width: 100,
+    height: 100,
+    borderTopLeftRadius: 10,
+    borderBottomLeftRadius: 10,
     backgroundColor: colors.opaqueSeparator,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pendingBody: { flex: 1 },
-  pendingTitle: { fontSize: 16, fontWeight: '600', color: colors.label, marginBottom: 4 },
-  pendingMeta: { fontSize: 12, color: colors.secondaryLabel },
+  pendingBody: { flex: 1, padding: 12, justifyContent: 'center' },
+  pendingTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  pendingMeta: { fontSize: 12, color: colors.tertiaryLabel },
+  pendingSpinnerWrap: { width: 40, alignItems: 'center', justifyContent: 'center' },
 })
 
 export default RecipesScreen
