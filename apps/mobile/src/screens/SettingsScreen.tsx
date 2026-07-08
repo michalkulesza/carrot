@@ -438,16 +438,36 @@ const SettingsScreen = () => {
         text: t('settings.deleteAccount'),
         style: 'destructive',
         onPress: () => {
-          setIsDeletingAccount(true)
-          deleteAccount()
-            .catch((e) => {
-              Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
-            })
-            .finally(() => setIsDeletingAccount(false))
+          Alert.prompt(
+            t('settings.deleteAccountTypeEmailTitle'),
+            t('settings.deleteAccountTypeEmailMessage', { email: user?.email ?? '' }),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('settings.deleteAccount'),
+                style: 'destructive',
+                onPress: (input) => {
+                  if (!input || input.trim().toLowerCase() !== user?.email?.toLowerCase()) {
+                    Alert.alert(t('common.ok'), t('settings.deleteAccountEmailMismatch'))
+                    return
+                  }
+                  setIsDeletingAccount(true)
+                  deleteAccount()
+                    .catch((e) => {
+                      Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+                    })
+                    .finally(() => setIsDeletingAccount(false))
+                },
+              },
+            ],
+            'plain-text',
+            '',
+            'emailAddress',
+          )
         },
       },
     ])
-  }, [t, deleteAccount])
+  }, [t, deleteAccount, user])
 
   const handleCreateHousehold = useCallback(() => {
     Alert.prompt(
@@ -529,7 +549,7 @@ const SettingsScreen = () => {
           <Text style={styles.privacyPolicyText}>{t('settings.privacyPolicy')}</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.logoutRow, styles.logoutRowDivider, pressed && { opacity: 0.7 }]}
           onPress={handleLogout}
           accessibilityLabel={t('settings.logOut')}
           accessibilityRole="button"
@@ -832,6 +852,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'flex-start',
+  },
+  logoutRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
   },
   logoutText: { color: colors.red, fontSize: 16, fontWeight: '500' },
   privacyPolicyText: { color: colors.blue, fontSize: 16 },
