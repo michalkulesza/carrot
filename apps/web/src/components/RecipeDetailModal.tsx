@@ -282,7 +282,7 @@ const serializeIngredient = (ing: StructuredIngredient): string => {
 
 const displayIngredient = (s: string, t: (key: string, opts: { defaultValue: string }) => string): string => {
   const parsed = parseIngredient(s)
-  if (!parsed.unit) return s
+  if (!parsed.unit) return typeof s === 'string' ? s : serializeIngredient(parsed)
   return serializeIngredient({ ...parsed, unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }) })
 }
 
