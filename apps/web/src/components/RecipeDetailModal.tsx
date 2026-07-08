@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar, Edit2, ShoppingCart, Sun, Trash2 } from 'react-feather'
 import { useTranslation } from 'react-i18next'
-import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
+import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
 import {
   useTimers,
   getRemainingSeconds,
@@ -28,7 +28,7 @@ import type {
   SaveComponent,
   StepIngredientRef,
   Tag,
-} from '@platekeeper/shared/types'
+} from '@carrot/shared/types'
 import {
   UNITS,
   addTagToRecipe,

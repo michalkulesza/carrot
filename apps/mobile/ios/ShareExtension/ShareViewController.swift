@@ -2,7 +2,7 @@ import UIKit
 import UniformTypeIdentifiers
 import ImageIO
 
-private let appGroupId = "group.com.kulesza.platekeeper"
+private let appGroupId = "group.com.kulesza.carrot"
 private let sharedImageFilename = "shared_image.jpg"
 private let pendingShareFilename = "shared_payload.json"
 private let sharedAuthFilename = "shared_auth.json"
@@ -921,7 +921,7 @@ final class ShareViewController: UIViewController {
         persistPendingShare(type: type, value: truncated)
 
         guard let encoded = truncated.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-              let url = URL(string: "platekeeper://share?type=\(type)&value=\(encoded)") else {
+              let url = URL(string: "carrot://share?type=\(type)&value=\(encoded)") else {
             NSLog("[ShareExtension] failed to build deep link URL for type=\(type)")
             complete()
             return

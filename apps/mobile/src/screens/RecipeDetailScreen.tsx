@@ -26,10 +26,10 @@ import * as Haptics from 'expo-haptics'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useLocalSearchParams } from 'expo-router'
-import { useApiClient } from '@platekeeper/shared/api/context'
-import { useRecipes } from '@platekeeper/shared/hooks/useRecipes'
-import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
-import { useTags } from '@platekeeper/shared/hooks/useTags'
+import { useApiClient } from '@carrot/shared/api/context'
+import { useRecipes } from '@carrot/shared/hooks/useRecipes'
+import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
+import { useTags } from '@carrot/shared/hooks/useTags'
 import {
   parseDurationMatch,
   formatDurationLabel,
@@ -46,16 +46,16 @@ import AddIngredientToShoppingListSheet, {
 } from '../components/AddIngredientToShoppingListSheet'
 import { UnitPickerModal, TagPickerModal, IngredientEditor } from '../components/RecipeFieldEditors'
 import NutritionBoxGrid from '../components/NutritionBoxGrid'
-import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef, Tag } from '@platekeeper/shared/types'
+import type { RecipeOut, SaveComponent, Ingredient, StepIngredientRef, Tag } from '@carrot/shared/types'
 import { useDebugMode } from '../context/DebugModeContext'
 import {
   displayIngredient,
   buildClientStepRefs,
   serializeIngredient,
   parseIngredient,
-} from '@platekeeper/shared/utils/ingredientUtils'
-import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
-import { tTag } from '@platekeeper/shared/utils/tagUtils'
+} from '@carrot/shared/utils/ingredientUtils'
+import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
+import { tTag } from '@carrot/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { uploadThumbnailImage } from '../api/uploadThumbnail'

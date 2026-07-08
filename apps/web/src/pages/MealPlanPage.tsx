@@ -13,8 +13,8 @@ import {
   Spinner,
 } from '@heroui/react'
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date'
-import type { MealPlanEntry, RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
-import { ymToYYYYMM, ymdToISODate, toISODate, formatWeekdayShort, weekdayShortByIndex, formatMonthYear, formatMonthLong } from '@platekeeper/shared/utils/dateUtils'
+import type { MealPlanEntry, RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
+import { ymToYYYYMM, ymdToISODate, toISODate, formatWeekdayShort, weekdayShortByIndex, formatMonthYear, formatMonthLong } from '@carrot/shared/utils/dateUtils'
 import { proxyUrl } from '../utils/imageUtils'
 import { deleteMealPlanEntry, listMealPlan, setMealPlanEntry } from '../api/client'
 import RecipeDetailModal from '../components/RecipeDetailModal'

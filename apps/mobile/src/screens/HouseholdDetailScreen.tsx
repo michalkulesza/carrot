@@ -12,8 +12,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
-import { useMembers } from '@platekeeper/shared/hooks/useMembers'
+import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
+import { useMembers } from '@carrot/shared/hooks/useMembers'
 import { useAuth } from '../context/AuthContext'
 import { colors } from '../theme/colors'
 

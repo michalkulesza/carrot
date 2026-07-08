@@ -26,13 +26,13 @@ import * as ImagePicker from 'expo-image-picker'
 import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
-import { useApiClient } from '@platekeeper/shared/api/context'
+import { useApiClient } from '@carrot/shared/api/context'
 import { useNotificationHistory } from '../context/NotificationHistoryContext'
 import BugReportButton from '../components/BugReportButton'
 import NutritionBoxGrid from '../components/NutritionBoxGrid'
 import { UnitPickerModal, TagPickerModal, IngredientEditor } from '../components/RecipeFieldEditors'
-import { useTags } from '@platekeeper/shared/hooks/useTags'
-import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
+import { useTags } from '@carrot/shared/hooks/useTags'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import type {
   AllergenFlag,
   ImportDebugUsage,
@@ -42,13 +42,13 @@ import type {
   StageEvent,
   StepIngredientRef,
   Tag,
-} from '@platekeeper/shared/types'
+} from '@carrot/shared/types'
 import {
   parseIngredient,
   serializeIngredient,
-} from '@platekeeper/shared/utils/ingredientUtils'
-import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
-import { tTag } from '@platekeeper/shared/utils/tagUtils'
+} from '@carrot/shared/utils/ingredientUtils'
+import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
+import { tTag } from '@carrot/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl } from '../api/thumbnailUrl'
 import { uploadThumbnailImage, makeTempRecipeId } from '../api/uploadThumbnail'

@@ -7,10 +7,10 @@ import {
   type ReactNode,
 } from 'react'
 import { useQueryClient as useQC } from '@tanstack/react-query'
-import type { HouseholdOut, InvitationOut, HouseholdLeaveNotificationOut } from '@platekeeper/shared/types'
-import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
-import { useInvitations } from '@platekeeper/shared/hooks/useInvitations'
-import { useHouseholdLeaveNotifications } from '@platekeeper/shared/hooks/useHouseholdLeaveNotifications'
+import type { HouseholdOut, InvitationOut, HouseholdLeaveNotificationOut } from '@carrot/shared/types'
+import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
+import { useInvitations } from '@carrot/shared/hooks/useInvitations'
+import { useHouseholdLeaveNotifications } from '@carrot/shared/hooks/useHouseholdLeaveNotifications'
 import { useAuth } from './AuthContext'
 import { mobileClient } from '../api/client'
 

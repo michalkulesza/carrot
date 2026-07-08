@@ -13,7 +13,7 @@ import {
   parseDurationMatch,
   parseDurationSeconds,
   type DurationMatch,
-} from '@platekeeper/shared/utils/timerUtils'
+} from '@carrot/shared/utils/timerUtils'
 import { useNotificationHistory } from './NotificationHistoryContext'
 
 export { formatCountdown, formatDurationLabel, parseDurationMatch, parseDurationSeconds, type DurationMatch }

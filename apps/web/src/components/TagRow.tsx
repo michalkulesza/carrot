@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { Tag } from '@platekeeper/shared/types'
-import { tTag } from '@platekeeper/shared/utils/tagUtils'
+import type { Tag } from '@carrot/shared/types'
+import { tTag } from '@carrot/shared/utils/tagUtils'
 
 interface TagRowProps {
   tags: Tag[]

@@ -12,10 +12,10 @@ import {
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { UNITS } from '@platekeeper/shared/types'
-import type { AllergenFlag, Tag } from '@platekeeper/shared/types'
-import type { StructuredIngredient } from '@platekeeper/shared/utils/ingredientUtils'
-import { tTag } from '@platekeeper/shared/utils/tagUtils'
+import { UNITS } from '@carrot/shared/types'
+import type { AllergenFlag, Tag } from '@carrot/shared/types'
+import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
+import { tTag } from '@carrot/shared/utils/tagUtils'
 import { colors } from '../theme/colors'
 
 // Shared editing controls used by both the import flow and in-place recipe

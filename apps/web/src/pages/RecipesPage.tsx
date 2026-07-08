@@ -14,12 +14,12 @@ import {
 import PageHeader from '../components/PageHeader'
 import RecipeDetailModal from '../components/RecipeDetailModal'
 import RecipesTable from '../components/RecipesTable'
-import type { RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
+import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
 import { deleteRecipe, toggleFavourite } from '../api/client'
 import { useHousehold } from '../context/HouseholdContext'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { tTag } from '@platekeeper/shared/utils/tagUtils'
+import { tTag } from '@carrot/shared/utils/tagUtils'
 import { proxyUrl } from '../utils/imageUtils'
 
 const RecipeThumb = ({ src, alt }: { src: string; alt: string }) => {

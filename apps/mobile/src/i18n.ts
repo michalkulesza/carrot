@@ -1,7 +1,7 @@
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { i18nBaseConfig } from '@platekeeper/shared/i18n'
+import { i18nBaseConfig } from '@carrot/shared/i18n'
 
 export const LANGUAGE_STORAGE_KEY = 'pk-language'
 

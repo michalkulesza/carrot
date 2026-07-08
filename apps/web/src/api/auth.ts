@@ -1,6 +1,6 @@
 import { webClient } from './client'
 
-export type { AuthUser } from '@platekeeper/shared/types'
+export type { AuthUser } from '@carrot/shared/types'
 
 export const {
   logout,

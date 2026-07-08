@@ -9,21 +9,21 @@
       "distribution": "internal",
       "env": {
         "SENTRY_ORG": "michal-kulesza",
-        "SENTRY_PROJECT": "platekeeper"
+        "SENTRY_PROJECT": "carrot"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "SENTRY_ORG": "michal-kulesza",
-        "SENTRY_PROJECT": "platekeeper"
+        "SENTRY_PROJECT": "carrot"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "SENTRY_ORG": "michal-kulesza",
-        "SENTRY_PROJECT": "platekeeper"
+        "SENTRY_PROJECT": "carrot"
       }
     }
   },

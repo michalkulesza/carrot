@@ -17,10 +17,10 @@ import { HouseholdProvider } from '../context/HouseholdContext'
 import { TimerProvider } from '../context/TimerContext'
 import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
 import { DebugModeProvider } from '../context/DebugModeContext'
-import { useRecipes, useRecipeStats } from '@platekeeper/shared/hooks/useRecipes'
-import { useTags } from '@platekeeper/shared/hooks/useTags'
-import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
-import type { RecipeOut, Tag, UserPreferences } from '@platekeeper/shared/types'
+import { useRecipes, useRecipeStats } from '@carrot/shared/hooks/useRecipes'
+import { useTags } from '@carrot/shared/hooks/useTags'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
 
 const AppShell = () => {
   const { user } = useAuth()

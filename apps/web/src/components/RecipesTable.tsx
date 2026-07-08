@@ -20,7 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import type { RecipeOut } from '@platekeeper/shared/types'
+import type { RecipeOut } from '@carrot/shared/types'
 import { reorderRecipes, toggleFavourite } from '../api/client'
 import { proxyUrl } from '../utils/imageUtils'
 

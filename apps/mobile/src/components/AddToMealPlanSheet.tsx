@@ -4,9 +4,9 @@ import { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps } 
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
-import { useMealPlan } from '@platekeeper/shared/hooks/useMealPlan'
-import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
-import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@platekeeper/shared/utils/dateUtils'
+import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@carrot/shared/utils/dateUtils'
 import { colors } from '../theme/colors'
 
 export interface AddToMealPlanSheetHandle {

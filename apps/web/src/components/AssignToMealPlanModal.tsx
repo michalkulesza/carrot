@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight } from 'react-feather'
 import { useTranslation } from 'react-i18next'
-import { useMealPlan } from '@platekeeper/shared/hooks/useMealPlan'
-import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
+import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import {
   Modal,
   ModalBackdrop,
@@ -11,7 +11,7 @@ import {
   ModalHeader,
   ModalBody,
 } from '@heroui/react'
-import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@platekeeper/shared/utils/dateUtils'
+import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@carrot/shared/utils/dateUtils'
 
 interface AssignToMealPlanModalProps {
   isOpen: boolean

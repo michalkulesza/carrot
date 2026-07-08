@@ -29,7 +29,7 @@ import type {
   StreamCallbacks,
   Tag,
   UserPreferences,
-} from '@platekeeper/shared/types'
+} from '@carrot/shared/types'
 import {
   streamImport,
   streamTextImportFetch,

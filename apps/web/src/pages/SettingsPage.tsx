@@ -25,7 +25,7 @@ import {
   formatCountdown,
 } from '../context/TimerContext'
 import PageHeader from '../components/PageHeader'
-import type { AllergenData, RecipeStats, UserPreferences, MemberOut, HouseholdOut } from '@platekeeper/shared/types'
+import type { AllergenData, RecipeStats, UserPreferences, MemberOut, HouseholdOut } from '@carrot/shared/types'
 import {
   exportRecipes,
   importRecipes,

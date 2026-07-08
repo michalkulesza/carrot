@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { useTranslation } from 'react-i18next'
-import { usePreferences } from '@platekeeper/shared/hooks/usePreferences'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { persistLanguage } from '../../src/i18n'
 
 export default function TabsLayout() {

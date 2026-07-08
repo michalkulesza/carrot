@@ -6,9 +6,9 @@ import {
 } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { switchHousehold as apiSwitch } from '../api/client'
-import type { HouseholdOut, InvitationOut } from '@platekeeper/shared/types'
-import { useHouseholds } from '@platekeeper/shared/hooks/useHouseholds'
-import { useInvitations } from '@platekeeper/shared/hooks/useInvitations'
+import type { HouseholdOut, InvitationOut } from '@carrot/shared/types'
+import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
+import { useInvitations } from '@carrot/shared/hooks/useInvitations'
 import { useAuth } from './AuthContext'
 
 interface HouseholdContextValue {

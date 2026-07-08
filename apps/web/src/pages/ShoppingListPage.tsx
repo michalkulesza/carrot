@@ -18,8 +18,8 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useShoppingList } from '@platekeeper/shared/hooks/useShoppingList'
-import type { ShoppingListItem, PresenceUser } from '@platekeeper/shared/types'
+import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
+import type { ShoppingListItem, PresenceUser } from '@carrot/shared/types'
 import PageHeader from '../components/PageHeader'
 import { useAuth } from '../context/AuthContext'
 

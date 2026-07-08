@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import * as SecureStore from 'expo-secure-store'
 import { mobileClient, setToken } from '../api/client'
 import { signInWithGoogle } from '../utils/googleAuth'
-import type { AuthUser } from '@platekeeper/shared/types'
+import type { AuthUser } from '@carrot/shared/types'
 
 const TOKEN_KEY = 'pk_auth_token'
 const PENDING_SIGNUP_KEY = 'pk_pending_signup'

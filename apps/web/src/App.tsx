@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { ToastProvider } from '@heroui/react'
-import { ApiClientProvider } from '@platekeeper/shared/api/context'
+import { ApiClientProvider } from '@carrot/shared/api/context'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'

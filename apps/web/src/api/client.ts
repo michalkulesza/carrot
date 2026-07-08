@@ -1,4 +1,4 @@
-import { createApiClient } from '@platekeeper/shared/api/client'
+import { createApiClient } from '@carrot/shared/api/client'
 
 export type {
   Unit,
@@ -25,8 +25,8 @@ export type {
   HouseholdOut,
   MemberOut,
   InvitationOut,
-} from '@platekeeper/shared/types'
-export { UNITS } from '@platekeeper/shared/types'
+} from '@carrot/shared/types'
+export { UNITS } from '@carrot/shared/types'
 
 export const webClient = createApiClient({
   baseUrl: '',
@@ -87,7 +87,7 @@ export async function exportRecipes(): Promise<void> {
 
 // ── Web-only: EventSource-based import stream (v2 mobile uses fetch SSE) ─────
 
-import type { StreamCallbacks, ImportResult } from '@platekeeper/shared/types'
+import type { StreamCallbacks, ImportResult } from '@carrot/shared/types'
 
 export function streamImport(url: string, callbacks: StreamCallbacks): () => void {
   const source = new EventSource(

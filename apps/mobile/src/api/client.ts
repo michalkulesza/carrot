@@ -1,4 +1,4 @@
-import { createApiClient } from '@platekeeper/shared/api/client'
+import { createApiClient } from '@carrot/shared/api/client'
 import { syncSharedAuth } from '../utils/sharedAuth'
 
 let _token: string | null = null

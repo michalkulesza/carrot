@@ -2,7 +2,7 @@
   "expo": {
     "name": "Carrot",
     "slug": "mobile",
-    "scheme": "platekeeper",
+    "scheme": "carrot",
     "version": "1.0.0",
     "orientation": "portrait",
     "runtimeVersion": {

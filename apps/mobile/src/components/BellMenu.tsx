@@ -13,7 +13,7 @@ import {
 import { useNotificationHistory } from '../context/NotificationHistoryContext'
 import { useHousehold } from '../context/HouseholdContext'
 import { useAuth } from '../context/AuthContext'
-import { useApiClient } from '@platekeeper/shared/api/context'
+import { useApiClient } from '@carrot/shared/api/context'
 
 const BellMenu = () => {
   const { t } = useTranslation()
