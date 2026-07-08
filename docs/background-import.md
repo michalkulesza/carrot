@@ -71,7 +71,7 @@ This applies to both in-app imports and shares from other apps (Instagram, TikTo
 
 ### APNs
 
-- Server needs an APNs auth key (`.p8`), Key ID, Team ID, bundle id `com.kulesza.platekeeper`.
+- Server needs an APNs auth key (`.p8`), Key ID, Team ID, bundle id `com.kulesza.carrot`.
 - Async HTTP/2 APNs client (e.g. `aioapns`) for both `liveactivity` push type (Live Activity updates/end) and `alert` push type (fallback banner).
 - Store creds as env / secrets alongside existing API config.
 

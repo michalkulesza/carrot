@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     apns_key_p8: str = ""       # Contents of the .p8 file (PEM)
     apns_key_id: str = ""       # 10-char key ID from Apple Developer
     apns_team_id: str = ""      # 10-char team ID
-    apns_bundle_id: str = "com.kulesza.platekeeper"
+    apns_bundle_id: str = "com.kulesza.carrot"
     apns_sandbox: bool = True   # False for production
 
     @property

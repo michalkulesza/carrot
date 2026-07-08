@@ -18,13 +18,15 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.kulesza.platekeeper",
+      "bundleIdentifier": "com.kulesza.carrot",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "14",
+      "buildNumber": "15",
       "entitlements": {
-        "com.apple.security.application-groups": ["group.com.kulesza.platekeeper"]
+        "com.apple.security.application-groups": [
+          "group.com.kulesza.carrot"
+        ]
       }
     },
     "android": {
@@ -33,7 +35,7 @@
         "backgroundColor": "#cb6134"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.kulesza.platekeeper"
+      "package": "com.kulesza.carrot"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -61,9 +63,18 @@
         {
           "ios": {
             "extraPods": [
-              { "name": "GoogleUtilities", "modular_headers": true },
-              { "name": "RecaptchaInterop", "modular_headers": true },
-              { "name": "AppCheckCore", "modular_headers": true }
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              },
+              {
+                "name": "AppCheckCore",
+                "modular_headers": true
+              }
             ]
           }
         }

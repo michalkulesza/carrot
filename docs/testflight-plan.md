@@ -17,12 +17,12 @@ Target: upload a signed production build to Apple TestFlight for internal testin
 
 ### 2. App Store Connect record must exist
 
-The EAS `projectId` (`d8507eab-05ed-4623-9f23-1114227f11a8`) links to Expo's cloud, but a separate record in App Store Connect must exist for the bundle ID `com.kulesza.platekeeper`.
+The EAS `projectId` (`d8507eab-05ed-4623-9f23-1114227f11a8`) links to Expo's cloud, but a separate record in App Store Connect must exist for the bundle ID `com.kulesza.carrot`.
 
 **Fix:**
 1. Log into [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
 2. My Apps → "+" → New App
-3. Platform: iOS, Name: PlateKeeper, Bundle ID: `com.kulesza.platekeeper`, SKU: any unique string (e.g. `platekeeper`)
+3. Platform: iOS, Name: PlateKeeper, Bundle ID: `com.kulesza.carrot`, SKU: any unique string (e.g. `platekeeper`)
 4. Language: English (or Polish)
 
 ### 3. EAS submit configuration is empty
@@ -36,7 +36,7 @@ The EAS `projectId` (`d8507eab-05ed-4623-9f23-1114227f11a8`) links to Expo's clo
     "ios": {
       "appleId": "kulesza.michal@gmail.com",
       "ascAppId": "<the numeric App Store Connect App ID shown in App Store Connect>",
-      "bundleIdentifier": "com.kulesza.platekeeper"
+      "bundleIdentifier": "com.kulesza.carrot"
     }
   }
 }
@@ -213,10 +213,10 @@ EAS manages the distribution certificate and provisioning profile automatically 
 | 12 | Header buttons: extra right margin vs left | ❌ Not done | Bug |
 
 **What's already good:**
-- Bundle ID `com.kulesza.platekeeper` and Apple Team ID `Q8L6CUF7BC` are set in the Xcode project
+- Bundle ID `com.kulesza.carrot` and Apple Team ID `Q8L6CUF7BC` are set in the Xcode project
 - `ITSAppUsesNonExemptEncryption: false` declared (skips export compliance questionnaire)
 - Camera and Photo Library privacy strings are in `Info.plist`
 - App icon is 1024×1024 (correct size)
 - EAS project ID is wired up
 - API URL points to production (`https://api.recipes.xcxz.xyz`) in the production EAS profile
-- Share Extension bundle ID follows the correct pattern (`com.kulesza.platekeeper.ShareExtension`)
+- Share Extension bundle ID follows the correct pattern (`com.kulesza.carrot.ShareExtension`)

@@ -1,6 +1,6 @@
 import { File, Paths } from 'expo-file-system'
 
-export const SHARE_APP_GROUP = 'group.com.kulesza.platekeeper'
+export const SHARE_APP_GROUP = 'group.com.kulesza.carrot'
 export const PENDING_SHARE_FILENAME = 'shared_payload.json'
 
 export type PendingShare =

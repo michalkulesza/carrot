@@ -23,13 +23,13 @@ After any clean prebuild, before the share-to-app feature works again:
    files were also wiped from disk (they will be, but git still has
    them since they're tracked).
 2. In Xcode: add a new **Share Extension** target, bundle ID
-   `com.kulesza.platekeeper.ShareExtension`.
+   `com.kulesza.carrot.ShareExtension`.
 3. Point the new target's source at the existing
    `ios/ShareExtension/ShareViewController.swift` and `Info.plist`
    instead of the boilerplate Xcode generates — don't let it overwrite
    them.
 4. Add the **App Groups** capability to the new target, with
-   `group.com.kulesza.platekeeper` (must match `SHARE_APP_GROUP` in
+   `group.com.kulesza.carrot` (must match `SHARE_APP_GROUP` in
    `src/utils/pendingShare.ts` and `appGroupId` in
    `ShareViewController.swift` — same ID hardcoded in both places).
 5. Embed the extension in the main app (Xcode does this automatically
