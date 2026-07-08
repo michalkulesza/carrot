@@ -484,6 +484,11 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<AuthUser>
   }
 
+  const deleteAccount = async (): Promise<void> => {
+    const res = await apiFetch('/api/users/me', { method: 'DELETE' })
+    await throwOnError(res, 'Failed to delete account')
+  }
+
   // ── SSE streaming (fetch-based, works on mobile too) ──────────────────────
 
   const _parseStreamEvents = (
@@ -751,6 +756,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     login,
     logout,
     getMe,
+    deleteAccount,
     streamImportFetch,
     streamTextImportFetch,
     streamImageImportFetch,

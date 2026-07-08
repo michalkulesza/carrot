@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import { mobileClient, setToken } from '../api/client'
-import { signInWithGoogle } from '../utils/googleAuth'
+import { revokeGoogleSignin, signInWithGoogle } from '../utils/googleAuth'
 import type { AuthUser } from '@carrot/shared/types'
 
 const TOKEN_KEY = 'pk_auth_token'
@@ -23,6 +23,7 @@ interface AuthContextValue {
   verifySignupCode: (email: string, code: string) => Promise<void>
   completeSignup: (password: string, nickname?: string) => Promise<void>
   logout: () => Promise<void>
+  deleteAccount: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
@@ -113,6 +114,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null)
   }, [])
 
+  const deleteAccount = useCallback(async (): Promise<void> => {
+    await mobileClient.deleteAccount()
+    await revokeGoogleSignin()
+    await SecureStore.deleteItemAsync(TOKEN_KEY)
+    setToken(null)
+    setUser(null)
+  }, [])
+
   const refreshUser = useCallback(async (): Promise<void> => {
     const me = await mobileClient.getMe()
     setUser(me)
@@ -131,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verifySignupCode,
         completeSignup,
         logout,
+        deleteAccount,
         refreshUser,
       }}
     >

@@ -6,6 +6,7 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -341,7 +342,8 @@ const KEEP_AWAKE_SHOPPING_STORAGE_KEY = 'shopping-list-keep-screen-on'
 const SettingsScreen = () => {
   const router = useRouter()
   const { t, i18n } = useTranslation()
-  const { user, logout } = useAuth()
+  const { user, logout, deleteAccount } = useAuth()
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const { preferences, isLoading, error, update } = usePreferences()
   const { showSpinner } = useScreenLoading(isLoading)
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold()
@@ -424,6 +426,28 @@ const SettingsScreen = () => {
     ])
   }, [t, logout])
 
+  const handleOpenPrivacyPolicy = useCallback(() => {
+    void Linking.openURL('https://carrot.xcxz.xyz/privacy-policy')
+  }, [])
+
+  const handleDeleteAccount = useCallback(() => {
+    Alert.alert(t('settings.deleteAccountConfirmTitle'), t('settings.deleteAccountConfirmMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.deleteAccount'),
+        style: 'destructive',
+        onPress: () => {
+          setIsDeletingAccount(true)
+          deleteAccount()
+            .catch((e) => {
+              Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+            })
+            .finally(() => setIsDeletingAccount(false))
+        },
+      },
+    ])
+  }, [t, deleteAccount])
+
   const handleCreateHousehold = useCallback(() => {
     Alert.prompt(
       t('settings.newHouseholdTitle'),
@@ -496,12 +520,33 @@ const SettingsScreen = () => {
           </View>
         )}
         <Pressable
+          style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
+          onPress={handleOpenPrivacyPolicy}
+          accessibilityLabel={t('settings.privacyPolicy')}
+          accessibilityRole="link"
+        >
+          <Text style={styles.privacyPolicyText}>{t('settings.privacyPolicy')}</Text>
+        </Pressable>
+        <Pressable
           style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
           onPress={handleLogout}
           accessibilityLabel={t('settings.logOut')}
           accessibilityRole="button"
         >
           <Text style={styles.logoutText}>{t('settings.logOut')}</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
+          onPress={handleDeleteAccount}
+          disabled={isDeletingAccount}
+          accessibilityLabel={t('settings.deleteAccount')}
+          accessibilityRole="button"
+        >
+          {isDeletingAccount ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.logoutText}>{t('settings.deleteAccount')}</Text>
+          )}
         </Pressable>
       </View>
 
@@ -788,6 +833,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   logoutText: { color: colors.red, fontSize: 16, fontWeight: '500' },
+  privacyPolicyText: { color: colors.blue, fontSize: 16 },
   loadingRow: { padding: 24, alignItems: 'center' },
   errorText: { color: colors.red, fontSize: 16, padding: 16 },
   cardLabel: {
