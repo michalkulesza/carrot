@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { colors } from '../theme/colors'
 
 export interface NutritionBoxGridItem {
@@ -25,7 +25,7 @@ const NutritionBoxGrid = ({
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+      <View style={styles.row}>
         {items.map((item, i) => (
           <View key={item.label} style={styles.boxWrapper}>
             {editing ? (
@@ -66,7 +66,7 @@ const NutritionBoxGrid = ({
             )}
           </View>
         ))}
-      </ScrollView>
+      </View>
     </View>
   )
 }
@@ -74,14 +74,14 @@ const NutritionBoxGrid = ({
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 10 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  boxWrapper: { position: 'relative' },
+  boxWrapper: { position: 'relative', flex: 1 },
   box: {
     backgroundColor: colors.secondaryBackground,
     borderRadius: 10,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    minWidth: 64,
+    width: '100%',
   },
   number: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.label },
   numberInput: {
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.label,
     textAlign: 'center',
-    minWidth: 40,
+    width: '100%',
     padding: 0,
   },
   label: { fontSize: 13, lineHeight: 18, color: colors.secondaryLabel, marginTop: 2 },
