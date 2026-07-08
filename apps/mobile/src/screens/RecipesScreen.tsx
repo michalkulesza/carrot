@@ -37,6 +37,7 @@ import { Feather } from '@expo/vector-icons'
 import BellMenu from '../components/BellMenu'
 import BugReportButton from '../components/BugReportButton'
 import GlassViewSafe from '../components/GlassViewSafe'
+import MarqueeText from '../components/MarqueeText'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
@@ -557,9 +558,7 @@ const RecipesScreen = () => {
               <View style={styles.cardImagePlaceholder} />
             )}
             <View style={styles.cardBody}>
-              <Text style={styles.cardTitle} numberOfLines={2}>
-                {item.title}
-              </Text>
+              <MarqueeText text={item.title} style={styles.cardTitle} containerStyle={styles.cardTitleMarquee} />
               {item.tags.length > 0 ? (
                 <View style={styles.cardTagRow}>
                   {item.tags.map((tg) => (
@@ -792,7 +791,8 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 10,
   },
   cardBody: { flex: 1, padding: 12, justifyContent: 'center' },
-  cardTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  cardTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label },
+  cardTitleMarquee: { marginBottom: 4 },
   cardTags: { fontSize: 12, color: colors.brand, marginBottom: 2, marginTop: 1 },
   cardTagsEmpty: { color: colors.tertiaryLabel },
   cardTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 2, marginTop: 1 },
