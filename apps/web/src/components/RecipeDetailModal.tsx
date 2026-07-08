@@ -1532,7 +1532,7 @@ const RecipeDetailModal = ({
               )}
 
               {/* Metadata: pills, actions */}
-              <div className={`px-5 pt-3 pb-3 flex flex-col gap-2 ${headerBg}`}>
+              <div className={`px-5 pt-5 pb-3 flex flex-col gap-2 ${headerBg}`}>
                 {/* Serves / kcal / protein / fat / carbs box grid */}
                 <NutritionBoxGrid
                   editing={mode === 'editing'}

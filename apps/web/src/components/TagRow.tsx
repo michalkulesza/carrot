@@ -86,7 +86,7 @@ const TagRow = ({
       {tags.map((tag) => (
         <span
           key={tag.id}
-          className="inline-flex items-center gap-0.5 text-xs font-medium px-2 py-0.5 rounded-full bg-secondary/15 text-secondary-700"
+          className="inline-flex items-center gap-0.5 text-xs font-medium px-2 py-0.5 rounded-full bg-secondary-100 border border-secondary-400 text-secondary-700"
         >
           {tTag(tag.name, t)}
           {editable && (

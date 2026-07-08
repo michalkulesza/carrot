@@ -43,7 +43,7 @@ const NutritionBoxGrid = ({
       {items.map((item, i) => (
         <div key={item.label} className="relative min-w-0">
           {editing ? (
-            <div className="flex flex-col items-center justify-center border border-zinc-200 rounded-lg px-2 py-1.5 min-w-0">
+            <div className="flex flex-col items-center justify-center border border-zinc-200 rounded-lg px-2 py-3 min-w-0">
               <input
                 type="number"
                 value={item.value}
@@ -61,7 +61,7 @@ const NutritionBoxGrid = ({
               type="button"
               onClick={() => setOpenIndex((v) => (v === i ? null : i))}
               aria-label={item.accessibilityLabel}
-              className="w-full flex flex-col items-center justify-center border border-zinc-200 rounded-lg px-2 py-1.5 min-w-0 hover:bg-zinc-50 transition-colors"
+              className="w-full flex flex-col items-center justify-center border border-zinc-200 rounded-lg px-2 py-3 min-w-0 hover:bg-zinc-50 transition-colors"
             >
               <span className="text-sm font-semibold text-zinc-900">
                 {item.value !== '' ? item.value : '—'}
