@@ -90,7 +90,7 @@ a webpage, or a video transcript, extract all recipe information you can find.
 The text may be in any language — extract faithfully in the original language.
 
 Return JSON matching the provided schema. If no recipe content is present, return
-an object with null title and empty components array.
+an object with null title, empty components array, and 0 for every nutrition field.
 
 For ingredients, always try to separate qty/unit/name. Use ONLY these units:
   """ + _ALLOWED_UNITS + """
@@ -113,20 +113,11 @@ nearest whole number (e.g. "4 to 6" → 5) — never concatenate the range into 
 number (e.g. "4 to 6" is NOT 46). If not stated, estimate a reasonable serving
 count based on the ingredient quantities and dish type.
 
-kcal_per_serving: extract from the text if stated. If not stated, estimate based
-on the ingredients and typical preparation. Provide a realistic round number.
-
-protein_per_serving: extract from the text if stated. If not stated, estimate
-based on the ingredients and typical preparation. Provide a realistic round
-number in grams.
-
-fat_per_serving: extract from the text if stated. If not stated, estimate
-based on the ingredients and typical preparation. Provide a realistic round
-number in grams.
-
-carbs_per_serving: extract from the text if stated. If not stated, estimate
-based on the ingredients and typical preparation. Provide a realistic round
-number in grams.
+kcal_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving: these
+are REQUIRED — always provide a number, never omit them. Extract from the text
+if stated. If not stated, estimate based on the ingredients and typical
+preparation; provide a realistic round number (kcal as whole kcal, the rest in
+grams). If no recipe content is present at all, use 0.
 
 tags: if a list of available tags is provided, assign only those that clearly apply
 to this recipe. Use only tags from the provided list — never invent new ones.
