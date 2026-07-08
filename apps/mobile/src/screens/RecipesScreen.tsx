@@ -127,8 +127,10 @@ const RecipesScreen = () => {
       }
     })
   }, [])
-  const { recipes, isLoading, error } = useRecipes()
-  const { busy, showSpinner } = useScreenLoading(isLoading)
+  const { recipes, isLoading, isFetching, error } = useRecipes()
+  const [switchingHousehold, setSwitchingHousehold] = useState(false)
+  const householdFetchStartedRef = useRef(false)
+  const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { tags } = useTags()
   const { households, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
   const api = useApiClient()
@@ -255,10 +257,30 @@ const RecipesScreen = () => {
     ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       if (nativeEvent.event === MANAGE_TIP_MENU_ID) return
       const id = nativeEvent.event === PERSONAL_MENU_ID ? null : nativeEvent.event
-      if (id !== activeHouseholdId) void switchHousehold(id)
+      if (id !== activeHouseholdId) {
+        setSwitchingHousehold(true)
+        householdFetchStartedRef.current = false
+        switchHousehold(id).catch(() => setSwitchingHousehold(false))
+      }
     },
     [activeHouseholdId, switchHousehold],
   )
+
+  // switchHousehold only awaits the API call + user refresh — the recipes query
+  // invalidation happens afterwards, asynchronously, in HouseholdContext. Keep the
+  // spinner up until that refetch actually starts and then finishes, so we don't
+  // clear it during the gap before isFetching flips true.
+  useEffect(() => {
+    if (!switchingHousehold) return
+    if (isFetching) {
+      householdFetchStartedRef.current = true
+      return
+    }
+    if (householdFetchStartedRef.current) {
+      householdFetchStartedRef.current = false
+      setSwitchingHousehold(false)
+    }
+  }, [isFetching, switchingHousehold])
 
   const handleSearchChangeText = useCallback(
     (e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text),
