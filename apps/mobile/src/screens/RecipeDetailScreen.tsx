@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Dimensions,
-  Image,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -16,6 +15,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { Image } from 'expo-image'
 
 import { useTranslation } from 'react-i18next'
 import { Feather, Ionicons } from '@expo/vector-icons'
@@ -898,7 +898,9 @@ const RecipeDetailScreen = () => {
                 source={{ uri: proxyThumbnailUrl(draft.thumbnail_url)! }}
                 style={styles.heroImage}
                 accessibilityLabel={draft.title}
-                resizeMode="cover"
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={draft.thumbnail_url}
                 onError={() => setThumbErrored(true)}
               />
               <Pressable
@@ -1124,7 +1126,9 @@ const RecipeDetailScreen = () => {
             source={{ uri: proxyThumbnailUrl(recipe.thumbnail_url!)! }}
             style={styles.heroImage}
             accessibilityLabel={recipe.title}
-            resizeMode="cover"
+            contentFit="cover"
+            cachePolicy="memory-disk"
+            recyclingKey={recipe.thumbnail_url}
             onError={() => setHeroImageErrored(true)}
           />
         ) : hasImage && heroImageErrored && PLACEHOLDER_URL ? (
@@ -1132,7 +1136,7 @@ const RecipeDetailScreen = () => {
             source={{ uri: PLACEHOLDER_URL }}
             style={styles.heroImage}
             accessibilityLabel={recipe.title}
-            resizeMode="cover"
+            contentFit="cover"
           />
         ) : (
           <View style={{ height: insets.top + 56 }} />
