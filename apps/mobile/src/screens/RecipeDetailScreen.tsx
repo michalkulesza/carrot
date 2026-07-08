@@ -697,11 +697,6 @@ const RecipeDetailScreen = () => {
   )
 
   const handlePickThumbnail = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') {
-      Alert.alert(t('recipes.galleryPermissionDenied'), t('recipes.galleryPermissionDeniedMsg'))
-      return
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.9,

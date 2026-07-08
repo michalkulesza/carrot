@@ -238,6 +238,7 @@ const AllergenSection = ({
   return (
     <View>
       <Text style={styles.scopeLabel}>{scopeLabel}</Text>
+      <Text style={styles.allergenDisclaimer}>{t('settings.allergenDisclaimer')}</Text>
 
       {renderGroup(ALLERGEN_KEYS, 'allergens', 'allergens', t('settings.allergens'))}
       {renderGroup(INTOLERANCE_KEYS, 'intolerances', 'intolerances', t('settings.intolerances'))}
@@ -912,7 +913,8 @@ const styles = StyleSheet.create({
   },
   // Allergen section
   allergenPad: { padding: 16 },
-  scopeLabel: { fontSize: 12, color: colors.tertiaryLabel, marginBottom: 12 },
+  scopeLabel: { fontSize: 12, color: colors.tertiaryLabel, marginBottom: 4 },
+  allergenDisclaimer: { fontSize: 13, lineHeight: 18, color: colors.tertiaryLabel, marginBottom: 12 },
   accordionBlock: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.separator,

@@ -27,7 +27,15 @@
     "close": "Zamknij"
   },
   "footer": {
-    "privacyPolicy": "Polityka prywatności"
+    "privacyPolicy": "Polityka prywatności",
+    "support": "Wsparcie"
+  },
+  "support": {
+    "back": "← Powrót do strony głównej",
+    "title": "Wsparcie",
+    "intro": "Masz pytanie, znalazłeś/aś błąd albo potrzebujesz pomocy z kontem? Chętnie pomożemy.",
+    "emailLabel": "Napisz do nas",
+    "email": "kulesza.michal@gmail.com"
   },
   "privacyPolicy": {
     "back": "← Powrót do strony głównej",
@@ -41,7 +49,7 @@
       },
       {
         "heading": "Jak wykorzystujemy Twoje informacje",
-        "body": "Wykorzystujemy te informacje wyłącznie do zapewnienia funkcji aplikacji: przechowywania i organizowania przepisów, tworzenia planów posiłków i list zakupów, oznaczania alergenów, o których nas poinformowałeś/aś, oraz synchronizacji danych między urządzeniami zalogowanymi na Twoje konto. Nie sprzedajemy Twoich danych ani nie wykorzystujemy ich do reklam."
+        "body": "Wykorzystujemy te informacje wyłącznie do zapewnienia funkcji aplikacji: przechowywania i organizowania przepisów, tworzenia planów posiłków i list zakupów, oznaczania alergenów, o których nas poinformowałeś/aś, oraz synchronizacji danych między urządzeniami zalogowanymi na Twoje konto. Nie sprzedajemy Twoich danych ani nie wykorzystujemy ich do reklam. Oznaczenia alergenów to szacunki wspomagane przez AI, a nie zamiennik czytania pełnej listy składników."
       },
       {
         "heading": "Usługi zewnętrzne",

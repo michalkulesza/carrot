@@ -304,11 +304,6 @@ const RecipeFormView = ({
   const tempRecipeIdRef = useRef(makeTempRecipeId())
 
   const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') {
-      Alert.alert(t('recipes.galleryPermissionDenied'), t('recipes.galleryPermissionDeniedMsg'))
-      return
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.9,
@@ -1280,19 +1275,6 @@ const ImportRecipeScreen = () => {
   }
 
   const handleGallery = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') {
-      Alert.alert(
-        t('addRecipe.galleryPermissionDenied'),
-        t('addRecipe.galleryPermissionDeniedMsg'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('addRecipe.openSettings'), onPress: () => Linking.openSettings() },
-        ],
-      )
-      setMode(null)
-      return
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.7,

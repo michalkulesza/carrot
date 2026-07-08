@@ -27,7 +27,15 @@
     "close": "Cerrar"
   },
   "footer": {
-    "privacyPolicy": "Política de privacidad"
+    "privacyPolicy": "Política de privacidad",
+    "support": "Soporte"
+  },
+  "support": {
+    "back": "← Volver al inicio",
+    "title": "Soporte",
+    "intro": "¿Tienes una pregunta, encontraste un error o necesitas ayuda con tu cuenta? Estamos aquí para ayudarte.",
+    "emailLabel": "Escríbenos",
+    "email": "kulesza.michal@gmail.com"
   },
   "privacyPolicy": {
     "back": "← Volver al inicio",
@@ -41,7 +49,7 @@
       },
       {
         "heading": "Cómo usamos tu información",
-        "body": "Usamos esta información únicamente para ofrecer las funciones de la aplicación: almacenar y organizar tus recetas, crear planes de comidas y listas de la compra, señalar los alérgenos que nos has indicado, y sincronizar tus datos entre los dispositivos con sesión iniciada en tu cuenta. No vendemos tus datos ni los usamos con fines publicitarios."
+        "body": "Usamos esta información únicamente para ofrecer las funciones de la aplicación: almacenar y organizar tus recetas, crear planes de comidas y listas de la compra, señalar los alérgenos que nos has indicado, y sincronizar tus datos entre los dispositivos con sesión iniciada en tu cuenta. No vendemos tus datos ni los usamos con fines publicitarios. Los avisos de alérgenos son estimaciones asistidas por IA, no un sustituto de leer la etiqueta completa de ingredientes."
       },
       {
         "heading": "Servicios de terceros",

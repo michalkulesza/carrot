@@ -27,7 +27,15 @@
     "close": "Schließen"
   },
   "footer": {
-    "privacyPolicy": "Datenschutzerklärung"
+    "privacyPolicy": "Datenschutzerklärung",
+    "support": "Support"
+  },
+  "support": {
+    "back": "← Zurück zur Startseite",
+    "title": "Support",
+    "intro": "Hast du eine Frage, einen Fehler gefunden oder brauchst Hilfe mit deinem Konto? Wir helfen dir gerne weiter.",
+    "emailLabel": "Schreib uns",
+    "email": "kulesza.michal@gmail.com"
   },
   "privacyPolicy": {
     "back": "← Zurück zur Startseite",
@@ -41,7 +49,7 @@
       },
       {
         "heading": "Wie wir deine Informationen verwenden",
-        "body": "Wir verwenden diese Informationen ausschließlich, um die Funktionen der App bereitzustellen: Speichern und Organisieren deiner Rezepte, Erstellen von Essensplänen und Einkaufslisten, Kennzeichnen von Allergenen, die du uns mitgeteilt hast, und Synchronisieren deiner Daten zwischen Geräten, die mit deinem Konto angemeldet sind. Wir verkaufen deine Daten nicht und nutzen sie nicht für Werbung."
+        "body": "Wir verwenden diese Informationen ausschließlich, um die Funktionen der App bereitzustellen: Speichern und Organisieren deiner Rezepte, Erstellen von Essensplänen und Einkaufslisten, Kennzeichnen von Allergenen, die du uns mitgeteilt hast, und Synchronisieren deiner Daten zwischen Geräten, die mit deinem Konto angemeldet sind. Wir verkaufen deine Daten nicht und nutzen sie nicht für Werbung. Allergen-Hinweise sind KI-gestützte Schätzungen und ersetzen nicht das Lesen der vollständigen Zutatenliste."
       },
       {
         "heading": "Drittanbieter-Dienste",

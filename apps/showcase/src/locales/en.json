@@ -27,7 +27,15 @@
     "close": "Close"
   },
   "footer": {
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "support": "Support"
+  },
+  "support": {
+    "back": "← Back to home",
+    "title": "Support",
+    "intro": "Have a question, found a bug, or need help with your account? We're happy to help.",
+    "emailLabel": "Email us",
+    "email": "kulesza.michal@gmail.com"
   },
   "privacyPolicy": {
     "back": "← Back to home",
@@ -41,7 +49,7 @@
       },
       {
         "heading": "How we use your information",
-        "body": "We use this information only to provide the app's features: storing and organizing your recipes, building meal plans and shopping lists, flagging allergens you've told us about, and syncing your data across devices signed in to your account. We do not sell your data or use it for advertising."
+        "body": "We use this information only to provide the app's features: storing and organizing your recipes, building meal plans and shopping lists, flagging allergens you've told us about, and syncing your data across devices signed in to your account. We do not sell your data or use it for advertising. Allergen flags are AI-assisted estimates, not a substitute for reading full ingredient labels."
       },
       {
         "heading": "Third-party services",
