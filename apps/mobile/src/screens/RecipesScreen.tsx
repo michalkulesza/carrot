@@ -234,11 +234,14 @@ const RecipesScreen = () => {
         id: PERSONAL_MENU_ID,
         title: t('households.personal'),
         state: (activeHouseholdId === null ? 'on' : 'off') as 'on' | 'off',
+        image: 'circle',
       },
       ...households.map((h) => ({
         id: h.id,
         title: h.name,
         state: (h.id === activeHouseholdId ? 'on' : 'off') as 'on' | 'off',
+        image: 'circle.fill',
+        imageColor: h.color,
       })),
       ...(households.length === 0
         ? [
@@ -352,6 +355,14 @@ const RecipesScreen = () => {
             onPressAction={handleHouseholdAction}
           >
             <View style={styles.householdSwitcher}>
+              <View
+                style={[
+                  styles.householdDot,
+                  activeHousehold?.color
+                    ? { backgroundColor: activeHousehold.color }
+                    : styles.householdDotEmpty,
+                ]}
+              />
               <Text style={styles.householdSwitcherText} numberOfLines={1}>
                 {activeHousehold ? activeHousehold.name : t('households.personal')}
               </Text>
@@ -712,7 +723,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.label,
   },
-  householdSwitcher: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 1 },
+  householdSwitcher: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
+  householdDot: { width: 8, height: 8, borderRadius: 4 },
+  householdDotEmpty: {
+    borderWidth: 1.5,
+    borderColor: colors.secondaryLabel,
+  },
   householdSwitcherText: {
     fontSize: 13,
     lineHeight: 18,
