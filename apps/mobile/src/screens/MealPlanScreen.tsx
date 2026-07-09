@@ -385,47 +385,51 @@ const MealPlanScreen = () => {
   const listRef = useRef<FlatList>(null)
   const { height: windowHeight } = useWindowDimensions()
 
-  // Rough starting position only, to avoid painting from the very top of the
-  // list before the real centering runs — this is deliberately imprecise.
-  // With contentInsetAdjustmentBehavior="automatic", the static contentOffset
-  // prop is applied in a different coordinate space than the automatic
-  // content-inset adjustment (confirmed: an offset computed with the exact
-  // same formula/height as the working Today button still lands in a
-  // different spot when set via this prop vs via scrollToIndex). So the real
-  // position always has to come from an imperative scrollToIndex call — same
-  // method the Today button already uses correctly — never from this prop.
-  const initialScrollOffset = useMemo(() => {
+  // scrollToIndex's viewPosition centers against the FlatList's raw frame
+  // height, which — because headerTransparent lets content render behind the
+  // header, and the tab bar floats over content too — equals the full window
+  // height, not the space actually visible between them. Measured today's row
+  // landing dead-center of the raw frame (confirmed via screenshot pixel
+  // measurement against the row grid), which visually sits too high in the
+  // header's obstruction and too low relative to the truly visible strip.
+  // Compute the target offset manually against the visible strip
+  // [header bottom, tab bar top] instead, and apply it with scrollToOffset
+  // (bypassing viewPosition's raw-frame assumption entirely). Header/tab bar
+  // content heights beyond the safe area are standard iOS constants (no
+  // large title on this screen, standard tab bar) since neither is
+  // measurable from this screen's own view tree.
+  const HEADER_CONTENT_HEIGHT = 44
+  const TAB_BAR_CONTENT_HEIGHT = 49
+
+  const targetScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
-    return Math.max(0, todayOffset - windowHeight / 2 + DAY_ROW_HEIGHT / 2)
-  }, [offsets, todayIndex, windowHeight])
+    const visibleTop = insets.top + HEADER_CONTENT_HEIGHT
+    const visibleBottom = windowHeight - insets.bottom - TAB_BAR_CONTENT_HEIGHT
+    const visibleCenter = (visibleTop + visibleBottom) / 2
+    return Math.max(0, todayOffset - visibleCenter + DAY_ROW_HEIGHT / 2)
+  }, [offsets, todayIndex, windowHeight, insets.top, insets.bottom])
 
   const [isCentered, setIsCentered] = useState(false)
   const hasUserScrolled = useRef(false)
   const listOpacity = useRef(new Animated.Value(0)).current
 
-  const recenterOnToday = useCallback((source: string) => {
+  const recenterOnToday = useCallback((animated: boolean) => {
     if (hasUserScrolled.current) return
-    console.log(`[mealplan-center-v2] ${source} refExists=${!!listRef.current} todayIndex=${todayIndex}`)
-    listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
+    listRef.current?.scrollToOffset({ offset: targetScrollOffset, animated })
     setIsCentered(true)
-    setTimeout(() => {
-      // @ts-expect-error - debug only
-      console.log(`[mealplan-center-v2] ${source} post-scroll offset=${listRef.current?._listRef?._scrollMetrics?.offset}`)
-    }, 30)
-  }, [todayIndex])
+  }, [targetScrollOffset])
 
   // Call it as soon as the ref exists (matches how quickly a real user could
   // tap Today), and again on every subsequent layout change in case that
   // first call landed before the FlatList was fully attached — cheap no-op
   // otherwise since it's idempotent.
   useEffect(() => {
-    console.log('[mealplan-center-v2] BUILD MARKER 2026-07-09-b mounted')
-    recenterOnToday('mount-effect')
+    recenterOnToday(false)
   }, [recenterOnToday])
 
   const handleListLayout = useCallback(
     (_e: LayoutChangeEvent) => {
-      recenterOnToday('onLayout')
+      recenterOnToday(false)
     },
     [recenterOnToday],
   )
@@ -502,13 +506,9 @@ const MealPlanScreen = () => {
   }, [])
 
   const handleScrollToToday = useCallback(() => {
-    console.log(`[mealplan-center-v2] today-button-tap todayIndex=${todayIndex}`)
-    listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
-    setTimeout(() => {
-      // @ts-expect-error - debug only
-      console.log(`[mealplan-center-v2] today-button-tap post-scroll offset=${listRef.current?._listRef?._scrollMetrics?.offset}`)
-    }, 400)
-  }, [todayIndex])
+    hasUserScrolled.current = false
+    recenterOnToday(true)
+  }, [recenterOnToday])
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
@@ -542,7 +542,7 @@ const MealPlanScreen = () => {
           keyExtractor={(item) => item.key}
           renderItem={renderItem}
           getItemLayout={getItemLayout}
-          contentOffset={{ x: 0, y: initialScrollOffset }}
+          contentOffset={{ x: 0, y: targetScrollOffset }}
           onLayout={handleListLayout}
           onScrollBeginDrag={handleScrollBeginDrag}
           style={styles.list}
