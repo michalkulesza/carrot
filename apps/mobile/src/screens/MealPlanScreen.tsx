@@ -1,11 +1,10 @@
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
-  InteractionManager,
   ListRenderItemInfo,
   Modal,
   PlatformColor,
@@ -382,7 +381,7 @@ const MealPlanScreen = () => {
   })
 
   const listRef = useRef<FlatList>(null)
-  const layoutDone = useRef(false)
+  const hasUserScrolled = useRef(false)
 
   const initialScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
@@ -390,14 +389,19 @@ const MealPlanScreen = () => {
     return Math.max(0, todayOffset - screenHeight / 2 + DAY_ROW_HEIGHT / 2)
   }, [offsets, todayIndex])
 
-  useEffect(() => {
-    if (layoutDone.current) return
-    const task = InteractionManager.runAfterInteractions(() => {
-      layoutDone.current = true
-      listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
-    })
-    return () => task.cancel()
+  // The transparent header + floating tab bar mean iOS applies the automatic
+  // content insets asynchronously as the push transition settles, so the
+  // FlatList's viewport isn't final on the first onLayout. Re-center on every
+  // layout change (size stabilizing) until the user takes over by scrolling,
+  // so it converges to the same result scrollToIndex gives the Today button.
+  const handleListLayout = useCallback(() => {
+    if (hasUserScrolled.current) return
+    listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
   }, [todayIndex])
+
+  const handleScrollBeginDrag = useCallback(() => {
+    hasUserScrolled.current = true
+  }, [])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -497,6 +501,8 @@ const MealPlanScreen = () => {
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         contentOffset={{ x: 0, y: initialScrollOffset }}
+        onLayout={handleListLayout}
+        onScrollBeginDrag={handleScrollBeginDrag}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
         contentInsetAdjustmentBehavior="automatic"
