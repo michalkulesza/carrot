@@ -14,9 +14,9 @@ type Props = {
 
 // Single-line text that scrolls back and forth (like a K.I.T. scanner) for
 // one pause-scroll-pause-scroll-back cycle whenever `turn` changes, instead
-// of wrapping or truncating with an ellipsis. Meant to be driven by a
-// MarqueeGroup (via turn/onOverflowChange/onDone) so it takes turns with
-// sibling marquees instead of scrolling simultaneously.
+// of wrapping or truncating with an ellipsis. Meant to be driven by
+// MarqueeSyncProvider (via turn/onOverflowChange/onDone) so it takes turns
+// with sibling marquees instead of scrolling simultaneously.
 //
 // The visible text is given an explicit numeric width (measured via an
 // invisible copy) rather than left to "auto". A plain `maxWidth` clamp on

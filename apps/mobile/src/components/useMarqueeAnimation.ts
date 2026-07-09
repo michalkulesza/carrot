@@ -15,8 +15,8 @@ const SPEED_PX_PER_SEC = 28
 
 // Drives one pause-scroll-pause-scroll-back cycle of a marquee's translateX
 // whenever `turn` changes to a non-null value, then reports completion via
-// onDone so a MarqueeGroup can hand the turn to the next participant instead
-// of every marquee scrolling simultaneously and independently.
+// onDone so a MarqueeSyncProvider can hand the turn to the next participant
+// instead of every marquee scrolling simultaneously and independently.
 export const useMarqueeAnimation = (
   contentWidth: number,
   containerWidth: number,

@@ -14,9 +14,9 @@ type Props = {
 
 // Single-line row of arbitrary children (e.g. tag pills) that scrolls back
 // and forth for one pause-scroll-pause-scroll-back cycle whenever `turn`
-// changes, instead of wrapping. Meant to be driven by a MarqueeGroup (via
-// turn/onOverflowChange/onDone) so it takes turns with sibling marquees
-// instead of scrolling simultaneously.
+// changes, instead of wrapping. Meant to be driven by MarqueeSyncProvider
+// (via turn/onOverflowChange/onDone) so it takes turns with sibling
+// marquees instead of scrolling simultaneously.
 //
 // Mirrors MarqueeText's measurement approach: an invisible absolutely-
 // positioned copy of the row reports the true intrinsic width (Yoga would

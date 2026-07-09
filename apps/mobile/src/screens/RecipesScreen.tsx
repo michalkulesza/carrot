@@ -39,7 +39,7 @@ import BugReportButton from '../components/BugReportButton'
 import GlassViewSafe from '../components/GlassViewSafe'
 import MarqueeText from '../components/MarqueeText'
 import MarqueeRow from '../components/MarqueeRow'
-import MarqueeGroup from '../components/MarqueeGroup'
+import { MarqueeSyncProvider, MarqueeSyncSlots } from '../components/MarqueeSync'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
@@ -565,8 +565,8 @@ const RecipesScreen = () => {
               <View style={styles.cardImagePlaceholder} />
             )}
             <View style={styles.cardBody}>
-              <MarqueeGroup count={2}>
-                {([titleTurn, tagsTurn]) => (
+              <MarqueeSyncSlots>
+                {({ title: titleTurn, tags: tagsTurn }) => (
                   <>
                     <MarqueeText
                       text={item.title}
@@ -597,7 +597,7 @@ const RecipesScreen = () => {
                     )}
                   </>
                 )}
-              </MarqueeGroup>
+              </MarqueeSyncSlots>
               {(item.servings != null || item.kcal_per_serving != null || item.protein_per_serving != null || item.fat_per_serving != null || item.carbs_per_serving != null) && (
                 <Text style={styles.cardMeta}>
                   {[
@@ -677,48 +677,50 @@ const RecipesScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderRecipe}
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
-        ListHeaderComponent={
-          <View>
-            <Reanimated.View style={topSpacerStyle} />
-            {pendingJobs.length > 0 && (
-              <View>
-                {pendingJobs.map((notif) => (
-                  <PendingJobCard key={notif.id} notif={notif} />
-                ))}
-              </View>
-            )}
-          </View>
-        }
-        ListFooterComponent={
-          filtered.length === 0 ? (
-            <View style={styles.empty}>
-              <Text style={styles.emptyText}>
-                {filterFavourites
-                  ? t('recipes.noFavourites')
-                  : selectedTagId
-                  ? t('recipes.noRecipesWithTag')
-                  : t('recipes.noRecipesYet')}
-              </Text>
-              {(selectedTagId || filterFavourites) && (
-                <Pressable
-                  onPress={() => { setSelectedTagId(null); setFilterFavourites(false) }}
-                  style={({ pressed }) => [pressed && { opacity: 0.7 }]}
-                  accessibilityLabel={t('recipes.clearFilter')}
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.clearFilter}>{t('recipes.clearFilter')}</Text>
-                </Pressable>
+      <MarqueeSyncProvider>
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderRecipe}
+          contentInsetAdjustmentBehavior="never"
+          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          ListHeaderComponent={
+            <View>
+              <Reanimated.View style={topSpacerStyle} />
+              {pendingJobs.length > 0 && (
+                <View>
+                  {pendingJobs.map((notif) => (
+                    <PendingJobCard key={notif.id} notif={notif} />
+                  ))}
+                </View>
               )}
             </View>
-          ) : null
-        }
-      />
+          }
+          ListFooterComponent={
+            filtered.length === 0 ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyText}>
+                  {filterFavourites
+                    ? t('recipes.noFavourites')
+                    : selectedTagId
+                    ? t('recipes.noRecipesWithTag')
+                    : t('recipes.noRecipesYet')}
+                </Text>
+                {(selectedTagId || filterFavourites) && (
+                  <Pressable
+                    onPress={() => { setSelectedTagId(null); setFilterFavourites(false) }}
+                    style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+                    accessibilityLabel={t('recipes.clearFilter')}
+                    accessibilityRole="button"
+                  >
+                    <Text style={styles.clearFilter}>{t('recipes.clearFilter')}</Text>
+                  </Pressable>
+                )}
+              </View>
+            ) : null
+          }
+        />
+      </MarqueeSyncProvider>
       <Reanimated.View
         style={[styles.tagBar, tagBarPositionStyle]}
         onLayout={(e) => { tagBarHeightSV.value = e.nativeEvent.layout.height }}
