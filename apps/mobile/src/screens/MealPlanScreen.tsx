@@ -2,6 +2,7 @@ import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayou
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Dimensions,
   FlatList,
   Image,
@@ -382,6 +383,8 @@ const MealPlanScreen = () => {
 
   const listRef = useRef<FlatList>(null)
   const hasUserScrolled = useRef(false)
+  const [isCentered, setIsCentered] = useState(false)
+  const listOpacity = useRef(new Animated.Value(0)).current
 
   const initialScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
@@ -391,24 +394,26 @@ const MealPlanScreen = () => {
 
   // The transparent header + floating tab bar mean iOS applies the automatic
   // content insets asynchronously as the push transition settles, so
-  // scrollToIndex's internal notion of viewport height isn't final on the
-  // first onLayout (or even for a bit after). Re-center on every layout
-  // change as a best-effort attempt, then force one more correction after a
-  // fixed delay long enough for the transition/insets to have settled for
-  // sure — matching what happens naturally when a user taps "Today" a
-  // moment after the screen appears. Stop once the user takes over scrolling.
-  const recenterOnToday = useCallback((source: string) => {
+  // scrollToIndex's centering isn't reliable until a bit after mount —
+  // matching what happens naturally when a user taps "Today" a moment after
+  // the screen appears. Keep the list hidden behind a spinner until that
+  // fixed delay has passed, then fade it in already centered, so the user
+  // never sees the pre-correction jump.
+  const recenterOnToday = useCallback(() => {
     if (hasUserScrolled.current) return
-    console.log(
-      `[mealplan-center] ${source} todayIndex=${todayIndex} todayOffset=${offsets[todayIndex]} windowHeight=${Dimensions.get('window').height} insetsTop=${insets.top} insetsBottom=${insets.bottom}`,
-    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
-  }, [todayIndex, offsets, insets])
+    setIsCentered(true)
+  }, [todayIndex])
 
   useEffect(() => {
-    const timer = setTimeout(() => recenterOnToday('delayed-400ms'), 400)
+    const timer = setTimeout(recenterOnToday, 400)
     return () => clearTimeout(timer)
   }, [recenterOnToday])
+
+  useEffect(() => {
+    if (!isCentered) return
+    Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start()
+  }, [isCentered, listOpacity])
 
   const handleScrollBeginDrag = useCallback(() => {
     hasUserScrolled.current = true
@@ -477,11 +482,8 @@ const MealPlanScreen = () => {
   }, [])
 
   const handleScrollToToday = useCallback(() => {
-    console.log(
-      `[mealplan-center] today-button todayIndex=${todayIndex} todayOffset=${offsets[todayIndex]} windowHeight=${Dimensions.get('window').height} insetsTop=${insets.top} insetsBottom=${insets.bottom}`,
-    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
-  }, [todayIndex, offsets, insets])
+  }, [todayIndex])
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
@@ -508,23 +510,29 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={listRef}
-        data={items}
-        keyExtractor={(item) => item.key}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        contentOffset={{ x: 0, y: initialScrollOffset }}
-        onLayout={() => recenterOnToday('onLayout')}
-        onScrollBeginDrag={handleScrollBeginDrag}
-        style={styles.list}
-        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        windowSize={5}
-        maxToRenderPerBatch={20}
-        initialNumToRender={14}
-      />
+      <Animated.View style={[styles.list, { opacity: listOpacity }]}>
+        <FlatList
+          ref={listRef}
+          data={items}
+          keyExtractor={(item) => item.key}
+          renderItem={renderItem}
+          getItemLayout={getItemLayout}
+          contentOffset={{ x: 0, y: initialScrollOffset }}
+          onLayout={recenterOnToday}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+          windowSize={5}
+          maxToRenderPerBatch={20}
+          initialNumToRender={14}
+        />
+      </Animated.View>
+      {!isCentered && (
+        <View style={styles.centeringOverlay} pointerEvents="none">
+          <ActivityIndicator size="large" color={colors.brand} />
+        </View>
+      )}
       <Pressable
         style={({ pressed }) => [
           styles.todayBtn,
@@ -568,6 +576,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
+  centeringOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   exportBtn: { padding: 4 },
   exportOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center' },
