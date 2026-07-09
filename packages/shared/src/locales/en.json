@@ -372,8 +372,7 @@
   "households": {
     "switchContext": "Switch household",
     "personal": "Personal",
-    "manageTipTitle": "No households yet",
-    "manageTip": "Manage households in Settings"
+    "manageTip": "You can add a new household in Settings"
   },
   "tags": {
     "tags": "Tags",

@@ -372,8 +372,7 @@
   "households": {
     "switchContext": "Changer de foyer",
     "personal": "Personnel",
-    "manageTipTitle": "Aucun foyer pour le moment",
-    "manageTip": "Gérer les foyers dans les Réglages"
+    "manageTip": "Vous pouvez ajouter un nouveau foyer dans les Réglages"
   },
   "tags": {
     "tags": "Tags",

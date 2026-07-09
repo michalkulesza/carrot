@@ -380,8 +380,7 @@
   "households": {
     "switchContext": "Przełącz gospodarstwo domowe",
     "personal": "Osobiste",
-    "manageTipTitle": "Brak gospodarstw domowych",
-    "manageTip": "Zarządzaj gospodarstwami w Ustawieniach"
+    "manageTip": "Możesz dodać nowe gospodarstwo domowe w Ustawieniach"
   },
   "tags": {
     "tags": "Tagi",
