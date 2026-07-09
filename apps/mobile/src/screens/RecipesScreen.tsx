@@ -238,7 +238,9 @@ const RecipesScreen = () => {
         title: t('households.personal'),
         state: 'off' as const,
         image: activeHouseholdId === null ? 'checkmark.circle.fill' : 'circle',
-        imageColor: colors.secondaryLabel,
+        // Must be a plain hex string, not colors.secondaryLabel (PlatformColor) — passing a
+        // PlatformColor object as imageColor here silently breaks the whole menu from opening.
+        imageColor: '#8e8e93',
       },
       ...households.map((h) => ({
         id: h.id,
