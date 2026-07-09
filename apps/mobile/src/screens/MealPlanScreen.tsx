@@ -1,12 +1,9 @@
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
-  Animated,
-  Dimensions,
   FlatList,
   Image,
-  LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
   PlatformColor,
@@ -14,6 +11,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native'
 import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
@@ -383,62 +381,22 @@ const MealPlanScreen = () => {
   })
 
   const listRef = useRef<FlatList>(null)
-  const hasUserScrolled = useRef(false)
-  const [isCentered, setIsCentered] = useState(false)
-  const listOpacity = useRef(new Animated.Value(0)).current
+  // FlatList's own measured onLayout height is unreliable for centering: it
+  // fires multiple times as the transparent-header/tab-bar transition
+  // settles, sometimes with a much-too-small height under load (confirmed via
+  // logging — a run under a slow JS thread reproduced the original "too low"
+  // bug at full strength). useWindowDimensions() is available correctly from
+  // the very first render and, since the header/tab bar float on top without
+  // reducing the FlatList's own frame, always equals the FlatList's true
+  // settled height (confirmed: it matched exactly what the Today button uses
+  // to center correctly). Compute the initial scroll position from it
+  // directly instead of waiting on any layout/timing signal.
+  const { height: windowHeight } = useWindowDimensions()
 
   const initialScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
-    const screenHeight = Dimensions.get('window').height
-    return Math.max(0, todayOffset - screenHeight / 2 + DAY_ROW_HEIGHT / 2)
-  }, [offsets, todayIndex])
-
-  // The transparent header + floating tab bar mean the FlatList's onLayout
-  // fires more than once as the push transition settles: an early call with
-  // a too-small height, then a later one with the true final height (which
-  // matches the full window height — confirmed via logging). scrollToIndex
-  // centers using whatever height was current at call time, so correcting
-  // only once (even after a delay) can still fire before the final onLayout
-  // has arrived. Re-center on every onLayout height change instead, and only
-  // reveal the list once no further layout change has come in for a short
-  // quiet period, so the correction is always using the final measurement.
-  const lastCorrectedHeight = useRef(0)
-  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const handleListLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      if (hasUserScrolled.current) return
-      const height = e.nativeEvent.layout.height
-      if (height === lastCorrectedHeight.current) return
-      lastCorrectedHeight.current = height
-      listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
-      if (revealTimer.current) clearTimeout(revealTimer.current)
-      revealTimer.current = setTimeout(() => setIsCentered(true), 150)
-    },
-    [todayIndex],
-  )
-
-  useEffect(() => {
-    // Safety net: reveal regardless after a bit, in case onLayout never
-    // settles for some reason, so the screen doesn't stay stuck on the spinner.
-    const timer = setTimeout(() => setIsCentered(true), 1500)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    return () => {
-      if (revealTimer.current) clearTimeout(revealTimer.current)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!isCentered) return
-    Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start()
-  }, [isCentered, listOpacity])
-
-  const handleScrollBeginDrag = useCallback(() => {
-    hasUserScrolled.current = true
-  }, [])
+    return Math.max(0, todayOffset - windowHeight / 2 + DAY_ROW_HEIGHT / 2)
+  }, [offsets, todayIndex, windowHeight])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -531,30 +489,21 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.list, { opacity: listOpacity }]}>
-        <FlatList
-          ref={listRef}
-          data={items}
-          keyExtractor={(item) => item.key}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          contentOffset={{ x: 0, y: initialScrollOffset }}
-          onScrollBeginDrag={handleScrollBeginDrag}
-          onLayout={handleListLayout}
-          style={styles.list}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={false}
-          windowSize={5}
-          maxToRenderPerBatch={20}
-          initialNumToRender={14}
-        />
-      </Animated.View>
-      {!isCentered && (
-        <View style={styles.centeringOverlay} pointerEvents="none">
-          <ActivityIndicator size="large" color={colors.brand} />
-        </View>
-      )}
+      <FlatList
+        ref={listRef}
+        data={items}
+        keyExtractor={(item) => item.key}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        contentOffset={{ x: 0, y: initialScrollOffset }}
+        style={styles.list}
+        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
+        contentInsetAdjustmentBehavior="automatic"
+        showsVerticalScrollIndicator={false}
+        windowSize={5}
+        maxToRenderPerBatch={20}
+        initialNumToRender={14}
+      />
       <Pressable
         style={({ pressed }) => [
           styles.todayBtn,
@@ -598,7 +547,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
-  centeringOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   exportBtn: { padding: 4 },
   exportOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center' },
