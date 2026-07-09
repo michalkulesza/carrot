@@ -236,15 +236,13 @@ const RecipesScreen = () => {
       {
         id: PERSONAL_MENU_ID,
         title: t('households.personal'),
-        state: (activeHouseholdId === null ? 'on' : 'off') as 'on' | 'off',
-        image: 'circle',
+        image: activeHouseholdId === null ? 'checkmark.circle.fill' : 'circle',
         imageColor: colors.secondaryLabel,
       },
       ...households.map((h) => ({
         id: h.id,
         title: h.name,
-        state: (h.id === activeHouseholdId ? 'on' : 'off') as 'on' | 'off',
-        image: 'circle.fill',
+        image: h.id === activeHouseholdId ? 'checkmark.circle.fill' : 'circle.fill',
         imageColor: h.color,
       })),
       ...(households.length === 0
