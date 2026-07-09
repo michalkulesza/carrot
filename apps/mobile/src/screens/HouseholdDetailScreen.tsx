@@ -55,6 +55,8 @@ const HouseholdDetailScreen = () => {
     }
   }, [householdId, name, color, update, t])
 
+  const isDirty = name.trim() !== (household?.name ?? '') || color !== (household?.color ?? PRESET_COLORS[0])
+
   const handleInvite = useCallback(async () => {
     const email = inviteEmail.trim()
     if (!email) return
@@ -105,7 +107,27 @@ const HouseholdDetailScreen = () => {
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen options={{ title: '' }} />
+      <Stack.Screen
+        options={{
+          title: '',
+          headerRight: () =>
+            saving ? (
+              <ActivityIndicator />
+            ) : (
+              <Pressable
+                onPress={handleSave}
+                disabled={!isDirty}
+                hitSlop={8}
+                accessibilityLabel={t('settings.saveChanges')}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.headerSaveText, !isDirty && styles.headerSaveTextDisabled]}>
+                  {t('settings.saveChanges')}
+                </Text>
+              </Pressable>
+            ),
+        }}
+      />
       {/* Name */}
       <Text style={styles.sectionHeader}>{t('settings.nameLabel')}</Text>
       <View style={styles.card}>
@@ -137,18 +159,6 @@ const HouseholdDetailScreen = () => {
           />
         ))}
       </View>
-
-      <Pressable
-        style={({ pressed }) => [styles.saveBtn, saving && styles.saveBtnDisabled, pressed && { opacity: 0.7 }]}
-        onPress={handleSave}
-        disabled={saving}
-        accessibilityLabel={t('settings.saveChanges')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.saveBtnText}>
-          {saving ? t('common.saving') : t('settings.saveChanges')}
-        </Text>
-      </Pressable>
 
       {/* Members */}
       <Text style={styles.sectionHeader}>{t('settings.members')}</Text>
@@ -182,24 +192,34 @@ const HouseholdDetailScreen = () => {
             placeholder={t('settings.inviteEmailPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            returnKeyType="send"
+            onSubmitEditing={handleInvite}
             accessibilityLabel={t('settings.inviteByEmail')}
           />
-          <Pressable
-            style={({ pressed }) => [styles.inviteBtn, inviting && styles.inviteBtnDisabled, pressed && { opacity: 0.7 }]}
-            onPress={handleInvite}
-            disabled={inviting}
-            accessibilityLabel={t('common.invite')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.inviteBtnText}>{t('common.invite')}</Text>
-          </Pressable>
+          {inviting ? (
+            <ActivityIndicator style={styles.inviteSpinner} />
+          ) : (
+            <Pressable
+              onPress={handleInvite}
+              disabled={!inviteEmail.trim()}
+              hitSlop={8}
+              accessibilityLabel={t('common.invite')}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.inviteBtnText, !inviteEmail.trim() && styles.inviteBtnTextDisabled]}>
+                {t('common.invite')}
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
       {/* Leave */}
-      <View style={styles.leaveSection}>
+      <View style={[styles.card, styles.leaveSection]}>
         <Pressable
-          style={({ pressed }) => [styles.leaveBtn, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.leaveRow, pressed && { backgroundColor: colors.secondaryBackground }]}
           onPress={handleLeave}
           accessibilityLabel={t('settings.leaveHousehold')}
           accessibilityRole="button"
@@ -263,16 +283,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     elevation: 4,
   },
-  saveBtn: {
-    backgroundColor: colors.blue,
-    borderRadius: 10,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingVertical: 13,
-    alignItems: 'center',
-  },
-  saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
+  headerSaveText: { color: colors.blue, fontSize: 17, fontWeight: '600' },
+  headerSaveTextDisabled: { color: colors.secondaryLabel, opacity: 0.5 },
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -309,24 +321,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
-  inviteBtn: {
-    backgroundColor: colors.secondaryBackground,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
-  },
-  inviteBtnDisabled: { opacity: 0.5 },
-  inviteBtnText: { fontSize: 16, fontWeight: '600', color: colors.secondaryLabel },
-  leaveSection: { marginHorizontal: 16, marginTop: 32 },
-  leaveBtn: {
-    borderRadius: 10,
+  inviteSpinner: { marginRight: 4 },
+  inviteBtnText: { fontSize: 16, fontWeight: '600', color: colors.blue },
+  inviteBtnTextDisabled: { color: colors.secondaryLabel, opacity: 0.5 },
+  leaveSection: { marginTop: 32 },
+  leaveRow: {
     paddingVertical: 13,
     alignItems: 'center',
-    backgroundColor: colors.brandLight,
   },
-  leaveBtnText: { color: colors.red, fontSize: 16, fontWeight: '600' },
+  leaveBtnText: { color: colors.red, fontSize: 16, fontWeight: '400' },
 })
 
 export default HouseholdDetailScreen
