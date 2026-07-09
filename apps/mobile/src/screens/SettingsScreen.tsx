@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Stack } from 'expo-router'
 import BellMenu from '../components/BellMenu'
 import BugReportButton from '../components/BugReportButton'
@@ -6,7 +6,9 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  KeyboardAvoidingView,
   Linking,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -345,6 +347,9 @@ const SettingsScreen = () => {
   const { t, i18n } = useTranslation()
   const { user, logout, deleteAccount } = useAuth()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [showDeleteEmailModal, setShowDeleteEmailModal] = useState(false)
+  const [deleteEmailInput, setDeleteEmailInput] = useState('')
+  const deleteEmailInputRef = useRef<TextInput>(null)
   const { preferences, isLoading, error, update } = usePreferences()
   const { showSpinner } = useScreenLoading(isLoading)
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } = useHousehold()
@@ -438,16 +443,27 @@ const SettingsScreen = () => {
         text: t('settings.deleteAccount'),
         style: 'destructive',
         onPress: () => {
-          setIsDeletingAccount(true)
-          deleteAccount()
-            .catch((e) => {
-              Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
-            })
-            .finally(() => setIsDeletingAccount(false))
+          setDeleteEmailInput('')
+          setShowDeleteEmailModal(true)
+          setTimeout(() => deleteEmailInputRef.current?.focus(), 100)
         },
       },
     ])
-  }, [t, deleteAccount])
+  }, [t])
+
+  const handleConfirmDeleteAccount = useCallback(() => {
+    if (!deleteEmailInput || deleteEmailInput.trim().toLowerCase() !== user?.email?.toLowerCase()) {
+      Alert.alert(t('common.ok'), t('settings.deleteAccountEmailMismatch'))
+      return
+    }
+    setShowDeleteEmailModal(false)
+    setIsDeletingAccount(true)
+    deleteAccount()
+      .catch((e) => {
+        Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+      })
+      .finally(() => setIsDeletingAccount(false))
+  }, [deleteEmailInput, user, t, deleteAccount])
 
   const handleCreateHousehold = useCallback(() => {
     Alert.prompt(
@@ -489,6 +505,7 @@ const SettingsScreen = () => {
     }
 
   return (
+    <>
     <ScrollView
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
@@ -755,6 +772,51 @@ const SettingsScreen = () => {
         </View>
       </View>
     </ScrollView>
+    <Modal
+      visible={showDeleteEmailModal}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setShowDeleteEmailModal(false)}
+    >
+      <KeyboardAvoidingView behavior="padding" style={styles.modalOverlay}>
+        <View style={styles.modalCard}>
+          <Text style={styles.modalTitle}>{t('settings.deleteAccountTypeEmailTitle')}</Text>
+          <Text style={styles.modalMessage}>{t('settings.deleteAccountTypeEmailMessage')}</Text>
+          <TextInput
+            ref={deleteEmailInputRef}
+            style={styles.modalInput}
+            value={deleteEmailInput}
+            onChangeText={setDeleteEmailInput}
+            placeholder={user?.email}
+            placeholderTextColor={colors.placeholderText}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="emailAddress"
+            returnKeyType="done"
+            onSubmitEditing={handleConfirmDeleteAccount}
+            accessibilityLabel={t('settings.deleteAccountTypeEmailTitle')}
+          />
+          <Pressable
+            style={({ pressed }) => [styles.modalDeleteBtn, pressed && { opacity: 0.7 }]}
+            onPress={handleConfirmDeleteAccount}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.deleteAccount')}
+          >
+            <Text style={styles.modalDeleteBtnText}>{t('settings.deleteAccount')}</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.modalCancelBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => setShowDeleteEmailModal(false)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.cancel')}
+          >
+            <Text style={styles.modalCancelBtnText}>{t('common.cancel')}</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+    </>
   )
 }
 
@@ -1005,6 +1067,75 @@ const styles = StyleSheet.create({
     borderColor: colors.opaqueSeparator,
   },
   reanalyzeBtnText: { color: colors.secondaryLabel, fontSize: 16, fontWeight: '600' },
+  // Delete account email modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: colors.background,
+    borderRadius: 14,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.label,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.secondaryLabel,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+    color: colors.label,
+    backgroundColor: colors.secondaryBackground,
+    marginBottom: 16,
+  },
+  modalDeleteBtn: {
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginBottom: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+  },
+  modalDeleteBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.red,
+  },
+  modalCancelBtn: {
+    borderRadius: 10,
+    paddingVertical: 13,
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.separator,
+  },
+  modalCancelBtnText: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: colors.label,
+  },
 })
 
 export default SettingsScreen
