@@ -393,13 +393,11 @@ const MealPlanScreen = () => {
   const handleListLayout = useCallback(
     (e: LayoutChangeEvent) => {
       if (layoutDone.current) return
+      if (e.nativeEvent.layout.height <= 0) return
       layoutDone.current = true
-      const listHeight = e.nativeEvent.layout.height
-      const todayOffset = offsets[todayIndex] ?? 0
-      const target = Math.max(0, todayOffset - listHeight / 2 + DAY_ROW_HEIGHT / 2)
-      listRef.current?.scrollToOffset({ offset: target, animated: false })
+      listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
     },
-    [offsets, todayIndex],
+    [todayIndex],
   )
 
   const getItemLayout = useCallback(
