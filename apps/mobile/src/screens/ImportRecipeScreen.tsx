@@ -761,7 +761,7 @@ const QuickUrlInputRow = ({
           accessibilityLabel={t('addRecipe.paste')}
           hitSlop={8}
         >
-          <Feather name="clipboard" size={20} color={colors.secondaryLabel} />
+          <Text style={styles.pasteIconBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
       <PrimaryButton
@@ -857,7 +857,7 @@ const UrlInputView = ({
           accessibilityLabel={t('addRecipe.paste')}
           hitSlop={4}
         >
-          <Feather name="clipboard" size={20} color={colors.secondaryLabel} />
+          <Text style={styles.pasteIconBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
     </View>
@@ -1652,8 +1652,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: 999,
+    paddingHorizontal: 16,
     fontSize: 16,
     backgroundColor: PlatformColor('systemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
@@ -1672,14 +1672,19 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   pasteIconBtn: {
-    width: 44,
     height: 44,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
     backgroundColor: PlatformColor('systemBackground') as unknown as string,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pasteIconBtnText: {
+    fontSize: 16,
+    color: PlatformColor('secondaryLabel') as unknown as string,
+    fontWeight: '500',
   },
 
   // Text paste input
