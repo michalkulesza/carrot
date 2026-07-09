@@ -28,8 +28,11 @@ type Props = {
 // auto-width Text nested under an overflow:hidden ancestor gets clamped to
 // the available space by Yoga's layout pass, so it never actually reports a
 // width wider than its container and the "does it overflow" check never
-// trips. Absolute positioning removes the measurer from that flow so it
-// reports its true intrinsic width.
+// trips. Absolute positioning alone isn't enough to escape that: the default
+// alignItems: 'stretch' on the column parent still stretches an absolutely
+// positioned Text to the container's cross-axis width, so alignSelf:
+// 'flex-start' is required for the measurer to report its true intrinsic
+// width instead of the clamped one.
 const MarqueeText = ({ text, style, containerStyle }: Props) => {
   const [containerWidth, setContainerWidth] = useState(0)
   const [textWidth, setTextWidth] = useState(0)
@@ -69,7 +72,7 @@ const MarqueeText = ({ text, style, containerStyle }: Props) => {
   return (
     <View style={[{ overflow: 'hidden' }, containerStyle]} onLayout={onContainerLayout}>
       <Text
-        style={[style, { position: 'absolute', opacity: 0 }]}
+        style={[style, { position: 'absolute', opacity: 0, alignSelf: 'flex-start' }]}
         onLayout={onTextLayout}
       >
         {text}
