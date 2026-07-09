@@ -397,13 +397,16 @@ const MealPlanScreen = () => {
   // fixed delay long enough for the transition/insets to have settled for
   // sure — matching what happens naturally when a user taps "Today" a
   // moment after the screen appears. Stop once the user takes over scrolling.
-  const recenterOnToday = useCallback(() => {
+  const recenterOnToday = useCallback((source: string) => {
     if (hasUserScrolled.current) return
+    console.log(
+      `[mealplan-center] ${source} todayIndex=${todayIndex} todayOffset=${offsets[todayIndex]} windowHeight=${Dimensions.get('window').height} insetsTop=${insets.top} insetsBottom=${insets.bottom}`,
+    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
-  }, [todayIndex])
+  }, [todayIndex, offsets, insets])
 
   useEffect(() => {
-    const timer = setTimeout(recenterOnToday, 400)
+    const timer = setTimeout(() => recenterOnToday('delayed-400ms'), 400)
     return () => clearTimeout(timer)
   }, [recenterOnToday])
 
@@ -474,8 +477,11 @@ const MealPlanScreen = () => {
   }, [])
 
   const handleScrollToToday = useCallback(() => {
+    console.log(
+      `[mealplan-center] today-button todayIndex=${todayIndex} todayOffset=${offsets[todayIndex]} windowHeight=${Dimensions.get('window').height} insetsTop=${insets.top} insetsBottom=${insets.bottom}`,
+    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
-  }, [todayIndex])
+  }, [todayIndex, offsets, insets])
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
@@ -509,7 +515,7 @@ const MealPlanScreen = () => {
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         contentOffset={{ x: 0, y: initialScrollOffset }}
-        onLayout={recenterOnToday}
+        onLayout={() => recenterOnToday('onLayout')}
         onScrollBeginDrag={handleScrollBeginDrag}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
