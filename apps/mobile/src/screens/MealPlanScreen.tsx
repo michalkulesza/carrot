@@ -1,9 +1,11 @@
-import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
+  LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
   PlatformColor,
@@ -381,22 +383,55 @@ const MealPlanScreen = () => {
   })
 
   const listRef = useRef<FlatList>(null)
-  // FlatList's own measured onLayout height is unreliable for centering: it
-  // fires multiple times as the transparent-header/tab-bar transition
-  // settles, sometimes with a much-too-small height under load (confirmed via
-  // logging — a run under a slow JS thread reproduced the original "too low"
-  // bug at full strength). useWindowDimensions() is available correctly from
-  // the very first render and, since the header/tab bar float on top without
-  // reducing the FlatList's own frame, always equals the FlatList's true
-  // settled height (confirmed: it matched exactly what the Today button uses
-  // to center correctly). Compute the initial scroll position from it
-  // directly instead of waiting on any layout/timing signal.
   const { height: windowHeight } = useWindowDimensions()
 
+  // Rough starting position only, to avoid painting from the very top of the
+  // list before the real centering runs — this is deliberately imprecise.
+  // With contentInsetAdjustmentBehavior="automatic", the static contentOffset
+  // prop is applied in a different coordinate space than the automatic
+  // content-inset adjustment (confirmed: an offset computed with the exact
+  // same formula/height as the working Today button still lands in a
+  // different spot when set via this prop vs via scrollToIndex). So the real
+  // position always has to come from an imperative scrollToIndex call — same
+  // method the Today button already uses correctly — never from this prop.
   const initialScrollOffset = useMemo(() => {
     const todayOffset = offsets[todayIndex] ?? 0
     return Math.max(0, todayOffset - windowHeight / 2 + DAY_ROW_HEIGHT / 2)
   }, [offsets, todayIndex, windowHeight])
+
+  const [isCentered, setIsCentered] = useState(false)
+  const hasUserScrolled = useRef(false)
+  const listOpacity = useRef(new Animated.Value(0)).current
+
+  const recenterOnToday = useCallback(() => {
+    if (hasUserScrolled.current) return
+    listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
+    setIsCentered(true)
+  }, [todayIndex])
+
+  // Call it as soon as the ref exists (matches how quickly a real user could
+  // tap Today), and again on every subsequent layout change in case that
+  // first call landed before the FlatList was fully attached — cheap no-op
+  // otherwise since it's idempotent.
+  useEffect(() => {
+    recenterOnToday()
+  }, [recenterOnToday])
+
+  const handleListLayout = useCallback(
+    (_e: LayoutChangeEvent) => {
+      recenterOnToday()
+    },
+    [recenterOnToday],
+  )
+
+  const handleScrollBeginDrag = useCallback(() => {
+    hasUserScrolled.current = true
+  }, [])
+
+  useEffect(() => {
+    if (!isCentered) return
+    Animated.timing(listOpacity, { toValue: 1, duration: 150, useNativeDriver: true }).start()
+  }, [isCentered, listOpacity])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -489,21 +524,25 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        ref={listRef}
-        data={items}
-        keyExtractor={(item) => item.key}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        contentOffset={{ x: 0, y: initialScrollOffset }}
-        style={styles.list}
-        contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        windowSize={5}
-        maxToRenderPerBatch={20}
-        initialNumToRender={14}
-      />
+      <Animated.View style={[styles.list, { opacity: listOpacity }]}>
+        <FlatList
+          ref={listRef}
+          data={items}
+          keyExtractor={(item) => item.key}
+          renderItem={renderItem}
+          getItemLayout={getItemLayout}
+          contentOffset={{ x: 0, y: initialScrollOffset }}
+          onLayout={handleListLayout}
+          onScrollBeginDrag={handleScrollBeginDrag}
+          style={styles.list}
+          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+          windowSize={5}
+          maxToRenderPerBatch={20}
+          initialNumToRender={14}
+        />
+      </Animated.View>
       <Pressable
         style={({ pressed }) => [
           styles.todayBtn,
