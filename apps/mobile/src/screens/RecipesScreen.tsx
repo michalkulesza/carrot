@@ -238,6 +238,7 @@ const RecipesScreen = () => {
         title: t('households.personal'),
         state: (activeHouseholdId === null ? 'on' : 'off') as 'on' | 'off',
         image: 'circle',
+        imageColor: colors.secondaryLabel,
       },
       ...households.map((h) => ({
         id: h.id,
