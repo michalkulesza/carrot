@@ -123,7 +123,7 @@ const HouseholdDetailScreen = () => {
                 accessibilityRole="button"
               >
                 <Text style={[styles.headerSaveText, !isDirty && styles.headerSaveTextDisabled]}>
-                  {t('settings.saveChanges')}
+                  {t('common.save')}
                 </Text>
               </Pressable>
             ),
