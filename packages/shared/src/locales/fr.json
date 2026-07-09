@@ -372,6 +372,7 @@
   "households": {
     "switchContext": "Changer de foyer",
     "personal": "Personnel",
+    "manageTipTitle": "Aucun foyer pour le moment",
     "manageTip": "Gérer les foyers dans les Réglages"
   },
   "tags": {

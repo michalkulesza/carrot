@@ -253,7 +253,8 @@ const RecipesScreen = () => {
         ? [
             {
               id: MANAGE_TIP_MENU_ID,
-              title: t('households.manageTip'),
+              title: t('households.manageTipTitle'),
+              subtitle: t('households.manageTip'),
               attributes: { disabled: true },
             },
           ]

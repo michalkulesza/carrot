@@ -372,6 +372,7 @@
   "households": {
     "switchContext": "Cambiar de hogar",
     "personal": "Personal",
+    "manageTipTitle": "Aún no hay hogares",
     "manageTip": "Gestiona los hogares en Ajustes"
   },
   "tags": {
