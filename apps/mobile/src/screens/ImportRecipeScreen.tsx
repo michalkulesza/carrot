@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ComponentProps } from 'react'
+import type { StyleProp, ViewStyle } from 'react-native'
 import {
   ActivityIndicator,
   Alert,
@@ -29,6 +30,7 @@ import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useNotificationHistory } from '../context/NotificationHistoryContext'
 import BugReportButton from '../components/BugReportButton'
+import GlassViewSafe, { glassAvailable } from '../components/GlassViewSafe'
 import NutritionBoxGrid from '../components/NutritionBoxGrid'
 import { UnitPickerModal, TagPickerModal, IngredientEditor } from '../components/RecipeFieldEditors'
 import { useTags } from '@carrot/shared/hooks/useTags'
@@ -677,6 +679,51 @@ const RecipeFormView = ({
   )
 }
 
+// ── PrimaryButton ──────────────────────────────────────────────────────────────
+// Native iOS 18+ Liquid Glass surface (real UIGlassEffect material + interactive
+// touch feedback) via expo-glass-effect, falling back to a flat blue fill with a
+// manual opacity dim on Android / pre-glass iOS where the API isn't available.
+
+const PrimaryButton = ({
+  onPress,
+  disabled,
+  loading,
+  label,
+  accessibilityLabel,
+  style,
+}: {
+  onPress: () => void
+  disabled?: boolean
+  loading?: boolean
+  label: string
+  accessibilityLabel: string
+  style?: StyleProp<ViewStyle>
+}) => (
+  <Pressable
+    style={({ pressed }) => [
+      styles.primaryBtn,
+      style,
+      disabled && styles.btnDisabled,
+      pressed && !glassAvailable && { opacity: 0.7 },
+    ]}
+    onPress={onPress}
+    disabled={disabled}
+    accessibilityLabel={accessibilityLabel}
+  >
+    <GlassViewSafe
+      style={StyleSheet.absoluteFill}
+      glassEffectStyle="regular"
+      tintColor={colors.blue}
+      isInteractive
+    />
+    {loading ? (
+      <ActivityIndicator color={colors.background} size="small" />
+    ) : (
+      <Text style={styles.primaryBtnText}>{label}</Text>
+    )}
+  </Pressable>
+)
+
 // ── QuickUrlInputRow ───────────────────────────────────────────────────────────
 
 const QuickUrlInputRow = ({
@@ -717,14 +764,12 @@ const QuickUrlInputRow = ({
           <Feather name="clipboard" size={20} color={colors.secondaryLabel} />
         </Pressable>
       </View>
-      <Pressable
-        style={({ pressed }) => [styles.primaryBtn, !url.trim() && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+      <PrimaryButton
         onPress={onImport}
         disabled={!url.trim()}
+        label={t('addRecipe.import')}
         accessibilityLabel={t('addRecipe.import')}
-      >
-        <Text style={styles.primaryBtnText}>{t('addRecipe.import')}</Text>
-      </Pressable>
+      />
     </View>
   )
 }
@@ -1477,58 +1522,42 @@ const ImportRecipeScreen = () => {
               >
                 <Text style={styles.secondaryBtnText}>{t('addRecipe.discard')}</Text>
               </Pressable>
-              <Pressable
-                style={({ pressed }) => [styles.primaryBtn, styles.flex, saving && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+              <PrimaryButton
+                style={styles.flex}
                 onPress={handleSave}
                 disabled={saving}
+                loading={saving}
+                label={t('common.save')}
                 accessibilityLabel={t('common.save')}
-              >
-                {saving ? (
-                  <ActivityIndicator color={colors.background} size="small" />
-                ) : (
-                  <Text style={styles.primaryBtnText}>{t('common.save')}</Text>
-                )}
-              </Pressable>
+              />
             </>
           ) : showImportBtn ? (
-            <Pressable
-              style={({ pressed }) => [styles.primaryBtn, styles.flex, (!url.trim() || loading) && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+            <PrimaryButton
+              style={styles.flex}
               onPress={handleImportUrl}
               disabled={!url.trim() || loading}
+              loading={loading}
+              label={t('addRecipe.import')}
               accessibilityLabel={t('addRecipe.import')}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.background} size="small" />
-              ) : (
-                <Text style={styles.primaryBtnText}>{t('addRecipe.import')}</Text>
-              )}
-            </Pressable>
+            />
           ) : showImportShareBtn ? (
-            <Pressable
-              style={({ pressed }) => [styles.primaryBtn, styles.flex, (!url.trim() || loading) && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+            <PrimaryButton
+              style={styles.flex}
               onPress={handleImportUrl}
               disabled={!url.trim() || loading}
+              loading={loading}
+              label={t('addRecipe.import')}
               accessibilityLabel={t('addRecipe.import')}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.background} size="small" />
-              ) : (
-                <Text style={styles.primaryBtnText}>{t('addRecipe.import')}</Text>
-              )}
-            </Pressable>
+            />
           ) : showExtractBtn ? (
-            <Pressable
-              style={({ pressed }) => [styles.primaryBtn, styles.flex, (!pastedText.trim() || loading) && styles.btnDisabled, pressed && { opacity: 0.7 }]}
+            <PrimaryButton
+              style={styles.flex}
               onPress={handleImportText}
               disabled={!pastedText.trim() || loading}
+              loading={loading}
+              label={t('addRecipe.extractRecipe')}
               accessibilityLabel={t('addRecipe.extractRecipe')}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.background} size="small" />
-              ) : (
-                <Text style={styles.primaryBtnText}>{t('addRecipe.extractRecipe')}</Text>
-              )}
-            </Pressable>
+            />
           ) : null}
         </View>
       )}
@@ -1801,7 +1830,9 @@ const styles = StyleSheet.create({
   secondaryBtnText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, fontWeight: '500' },
   primaryBtn: {
     backgroundColor: colors.blue,
-    borderRadius: 10,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',
