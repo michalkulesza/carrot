@@ -6,8 +6,11 @@ import {
   Dimensions,
   FlatList,
   Image,
+  LayoutChangeEvent,
   ListRenderItemInfo,
   Modal,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   PlatformColor,
   Pressable,
   StyleSheet,
@@ -399,11 +402,31 @@ const MealPlanScreen = () => {
   // the screen appears. Keep the list hidden behind a spinner until that
   // fixed delay has passed, then fade it in already centered, so the user
   // never sees the pre-correction jump.
+  const lastMeasuredHeight = useRef(0)
+
+  const handleDebugLayout = useCallback((e: LayoutChangeEvent) => {
+    lastMeasuredHeight.current = e.nativeEvent.layout.height
+    console.log(
+      `[mealplan-center] onLayout height=${e.nativeEvent.layout.height} windowHeight=${Dimensions.get('window').height} insetsTop=${insets.top} insetsBottom=${insets.bottom} todayOffset=${offsets[todayIndex]}`,
+    )
+  }, [insets, offsets, todayIndex])
+
+  const handleDebugScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    console.log(`[mealplan-center] scroll y=${e.nativeEvent.contentOffset.y}`)
+  }, [])
+
   const recenterOnToday = useCallback(() => {
     if (hasUserScrolled.current) return
+    console.log(
+      `[mealplan-center] recenter firing todayOffset=${offsets[todayIndex]} lastMeasuredHeight=${lastMeasuredHeight.current} expectedTarget=${(offsets[todayIndex] ?? 0) - lastMeasuredHeight.current / 2 + DAY_ROW_HEIGHT / 2}`,
+    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
     setIsCentered(true)
-  }, [todayIndex])
+    setTimeout(() => {
+      // @ts-expect-error - reaching into private internals purely for debug logging
+      console.log(`[mealplan-center] post-scroll metrics=${JSON.stringify(listRef.current?._listRef?._scrollMetrics)}`)
+    }, 50)
+  }, [todayIndex, offsets])
 
   useEffect(() => {
     const timer = setTimeout(recenterOnToday, 400)
@@ -482,8 +505,11 @@ const MealPlanScreen = () => {
   }, [])
 
   const handleScrollToToday = useCallback(() => {
+    console.log(
+      `[mealplan-center] today-button firing todayOffset=${offsets[todayIndex]} lastMeasuredHeight=${lastMeasuredHeight.current}`,
+    )
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
-  }, [todayIndex])
+  }, [todayIndex, offsets])
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
@@ -519,6 +545,9 @@ const MealPlanScreen = () => {
           getItemLayout={getItemLayout}
           contentOffset={{ x: 0, y: initialScrollOffset }}
           onScrollBeginDrag={handleScrollBeginDrag}
+          onLayout={handleDebugLayout}
+          onScroll={handleDebugScroll}
+          scrollEventThrottle={100}
           style={styles.list}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
           contentInsetAdjustmentBehavior="automatic"
