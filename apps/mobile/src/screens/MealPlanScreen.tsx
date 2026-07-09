@@ -403,10 +403,15 @@ const MealPlanScreen = () => {
   const hasUserScrolled = useRef(false)
   const listOpacity = useRef(new Animated.Value(0)).current
 
-  const recenterOnToday = useCallback(() => {
+  const recenterOnToday = useCallback((source: string) => {
     if (hasUserScrolled.current) return
+    console.log(`[mealplan-center-v2] ${source} refExists=${!!listRef.current} todayIndex=${todayIndex}`)
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
     setIsCentered(true)
+    setTimeout(() => {
+      // @ts-expect-error - debug only
+      console.log(`[mealplan-center-v2] ${source} post-scroll offset=${listRef.current?._listRef?._scrollMetrics?.offset}`)
+    }, 30)
   }, [todayIndex])
 
   // Call it as soon as the ref exists (matches how quickly a real user could
@@ -414,12 +419,13 @@ const MealPlanScreen = () => {
   // first call landed before the FlatList was fully attached — cheap no-op
   // otherwise since it's idempotent.
   useEffect(() => {
-    recenterOnToday()
+    console.log('[mealplan-center-v2] BUILD MARKER 2026-07-09-b mounted')
+    recenterOnToday('mount-effect')
   }, [recenterOnToday])
 
   const handleListLayout = useCallback(
     (_e: LayoutChangeEvent) => {
-      recenterOnToday()
+      recenterOnToday('onLayout')
     },
     [recenterOnToday],
   )
@@ -496,7 +502,12 @@ const MealPlanScreen = () => {
   }, [])
 
   const handleScrollToToday = useCallback(() => {
+    console.log(`[mealplan-center-v2] today-button-tap todayIndex=${todayIndex}`)
     listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: true })
+    setTimeout(() => {
+      // @ts-expect-error - debug only
+      console.log(`[mealplan-center-v2] today-button-tap post-scroll offset=${listRef.current?._listRef?._scrollMetrics?.offset}`)
+    }, 400)
   }, [todayIndex])
 
   const renderItem = useCallback(
