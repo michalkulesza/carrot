@@ -1,11 +1,11 @@
-import { forwardRef, memo, useCallback, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
-  LayoutChangeEvent,
+  InteractionManager,
   ListRenderItemInfo,
   Modal,
   PlatformColor,
@@ -390,15 +390,14 @@ const MealPlanScreen = () => {
     return Math.max(0, todayOffset - screenHeight / 2 + DAY_ROW_HEIGHT / 2)
   }, [offsets, todayIndex])
 
-  const handleListLayout = useCallback(
-    (e: LayoutChangeEvent) => {
-      if (layoutDone.current) return
-      if (e.nativeEvent.layout.height <= 0) return
+  useEffect(() => {
+    if (layoutDone.current) return
+    const task = InteractionManager.runAfterInteractions(() => {
       layoutDone.current = true
       listRef.current?.scrollToIndex({ index: todayIndex, viewPosition: 0.5, animated: false })
-    },
-    [todayIndex],
-  )
+    })
+    return () => task.cancel()
+  }, [todayIndex])
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -498,7 +497,6 @@ const MealPlanScreen = () => {
         renderItem={renderItem}
         getItemLayout={getItemLayout}
         contentOffset={{ x: 0, y: initialScrollOffset }}
-        onLayout={handleListLayout}
         style={styles.list}
         contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
         contentInsetAdjustmentBehavior="automatic"
