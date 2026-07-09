@@ -58,6 +58,8 @@ const APPEARANCE_OPTIONS: { value: AppearanceMode; labelKey: string }[] = [
   { value: 'dark', labelKey: 'settings.appearanceDark' },
 ]
 
+const DEVELOPER_SETTINGS_EMAIL = 'kulesza.michal@gmail.com'
+
 const ALLERGEN_KEYS = [
   'gluten', 'crustaceans', 'tree nuts', 'celery', 'mustard',
   'sulphites', 'lupin', 'molluscs', 'eggs', 'fish',
@@ -438,16 +440,36 @@ const SettingsScreen = () => {
         text: t('settings.deleteAccount'),
         style: 'destructive',
         onPress: () => {
-          setIsDeletingAccount(true)
-          deleteAccount()
-            .catch((e) => {
-              Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
-            })
-            .finally(() => setIsDeletingAccount(false))
+          Alert.prompt(
+            t('settings.deleteAccountTypeEmailTitle'),
+            t('settings.deleteAccountTypeEmailMessage', { email: user?.email ?? '' }),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('settings.deleteAccount'),
+                style: 'destructive',
+                onPress: (input) => {
+                  if (!input || input.trim().toLowerCase() !== user?.email?.toLowerCase()) {
+                    Alert.alert(t('common.ok'), t('settings.deleteAccountEmailMismatch'))
+                    return
+                  }
+                  setIsDeletingAccount(true)
+                  deleteAccount()
+                    .catch((e) => {
+                      Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+                    })
+                    .finally(() => setIsDeletingAccount(false))
+                },
+              },
+            ],
+            'plain-text',
+            '',
+            'emailAddress',
+          )
         },
       },
     ])
-  }, [t, deleteAccount])
+  }, [t, deleteAccount, user])
 
   const handleCreateHousehold = useCallback(() => {
     Alert.prompt(
@@ -529,7 +551,7 @@ const SettingsScreen = () => {
           <Text style={styles.privacyPolicyText}>{t('settings.privacyPolicy')}</Text>
         </Pressable>
         <Pressable
-          style={({ pressed }) => [styles.logoutRow, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.logoutRow, styles.logoutRowDivider, pressed && { opacity: 0.7 }]}
           onPress={handleLogout}
           accessibilityLabel={t('settings.logOut')}
           accessibilityRole="button"
@@ -597,31 +619,6 @@ const SettingsScreen = () => {
                 <Text style={styles.pickerChevron}>›</Text>
               </View>
             </Pressable>
-          </View>
-
-          {/* Appearance */}
-          <View style={styles.card}>
-            <MenuView
-              title={t('settings.appearance')}
-              onPressAction={({ nativeEvent }) => {
-                setAppearanceMode(nativeEvent.event as AppearanceMode)
-              }}
-              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
-                id: value,
-                title: t(labelKey),
-                state: appearanceMode === value ? 'on' : 'off',
-              }))}
-            >
-              <View style={styles.pickerRow}>
-                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
-                <View style={styles.pickerRight}>
-                  <Text style={styles.pickerValue}>
-                    {t(APPEARANCE_OPTIONS.find(o => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem')}
-                  </Text>
-                  <Text style={styles.pickerChevron}>›</Text>
-                </View>
-              </View>
-            </MenuView>
           </View>
 
           {/* Unit system */}
@@ -740,20 +737,45 @@ const SettingsScreen = () => {
       </View>
 
       {/* Developer */}
-      <SectionHeader label={t('settings.developer')} />
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t('settings.debugMode')}</Text>
-            <Text style={styles.cardDesc}>{t('settings.debugModeDesc')}</Text>
+      {user?.email === DEVELOPER_SETTINGS_EMAIL && (
+        <>
+          <SectionHeader label={t('settings.developer')} />
+          <View style={styles.card}>
+            <MenuView
+              title={t('settings.appearance')}
+              onPressAction={({ nativeEvent }) => {
+                setAppearanceMode(nativeEvent.event as AppearanceMode)
+              }}
+              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
+                id: value,
+                title: t(labelKey),
+                state: appearanceMode === value ? 'on' : 'off',
+              }))}
+            >
+              <View style={[styles.pickerRow, styles.switchRowBorder]}>
+                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
+                <View style={styles.pickerRight}>
+                  <Text style={styles.pickerValue}>
+                    {t(APPEARANCE_OPTIONS.find(o => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem')}
+                  </Text>
+                  <Text style={styles.pickerChevron}>›</Text>
+                </View>
+              </View>
+            </MenuView>
+            <View style={styles.switchRow}>
+              <View style={styles.switchLabelBlock}>
+                <Text style={styles.switchLabel}>{t('settings.debugMode')}</Text>
+                <Text style={styles.cardDesc}>{t('settings.debugModeDesc')}</Text>
+              </View>
+              <Switch
+                value={debugMode}
+                onValueChange={setDebugMode}
+                accessibilityLabel={t('settings.debugMode')}
+              />
+            </View>
           </View>
-          <Switch
-            value={debugMode}
-            onValueChange={setDebugMode}
-            accessibilityLabel={t('settings.debugMode')}
-          />
-        </View>
-      </View>
+        </>
+      )}
     </ScrollView>
   )
 }
@@ -832,6 +854,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     alignItems: 'flex-start',
+  },
+  logoutRowDivider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.separator,
   },
   logoutText: { color: colors.red, fontSize: 16, fontWeight: '500' },
   privacyPolicyText: { color: colors.blue, fontSize: 16 },

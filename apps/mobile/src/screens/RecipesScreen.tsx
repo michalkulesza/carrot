@@ -4,7 +4,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Image,
   ListRenderItemInfo,
   PlatformColor,
   Pressable,
@@ -12,6 +11,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { Image } from 'expo-image'
 import Reanimated, {
   Easing,
   FadeInDown,
@@ -58,13 +58,15 @@ const ThumbnailImage = ({ url, style }: { url: string; style: object }) => {
   const [errored, setErrored] = useState(false)
   const fallbackUri = PLACEHOLDER_URL || undefined
   if (errored && fallbackUri) {
-    return <Image source={{ uri: fallbackUri }} style={style} resizeMode="cover" />
+    return <Image source={{ uri: fallbackUri }} style={style} contentFit="cover" />
   }
   return (
     <Image
       source={{ uri: proxyThumbnailUrl(url)! }}
       style={style}
-      resizeMode="cover"
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      recyclingKey={url}
       onError={() => setErrored(true)}
     />
   )
