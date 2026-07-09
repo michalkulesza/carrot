@@ -809,7 +809,6 @@ const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }
               <Text style={styles.methodTitle}>{t(method.titleKey)}</Text>
               <Text style={styles.methodDesc}>{t(method.descKey)}</Text>
             </View>
-            <Text style={styles.methodChevron}>›</Text>
           </Pressable>
         ))}
       </View>
@@ -1596,7 +1595,8 @@ const styles = StyleSheet.create({
   pickerWrap: { paddingTop: 16, paddingHorizontal: 16, gap: 12 },
   pickerGroup: {
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   methodRow: {
@@ -1619,6 +1619,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 9,
+    borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: PlatformColor('systemGray5') as unknown as string,
@@ -1635,12 +1636,6 @@ const styles = StyleSheet.create({
     color: PlatformColor('secondaryLabel') as unknown as string,
     lineHeight: 17,
   },
-  methodChevron: {
-    fontSize: 20,
-    color: PlatformColor('systemGray3') as unknown as string,
-    fontWeight: '300',
-  },
-
   // Input section (common wrapper for all input modes)
   inputSection: { padding: 16, gap: 12 },
   imageLoadingSection: { padding: 16, gap: 16, alignItems: 'center', paddingTop: 60 },
@@ -1723,7 +1718,8 @@ const styles = StyleSheet.create({
   // Share tip card
   shareTipCard: {
     backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-    borderRadius: 12,
+    borderRadius: 16,
+    borderCurve: 'continuous',
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
