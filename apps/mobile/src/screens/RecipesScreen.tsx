@@ -38,6 +38,7 @@ import BellMenu from '../components/BellMenu'
 import BugReportButton from '../components/BugReportButton'
 import GlassViewSafe from '../components/GlassViewSafe'
 import MarqueeText from '../components/MarqueeText'
+import MarqueeRow from '../components/MarqueeRow'
 import { colors } from '../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../api/thumbnailUrl'
 import { useNotificationHistory, type NotificationItem } from '../context/NotificationHistoryContext'
@@ -563,7 +564,7 @@ const RecipesScreen = () => {
             <View style={styles.cardBody}>
               <MarqueeText text={item.title} style={styles.cardTitle} containerStyle={styles.cardTitleMarquee} />
               {item.tags.length > 0 ? (
-                <View style={styles.cardTagRow}>
+                <MarqueeRow containerStyle={styles.cardTagRow} gap={4}>
                   {item.tags.map((tg) => (
                     <View key={tg.id} style={styles.cardTagPill}>
                       <Text style={styles.cardTagPillText} numberOfLines={1}>
@@ -571,7 +572,7 @@ const RecipesScreen = () => {
                       </Text>
                     </View>
                   ))}
-                </View>
+                </MarqueeRow>
               ) : (
                 <Text style={[styles.cardTags, styles.cardTagsEmpty]}>{t('tags.noTags')}</Text>
               )}
@@ -806,7 +807,7 @@ const styles = StyleSheet.create({
   cardTitleMarquee: { marginBottom: 4 },
   cardTags: { fontSize: 12, color: colors.brand, marginBottom: 2, marginTop: 1 },
   cardTagsEmpty: { color: colors.tertiaryLabel },
-  cardTagRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 2, marginTop: 1 },
+  cardTagRow: { marginBottom: 2, marginTop: 1 },
   cardTagPill: {
     backgroundColor: colors.brandLight,
     borderRadius: 8,
