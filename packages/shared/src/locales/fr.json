@@ -192,6 +192,8 @@
     "from": "De {{name}}",
     "history": "Historique",
     "timerDone": "Minuteur terminé",
+    "timerDoneTitle": "✓ Terminé — {{title}}",
+    "timerDoneBody": "Étape {{step}} · {{duration}}",
     "household": "Foyer",
     "recipeImporting": "Import en arrière-plan…",
     "recipeImportingBody": "Vous serez notifié quand c'est prêt.",

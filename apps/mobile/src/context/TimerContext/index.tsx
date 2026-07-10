@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import Constants from 'expo-constants'
 import * as KeepAwake from 'expo-keep-awake'
 import * as Notifications from 'expo-notifications'
 import {
@@ -11,51 +10,25 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useNotificationHistory } from '../NotificationHistoryContext'
 import {
+  cancelNotif,
   formatCountdown,
   formatDurationLabel,
+  getRemainingSeconds,
+  isExpoGo,
+  KEEP_AWAKE_TAG,
   parseDurationMatch,
+  scheduleNotif,
+  STORAGE_KEY,
   type DurationMatch,
-} from '@carrot/shared/utils/timerUtils'
-import { useNotificationHistory } from './NotificationHistoryContext'
+  type ResumeInfo,
+  type TimerEntry,
+} from './helpers'
 
 export { formatCountdown, formatDurationLabel, parseDurationMatch, type DurationMatch }
-
-const STORAGE_KEY = 'pk-timers'
-const KEEP_AWAKE_TAG = 'pk-timer'
-
-const isExpoGo = Constants.executionEnvironment === 'storeClient'
-
-if (!isExpoGo) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  })
-}
-
-export interface TimerEntry {
-  id: string
-  recipeId: string
-  recipeTitle: string
-  componentIndex: number
-  stepIndex: number
-  stepText: string
-  totalSeconds: number
-  remainingAtStart: number
-  startedAt: number | null
-  status: 'running' | 'paused' | 'done'
-  notificationId?: string
-}
-
-export interface ResumeInfo {
-  interrupted: TimerEntry[]
-  expired: TimerEntry[]
-}
+export { getRemainingSeconds, type ResumeInfo, type TimerEntry }
 
 interface TimerContextValue {
   timers: Map<string, TimerEntry>
@@ -83,40 +56,9 @@ export const useTimers = () => {
   return ctx
 }
 
-export const getRemainingSeconds = (t: TimerEntry): number => {
-  if (t.status !== 'running' || t.startedAt === null) return t.remainingAtStart
-  return Math.max(0, t.remainingAtStart - Math.floor((Date.now() - t.startedAt) / 1000))
-}
-
-const scheduleNotif = async (t: TimerEntry): Promise<string | null> => {
-  const seconds = getRemainingSeconds(t)
-  if (seconds <= 0) return null
-  try {
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: '⏱️ Timer done',
-        subtitle: t.recipeTitle.length > 50 ? t.recipeTitle.slice(0, 47) + '…' : t.recipeTitle,
-        body: t.stepText.length > 80 ? t.stepText.slice(0, 77) + '…' : t.stepText,
-        data: { timerId: t.id },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-        seconds,
-      },
-    })
-    return id
-  } catch {
-    return null
-  }
-}
-
-const cancelNotif = (notificationId: string | undefined) => {
-  if (!notificationId) return
-  void Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {})
-}
-
 export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const { push: pushNotification } = useNotificationHistory()
+  const { t: translate } = useTranslation()
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map())
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(null)
   const [expiredQueue, setExpiredQueue] = useState<TimerEntry[]>([])
@@ -124,12 +66,11 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const processedDoneRef = useRef<Set<string>>(new Set())
   const loadedRef = useRef(false)
 
-  // Request permissions on mount (not available in Expo Go SDK 53+)
+  // Not available in Expo Go SDK 53+
   useEffect(() => {
     if (!isExpoGo) void Notifications.requestPermissionsAsync()
   }, [])
 
-  // Load persisted timers on mount
   useEffect(() => {
     if (loadedRef.current) return
     loadedRef.current = true
@@ -175,8 +116,11 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
           expired.forEach((t) => {
             pushNotification({
               type: 'timer_done',
-              title: `✓ Done — ${t.recipeTitle}`,
-              body: `Step ${t.stepIndex + 1} · ${formatDurationLabel(t.totalSeconds)}`,
+              title: translate('bell.timerDoneTitle', { title: t.recipeTitle }),
+              body: translate('bell.timerDoneBody', {
+                step: t.stepIndex + 1,
+                duration: formatDurationLabel(t.totalSeconds),
+              }),
             })
           })
           setExpiredQueue(expired)
@@ -194,12 +138,10 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     })()
   }, [])
 
-  // Persist on every change
   useEffect(() => {
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify([...timers.values()]))
   }, [timers])
 
-  // Tick: detect expiry
   useEffect(() => {
     const interval = setInterval(() => {
       setTimers((prev) => {
@@ -218,7 +160,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(interval)
   }, [])
 
-  // Side-effects for expired timers
   useEffect(() => {
     for (const [id, t] of timers) {
       if (t.status !== 'done' || processedDoneRef.current.has(id)) continue
@@ -226,8 +167,11 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       setExpiredQueue((prev) => [...prev, t])
       pushNotification({
         type: 'timer_done',
-        title: `✓ Done — ${t.recipeTitle}`,
-        body: `Step ${t.stepIndex + 1} · ${formatDurationLabel(t.totalSeconds)}`,
+        title: translate('bell.timerDoneTitle', { title: t.recipeTitle }),
+        body: translate('bell.timerDoneBody', {
+          step: t.stepIndex + 1,
+          duration: formatDurationLabel(t.totalSeconds),
+        }),
       })
       setTimeout(() => {
         setTimers((m) => {
@@ -238,11 +182,10 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         processedDoneRef.current.delete(id)
       }, 5000)
     }
-  }, [timers])
+  }, [timers, translate])
 
   const hasRunningTimers = [...timers.values()].some((t) => t.status === 'running')
 
-  // Keep screen on while timers are running
   useEffect(() => {
     if (keepScreenOn && hasRunningTimers) {
       void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_TAG)

@@ -192,6 +192,8 @@
     "from": "Von {{name}}",
     "history": "Verlauf",
     "timerDone": "Timer fertig",
+    "timerDoneTitle": "✓ Fertig — {{title}}",
+    "timerDoneBody": "Schritt {{step}} · {{duration}}",
     "household": "Haushalt",
     "recipeImporting": "Import läuft im Hintergrund…",
     "recipeImportingBody": "Wir benachrichtigen dich, wenn er fertig ist.",

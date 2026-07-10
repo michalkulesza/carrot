@@ -196,6 +196,8 @@
     "from": "Od {{name}}",
     "history": "Historia",
     "timerDone": "Minutnik gotowy",
+    "timerDoneTitle": "✓ Gotowe — {{title}}",
+    "timerDoneBody": "Krok {{step}} · {{duration}}",
     "household": "Gospodarstwo",
     "recipeImporting": "Importowanie w tle…",
     "recipeImportingBody": "Powiadomimy Cię, gdy będzie gotowy.",

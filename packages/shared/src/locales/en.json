@@ -192,6 +192,8 @@
     "from": "From {{name}}",
     "history": "History",
     "timerDone": "Timer done",
+    "timerDoneTitle": "✓ Done — {{title}}",
+    "timerDoneBody": "Step {{step}} · {{duration}}",
     "household": "Household",
     "recipeImporting": "Importing in background…",
     "recipeImportingBody": "We'll notify you when it's ready.",
