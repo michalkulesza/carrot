@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Keyboard, StyleSheet, Text, TextInput, Pressable, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
@@ -28,17 +28,14 @@ const CompleteProfileScreen = () => {
   } = useForm<CompleteProfileFormValues>({ defaultValues: { password: '', nickname: '' } })
 
   useEffect(() => {
-    // Once completeSignup succeeds, signupToken clears and `user` becomes set in the same
-    // render — don't bounce to login in that case, just let the root layout swap to the
-    // main app while this screen still shows its "creating account" loading state.
+    // Don't bounce to login: signupToken clears and user sets in the same render on success.
     if (!signupToken && !user) {
       router.replace('/(auth)/login')
     }
   }, [signupToken, user])
 
   const onSubmit = async (values: CompleteProfileFormValues) => {
-    // Dismiss up front — otherwise the keyboard closing collides with the route
-    // transition to the main app and the password field visibly clears mid-swap.
+    // Dismiss up front to avoid the keyboard-close colliding with the route transition.
     Keyboard.dismiss()
     setError(null)
     setSubmitting(true)
@@ -46,10 +43,16 @@ const CompleteProfileScreen = () => {
       await completeSignup(values.password, values.nickname || undefined)
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
-      setError(msg === PASSWORD_TOO_SHORT ? t('auth.passwordTooShort') : (msg || t('auth.createAccount') + ' failed'))
+      const errorMessage = msg === PASSWORD_TOO_SHORT ? t('auth.passwordTooShort') : (msg || t('auth.createAccount') + ' failed')
+      setError(errorMessage)
       setSubmitting(false)
     }
   }
+
+  const getPrimaryButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }],
+    [],
+  )
 
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -118,7 +121,7 @@ const CompleteProfileScreen = () => {
         />
 
         <Pressable
-          style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
+          style={getPrimaryButtonStyle}
           onPress={handleSubmit(onSubmit)}
           disabled={submitting}
           accessibilityLabel={t('auth.createAccount')}

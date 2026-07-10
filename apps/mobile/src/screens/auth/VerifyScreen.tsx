@@ -3,7 +3,6 @@ import {
   InputAccessoryView,
   KeyboardAvoidingView,
   Platform,
-  PlatformColor,
   Pressable,
   StyleSheet,
   Text,
@@ -16,6 +15,7 @@ import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Controller, useForm } from 'react-hook-form'
 import { useAuth } from '../../context/AuthContext'
+import { colors } from '../../theme/colors'
 
 const RESEND_COOLDOWN = 60
 const CODE_ACCESSORY_ID = 'verify-code-accessory'
@@ -104,6 +104,15 @@ const VerifyScreen = () => {
     }
   }
 
+  const getSubmitButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [
+      styles.button,
+      submitting && styles.buttonDisabled,
+      pressed && styles.buttonPressed,
+    ],
+    [submitting],
+  )
+
   return (
     <KeyboardAvoidingView behavior="padding" style={[styles.container, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 24 }]}>
       <View style={styles.content}>
@@ -131,7 +140,7 @@ const VerifyScreen = () => {
                   onChange(v.replace(/\D/g, '').slice(0, 6))
                 }}
                 placeholder={t('auth.codePlaceholder')}
-                placeholderTextColor={PlatformColor('systemGray2') as unknown as string}
+                placeholderTextColor={colors.gray2}
                 keyboardType="number-pad"
                 textContentType="oneTimeCode"
                 autoComplete="one-time-code"
@@ -151,11 +160,7 @@ const VerifyScreen = () => {
           onPress={handleSubmit(onSubmit)}
           disabled={submitting}
           hitSlop={8}
-          style={({ pressed }) => [
-            styles.button,
-            submitting && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
+          style={getSubmitButtonStyle}
           accessibilityRole="button"
           accessibilityLabel={submitting ? t('auth.verifying') : t('auth.verify')}
         >
@@ -196,7 +201,7 @@ export default VerifyScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: PlatformColor('systemBackground') as unknown as string,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -207,13 +212,13 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 34,
-    color: PlatformColor('label') as unknown as string,
+    color: colors.label,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     lineHeight: 21,
-    color: PlatformColor('secondaryLabel') as unknown as string,
+    color: colors.secondaryLabel,
     marginBottom: 32,
   },
   codeInput: {
@@ -222,8 +227,8 @@ const styles = StyleSheet.create({
     lineHeight: 34,
     letterSpacing: 8,
     textAlign: 'center',
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-    color: PlatformColor('label') as unknown as string,
+    backgroundColor: colors.secondaryBackground,
+    color: colors.label,
     borderRadius: 999,
     paddingVertical: 20,
     paddingHorizontal: 16,
@@ -231,17 +236,17 @@ const styles = StyleSheet.create({
   },
   codeInputError: {
     borderWidth: 1,
-    borderColor: PlatformColor('systemRed') as unknown as string,
+    borderColor: colors.red,
   },
   error: {
     fontSize: 13,
     lineHeight: 18,
-    color: PlatformColor('systemRed') as unknown as string,
+    color: colors.red,
     marginBottom: 16,
     textAlign: 'center',
   },
   button: {
-    backgroundColor: PlatformColor('systemBlue') as unknown as string,
+    backgroundColor: colors.blue,
     borderRadius: 999,
     paddingVertical: 16,
     alignItems: 'center',
@@ -268,10 +273,10 @@ const styles = StyleSheet.create({
   resendText: {
     fontSize: 16,
     lineHeight: 21,
-    color: PlatformColor('systemBlue') as unknown as string,
+    color: colors.blue,
   },
   resendTextDisabled: {
-    color: PlatformColor('systemGray') as unknown as string,
+    color: colors.gray,
   },
   accessoryBar: {
     flexDirection: 'row',
@@ -279,11 +284,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    backgroundColor: colors.secondaryBackground,
   },
   accessoryDoneText: {
     fontSize: 16,
     fontWeight: '600',
-    color: PlatformColor('systemBlue') as unknown as string,
+    color: colors.blue,
   },
 })

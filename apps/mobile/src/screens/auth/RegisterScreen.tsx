@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
@@ -11,6 +11,7 @@ import { EMAIL_PATTERN } from '../../utils/validation'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
 const ACCOUNT_EXISTS_GOOGLE = 'ACCOUNT_EXISTS_GOOGLE'
+const googleIconColor = colors.label as unknown as string
 
 interface RegisterFormValues {
   email: string
@@ -64,6 +65,21 @@ const RegisterScreen = () => {
     }
   }
 
+  const getPrimaryButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }],
+    [],
+  )
+
+  const getOutlineButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, pressed && { opacity: 0.7 }],
+    [],
+  )
+
+  const getGoogleButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, styles.buttonGoogle, pressed && { opacity: 0.7 }],
+    [],
+  )
+
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -105,7 +121,7 @@ const RegisterScreen = () => {
         />
 
         <Pressable
-          style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
+          style={getPrimaryButtonStyle}
           onPress={handleSubmit(onSubmit)}
           disabled={submitting}
           accessibilityLabel={t('auth.continue')}
@@ -117,7 +133,7 @@ const RegisterScreen = () => {
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
+          style={getOutlineButtonStyle}
           onPress={() => router.back()}
           accessibilityLabel={t('auth.alreadyHaveAccount')}
           accessibilityRole="button"
@@ -132,13 +148,13 @@ const RegisterScreen = () => {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.button, styles.buttonGoogle, pressed && { opacity: 0.7 }]}
+          style={getGoogleButtonStyle}
           onPress={onGooglePress}
           disabled={googleSubmitting}
           accessibilityLabel={t('auth.continueWithGoogle')}
           accessibilityRole="button"
         >
-          <AntDesign name="google" size={18} color={colors.label as unknown as string} />
+          <AntDesign name="google" size={18} color={googleIconColor} />
           <Text style={styles.buttonGoogleText}>{t('auth.continueWithGoogle')}</Text>
         </Pressable>
       </ScrollView>

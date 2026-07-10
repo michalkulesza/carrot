@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Image, StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Platform } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
@@ -10,6 +10,7 @@ import { colors } from '../../theme/colors'
 import { EMAIL_PATTERN } from '../../utils/validation'
 
 const NOT_VERIFIED = 'LOGIN_USER_NOT_VERIFIED'
+const googleIconColor = colors.label as unknown as string
 
 interface LoginFormValues {
   email: string
@@ -38,7 +39,8 @@ const LoginScreen = () => {
       await login(values.email, values.password)
     } catch (e) {
       const msg = e instanceof Error ? e.message : ''
-      setError(msg === NOT_VERIFIED ? t('auth.notVerifiedError') : (msg || t('auth.signIn') + ' failed'))
+      const errorMessage = msg === NOT_VERIFIED ? t('auth.notVerifiedError') : (msg || t('auth.signIn') + ' failed')
+      setError(errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -56,6 +58,21 @@ const LoginScreen = () => {
       setGoogleSubmitting(false)
     }
   }
+
+  const getPrimaryButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }],
+    [],
+  )
+
+  const getOutlineButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, pressed && { opacity: 0.7 }],
+    [],
+  )
+
+  const getGoogleButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.button, styles.buttonGoogle, pressed && { opacity: 0.7 }],
+    [],
+  )
 
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -133,7 +150,7 @@ const LoginScreen = () => {
         />
 
         <Pressable
-          style={({ pressed }) => [styles.button, styles.buttonPrimary, pressed && { opacity: 0.7 }]}
+          style={getPrimaryButtonStyle}
           onPress={handleSubmit(onSubmit)}
           disabled={submitting}
           accessibilityLabel={t('auth.signIn')}
@@ -145,7 +162,7 @@ const LoginScreen = () => {
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
+          style={getOutlineButtonStyle}
           onPress={() => router.push('/(auth)/register')}
           accessibilityLabel={t('auth.createAccount')}
           accessibilityRole="button"
@@ -160,13 +177,13 @@ const LoginScreen = () => {
         </View>
 
         <Pressable
-          style={({ pressed }) => [styles.button, styles.buttonGoogle, pressed && { opacity: 0.7 }]}
+          style={getGoogleButtonStyle}
           onPress={onGooglePress}
           disabled={googleSubmitting}
           accessibilityLabel={t('auth.continueWithGoogle')}
           accessibilityRole="button"
         >
-          <AntDesign name="google" size={18} color={colors.label as unknown as string} />
+          <AntDesign name="google" size={18} color={googleIconColor} />
           <Text style={styles.buttonGoogleText}>{t('auth.continueWithGoogle')}</Text>
         </Pressable>
       </View>
