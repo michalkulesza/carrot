@@ -18,16 +18,7 @@ type MarqueeSyncContextValue = {
 
 const MarqueeSyncContext = createContext<MarqueeSyncContextValue | null>(null)
 
-// Coordinates every title/tag marquee across an entire list into two
-// synchronized rounds: first every overflowing title scrolls out and back
-// together, then every overflowing tag row does, then back to titles, and so
-// on — instead of each one running on its own independent clock.
-//
-// All bookkeeping (which ids currently overflow, which ones are still mid-
-// round) lives in refs rather than state, so it's read via `phaseRef` inside
-// callbacks instead of a closed-over value that could be stale by the time a
-// distant list item's effect fires. Only `phase`/`token` are real state,
-// since those are the only values that need to trigger a re-render.
+// Overflow bookkeeping lives in refs (read via phaseRef) so callbacks always see the latest state, not a stale closure from when a distant list item's effect fired.
 export const MarqueeSyncProvider = ({ children }: { children: ReactNode }) => {
   const [phase, setPhase] = useState<Role>('title')
   const [token, setToken] = useState(0)
@@ -46,9 +37,7 @@ export const MarqueeSyncProvider = ({ children }: { children: ReactNode }) => {
     setToken((t) => t + 1)
   }, [])
 
-  // If the round that just emptied out leaves nothing to animate, but the
-  // other role has overflowing content, hop straight to it instead of
-  // sitting idle until something changes.
+  // If the round that just emptied leaves nothing to animate but the other role has overflowing content, hop straight to it instead of sitting idle.
   const maybeAdvance = useCallback(() => {
     if (remaining.current.size > 0) return
     const otherRole: Role = phaseRef.current === 'title' ? 'tags' : 'title'
@@ -126,9 +115,7 @@ type SlotsProps = {
   children: (slots: { title: MarqueeTurn; tags: MarqueeTurn }) => ReactNode
 }
 
-// Convenience wrapper so a single JSX-instantiated component (giving it a
-// stable per-row identity, e.g. inside a FlatList renderItem) can grab both
-// roles' turn state at once.
+// Lets a single JSX-instantiated component (e.g. inside a FlatList renderItem, for stable per-row identity) grab both roles' turn state at once.
 export const MarqueeSyncSlots = ({ children }: SlotsProps) => {
   const title = useMarqueeSync('title')
   const tags = useMarqueeSync('tags')
