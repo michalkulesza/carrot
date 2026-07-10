@@ -31,7 +31,9 @@
     "changePhoto": "Zmień zdjęcie",
     "uploading": "Przesyłam…",
     "uploadFailed": "Nie udało się przesłać zdjęcia. Spróbuj ponownie.",
-    "invalidImageUrl": "Nieprawidłowy URL. Podaj prawidłowy adres https://."
+    "invalidImageUrl": "Nieprawidłowy URL. Podaj prawidłowy adres https://.",
+    "somethingWentWrong": "Coś poszło nie tak",
+    "tryAgain": "Spróbuj ponownie"
   },
   "recipes": {
     "searchPlaceholder": "Wyszukaj",
@@ -126,7 +128,9 @@
     "shopping": "Zakupy",
     "settings": "Ustawienia",
     "personalLibrary": "Biblioteka osobista",
-    "addRecipe": "Dodaj"
+    "addRecipe": "Dodaj",
+    "expandSidebar": "Rozwiń pasek boczny",
+    "collapseSidebar": "Zwiń pasek boczny"
   },
   "auth": {
     "signIn": "Zaloguj się",
@@ -146,6 +150,7 @@
     "accountExistsGoogleError": "Konto z tym adresem e-mail już istnieje przez Google. Użyj \"Kontynuuj z Google\", aby się zalogować.",
     "completeProfileTitle": "Skonfiguruj swoje konto",
     "completeProfileSubtitle": "Wybierz hasło i sposób, w jaki chcesz być widoczny/a.",
+    "completeProfileError": "Rejestracja nie powiodła się. Spróbuj ponownie.",
     "brandName": "carrot",
     "tagline": "Twoja osobista biblioteka przepisów",
     "continueWithGoogle": "Kontynuuj z Google",
@@ -164,12 +169,14 @@
     "codeExpired": "Kod wygasł. Poproś o nowy.",
     "codeTooManyAttempts": "Zbyt wiele prób. Poproś o nowy kod.",
     "notVerifiedError": "Najpierw zweryfikuj swój adres e-mail.",
+    "loginFailed": "Logowanie nie powiodło się.",
     "emailRequired": "Adres e-mail jest wymagany",
     "emailInvalid": "Podaj prawidłowy adres e-mail",
     "passwordRequired": "Hasło jest wymagane",
     "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków",
     "nicknameTooLong": "Pseudonim może mieć maksymalnie 50 znaków",
-    "codeRequired": "Podaj 6-cyfrowy kod"
+    "codeRequired": "Podaj 6-cyfrowy kod",
+    "registrationError": "Rejestracja nie powiodła się. Spróbuj ponownie."
   },
   "timers": {
     "startTimer": "Uruchom minutnik",
@@ -193,6 +200,10 @@
     "householdInvitation": "Zaproszenie do gospodarstwa",
     "invitationTitle": "Zaproszenie do gospodarstwa {{name}}",
     "acceptInvitationFailed": "Nie udało się zaakceptować zaproszenia",
+    "joinedHousehold": "Dołączono do gospodarstwa",
+    "joinedHouseholdTitle": "Dołączono do {{name}}",
+    "declinedHouseholdTitle": "Odrzucono {{name}}",
+    "invitedBy": "Zaproszenie od {{name}}",
     "memberLeft": "{{name}} opuścił(a) gospodarstwo {{household}}",
     "from": "Od {{name}}",
     "history": "Historia",
@@ -255,10 +266,12 @@
     "exportRecipes": "Eksportuj przepisy",
     "exportDesc": "Pobierz wszystkie przepisy jako plik CSV.",
     "exportCSV": "Eksportuj CSV",
+    "exportFailed": "Eksport nieudany",
     "exporting": "Eksportuję…",
     "importRecipes": "Importuj przepisy",
     "importDesc": "Importuj przepisy z wcześniej wyeksportowanego pliku CSV.",
     "chooseCSV": "Wybierz CSV…",
+    "importFailed": "Import nieudany",
     "importing": "Importuję…",
     "importedRecipes_one": "Zaimportowano {{count}} przepis",
     "importedRecipes_few": "Zaimportowano {{count}} przepisy",
@@ -286,6 +299,7 @@
     "householdNameOptional": "Nazwa",
     "householdNamePlaceholder": "Moje gospodarstwo",
     "householdCreated": "Gospodarstwo utworzone",
+    "createHouseholdFailed": "Nie udało się utworzyć gospodarstwa",
     "manageHousehold": "Zarządzaj gospodarstwem",
     "personalScope": "Dotyczy twoich osobistych przepisów",
     "householdScope": "Dotyczy {{name}}",
@@ -395,7 +409,8 @@
     "createTag": "Utwórz '{{name}}'",
     "noTagsAvailable": "Brak dostępnych tagów",
     "allTagsAdded": "Wszystkie tagi już dodane",
-    "addTag": "Dodaj tag"
+    "addTag": "Dodaj tag",
+    "removeTag": "Usuń {{name}}"
   },
   "addRecipe": {
     "highDemandTitle": "Wysokie obciążenie",
@@ -521,5 +536,9 @@
     "handful": "garść",
     "qtyLabel": "ilość",
     "unitLabel": "jednostka"
+  },
+  "ads": {
+    "advertisement": "Reklama",
+    "placeholder": "Reklama"
   }
 }

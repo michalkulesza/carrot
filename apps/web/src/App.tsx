@@ -16,25 +16,25 @@ const queryClient = new QueryClient()
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ApiClientProvider client={webClient}>
-    <BrowserRouter>
-      <ToastProvider placement="bottom" />
-      <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/verify" element={<VerifyPage />} />
-          <Route path="/complete-profile" element={<CompleteProfilePage />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <AppShell />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+      <BrowserRouter>
+        <ToastProvider placement="bottom" />
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify" element={<VerifyPage />} />
+            <Route path="/complete-profile" element={<CompleteProfilePage />} />
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <AppShell />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
     </ApiClientProvider>
   </QueryClientProvider>
 )

@@ -1,8 +1,18 @@
-import { createContext, useCallback, useContext, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react'
 
 type DebugModeContextValue = {
   enabled: boolean
   setEnabled: (enabled: boolean) => void
+}
+
+type DebugModeProviderProps = {
+  children: React.ReactNode
 }
 
 const STORAGE_KEY = 'debug-mode-enabled'
@@ -12,11 +22,7 @@ const DebugModeContext = createContext<DebugModeContextValue>({
   setEnabled: () => {},
 })
 
-export const DebugModeProvider = ({
-  children,
-}: {
-  children: React.ReactNode
-}) => {
+export const DebugModeProvider = ({ children }: DebugModeProviderProps) => {
   const [enabled, setEnabledState] = useState(
     () => localStorage.getItem(STORAGE_KEY) === '1'
   )
@@ -26,8 +32,10 @@ export const DebugModeProvider = ({
     localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
   }, [])
 
+  const value = useMemo(() => ({ enabled, setEnabled }), [enabled, setEnabled])
+
   return (
-    <DebugModeContext.Provider value={{ enabled, setEnabled }}>
+    <DebugModeContext.Provider value={value}>
       {children}
     </DebugModeContext.Provider>
   )

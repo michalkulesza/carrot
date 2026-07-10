@@ -10,7 +10,14 @@ const LANGUAGES = [
   { code: 'es', label: 'Español' },
 ]
 
-export default function LanguageSwitcher() {
+const getLanguageOptionClassName = (active: boolean) =>
+  `w-full text-left px-3 py-2 text-sm transition-colors ${
+    active
+      ? 'bg-primary/10 text-primary font-medium'
+      : 'text-zinc-700 hover:bg-zinc-50'
+  }`
+
+const LanguageSwitcher = () => {
   const { i18n, t } = useTranslation()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -46,11 +53,7 @@ export default function LanguageSwitcher() {
               key={code}
               type="button"
               onClick={() => select(code)}
-              className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                i18n.language === code
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-zinc-700 hover:bg-zinc-50'
-              }`}
+              className={getLanguageOptionClassName(i18n.language === code)}
             >
               {label}
             </button>
@@ -60,3 +63,5 @@ export default function LanguageSwitcher() {
     </div>
   )
 }
+
+export default LanguageSwitcher

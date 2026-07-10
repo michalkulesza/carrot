@@ -6,7 +6,7 @@ import './i18n'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 
-Sentry.init({
+const sentryOptions: Sentry.BrowserOptions = {
   dsn: 'https://c99c9d4ee4dcc9a6b30e23963716751d@o4511350064611328.ingest.de.sentry.io/4511571143295056',
   tracesSampleRate: 1.0,
   integrations: [
@@ -20,7 +20,9 @@ Sentry.init({
       colorScheme: 'system',
     }),
   ],
-})
+}
+
+Sentry.init(sentryOptions)
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {})

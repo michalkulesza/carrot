@@ -1,4 +1,5 @@
 import { createApiClient } from '@carrot/shared/api/client'
+import type { StreamCallbacks, ImportResult } from '@carrot/shared/types'
 
 export type {
   Unit,
@@ -71,13 +72,13 @@ export const {
   declineInvitation,
 } = webClient
 
-// ── Web-only: DOM download trigger ────────────────────────────────────────────
-
 export async function exportRecipes(): Promise<void> {
   const res = await fetch('/api/recipes/export', { credentials: 'include' })
   if (!res.ok) throw new Error('Export failed')
+
   const blob = await res.blob()
   const url = URL.createObjectURL(blob)
+
   const a = document.createElement('a')
   a.href = url
   a.download = 'recipes.csv'
@@ -85,20 +86,23 @@ export async function exportRecipes(): Promise<void> {
   URL.revokeObjectURL(url)
 }
 
-// ── Web-only: EventSource-based import stream (v2 mobile uses fetch SSE) ─────
+type ImportStreamMessage =
+  | { type: 'stage'; key: string; label: string }
+  | { type: 'done'; result: ImportResult }
 
-import type { StreamCallbacks, ImportResult } from '@carrot/shared/types'
+export function streamImport(
+  url: string,
+  callbacks: StreamCallbacks
+): () => void {
+  const streamUrl = `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`
+  const source = new EventSource(streamUrl)
 
-export function streamImport(url: string, callbacks: StreamCallbacks): () => void {
-  const source = new EventSource(
-    `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`
-  )
   source.onmessage = (event) => {
-    const data = JSON.parse(event.data as string)
+    const data = JSON.parse(event.data as string) as ImportStreamMessage
     if (data.type === 'stage') {
-      callbacks.onStage({ key: data.key as string, label: data.label as string })
+      callbacks.onStage({ key: data.key, label: data.label })
     } else if (data.type === 'done') {
-      callbacks.onDone(data.result as ImportResult)
+      callbacks.onDone(data.result)
       source.close()
     }
   }
@@ -106,5 +110,6 @@ export function streamImport(url: string, callbacks: StreamCallbacks): () => voi
     callbacks.onError('Connection error — check the API server.')
     source.close()
   }
+
   return () => source.close()
 }

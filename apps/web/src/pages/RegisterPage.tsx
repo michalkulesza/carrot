@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +8,29 @@ import GoogleSignInButton from '../components/GoogleSignInButton'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
 
-export default function RegisterPage() {
+interface GoogleSignInSectionProps {
+  loading: boolean
+  onCredential: (idToken: string) => void
+  onError: () => void
+}
+
+const GoogleSignInSection = ({
+  loading,
+  onCredential,
+  onError,
+}: GoogleSignInSectionProps) => {
+  const { t } = useTranslation()
+
+  if (loading) {
+    return (
+      <p className="text-center text-sm text-zinc-600">{t('auth.creating')}</p>
+    )
+  }
+
+  return <GoogleSignInButton onCredential={onCredential} onError={onError} />
+}
+
+const RegisterPage = () => {
   const { requestSignupCode, loginWithGoogle } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -17,37 +39,50 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      await requestSignupCode(email)
-      navigate('/verify', { replace: true })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
-      setError(
-        msg === ACCOUNT_EXISTS
-          ? t('auth.accountExistsError')
-          : msg || 'Registration failed.'
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault()
+      setError(null)
+      setLoading(true)
 
-  async function handleGoogleCredential(idToken: string) {
-    setError(null)
-    setGoogleLoading(true)
-    try {
-      await loginWithGoogle(idToken)
-      navigate('/', { replace: true })
-    } catch {
-      setError(t('auth.googleSignInError'))
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
+      try {
+        await requestSignupCode(email)
+        navigate('/verify', { replace: true })
+      } catch (err) {
+        const fallbackMessage =
+          err instanceof Error ? err.message : t('auth.registrationError')
+        const displayMessage =
+          fallbackMessage === ACCOUNT_EXISTS
+            ? t('auth.accountExistsError')
+            : fallbackMessage || t('auth.registrationError')
+        setError(displayMessage)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [email, requestSignupCode, navigate, t]
+  )
+
+  const handleGoogleCredential = useCallback(
+    async (idToken: string) => {
+      setError(null)
+      setGoogleLoading(true)
+
+      try {
+        await loginWithGoogle(idToken)
+        navigate('/', { replace: true })
+      } catch {
+        setError(t('auth.googleSignInError'))
+      } finally {
+        setGoogleLoading(false)
+      }
+    },
+    [loginWithGoogle, navigate, t]
+  )
+
+  const handleGoogleError = useCallback(() => {
+    setError(t('auth.googleSignInError'))
+  }, [t])
 
   return (
     <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -105,16 +140,11 @@ export default function RegisterPage() {
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
 
-            {googleLoading ? (
-              <p className="text-center text-sm text-zinc-600">
-                {t('auth.creating')}
-              </p>
-            ) : (
-              <GoogleSignInButton
-                onCredential={handleGoogleCredential}
-                onError={() => setError(t('auth.googleSignInError'))}
-              />
-            )}
+            <GoogleSignInSection
+              loading={googleLoading}
+              onCredential={handleGoogleCredential}
+              onError={handleGoogleError}
+            />
 
             <p className="text-center text-sm text-zinc-600">
               {t('auth.alreadyHaveAccount')}{' '}
@@ -128,3 +158,5 @@ export default function RegisterPage() {
     </main>
   )
 }
+
+export default RegisterPage

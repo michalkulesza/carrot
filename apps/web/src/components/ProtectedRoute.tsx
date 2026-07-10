@@ -1,11 +1,11 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-export default function ProtectedRoute({
-  children,
-}: {
+interface ProtectedRouteProps {
   children: React.ReactNode
-}) {
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth()
 
   if (loading) {
@@ -20,3 +20,5 @@ export default function ProtectedRoute({
 
   return <>{children}</>
 }
+
+export default ProtectedRoute

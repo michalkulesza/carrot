@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -42,23 +43,37 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     void qc.invalidateQueries({ queryKey: ['invitations'] })
   }, [qc])
 
-  const switchHousehold = useCallback(async (id: string | null) => {
-    await apiSwitch(id)
-    await refreshUser()
-  }, [refreshUser])
+  const switchHousehold = useCallback(
+    async (id: string | null) => {
+      await apiSwitch(id)
+      await refreshUser()
+    },
+    [refreshUser]
+  )
+
+  const value = useMemo(
+    () => ({
+      households,
+      activeHouseholdId,
+      activeHousehold,
+      invitations,
+      switchHousehold,
+      refetchHouseholds,
+      refetchInvitations,
+    }),
+    [
+      households,
+      activeHouseholdId,
+      activeHousehold,
+      invitations,
+      switchHousehold,
+      refetchHouseholds,
+      refetchInvitations,
+    ]
+  )
 
   return (
-    <HouseholdContext.Provider
-      value={{
-        households,
-        activeHouseholdId,
-        activeHousehold,
-        invitations,
-        switchHousehold,
-        refetchHouseholds,
-        refetchInvitations,
-      }}
-    >
+    <HouseholdContext.Provider value={value}>
       {children}
     </HouseholdContext.Provider>
   )

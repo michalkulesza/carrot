@@ -1,10 +1,10 @@
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 
-export default function CompleteProfilePage() {
+const CompleteProfilePage = () => {
   const { signupToken, completeSignup } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -18,19 +18,25 @@ export default function CompleteProfilePage() {
     if (!signupToken) navigate('/register', { replace: true })
   }, [signupToken, navigate])
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setError(null)
-    setLoading(true)
-    try {
-      await completeSignup(password, nickname || undefined)
-      navigate('/', { replace: true })
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed.')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault()
+      setError(null)
+      setLoading(true)
+
+      try {
+        await completeSignup(password, nickname || undefined)
+        navigate('/', { replace: true })
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : t('auth.completeProfileError')
+        )
+      } finally {
+        setLoading(false)
+      }
+    },
+    [completeSignup, password, nickname, navigate, t]
+  )
 
   return (
     <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -42,8 +48,12 @@ export default function CompleteProfilePage() {
         <Card>
           <CardContent className="flex flex-col gap-4 p-6">
             <div>
-              <h2 className="text-xl font-semibold">{t('auth.completeProfileTitle')}</h2>
-              <p className="text-sm text-zinc-600 mt-1">{t('auth.completeProfileSubtitle')}</p>
+              <h2 className="text-xl font-semibold">
+                {t('auth.completeProfileTitle')}
+              </h2>
+              <p className="text-sm text-zinc-600 mt-1">
+                {t('auth.completeProfileSubtitle')}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -93,3 +103,5 @@ export default function CompleteProfilePage() {
     </main>
   )
 }
+
+export default CompleteProfilePage

@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from 'react'
+import { type FormEvent, useCallback, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
@@ -6,7 +6,29 @@ import { useAuth } from '../context/AuthContext'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import GoogleSignInButton from '../components/GoogleSignInButton'
 
-export default function LoginPage() {
+interface GoogleSignInSectionProps {
+  loading: boolean
+  onCredential: (idToken: string) => void
+  onError: () => void
+}
+
+const GoogleSignInSection = ({
+  loading,
+  onCredential,
+  onError,
+}: GoogleSignInSectionProps) => {
+  const { t } = useTranslation()
+
+  if (loading) {
+    return (
+      <p className="text-center text-sm text-zinc-600">{t('auth.signingIn')}</p>
+    )
+  }
+
+  return <GoogleSignInButton onCredential={onCredential} onError={onError} />
+}
+
+const LoginPage = () => {
   const { login, loginWithGoogle } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -16,36 +38,52 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!email || !password) return
-    setError(null)
-    setLoading(true)
-    try {
-      await login(email, password)
-      navigate('/', { replace: true })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Login failed.'
-      setError(
-        msg === 'LOGIN_USER_NOT_VERIFIED' ? t('auth.notVerifiedError') : msg
-      )
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault()
+      if (!email || !password) return
 
-  async function handleGoogleCredential(idToken: string) {
-    setError(null)
-    setGoogleLoading(true)
-    try {
-      await loginWithGoogle(idToken)
-      navigate('/', { replace: true })
-    } catch {
-      setError(t('auth.googleSignInError'))
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
+      setError(null)
+      setLoading(true)
+
+      try {
+        await login(email, password)
+        navigate('/', { replace: true })
+      } catch (err) {
+        const fallbackMessage =
+          err instanceof Error ? err.message : t('auth.loginFailed')
+        const displayMessage =
+          fallbackMessage === 'LOGIN_USER_NOT_VERIFIED'
+            ? t('auth.notVerifiedError')
+            : fallbackMessage
+        setError(displayMessage)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [email, password, login, navigate, t]
+  )
+
+  const handleGoogleCredential = useCallback(
+    async (idToken: string) => {
+      setError(null)
+      setGoogleLoading(true)
+
+      try {
+        await loginWithGoogle(idToken)
+        navigate('/', { replace: true })
+      } catch {
+        setError(t('auth.googleSignInError'))
+      } finally {
+        setGoogleLoading(false)
+      }
+    },
+    [loginWithGoogle, navigate, t]
+  )
+
+  const handleGoogleError = useCallback(() => {
+    setError(t('auth.googleSignInError'))
+  }, [t])
 
   return (
     <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -108,16 +146,11 @@ export default function LoginPage() {
               <div className="h-px flex-1 bg-zinc-200" />
             </div>
 
-            {googleLoading ? (
-              <p className="text-center text-sm text-zinc-600">
-                {t('auth.signingIn')}
-              </p>
-            ) : (
-              <GoogleSignInButton
-                onCredential={handleGoogleCredential}
-                onError={() => setError(t('auth.googleSignInError'))}
-              />
-            )}
+            <GoogleSignInSection
+              loading={googleLoading}
+              onCredential={handleGoogleCredential}
+              onError={handleGoogleError}
+            />
 
             <p className="text-center text-sm text-zinc-600">
               {t('auth.noAccount')}{' '}
@@ -131,3 +164,5 @@ export default function LoginPage() {
     </main>
   )
 }
+
+export default LoginPage

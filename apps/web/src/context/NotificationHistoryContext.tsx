@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -39,7 +40,7 @@ interface NotificationHistoryContextValue {
 const NotificationHistoryContext =
   createContext<NotificationHistoryContextValue | null>(null)
 
-export function useNotificationHistory() {
+export const useNotificationHistory = () => {
   const ctx = useContext(NotificationHistoryContext)
   if (!ctx)
     throw new Error(
@@ -49,11 +50,13 @@ export function useNotificationHistory() {
   return ctx
 }
 
-export function NotificationHistoryProvider({
-  children,
-}: {
+interface NotificationHistoryProviderProps {
   children: ReactNode
-}) {
+}
+
+export const NotificationHistoryProvider = ({
+  children,
+}: NotificationHistoryProviderProps) => {
   const [items, setItems] = useState<NotificationItem[]>(load)
 
   useEffect(() => {
@@ -62,11 +65,9 @@ export function NotificationHistoryProvider({
 
   const push = useCallback(
     (item: Omit<NotificationItem, 'id' | 'timestamp'>) => {
-      const full: NotificationItem = {
-        ...item,
-        id: `${item.type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        timestamp: Date.now(),
-      }
+      const id = `${item.type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      const full: NotificationItem = { ...item, id, timestamp: Date.now() }
+
       setItems((prev) => [full, ...prev].slice(0, MAX_ITEMS))
     },
     []
@@ -80,10 +81,13 @@ export function NotificationHistoryProvider({
     setItems([])
   }, [])
 
+  const value = useMemo(
+    () => ({ items, push, dismiss, clearAll }),
+    [items, push, dismiss, clearAll]
+  )
+
   return (
-    <NotificationHistoryContext.Provider
-      value={{ items, push, dismiss, clearAll }}
-    >
+    <NotificationHistoryContext.Provider value={value}>
       {children}
     </NotificationHistoryContext.Provider>
   )

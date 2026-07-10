@@ -31,7 +31,9 @@
     "changePhoto": "Change photo",
     "uploading": "Uploading…",
     "uploadFailed": "Couldn't upload the photo. Please try again.",
-    "invalidImageUrl": "Invalid URL. Please enter a valid https:// address."
+    "invalidImageUrl": "Invalid URL. Please enter a valid https:// address.",
+    "somethingWentWrong": "Something went wrong",
+    "tryAgain": "Try again"
   },
   "recipes": {
     "searchPlaceholder": "Search recipes…",
@@ -124,7 +126,9 @@
     "shopping": "Shopping",
     "settings": "Settings",
     "personalLibrary": "Personal Library",
-    "addRecipe": "Add"
+    "addRecipe": "Add",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar"
   },
   "auth": {
     "signIn": "Sign in",
@@ -144,6 +148,7 @@
     "accountExistsGoogleError": "An account with this email already exists via Google. Use \"Continue with Google\" to sign in.",
     "completeProfileTitle": "Set up your account",
     "completeProfileSubtitle": "Choose a password and how you'd like to be known.",
+    "completeProfileError": "Registration failed. Please try again.",
     "brandName": "carrot",
     "tagline": "Your personal recipe library",
     "continueWithGoogle": "Continue with Google",
@@ -162,12 +167,14 @@
     "codeExpired": "This code has expired. Request a new one.",
     "codeTooManyAttempts": "Too many attempts. Request a new code.",
     "notVerifiedError": "Please verify your email before signing in.",
+    "loginFailed": "Login failed.",
     "emailRequired": "Email is required",
     "emailInvalid": "Enter a valid email address",
     "passwordRequired": "Password is required",
     "passwordTooShort": "Password must be at least 8 characters",
     "nicknameTooLong": "Nickname must be 50 characters or fewer",
-    "codeRequired": "Enter the 6-digit code"
+    "codeRequired": "Enter the 6-digit code",
+    "registrationError": "Registration failed. Please try again."
   },
   "timers": {
     "timerDone_one": "Timer done",
@@ -189,6 +196,10 @@
     "householdInvitation": "Household invitation",
     "invitationTitle": "Invitation to join {{name}} household",
     "acceptInvitationFailed": "Failed to accept invitation",
+    "joinedHousehold": "Joined household",
+    "joinedHouseholdTitle": "Joined {{name}}",
+    "declinedHouseholdTitle": "Declined {{name}}",
+    "invitedBy": "Invited by {{name}}",
     "memberLeft": "{{name}} left {{household}}",
     "from": "From {{name}}",
     "history": "History",
@@ -251,10 +262,12 @@
     "exportRecipes": "Export recipes",
     "exportDesc": "Download all your recipes as a CSV file.",
     "exportCSV": "Export CSV",
+    "exportFailed": "Export failed",
     "exporting": "Exporting…",
     "importRecipes": "Import recipes",
     "importDesc": "Import recipes from a previously exported CSV file.",
     "chooseCSV": "Choose CSV…",
+    "importFailed": "Import failed",
     "importing": "Importing…",
     "importedRecipes_one": "Imported {{count}} recipe",
     "importedRecipes_other": "Imported {{count}} recipes",
@@ -278,6 +291,7 @@
     "householdNameOptional": "Name",
     "householdNamePlaceholder": "My household",
     "householdCreated": "Household created",
+    "createHouseholdFailed": "Failed to create household",
     "manageHousehold": "Manage household",
     "personalScope": "Applied to your personal recipes",
     "householdScope": "Applied to {{name}}",
@@ -387,7 +401,8 @@
     "createTag": "Create \"{{name}}\"",
     "noTagsAvailable": "No tags available",
     "allTagsAdded": "All tags already added",
-    "addTag": "Add tag"
+    "addTag": "Add tag",
+    "removeTag": "Remove {{name}}"
   },
   "addRecipe": {
     "highDemandTitle": "High demand",
@@ -513,5 +528,9 @@
     "handful": "handful",
     "qtyLabel": "qty",
     "unitLabel": "unit"
+  },
+  "ads": {
+    "advertisement": "Advertisement",
+    "placeholder": "Ad"
   }
 }

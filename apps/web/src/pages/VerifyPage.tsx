@@ -1,4 +1,11 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import {
+  type ChangeEvent,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
@@ -12,7 +19,7 @@ const ERROR_KEYS: Record<string, string> = {
   SIGNUP_CODE_TOO_MANY_ATTEMPTS: 'auth.codeTooManyAttempts',
 }
 
-export default function VerifyPage() {
+const VerifyPage = () => {
   const { signupEmail, verifySignupCode, requestSignupCode } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -27,44 +34,65 @@ export default function VerifyPage() {
     if (!signupEmail) navigate('/register', { replace: true })
   }, [signupEmail, navigate])
 
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
+  useEffect(
+    () => () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    },
+    []
+  )
 
-  const startCooldown = () => {
+  const startCooldown = useCallback(() => {
     setCooldown(RESEND_COOLDOWN)
     intervalRef.current = setInterval(() => {
       setCooldown((prev) => {
-        if (prev <= 1) { clearInterval(intervalRef.current!); return 0 }
+        if (prev <= 1) {
+          clearInterval(intervalRef.current!)
+
+          return 0
+        }
+
         return prev - 1
       })
     }, 1000)
-  }
+  }, [])
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    if (!signupEmail || code.length < 6) return
-    setError(null)
-    setLoading(true)
-    try {
-      await verifySignupCode(signupEmail, code)
-      navigate('/complete-profile', { replace: true })
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : ''
-      setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
-      setCode('')
-    } finally {
-      setLoading(false)
-    }
-  }
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault()
+      if (!signupEmail || code.length < 6) return
 
-  async function handleResend() {
+      setError(null)
+      setLoading(true)
+
+      try {
+        await verifySignupCode(signupEmail, code)
+        navigate('/complete-profile', { replace: true })
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : ''
+        setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
+        setCode('')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [signupEmail, code, verifySignupCode, navigate, t]
+  )
+
+  const handleResend = useCallback(async () => {
     if (!signupEmail || cooldown > 0) return
+
     try {
       await requestSignupCode(signupEmail)
       startCooldown()
     } catch {
       // ignore — cooldown UI already reflects the attempt
     }
-  }
+  }, [signupEmail, cooldown, requestSignupCode, startCooldown])
+
+  const handleCodeChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setError(null)
+    setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
+  }, [])
 
   return (
     <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -89,16 +117,15 @@ export default function VerifyPage() {
                 autoComplete="one-time-code"
                 maxLength={6}
                 value={code}
-                onChange={(e) => {
-                  setError(null)
-                  setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
-                }}
+                onChange={handleCodeChange}
                 placeholder={t('auth.codePlaceholder')}
                 className="px-3 py-4 text-3xl font-bold tracking-[0.5em] text-center rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 aria-label={t('auth.codePlaceholder')}
               />
 
-              {error && <p className="text-danger text-sm text-center">{error}</p>}
+              {error && (
+                <p className="text-danger text-sm text-center">{error}</p>
+              )}
 
               <Button
                 variant="primary"
@@ -116,7 +143,9 @@ export default function VerifyPage() {
               disabled={cooldown > 0}
               className="text-sm text-primary font-medium disabled:text-zinc-400 disabled:cursor-not-allowed text-center"
             >
-              {cooldown > 0 ? t('auth.resendIn', { seconds: cooldown }) : t('auth.resendCode')}
+              {cooldown > 0
+                ? t('auth.resendIn', { seconds: cooldown })
+                : t('auth.resendCode')}
             </button>
           </CardContent>
         </Card>
@@ -124,3 +153,5 @@ export default function VerifyPage() {
     </main>
   )
 }
+
+export default VerifyPage

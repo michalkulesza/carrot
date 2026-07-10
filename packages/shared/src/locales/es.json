@@ -31,7 +31,9 @@
     "changePhoto": "Cambiar foto",
     "uploading": "Subiendo…",
     "uploadFailed": "No se pudo subir la foto. Por favor, inténtalo de nuevo.",
-    "invalidImageUrl": "URL no válida. Introduce una dirección https:// válida."
+    "invalidImageUrl": "URL no válida. Introduce una dirección https:// válida.",
+    "somethingWentWrong": "Algo salió mal",
+    "tryAgain": "Inténtalo de nuevo"
   },
   "recipes": {
     "searchPlaceholder": "Buscar recetas…",
@@ -124,7 +126,9 @@
     "shopping": "Compras",
     "settings": "Ajustes",
     "personalLibrary": "Biblioteca personal",
-    "addRecipe": "Añadir"
+    "addRecipe": "Añadir",
+    "expandSidebar": "Expandir barra lateral",
+    "collapseSidebar": "Contraer barra lateral"
   },
   "auth": {
     "signIn": "Iniciar sesión",
@@ -162,12 +166,14 @@
     "codeExpired": "Este código ha caducado. Solicita uno nuevo.",
     "codeTooManyAttempts": "Demasiados intentos. Solicita un nuevo código.",
     "notVerifiedError": "Por favor verifica tu correo antes de iniciar sesión.",
+    "loginFailed": "Error al iniciar sesión.",
     "emailRequired": "El correo electrónico es obligatorio",
     "emailInvalid": "Introduce un correo electrónico válido",
     "passwordRequired": "La contraseña es obligatoria",
     "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
     "nicknameTooLong": "El apodo debe tener 50 caracteres como máximo",
-    "codeRequired": "Introduce el código de 6 dígitos"
+    "codeRequired": "Introduce el código de 6 dígitos",
+    "registrationError": "Error en el registro. Inténtalo de nuevo."
   },
   "timers": {
     "startTimer": "Iniciar temporizador",
@@ -189,6 +195,10 @@
     "householdInvitation": "Invitación al hogar",
     "invitationTitle": "Invitación para unirte al hogar {{name}}",
     "acceptInvitationFailed": "No se pudo aceptar la invitación",
+    "joinedHousehold": "Te uniste al hogar",
+    "joinedHouseholdTitle": "Te uniste a {{name}}",
+    "declinedHouseholdTitle": "{{name}} rechazado",
+    "invitedBy": "Invitado por {{name}}",
     "memberLeft": "{{name}} dejó el hogar {{household}}",
     "from": "De {{name}}",
     "history": "Historial",
@@ -251,10 +261,12 @@
     "exportRecipes": "Exportar recetas",
     "exportDesc": "Descarga todas tus recetas como archivo CSV.",
     "exportCSV": "Exportar CSV",
+    "exportFailed": "Error al exportar",
     "exporting": "Exportando…",
     "importRecipes": "Importar recetas",
     "importDesc": "Importa recetas desde un archivo CSV exportado previamente.",
     "chooseCSV": "Elegir CSV…",
+    "importFailed": "Error al importar",
     "importing": "Importando…",
     "importedRecipes_one": "{{count}} receta importada",
     "importedRecipes_other": "{{count}} recetas importadas",
@@ -278,6 +290,7 @@
     "householdNameOptional": "Nombre",
     "householdNamePlaceholder": "Mi hogar",
     "householdCreated": "Hogar creado",
+    "createHouseholdFailed": "No se pudo crear el hogar",
     "manageHousehold": "Gestionar hogar",
     "personalScope": "Aplicado a tus recetas personales",
     "householdScope": "Aplicado a {{name}}",
@@ -387,7 +400,8 @@
     "createTag": "Crear \"{{name}}\"",
     "noTagsAvailable": "No hay etiquetas disponibles",
     "allTagsAdded": "Todas las etiquetas ya añadidas",
-    "addTag": "Añadir etiqueta"
+    "addTag": "Añadir etiqueta",
+    "removeTag": "Eliminar {{name}}"
   },
   "addRecipe": {
     "highDemandTitle": "Alta demanda",
@@ -513,5 +527,9 @@
     "handful": "puñado",
     "qtyLabel": "cant.",
     "unitLabel": "unidad"
+  },
+  "ads": {
+    "advertisement": "Publicidad",
+    "placeholder": "Anuncio"
   }
 }

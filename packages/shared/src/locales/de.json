@@ -31,7 +31,9 @@
     "changePhoto": "Foto ändern",
     "uploading": "Hochladen…",
     "uploadFailed": "Foto konnte nicht hochgeladen werden. Bitte erneut versuchen.",
-    "invalidImageUrl": "Ungültige URL. Bitte eine gültige https://-Adresse eingeben."
+    "invalidImageUrl": "Ungültige URL. Bitte eine gültige https://-Adresse eingeben.",
+    "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "tryAgain": "Erneut versuchen"
   },
   "recipes": {
     "searchPlaceholder": "Rezepte suchen…",
@@ -124,7 +126,9 @@
     "shopping": "Einkaufen",
     "settings": "Einstellungen",
     "personalLibrary": "Persönliche Bibliothek",
-    "addRecipe": "Hinzufügen"
+    "addRecipe": "Hinzufügen",
+    "expandSidebar": "Seitenleiste erweitern",
+    "collapseSidebar": "Seitenleiste einklappen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -144,6 +148,7 @@
     "accountExistsGoogleError": "Ein Konto mit dieser E-Mail-Adresse existiert bereits über Google. Nutze \"Mit Google fortfahren\", um dich anzumelden.",
     "completeProfileTitle": "Konto einrichten",
     "completeProfileSubtitle": "Wähle ein Passwort und wie du genannt werden möchtest.",
+    "completeProfileError": "Registrierung fehlgeschlagen. Bitte versuche es erneut.",
     "brandName": "carrot",
     "tagline": "Deine persönliche Rezeptbibliothek",
     "continueWithGoogle": "Mit Google fortfahren",
@@ -162,12 +167,14 @@
     "codeExpired": "Dieser Code ist abgelaufen. Fordere einen neuen an.",
     "codeTooManyAttempts": "Zu viele Versuche. Fordere einen neuen Code an.",
     "notVerifiedError": "Bitte bestätige deine E-Mail-Adresse, bevor du dich anmeldest.",
+    "loginFailed": "Anmeldung fehlgeschlagen.",
     "emailRequired": "E-Mail-Adresse ist erforderlich",
     "emailInvalid": "Gib eine gültige E-Mail-Adresse ein",
     "passwordRequired": "Passwort ist erforderlich",
     "passwordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein",
     "nicknameTooLong": "Der Spitzname darf höchstens 50 Zeichen lang sein",
-    "codeRequired": "Gib den 6-stelligen Code ein"
+    "codeRequired": "Gib den 6-stelligen Code ein",
+    "registrationError": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
   },
   "timers": {
     "startTimer": "Timer starten",
@@ -189,6 +196,10 @@
     "householdInvitation": "Haushaltseinladung",
     "invitationTitle": "Einladung zum Haushalt {{name}}",
     "acceptInvitationFailed": "Einladung konnte nicht angenommen werden",
+    "joinedHousehold": "Haushalt beigetreten",
+    "joinedHouseholdTitle": "{{name}} beigetreten",
+    "declinedHouseholdTitle": "{{name}} abgelehnt",
+    "invitedBy": "Eingeladen von {{name}}",
     "memberLeft": "{{name}} hat den Haushalt {{household}} verlassen",
     "from": "Von {{name}}",
     "history": "Verlauf",
@@ -251,10 +262,12 @@
     "exportRecipes": "Rezepte exportieren",
     "exportDesc": "Alle Rezepte als CSV-Datei herunterladen.",
     "exportCSV": "CSV exportieren",
+    "exportFailed": "Export fehlgeschlagen",
     "exporting": "Exportiere…",
     "importRecipes": "Rezepte importieren",
     "importDesc": "Rezepte aus einer exportierten CSV-Datei importieren.",
     "chooseCSV": "CSV auswählen…",
+    "importFailed": "Import fehlgeschlagen",
     "importing": "Importiere…",
     "importedRecipes_one": "{{count}} Rezept importiert",
     "importedRecipes_other": "{{count}} Rezepte importiert",
@@ -278,6 +291,7 @@
     "householdNameOptional": "Name",
     "householdNamePlaceholder": "Mein Haushalt",
     "householdCreated": "Haushalt erstellt",
+    "createHouseholdFailed": "Haushalt konnte nicht erstellt werden",
     "manageHousehold": "Haushalt verwalten",
     "personalScope": "Gilt für deine persönlichen Rezepte",
     "householdScope": "Gilt für {{name}}",
@@ -387,7 +401,8 @@
     "createTag": "\"{{name}}\" erstellen",
     "noTagsAvailable": "Keine Tags vorhanden",
     "allTagsAdded": "Alle Tags bereits hinzugefügt",
-    "addTag": "Tag hinzufügen"
+    "addTag": "Tag hinzufügen",
+    "removeTag": "{{name}} entfernen"
   },
   "addRecipe": {
     "highDemandTitle": "Hohe Nachfrage",
@@ -513,5 +528,9 @@
     "handful": "Handvoll",
     "qtyLabel": "Menge",
     "unitLabel": "Einheit"
+  },
+  "ads": {
+    "advertisement": "Werbung",
+    "placeholder": "Anzeige"
   }
 }

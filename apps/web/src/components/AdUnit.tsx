@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface AdUnitProps {
   slot: string
@@ -12,11 +13,8 @@ declare global {
   }
 }
 
-export default function AdUnit({
-  slot,
-  format = 'rectangle',
-  style,
-}: AdUnitProps) {
+const AdUnit = ({ slot, format = 'rectangle', style }: AdUnitProps) => {
+  const { t } = useTranslation()
   const ref = useRef<HTMLModElement>(null)
   const pushed = useRef(false)
 
@@ -31,53 +29,18 @@ export default function AdUnit({
   }, [])
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 4,
-        ...style,
-      }}
-    >
-      <span
-        style={{
-          fontSize: 10,
-          color: '#aaa',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-        }}
-      >
-        Advertisement
+    <div className="flex flex-col items-center gap-1" style={style}>
+      <span className="text-[10px] uppercase tracking-[0.05em] text-gray-400">
+        {t('ads.advertisement')}
       </span>
-      <div style={{ position: 'relative', width: 300, height: 250 }}>
-        {/* Placeholder visible in dev / before AdSense fills */}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            border: '1px solid #d1d5db',
-            borderRadius: 6,
-            background: '#f9fafb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#9ca3af',
-            fontSize: 13,
-            pointerEvents: 'none',
-          }}
-        >
-          Ad
+      <div className="relative h-[250px] w-[300px]">
+        {/* Shows through until AdSense fills the ins tag on top of it */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md border border-gray-300 bg-gray-50 text-sm text-gray-400">
+          {t('ads.placeholder')}
         </div>
         <ins
           ref={ref}
-          className="adsbygoogle"
-          style={{
-            display: 'block',
-            width: 300,
-            height: 250,
-            position: 'relative',
-          }}
+          className="adsbygoogle relative block h-[250px] w-[300px]"
           data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
           data-ad-slot={slot}
           data-ad-format={format}
@@ -86,3 +49,5 @@ export default function AdUnit({
     </div>
   )
 }
+
+export default AdUnit

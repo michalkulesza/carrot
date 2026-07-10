@@ -1,0 +1,244 @@
+import { useCallback, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { toast } from '@heroui/react'
+import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
+import PageHeader from '../../components/PageHeader'
+import RecipeDetailModal from '../../components/RecipeDetailModal'
+import RecipesTable from '../../components/RecipesTable'
+import { deleteRecipe } from '../../api/client'
+import { useHousehold } from '../../context/HouseholdContext'
+import RecipeSearchInput from './RecipeSearchInput'
+import SearchOverlay from './SearchOverlay'
+import FilterBar from './FilterBar'
+import RecipeCard from './RecipeCard'
+import RecipesLoadingSkeleton from './RecipesLoadingSkeleton'
+import NoRecipesEmptyState from './NoRecipesEmptyState'
+import NoMatchingRecipesEmptyState from './NoMatchingRecipesEmptyState'
+import DeleteRecipeModal from './DeleteRecipeModal'
+import { useFavouriteOverrides } from './useFavouriteOverrides'
+import { useOpenRecipeFromQuery } from './useOpenRecipeFromQuery'
+import type { StepLocation } from './useOpenRecipeFromQuery'
+import {
+  applyFavouriteOverrides,
+  filterAndSortRecipes,
+  getActiveAllergens,
+  searchIngredientMatches,
+  searchTitleMatches,
+} from './helpers'
+
+interface RecipesPageProps {
+  recipes: RecipeOut[]
+  loading: boolean
+  allTags: Tag[]
+  onTagCreated: (tag: Tag) => void
+  onRecipeUpdated: (r: RecipeOut) => void
+  onRecipeDeleted: (id: string) => void
+  preferences: UserPreferences | null
+}
+
+const RecipesPage = ({
+  recipes,
+  loading,
+  allTags,
+  onTagCreated,
+  onRecipeUpdated,
+  onRecipeDeleted,
+  preferences,
+}: RecipesPageProps) => {
+  const { activeHouseholdId, activeHousehold } = useHousehold()
+  const { t } = useTranslation()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [filterFavourites, setFilterFavourites] = useState(false)
+  const [selected, setSelected] = useState<RecipeOut | null>(null)
+  const [openInEdit, setOpenInEdit] = useState(false)
+  const [scrollToStep, setScrollToStep] = useState<StepLocation | null>(null)
+  const [filterTag, setFilterTag] = useState<Tag | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [deleteTarget, setDeleteTarget] = useState<RecipeOut | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const { favouriteOverrides, handleToggleFavourite } =
+    useFavouriteOverrides(onRecipeUpdated)
+
+  useOpenRecipeFromQuery({
+    recipes,
+    loading,
+    searchParams,
+    setSearchParams,
+    setSelected,
+    setOpenInEdit,
+    setScrollToStep,
+  })
+
+  const activeAllergens = getActiveAllergens(activeHousehold, preferences)
+  const recipesWithOverrides = applyFavouriteOverrides(
+    recipes,
+    favouriteOverrides
+  )
+  const displayed = filterAndSortRecipes(
+    recipesWithOverrides,
+    filterFavourites,
+    filterTag
+  )
+
+  const query = searchQuery.trim().toLowerCase()
+  const titleMatches = searchTitleMatches(recipes, query)
+  const ingredientMatches = searchIngredientMatches(recipes, query)
+
+  const openView = useCallback((recipe: RecipeOut) => {
+    setOpenInEdit(false)
+    setSelected(recipe)
+  }, [])
+
+  const openEdit = useCallback((recipe: RecipeOut) => {
+    setOpenInEdit(true)
+    setSelected(recipe)
+  }, [])
+
+  const handleSelectSearchResult = useCallback(
+    (recipe: RecipeOut) => {
+      setSearchQuery('')
+      openView(recipe)
+    },
+    [openView]
+  )
+
+  const handleUpdated = useCallback(
+    (updated: RecipeOut) => {
+      onRecipeUpdated(updated)
+      setSelected(updated)
+    },
+    [onRecipeUpdated]
+  )
+
+  const handleModalDeleted = useCallback(
+    (id: string) => {
+      onRecipeDeleted(id)
+      setSelected(null)
+    },
+    [onRecipeDeleted]
+  )
+
+  const handleModalClose = useCallback(() => {
+    setSelected(null)
+    setScrollToStep(null)
+  }, [])
+
+  const handleClearFilters = useCallback(() => {
+    setFilterTag(null)
+    setFilterFavourites(false)
+  }, [])
+
+  const handleToggleFilterFavourites = useCallback(() => {
+    setFilterFavourites((v) => !v)
+  }, [])
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await deleteRecipe(deleteTarget.id)
+      toast.danger(t('recipes.recipeDeleted'), { timeout: 3000 })
+      onRecipeDeleted(deleteTarget.id)
+      setDeleteTarget(null)
+    } catch {
+      toast.danger(t('recipes.failedToDelete'), { timeout: 3000 })
+    } finally {
+      setDeleting(false)
+    }
+  }, [deleteTarget, onRecipeDeleted, t])
+
+  const searchInput = (
+    <RecipeSearchInput
+      searchQuery={searchQuery}
+      onSearchQueryChange={setSearchQuery}
+    />
+  )
+
+  return (
+    <>
+      <PageHeader title={t('nav.recipes')} searchSlot={searchInput} />
+
+      <div className="md:hidden px-4 mt-3">{searchInput}</div>
+
+      <div className="relative">
+        {query && (
+          <SearchOverlay
+            titleMatches={titleMatches}
+            ingredientMatches={ingredientMatches}
+            onSelectRecipe={handleSelectSearchResult}
+          />
+        )}
+
+        <FilterBar
+          allTags={allTags}
+          filterFavourites={filterFavourites}
+          onToggleFilterFavourites={handleToggleFilterFavourites}
+          filterTag={filterTag}
+          onSelectFilterTag={setFilterTag}
+        />
+
+        {loading ? (
+          <RecipesLoadingSkeleton />
+        ) : displayed.length === 0 && recipes.length === 0 ? (
+          <NoRecipesEmptyState />
+        ) : displayed.length === 0 ? (
+          <NoMatchingRecipesEmptyState
+            filterFavourites={filterFavourites}
+            filterTag={!!filterTag}
+            onClearFilters={handleClearFilters}
+          />
+        ) : (
+          <>
+            <div className="md:hidden flex flex-col gap-3 px-4 mt-4">
+              {displayed.map((r) => (
+                <RecipeCard
+                  key={r.id}
+                  recipe={r}
+                  onView={() => openView(r)}
+                  onEdit={() => openEdit(r)}
+                  onDelete={() => setDeleteTarget(r)}
+                  onTagClick={setFilterTag}
+                  onToggleFavourite={() => handleToggleFavourite(r)}
+                />
+              ))}
+            </div>
+
+            <div className="hidden md:block">
+              <RecipesTable
+                recipes={displayed}
+                showAddedBy={!!activeHouseholdId}
+                onView={openView}
+                onEdit={openEdit}
+                onDelete={(r) => setDeleteTarget(r)}
+                onToggleFavourite={handleToggleFavourite}
+              />
+            </div>
+          </>
+        )}
+      </div>
+
+      <RecipeDetailModal
+        recipe={selected}
+        allTags={allTags}
+        onTagCreated={onTagCreated}
+        onClose={handleModalClose}
+        onUpdated={handleUpdated}
+        onDeleted={handleModalDeleted}
+        initialMode={openInEdit ? 'editing' : 'view'}
+        activeAllergens={activeAllergens}
+        scrollToStep={scrollToStep}
+      />
+
+      <DeleteRecipeModal
+        deleteTarget={deleteTarget}
+        deleting={deleting}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+      />
+    </>
+  )
+}
+
+export default RecipesPage

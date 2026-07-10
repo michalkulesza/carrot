@@ -1,7 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -54,7 +56,7 @@ const loadPendingSignup = (): PendingSignup | null => {
   }
 }
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [signupEmail, setSignupEmail] = useState<string | null>(null)
@@ -64,6 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     getMe().then((u) => {
       setUser(u)
       syncSentryUser(u)
+
       if (!u) {
         const pending = loadPendingSignup()
         if (pending) {
@@ -75,79 +78,96 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  async function refreshUser() {
+  const refreshUser = useCallback(async () => {
     const u = await getMe()
     setUser(u)
     syncSentryUser(u)
-  }
+  }, [])
 
-  async function login(email: string, password: string) {
+  const login = useCallback(async (email: string, password: string) => {
     await apiLogin(email, password)
+
     const u = await getMe()
     setUser(u)
     syncSentryUser(u)
-  }
+  }, [])
 
-  async function loginWithGoogle(idToken: string) {
+  const loginWithGoogle = useCallback(async (idToken: string) => {
     await apiLoginWithGoogle(idToken)
+
     const u = await getMe()
     setUser(u)
     syncSentryUser(u)
-  }
+  }, [])
 
-  async function requestSignupCode(email: string) {
+  const requestSignupCode = useCallback(async (email: string) => {
     await apiRequestSignupCode(email)
     setSignupEmail(email)
     setSignupToken(null)
     localStorage.removeItem(PENDING_SIGNUP_KEY)
-  }
+  }, [])
 
-  async function verifySignupCode(email: string, code: string) {
+  const verifySignupCode = useCallback(async (email: string, code: string) => {
     const { token } = await apiVerifySignupCode(email, code)
     setSignupEmail(email)
     setSignupToken(token)
     localStorage.setItem(PENDING_SIGNUP_KEY, JSON.stringify({ email, token }))
-  }
+  }, [])
 
-  async function completeSignup(password: string, nickname?: string) {
-    if (!signupToken) throw new Error('No pending signup')
-    await apiCompleteSignup(signupToken, password, nickname)
-    localStorage.removeItem(PENDING_SIGNUP_KEY)
-    setSignupEmail(null)
-    setSignupToken(null)
-    const u = await getMe()
-    setUser(u)
-    syncSentryUser(u)
-  }
+  const completeSignup = useCallback(
+    async (password: string, nickname?: string) => {
+      if (!signupToken) throw new Error('No pending signup')
+      await apiCompleteSignup(signupToken, password, nickname)
+      localStorage.removeItem(PENDING_SIGNUP_KEY)
+      setSignupEmail(null)
+      setSignupToken(null)
 
-  async function logout() {
+      const u = await getMe()
+      setUser(u)
+      syncSentryUser(u)
+    },
+    [signupToken]
+  )
+
+  const logout = useCallback(async () => {
     await apiLogout()
     setUser(null)
     syncSentryUser(null)
-  }
+  }, [])
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        signupEmail,
-        signupToken,
-        login,
-        loginWithGoogle,
-        requestSignupCode,
-        verifySignupCode,
-        completeSignup,
-        logout,
-        refreshUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      loading,
+      signupEmail,
+      signupToken,
+      login,
+      loginWithGoogle,
+      requestSignupCode,
+      verifySignupCode,
+      completeSignup,
+      logout,
+      refreshUser,
+    }),
+    [
+      user,
+      loading,
+      signupEmail,
+      signupToken,
+      login,
+      loginWithGoogle,
+      requestSignupCode,
+      verifySignupCode,
+      completeSignup,
+      logout,
+      refreshUser,
+    ]
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
 
