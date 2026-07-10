@@ -15,9 +15,7 @@ export const signInWithGoogle = async (): Promise<string> => {
   return idToken
 }
 
-// Best-effort: revokes the app's Google OAuth grant so the account can't be
-// used to sign back in without fresh consent. No-ops harmlessly if the user
-// never signed in with Google, so callers don't need to know their auth method.
+// Best-effort: no-ops if the user never signed in with Google, so callers don't need to know the auth method.
 export const revokeGoogleSignin = async (): Promise<void> => {
   try {
     await GoogleSignin.revokeAccess()
