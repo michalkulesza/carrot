@@ -428,6 +428,8 @@
     "importRecipe": "Importar receta",
     "addRecipe": "Añadir receta",
     "fromPersonalLibrary": "De mi biblioteca personal",
+    "fromPersonalLibraryDesc": "Elige una receta para añadirla a este hogar",
+    "addPersonalRecipe": "Añadir {{title}} al hogar",
     "orImportFromUrl": "o importar desde URL",
     "recipeUrl": "URL de la receta",
     "paste": "Pegar",

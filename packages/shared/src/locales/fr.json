@@ -429,6 +429,8 @@
     "importRecipe": "Importer une recette",
     "addRecipe": "Ajouter une recette",
     "fromPersonalLibrary": "De ma bibliothèque personnelle",
+    "fromPersonalLibraryDesc": "Choisissez une recette à ajouter à ce foyer",
+    "addPersonalRecipe": "Ajouter {{title}} au foyer",
     "orImportFromUrl": "ou importer depuis une URL",
     "recipeUrl": "URL de la recette",
     "paste": "Coller",

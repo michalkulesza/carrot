@@ -15,18 +15,35 @@ const METHODS: { key: ImportMode; icon: FeatherIconName; titleKey: string; descK
   { key: 'scratch', icon: 'edit-3', titleKey: 'addRecipe.methodScratch', descKey: 'addRecipe.methodScratchDesc' },
 ]
 
-const MethodPickerView = ({ onSelect }: { onSelect: (mode: ImportMode) => void }) => {
+const MethodPickerView = ({
+  showPersonalLibrary,
+  onSelect,
+}: {
+  showPersonalLibrary: boolean
+  onSelect: (mode: ImportMode) => void
+}) => {
   const { t } = useTranslation()
+  const methods = showPersonalLibrary
+    ? [
+        ...METHODS,
+        {
+          key: 'personal-library' as const,
+          icon: 'book-open' as FeatherIconName,
+          titleKey: 'addRecipe.fromPersonalLibrary',
+          descKey: 'addRecipe.fromPersonalLibraryDesc',
+        },
+      ]
+    : METHODS
 
   return (
     <View style={styles.pickerWrap}>
       <View style={styles.pickerGroup}>
-        {METHODS.map((method, mi) => (
+        {methods.map((method, mi) => (
           <Pressable
             key={method.key}
             style={({ pressed }) => [
               styles.methodRow,
-              mi < METHODS.length - 1 && styles.methodRowBorder,
+              mi < methods.length - 1 && styles.methodRowBorder,
               pressed && styles.methodRowPressed,
             ]}
             onPress={() => onSelect(method.key)}

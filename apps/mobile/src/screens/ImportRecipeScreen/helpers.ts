@@ -11,7 +11,7 @@ import type {
 import { parseIngredient, serializeIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 
-export type ImportMode = 'url' | 'camera' | 'gallery' | 'text' | 'share' | 'scratch'
+export type ImportMode = 'url' | 'camera' | 'gallery' | 'text' | 'share' | 'scratch' | 'personal-library'
 
 export interface EditableComponent {
   name: string

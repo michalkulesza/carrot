@@ -162,6 +162,59 @@ export const styles = StyleSheet.create({
     lineHeight: 19,
   },
 
+  personalRecipePicker: { flex: 1, padding: 16, gap: 12 },
+  personalRecipeLoading: { flex: 1 },
+  personalRecipeSearch: {
+    height: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    color: PlatformColor('label') as unknown as string,
+  },
+  personalRecipeRow: {
+    minHeight: 64,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  personalRecipeRowPressed: { opacity: 0.55 },
+  personalRecipeThumbnail: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    borderCurve: 'continuous',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
+  },
+  personalRecipeTitle: {
+    flex: 1,
+    fontSize: 16,
+    lineHeight: 21,
+    color: PlatformColor('label') as unknown as string,
+  },
+  personalRecipeAdd: {
+    fontSize: 16,
+    color: PlatformColor('systemBlue') as unknown as string,
+    fontWeight: '600',
+  },
+  personalRecipeSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: PlatformColor('separator') as unknown as string,
+    marginLeft: 60,
+  },
+  personalRecipeEmpty: {
+    paddingVertical: 32,
+    textAlign: 'center',
+    fontSize: 16,
+    color: PlatformColor('secondaryLabel') as unknown as string,
+  },
+
   // Share URL label (used when share extension delivers a URL)
   shareUrlLabel: {
     fontSize: 13,

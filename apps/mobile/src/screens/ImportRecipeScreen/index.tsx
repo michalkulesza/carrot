@@ -24,12 +24,14 @@ import { useNotificationHistory } from '../../context/NotificationHistoryContext
 import { useHousehold } from '../../context/HouseholdContext'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import { usePersonalRecipes } from '@carrot/shared/hooks/useRecipes'
 import type { ImportJobKind, ImportResult, StageEvent, Tag } from '@carrot/shared/types'
 import type { EditableRecipe, ImportMode } from './helpers'
 import { STAGE_PROGRESS, blankRecipe, buildRecipeSavePayload, toEditable } from './helpers'
 import { useHighDemandJob } from './useHighDemandJob'
 import ActionBar from './ActionBar'
 import MethodPickerView from './MethodPickerView'
+import PersonalRecipePickerView from './PersonalRecipePickerView'
 import QuickUrlInputRow from './QuickUrlInputRow'
 import RecipeFormView from './RecipeFormView'
 import RecipeImportSkeleton from './RecipeImportSkeleton'
@@ -51,6 +53,10 @@ const ImportRecipeScreen = () => {
   const { tags, create: createTagMutation } = useTags()
   const { preferences } = usePreferences()
   const { activeHouseholdId } = useHousehold()
+  const {
+    data: personalRecipes = [],
+    isLoading: isLoadingPersonalRecipes,
+  } = usePersonalRecipes(activeHouseholdId !== null)
 
   const [mode, setMode] = useState<ImportMode | null>(null)
   const [url, setUrl] = useState('')
@@ -62,6 +68,7 @@ const ImportRecipeScreen = () => {
   const [previewMode, setPreviewMode] = useState(false)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
   const cancelRef = useRef<(() => void) | null>(null)
   const skipGuardRef = useRef(false)
   const pendingThumbRef = useRef<string | null>(null)
@@ -302,6 +309,27 @@ const ImportRecipeScreen = () => {
     }
   }, [reset])
 
+  const handlePersonalRecipeSelect = useCallback(async (recipeId: string) => {
+    if (!activeHouseholdId) return
+
+    setLinkingRecipeId(recipeId)
+    setError(null)
+    try {
+      await api.linkRecipeToHousehold(recipeId, activeHouseholdId)
+      await qc.invalidateQueries({ queryKey: ['recipes'] })
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      Alert.alert(t('addRecipe.recipeAddedToHousehold'), undefined, [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ])
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t('addRecipe.failedToAdd')
+      setError(message)
+      Alert.alert(t('addRecipe.failedToAdd'), message)
+    } finally {
+      setLinkingRecipeId(null)
+    }
+  }, [activeHouseholdId, api, qc, router, t])
+
   const handleSave = useCallback(async () => {
     if (!editable) return
     setSaving(true)
@@ -334,6 +362,22 @@ const ImportRecipeScreen = () => {
 
   const handleDiscard = useCallback(() => { reset(); setMode(null) }, [reset])
 
+  if (mode === 'personal-library') {
+    return (
+      <KeyboardAvoidingView
+        style={[styles.flex, styles.screenBackground]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <PersonalRecipePickerView
+          recipes={personalRecipes}
+          isLoading={isLoadingPersonalRecipes}
+          linkingRecipeId={linkingRecipeId}
+          onSelect={handlePersonalRecipeSelect}
+        />
+      </KeyboardAvoidingView>
+    )
+  }
+
   return (
     <KeyboardAvoidingView
       style={[styles.flex, styles.screenBackground]}
@@ -355,7 +399,10 @@ const ImportRecipeScreen = () => {
               onPaste={handlePasteUrl}
               onImport={handleQuickUrlImport}
             />
-            <MethodPickerView onSelect={handleModeSelect} />
+            <MethodPickerView
+              showPersonalLibrary={activeHouseholdId !== null}
+              onSelect={handleModeSelect}
+            />
           </>
         )}
 

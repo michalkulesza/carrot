@@ -69,7 +69,7 @@ export const useRecipeStats = () => {
   return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats })
 }
 
-export const usePersonalRecipes = () => {
+export const usePersonalRecipes = (enabled = true) => {
   const api = useApiClient()
-  return useQuery({ queryKey: ['recipes', 'personal'], queryFn: api.listPersonalRecipes })
+  return useQuery({ queryKey: ['recipes', 'personal'], queryFn: api.listPersonalRecipes, enabled })
 }

@@ -429,6 +429,8 @@
     "importRecipe": "Import Recipe",
     "addRecipe": "Add Recipe",
     "fromPersonalLibrary": "From Personal Library",
+    "fromPersonalLibraryDesc": "Choose a recipe to add to this household",
+    "addPersonalRecipe": "Add {{title}} to household",
     "orImportFromUrl": "or import from URL",
     "recipeUrl": "Recipe URL",
     "paste": "Paste",
