@@ -410,7 +410,14 @@
     "noTagsAvailable": "Brak dostępnych tagów",
     "allTagsAdded": "Wszystkie tagi już dodane",
     "addTag": "Dodaj tag",
-    "removeTag": "Usuń {{name}}"
+    "removeTag": "Usuń {{name}}",
+    "category": {
+      "protein": "Białko",
+      "carb": "Węglowodany",
+      "cuisine": "Kuchnia",
+      "time": "Czas",
+      "other": "Inne"
+    }
   },
   "addRecipe": {
     "highDemandTitle": "Wysokie obciążenie",
@@ -509,7 +516,27 @@
     "High_Protein": "Wysokobiałkowe",
     "Comfort_Food": "Jedzenie na pocieszenie",
     "Italian": "Włoskie",
-    "Asian": "Azjatyckie"
+    "Asian": "Azjatyckie",
+    "Chicken": "Kurczak",
+    "Beef": "Wołowina",
+    "Pork": "Wieprzowina",
+    "Fish": "Ryba",
+    "Seafood": "Owoce morza",
+    "Turkey": "Indyk",
+    "Tofu": "Tofu",
+    "Eggs": "Jajka",
+    "Potatoes": "Ziemniaki",
+    "Rice": "Ryż",
+    "Pasta": "Makaron",
+    "Bread": "Chleb",
+    "Noodles": "Makaron azjatycki",
+    "Mexican": "Meksykańskie",
+    "Indian": "Indyjskie",
+    "Mediterranean": "Śródziemnomorskie",
+    "French": "Francuskie",
+    "American": "Amerykańskie",
+    "Medium": "Średnie",
+    "Long": "Długie"
   },
   "languages": {
     "en": "English",

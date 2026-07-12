@@ -169,6 +169,7 @@ class Tag(Base):
     household_id: Mapped[uuid.UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
     )
+    category: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
 
 # ── SQLAlchemy recipe model ───────────────────────────────────────────────────
@@ -285,6 +286,7 @@ class TagOut(BaseModel):
     name: str
     is_default: bool
     household_id: uuid.UUID | None = None
+    category: str | None = None
 
 
 class TagCreate(BaseModel):

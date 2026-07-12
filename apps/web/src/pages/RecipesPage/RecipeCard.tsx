@@ -12,7 +12,7 @@ interface RecipeCardProps {
   onView: () => void
   onEdit: () => void
   onDelete: () => void
-  onTagClick: (tag: Tag) => void
+  onToggleTag: (tagId: string) => void
   onToggleFavourite: () => void
 }
 
@@ -21,7 +21,7 @@ const RecipeCard = ({
   onView,
   onEdit,
   onDelete,
-  onTagClick,
+  onToggleTag,
   onToggleFavourite,
 }: RecipeCardProps) => {
   const { t } = useTranslation()
@@ -90,7 +90,7 @@ const RecipeCard = ({
         {recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
             {recipe.tags.map((tag) => (
-              <RecipeCardTag key={tag.id} tag={tag} onTagClick={onTagClick} />
+              <RecipeCardTag key={tag.id} tag={tag} onToggleTag={onToggleTag} />
             ))}
           </div>
         )}
@@ -119,28 +119,28 @@ const RecipeCard = ({
 
 interface RecipeCardTagProps {
   tag: Tag
-  onTagClick: (tag: Tag) => void
+  onToggleTag: (tagId: string) => void
 }
 
-const RecipeCardTag = ({ tag, onTagClick }: RecipeCardTagProps) => {
+const RecipeCardTag = ({ tag, onToggleTag }: RecipeCardTagProps) => {
   const { t } = useTranslation()
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation()
-      onTagClick(tag)
+      onToggleTag(tag.id)
     },
-    [onTagClick, tag]
+    [onToggleTag, tag]
   )
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.stopPropagation()
-        onTagClick(tag)
+        onToggleTag(tag.id)
       }
     },
-    [onTagClick, tag]
+    [onToggleTag, tag]
   )
 
   return (

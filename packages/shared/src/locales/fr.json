@@ -402,7 +402,14 @@
     "noTagsAvailable": "Aucun tag disponible",
     "allTagsAdded": "Tous les tags déjà ajoutés",
     "addTag": "Ajouter un tag",
-    "removeTag": "Supprimer {{name}}"
+    "removeTag": "Supprimer {{name}}",
+    "category": {
+      "protein": "Protéine",
+      "carb": "Glucide",
+      "cuisine": "Cuisine",
+      "time": "Temps",
+      "other": "Autre"
+    }
   },
   "addRecipe": {
     "highDemandTitle": "Forte demande",
@@ -501,7 +508,27 @@
     "High_Protein": "Riche en protéines",
     "Comfort_Food": "Réconfortant",
     "Italian": "Italien",
-    "Asian": "Asiatique"
+    "Asian": "Asiatique",
+    "Chicken": "Poulet",
+    "Beef": "Bœuf",
+    "Pork": "Porc",
+    "Fish": "Poisson",
+    "Seafood": "Fruits de mer",
+    "Turkey": "Dinde",
+    "Tofu": "Tofu",
+    "Eggs": "Œufs",
+    "Potatoes": "Pommes de terre",
+    "Rice": "Riz",
+    "Pasta": "Pâtes",
+    "Bread": "Pain",
+    "Noodles": "Nouilles",
+    "Mexican": "Mexicain",
+    "Indian": "Indien",
+    "Mediterranean": "Méditerranéen",
+    "French": "Français",
+    "American": "Américain",
+    "Medium": "Moyen",
+    "Long": "Long"
   },
   "languages": {
     "en": "English",
