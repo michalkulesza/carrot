@@ -404,6 +404,7 @@
   "households": {
     "switchContext": "Przełącz gospodarstwo domowe",
     "personal": "Osobiste",
+    "personalHousehold": "Gospodarstwo osobiste",
     "manageTip": "Możesz dodać nowe gospodarstwo domowe w Ustawieniach"
   },
   "tags": {

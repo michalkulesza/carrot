@@ -68,6 +68,7 @@ export const styles = StyleSheet.create({
     gap: 4,
     marginBottom: 12,
   },
+  householdAvatarWrapper: { position: 'relative' },
   debugBox: {
     backgroundColor: colors.gray6,
     borderRadius: 8,

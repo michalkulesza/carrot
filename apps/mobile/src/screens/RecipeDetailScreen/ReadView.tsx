@@ -1,4 +1,4 @@
-import type { RefObject } from 'react'
+import { useState, type RefObject } from 'react'
 import { ActivityIndicator, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native'
 import Avatar from '../../components/Avatar'
 import NetworkImage from '../../components/NetworkImage'
@@ -12,7 +12,7 @@ import AddToMealPlanSheet, { type AddToMealPlanSheetHandle } from '../../compone
 import AddIngredientToShoppingListSheet, {
   type AddIngredientToShoppingListSheetHandle,
 } from '../../components/AddIngredientToShoppingListSheet'
-import NutritionBoxGrid from '../../components/NutritionBoxGrid'
+import NutritionBoxGrid, { TooltipPopover } from '../../components/NutritionBoxGrid'
 import { colors } from '../../theme/colors'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
 import { styles } from './styles'
@@ -65,11 +65,14 @@ const ReadView = ({
   const { user } = useAuth()
   const hasImage = !!recipe.thumbnail_url
   const personalName = user?.nickname || user?.email || t('households.personal')
+  const [openHouseholdAvatar, setOpenHouseholdAvatar] = useState<string | null>(null)
   const recipeHousehold = recipe.household_id ? households.find((h) => h.id === recipe.household_id) : undefined
   const householdAvatars = [
-    ...(!recipe.household_id || recipe.shared_to_personal ? [{ key: 'personal', name: personalName }] : []),
+    ...(!recipe.household_id || recipe.shared_to_personal
+      ? [{ key: 'personal', name: personalName, tooltip: t('households.personalHousehold') }]
+      : []),
     ...(recipeHousehold
-      ? [{ key: recipeHousehold.id, name: recipeHousehold.name, color: recipeHousehold.color }]
+      ? [{ key: recipeHousehold.id, name: recipeHousehold.name, color: recipeHousehold.color, tooltip: recipeHousehold.name }]
       : []),
   ]
 
@@ -143,8 +146,24 @@ const ReadView = ({
           />
 
           <View style={styles.householdRow}>
-            {householdAvatars.map(({ key, ...avatarProps }) => (
-              <Avatar key={key} {...avatarProps} size={28} />
+            {householdAvatars.map(({ key, tooltip, ...avatarProps }) => (
+              <View key={key} style={styles.householdAvatarWrapper}>
+                <Pressable
+                  onPress={() => setOpenHouseholdAvatar((current) => (current === key ? null : key))}
+                  accessibilityLabel={tooltip}
+                  accessibilityRole="button"
+                >
+                  <Avatar {...avatarProps} size={28} />
+                </Pressable>
+                {openHouseholdAvatar === key && (
+                  <TooltipPopover
+                    text={tooltip}
+                    alignRight={false}
+                    fitContent
+                    onDismiss={() => setOpenHouseholdAvatar(null)}
+                  />
+                )}
+              </View>
             ))}
           </View>
 

@@ -396,6 +396,7 @@
   "households": {
     "switchContext": "Changer de foyer",
     "personal": "Personnel",
+    "personalHousehold": "Foyer personnel",
     "manageTip": "Vous pouvez ajouter un nouveau foyer dans les Réglages"
   },
   "tags": {

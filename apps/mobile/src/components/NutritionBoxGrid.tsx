@@ -60,16 +60,17 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
   )
 }
 
-interface NutritionDisclaimerPopoverProps {
+interface TooltipPopoverProps {
   text: string
   alignRight: boolean
+  fitContent?: boolean
   onDismiss: () => void
 }
 
-const NutritionDisclaimerPopover = ({ text, alignRight, onDismiss }: NutritionDisclaimerPopoverProps) => (
+export const TooltipPopover = ({ text, alignRight, fitContent = false, onDismiss }: TooltipPopoverProps) => (
   <>
     <Pressable style={styles.backdrop} onPress={onDismiss} accessibilityLabel={text} />
-    <View style={[styles.popover, alignRight ? styles.popoverAlignRight : styles.popoverAlignLeft]}>
+    <View style={[styles.popover, fitContent && styles.popoverFitContent, alignRight ? styles.popoverAlignRight : styles.popoverAlignLeft]}>
       <Text style={styles.popoverText}>{text}</Text>
     </View>
   </>
@@ -107,7 +108,7 @@ const NutritionBox = ({
       )}
 
       {isOpen && (
-        <NutritionDisclaimerPopover text={disclaimerText} alignRight={alignRight} onDismiss={onClose} />
+        <TooltipPopover text={disclaimerText} alignRight={alignRight} onDismiss={onClose} />
       )}
     </View>
   )
@@ -188,6 +189,7 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     zIndex: 20,
   },
+  popoverFitContent: { width: 'auto', maxWidth: 220, alignSelf: 'flex-start' },
   popoverAlignLeft: { left: 0 },
   popoverAlignRight: { right: 0 },
   popoverText: { fontSize: 13, lineHeight: 18, color: colors.label },

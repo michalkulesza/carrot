@@ -395,6 +395,7 @@
   "households": {
     "switchContext": "Cambiar de hogar",
     "personal": "Personal",
+    "personalHousehold": "Hogar personal",
     "manageTip": "Puedes añadir un nuevo hogar en Ajustes"
   },
   "tags": {
