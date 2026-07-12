@@ -3,7 +3,6 @@ import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
-import BellMenu from '../../components/BellMenu'
 import BugReportButton from '../../components/BugReportButton'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
@@ -30,7 +29,6 @@ const EditHeaderLeft = ({ onCancel }: { onCancel: () => void }) => {
 const EditHeaderRight = () => (
   <View style={styles.headerBtns}>
     <BugReportButton />
-    <BellMenu />
   </View>
 )
 
@@ -74,7 +72,6 @@ const ViewHeaderRight = ({
         <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
       </Pressable>
       <BugReportButton />
-      <BellMenu />
     </View>
   )
 }
