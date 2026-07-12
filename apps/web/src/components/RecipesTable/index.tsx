@@ -98,6 +98,9 @@ const RecipesTable = ({
                 align="right"
               />
             </div>
+            <div className="text-xs font-semibold text-zinc-500">
+              {t('recipes.colHousehold')}
+            </div>
             <ColHeader
               label={t('recipes.colAuthor')}
               field="creator_handle"

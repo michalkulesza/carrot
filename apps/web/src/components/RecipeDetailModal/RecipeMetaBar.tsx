@@ -2,6 +2,7 @@ import { Calendar, ShoppingCart, Sun } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@heroui/react'
 import type { RecipeOut } from '@carrot/shared/types'
+import HouseholdAvatarIndicators from '../HouseholdAvatarIndicators'
 import NutritionBoxGrid from '../NutritionBoxGrid'
 import { getHeaderBg, type EditState, type Mode } from './helpers'
 
@@ -95,6 +96,7 @@ const RecipeMetaBar = ({
         onChangeValue={handleNutritionChangeValue}
         disclaimerText={t('recipes.nutritionEstimateDisclaimer')}
       />
+      <HouseholdAvatarIndicators recipe={r} />
 
       {debugMode && r.debug_model && (
         <div className="flex flex-col gap-0.5 rounded-lg bg-zinc-50 px-3 py-2">

@@ -10,6 +10,7 @@ import NumericCell from './NumericCell'
 import EmptyDash from './EmptyDash'
 import RowMenu from './RowMenu'
 import { formatDate } from './helpers'
+import HouseholdAvatarIndicators from '../HouseholdAvatarIndicators'
 
 interface SortableRowProps {
   recipe: RecipeOut
@@ -118,6 +119,8 @@ const SortableRow = ({
       <NumericCell value={recipe.protein_per_serving} />
       <NumericCell value={recipe.fat_per_serving} />
       <NumericCell value={recipe.carbs_per_serving} />
+
+      <HouseholdAvatarIndicators recipe={recipe} size="sm" />
 
       <div className="text-sm text-zinc-500 truncate overflow-hidden">
         {recipe.creator_handle ? `@${recipe.creator_handle}` : <EmptyDash />}
