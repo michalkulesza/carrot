@@ -306,7 +306,7 @@
     "cookingMode": "Modo cocina",
     "cookingModeDesc": "La pantalla permanece activa mientras hay una receta abierta",
     "recipeImport": "Importación de recetas",
-    "shareImportsToPersonal": "Añadir también las recetas importadas a mi biblioteca privada",
+    "shareImportsToPersonal": "Añadir también las recetas importadas a mi biblioteca personal",
     "shareImportsToPersonalDesc": "Al añadir una receta en un hogar, guarda también una copia en tus recetas privadas",
     "shoppingList": "Lista de compras",
     "keepScreenOnWhileShoppingList": "Mantener pantalla encendida en la lista de compras",

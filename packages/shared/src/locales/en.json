@@ -307,7 +307,7 @@
     "cookingMode": "Cooking mode",
     "cookingModeDesc": "Keeps your screen awake while a recipe is open",
     "recipeImport": "Recipe Import",
-    "shareImportsToPersonal": "Also add imported recipes to my private library",
+    "shareImportsToPersonal": "Also add imported recipes to my personal library",
     "shareImportsToPersonalDesc": "When adding a recipe in a household, also save a copy to your personal recipes",
     "shoppingList": "Shopping List",
     "keepScreenOnWhileShoppingList": "Keep screen on while shopping list is open",
