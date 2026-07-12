@@ -14,3 +14,4 @@ __pycache__/
 *.ipa
 apps/mobile/assets/react-logo*.png
 apps/mobile/assets/partial-react-logo.png
+*.tsbuildinfo
