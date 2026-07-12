@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
+import { useQueryClient } from '@tanstack/react-query'
 import { mobileClient, setToken } from '../api/client'
 import { revokeGoogleSignin, signInWithGoogle } from '../utils/googleAuth'
 import type { AuthUser } from '@carrot/shared/types'
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [signupEmail, setSignupEmail] = useState<string | null>(null)
   const [signupToken, setSignupToken] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     const init = async () => {
@@ -110,7 +112,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync(TOKEN_KEY)
     setToken(null)
     setUser(null)
-  }, [])
+    // Clears the in-memory cache and, via the persister's subscription, overwrites the
+    // on-disk cache too — otherwise the next account to log in on this device would see
+    // this account's households/recipes/preferences until every query happened to refetch.
+    queryClient.clear()
+  }, [queryClient])
 
   const deleteAccount = useCallback(async (): Promise<void> => {
     await mobileClient.deleteAccount()
@@ -118,7 +124,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync(TOKEN_KEY)
     setToken(null)
     setUser(null)
-  }, [])
+    queryClient.clear()
+  }, [queryClient])
 
   const refreshUser = useCallback(async (): Promise<void> => {
     const me = await mobileClient.getMe()

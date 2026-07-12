@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import * as Sentry from '@sentry/react'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   getMe,
   login as apiLogin,
@@ -61,6 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [signupEmail, setSignupEmail] = useState<string | null>(null)
   const [signupToken, setSignupToken] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
   useEffect(() => {
     getMe().then((u) => {
@@ -133,7 +135,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await apiLogout()
     setUser(null)
     syncSentryUser(null)
-  }, [])
+    // Prevents the next account to log in on this browser from seeing this account's
+    // cached households/recipes/preferences until every query happens to refetch.
+    queryClient.clear()
+  }, [queryClient])
 
   const value = useMemo(
     () => ({
