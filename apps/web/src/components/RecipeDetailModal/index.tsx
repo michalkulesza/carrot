@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import {
   Modal,
   ModalBackdrop,
@@ -68,6 +69,7 @@ const RecipeDetailModal = ({
   const { enabled: debugMode } = useDebugMode()
   const wakeLock = useScreenWakeLock()
   const { addItems: addShoppingListItems } = useShoppingList()
+  const { preferences } = usePreferences()
   const [mode, setMode] = useState<Mode>('view')
   const [addMode, setAddMode] = useState(false)
   const [mealPlanOpen, setMealPlanOpen] = useState(false)
@@ -411,6 +413,7 @@ const RecipeDetailModal = ({
                         <EditComponent
                           key={ci}
                           comp={comp}
+                          unitSystem={preferences?.unit_system ?? 'metric'}
                           single={single}
                           onIngredientChange={(ii, val) =>
                             setIngredient(ci, ii, val)

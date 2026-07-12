@@ -229,6 +229,10 @@ class RecipeComponent(BaseModel):
     yield_note: str | None = None
     ingredients: list[Ingredient] = []
     steps: list[str] = []
+    metric_ingredients: list[str] = []
+    imperial_ingredients: list[str] = []
+    metric_steps: list[str] = []
+    imperial_steps: list[str] = []
     step_refs: list[StepRef] = []
 
 
@@ -240,6 +244,10 @@ class RecipeExtraction(BaseModel):
     fat_per_serving: int
     carbs_per_serving: int
     tags: list[str] = []
+    components: list[RecipeComponent] = []
+
+
+class RecipeUnitVariants(BaseModel):
     components: list[RecipeComponent] = []
 
 
@@ -305,6 +313,10 @@ class SaveComponent(BaseModel):
     yield_note: str
     ingredients: list[str]
     steps: list[str]
+    metric_ingredients: list[str] | None = None
+    imperial_ingredients: list[str] | None = None
+    metric_steps: list[str] | None = None
+    imperial_steps: list[str] | None = None
     ingredient_flags: list[AllergenFlag] | None = None
     step_ingredient_refs: list[list[StepIngredientRef]] | None = None
 

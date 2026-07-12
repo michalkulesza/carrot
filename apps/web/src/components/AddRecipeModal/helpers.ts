@@ -24,6 +24,10 @@ export interface EditableComponent {
   yield_note: string
   ingredients: StructuredIngredient[]
   steps: string[]
+  metric_ingredients: string[] | null
+  imperial_ingredients: string[] | null
+  metric_steps: string[] | null
+  imperial_steps: string[] | null
   ingredient_flags: (AllergenFlag | null)[]
   step_ingredient_refs: StepIngredientRef[][] | null
 }
@@ -144,6 +148,10 @@ export const toEditable = (
           }
         }),
         steps: c.steps,
+        metric_ingredients: c.metric_ingredients,
+        imperial_ingredients: c.imperial_ingredients,
+        metric_steps: c.metric_steps,
+        imperial_steps: c.imperial_steps,
         ingredient_flags: c.ingredients.map((ing) => ({
           allergen: ing.allergen ?? null,
           substitute: ing.substitute ?? null,
@@ -178,6 +186,10 @@ export const buildSaveRecipePayload = (
     yield_note: c.yield_note,
     ingredients: c.ingredients.map(serializeIngredient),
     steps: c.steps,
+    metric_ingredients: c.metric_ingredients,
+    imperial_ingredients: c.imperial_ingredients,
+    metric_steps: c.metric_steps,
+    imperial_steps: c.imperial_steps,
     ingredient_flags: c.ingredient_flags.map(
       (f) =>
         f ?? {

@@ -14,6 +14,7 @@ const ComponentSection = ({
   recipe,
   addMode = false,
   showStepQty = true,
+  unitSystem,
   sessionAdded,
   onAdd,
   onAddAll,
@@ -25,6 +26,7 @@ const ComponentSection = ({
   recipe: RecipeOut
   addMode?: boolean
   showStepQty?: boolean
+  unitSystem: string
   sessionAdded?: Set<string>
   onAdd?: (key: string, text: string) => void
   onAddAll?: (keys: string[], texts: string[]) => void
@@ -32,15 +34,21 @@ const ComponentSection = ({
   lineHeight?: number
 }) => {
   const { t } = useTranslation()
+  const ingredientValues = unitSystem === 'imperial'
+    ? component.imperial_ingredients ?? component.ingredients
+    : component.metric_ingredients ?? component.ingredients
+  const steps = unitSystem === 'imperial'
+    ? component.imperial_steps ?? component.steps
+    : component.metric_steps ?? component.steps
   const ingredients = useMemo(
     () =>
-      component.ingredients.map((raw) => {
+      ingredientValues.map((raw) => {
         if (typeof raw === 'string') {
           return { qty: null, unit: null, name: raw } as Ingredient
         }
         return raw as Ingredient
       }),
-    [component.ingredients],
+    [ingredientValues],
   )
 
   const stepRefs = useMemo<StepIngredientRef[][]>(
@@ -48,10 +56,10 @@ const ComponentSection = ({
       component.step_ingredient_refs != null
         ? component.step_ingredient_refs
         : buildClientStepRefs(
-            component.steps,
+            steps,
             ingredients.map((ing) => serializeIngredient(ing)),
           ),
-    [component.step_ingredient_refs, component.steps, ingredients],
+    [component.step_ingredient_refs, steps, ingredients],
   )
 
   const handleAddAll = useCallback(() => {
@@ -108,10 +116,10 @@ const ComponentSection = ({
         </View>
       )}
 
-      {component.steps.length > 0 && (
+      {steps.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>{t('recipes.steps')}</Text>
-          {component.steps.map((step, i) => (
+          {steps.map((step, i) => (
             <StepRow
               key={i}
               step={step}

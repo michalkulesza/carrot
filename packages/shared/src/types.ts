@@ -39,6 +39,10 @@ export interface RecipeComponent {
   yield_note: string | null
   ingredients: Ingredient[]
   steps: string[]
+  metric_ingredients: string[]
+  imperial_ingredients: string[]
+  metric_steps: string[]
+  imperial_steps: string[]
   step_refs?: StepRef[]
 }
 
@@ -129,6 +133,10 @@ export interface SaveComponent {
   yield_note: string
   ingredients: string[]
   steps: string[]
+  metric_ingredients?: string[] | null
+  imperial_ingredients?: string[] | null
+  metric_steps?: string[] | null
+  imperial_steps?: string[] | null
   ingredient_flags?: AllergenFlag[]
   step_ingredient_refs?: StepIngredientRef[][] | null
 }

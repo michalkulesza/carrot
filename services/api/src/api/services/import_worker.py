@@ -116,6 +116,10 @@ async def _save_recipe(session, user_id: uuid.UUID, household_id: uuid.UUID | No
             "yield_note": c.yield_note or "",
             "ingredients": [_flatten_ingredient(i, auto_substitute) for i in c.ingredients],
             "steps": c.steps,
+            "metric_ingredients": c.metric_ingredients or [_flatten_ingredient(i, auto_substitute) for i in c.ingredients],
+            "imperial_ingredients": c.imperial_ingredients or [_flatten_ingredient(i, auto_substitute) for i in c.ingredients],
+            "metric_steps": c.metric_steps or c.steps,
+            "imperial_steps": c.imperial_steps or c.steps,
             "ingredient_flags": [
                 {
                     "allergen": i.allergen,

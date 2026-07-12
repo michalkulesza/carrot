@@ -25,6 +25,7 @@ const ReadView = ({
   recipe,
   addMode,
   showStepQty,
+  unitSystem,
   sessionAdded,
   fontSizeIndex,
   keepScreenOn,
@@ -44,6 +45,7 @@ const ReadView = ({
   recipe: RecipeOut
   addMode: boolean
   showStepQty: boolean
+  unitSystem: string
   sessionAdded: Set<string>
   fontSizeIndex: number
   keepScreenOn: boolean
@@ -225,6 +227,7 @@ const ReadView = ({
               recipe={recipe}
               addMode={addMode}
               showStepQty={showStepQty}
+              unitSystem={unitSystem}
               sessionAdded={sessionAdded}
               onAdd={handleAddIngredient}
               onAddAll={handleAddAll}

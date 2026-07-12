@@ -7,6 +7,7 @@ import StepText from './StepText'
 
 interface ViewComponentProps {
   comp: SaveComponent
+  unitSystem: string
   single: boolean
   activeAllergens: string[]
   onReplaceIngredient: (ii: number) => void
@@ -31,6 +32,7 @@ const TEXT_SIZE_CLASSES = [
 
 const ViewComponent = ({
   comp,
+  unitSystem,
   single,
   activeAllergens,
   onReplaceIngredient,
@@ -45,14 +47,20 @@ const ViewComponent = ({
   fontSizeIndex,
 }: ViewComponentProps) => {
   const { t } = useTranslation()
+  const ingredients = unitSystem === 'imperial'
+    ? comp.imperial_ingredients ?? comp.ingredients
+    : comp.metric_ingredients ?? comp.ingredients
+  const steps = unitSystem === 'imperial'
+    ? comp.imperial_steps ?? comp.steps
+    : comp.metric_steps ?? comp.steps
 
   const clientRefs = useMemo<StepIngredientRef[][] | null>(() => {
     if (comp.step_ingredient_refs != null) return null
 
-    return computeClientStepIngredientRefs(comp)
-  }, [comp.step_ingredient_refs, comp.ingredients, comp.steps])
+    return computeClientStepIngredientRefs({ ...comp, ingredients, steps })
+  }, [comp, ingredients, steps])
 
-  const allIngredientsAdded = comp.ingredients.every((_, i) =>
+  const allIngredientsAdded = ingredients.every((_, i) =>
     sessionAdded?.has(`${componentIndex}-${i}`)
   )
 
@@ -63,7 +71,7 @@ const ViewComponent = ({
           {comp.name}
         </h3>
       )}
-      {comp.ingredients.length > 0 && (
+      {ingredients.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs font-semibold uppercase text-zinc-400">
@@ -83,7 +91,7 @@ const ViewComponent = ({
             )}
           </div>
           <ul className="space-y-1 mb-3">
-            {comp.ingredients.map((ing, i) => {
+            {ingredients.map((ing, i) => {
               const flag = comp.ingredient_flags?.[i]
               const added = sessionAdded?.has(`${componentIndex}-${i}`) ?? false
               const addButtonLabel = added
@@ -147,13 +155,13 @@ const ViewComponent = ({
           </ul>
         </>
       )}
-      {comp.steps.length > 0 && (
+      {steps.length > 0 && (
         <>
           <p className="text-xs font-semibold uppercase text-zinc-400 mb-1">
             {t('recipes.steps')}
           </p>
           <ol className="space-y-2">
-            {comp.steps.map((step, i) => {
+            {steps.map((step, i) => {
               const timerId = `${recipeId}-c${componentIndex}-s${i}`
               const stepRefs =
                 comp.step_ingredient_refs?.[i] ?? clientRefs?.[i] ?? []
@@ -170,7 +178,7 @@ const ViewComponent = ({
                   <StepText
                     step={step}
                     stepRefs={stepRefs}
-                    ingredients={comp.ingredients}
+                    ingredients={ingredients}
                     timerId={timerId}
                     recipeId={recipeId}
                     recipeTitle={recipeTitle}

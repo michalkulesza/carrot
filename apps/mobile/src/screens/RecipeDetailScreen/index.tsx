@@ -7,6 +7,7 @@ import { useNavigation, useLocalSearchParams } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import type { RecipeOut } from '@carrot/shared/types'
 import { useDebugMode } from '../../context/DebugModeContext'
 import { useHousehold } from '../../context/HouseholdContext'
@@ -26,6 +27,7 @@ const RecipeDetailScreen = () => {
   const api = useApiClient()
   const { recipes, isLoading, error, toggleFavourite, linkToHousehold } = useRecipes()
   const { addItems } = useShoppingList()
+  const { preferences } = usePreferences()
   const { households } = useHousehold()
   const [heroImageErrored, setHeroImageErrored] = useState(false)
   const [addMode, setAddMode] = useState(false)
@@ -171,6 +173,7 @@ const RecipeDetailScreen = () => {
       recipe={recipe}
       addMode={addMode}
       showStepQty={displayPrefs.showStepQty}
+      unitSystem={preferences?.unit_system ?? 'metric'}
       sessionAdded={sessionAdded}
       fontSizeIndex={displayPrefs.fontSizeIndex}
       keepScreenOn={displayPrefs.keepScreenOn}

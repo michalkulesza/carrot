@@ -11,7 +11,7 @@ from google.genai import types
 from pydantic import BaseModel
 
 from api.config import settings
-from api.models import RecipeExtraction
+from api.models import RecipeExtraction, RecipeUnitVariants
 
 log = logging.getLogger(__name__)
 
@@ -95,7 +95,6 @@ an object with null title, empty components array, and 0 for every nutrition fie
 For ingredients, always try to separate qty/unit/name. Use ONLY these units:
   """ + _ALLOWED_UNITS + """
   Convert any other unit to the closest allowed unit (e.g. oz → g, fl oz → ml).
-  Convert temperatures in step text from °F to °C. Keep cups/tbsp as-is.
   If no unit applies, set unit to null.
 
 Examples:
@@ -103,6 +102,17 @@ Examples:
   "3 cloves garlic, minced" → qty="3", unit="clove", name="garlic, minced"
   "salt to taste" → qty=null, unit=null, name="salt, to taste"
   "1 oz butter" → qty="28", unit="g", name="butter"
+
+For every component, return BOTH unit variants in parallel arrays:
+- metric_ingredients and metric_steps: use grams/kilograms/millilitres/litres
+  and Celsius. Convert every cup measurement to an ingredient-specific whole
+  gram value; never use a range.
+- imperial_ingredients and imperial_steps: use cups/tbsp/tsp where practical
+  and Fahrenheit.
+Each variant array must have the same number of entries and order as ingredients
+or steps. Preserve ingredient names and cooking instructions; change only units,
+amounts, and temperatures. The ingredients and steps fields should contain the
+metric variant as structured ingredients and steps respectively.
 
 For multi-component recipes (e.g. "for the sauce:", "for the marinade:"),
 create a separate component for each section.
@@ -158,7 +168,6 @@ For each ingredient return (in the same order):
 
 Return exactly as many entries as there are input ingredients, in the same order.
 """
-
 
 def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
@@ -257,6 +266,32 @@ async def extract_recipe_from_image(
     return RecipeExtraction.model_validate(data)
 
 
+async def estimate_unit_variants(components: list[dict], model: str = _DEFAULT_MODEL) -> RecipeUnitVariants:
+    prompt = json.dumps({"components": components}, ensure_ascii=False)
+    instruction = """\
+You convert recipe units. Return the same number of components, in the same order.
+For each component, return metric_ingredients, imperial_ingredients, metric_steps,
+and imperial_steps. Keep every array aligned with its source array. Metric values use
+grams/kilograms/millilitres/litres and Celsius; convert cups to ingredient-specific
+whole gram values, never ranges. Imperial values use cups/tbsp/tsp where practical
+and Fahrenheit. Preserve ingredient names and instruction wording except units,
+amounts, and temperatures. Also return ingredients and steps as metric equivalents.
+"""
+    client = _build_client()
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=model,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=instruction,
+                response_mime_type="application/json",
+                response_schema=RecipeUnitVariants,
+            ),
+        )
+    )
+    return RecipeUnitVariants.model_validate(json.loads(response.text))
+
+
 class _IngredientFlag(BaseModel):
     allergen: str | None = None
     substitute: str | None = None
@@ -301,5 +336,3 @@ async def analyze_allergens(
     while len(flags) < len(ingredients):
         flags.append(_IngredientFlag())
     return flags[:len(ingredients)]
-
-
