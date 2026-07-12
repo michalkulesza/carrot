@@ -33,7 +33,6 @@ const ReadView = ({
   heroImageErrored,
   setHeroImageErrored,
   handleToggleKeepScreenOn,
-  handleToggleShowStepQty,
   handleFontSizeChange,
   handleAddIngredient,
   handleAddAll,
@@ -53,7 +52,6 @@ const ReadView = ({
   heroImageErrored: boolean
   setHeroImageErrored: (errored: boolean) => void
   handleToggleKeepScreenOn: (val: boolean) => void
-  handleToggleShowStepQty: (val: boolean) => void
   handleFontSizeChange: (index: number) => void
   handleAddIngredient: (key: string, text: string) => void
   handleAddAll: (keys: string[], texts: string[]) => void
@@ -166,15 +164,6 @@ const ReadView = ({
                 value={keepScreenOn}
                 onValueChange={handleToggleKeepScreenOn}
                 accessibilityLabel={t('settings.cookingMode')}
-              />
-            </View>
-            <View style={styles.toggleDivider} />
-            <View style={styles.keepScreenRow}>
-              <Text style={styles.keepScreenLabel}>{t('settings.showIntelligentIngredients')}</Text>
-              <Switch
-                value={showStepQty}
-                onValueChange={handleToggleShowStepQty}
-                accessibilityLabel={t('settings.showIntelligentIngredients')}
               />
             </View>
             <View style={styles.toggleDivider} />

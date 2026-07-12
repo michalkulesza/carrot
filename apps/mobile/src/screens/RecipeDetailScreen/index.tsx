@@ -159,7 +159,6 @@ const RecipeDetailScreen = () => {
       heroImageErrored={heroImageErrored}
       setHeroImageErrored={setHeroImageErrored}
       handleToggleKeepScreenOn={displayPrefs.handleToggleKeepScreenOn}
-      handleToggleShowStepQty={displayPrefs.handleToggleShowStepQty}
       handleFontSizeChange={displayPrefs.handleFontSizeChange}
       handleAddIngredient={handleAddIngredient}
       handleAddAll={handleAddAll}
