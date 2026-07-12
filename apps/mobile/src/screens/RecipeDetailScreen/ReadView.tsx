@@ -127,8 +127,6 @@ const ReadView = ({
             )}
           </View>
 
-          <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
-
           <TagsSection recipe={recipe} />
 
           <View style={styles.householdRow}>
@@ -203,6 +201,8 @@ const ReadView = ({
               </View>
             </View>
           </View>
+
+          <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
 
           {recipe.components.map((component, i) => (
             <ComponentSection
