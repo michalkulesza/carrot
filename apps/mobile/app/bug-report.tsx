@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
     color: colors.secondaryLabel,
     marginBottom: 20,
   },
-  button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', backgroundColor: colors.blue },
+  button: { borderRadius: 999, paddingVertical: 14, alignItems: 'center', backgroundColor: colors.blue },
   buttonDisabled: { backgroundColor: colors.gray4 },
   buttonText: { color: colors.background, fontSize: 16, fontWeight: '600' },
 })

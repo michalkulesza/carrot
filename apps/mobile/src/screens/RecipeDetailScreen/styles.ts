@@ -256,14 +256,14 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   secondaryBtn: {
-    borderRadius: 10,
+    borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
     backgroundColor: colors.gray6,
   },
   secondaryBtnText: { fontSize: 16, color: colors.label, fontWeight: '500' },
   primaryBtn: {
-    borderRadius: 10,
+    borderRadius: 999,
     paddingVertical: 14,
     alignItems: 'center',
     backgroundColor: colors.blue,
