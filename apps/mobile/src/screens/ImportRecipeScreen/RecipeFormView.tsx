@@ -240,22 +240,22 @@ const RecipeFormView = ({
           items={[
             { label: t('recipes.serves'), value: recipe.servings, accessibilityLabel: t('recipes.serves') },
             {
-              label: t(editing ? 'recipes.kcalPerServing' : 'recipes.colKcal'),
+              label: t('recipes.colKcal'),
               value: recipe.kcal,
               accessibilityLabel: t('recipes.kcalPerServing'),
             },
             {
-              label: t(editing ? 'recipes.proteinPerServing' : 'recipes.protein'),
+              label: t('recipes.protein'),
               value: recipe.protein,
               accessibilityLabel: t('recipes.proteinPerServing'),
             },
             {
-              label: t(editing ? 'recipes.fatPerServing' : 'recipes.fat'),
+              label: t('recipes.fat'),
               value: recipe.fat,
               accessibilityLabel: t('recipes.fatPerServing'),
             },
             {
-              label: t(editing ? 'recipes.carbsPerServing' : 'recipes.carbs'),
+              label: t('recipes.carbs'),
               value: recipe.carbs,
               accessibilityLabel: t('recipes.carbsPerServing'),
             },
