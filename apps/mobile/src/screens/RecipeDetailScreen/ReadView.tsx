@@ -37,6 +37,7 @@ const ReadView = ({
   handleAddIngredient,
   handleAddAll,
   handleConfirmAddIngredient,
+  handleToggleFavourite,
   mealPlanSheetRef,
   addIngredientSheetRef,
 }: {
@@ -56,6 +57,7 @@ const ReadView = ({
   handleAddIngredient: (key: string, text: string) => void
   handleAddAll: (keys: string[], texts: string[]) => void
   handleConfirmAddIngredient: (text: string) => void
+  handleToggleFavourite: () => void
   mealPlanSheetRef: RefObject<AddToMealPlanSheetHandle | null>
   addIngredientSheetRef: RefObject<AddIngredientToShoppingListSheetHandle | null>
 }) => {
@@ -91,7 +93,24 @@ const ReadView = ({
         )}
 
         <View style={styles.card}>
-          <Text style={styles.title}>{recipe.title}</Text>
+          <View style={styles.titleRow}>
+            <Pressable
+              onPress={handleToggleFavourite}
+              hitSlop={8}
+              style={({ pressed }) => [styles.favBtn, pressed && { opacity: 0.7 }]}
+              accessibilityLabel={
+                recipe.is_favourite ? t('recipes.removeFromFavourites') : t('recipes.addToFavourites')
+              }
+              accessibilityRole="button"
+            >
+              <Ionicons
+                name={recipe.is_favourite ? 'star' : 'star-outline'}
+                size={24}
+                color={recipe.is_favourite ? '#f59e0b' : colors.opaqueSeparator}
+              />
+            </Pressable>
+            <Text style={styles.title}>{recipe.title}</Text>
+          </View>
 
           {recipe.tags.length > 0 && (
             <View style={styles.tagRow}>

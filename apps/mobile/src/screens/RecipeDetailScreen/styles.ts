@@ -26,11 +26,24 @@ export const styles = StyleSheet.create({
   errorText: { color: colors.red, fontSize: 16, textAlign: 'center' },
   headerBtns: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4, marginRight: 4 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    marginBottom: 10,
+  },
+  favBtn: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
   title: {
+    flex: 1,
     fontSize: 28,
     fontWeight: '700',
     color: colors.label,
-    marginBottom: 10,
     lineHeight: 34,
   },
   tagRow: {

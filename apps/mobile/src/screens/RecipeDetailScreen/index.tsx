@@ -24,7 +24,7 @@ const RecipeDetailScreen = () => {
   const navigation = useNavigation()
   const { t } = useTranslation()
   const api = useApiClient()
-  const { recipes, isLoading, error } = useRecipes()
+  const { recipes, isLoading, error, toggleFavourite } = useRecipes()
   const { addItems } = useShoppingList()
   const { tags: allTags, create: createTagMutation } = useTags()
   const [heroImageErrored, setHeroImageErrored] = useState(false)
@@ -53,6 +53,12 @@ const RecipeDetailScreen = () => {
   }, [])
 
   const handleToggleAddMode = useCallback(() => setAddMode((prev) => !prev), [])
+
+  const handleToggleFavourite = useCallback(() => {
+    if (!recipe) return
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    toggleFavourite.mutate(recipe.id)
+  }, [recipe, toggleFavourite])
 
   const handleAddIngredient = useCallback((key: string, text: string) => {
     pendingIngredientKeyRef.current = key
@@ -167,6 +173,7 @@ const RecipeDetailScreen = () => {
       handleAddIngredient={handleAddIngredient}
       handleAddAll={handleAddAll}
       handleConfirmAddIngredient={handleConfirmAddIngredient}
+      handleToggleFavourite={handleToggleFavourite}
       mealPlanSheetRef={mealPlanSheetRef}
       addIngredientSheetRef={addIngredientSheetRef}
     />
