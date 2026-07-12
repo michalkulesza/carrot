@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import { Alert, Pressable, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTags } from '@carrot/shared/hooks/useTags'
@@ -56,29 +56,31 @@ const TagsSection = ({ recipe, editing }: { recipe: RecipeOut; editing: boolean 
 
   return (
     <>
-      <View style={styles.tagRow}>
-        {recipe.tags.map((tag) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
+        <View style={styles.tagRow}>
+          {recipe.tags.map((tag) => (
+            <Pressable
+              key={tag.id}
+              style={({ pressed }) => [styles.tag, pressed && { opacity: 0.7 }]}
+              onPress={editing ? () => handleTagRemove(tag.id) : undefined}
+              accessibilityLabel={editing ? `${tag.name}, tap to remove` : tag.name}
+              disabled={!editing}
+            >
+              <Text style={styles.tagText}>
+                {tTag(tag.name, t)}
+                {editing && ' ×'}
+              </Text>
+            </Pressable>
+          ))}
           <Pressable
-            key={tag.id}
-            style={({ pressed }) => [styles.tag, pressed && { opacity: 0.7 }]}
-            onPress={editing ? () => handleTagRemove(tag.id) : undefined}
-            accessibilityLabel={editing ? `${tag.name}, tap to remove` : tag.name}
-            disabled={!editing}
+            style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => setShowTagPicker(true)}
+            accessibilityLabel={t('tags.addTag')}
           >
-            <Text style={styles.tagText}>
-              {tTag(tag.name, t)}
-              {editing && ' ×'}
-            </Text>
+            <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
           </Pressable>
-        ))}
-        <Pressable
-          style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
-          onPress={() => setShowTagPicker(true)}
-          accessibilityLabel={t('tags.addTag')}
-        >
-          <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
-        </Pressable>
-      </View>
+        </View>
+      </ScrollView>
       <TagPickerModal
         visible={showTagPicker}
         allTags={allTags}

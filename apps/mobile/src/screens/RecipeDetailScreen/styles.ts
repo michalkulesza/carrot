@@ -51,9 +51,10 @@ export const styles = StyleSheet.create({
   },
   tagRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 12,
     gap: 6,
+  },
+  tagScroll: {
+    marginBottom: 12,
   },
   tag: {
     backgroundColor: colors.brandLight,
