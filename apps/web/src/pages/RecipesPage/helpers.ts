@@ -4,6 +4,7 @@ import type {
   Tag,
   UserPreferences,
 } from '@carrot/shared/types'
+import { matchesTagFilters } from '@carrot/shared/utils/tagFilters'
 
 export interface IngredientMatch {
   recipe: RecipeOut
@@ -44,11 +45,12 @@ export const applyFavouriteOverrides = (
 export const filterAndSortRecipes = (
   recipes: RecipeOut[],
   filterFavourites: boolean,
-  filterTag: Tag | null
+  allTags: Tag[],
+  selectedTagIds: Set<string>
 ): RecipeOut[] =>
   recipes
     .filter((r) => !filterFavourites || r.is_favourite)
-    .filter((r) => !filterTag || r.tags.some((t) => t.id === filterTag.id))
+    .filter((r) => matchesTagFilters(r.tags, allTags, selectedTagIds))
     .slice()
     .sort(
       (a, b) =>

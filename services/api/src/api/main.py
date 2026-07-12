@@ -45,17 +45,26 @@ from api.users import User
 
 logging.basicConfig(level=logging.DEBUG)
 
-_DEFAULT_TAGS = [
+_DEFAULT_TAGS: list[tuple[str, str | None]] = [
     # Diet
-    "Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "Keto", "Low-Carb",
+    ("Vegetarian", None), ("Vegan", None), ("Gluten-Free", None), ("Dairy-Free", None),
+    ("Keto", None), ("Low-Carb", None),
     # Meal type
-    "Breakfast", "Lunch", "Dinner", "Snack", "Dessert", "Drink",
+    ("Breakfast", None), ("Lunch", None), ("Dinner", None), ("Snack", None), ("Dessert", None), ("Drink", None),
     # Method
-    "Quick", "Grilled", "Baked", "One-Pot",
+    ("Grilled", None), ("Baked", None), ("One-Pot", None),
     # Other
-    "High-Protein", "Comfort Food",
+    ("High-Protein", None), ("Comfort Food", None),
+    # Protein
+    ("Chicken", "protein"), ("Beef", "protein"), ("Pork", "protein"), ("Fish", "protein"),
+    ("Seafood", "protein"), ("Turkey", "protein"), ("Tofu", "protein"), ("Eggs", "protein"),
+    # Carb
+    ("Potatoes", "carb"), ("Rice", "carb"), ("Pasta", "carb"), ("Bread", "carb"), ("Noodles", "carb"),
     # Cuisine
-    "Italian", "Asian",
+    ("Italian", "cuisine"), ("Asian", "cuisine"), ("Mexican", "cuisine"), ("Indian", "cuisine"),
+    ("Mediterranean", "cuisine"), ("French", "cuisine"), ("American", "cuisine"),
+    # Time
+    ("Quick", "time"), ("Medium", "time"), ("Long", "time"),
 ]
 
 
@@ -76,10 +85,13 @@ async def _seed_demo_user() -> None:
 async def _seed_default_tags() -> None:
     async with async_session_maker() as session:
         existing = await session.execute(select(Tag).where(Tag.is_default.is_(True)))
-        existing_names = {t.name for t in existing.scalars().all()}
-        for name in _DEFAULT_TAGS:
-            if name not in existing_names:
-                session.add(Tag(name=name, is_default=True, user_id=None))
+        existing_by_name = {t.name: t for t in existing.scalars().all()}
+        for name, category in _DEFAULT_TAGS:
+            tag = existing_by_name.get(name)
+            if tag is None:
+                session.add(Tag(name=name, is_default=True, user_id=None, category=category))
+            elif tag.category != category:
+                tag.category = category
         await session.commit()
 
 
@@ -104,6 +116,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMP"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_account BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS share_imports_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
+        await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS category VARCHAR(20)"))
     await _seed_demo_user()
     await _seed_default_tags()
     await showcase.ensure_showcase_user()

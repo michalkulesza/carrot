@@ -406,7 +406,14 @@
     "noTagsAvailable": "No tags available",
     "allTagsAdded": "All tags already added",
     "addTag": "Add tag",
-    "removeTag": "Remove {{name}}"
+    "removeTag": "Remove {{name}}",
+    "category": {
+      "protein": "Protein",
+      "carb": "Carb",
+      "cuisine": "Cuisine",
+      "time": "Time",
+      "other": "Other"
+    }
   },
   "addRecipe": {
     "highDemandTitle": "High demand",
@@ -488,7 +495,27 @@
     "High_Protein": "High-Protein",
     "Comfort_Food": "Comfort Food",
     "Italian": "Italian",
-    "Asian": "Asian"
+    "Asian": "Asian",
+    "Chicken": "Chicken",
+    "Beef": "Beef",
+    "Pork": "Pork",
+    "Fish": "Fish",
+    "Seafood": "Seafood",
+    "Turkey": "Turkey",
+    "Tofu": "Tofu",
+    "Eggs": "Eggs",
+    "Potatoes": "Potatoes",
+    "Rice": "Rice",
+    "Pasta": "Pasta",
+    "Bread": "Bread",
+    "Noodles": "Noodles",
+    "Mexican": "Mexican",
+    "Indian": "Indian",
+    "Mediterranean": "Mediterranean",
+    "French": "French",
+    "American": "American",
+    "Medium": "Medium",
+    "Long": "Long"
   },
   "shoppingList": {
     "title": "Shopping List",

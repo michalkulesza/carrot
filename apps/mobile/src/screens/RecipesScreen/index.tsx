@@ -32,6 +32,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import type { RecipeOut, Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import Avatar from '../../components/Avatar'
+import { TAG_CATEGORIES, groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
+import CategoryFilterChip from './CategoryFilterChip'
 import GlassViewSafe from '../../components/GlassViewSafe'
 import MarqueeText from '../../components/MarqueeText'
 import MarqueeRow from '../../components/MarqueeRow'
@@ -93,7 +95,7 @@ const RecipesScreen = () => {
   const personalName = useMemo(() => user?.nickname || user?.email || t('households.personal'), [user, t])
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
-  const [selectedTagId, setSelectedTagId] = useState<string | null>(null)
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [filterFavourites, setFilterFavourites] = useState(false)
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [sort, setSort] = useState<SortMode>('newest')
@@ -297,7 +299,7 @@ const RecipesScreen = () => {
     tagBarVisibleSV.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) })
     animateHeaderHeight(true)
     setIsSearching(true)
-    setSelectedTagId(null)
+    setSelectedTagIds(new Set())
     setFilterFavourites(false)
   }, [animateHeaderHeight, tagBarVisibleSV])
   const handleSearchBlur = useCallback(() => {
@@ -370,7 +372,7 @@ const RecipesScreen = () => {
     const q = query.trim().toLowerCase()
     const base = recipesWithOverrides.filter((r) => {
       const matchesQuery = !q || r.title.toLowerCase().includes(q)
-      const matchesTag = !selectedTagId || r.tags.some((tag) => tag.id === selectedTagId)
+      const matchesTag = matchesTagFilters(r.tags, tags, selectedTagIds)
       const matchesFav = !filterFavourites || r.is_favourite
       return matchesQuery && matchesTag && matchesFav
     })
@@ -385,14 +387,16 @@ const RecipesScreen = () => {
         return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
-  }, [recipesWithOverrides, query, selectedTagId, filterFavourites, sort])
+  }, [recipesWithOverrides, query, tags, selectedTagIds, filterFavourites, sort])
 
-  const handleTagPress = useCallback(
-    (tagId: string) => {
-      setSelectedTagId((prev) => (prev === tagId ? null : tagId))
-    },
-    [],
-  )
+  const toggleTagId = useCallback((tagId: string) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tagId)) next.delete(tagId)
+      else next.add(tagId)
+      return next
+    })
+  }, [])
 
   const handleToggleFavourite = useCallback(
     async (recipe: RecipeOut) => {
@@ -424,10 +428,10 @@ const RecipesScreen = () => {
 
   const renderTag = useCallback(
     ({ item }: ListRenderItemInfo<Tag>) => {
-      const isSelected = item.id === selectedTagId
+      const isSelected = selectedTagIds.has(item.id)
       return (
         <Pressable
-          onPress={() => handleTagPress(item.id)}
+          onPress={() => toggleTagId(item.id)}
           style={({ pressed }) => [styles.chip, pressed && { opacity: 0.7 }]}
           accessibilityLabel={item.name}
           accessibilityRole="button"
@@ -444,7 +448,7 @@ const RecipesScreen = () => {
         </Pressable>
       )
     },
-    [selectedTagId, handleTagPress, t],
+    [selectedTagIds, toggleTagId, t],
   )
 
   const recipeHouseholdAvatarProps = useCallback(
@@ -560,7 +564,7 @@ const RecipesScreen = () => {
     () => (
       <Pressable
         onPress={() => setFilterFavourites((v) => !v)}
-        style={({ pressed }) => [styles.chip, styles.favChip, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [styles.favChip, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t('recipes.filterFavourites')}
         accessibilityRole="button"
         accessibilityState={{ selected: filterFavourites }}
@@ -570,13 +574,13 @@ const RecipesScreen = () => {
           glassEffectStyle={filterFavourites ? 'clear' : 'regular'}
           tintColor={filterFavourites ? colors.blue : colors.gray5}
         />
-        <Text style={[styles.chipText, filterFavourites && styles.chipTextSelected]}>
-          {'★ '}{t('recipes.filterFavourites')}
-        </Text>
+        <Text style={[styles.favChipText, filterFavourites && styles.chipTextSelected]}>★</Text>
       </Pressable>
     ),
     [filterFavourites, t],
   )
+
+  const groupedFilterTags = useMemo(() => groupTagsByCategory(tags), [tags])
 
   const tagBarPositionStyle = useAnimatedStyle(() => ({
     top: headerHeightSV.value,
@@ -631,13 +635,13 @@ const RecipesScreen = () => {
                 <Text style={styles.emptyText}>
                   {filterFavourites
                     ? t('recipes.noFavourites')
-                    : selectedTagId
+                    : selectedTagIds.size > 0
                     ? t('recipes.noRecipesWithTag')
                     : t('recipes.noRecipesYet')}
                 </Text>
-                {(selectedTagId || filterFavourites) && (
+                {(selectedTagIds.size > 0 || filterFavourites) && (
                   <Pressable
-                    onPress={() => { setSelectedTagId(null); setFilterFavourites(false) }}
+                    onPress={() => { setSelectedTagIds(new Set()); setFilterFavourites(false) }}
                     style={({ pressed }) => [pressed && { opacity: 0.7 }]}
                     accessibilityLabel={t('recipes.clearFilter')}
                     accessibilityRole="button"
@@ -655,17 +659,30 @@ const RecipesScreen = () => {
         onLayout={(e) => { tagBarHeightSV.value = e.nativeEvent.layout.height }}
         pointerEvents={isSearching ? 'none' : 'auto'}
       >
-        {favChip}
-        <View style={styles.tagBarDivider} />
-        <FlatList
-          data={tags}
-          keyExtractor={(t) => t.id}
-          renderItem={renderTag}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tagScrollArea}
-          contentContainerStyle={styles.tagListContent}
-        />
+        <View style={styles.tagBarRow1}>
+          {favChip}
+          {TAG_CATEGORIES.map((category) => (
+            <CategoryFilterChip
+              key={category}
+              category={category}
+              tags={groupedFilterTags[category]}
+              selectedTagIds={selectedTagIds}
+              onToggle={toggleTagId}
+            />
+          ))}
+        </View>
+        <View style={styles.tagBarRow2}>
+          <View style={styles.tagBarDivider} />
+          <FlatList
+            data={groupedFilterTags.other}
+            keyExtractor={(t) => t.id}
+            renderItem={renderTag}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.tagScrollArea}
+            contentContainerStyle={styles.tagListContent}
+          />
+        </View>
       </Reanimated.View>
     </View>
   )

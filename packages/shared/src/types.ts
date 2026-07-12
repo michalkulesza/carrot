@@ -42,11 +42,14 @@ export interface RecipeComponent {
   step_refs?: StepRef[]
 }
 
+export type TagCategory = 'protein' | 'carb' | 'cuisine' | 'time'
+
 export interface Tag {
   id: string
   name: string
   is_default: boolean
   household_id: string | null
+  category: TagCategory | null
 }
 
 export interface RecipeGroup {

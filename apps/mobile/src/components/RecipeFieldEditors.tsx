@@ -16,6 +16,7 @@ import { UNITS } from '@carrot/shared/types'
 import type { AllergenFlag, Tag } from '@carrot/shared/types'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { tTag } from '@carrot/shared/utils/tagUtils'
+import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
 import { colors } from '../theme/colors'
 
 // Shared editing controls used by both the import flow and in-place recipe editing.
@@ -117,6 +118,18 @@ export const TagPickerModal = ({
     return allTags.filter((tag) => !q || tag.name.toLowerCase().includes(q))
   }, [allTags, query])
 
+  const groupedSections = useMemo(() => {
+    const grouped = groupTagsByCategory(filtered)
+    return [
+      ...TAG_CATEGORIES.map((category) => ({
+        key: category,
+        title: t(`tags.category.${category}`),
+        tags: grouped[category],
+      })),
+      { key: 'other', title: t('tags.category.other'), tags: grouped.other },
+    ].filter((section) => section.tags.length > 0)
+  }, [filtered, t])
+
   const trimmedQuery = query.trim()
   const exactMatch = allTags.some((tag) => tag.name.toLowerCase() === trimmedQuery.toLowerCase())
   const canCreate = trimmedQuery.length > 0 && !exactMatch
@@ -197,21 +210,26 @@ export const TagPickerModal = ({
                 <Text style={styles.tagCreateText}>{createTagText}</Text>
               </Pressable>
             )}
-            {filtered.map((tag) => {
-              const isSelected = selectedIds.has(tag.id)
-              return (
-                <Pressable
-                  key={tag.id}
-                  style={getTagListRowStyle}
-                  onPress={() => handleTagRowPress(tag)}
-                  accessibilityLabel={tag.name}
-                  accessibilityState={{ selected: isSelected }}
-                >
-                  <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
-                  {isSelected && <Text style={styles.tagCheck}>✓</Text>}
-                </Pressable>
-              )
-            })}
+            {groupedSections.map((section) => (
+              <View key={section.key}>
+                <Text style={styles.tagSectionHeader}>{section.title}</Text>
+                {section.tags.map((tag) => {
+                  const isSelected = selectedIds.has(tag.id)
+                  return (
+                    <Pressable
+                      key={tag.id}
+                      style={getTagListRowStyle}
+                      onPress={() => handleTagRowPress(tag)}
+                      accessibilityLabel={tag.name}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
+                      {isSelected && <Text style={styles.tagCheck}>✓</Text>}
+                    </Pressable>
+                  )
+                })}
+              </View>
+            ))}
             {filtered.length === 0 && !canCreate && (
               <Text style={styles.tagEmpty}>{t('tags.noTagsAvailable')}</Text>
             )}
@@ -381,6 +399,17 @@ const styles = StyleSheet.create({
     color: PlatformColor('label') as unknown as string,
   },
   tagScrollList: { maxHeight: 320 },
+  tagSectionHeader: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: PlatformColor('secondaryLabel') as unknown as string,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
   tagCreateRow: {
     paddingHorizontal: 16,
     paddingVertical: 12,

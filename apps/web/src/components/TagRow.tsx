@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
+import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
 
 interface TagRowProps {
   tags: Tag[]
@@ -73,6 +74,18 @@ const TagPicker = ({
     ? t('tags.noTagsAvailable')
     : t('tags.allTagsAdded')
 
+  const groupedSections = useMemo(() => {
+    const grouped = groupTagsByCategory(filtered)
+    return [
+      ...TAG_CATEGORIES.map((category) => ({
+        key: category,
+        title: t(`tags.category.${category}`),
+        tags: grouped[category],
+      })),
+      { key: 'other', title: t('tags.category.other'), tags: grouped.other },
+    ].filter((section) => section.tags.length > 0)
+  }, [filtered, t])
+
   return (
     <div className="absolute left-0 top-6 z-50 w-52 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
       <div className="px-3 py-2 border-b border-zinc-200">
@@ -87,15 +100,22 @@ const TagPicker = ({
         />
       </div>
       <div className="max-h-44 overflow-y-auto">
-        {filtered.map((tag) => (
-          <button
-            key={tag.id}
-            type="button"
-            className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 transition-colors"
-            onClick={() => onSelectTag(tag)}
-          >
-            {tTag(tag.name, t)}
-          </button>
+        {groupedSections.map((section) => (
+          <div key={section.key}>
+            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+              {section.title}
+            </p>
+            {section.tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                className="w-full text-left px-3 py-2 text-sm hover:bg-zinc-100 transition-colors"
+                onClick={() => onSelectTag(tag)}
+              >
+                {tTag(tag.name, t)}
+              </button>
+            ))}
+          </div>
         ))}
         {canCreate && (
           <button

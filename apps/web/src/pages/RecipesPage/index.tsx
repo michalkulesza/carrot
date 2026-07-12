@@ -53,7 +53,7 @@ const RecipesPage = ({
   const [selected, setSelected] = useState<RecipeOut | null>(null)
   const [openInEdit, setOpenInEdit] = useState(false)
   const [scrollToStep, setScrollToStep] = useState<StepLocation | null>(null)
-  const [filterTag, setFilterTag] = useState<Tag | null>(null)
+  const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<RecipeOut | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -79,7 +79,8 @@ const RecipesPage = ({
   const displayed = filterAndSortRecipes(
     recipesWithOverrides,
     filterFavourites,
-    filterTag
+    allTags,
+    selectedTagIds
   )
 
   const query = searchQuery.trim().toLowerCase()
@@ -126,12 +127,21 @@ const RecipesPage = ({
   }, [])
 
   const handleClearFilters = useCallback(() => {
-    setFilterTag(null)
+    setSelectedTagIds(new Set())
     setFilterFavourites(false)
   }, [])
 
   const handleToggleFilterFavourites = useCallback(() => {
     setFilterFavourites((v) => !v)
+  }, [])
+
+  const handleToggleTag = useCallback((tagId: string) => {
+    setSelectedTagIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(tagId)) next.delete(tagId)
+      else next.add(tagId)
+      return next
+    })
   }, [])
 
   const confirmDelete = useCallback(async () => {
@@ -175,8 +185,8 @@ const RecipesPage = ({
           allTags={allTags}
           filterFavourites={filterFavourites}
           onToggleFilterFavourites={handleToggleFilterFavourites}
-          filterTag={filterTag}
-          onSelectFilterTag={setFilterTag}
+          selectedTagIds={selectedTagIds}
+          onToggleTag={handleToggleTag}
         />
 
         {loading ? (
@@ -186,7 +196,7 @@ const RecipesPage = ({
         ) : displayed.length === 0 ? (
           <NoMatchingRecipesEmptyState
             filterFavourites={filterFavourites}
-            filterTag={!!filterTag}
+            filterTag={selectedTagIds.size > 0}
             onClearFilters={handleClearFilters}
           />
         ) : (
@@ -199,7 +209,7 @@ const RecipesPage = ({
                   onView={() => openView(r)}
                   onEdit={() => openEdit(r)}
                   onDelete={() => setDeleteTarget(r)}
-                  onTagClick={setFilterTag}
+                  onToggleTag={handleToggleTag}
                   onToggleFavourite={() => handleToggleFavourite(r)}
                 />
               ))}
