@@ -123,7 +123,11 @@ export const blankRecipe = (): EditableRecipe => ({
   }],
 })
 
-export const buildRecipeSavePayload = (editable: EditableRecipe, selectedTags: Tag[]): RecipeSaveRequest => ({
+export const buildRecipeSavePayload = (
+  editable: EditableRecipe,
+  selectedTags: Tag[],
+  sharedToPersonal: boolean,
+): RecipeSaveRequest => ({
   title: editable.title,
   servings: editable.servings !== '' ? Number(editable.servings) : null,
   kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
@@ -148,6 +152,7 @@ export const buildRecipeSavePayload = (editable: EditableRecipe, selectedTags: T
     step_ingredient_refs: c.step_ingredient_refs,
   })),
   tag_ids: selectedTags.map((tag) => tag.id),
+  shared_to_personal: sharedToPersonal,
 })
 
 export const isBlankRecipe = (r: EditableRecipe): boolean =>

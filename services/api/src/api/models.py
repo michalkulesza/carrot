@@ -419,6 +419,7 @@ class UserPreferences(Base):
     personal_allergens: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     unit_system: Mapped[str] = mapped_column(String(20), default="metric", nullable=False)
+    share_imports_to_personal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class UserPreferencesOut(BaseModel):
@@ -429,6 +430,7 @@ class UserPreferencesOut(BaseModel):
     personal_allergens: dict | None = None
     language: str = "en"
     unit_system: str = "metric"
+    share_imports_to_personal: bool = False
 
 
 class UserPreferencesUpdate(BaseModel):
@@ -437,6 +439,7 @@ class UserPreferencesUpdate(BaseModel):
     personal_allergens: dict | None = None
     language: str | None = None
     unit_system: str | None = None
+    share_imports_to_personal: bool | None = None
 
 
 # ── Shopping List ──────────────────────────────────────────────────────────────

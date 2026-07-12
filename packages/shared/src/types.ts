@@ -201,6 +201,7 @@ export interface UserPreferences {
   personal_allergens: AllergenData | null
   language: string
   unit_system: string // "metric" | "imperial"
+  share_imports_to_personal: boolean
 }
 
 export interface ReanalyzeProgress {

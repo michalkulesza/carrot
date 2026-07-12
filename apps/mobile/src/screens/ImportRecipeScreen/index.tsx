@@ -21,6 +21,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useNotificationHistory } from '../../context/NotificationHistoryContext'
+import { useHousehold } from '../../context/HouseholdContext'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import type { ImportJobKind, ImportResult, StageEvent, Tag } from '@carrot/shared/types'
@@ -49,6 +50,7 @@ const ImportRecipeScreen = () => {
   const { push: pushNotif } = useNotificationHistory()
   const { tags, create: createTagMutation } = useTags()
   const { preferences } = usePreferences()
+  const { activeHouseholdId } = useHousehold()
 
   const [mode, setMode] = useState<ImportMode | null>(null)
   const [url, setUrl] = useState('')
@@ -305,7 +307,8 @@ const ImportRecipeScreen = () => {
     setSaving(true)
     setError(null)
     try {
-      await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags))
+      const sharedToPersonal = activeHouseholdId !== null && !!preferences?.share_imports_to_personal
+      await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags, sharedToPersonal))
       await qc.invalidateQueries({ queryKey: ['recipes'] })
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       skipGuardRef.current = true
@@ -315,7 +318,7 @@ const ImportRecipeScreen = () => {
     } finally {
       setSaving(false)
     }
-  }, [editable, selectedTags, api, qc, t, router])
+  }, [editable, selectedTags, activeHouseholdId, preferences, api, qc, t, router])
 
   const handleTagCreate = useCallback(
     async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name),

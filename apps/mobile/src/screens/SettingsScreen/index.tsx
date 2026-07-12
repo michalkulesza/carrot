@@ -109,6 +109,13 @@ const SettingsScreen = () => {
     [update],
   )
 
+  const handleShareImportsToggle = useCallback(
+    (value: boolean) => {
+      update.mutate({ share_imports_to_personal: value } as Partial<UserPreferences>)
+    },
+    [update],
+  )
+
   const { mode: appearanceMode, setMode: setAppearanceMode } = useAppearanceMode()
   const { enabled: debugMode, setEnabled: setDebugMode } = useDebugMode()
 
@@ -308,6 +315,21 @@ const SettingsScreen = () => {
         onWeekStartPicker={handleWeekStartPicker}
         onUnitSystemToggle={handleUnitSystemToggle}
       />
+
+      <SectionHeader label={t('settings.recipeImport')} />
+      <View style={styles.card}>
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>{t('settings.shareImportsToPersonal')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.shareImportsToPersonalDesc')}</Text>
+          </View>
+          <Switch
+            value={preferences?.share_imports_to_personal ?? false}
+            onValueChange={handleShareImportsToggle}
+            accessibilityLabel={t('settings.shareImportsToPersonal')}
+          />
+        </View>
+      </View>
 
       <SectionHeader label={t('settings.screen')} />
       <View style={styles.card}>

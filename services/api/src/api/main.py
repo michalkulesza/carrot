@@ -103,6 +103,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS debug_total_tokens INTEGER"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_activity_at TIMESTAMP"))
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_account BOOLEAN NOT NULL DEFAULT FALSE"))
+        await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS share_imports_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
     await _seed_demo_user()
     await _seed_default_tags()
     await showcase.ensure_showcase_user()
