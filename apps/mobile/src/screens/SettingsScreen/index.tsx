@@ -27,9 +27,9 @@ import type { UserPreferences, AllergenData, HouseholdOut } from '@carrot/shared
 import { useAuth } from '../../context/AuthContext'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
-import { useTimers } from '../../context/TimerContext'
 import { persistLanguage } from '../../i18n'
 import HeaderTitle from '../../components/HeaderTitle'
+import { SHOW_STEP_QTY_STORAGE_KEY } from '../RecipeDetailScreen/helpers'
 import {
   APPEARANCE_OPTIONS,
   DEVELOPER_SETTINGS_EMAIL,
@@ -63,22 +63,30 @@ const SettingsScreen = () => {
   const { create: createHousehold } = useHouseholds()
   const api = useApiClient()
   const insets = useSafeAreaInsets()
-  const { keepScreenOn: keepScreenOnTimer, setKeepScreenOn: setKeepScreenOnTimer } = useTimers()
-  const [keepScreenDefault, setKeepScreenDefault] = useState(false)
+  const [cookingMode, setCookingMode] = useState(false)
+  const [showStepQty, setShowStepQty] = useState(true)
   const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false)
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_STORAGE_KEY).then((val) => {
-      setKeepScreenDefault(val === '1')
+      setCookingMode(val === '1')
+    })
+    AsyncStorage.getItem(SHOW_STEP_QTY_STORAGE_KEY).then((val) => {
+      if (val !== null) setShowStepQty(val === '1')
     })
     AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
       setKeepScreenOnShopping(val === '1')
     })
   }, [])
 
-  const handleKeepScreenDefaultToggle = useCallback((val: boolean) => {
-    setKeepScreenDefault(val)
+  const handleCookingModeToggle = useCallback((val: boolean) => {
+    setCookingMode(val)
     void AsyncStorage.setItem(KEEP_AWAKE_STORAGE_KEY, val ? '1' : '0')
+  }, [])
+
+  const handleShowStepQtyToggle = useCallback((val: boolean) => {
+    setShowStepQty(val)
+    void AsyncStorage.setItem(SHOW_STEP_QTY_STORAGE_KEY, val ? '1' : '0')
   }, [])
 
   const handleKeepScreenShoppingToggle = useCallback((val: boolean) => {
@@ -248,6 +256,10 @@ const SettingsScreen = () => {
     APPEARANCE_OPTIONS.find((o) => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem',
   )
 
+  const weekStartLabel = t(
+    WEEK_START_OPTIONS.find((o) => o.value === (preferences?.week_start_day ?? 1))?.labelKey ?? 'settings.monday',
+  )
+
   return (
     <ScrollView
       style={styles.container}
@@ -305,6 +317,14 @@ const SettingsScreen = () => {
         </Pressable>
       </View>
 
+      <SectionHeader label={t('settings.households')} />
+      <HouseholdsSection
+        households={households}
+        activeHouseholdId={activeHouseholdId}
+        onManage={handleManageHousehold}
+        onCreateHousehold={handleCreateHousehold}
+      />
+
       <SectionHeader label={t('settings.preferences')} />
       <PreferencesSection
         loading={showSpinner}
@@ -312,7 +332,6 @@ const SettingsScreen = () => {
         preferences={preferences}
         currentLanguageCode={preferences?.language ?? i18n.language}
         onLanguagePicker={handleLanguagePicker}
-        onWeekStartPicker={handleWeekStartPicker}
         onUnitSystemToggle={handleUnitSystemToggle}
       />
 
@@ -331,30 +350,48 @@ const SettingsScreen = () => {
         </View>
       </View>
 
-      <SectionHeader label={t('settings.screen')} />
+      <SectionHeader label={t('settings.recipeDetail')} />
       <View style={styles.card}>
         <View style={[styles.switchRow, styles.switchRowBorder]}>
           <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t('settings.keepScreenOnDefault')}</Text>
-            <Text style={styles.cardDesc}>{t('settings.keepScreenOnDefaultDesc')}</Text>
+            <Text style={styles.switchLabel}>{t('settings.cookingMode')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.cookingModeDesc')}</Text>
           </View>
           <Switch
-            value={keepScreenDefault}
-            onValueChange={handleKeepScreenDefaultToggle}
-            accessibilityLabel={t('settings.keepScreenOnDefault')}
+            value={cookingMode}
+            onValueChange={handleCookingModeToggle}
+            accessibilityLabel={t('settings.cookingMode')}
           />
         </View>
-        <View style={[styles.switchRow, styles.switchRowBorder]}>
+        <View style={styles.switchRow}>
           <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t('timers.keepScreenOn')}</Text>
-            <Text style={styles.cardDesc}>{t('timers.keepScreenOnDesc')}</Text>
+            <Text style={styles.switchLabel}>{t('settings.showIntelligentIngredients')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.showIntelligentIngredientsDesc')}</Text>
           </View>
           <Switch
-            value={keepScreenOnTimer}
-            onValueChange={setKeepScreenOnTimer}
-            accessibilityLabel={t('timers.keepScreenOn')}
+            value={showStepQty}
+            onValueChange={handleShowStepQtyToggle}
+            accessibilityLabel={t('settings.showIntelligentIngredients')}
           />
         </View>
+      </View>
+
+      <SectionHeader label={t('settings.shoppingList')} />
+      <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={handleWeekStartPicker}
+          accessibilityLabel={t('settings.weekStartsOn')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t('settings.weekStartsOn')}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerValue}>{weekStartLabel}</Text>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+      </View>
+      <View style={styles.card}>
         <View style={styles.switchRow}>
           <View style={styles.switchLabelBlock}>
             <Text style={styles.switchLabel}>{t('settings.keepScreenOnWhileShoppingList')}</Text>
@@ -367,14 +404,6 @@ const SettingsScreen = () => {
           />
         </View>
       </View>
-
-      <SectionHeader label={t('settings.households')} />
-      <HouseholdsSection
-        households={households}
-        activeHouseholdId={activeHouseholdId}
-        onManage={handleManageHousehold}
-        onCreateHousehold={handleCreateHousehold}
-      />
 
       <SectionHeader label={t('settings.allergiesIntolerances')} />
       <View style={styles.card}>

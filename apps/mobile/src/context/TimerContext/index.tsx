@@ -35,8 +35,6 @@ interface TimerContextValue {
   resumeInfo: ResumeInfo | null
   expiredQueue: TimerEntry[]
   hasRunningTimers: boolean
-  keepScreenOn: boolean
-  setKeepScreenOn: (v: boolean) => void
   startTimer: (
     params: Omit<TimerEntry, 'remainingAtStart' | 'startedAt' | 'status' | 'notificationId'>,
   ) => void
@@ -62,7 +60,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map())
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(null)
   const [expiredQueue, setExpiredQueue] = useState<TimerEntry[]>([])
-  const [keepScreenOn, setKeepScreenOnState] = useState(true)
   const processedDoneRef = useRef<Set<string>>(new Set())
   const loadedRef = useRef(false)
 
@@ -187,16 +184,12 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   const hasRunningTimers = [...timers.values()].some((t) => t.status === 'running')
 
   useEffect(() => {
-    if (keepScreenOn && hasRunningTimers) {
+    if (hasRunningTimers) {
       void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_TAG)
     } else {
       KeepAwake.deactivateKeepAwake(KEEP_AWAKE_TAG)
     }
-  }, [keepScreenOn, hasRunningTimers])
-
-  const setKeepScreenOn = useCallback((v: boolean) => {
-    setKeepScreenOnState(v)
-  }, [])
+  }, [hasRunningTimers])
 
   const startTimer = useCallback(
     (
@@ -303,8 +296,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         resumeInfo,
         expiredQueue,
         hasRunningTimers,
-        keepScreenOn,
-        setKeepScreenOn,
         startTimer,
         pauseTimer,
         resumeTimer,

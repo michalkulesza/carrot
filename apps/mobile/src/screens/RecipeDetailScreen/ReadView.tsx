@@ -149,20 +149,20 @@ const ReadView = ({
 
           <View style={styles.toggleGroup}>
             <View style={styles.keepScreenRow}>
-              <Text style={styles.keepScreenLabel}>{t('settings.keepScreenOnDefault')}</Text>
+              <Text style={styles.keepScreenLabel}>{t('settings.cookingMode')}</Text>
               <Switch
                 value={keepScreenOn}
                 onValueChange={handleToggleKeepScreenOn}
-                accessibilityLabel={t('settings.keepScreenOnDefault')}
+                accessibilityLabel={t('settings.cookingMode')}
               />
             </View>
             <View style={styles.toggleDivider} />
             <View style={styles.keepScreenRow}>
-              <Text style={styles.keepScreenLabel}>{t('settings.showQuantityUnderStep')}</Text>
+              <Text style={styles.keepScreenLabel}>{t('settings.showIntelligentIngredients')}</Text>
               <Switch
                 value={showStepQty}
                 onValueChange={handleToggleShowStepQty}
-                accessibilityLabel={t('settings.showQuantityUnderStep')}
+                accessibilityLabel={t('settings.showIntelligentIngredients')}
               />
             </View>
             <View style={styles.toggleDivider} />
