@@ -6,6 +6,7 @@ export interface NutritionBoxGridItem {
   label: string
   value: string
   accessibilityLabel: string
+  unit?: string
 }
 
 interface NutritionBoxGridProps {
@@ -22,15 +23,18 @@ interface EditableNutritionBoxProps {
 
 const EditableNutritionBox = ({ item, onChangeValue }: EditableNutritionBoxProps) => (
   <View style={styles.box}>
-    <TextInput
-      style={styles.numberInput}
-      value={item.value}
-      onChangeText={(value) => onChangeValue(value.replace(/\s/g, ''))}
-      keyboardType="number-pad"
-      placeholder="—"
-      placeholderTextColor={colors.placeholderText}
-      accessibilityLabel={item.accessibilityLabel}
-    />
+    <View style={styles.numberRow}>
+      <TextInput
+        style={styles.numberInput}
+        value={item.value}
+        onChangeText={(value) => onChangeValue(value.replace(/\s/g, ''))}
+        keyboardType="number-pad"
+        placeholder="—"
+        placeholderTextColor={colors.placeholderText}
+        accessibilityLabel={item.accessibilityLabel}
+      />
+      {item.unit && item.value !== '' && <Text style={styles.number}>{item.unit}</Text>}
+    </View>
     <Text style={styles.label}>{item.label}</Text>
   </View>
 )
@@ -46,10 +50,11 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
     ({ pressed }: { pressed: boolean }) => [styles.box, pressed && styles.boxPressed],
     [],
   )
+  const shownValue = item.unit && item.value !== '' ? `${displayValue}${item.unit}` : displayValue
 
   return (
     <Pressable style={getPressableStyle} onPress={onPress} accessibilityLabel={item.accessibilityLabel}>
-      <Text style={styles.number}>{displayValue}</Text>
+      <Text style={styles.number}>{shownValue}</Text>
       <Text style={styles.label}>{item.label}</Text>
     </Pressable>
   )
@@ -150,13 +155,14 @@ const styles = StyleSheet.create({
   },
   boxPressed: { opacity: 0.7 },
   number: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.label },
+  numberRow: { flexDirection: 'row', alignItems: 'center' },
   numberInput: {
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '600',
     color: colors.label,
     textAlign: 'center',
-    minWidth: 40,
+    minWidth: 24,
     padding: 0,
   },
   label: { fontSize: 13, lineHeight: 18, color: colors.secondaryLabel, marginTop: 4 },

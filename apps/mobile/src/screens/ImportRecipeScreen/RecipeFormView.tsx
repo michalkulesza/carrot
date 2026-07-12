@@ -248,16 +248,19 @@ const RecipeFormView = ({
               label: t('recipes.protein'),
               value: recipe.protein,
               accessibilityLabel: t('recipes.proteinPerServing'),
+              unit: 'g',
             },
             {
               label: t('recipes.fat'),
               value: recipe.fat,
               accessibilityLabel: t('recipes.fatPerServing'),
+              unit: 'g',
             },
             {
               label: t('recipes.carbs'),
               value: recipe.carbs,
               accessibilityLabel: t('recipes.carbsPerServing'),
+              unit: 'g',
             },
           ]}
           onChangeValue={handleNutritionChange}
