@@ -1,5 +1,15 @@
 import { useCallback, useRef, useState } from 'react'
-import { Dimensions, Modal, PlatformColor, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import {
+  Dimensions,
+  Modal,
+  PlatformColor,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type View as RNView,
+} from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { Tag, TagCategory } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
@@ -26,7 +36,7 @@ const CategoryFilterChip = ({
   onToggle: (tagId: string) => void
 }) => {
   const { t } = useTranslation()
-  const anchorRef = useRef<View>(null)
+  const anchorRef = useRef<RNView>(null)
   const [popoverPosition, setPopoverPosition] = useState<PopoverPosition | null>(null)
 
   const selectedTags = tags.filter((tag) => selectedTagIds.has(tag.id))
@@ -49,24 +59,23 @@ const CategoryFilterChip = ({
 
   return (
     <>
-      <View ref={anchorRef} collapsable={false}>
-        <Pressable
-          onPress={handleOpen}
-          style={({ pressed }) => [styles.chip, pressed && { opacity: 0.7 }]}
-          accessibilityLabel={t(`tags.category.${category}`)}
-          accessibilityRole="button"
-          accessibilityState={{ selected: isActive }}
-        >
-          <GlassViewSafe
-            style={StyleSheet.absoluteFill}
-            glassEffectStyle={isActive ? 'clear' : 'regular'}
-            tintColor={isActive ? colors.blue : colors.gray5}
-          />
-          <Text style={[styles.chipText, isActive && styles.chipTextSelected]} numberOfLines={1}>
-            {label} ▾
-          </Text>
-        </Pressable>
-      </View>
+      <Pressable
+        ref={anchorRef}
+        onPress={handleOpen}
+        style={({ pressed }) => [styles.chip, pressed && { opacity: 0.7 }]}
+        accessibilityLabel={t(`tags.category.${category}`)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isActive }}
+      >
+        <GlassViewSafe
+          style={StyleSheet.absoluteFill}
+          glassEffectStyle={isActive ? 'clear' : 'regular'}
+          tintColor={isActive ? colors.blue : colors.gray5}
+        />
+        <Text style={[styles.chipText, isActive && styles.chipTextSelected]} numberOfLines={1}>
+          {label} ▾
+        </Text>
+      </Pressable>
       <Modal visible={popoverPosition !== null} transparent animationType="fade" onRequestClose={handleClose}>
         <Pressable style={styles.overlay} onPress={handleClose} />
         {popoverPosition && (
