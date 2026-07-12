@@ -6,6 +6,7 @@ import {
   FlatList,
   ListRenderItemInfo,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -427,10 +428,11 @@ const RecipesScreen = () => {
   )
 
   const renderTag = useCallback(
-    ({ item }: ListRenderItemInfo<Tag>) => {
+    (item: Tag) => {
       const isSelected = selectedTagIds.has(item.id)
       return (
         <Pressable
+          key={item.id}
           onPress={() => toggleTagId(item.id)}
           style={({ pressed }) => [styles.chip, pressed && { opacity: 0.7 }]}
           accessibilityLabel={item.name}
@@ -659,7 +661,11 @@ const RecipesScreen = () => {
         onLayout={(e) => { tagBarHeightSV.value = e.nativeEvent.layout.height }}
         pointerEvents={isSearching ? 'none' : 'auto'}
       >
-        <View style={styles.tagBarRow1}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tagListContent}
+        >
           {favChip}
           {TAG_CATEGORIES.map((category) => (
             <CategoryFilterChip
@@ -670,19 +676,9 @@ const RecipesScreen = () => {
               onToggle={toggleTagId}
             />
           ))}
-        </View>
-        <View style={styles.tagBarRow2}>
-          <View style={styles.tagBarDivider} />
-          <FlatList
-            data={groupedFilterTags.other}
-            keyExtractor={(t) => t.id}
-            renderItem={renderTag}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.tagScrollArea}
-            contentContainerStyle={styles.tagListContent}
-          />
-        </View>
+          {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
+          {groupedFilterTags.other.map(renderTag)}
+        </ScrollView>
       </Reanimated.View>
     </View>
   )

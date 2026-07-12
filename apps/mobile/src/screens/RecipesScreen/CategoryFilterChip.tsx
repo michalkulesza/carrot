@@ -84,13 +84,15 @@ export default CategoryFilterChip
 
 const styles = StyleSheet.create({
   chip: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
     overflow: 'hidden',
+    maxWidth: 140,
   },
-  chipText: { fontSize: 13, color: colors.secondaryLabel, textAlign: 'center' },
+  chipText: { fontSize: 13, color: colors.secondaryLabel },
   chipTextSelected: { color: '#ffffff', fontWeight: '600' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' },
   sheet: {
