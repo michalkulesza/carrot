@@ -169,10 +169,10 @@ const EditView = ({
             editing
             items={[
               { label: t('recipes.serves'), value: draft.servings, accessibilityLabel: t('recipes.serves') },
-              { label: t('recipes.kcalPerServing'), value: draft.kcal, accessibilityLabel: t('recipes.kcalPerServing') },
-              { label: t('recipes.proteinPerServing'), value: draft.protein, accessibilityLabel: t('recipes.proteinPerServing') },
-              { label: t('recipes.fatPerServing'), value: draft.fat, accessibilityLabel: t('recipes.fatPerServing') },
-              { label: t('recipes.carbsPerServing'), value: draft.carbs, accessibilityLabel: t('recipes.carbsPerServing') },
+              { label: t('recipes.colKcal'), value: draft.kcal, accessibilityLabel: t('recipes.kcalPerServing') },
+              { label: t('recipes.protein'), value: draft.protein, accessibilityLabel: t('recipes.proteinPerServing') },
+              { label: t('recipes.fat'), value: draft.fat, accessibilityLabel: t('recipes.fatPerServing') },
+              { label: t('recipes.carbs'), value: draft.carbs, accessibilityLabel: t('recipes.carbsPerServing') },
             ]}
             onChangeValue={handleNutritionChange}
             disclaimerText={t('recipes.nutritionEstimateDisclaimer')}

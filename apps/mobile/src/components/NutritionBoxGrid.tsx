@@ -25,7 +25,7 @@ const EditableNutritionBox = ({ item, onChangeValue }: EditableNutritionBoxProps
     <TextInput
       style={styles.numberInput}
       value={item.value}
-      onChangeText={onChangeValue}
+      onChangeText={(value) => onChangeValue(value.replace(/\s/g, ''))}
       keyboardType="number-pad"
       placeholder="—"
       placeholderTextColor={colors.placeholderText}
