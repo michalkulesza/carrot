@@ -43,7 +43,7 @@ const NotesSection = ({ recipe, fontSizeIndex }: { recipe: RecipeOut; fontSizeIn
           onBlur={handleBlur}
           autoFocus
           multiline
-          placeholder={t('common.addPrivateNotes')}
+          placeholder={t('common.tapToAddNotes')}
           accessibilityLabel={t('recipes.notes')}
         />
       </View>
@@ -61,7 +61,7 @@ const NotesSection = ({ recipe, fontSizeIndex }: { recipe: RecipeOut; fontSizeIn
             !recipe.notes && styles.notesPlaceholder,
           ]}
         >
-          {recipe.notes || t('common.addPrivateNotes')}
+          {recipe.notes || t('common.tapToAddNotes')}
         </Text>
       </View>
     </Pressable>
