@@ -2,24 +2,12 @@ import { StyleSheet } from 'react-native'
 import { colors } from '../../theme/colors'
 
 export const styles = StyleSheet.create({
-  headerTitleWrap: { flexDirection: 'column', alignItems: 'flex-start', width: '100%' },
+  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%' },
   headerTitleText: {
     fontSize: 17,
     lineHeight: 22,
     fontWeight: '600',
     color: colors.label,
-  },
-  householdSwitcher: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 1 },
-  householdDot: { width: 8, height: 8, borderRadius: 4 },
-  householdDotEmpty: {
-    borderWidth: 1.5,
-    borderColor: colors.secondaryLabel,
-  },
-  householdSwitcherText: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: colors.secondaryLabel,
   },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4 },

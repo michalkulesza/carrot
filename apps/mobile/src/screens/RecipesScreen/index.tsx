@@ -39,6 +39,7 @@ import { colors } from '../../theme/colors'
 import { useNotificationHistory } from '../../context/NotificationHistoryContext'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
+import { useAuth } from '../../context/AuthContext'
 import {
   MANAGE_TIP_MENU_ID,
   PERSONAL_MENU_ID,
@@ -84,6 +85,7 @@ const RecipesScreen = () => {
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { tags } = useTags()
   const { households, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
+  const { user } = useAuth()
   const api = useApiClient()
   const qc = useQueryClient()
   const { items: notifItems } = useNotificationHistory()
@@ -319,7 +321,7 @@ const RecipesScreen = () => {
           householdMenuActions={householdMenuActions}
           onHouseholdAction={handleHouseholdAction}
           activeHousehold={activeHousehold}
-          personalLabel={t('households.personal')}
+          personalName={user?.nickname || user?.email || t('households.personal')}
           switchContextLabel={t('households.switchContext')}
         />
       ),
@@ -340,6 +342,7 @@ const RecipesScreen = () => {
     householdMenuActions,
     handleHouseholdAction,
     activeHousehold,
+    user,
     handleSearchChangeText,
     handleSearchCancel,
     handleSearchFocus,

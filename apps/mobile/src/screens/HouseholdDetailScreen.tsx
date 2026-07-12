@@ -16,6 +16,7 @@ import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { useMembers } from '@carrot/shared/hooks/useMembers'
 import type { MemberOut } from '@carrot/shared/types'
 import { useAuth } from '../context/AuthContext'
+import Avatar from '../components/Avatar'
 import { colors } from '../theme/colors'
 
 const PRESET_COLORS = [
@@ -60,9 +61,7 @@ const HeaderSaveButton = ({ saving, isDirty, onPress }: HeaderSaveButtonProps) =
 
 const MemberRow = ({ member }: { member: MemberOut }) => (
   <View style={styles.memberRow}>
-    <View style={styles.memberAvatar}>
-      <Text style={styles.memberAvatarText}>{(member.nickname || member.email)[0].toUpperCase()}</Text>
-    </View>
+    <Avatar name={member.nickname || member.email} size={32} />
     <Text style={styles.memberName} numberOfLines={1}>
       {member.nickname || member.email}
     </Text>
@@ -328,21 +327,12 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.secondaryBackground,
   },
-  memberAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.opaqueSeparator,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 10,
-  },
-  memberAvatarText: { fontSize: 13, fontWeight: '700', color: colors.secondaryLabel },
   memberName: { flex: 1, fontSize: 16, color: colors.label },
   inviteRow: {
     flexDirection: 'row',
