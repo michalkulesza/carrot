@@ -8,7 +8,7 @@ import { tTag } from '@carrot/shared/utils/tagUtils'
 import { TagPickerModal } from '../../components/RecipeFieldEditors'
 import { styles } from './styles'
 
-const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
+const TagsSection = ({ recipe, editing }: { recipe: RecipeOut; editing: boolean }) => {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { tags: allTags, create: createTagMutation, addToRecipe, removeFromRecipe } = useTags()
@@ -61,10 +61,14 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
           <Pressable
             key={tag.id}
             style={({ pressed }) => [styles.tag, pressed && { opacity: 0.7 }]}
-            onPress={() => handleTagRemove(tag.id)}
-            accessibilityLabel={`${tag.name}, tap to remove`}
+            onPress={editing ? () => handleTagRemove(tag.id) : undefined}
+            accessibilityLabel={editing ? `${tag.name}, tap to remove` : tag.name}
+            disabled={!editing}
           >
-            <Text style={styles.tagText}>{tTag(tag.name, t)} ×</Text>
+            <Text style={styles.tagText}>
+              {tTag(tag.name, t)}
+              {editing && ' ×'}
+            </Text>
           </Pressable>
         ))}
         <Pressable
@@ -80,7 +84,7 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
         allTags={allTags}
         selectedIds={selectedIds}
         onAdd={handleTagAdd}
-        onRemove={handleTagRemove}
+        onRemove={editing ? handleTagRemove : undefined}
         onCreate={handleTagCreate}
         onClose={() => setShowTagPicker(false)}
       />

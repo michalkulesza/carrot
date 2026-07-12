@@ -105,7 +105,7 @@ export const TagPickerModal = ({
   allTags: Tag[]
   selectedIds: Set<string>
   onAdd: (tag: Tag) => void
-  onRemove: (tagId: string) => void
+  onRemove?: (tagId: string) => void
   onCreate: (name: string) => Promise<Tag>
   onClose: () => void
 }) => {
@@ -149,8 +149,12 @@ export const TagPickerModal = ({
 
   const handleTagRowPress = useCallback(
     (tag: Tag) => {
-      if (selectedIds.has(tag.id)) onRemove(tag.id)
-      else onAdd(tag)
+      if (selectedIds.has(tag.id)) {
+        onRemove?.(tag.id)
+        return
+      }
+
+      onAdd(tag)
     },
     [selectedIds, onAdd, onRemove],
   )
@@ -220,6 +224,7 @@ export const TagPickerModal = ({
                       key={tag.id}
                       style={getTagListRowStyle}
                       onPress={() => handleTagRowPress(tag)}
+                      disabled={isSelected && !onRemove}
                       accessibilityLabel={tag.name}
                       accessibilityState={{ selected: isSelected }}
                     >
