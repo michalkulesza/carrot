@@ -129,10 +129,6 @@ const ReadView = ({
 
           <TagsSection recipe={recipe} />
 
-          <View style={styles.householdRow}>
-            <Avatar {...householdAvatarProps} size={28} />
-          </View>
-
           <NutritionBoxGrid
             editing={false}
             items={[
@@ -144,6 +140,10 @@ const ReadView = ({
             ]}
             disclaimerText={t('recipes.nutritionEstimateDisclaimer')}
           />
+
+          <View style={styles.householdRow}>
+            <Avatar {...householdAvatarProps} size={28} />
+          </View>
 
           {debugMode && recipe.debug_model ? (
             <View style={styles.debugBox}>
