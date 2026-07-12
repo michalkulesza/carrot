@@ -57,13 +57,14 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
 
 interface NutritionDisclaimerPopoverProps {
   text: string
+  alignRight: boolean
   onDismiss: () => void
 }
 
-const NutritionDisclaimerPopover = ({ text, onDismiss }: NutritionDisclaimerPopoverProps) => (
+const NutritionDisclaimerPopover = ({ text, alignRight, onDismiss }: NutritionDisclaimerPopoverProps) => (
   <>
     <Pressable style={styles.backdrop} onPress={onDismiss} accessibilityLabel={text} />
-    <View style={styles.popover}>
+    <View style={[styles.popover, alignRight ? styles.popoverAlignRight : styles.popoverAlignLeft]}>
       <Text style={styles.popoverText}>{text}</Text>
     </View>
   </>
@@ -73,6 +74,7 @@ interface NutritionBoxProps {
   item: NutritionBoxGridItem
   editing: boolean
   isOpen: boolean
+  alignRight: boolean
   disclaimerText: string
   onChangeValue: (value: string) => void
   onToggleOpen: () => void
@@ -83,6 +85,7 @@ const NutritionBox = ({
   item,
   editing,
   isOpen,
+  alignRight,
   disclaimerText,
   onChangeValue,
   onToggleOpen,
@@ -98,7 +101,9 @@ const NutritionBox = ({
         <NutritionBoxButton item={item} displayValue={displayValue} onPress={onToggleOpen} />
       )}
 
-      {isOpen && <NutritionDisclaimerPopover text={disclaimerText} onDismiss={onClose} />}
+      {isOpen && (
+        <NutritionDisclaimerPopover text={disclaimerText} alignRight={alignRight} onDismiss={onClose} />
+      )}
     </View>
   )
 }
@@ -120,6 +125,7 @@ const NutritionBoxGrid = ({
             item={item}
             editing={editing}
             isOpen={openIndex === i}
+            alignRight={i >= items.length - 2}
             disclaimerText={disclaimerText}
             onChangeValue={(value) => onChangeValue?.(i, value)}
             onToggleOpen={() => setOpenIndex((prev) => (prev === i ? null : i))}
@@ -165,7 +171,6 @@ const styles = StyleSheet.create({
   popover: {
     position: 'absolute',
     top: '100%',
-    left: 0,
     marginTop: 8,
     backgroundColor: colors.tertiaryBackground,
     borderRadius: 10,
@@ -177,6 +182,8 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     zIndex: 20,
   },
+  popoverAlignLeft: { left: 0 },
+  popoverAlignRight: { right: 0 },
   popoverText: { fontSize: 13, lineHeight: 18, color: colors.label },
 })
 
