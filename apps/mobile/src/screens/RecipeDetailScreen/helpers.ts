@@ -10,14 +10,6 @@ export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
 export const FONT_SIZES = [13, 16, 17, 20, 22] as const
 export const LINE_HEIGHTS = [18, 21, 22, 25, 28] as const
 
-export const extractDisplayUrl = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, '')
-  } catch {
-    return url.length > 40 ? url.slice(0, 40) + '…' : url
-  }
-}
-
 export const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export interface EditComponent {

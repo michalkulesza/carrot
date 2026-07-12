@@ -39,6 +39,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
+  titleLinkWrap: {
+    flex: 1,
+  },
   title: {
     flex: 1,
     fontSize: 28,
@@ -64,13 +67,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  sourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sourceIcon: { marginRight: 5 },
-  sourceText: { fontSize: 13, color: colors.blue },
   debugBox: {
     backgroundColor: colors.gray6,
     borderRadius: 8,
