@@ -338,7 +338,7 @@ const RecipeDetailModal = ({
             scroll="inside"
             className="!rounded-xl overflow-hidden"
           >
-            <ModalDialog className="!p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[900px]">
+            <ModalDialog className="!max-w-[712px] !p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[1000px] rounded-xl">
               <ModalHeader className="flex-col gap-0 p-0">
                 <RecipeHeroSection
                   recipe={r}
