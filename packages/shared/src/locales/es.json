@@ -301,6 +301,7 @@
     "avgFat": "Grasa prom.",
     "avgCarbs": "Carbos prom.",
     "showQuantityUnderStep": "Mostrar cantidad bajo cada paso",
+    "showQuantityUnderStepDesc": "Las cantidades de los ingredientes aparecen bajo cada paso de la receta",
     "keepScreenOnDefault": "Mantener pantalla encendida al ver una receta",
     "keepScreenOnDefaultDesc": "La pantalla permanece activa mientras hay una receta abierta",
     "screen": "Pantalla",

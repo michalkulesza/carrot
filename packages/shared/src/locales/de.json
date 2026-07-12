@@ -302,6 +302,7 @@
     "avgFat": "Ø Fett",
     "avgCarbs": "Ø Kohlenh.",
     "showQuantityUnderStep": "Menge unter jedem Schritt anzeigen",
+    "showQuantityUnderStepDesc": "Zutatenmengen werden direkt unter jedem Rezeptschritt angezeigt",
     "keepScreenOnDefault": "Bildschirm beim Anzeigen eines Rezepts anlassen",
     "keepScreenOnDefaultDesc": "Bildschirm bleibt wach, wenn ein Rezept geöffnet ist",
     "screen": "Bildschirm",

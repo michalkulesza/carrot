@@ -36,11 +36,6 @@ export const useDisplayPrefs = () => {
     else KeepAwake.deactivateKeepAwake(KEEP_AWAKE_RECIPE_TAG)
   }, [])
 
-  const handleToggleShowStepQty = useCallback((val: boolean) => {
-    setShowStepQty(val)
-    void AsyncStorage.setItem(SHOW_STEP_QTY_STORAGE_KEY, val ? '1' : '0')
-  }, [])
-
   const handleFontSizeChange = useCallback((index: number) => {
     setFontSizeIndex(index)
     void AsyncStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index))
@@ -52,7 +47,6 @@ export const useDisplayPrefs = () => {
     showStepQty,
     fontSizeIndex,
     handleToggleKeepScreenOn,
-    handleToggleShowStepQty,
     handleFontSizeChange,
   }
 }

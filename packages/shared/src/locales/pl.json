@@ -310,6 +310,7 @@
     "avgFat": "Śr. tłuszcz",
     "avgCarbs": "Śr. węglow.",
     "showQuantityUnderStep": "Pokaż ilość pod każdym krokiem",
+    "showQuantityUnderStepDesc": "Ilości składników pojawiają się pod każdym krokiem przepisu",
     "keepScreenOnDefault": "Trzymaj ekran włączony podczas oglądania przepisu",
     "keepScreenOnDefaultDesc": "Ekran pozostaje aktywny podczas przeglądania przepisu",
     "screen": "Ekran",

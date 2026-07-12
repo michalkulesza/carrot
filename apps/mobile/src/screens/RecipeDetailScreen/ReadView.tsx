@@ -29,7 +29,6 @@ const ReadView = ({
   heroImageErrored,
   setHeroImageErrored,
   handleToggleKeepScreenOn,
-  handleToggleShowStepQty,
   handleFontSizeChange,
   handleAddIngredient,
   handleAddAll,
@@ -48,7 +47,6 @@ const ReadView = ({
   heroImageErrored: boolean
   setHeroImageErrored: (errored: boolean) => void
   handleToggleKeepScreenOn: (val: boolean) => void
-  handleToggleShowStepQty: (val: boolean) => void
   handleFontSizeChange: (index: number) => void
   handleAddIngredient: (key: string, text: string) => void
   handleAddAll: (keys: string[], texts: string[]) => void
@@ -147,15 +145,6 @@ const ReadView = ({
                 value={keepScreenOn}
                 onValueChange={handleToggleKeepScreenOn}
                 accessibilityLabel={t('settings.keepScreenOnDefault')}
-              />
-            </View>
-            <View style={styles.toggleDivider} />
-            <View style={styles.keepScreenRow}>
-              <Text style={styles.keepScreenLabel}>{t('settings.showQuantityUnderStep')}</Text>
-              <Switch
-                value={showStepQty}
-                onValueChange={handleToggleShowStepQty}
-                accessibilityLabel={t('settings.showQuantityUnderStep')}
               />
             </View>
             <View style={styles.toggleDivider} />

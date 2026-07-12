@@ -302,6 +302,7 @@
     "avgFat": "Avg fat",
     "avgCarbs": "Avg carbs",
     "showQuantityUnderStep": "Show quantity under each step",
+    "showQuantityUnderStepDesc": "Ingredient amounts appear inline under each recipe step",
     "keepScreenOnDefault": "Keep screen on while recipe is open",
     "keepScreenOnDefaultDesc": "Screen stays awake when viewing a recipe",
     "screen": "Screen",

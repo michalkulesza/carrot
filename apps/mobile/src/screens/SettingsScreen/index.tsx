@@ -30,6 +30,7 @@ import { useHousehold } from '../../context/HouseholdContext'
 import { useTimers } from '../../context/TimerContext'
 import { persistLanguage } from '../../i18n'
 import HeaderTitle from '../../components/HeaderTitle'
+import { SHOW_STEP_QTY_STORAGE_KEY } from '../RecipeDetailScreen/helpers'
 import {
   APPEARANCE_OPTIONS,
   DEVELOPER_SETTINGS_EMAIL,
@@ -66,6 +67,7 @@ const SettingsScreen = () => {
   const { keepScreenOn: keepScreenOnTimer, setKeepScreenOn: setKeepScreenOnTimer } = useTimers()
   const [keepScreenDefault, setKeepScreenDefault] = useState(false)
   const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false)
+  const [showStepQty, setShowStepQty] = useState(true)
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_STORAGE_KEY).then((val) => {
@@ -73,6 +75,9 @@ const SettingsScreen = () => {
     })
     AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
       setKeepScreenOnShopping(val === '1')
+    })
+    AsyncStorage.getItem(SHOW_STEP_QTY_STORAGE_KEY).then((val) => {
+      if (val !== null) setShowStepQty(val === '1')
     })
   }, [])
 
@@ -84,6 +89,11 @@ const SettingsScreen = () => {
   const handleKeepScreenShoppingToggle = useCallback((val: boolean) => {
     setKeepScreenOnShopping(val)
     void AsyncStorage.setItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY, val ? '1' : '0')
+  }, [])
+
+  const handleShowStepQtyToggle = useCallback((val: boolean) => {
+    setShowStepQty(val)
+    void AsyncStorage.setItem(SHOW_STEP_QTY_STORAGE_KEY, val ? '1' : '0')
   }, [])
 
   const handleLanguageChange = useCallback(
@@ -333,7 +343,7 @@ const SettingsScreen = () => {
             accessibilityLabel={t('timers.keepScreenOn')}
           />
         </View>
-        <View style={styles.switchRow}>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
           <View style={styles.switchLabelBlock}>
             <Text style={styles.switchLabel}>{t('settings.keepScreenOnWhileShoppingList')}</Text>
             <Text style={styles.cardDesc}>{t('settings.keepScreenOnWhileShoppingListDesc')}</Text>
@@ -342,6 +352,17 @@ const SettingsScreen = () => {
             value={keepScreenOnShopping}
             onValueChange={handleKeepScreenShoppingToggle}
             accessibilityLabel={t('settings.keepScreenOnWhileShoppingList')}
+          />
+        </View>
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>{t('settings.showQuantityUnderStep')}</Text>
+            <Text style={styles.cardDesc}>{t('settings.showQuantityUnderStepDesc')}</Text>
+          </View>
+          <Switch
+            value={showStepQty}
+            onValueChange={handleShowStepQtyToggle}
+            accessibilityLabel={t('settings.showQuantityUnderStep')}
           />
         </View>
       </View>

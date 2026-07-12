@@ -302,6 +302,7 @@
     "avgFat": "Lipides moy.",
     "avgCarbs": "Glucides moy.",
     "showQuantityUnderStep": "Afficher la quantité sous chaque étape",
+    "showQuantityUnderStepDesc": "Les quantités d'ingrédients apparaissent sous chaque étape de la recette",
     "keepScreenOnDefault": "Garder l'écran allumé pendant la lecture d'une recette",
     "keepScreenOnDefaultDesc": "L'écran reste actif lorsqu'une recette est ouverte",
     "screen": "Écran",
