@@ -24,6 +24,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Quality, release, and growth
 
+- [ ] **Double-verify recipe imports for hallucinations** — Add a second validation pass that compares imported ingredients, quantities, and instructions with the source before saving or presenting the recipe.
 - [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Public sharing** — Create shareable public recipe pages.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
