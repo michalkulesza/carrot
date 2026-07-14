@@ -8,6 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "APP_VARIANT": "development",
         "SENTRY_ORG": "michal-kulesza",
         "SENTRY_PROJECT": "carrot"
       }
