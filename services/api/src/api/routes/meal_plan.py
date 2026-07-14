@@ -131,7 +131,8 @@ async def set_meal_plan_entry(
     recipe_result = await session.execute(
         select(Recipe).where(_recipe_access_filter(user.id, household_id, body.recipe_id))
     )
-    if recipe_result.scalar_one_or_none() is None:
+    recipe = recipe_result.scalar_one_or_none()
+    if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     result = await session.execute(
@@ -144,6 +145,7 @@ async def set_meal_plan_entry(
             household_id=household_id,
             date=date,
             recipe_id=body.recipe_id,
+            recipe=recipe,
         )
         session.add(entry)
     else:

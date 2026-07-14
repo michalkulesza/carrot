@@ -84,7 +84,18 @@ const MealPlanScreen = () => {
   const setEntry = useMutation({
     mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
       api.setMealPlanEntry(date, recipeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+    onSuccess: (entry) => {
+      // The recipes tab stays mounted while navigating to the meal plan. Update its
+      // empty next-meal cache immediately, then revalidate in case another date is
+      // earlier than the one just assigned.
+      if (entry.date >= todayIso) {
+        qc.setQueryData<MealPlanEntry | null>(['mealPlan', 'next', todayIso], (current) => {
+          if (current === null || current === undefined || entry.date <= current.date) return entry
+          return current
+        })
+      }
+      void qc.invalidateQueries({ queryKey: ['mealPlan'] })
+    },
   })
 
   const deleteEntry = useMutation({

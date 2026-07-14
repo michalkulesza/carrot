@@ -35,6 +35,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Quality, release, and growth
 
+- [ ] **Reduce extraction hallucinations (prompt/model tuning)** — Cheap first lever before a full validation pass: add an anti-fabrication clause to the extraction prompt, set `temperature=0`, and route the faithful-extraction call to `gemini-2.5-flash` (keeping shopping-list/unit-conversion on `flash-lite`). See `docs/specs/reduce-extraction-hallucinations.md`.
 - [ ] **Double-verify recipe imports for hallucinations** — Add a second validation pass that compares imported ingredients, quantities, and instructions with the source before saving or presenting the recipe.
 - [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.

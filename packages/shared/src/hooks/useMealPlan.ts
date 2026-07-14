@@ -1,9 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
+import type { MealPlanEntry } from '../types'
+import { toISODate } from '../utils/dateUtils'
 
 export const useMealPlan = (month: string) => {
   const api = useApiClient()
   const qc = useQueryClient()
+  const todayIso = toISODate(new Date())
 
   const query = useQuery({
     queryKey: ['mealPlan', month],
@@ -14,7 +17,15 @@ export const useMealPlan = (month: string) => {
   const setEntry = useMutation({
     mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
       api.setMealPlanEntry(date, recipeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+    onSuccess: (entry) => {
+      if (entry.date >= todayIso) {
+        qc.setQueryData<MealPlanEntry | null>(['mealPlan', 'next', todayIso], (current) => {
+          if (current === null || current === undefined || entry.date <= current.date) return entry
+          return current
+        })
+      }
+      void qc.invalidateQueries({ queryKey: ['mealPlan'] })
+    },
   })
 
   const deleteEntry = useMutation({
