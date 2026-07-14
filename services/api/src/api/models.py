@@ -247,6 +247,12 @@ class RecipeExtraction(BaseModel):
     components: list[RecipeComponent] = []
 
 
+class RecipeSourceExtraction(BaseModel):
+    title: str | None = None
+    servings: int | None = None
+    components: list[RecipeComponent] = []
+
+
 class RecipeUnitVariants(BaseModel):
     components: list[RecipeComponent] = []
 

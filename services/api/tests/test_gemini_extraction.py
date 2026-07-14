@@ -21,31 +21,39 @@ def _extraction_payload() -> dict:
     }
 
 
+def _source_payload() -> dict:
+    return {"components": []}
+
+
 @pytest.mark.asyncio
 async def test_text_extraction_uses_configured_model_and_deterministic_sampling(monkeypatch) -> None:
-    generate_content = Mock(return_value=_response(_extraction_payload()))
+    generate_content = Mock(side_effect=[_response(_source_payload()), _response(_extraction_payload())])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
     monkeypatch.setattr(gemini.settings, "gemini_extraction_model", "configured-extraction-model")
 
     await gemini.extract_recipe("Ingredients: 1 onion")
 
-    assert generate_content.call_args.kwargs["model"] == "configured-extraction-model"
-    config = generate_content.call_args.kwargs["config"]
-    assert config.temperature == 0
-    assert "Never add an ingredient" in config.system_instruction
+    extraction_call, enrichment_call = generate_content.call_args_list
+    assert extraction_call.kwargs["model"] == "configured-extraction-model"
+    assert enrichment_call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert extraction_call.kwargs["config"].temperature == 0
+    assert enrichment_call.kwargs["config"].temperature == 0
+    assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
 
 
 @pytest.mark.asyncio
 async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None:
-    generate_content = Mock(return_value=_response(_extraction_payload()))
+    generate_content = Mock(side_effect=[_response(_source_payload()), _response(_extraction_payload())])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
     await gemini.extract_recipe_from_image(b"image", mime_type="image/jpeg", model="image-model")
 
-    assert generate_content.call_args.kwargs["model"] == "image-model"
-    assert generate_content.call_args.kwargs["config"].temperature == 0
+    extraction_call, enrichment_call = generate_content.call_args_list
+    assert extraction_call.kwargs["model"] == "image-model"
+    assert enrichment_call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert extraction_call.kwargs["config"].temperature == 0
 
 
 @pytest.mark.asyncio

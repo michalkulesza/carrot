@@ -10,7 +10,7 @@ from google.genai import types
 from pydantic import BaseModel
 
 from api.config import settings
-from api.models import RecipeExtraction, RecipeUnitVariants
+from api.models import RecipeExtraction, RecipeSourceExtraction, RecipeUnitVariants
 
 log = logging.getLogger(__name__)
 
@@ -75,10 +75,30 @@ _ALLOWED_UNITS = (
     "count: clove, slice, can, bunch, pinch, sprig, handful"
 )
 
-_SYSTEM = """\
+_EXTRACTION_SYSTEM = """\
+You faithfully extract recipes from social-media captions, webpages, video transcripts,
+or images. Preserve the original language.
+
+CRITICAL: Only extract ingredients, quantities, and steps explicitly present in the source.
+Never add ingredients, change stated numbers, estimate values, convert units, round values,
+infer missing steps, calculate nutrition, assign tags, detect allergens, or add references.
+
+Return JSON matching the provided schema. If there is no recipe, return null title and an
+empty components array. Create a component for each explicit section. Extract servings only
+when stated; otherwise return null. For a stated servings range, use its midpoint rounded to
+a whole number. Separate qty, unit, and name only when doing so preserves the source exactly.
+Use only these units: """ + _ALLOWED_UNITS + """. For unsupported units, preserve the entire
+ingredient text in name with null qty and unit. Leave enrichment fields empty.
+"""
+
+_ENRICHMENT_SYSTEM = """\
 You are a recipe extraction assistant. Given text from a social media caption,
 a webpage, or a video transcript, extract all recipe information you can find.
 The text may be in any language — extract faithfully in the original language.
+
+The input is already a faithful extraction. Its title, components, ingredients,
+quantities, units, names, and steps are authoritative: never add, remove, reorder, or alter
+them. Produce unit conversions only in the parallel variant fields.
 
 CRITICAL: Only extract ingredients, quantities, and steps that are explicitly present in
 the source text. Never add an ingredient that is not mentioned. Never change a number
@@ -116,8 +136,7 @@ For every component, return BOTH unit variants in parallel arrays:
   and Fahrenheit.
 Each variant array must have the same number of entries and order as ingredients
 or steps. Preserve ingredient names and cooking instructions; change only units,
-amounts, and temperatures. The ingredients and steps fields should contain the
-metric variant as structured ingredients and steps respectively.
+amounts, and temperatures in the variant fields. Never modify ingredients or steps.
 
 For multi-component recipes (e.g. "for the sauce:", "for the marinade:"),
 create a separate component for each section.
@@ -178,6 +197,39 @@ def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
+async def _enrich_recipe(
+    source: RecipeSourceExtraction,
+    available_tags: list[str] | None,
+    allergens: list[str] | None,
+    generous: bool,
+    usage: UsageTracker | None,
+) -> RecipeExtraction:
+    prompt = {"source_recipe": source.model_dump(mode="json")}
+    if available_tags:
+        prompt["available_tags"] = available_tags
+    if allergens:
+        prompt["allergens"] = allergens
+
+    client = _build_client()
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=_DEFAULT_MECHANICAL_MODEL,
+            contents=json.dumps(prompt, ensure_ascii=False),
+            config=types.GenerateContentConfig(
+                system_instruction=_ENRICHMENT_SYSTEM,
+                temperature=0,
+                response_mime_type="application/json",
+                response_schema=RecipeExtraction,
+            ),
+        ),
+        generous=generous,
+    )
+    if usage is not None:
+        usage.add(response)
+
+    return RecipeExtraction.model_validate(json.loads(response.text))
+
+
 async def extract_recipe(
     text: str,
     source_hint: str = "",
@@ -191,10 +243,6 @@ async def extract_recipe(
     parts = []
     if source_hint:
         parts.append(f"Source: {source_hint}")
-    if available_tags:
-        parts.append(f"Available tags: {', '.join(available_tags)}")
-    if allergens:
-        parts.append(f"Allergens to check: {', '.join(allergens)}")
     parts.append(text)
     prompt = "\n\n".join(parts)
 
@@ -204,10 +252,10 @@ async def extract_recipe(
             model=extraction_model,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM,
+                system_instruction=_EXTRACTION_SYSTEM,
                 temperature=0,
                 response_mime_type="application/json",
-                response_schema=RecipeExtraction,
+                response_schema=RecipeSourceExtraction,
             ),
         ),
         generous=generous,
@@ -217,8 +265,8 @@ async def extract_recipe(
 
     raw = response.text
     log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
-    data = json.loads(raw)
-    return RecipeExtraction.model_validate(data)
+    source = RecipeSourceExtraction.model_validate(json.loads(raw))
+    return await _enrich_recipe(source, available_tags, allergens, generous, usage)
 
 
 async def extract_recipe_from_image(
@@ -232,10 +280,6 @@ async def extract_recipe_from_image(
 ) -> RecipeExtraction:
     extraction_model = model or settings.gemini_extraction_model
     parts_text = []
-    if available_tags:
-        parts_text.append(f"Available tags: {', '.join(available_tags)}")
-    if allergens:
-        parts_text.append(f"Allergens to check: {', '.join(allergens)}")
     parts_text.append(
         "Extract the recipe from this image. "
         "This may be a photo of a cookbook page, recipe card, handwritten recipe, or screenshot. "
@@ -254,10 +298,10 @@ async def extract_recipe_from_image(
                 text_prompt,
             ],
             config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM,
+                system_instruction=_EXTRACTION_SYSTEM,
                 temperature=0,
                 response_mime_type="application/json",
-                response_schema=RecipeExtraction,
+                response_schema=RecipeSourceExtraction,
             ),
         ),
         generous=generous,
@@ -267,8 +311,8 @@ async def extract_recipe_from_image(
 
     raw = response.text
     log.debug("Gemini image extraction raw: %s", raw[:500])
-    data = json.loads(raw)
-    return RecipeExtraction.model_validate(data)
+    source = RecipeSourceExtraction.model_validate(json.loads(raw))
+    return await _enrich_recipe(source, available_tags, allergens, generous, usage)
 
 
 async def estimate_unit_variants(
