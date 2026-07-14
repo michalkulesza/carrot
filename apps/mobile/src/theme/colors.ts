@@ -8,6 +8,10 @@ const brandText = (Platform.OS === 'ios'
   ? DynamicColorIOS({ light: '#141212', dark: '#F4E7E7' })
   : '#141212') as unknown as string
 
+const orangeGlass = (Platform.OS === 'ios'
+  ? DynamicColorIOS({ light: 'rgba(255, 149, 0, 0.72)', dark: 'rgba(255, 159, 10, 0.72)' })
+  : 'rgba(255, 149, 0, 0.72)') as unknown as string
+
 export const colors = {
   background: ios('systemBackground', '#ffffff'),
   secondaryBackground: ios('secondarySystemBackground', '#f2f2f7'),
@@ -29,6 +33,7 @@ export const colors = {
   red: ios('systemRed', '#ff3b30'),
   green: ios('systemGreen', '#34c759'),
   orange: ios('systemOrange', '#ff9500'),
+  orangeGlass,
   gray: ios('systemGray', '#8e8e93'),
   gray2: ios('systemGray2', '#aeaeb2'),
   gray3: ios('systemGray3', '#c7c7cc'),

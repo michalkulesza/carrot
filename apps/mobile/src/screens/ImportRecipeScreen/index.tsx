@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
-import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
@@ -317,7 +316,6 @@ const ImportRecipeScreen = () => {
     try {
       await api.linkRecipeToHousehold(recipeId, activeHouseholdId)
       await qc.invalidateQueries({ queryKey: ['recipes'] })
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       Alert.alert(t('addRecipe.recipeAddedToHousehold'), undefined, [
         { text: t('common.ok'), onPress: () => router.back() },
       ])
@@ -338,7 +336,6 @@ const ImportRecipeScreen = () => {
       const sharedToPersonal = activeHouseholdId !== null && !!preferences?.share_imports_to_personal
       await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags, sharedToPersonal))
       await qc.invalidateQueries({ queryKey: ['recipes'] })
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       skipGuardRef.current = true
       router.back()
     } catch (err) {

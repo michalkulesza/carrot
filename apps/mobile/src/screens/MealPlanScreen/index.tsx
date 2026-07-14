@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigation, useRouter } from 'expo-router'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import * as Haptics from 'expo-haptics'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useApiClient } from '@carrot/shared/api/context'
 import type { MealPlanEntry } from '@carrot/shared/types'
@@ -192,6 +193,11 @@ const MealPlanScreen = () => {
     [insets.bottom],
   )
 
+  const handleTodayPress = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    handleScrollToToday()
+  }, [handleScrollToToday])
+
   return (
     <View style={styles.container}>
       <Animated.View style={[styles.list, { opacity: listOpacity }]}>
@@ -215,12 +221,12 @@ const MealPlanScreen = () => {
       </Animated.View>
       <Pressable
         style={getTodayBtnStyle}
-        onPress={handleScrollToToday}
+        onPress={handleTodayPress}
         accessibilityLabel={t('mealPlan.today')}
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="clear" tintColor={colors.blue} />
+        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="clear" tintColor={colors.orangeGlass} />
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 

@@ -23,7 +23,8 @@ import Reanimated, {
 import type { NativeActionEvent } from '@react-native-menu/menu'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useTranslation } from 'react-i18next'
-import { useNavigation, useRouter } from 'expo-router'
+import * as Haptics from 'expo-haptics'
+import { useIsFocused, useNavigation, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
@@ -58,11 +59,13 @@ import ThumbnailImage from './ThumbnailImage'
 import PendingJobCard from './PendingJobCard'
 import HeaderTitle from './HeaderTitle'
 import HeaderRight from './HeaderRight'
+import FloatingAddButton from './FloatingAddButton'
 import NextMealCard from './NextMealCard'
 
 const RecipesScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
+  const isFocused = useIsFocused()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const headerHeight = useHeaderHeight()
@@ -105,6 +108,8 @@ const RecipesScreen = () => {
   const openSwipeableId = useRef<string | null>(null)
   const seenIdsRef = useRef<Set<string>>(new Set())
   const initialLoadDoneRef = useRef(false)
+  const knownRecipeIdsRef = useRef<Set<string>>(new Set())
+  const recipeIdsInitializedRef = useRef(false)
 
   // Mark all recipes as "seen" on initial data arrival so they don't animate in.
   // Runs during render (before renderRecipe) so subsequent calls see a populated set.
@@ -112,6 +117,26 @@ const RecipesScreen = () => {
     initialLoadDoneRef.current = true
     recipes.forEach((r) => seenIdsRef.current.add(r.id))
   }
+
+  useEffect(() => {
+    if (isLoading) return
+
+    const recipeIds = new Set(recipes.map((recipe) => recipe.id))
+    if (!recipeIdsInitializedRef.current || switchingHousehold) {
+      recipeIdsInitializedRef.current = true
+      knownRecipeIdsRef.current = recipeIds
+
+      return
+    }
+
+    if (!isFocused) return
+
+    const hasNewRecipe = recipes.some((recipe) => !knownRecipeIdsRef.current.has(recipe.id))
+    knownRecipeIdsRef.current = recipeIds
+    if (hasNewRecipe) {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }
+  }, [isFocused, isLoading, recipes, switchingHousehold])
 
   const handleConfirmDelete = useCallback(
     async (recipe: RecipeOut) => {
@@ -334,7 +359,6 @@ const RecipesScreen = () => {
       headerSearchBarOptions,
       headerRight: () => (
         <HeaderRight
-          addRecipeLabel={t('nav.addRecipe')}
           sortByLabel={t('recipes.sortBy')}
           filterMenuActions={filterMenuActions}
           onFilterAction={handleFilterAction}
@@ -634,7 +658,7 @@ const RecipesScreen = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderRecipe}
           contentInsetAdjustmentBehavior="never"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 88 }}
           ListHeaderComponent={
             <View>
               <Reanimated.View style={topSpacerStyle} />
@@ -697,6 +721,7 @@ const RecipesScreen = () => {
         </ScrollView>
         <NextMealCard />
       </Reanimated.View>
+      <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} />
     </View>
   )
 }

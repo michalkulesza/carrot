@@ -149,5 +149,5 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
   },
-  todayBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+  todayBtnText: { color: colors.brandText, fontSize: 16, fontWeight: '600' },
 })

@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.2] — 2026-07-14
+
+### Apps & platform
+
+- ✨ **Feature** — Moved the mobile recipe add action into a persistent orange glass button, matched the Meal Plan “Today” control to it, and added haptic feedback for both actions and successful recipe additions.
+
 ## [1.0.1] — 2026-07-14
 
 ### Ingredients, units & nutrition
@@ -96,5 +102,6 @@ backend, a React web app, and a React Native (Expo) iOS app sharing a common
 - ✨ **Feature** — Rebranded to Carrot with new name, icons, and brand color, plus a marketing site at carrot.xcxz.xyz.
 - 🐛 **Bug** — Recipe thumbnails now stay cached, eliminating the image flash when opening a recipe's detail view.
 
+[1.0.2]: https://github.com/
 [1.0.1]: https://github.com/
 [1.0.0]: https://github.com/
