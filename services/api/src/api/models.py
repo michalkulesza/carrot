@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import JSON, Boolean, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, text
+from sqlalchemy import JSON, Boolean, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
@@ -509,6 +509,15 @@ class ImportJobStatus(StrEnum):
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"
+    CANCELLED = "cancelled"
+
+
+class ImportFailureCode(StrEnum):
+    EXTRACTION_FAILED = "extraction_failed"
+    INVALID_INPUT = "invalid_input"
+    HOUSEHOLD_ACCESS_CHANGED = "household_access_changed"
+    RETRIES_EXHAUSTED = "retries_exhausted"
+    UNEXPECTED = "unexpected"
 
 
 class ImportJobKind(StrEnum):
@@ -519,20 +528,36 @@ class ImportJobKind(StrEnum):
 
 class ImportJob(Base):
     __tablename__ = "import_jobs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "idempotency_key", name="uq_import_jobs_user_idempotency_key"),
+        Index("ix_import_jobs_household_status", "household_id", "status"),
+        Index("ix_import_jobs_user_status", "user_id", "status"),
+        Index("ix_import_jobs_next_attempt_at", "next_attempt_at"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+    household_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
+    )
+    idempotency_key: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, default=uuid.uuid4)
+    shared_to_personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ImportJobStatus.PENDING)
     kind: Mapped[str] = mapped_column(String(20), nullable=False)
     input: Mapped[dict] = mapped_column(JSON, nullable=False)
     model: Mapped[str] = mapped_column(String(100), nullable=False, default="gemini-2.5-flash-lite")
-    activity_push_token: Mapped[str | None] = mapped_column(String, nullable=True)
-    device_push_token: Mapped[str | None] = mapped_column(String, nullable=True)
-    result_recipe_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
-    error: Mapped[str | None] = mapped_column(String, nullable=True)
+    result_recipe_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
+    )
+    failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    diagnostic_error: Mapped[str | None] = mapped_column(String, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    dismissed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -541,18 +566,57 @@ class ImportJobCreate(BaseModel):
     kind: ImportJobKind
     input: dict  # {url} | {text} | {image_base64, mime_type}
     model: str = "gemini-2.5-flash-lite"
-    activity_push_token: str | None = None
-    device_push_token: str | None = None
+    idempotency_key: uuid.UUID
 
 
 class ImportJobOut(BaseModel):
-    model_config = {"from_attributes": True}
-
     id: uuid.UUID
     status: str
     kind: str
+    household_id: uuid.UUID | None
+    created_by_user_id: uuid.UUID
+    created_by_name: str | None = None
     result_recipe_id: uuid.UUID | None = None
-    error: str | None = None
-    attempts: int
+    failure_code: ImportFailureCode | None = None
+    retry_count: int
+    next_attempt_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class ImportJobEvent(Base):
+    __tablename__ = "import_job_events"
+    __table_args__ = (Index("ix_import_job_events_scope_id", "household_id", "id"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    job_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("import_jobs.id", ondelete="CASCADE"), nullable=False
+    )
+    household_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    type: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    sse_dispatched_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    push_dispatched_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    push_attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_push_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class DeviceSubscription(Base):
+    __tablename__ = "device_subscriptions"
+    __table_args__ = (UniqueConstraint("user_id", "installation_id", name="uq_device_subscriptions_user_installation"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    installation_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    token: Mapped[str] = mapped_column(String, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class DeviceSubscriptionCreate(BaseModel):
+    installation_id: str
+    token: str

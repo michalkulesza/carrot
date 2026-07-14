@@ -27,7 +27,6 @@ from api.routes.recipes import router as recipes_router
 from api.routes.shopping_list import router as shopping_list_router
 from api.routes.signup import router as signup_router
 from api.routes.tags import router as tags_router
-from api.services import import_worker
 from api import showcase
 from api.users import (
     UserCreate,
@@ -117,15 +116,27 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_account BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS share_imports_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS category VARCHAR(20)"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id) ON DELETE CASCADE"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS idempotency_key UUID"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS shared_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS failure_code VARCHAR(64)"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS diagnostic_error VARCHAR"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMP"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS started_at TIMESTAMP"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMP"))
+        await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN attempts SET DEFAULT 0"))
+        await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_import_jobs_user_idempotency_key ON import_jobs (user_id, idempotency_key)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_household_status ON import_jobs (household_id, status)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_user_status ON import_jobs (user_id, status)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_next_attempt_at ON import_jobs (next_attempt_at)"))
     await _seed_demo_user()
     await _seed_default_tags()
     await showcase.ensure_showcase_user()
-    worker_task = asyncio.create_task(import_worker.run())
     showcase_task = asyncio.create_task(showcase.run())
     yield
-    worker_task.cancel()
     showcase_task.cancel()
-    for task in (worker_task, showcase_task):
+    for task in (showcase_task,):
         try:
             await task
         except asyncio.CancelledError:

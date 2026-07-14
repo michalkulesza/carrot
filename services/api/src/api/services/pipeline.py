@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
-from collections.abc import AsyncGenerator, Callable, Awaitable
+from collections.abc import AsyncGenerator, Awaitable
 from typing import Any
 from urllib.parse import urlparse
 
@@ -30,35 +29,12 @@ IMPORT_ERROR_CODE = "extraction_failed"
 
 
 async def _run_gemini(
-    coro_factory: Callable[[Callable[[], Awaitable[None]]], Any],
-    hd_emitted: list[bool],
+    coro: Awaitable[Any],
     result_out: list,
 ) -> AsyncGenerator[dict[str, Any], None]:
-    """
-    Async generator wrapper around a Gemini coroutine.
-    Polls every 50ms and yields {"type": "high_demand"} in real-time the first time
-    on_hd fires during a _with_retry sleep — before the coroutine returns.
-    Appends the result to result_out when done (or raises if the coroutine raised).
-    """
-    hd_event = asyncio.Event()
-
-    async def on_hd() -> None:
-        if not hd_emitted:
-            hd_event.set()
-
-    task = asyncio.create_task(coro_factory(on_hd))
-    try:
-        while True:
-            if hd_event.is_set() and not hd_emitted:
-                hd_emitted.append(True)
-                yield {"type": "high_demand"}
-            if task.done():
-                break
-            await asyncio.sleep(0.05)
-    except (asyncio.CancelledError, GeneratorExit):
-        task.cancel()
-        raise
-    result_out.append(task.result())  # propagates task exception if failed
+    result_out.append(await coro)
+    if False:
+        yield {}
 
 
 def _is_complete(recipe: RecipeExtraction) -> bool:
@@ -158,7 +134,6 @@ async def _try_linked_url(
     model: str = "gemini-2.5-flash-lite",
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
-    on_high_demand: Callable[[], Awaitable[None]] | None = None,
     usage: gemini_svc.UsageTracker | None = None,
 ) -> RecipeExtraction | None:
     try:
@@ -181,7 +156,7 @@ async def _try_linked_url(
     result = await gemini_svc.extract_recipe(
         source_text, source_hint="webpage", model=model,
         available_tags=available_tags, allergens=allergens,
-        on_high_demand=on_high_demand, usage=usage,
+        usage=usage,
     )
     return result if _is_complete(result) else None
 
@@ -244,7 +219,6 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             yield _done_event(cached)
             return
 
-    hd_emitted: list[bool] = []  # shared flag: high_demand already yielded this stream
     usage = gemini_svc.UsageTracker()
 
     if not _is_social_url(url):
@@ -284,12 +258,12 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         try:
             result_out: list = []
             async for _ev in _run_gemini(
-                lambda on_hd: gemini_svc.extract_recipe(
+                gemini_svc.extract_recipe(
                     source_text, source_hint="webpage", model=model,
                     available_tags=available_tags, allergens=allergens,
-                    on_high_demand=on_hd, usage=usage,
+                    usage=usage,
                 ),
-                hd_emitted, result_out,
+                result_out,
             ):
                 yield _ev
             result = result_out[0]
@@ -336,12 +310,12 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         try:
             result_out_desc: list = []
             async for _ev in _run_gemini(
-                lambda on_hd: gemini_svc.extract_recipe(
+                gemini_svc.extract_recipe(
                     metadata.description, source_hint="instagram/tiktok caption",
                     model=model, available_tags=available_tags, allergens=allergens,
-                    on_high_demand=on_hd, usage=usage,
+                    usage=usage,
                 ),
-                hd_emitted, result_out_desc,
+                result_out_desc,
             ):
                 yield _ev
             result = result_out_desc[0]
@@ -358,7 +332,6 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         try:
             result = await _try_linked_url(
                 link, model=model, available_tags=available_tags, allergens=allergens,
-                on_high_demand=None,  # skip hd detection for linked pages
                 usage=usage,
             )
             if result and _is_complete(result):
@@ -376,12 +349,12 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             yield _stage_event("analyzing_transcript", "Analyzing transcript with Gemini…")
             result_out_tr: list = []
             async for _ev in _run_gemini(
-                lambda on_hd: gemini_svc.extract_recipe(
+                gemini_svc.extract_recipe(
                     transcript, source_hint="video transcript", model=model,
                     available_tags=available_tags, allergens=allergens,
-                    on_high_demand=on_hd, usage=usage,
+                    usage=usage,
                 ),
-                hd_emitted, result_out_tr,
+                result_out_tr,
             ):
                 yield _ev
             result = result_out_tr[0]
@@ -407,17 +380,16 @@ async def run_text_import_stream(
 ) -> AsyncGenerator[dict[str, Any], None]:
     yield _stage_event("analyzing_text", "Analyzing recipe text with Gemini…")
     meta = ImportMetadata()
-    hd_emitted: list[bool] = []
     usage = gemini_svc.UsageTracker()
     try:
         result_out_txt: list = []
         async for _ev in _run_gemini(
-            lambda on_hd: gemini_svc.extract_recipe(
+            gemini_svc.extract_recipe(
                 text[:6000], source_hint="pasted text", model=model,
                 available_tags=available_tags, allergens=allergens,
-                on_high_demand=on_hd, usage=usage,
+                usage=usage,
             ),
-            hd_emitted, result_out_txt,
+            result_out_txt,
         ):
             yield _ev
         result = result_out_txt[0]
@@ -445,17 +417,16 @@ async def run_image_import_stream(
 ) -> AsyncGenerator[dict[str, Any], None]:
     yield _stage_event("analyzing_image", "Analyzing image with Gemini Vision…")
     meta = ImportMetadata()
-    hd_emitted: list[bool] = []
     usage = gemini_svc.UsageTracker()
     try:
         result_out_img: list = []
         async for _ev in _run_gemini(
-            lambda on_hd: gemini_svc.extract_recipe_from_image(
+            gemini_svc.extract_recipe_from_image(
                 image_data, mime_type=mime_type, model=model,
                 available_tags=available_tags, allergens=allergens,
-                on_high_demand=on_hd, usage=usage,
+                usage=usage,
             ),
-            hd_emitted, result_out_img,
+            result_out_img,
         ):
             yield _ev
         result = result_out_img[0]

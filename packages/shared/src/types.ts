@@ -96,32 +96,54 @@ export interface StageEvent {
   label: string
 }
 
-export interface StreamCallbacks {
-  onStage: (stage: StageEvent) => void
-  onDone: (result: ImportResult) => void
-  onError: (error: string) => void
-  onHighDemand?: () => void
-}
-
 export type ImportJobKind = 'url' | 'text' | 'image'
+export type ImportJobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled'
+export type ImportFailureCode =
+  | 'extraction_failed'
+  | 'invalid_input'
+  | 'household_access_changed'
+  | 'retries_exhausted'
+  | 'unexpected'
 
 export interface ImportJobEnqueue {
   kind: ImportJobKind
   input: Record<string, string>
   model?: string
-  activity_push_token?: string | null
-  device_push_token?: string | null
+  idempotency_key: string
 }
 
-export interface ImportJobOut {
+export interface ImportJob {
   id: string
-  status: 'pending' | 'running' | 'succeeded' | 'failed'
+  status: ImportJobStatus
   kind: ImportJobKind
+  household_id: string | null
+  created_by_user_id: string
+  created_by_name: string | null
   result_recipe_id: string | null
-  error: string | null
-  attempts: number
+  failure_code: ImportFailureCode | null
+  retry_count: number
+  next_attempt_at: string | null
   created_at: string
   updated_at: string
+}
+
+export type ImportJobOut = ImportJob
+
+export interface ImportJobsSnapshot {
+  jobs: ImportJob[]
+}
+
+export interface ImportJobEvent {
+  id: number
+  type:
+    | 'import_job.created'
+    | 'import_job.running'
+    | 'import_job.retry_scheduled'
+    | 'import_job.succeeded'
+    | 'import_job.failed'
+    | 'import_job.cancelled'
+    | 'import_job.dismissed'
+  job: ImportJob
 }
 
 export interface StepIngredientRef {

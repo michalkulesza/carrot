@@ -5,7 +5,7 @@ export const PENDING_SHARE_FILENAME = 'shared_payload.json'
 
 export type PendingShare =
   | { type: 'image' | 'url' | 'text'; value: string }
-  | { type: 'job'; job_id: string; job_kind: string; job_input: Record<string, string> }
+  | { type: 'job'; job_id: string }
 
 // Cheap sync check so callers can avoid flashing a loading state before the slower async consume.
 export function hasPendingShare(): boolean {
@@ -38,10 +38,8 @@ export async function consumePendingShare(): Promise<PendingShare | null> {
 
   if (manifest.type === 'job') {
     const job_id = manifest.job_id as string | undefined
-    const job_kind = manifest.job_kind as string | undefined
-    const job_input = manifest.job_input as Record<string, string> | undefined
-    if (!job_id || !job_kind || !job_input) return null
-    return { type: 'job', job_id, job_kind, job_input }
+    if (!job_id) return null
+    return { type: 'job', job_id }
   }
 
   if (!manifest.value) return null

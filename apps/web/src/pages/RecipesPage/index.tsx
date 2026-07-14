@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from '@heroui/react'
-import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
+import type { ImportJob, RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
 import PageHeader from '../../components/PageHeader'
 import NextMealCard from '../../components/NextMealCard'
 import RecipeDetailModal from '../../components/RecipeDetailModal'
@@ -17,6 +17,7 @@ import RecipesLoadingSkeleton from './RecipesLoadingSkeleton'
 import NoRecipesEmptyState from './NoRecipesEmptyState'
 import NoMatchingRecipesEmptyState from './NoMatchingRecipesEmptyState'
 import DeleteRecipeModal from './DeleteRecipeModal'
+import ImportJobCards from './ImportJobCards'
 import { useFavouriteOverrides } from './useFavouriteOverrides'
 import { useOpenRecipeFromQuery } from './useOpenRecipeFromQuery'
 import type { StepLocation } from './useOpenRecipeFromQuery'
@@ -36,6 +37,7 @@ interface RecipesPageProps {
   onRecipeUpdated: (r: RecipeOut) => void
   onRecipeDeleted: (id: string) => void
   preferences: UserPreferences | null
+  importJobs: ImportJob[]
 }
 
 const RecipesPage = ({
@@ -46,6 +48,7 @@ const RecipesPage = ({
   onRecipeUpdated,
   onRecipeDeleted,
   preferences,
+  importJobs,
 }: RecipesPageProps) => {
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const { t } = useTranslation()
@@ -85,6 +88,7 @@ const RecipesPage = ({
   )
 
   const query = searchQuery.trim().toLowerCase()
+  const showImportJobs = !query && !filterFavourites && selectedTagIds.size === 0
   const titleMatches = searchTitleMatches(recipes, query)
   const ingredientMatches = searchIngredientMatches(recipes, query)
 
@@ -194,6 +198,8 @@ const RecipesPage = ({
           selectedTagIds={selectedTagIds}
           onToggleTag={handleToggleTag}
         />
+
+        {showImportJobs && <ImportJobCards jobs={importJobs} />}
 
         {loading ? (
           <RecipesLoadingSkeleton />

@@ -430,11 +430,6 @@
     }
   },
   "addRecipe": {
-    "highDemandTitle": "Hohe Nachfrage",
-    "highDemandMessage": "Gemini ist derzeit überlastet. Import im Hintergrund fortsetzen — wir benachrichtigen dich, wenn er fertig ist, auch wenn du die App schließt.",
-    "highDemandAccept": "Im Hintergrund verarbeiten",
-    "highDemandWait": "Weiter warten",
-    "failedToEnqueueJob": "Hintergrundimport konnte nicht geplant werden",
     "urlPlaceholder": "Instagram, TikTok oder eine beliebige Rezept-URL",
     "editRecipe": "Rezept bearbeiten",
     "importRecipe": "Rezept importieren",
@@ -507,6 +502,10 @@
     "addToList": "Zur Einkaufsliste hinzufügen",
     "addedToList": "Hinzugefügt",
     "addAll": "Alle hinzufügen"
+  },
+  "importJobs": {
+    "queued": "Rezeptimport vorgemerkt", "pending": "Der Import startet bald", "running": "Rezept wird extrahiert…", "takingLonger": "Es dauert länger als gewöhnlich…", "retry": "Erneut versuchen", "cancel": "Abbrechen", "dismiss": "Ausblenden", "enqueueFailed": "Der Import konnte nicht gestartet werden. Bitte versuche es erneut.", "someone": "Jemand",
+    "failure": { "extraction_failed": "Aus diesem Import konnte kein Rezept extrahiert werden.", "invalid_input": "Diese Import-Eingabe wird nicht unterstützt.", "household_access_changed": "Du hast keinen Zugriff mehr auf diesen Haushalt.", "retries_exhausted": "Der Import konnte nach mehreren Versuchen nicht abgeschlossen werden.", "unexpected": "Der Import ist fehlgeschlagen. Bitte versuche es erneut." }
   },
   "defaultTags": {
     "Vegetarian": "Vegetarisch",

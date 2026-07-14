@@ -430,11 +430,6 @@
     }
   },
   "addRecipe": {
-    "highDemandTitle": "Forte demande",
-    "highDemandMessage": "Gemini est surchargé en ce moment. Terminer l'import en arrière-plan et nous vous notifierons quand c'est fait — même si vous fermez l'application.",
-    "highDemandAccept": "Traiter en arrière-plan",
-    "highDemandWait": "Continuer à attendre",
-    "failedToEnqueueJob": "Impossible de planifier l'import en arrière-plan",
     "urlPlaceholder": "URL Instagram, TikTok ou toute page de recette",
     "editRecipe": "Modifier la recette",
     "importRecipe": "Importer une recette",
@@ -507,6 +502,10 @@
     "addToList": "Ajouter à la liste de courses",
     "addedToList": "Ajouté",
     "addAll": "Tout ajouter"
+  },
+  "importJobs": {
+    "queued": "Importation de recette mise en file d’attente", "pending": "L’importation commencera bientôt", "running": "Extraction de la recette…", "takingLonger": "Cela prend plus de temps que prévu…", "retry": "Réessayer", "cancel": "Annuler", "dismiss": "Masquer", "enqueueFailed": "Impossible de démarrer l’importation. Réessayez.", "someone": "Quelqu’un",
+    "failure": { "extraction_failed": "Impossible d’extraire une recette de cette importation.", "invalid_input": "Cette entrée d’importation n’est pas prise en charge.", "household_access_changed": "Vous n’avez plus accès à ce foyer.", "retries_exhausted": "L’importation n’a pas pu être terminée après plusieurs tentatives.", "unexpected": "L’importation a échoué. Réessayez." }
   },
   "defaultTags": {
     "Vegetarian": "Végétarien",

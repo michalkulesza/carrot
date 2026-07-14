@@ -58,7 +58,7 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "ios": "APP_VARIANT=development expo prebuild --platform ios && node scripts/sync-ios-development-variant.mjs && APP_VARIANT=development expo run:ios --device",
+    "ios": "expo run:ios --device",
     "web": "expo start --web",
     "build:android": "set -a && . ./.env && set +a && pnpm exec eas build --platform android --local",
     "build:ios": "set -a && . ./.env && set +a && EXPO_PUBLIC_API_URL=https://app.carrot.xcxz.xyz pnpm exec eas build --platform ios --local",

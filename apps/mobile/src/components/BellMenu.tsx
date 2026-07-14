@@ -85,17 +85,6 @@ const buildNotifAction = (notif: NotificationItem): MenuAction | null => {
   }
 }
 
-const buildImportRecipeRoute = (kind: string, input: Record<string, string>): string => {
-  switch (kind) {
-    case 'url':
-      return `/import-recipe?type=url&value=${encodeURIComponent(input.url)}`
-    case 'text':
-      return `/import-recipe?type=text&value=${encodeURIComponent(input.text)}`
-    default:
-      return '/import-recipe'
-  }
-}
-
 const BellMenu = () => {
   const { t } = useTranslation()
   const router = useRouter()
@@ -108,13 +97,7 @@ const BellMenu = () => {
 
   const timerList = useMemo(() => [...timers.values()], [timers])
 
-  // recipe_importing entries exist only so app/_layout.tsx's poller knows which jobs to
-  // check — not surfaced here; only the eventual imported/failed result should notify the user.
-  const visibleNotifCount = useMemo(
-    () => notifHistory.filter((n) => n.type !== 'recipe_importing').length,
-    [notifHistory],
-  )
-  const totalCount = timerList.length + invitations.length + leaveNotifications.length + visibleNotifCount
+  const totalCount = timerList.length + invitations.length + leaveNotifications.length + notifHistory.length
 
   const actions = useMemo(() => {
     if (totalCount === 0) {
@@ -131,7 +114,7 @@ const BellMenu = () => {
       if (action) items.push(action)
     }
 
-    if (visibleNotifCount > 0) {
+    if (notifHistory.length > 0) {
       items.push({
         // No `image` here (unlike subactions) — a native icon on this row alone makes iOS
         // reserve a left icon column for every sibling row in the menu.
@@ -198,10 +181,7 @@ const BellMenu = () => {
           break
         }
         case 'recipe-failed': {
-          const notif = notifHistory.find((n) => n.id === payload)
-          if (notif?.job_kind && notif?.job_input) {
-            router.push(buildImportRecipeRoute(notif.job_kind, notif.job_input))
-          }
+          router.push('/(tabs)/recipes')
           dismissNotif(payload)
           break
         }

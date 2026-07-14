@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from collections.abc import Awaitable
 from typing import Callable, TypeVar
 
 from google import genai
@@ -52,14 +51,9 @@ def _retry_delays(generous: bool = False):
 
 async def _with_retry(
     fn: Callable[[], _T],
-    on_high_demand: Callable[[], Awaitable[None]] | None = None,
     generous: bool = False,
     max_attempts: int = 200,
 ) -> _T:
-    high_demand_notified = False
-    if settings.debug_force_high_demand and on_high_demand is not None:
-        high_demand_notified = True
-        await on_high_demand()
     if settings.debug_artificial_delay_seconds > 0:
         await asyncio.sleep(settings.debug_artificial_delay_seconds)
     for attempt, delay in enumerate(_retry_delays(generous=generous), start=1):
@@ -72,9 +66,6 @@ async def _with_retry(
             is_transient = "503" in msg or "UNAVAILABLE" in msg or "429" in msg or "RESOURCE_EXHAUSTED" in msg
             if not is_transient:
                 raise
-            if on_high_demand is not None and not high_demand_notified and attempt >= 3:
-                high_demand_notified = True
-                await on_high_demand()
             log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
             await asyncio.sleep(delay)
 
@@ -187,7 +178,6 @@ async def extract_recipe(
     model: str = _DEFAULT_MODEL,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
-    on_high_demand: Callable[[], Awaitable[None]] | None = None,
     generous: bool = False,
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
@@ -212,7 +202,6 @@ async def extract_recipe(
                 response_schema=RecipeExtraction,
             ),
         ),
-        on_high_demand=on_high_demand,
         generous=generous,
     )
     if usage is not None:
@@ -230,7 +219,6 @@ async def extract_recipe_from_image(
     model: str = _DEFAULT_MODEL,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
-    on_high_demand: Callable[[], Awaitable[None]] | None = None,
     generous: bool = False,
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
@@ -262,7 +250,6 @@ async def extract_recipe_from_image(
                 response_schema=RecipeExtraction,
             ),
         ),
-        on_high_demand=on_high_demand,
         generous=generous,
     )
     if usage is not None:

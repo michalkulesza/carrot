@@ -17,6 +17,7 @@
     "./hooks/useHouseholdLeaveNotifications": "./src/hooks/useHouseholdLeaveNotifications.ts",
     "./hooks/useMembers": "./src/hooks/useMembers.ts",
     "./hooks/useShoppingList": "./src/hooks/useShoppingList.ts",
+    "./hooks/useImportJobs": "./src/hooks/useImportJobs.ts",
     "./utils/*": "./src/utils/*.ts",
     "./i18n": "./src/i18n.ts",
     "./locales/*": "./src/locales/*.json"

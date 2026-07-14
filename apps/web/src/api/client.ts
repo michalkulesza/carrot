@@ -1,6 +1,4 @@
 import { createApiClient } from '@carrot/shared/api/client'
-import type { StreamCallbacks, ImportResult } from '@carrot/shared/types'
-
 export type {
   Unit,
   AllergenData,
@@ -12,9 +10,6 @@ export type {
   RecipeGroup,
   ImportMetadata,
   ImportStage,
-  ImportResult,
-  StageEvent,
-  StreamCallbacks,
   StepIngredientRef,
   SaveComponent,
   RecipeSaveRequest,
@@ -47,8 +42,6 @@ export const {
   reorderRecipes,
   importRecipes,
   uploadThumbnail,
-  streamTextImportFetch,
-  streamImageImportFetch,
   listTags,
   createTag,
   addTagToRecipe,
@@ -70,6 +63,10 @@ export const {
   listInvitations,
   acceptInvitation,
   declineInvitation,
+  enqueueImportJob,
+  retryImportJob,
+  cancelImportJob,
+  dismissImportJob,
 } = webClient
 
 export async function exportRecipes(): Promise<void> {
@@ -84,32 +81,4 @@ export async function exportRecipes(): Promise<void> {
   a.download = 'recipes.csv'
   a.click()
   URL.revokeObjectURL(url)
-}
-
-type ImportStreamMessage =
-  | { type: 'stage'; key: string; label: string }
-  | { type: 'done'; result: ImportResult }
-
-export function streamImport(
-  url: string,
-  callbacks: StreamCallbacks
-): () => void {
-  const streamUrl = `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`
-  const source = new EventSource(streamUrl)
-
-  source.onmessage = (event) => {
-    const data = JSON.parse(event.data as string) as ImportStreamMessage
-    if (data.type === 'stage') {
-      callbacks.onStage({ key: data.key, label: data.label })
-    } else if (data.type === 'done') {
-      callbacks.onDone(data.result)
-      source.close()
-    }
-  }
-  source.onerror = () => {
-    callbacks.onError('Connection error — check the API server.')
-    source.close()
-  }
-
-  return () => source.close()
 }

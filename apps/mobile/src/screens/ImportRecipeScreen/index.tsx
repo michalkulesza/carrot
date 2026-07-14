@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
-  Animated,
   KeyboardAvoidingView,
   Linking,
   Platform,
@@ -19,26 +18,24 @@ import * as ImagePicker from 'expo-image-picker'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
-import { useNotificationHistory } from '../../context/NotificationHistoryContext'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { usePersonalRecipes } from '@carrot/shared/hooks/useRecipes'
-import type { ImportJobKind, ImportResult, StageEvent, Tag } from '@carrot/shared/types'
+import type { ImportJob, Tag } from '@carrot/shared/types'
 import type { EditableRecipe, ImportMode } from './helpers'
-import { STAGE_PROGRESS, blankRecipe, buildRecipeSavePayload, toEditable } from './helpers'
-import { useHighDemandJob } from './useHighDemandJob'
+import { blankRecipe, buildRecipeSavePayload } from './helpers'
 import ActionBar from './ActionBar'
 import MethodPickerView from './MethodPickerView'
 import PersonalRecipePickerView from './PersonalRecipePickerView'
 import QuickUrlInputRow from './QuickUrlInputRow'
 import RecipeFormView from './RecipeFormView'
-import RecipeImportSkeleton from './RecipeImportSkeleton'
 import ShareView from './ShareView'
 import TextPasteView from './TextPasteView'
 import UrlInputView from './UrlInputView'
 import { useImportRecipeHeader } from './useImportRecipeHeader'
 import { styles } from './styles'
+import { createUuid } from '../../utils/uuid'
 
 const ImportRecipeScreen = () => {
   const { type: sharedTypeParam, value: sharedValueParam } = useLocalSearchParams<{ type?: string; value?: string }>()
@@ -48,7 +45,6 @@ const ImportRecipeScreen = () => {
   const insets = useSafeAreaInsets()
   const api = useApiClient()
   const qc = useQueryClient()
-  const { push: pushNotif } = useNotificationHistory()
   const { tags, create: createTagMutation } = useTags()
   const { preferences } = usePreferences()
   const { activeHouseholdId } = useHousehold()
@@ -62,20 +58,12 @@ const ImportRecipeScreen = () => {
   const [pastedText, setPastedText] = useState('')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const progressAnim = useRef(new Animated.Value(0)).current
   const [editable, setEditable] = useState<EditableRecipe | null>(null)
   const [previewMode, setPreviewMode] = useState(false)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [error, setError] = useState<string | null>(null)
   const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
-  const cancelRef = useRef<(() => void) | null>(null)
   const skipGuardRef = useRef(false)
-  const pendingThumbRef = useRef<string | null>(null)
-  const highDemandJobRef = useRef<{ kind: ImportJobKind; input: Record<string, string> } | null>(null)
-  const highDemandOfferedRef = useRef(false)
-  // True once the foreground stream has resolved (success or error) — guards against
-  // offering/accepting a background job for an import that already finished on its own.
-  const streamDoneRef = useRef(false)
 
   const activeAllergens = useMemo(() => {
     const p = preferences?.personal_allergens
@@ -83,8 +71,6 @@ const ImportRecipeScreen = () => {
   }, [preferences])
 
   const autoSubstitute = preferences?.auto_substitute ?? false
-
-  useEffect(() => () => { cancelRef.current?.() }, [])
 
   useEffect(() => {
     if (!sharedTypeParam || !sharedValueParam || editable) return
@@ -121,17 +107,14 @@ const ImportRecipeScreen = () => {
   }, [])
 
   const reset = useCallback(() => {
-    cancelRef.current?.()
     setLoading(false)
-    progressAnim.setValue(0)
     setEditable(null)
     setPreviewMode(false)
     setSelectedTags([])
     setError(null)
     setUrl('')
     setPastedText('')
-    pendingThumbRef.current = null
-  }, [progressAnim])
+  }, [])
 
   useImportRecipeHeader({
     navigation,
@@ -145,85 +128,23 @@ const ImportRecipeScreen = () => {
     setPreviewMode,
   })
 
-  const applyImportResult = (res: ImportResult) => {
-    if (res.recipe) {
-      const editableRecipe = toEditable(res, autoSubstitute)
-      if (!editableRecipe.thumbnail_url && pendingThumbRef.current) {
-        editableRecipe.thumbnail_url = pendingThumbRef.current
-      }
-      pendingThumbRef.current = null
-      setEditable(editableRecipe)
-      setPreviewMode(true)
-      setSelectedTags(
-        tags.filter((tag) =>
-          editableRecipe.suggestedTagNames.some((name) => name.toLowerCase() === tag.name.toLowerCase()),
-        ),
-      )
-    } else {
-      const message =
-        res.error === 'extraction_failed' || !res.error
-          ? t('addRecipe.couldNotExtract')
-          : res.error
-      // Camera/gallery imports leave the user looking at a blank import screen with no
-      // input to correct (unlike a URL/text typo), so a passive inline error is easy to
-      // miss — surface it as an alert too.
-      if (mode === 'camera' || mode === 'gallery') {
-        Alert.alert(t('addRecipe.importFailed'), message)
-      }
-      setError(message)
-    }
-    setLoading(false)
-  }
-
-  const handleHighDemand = useHighDemandJob({
-    api,
-    router,
-    t,
-    pushNotif,
-    highDemandJobRef,
-    highDemandOfferedRef,
-    streamDoneRef,
-    cancelRef,
-    skipGuardRef,
-  })
-
-  const startStreamCallbacks = () => ({
-    onStage(stage: StageEvent) {
-      console.log('[import] stage:', stage.key, '—', stage.label)
-      const target = STAGE_PROGRESS[stage.key] ?? 0.5
-      Animated.timing(progressAnim, { toValue: target, duration: 400, useNativeDriver: false }).start()
-    },
-    onDone(res: ImportResult) {
-      console.log('[import] done:', res.stage, res.error ?? 'ok')
-      streamDoneRef.current = true
-      Animated.timing(progressAnim, { toValue: 1, duration: 300, useNativeDriver: false }).start()
-      applyImportResult(res)
-    },
-    onError(msg: string) {
-      console.log('[import] error:', msg)
-      streamDoneRef.current = true
-      setError(msg)
-      setLoading(false)
-    },
-    onHighDemand() {
-      console.log('[import] high demand — offering background job')
-      void handleHighDemand()
-    },
-  })
-
-  const handleImportUrl = useCallback(() => {
-    if (!url.trim()) return
-    cancelRef.current?.()
-    highDemandJobRef.current = { kind: 'url', input: { url: url.trim() } }
-    highDemandOfferedRef.current = false
-    streamDoneRef.current = false
-    progressAnim.setValue(0)
+  const enqueue = useCallback(async (kind: 'url' | 'text' | 'image', input: Record<string, string>) => {
     setLoading(true)
     setError(null)
-    setEditable(null)
-    setSelectedTags([])
-    cancelRef.current = api.streamImportFetch(url.trim(), startStreamCallbacks())
-  }, [url, api, progressAnim])
+    try {
+      const job = await api.enqueueImportJob({ kind, input, idempotency_key: createUuid() })
+      qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs.filter((item) => item.id !== job.id), job])
+      router.replace('/(tabs)/recipes')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
+    } finally {
+      setLoading(false)
+    }
+  }, [api, qc, router, t])
+
+  const handleImportUrl = useCallback(() => {
+    if (url.trim()) void enqueue('url', { url: url.trim() })
+  }, [enqueue, url])
 
   const handleQuickUrlImport = useCallback(() => {
     if (!url.trim()) return
@@ -233,17 +154,8 @@ const ImportRecipeScreen = () => {
 
   const handleImportText = useCallback(() => {
     if (!pastedText.trim()) return
-    cancelRef.current?.()
-    highDemandJobRef.current = { kind: 'text', input: { text: pastedText.trim() } }
-    highDemandOfferedRef.current = false
-    streamDoneRef.current = false
-    progressAnim.setValue(0)
-    setLoading(true)
-    setError(null)
-    setEditable(null)
-    setSelectedTags([])
-    cancelRef.current = api.streamTextImportFetch(pastedText.trim(), startStreamCallbacks())
-  }, [pastedText, api, progressAnim])
+    void enqueue('text', { text: pastedText.trim() })
+  }, [enqueue, pastedText])
 
   const handleCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync()
@@ -284,19 +196,7 @@ const ImportRecipeScreen = () => {
     }
   }
 
-  const startImageImport = (imageBase64: string, mimeType: string) => {
-    cancelRef.current?.()
-    highDemandJobRef.current = { kind: 'image', input: { image_base64: imageBase64, mime_type: mimeType } }
-    highDemandOfferedRef.current = false
-    streamDoneRef.current = false
-    pendingThumbRef.current = `data:${mimeType};base64,${imageBase64}`
-    progressAnim.setValue(0)
-    setLoading(true)
-    setError(null)
-    setEditable(null)
-    setSelectedTags([])
-    cancelRef.current = api.streamImageImportFetch(imageBase64, mimeType, startStreamCallbacks())
-  }
+  const startImageImport = (imageBase64: string, mimeType: string) => void enqueue('image', { image_base64: imageBase64, mime_type: mimeType })
 
   const handleModeSelect = useCallback((selectedMode: ImportMode) => {
     reset()
@@ -435,8 +335,6 @@ const ImportRecipeScreen = () => {
             <Ionicons name="image" size={80} color={PlatformColor('tertiaryLabel') as unknown as string} />
           </View>
         )}
-
-        {loading && !editable && <RecipeImportSkeleton progress={progressAnim} />}
 
         {editable && (
           <RecipeFormView

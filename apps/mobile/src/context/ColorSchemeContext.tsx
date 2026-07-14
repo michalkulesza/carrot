@@ -23,7 +23,7 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
     AsyncStorage.getItem(STORAGE_KEY).then((val) => {
       if (val === 'light' || val === 'dark' || val === 'system') {
         setModeState(val)
-        Appearance.setColorScheme(val === 'system' ? null : val)
+        Appearance.setColorScheme((val === 'system' ? null : val) as never)
       }
     })
   }, [])
@@ -31,7 +31,7 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
   const setMode = useCallback((newMode: AppearanceMode) => {
     setModeState(newMode)
     void AsyncStorage.setItem(STORAGE_KEY, newMode)
-    Appearance.setColorScheme(newMode === 'system' ? null : newMode)
+    Appearance.setColorScheme((newMode === 'system' ? null : newMode) as never)
   }, [])
 
   return (

@@ -430,11 +430,6 @@
     }
   },
   "addRecipe": {
-    "highDemandTitle": "High demand",
-    "highDemandMessage": "Gemini is busy right now. Finish the import in the background and we'll notify you when it's done — even if you close the app.",
-    "highDemandAccept": "Process in background",
-    "highDemandWait": "Keep waiting",
-    "failedToEnqueueJob": "Failed to schedule background import",
     "urlPlaceholder": "Instagram, TikTok, or any recipe page URL",
     "editRecipe": "Edit Recipe",
     "importRecipe": "Import Recipe",
@@ -490,6 +485,10 @@
     "fromUrl": "From URL",
     "fromImage": "From Image",
     "fromText": "From Text"
+  },
+  "importJobs": {
+    "queued": "Recipe import queued", "pending": "Import will start soon", "running": "Extracting recipe…", "takingLonger": "Taking longer than usual…", "retry": "Retry", "cancel": "Cancel", "dismiss": "Dismiss", "enqueueFailed": "Could not start the import. Please try again.", "someone": "Someone",
+    "failure": { "extraction_failed": "We couldn't extract a recipe from this import.", "invalid_input": "This import input isn't supported.", "household_access_changed": "You no longer have access to this household.", "retries_exhausted": "The import could not be completed after several attempts.", "unexpected": "The import failed. Please try again." }
   },
   "defaultTags": {
     "Vegetarian": "Vegetarian",

@@ -438,11 +438,6 @@
     }
   },
   "addRecipe": {
-    "highDemandTitle": "Wysokie obciążenie",
-    "highDemandMessage": "Gemini jest teraz zajęty. Dokończ import w tle i powiadomimy Cię, gdy zostanie zakończony — nawet jeśli zamkniesz aplikację.",
-    "highDemandAccept": "Przetwórz w tle",
-    "highDemandWait": "Czekaj dalej",
-    "failedToEnqueueJob": "Nie udało się zaplanować importu w tle",
     "urlPlaceholder": "URL z Instagrama, TikToka lub dowolnej strony z przepisami",
     "editRecipe": "Edytuj przepis",
     "importRecipe": "Importuj przepis",
@@ -515,6 +510,10 @@
     "addToList": "Dodaj do listy zakupów",
     "addedToList": "Dodano",
     "addAll": "Dodaj wszystko"
+  },
+  "importJobs": {
+    "queued": "Import przepisu dodany do kolejki", "pending": "Import rozpocznie się wkrótce", "running": "Wyodrębnianie przepisu…", "takingLonger": "To trwa dłużej niż zwykle…", "retry": "Spróbuj ponownie", "cancel": "Anuluj", "dismiss": "Odrzuć", "enqueueFailed": "Nie udało się rozpocząć importu. Spróbuj ponownie.", "someone": "Ktoś",
+    "failure": { "extraction_failed": "Nie udało się wyodrębnić przepisu.", "invalid_input": "Ten format importu nie jest obsługiwany.", "household_access_changed": "Nie masz już dostępu do tego gospodarstwa.", "retries_exhausted": "Import nie zakończył się po kilku próbach.", "unexpected": "Import nie powiódł się. Spróbuj ponownie." }
   },
   "defaultTags": {
     "Vegetarian": "Wegetariańskie",

@@ -28,10 +28,11 @@ import { useIsFocused, useNavigation, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
+import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useQueryClient } from '@tanstack/react-query'
-import type { RecipeOut, Tag } from '@carrot/shared/types'
+import type { ImportJob, RecipeOut, Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import Avatar from '../../components/Avatar'
 import { TAG_CATEGORIES, groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
@@ -41,7 +42,6 @@ import MarqueeText from '../../components/MarqueeText'
 import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { colors } from '../../theme/colors'
-import { useNotificationHistory } from '../../context/NotificationHistoryContext'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
@@ -96,7 +96,6 @@ const RecipesScreen = () => {
   const { user } = useAuth()
   const api = useApiClient()
   const qc = useQueryClient()
-  const { items: notifItems } = useNotificationHistory()
   const personalName = useMemo(() => user?.nickname || user?.email || t('households.personal'), [user, t])
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
@@ -389,10 +388,14 @@ const RecipesScreen = () => {
     [recipes, favouriteOverrides],
   )
 
-  const pendingJobs = useMemo(
-    () => notifItems.filter((n) => n.type === 'recipe_importing'),
-    [notifItems],
+  const { jobs: importJobs, retry, cancel, dismiss } = useImportJobs(
+    user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
   )
+  const pendingJobs = useMemo(
+    () => importJobs,
+    [importJobs],
+  )
+  const showImportJobs = !query.trim() && !filterFavourites && selectedTagIds.size === 0
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -662,10 +665,16 @@ const RecipesScreen = () => {
           ListHeaderComponent={
             <View>
               <Reanimated.View style={topSpacerStyle} />
-              {pendingJobs.length > 0 && (
+              {showImportJobs && pendingJobs.length > 0 && (
                 <View>
-                  {pendingJobs.map((notif) => (
-                    <PendingJobCard key={notif.id} notif={notif} />
+                  {pendingJobs.map((job: ImportJob) => (
+                    <PendingJobCard
+                      key={job.id}
+                      job={job}
+                      onRetry={() => retry.mutate(job.id)}
+                      onCancel={() => cancel.mutate(job.id)}
+                      onDismiss={() => dismiss.mutate(job.id)}
+                    />
                   ))}
                 </View>
               )}

@@ -19,17 +19,17 @@ export default function TabsLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="recipes">
-        <NativeTabs.Trigger.Icon sf="book" md="menu-book" />
+        <NativeTabs.Trigger.Icon sf="book" md="menu_book" />
         <NativeTabs.Trigger.Label>{t('nav.recipes')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="meal-plan">
-        <NativeTabs.Trigger.Icon sf="calendar" md="calendar-today" />
+        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
         <NativeTabs.Trigger.Label>{t('nav.mealPlan')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="shopping">
-        <NativeTabs.Trigger.Icon sf="cart" md="shopping-cart" />
+        <NativeTabs.Trigger.Icon sf="cart" md="shopping_cart" />
         <NativeTabs.Trigger.Label>{t('nav.shopping')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 

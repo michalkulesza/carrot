@@ -21,6 +21,7 @@ import { DebugModeProvider } from '../context/DebugModeContext'
 import { useRecipes, useRecipeStats } from '@carrot/shared/hooks/useRecipes'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
 
 const AppShell = () => {
@@ -35,6 +36,9 @@ const AppShell = () => {
   const { data: statsData } = useRecipeStats()
   const stats = statsData ?? null
   const { preferences } = usePreferences()
+  const { jobs: importJobs, seed: seedImportJob } = useImportJobs(
+    user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null,
+  )
 
   useEffect(() => {
     if (preferences?.language) void i18n.changeLanguage(preferences.language)
@@ -124,6 +128,7 @@ const AppShell = () => {
                           onRecipeUpdated={handleRecipeUpdated}
                           onRecipeDeleted={handleRecipeDeleted}
                           preferences={preferences}
+                          importJobs={importJobs}
                         />
                       }
                     />
@@ -170,9 +175,10 @@ const AppShell = () => {
                 isOpen={modalOpen}
                 onClose={closeAddRecipe}
                 onSaved={handleRecipeSaved}
-                allTags={allTags}
-                onTagCreated={handleTagCreated}
-                preferences={preferences}
+                onImportEnqueued={(job) => {
+                  seedImportJob(job)
+                  navigate('/')
+                }}
               />
               <ResumeTimersModal />
               <ExpiredTimersModal />

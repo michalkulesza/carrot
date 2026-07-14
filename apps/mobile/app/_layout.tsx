@@ -26,6 +26,7 @@ import { I18nextProvider } from 'react-i18next'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { ApiClientProvider, useApiClient } from '@carrot/shared/api/context'
+import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
 import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
 import { TimerProvider } from '../src/context/TimerContext'
@@ -34,6 +35,7 @@ import { ColorSchemeProvider } from '../src/context/ColorSchemeContext'
 import { DebugModeProvider } from '../src/context/DebugModeContext'
 import { mobileClient } from '../src/api/client'
 import { configureGoogleSignin } from '../src/utils/googleAuth'
+import { createUuid } from '../src/utils/uuid'
 
 configureGoogleSignin()
 
@@ -51,6 +53,7 @@ const queryClient = new QueryClient({
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })
 // Bump when the cached query data shape changes in a way older persisted caches can't handle.
 const QUERY_CACHE_BUSTER = '1'
+const PUSH_INSTALLATION_ID_KEY = 'push-installation-id'
 
 function RootLayoutNav() {
   const { t } = useTranslation()
@@ -58,52 +61,33 @@ function RootLayoutNav() {
   const segments = useSegments()
   const router = useRouter()
   const qc = useQueryClient()
-  const [processingShare, setProcessingShare] = useState(false)
   const api = useApiClient()
-  const { push: pushNotif, dismiss: dismissNotif, items: notifItems } = useNotificationHistory()
+  const [processingShare, setProcessingShare] = useState(false)
+  const { push: pushNotif } = useNotificationHistory()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
-  // Stable ref so the polling interval doesn't need to re-register when items change
-  const notifItemsRef = useRef(notifItems)
-  useEffect(() => { notifItemsRef.current = notifItems }, [notifItems])
+  useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
 
-  // Poll job status while any recipe_importing entry is in the bell.
-  // This is the primary completion signal — APNs is a bonus if configured.
   useEffect(() => {
     if (!user) return
-    const id = setInterval(async () => {
-      const pending = notifItemsRef.current.filter((n) => n.type === 'recipe_importing' && n.job_id)
-      if (!pending.length) return
-      for (const notif of pending) {
-        try {
-          const job = await api.getImportJob(notif.job_id!)
-          if (job.status === 'succeeded' && job.result_recipe_id) {
-            dismissNotif(notif.id)
-            pushNotif({
-              type: 'recipe_imported',
-              title: t('bell.recipeImported'),
-              body: t('bell.recipeImportedBody'),
-              recipe_id: job.result_recipe_id,
-              job_id: job.id,
-            })
-            qc.invalidateQueries()
-          } else if (job.status === 'failed') {
-            dismissNotif(notif.id)
-            pushNotif({
-              type: 'recipe_failed',
-              title: t('bell.recipeImportFailed'),
-              body: job.error ?? t('bell.recipeImportFailedBody'),
-              job_id: job.id,
-              job_kind: notif.job_kind,
-              job_input: notif.job_input,
-            })
-          }
-        } catch {
-          // ignore transient network errors
-        }
+    let installationId: string | null = null
+    let active = true
+    const register = async () => {
+      const permissions = await Notifications.getPermissionsAsync()
+      if (!permissions.granted) return
+      installationId = await AsyncStorage.getItem(PUSH_INSTALLATION_ID_KEY)
+      if (!installationId) {
+        installationId = createUuid()
+        await AsyncStorage.setItem(PUSH_INSTALLATION_ID_KEY, installationId)
       }
-    }, 3000)
-    return () => clearInterval(id)
-  }, [user, api, dismissNotif, pushNotif, qc, t])
+      const token = await Notifications.getDevicePushTokenAsync()
+      if (active) await api.registerDevice(installationId, token.data)
+    }
+    void register()
+    return () => {
+      active = false
+      if (installationId) void api.unregisterDevice(installationId)
+    }
+  }, [api, user?.id])
 
   // Handle APNs pushes from the background import worker
   useEffect(() => {
@@ -113,10 +97,6 @@ function RootLayoutNav() {
       const type = data?.type as string | undefined
       const jobId = data?.job_id as string | undefined
       if (type === 'recipe_imported') {
-        if (jobId) {
-          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
-          if (pending) dismissNotif(pending.id)
-        }
         pushNotif({
           type: 'recipe_imported',
           title: notification.request.content.title ?? t('bell.recipeImported'),
@@ -126,17 +106,11 @@ function RootLayoutNav() {
         })
         qc.invalidateQueries()
       } else if (type === 'recipe_failed') {
-        if (jobId) {
-          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
-          if (pending) dismissNotif(pending.id)
-        }
         pushNotif({
           type: 'recipe_failed',
           title: notification.request.content.title ?? t('bell.recipeImportFailed'),
           body: notification.request.content.body ?? t('bell.recipeImportFailedBody'),
           job_id: jobId,
-          job_kind: data.job_kind as string | undefined,
-          job_input: data.job_input as Record<string, string> | undefined,
         })
       }
     })
@@ -146,10 +120,6 @@ function RootLayoutNav() {
       const type = data?.type as string | undefined
       const jobId = data?.job_id as string | undefined
       if (type === 'recipe_imported') {
-        if (jobId) {
-          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
-          if (pending) dismissNotif(pending.id)
-        }
         pushNotif({
           type: 'recipe_imported',
           title: response.notification.request.content.title ?? t('bell.recipeImported'),
@@ -161,17 +131,11 @@ function RootLayoutNav() {
           router.push(`/recipe/${data.recipe_id as string}`)
         }
       } else if (type === 'recipe_failed') {
-        if (jobId) {
-          const pending = notifItems.find((n) => n.type === 'recipe_importing' && n.job_id === jobId)
-          if (pending) dismissNotif(pending.id)
-        }
         pushNotif({
           type: 'recipe_failed',
           title: response.notification.request.content.title ?? t('bell.recipeImportFailed'),
           body: response.notification.request.content.body ?? t('bell.recipeImportFailedBody'),
           job_id: jobId,
-          job_kind: data.job_kind as string | undefined,
-          job_input: data.job_input as Record<string, string> | undefined,
         })
       }
     })
@@ -179,13 +143,13 @@ function RootLayoutNav() {
       receivedSub.remove()
       responseListenerRef.current?.remove()
     }
-  }, [dismissNotif, notifItems, pushNotif, qc, router, t])
+  }, [pushNotif, qc, router, t])
 
   useEffect(() => {
     if (loading) return
     const inAuth = segments[0] === '(auth)'
-    const inVerify = segments[1] === 'verify'
-    const inCompleteProfile = segments[1] === 'complete-profile'
+    const inVerify = segments.includes('verify')
+    const inCompleteProfile = segments.includes('complete-profile')
     if (!user && signupToken && !inCompleteProfile) {
       router.replace('/(auth)/complete-profile')
     } else if (!user && signupEmail && !signupToken && !inVerify) {
@@ -214,16 +178,7 @@ function RootLayoutNav() {
         const pending = await consumePendingShare()
         if (!pending) return
         if (pending.type === 'job') {
-          // Extension enqueued a background job — register it in the bell so the polling
-          // loop picks it up and the recipe list shows a placeholder.
-          pushNotif({
-            type: 'recipe_importing',
-            title: t('bell.recipeImporting'),
-            body: t('bell.recipeImportingBody'),
-            job_id: pending.job_id,
-            job_kind: pending.job_kind,
-            job_input: pending.job_input,
-          })
+          router.replace('/(tabs)/recipes')
         } else {
           router.push({ pathname: '/import-recipe', params: { type: pending.type, value: pending.value } })
         }
@@ -324,7 +279,7 @@ export default __DEV__ ? RootLayout : Sentry.wrap(RootLayout)
 
 const styles = StyleSheet.create({
   loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',

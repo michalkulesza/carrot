@@ -94,7 +94,7 @@ let nextMarqueeId = 0
 const useMarqueeSync = (role: Role): MarqueeTurn => {
   const ctx = useContext(MarqueeSyncContext)
   if (!ctx) throw new Error('useMarqueeSync must be used within a MarqueeSyncProvider')
-  const idRef = useRef<string>()
+  const idRef = useRef<string | null>(null)
   if (!idRef.current) idRef.current = `marquee-${nextMarqueeId++}`
   const id = idRef.current
 

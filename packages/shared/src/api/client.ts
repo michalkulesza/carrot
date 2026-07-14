@@ -11,10 +11,10 @@ import type {
   InvitationOut,
   HouseholdLeaveNotificationOut,
   ReanalyzeProgress,
-  StreamCallbacks,
-  ImportResult,
   ImportJobEnqueue,
   ImportJobOut,
+  ImportJob,
+  ImportJobsSnapshot,
   AuthUser,
   ShoppingListItem,
   PresenceUser,
@@ -498,113 +498,6 @@ export const createApiClient = (config: ApiClientConfig) => {
 
   // ── SSE streaming (fetch-based, works on mobile too) ──────────────────────
 
-  const _parseStreamEvents = (
-    chunks: string[],
-    callbacks: StreamCallbacks,
-    highDemandFired: { current: boolean },
-  ) => {
-    for (const chunk of chunks) {
-      const data = chunk.replace(/^data: /, '').trim()
-      if (!data) continue
-      try {
-        const event = JSON.parse(data) as {
-          type: string
-          key?: string
-          label?: string
-          result?: ImportResult
-        }
-        if (event.type === 'stage') {
-          callbacks.onStage({ key: event.key ?? '', label: event.label ?? '' })
-        } else if (event.type === 'done') {
-          callbacks.onDone(event.result!)
-        } else if (event.type === 'high_demand' && !highDemandFired.current) {
-          highDemandFired.current = true
-          callbacks.onHighDemand?.()
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-  }
-
-  const streamImportFetch = (url: string, callbacks: StreamCallbacks): () => void => {
-    let aborted = false
-    const controller = new AbortController()
-    const highDemandFired = { current: false }
-    apiFetch(
-      `/api/imports/stream?url=${encodeURIComponent(url)}&model=gemini-2.5-flash-lite`,
-      { signal: controller.signal }
-    )
-      .then(async (res) => {
-        if (!res.ok || !res.body) {
-          callbacks.onError('Failed to start import')
-          return
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (!aborted) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          const chunks = buffer.split('\n\n')
-          buffer = chunks.pop() ?? ''
-          _parseStreamEvents(chunks, callbacks, highDemandFired)
-        }
-      })
-      .catch((err: unknown) => {
-        reportError?.(err, 'streamImportFetch')
-        if (!aborted) callbacks.onError('Connection error — check the API server.')
-      })
-    return () => {
-      aborted = true
-      controller.abort()
-    }
-  }
-
-  const _streamPostFetch = (path: string, body: unknown, callbacks: StreamCallbacks): () => void => {
-    let aborted = false
-    const controller = new AbortController()
-    const highDemandFired = { current: false }
-    apiFetch(path, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok || !res.body) {
-          callbacks.onError('Failed to start import')
-          return
-        }
-        const reader = res.body.getReader()
-        const decoder = new TextDecoder()
-        let buffer = ''
-        while (!aborted) {
-          const { done, value } = await reader.read()
-          if (done) break
-          buffer += decoder.decode(value, { stream: true })
-          const chunks = buffer.split('\n\n')
-          buffer = chunks.pop() ?? ''
-          _parseStreamEvents(chunks, callbacks, highDemandFired)
-        }
-      })
-      .catch((err: unknown) => {
-        reportError?.(err, path)
-        if (!aborted) callbacks.onError('Connection error — check the API server.')
-      })
-    return () => {
-      aborted = true
-      controller.abort()
-    }
-  }
-
-  const streamTextImportFetch = (text: string, callbacks: StreamCallbacks): () => void =>
-    _streamPostFetch('/api/imports/stream-text', { text, model: 'gemini-2.5-flash-lite' }, callbacks)
-
-  const streamImageImportFetch = (imageBase64: string, mimeType: string, callbacks: StreamCallbacks): () => void =>
-    _streamPostFetch('/api/imports/stream-image', { image_base64: imageBase64, mime_type: mimeType, model: 'gemini-2.5-flash-lite' }, callbacks)
-
   // ── Shopping List ──────────────────────────────────────────────────────────
 
   const listShoppingList = async (): Promise<ShoppingListItem[]> => {
@@ -715,10 +608,81 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<ImportJobOut>
   }
 
-  const getImportJob = async (id: string): Promise<ImportJobOut> => {
-    const res = await apiFetch(`/api/imports/jobs/${id}`)
-    await throwOnError(res, 'Failed to get import job')
-    return res.json() as Promise<ImportJobOut>
+  const retryImportJob = async (id: string): Promise<ImportJob> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}/retry`, { method: 'POST' })
+    await throwOnError(res, 'Failed to retry import job')
+    return res.json() as Promise<ImportJob>
+  }
+
+  const cancelImportJob = async (id: string): Promise<ImportJob> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}/cancel`, { method: 'POST' })
+    await throwOnError(res, 'Failed to cancel import job')
+    return res.json() as Promise<ImportJob>
+  }
+
+  const dismissImportJob = async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}/dismiss`, { method: 'POST' })
+    await throwOnError(res, 'Failed to dismiss import job')
+  }
+
+  const registerDevice = async (installationId: string, token: string): Promise<void> => {
+    const res = await apiFetch('/api/imports/devices', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ installation_id: installationId, token }),
+    })
+    await throwOnError(res, 'Failed to register notifications')
+  }
+
+  const unregisterDevice = async (installationId: string): Promise<void> => {
+    const res = await apiFetch(`/api/imports/devices/${encodeURIComponent(installationId)}`, { method: 'DELETE' })
+    await throwOnError(res, 'Failed to unregister notifications')
+  }
+
+  const subscribeImportJobs = (
+    onSnapshot: (snapshot: ImportJobsSnapshot) => void,
+    onEvent: (event: { id: number; type: string; job: ImportJob }) => void,
+    lastEventId?: number,
+    onDisconnect?: () => void,
+  ): (() => void) => {
+    const controller = new AbortController()
+    let stopped = false
+    void apiFetch('/api/imports/jobs/events', {
+      signal: controller.signal,
+      headers: lastEventId ? { 'Last-Event-ID': String(lastEventId) } : {},
+    }).then(async (res) => {
+      if (!res.ok || !res.body) return
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (!stopped) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const messages = buffer.split('\n\n')
+        buffer = messages.pop() ?? ''
+        for (const message of messages) {
+          const type = message.match(/^event: (.+)$/m)?.[1]
+          const id = Number(message.match(/^id: (.+)$/m)?.[1] ?? 0)
+          const data = message.match(/^data: (.+)$/m)?.[1]
+          if (!type || !data) continue
+          try {
+            if (type === 'import_jobs.snapshot') onSnapshot(JSON.parse(data) as ImportJobsSnapshot)
+            else onEvent({ id, type, job: JSON.parse(data) as ImportJob })
+          } catch {
+            // Ignore malformed messages and retain the current authoritative cache.
+          }
+        }
+      }
+    }).catch((error: unknown) => {
+      if (!stopped) reportError?.(error, 'subscribeImportJobs')
+    }).finally(() => {
+      if (!stopped) onDisconnect?.()
+    })
+    return () => {
+      stopped = true
+      controller.abort()
+    }
   }
 
   return {
@@ -765,11 +729,13 @@ export const createApiClient = (config: ApiClientConfig) => {
     logout,
     getMe,
     deleteAccount,
-    streamImportFetch,
-    streamTextImportFetch,
-    streamImageImportFetch,
     enqueueImportJob,
-    getImportJob,
+    retryImportJob,
+    cancelImportJob,
+    dismissImportJob,
+    registerDevice,
+    unregisterDevice,
+    subscribeImportJobs,
     listShoppingList,
     addShoppingListItems,
     updateShoppingListItem,

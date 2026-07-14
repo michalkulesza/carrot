@@ -15,36 +15,17 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Switch,
   toast,
 } from '@heroui/react'
-import type {
-  RecipeOut,
-  StreamCallbacks,
-  Tag,
-  UserPreferences,
-} from '@carrot/shared/types'
+import type { ImportJob, RecipeOut } from '@carrot/shared/types'
 import {
-  streamImport,
-  streamTextImportFetch,
-  streamImageImportFetch,
-  saveRecipe,
-  createTag,
+  enqueueImportJob,
   listPersonalRecipes,
   linkRecipeToHousehold,
 } from '../../api/client'
 import { useHousehold } from '../../context/HouseholdContext'
 import { proxyUrl } from '../../utils/imageUtils'
 import NetworkImage from '../NetworkImage'
-import EditableRecipeView from './EditableRecipeView'
-import RecipeImportSkeleton from './RecipeImportSkeleton'
-import {
-  STAGE_PROGRESS,
-  buildSaveRecipePayload,
-  toEditable,
-  type EditableRecipe,
-  type StepState,
-} from './helpers'
 
 const IMPORT_METHODS = [
   { key: 'url', labelKey: 'addRecipe.fromUrl', Icon: LinkIcon },
@@ -62,51 +43,26 @@ interface AddRecipeModalProps {
   isOpen: boolean
   onClose: () => void
   onSaved?: () => void
-  allTags: Tag[]
-  onTagCreated: (tag: Tag) => void
-  preferences: UserPreferences | null
+  onImportEnqueued: (job: ImportJob) => void
 }
 
 const AddRecipeModal = ({
   isOpen,
   onClose,
   onSaved,
-  allTags,
-  onTagCreated,
-  preferences,
+  onImportEnqueued,
 }: AddRecipeModalProps) => {
   const { t } = useTranslation()
-  const { activeHouseholdId, activeHousehold } = useHousehold()
-  const [tempRecipeId] = useState(() => crypto.randomUUID())
+  const { activeHouseholdId } = useHousehold()
   const [importMode, setImportMode] = useState<'url' | 'text' | 'image'>('url')
   const [url, setUrl] = useState('')
   const [pastedText, setPastedText] = useState('')
   const importImageInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [progressSteps, setProgressSteps] = useState<StepState[]>([])
-  const [editable, setEditable] = useState<EditableRecipe | null>(null)
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
-  const [sharedToPersonal, setSharedToPersonal] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const cancelRef = useRef<(() => void) | null>(null)
   const [personalRecipes, setPersonalRecipes] = useState<RecipeOut[]>([])
   const [librarySearch, setLibrarySearch] = useState('')
   const [linking, setLinking] = useState(false)
-
-  const activeAllergens: string[] = activeHousehold?.allergens
-    ? [
-        ...(activeHousehold.allergens.predefined ?? []),
-        ...(activeHousehold.allergens.custom ?? []),
-      ]
-    : preferences?.personal_allergens
-      ? [
-          ...(preferences.personal_allergens.predefined ?? []),
-          ...(preferences.personal_allergens.custom ?? []),
-        ]
-      : []
-
-  const autoSubstitute = preferences?.auto_substitute ?? false
 
   useEffect(() => {
     if (isOpen && activeHouseholdId) {
@@ -117,17 +73,11 @@ const AddRecipeModal = ({
   }, [isOpen, activeHouseholdId])
 
   const reset = () => {
-    cancelRef.current?.()
     setImportMode('url')
     setUrl('')
     setPastedText('')
     if (importImageInputRef.current) importImageInputRef.current.value = ''
     setLoading(false)
-    setSaving(false)
-    setProgressSteps([])
-    setEditable(null)
-    setSelectedTags([])
-    setSharedToPersonal(true)
     setError(null)
     setLibrarySearch('')
   }
@@ -148,32 +98,6 @@ const AddRecipeModal = ({
     }
   }
 
-  async function handleTagCreate(name: string): Promise<Tag> {
-    const tag = await createTag(name)
-    onTagCreated(tag)
-
-    return tag
-  }
-
-  async function handleSave() {
-    if (!editable) return
-    setSaving(true)
-    setError(null)
-    try {
-      await saveRecipe(
-        buildSaveRecipePayload(editable, selectedTags, sharedToPersonal)
-      )
-      toast.success(t('addRecipe.recipeSaved'), { timeout: 3000 })
-      onSaved?.()
-      reset()
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('addRecipe.failedToSave'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleClose = () => {
     reset()
     onClose()
@@ -188,61 +112,28 @@ const AddRecipeModal = ({
     }
   }
 
-  const startImport = (starter: (callbacks: StreamCallbacks) => () => void) => {
-    cancelRef.current?.()
+  const enqueue = async (kind: 'url' | 'text' | 'image', input: Record<string, string>) => {
     setLoading(true)
     setError(null)
-    setEditable(null)
-    setSelectedTags([])
-    setProgressSteps([])
-
-    cancelRef.current = starter({
-      onStage(stage) {
-        setProgressSteps((prev) => {
-          const updated = prev.map((s) =>
-            s.status === 'active' ? { ...s, status: 'done' as const } : s
-          )
-
-          return [...updated, { ...stage, status: 'active' }]
-        })
-      },
-      onDone(res) {
-        setProgressSteps((prev) =>
-          prev.map((s) =>
-            s.status === 'active' ? { ...s, status: 'done' as const } : s
-          )
-        )
-        if (res.recipe) {
-          const editableRecipe = toEditable(res, autoSubstitute)
-          setEditable(editableRecipe)
-          const suggested = allTags.filter((t) =>
-            editableRecipe.suggestedTagNames.some(
-              (name) => name.toLowerCase() === t.name.toLowerCase()
-            )
-          )
-          setSelectedTags(suggested)
-        } else {
-          setError(
-            res.error === 'extraction_failed' || !res.error
-              ? t('addRecipe.couldNotExtract')
-              : res.error
-          )
-        }
-        setLoading(false)
-      },
-      onError(msg) {
-        setError(msg)
-        setLoading(false)
-      },
-    })
+    try {
+      const job = await enqueueImportJob({ kind, input, idempotency_key: crypto.randomUUID() })
+      onImportEnqueued(job)
+      toast.success(t('importJobs.queued'), { timeout: 3000 })
+      reset()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (importMode === 'url') {
-      startImport((cb) => streamImport(url, cb))
+      void enqueue('url', { url: url.trim() })
     } else if (importMode === 'text') {
-      startImport((cb) => streamTextImportFetch(pastedText.trim(), cb))
+      void enqueue('text', { text: pastedText.trim() })
     }
   }
 
@@ -251,9 +142,7 @@ const AddRecipeModal = ({
     reader.onload = () => {
       const dataUrl = reader.result as string
       const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
-      startImport((cb) =>
-        streamImageImportFetch(base64, file.type || 'image/jpeg', cb)
-      )
+      void enqueue('image', { image_base64: base64, mime_type: file.type || 'image/jpeg' })
     }
     reader.readAsDataURL(file)
   }
@@ -265,17 +154,7 @@ const AddRecipeModal = ({
     if (file) handleImageFile(file)
   }
 
-  const parsed = editable !== null
-  const lastStep = progressSteps[progressSteps.length - 1]
-  const importProgress = lastStep
-    ? lastStep.status === 'done'
-      ? 1
-      : (STAGE_PROGRESS[lastStep.key] ?? 0.5)
-    : 0
-
-  const modalTitle = parsed
-    ? t('addRecipe.editRecipe')
-    : t('addRecipe.importRecipe')
+  const modalTitle = t('addRecipe.importRecipe')
 
   const filteredPersonalRecipes = personalRecipes.filter((r) =>
     r.title.toLowerCase().includes(librarySearch.toLowerCase())
@@ -296,8 +175,7 @@ const AddRecipeModal = ({
           <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[700px]">
             <ModalHeader>{modalTitle}</ModalHeader>
             <ModalBody>
-              {!parsed &&
-                !loading &&
+              {!loading &&
                 activeHouseholdId &&
                 personalRecipes.length > 0 && (
                   <div className="flex flex-col gap-2">
@@ -355,7 +233,7 @@ const AddRecipeModal = ({
                   </div>
                 )}
 
-              {!parsed && !loading && (
+              {!loading && (
                 <div className="flex flex-col gap-3">
                   <div className="flex gap-1.5">
                     {IMPORT_METHODS.map(({ key, labelKey, Icon }) => (
@@ -467,10 +345,6 @@ const AddRecipeModal = ({
                 </div>
               )}
 
-              {!parsed && !error && loading && (
-                <RecipeImportSkeleton progress={importProgress} />
-              )}
-
               {error && (
                 <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mt-2">
                   <strong>{t('addRecipe.importFailed')}</strong>
@@ -478,57 +352,17 @@ const AddRecipeModal = ({
                 </div>
               )}
 
-              {editable && (
-                <EditableRecipeView
-                  recipe={editable}
-                  recipeId={tempRecipeId}
-                  selectedTags={selectedTags}
-                  allTags={allTags}
-                  activeAllergens={activeAllergens}
-                  onChange={setEditable}
-                  onTagAdd={(tag) => setSelectedTags((prev) => [...prev, tag])}
-                  onTagRemove={(id) =>
-                    setSelectedTags((prev) => prev.filter((t) => t.id !== id))
-                  }
-                  onTagCreate={handleTagCreate}
-                />
-              )}
             </ModalBody>
             <ModalFooter className="flex flex-col gap-2 items-stretch">
-              {parsed && activeHouseholdId && (
-                <div className="flex items-center gap-2 px-1">
-                  <Switch
-                    size="sm"
-                    isSelected={sharedToPersonal}
-                    onChange={setSharedToPersonal}
-                  >
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch>
-                  <span className="text-sm text-zinc-600">
-                    {t('addRecipe.alsoAddToPrivate')}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-end gap-2">
                 <Button
                   variant="tertiary"
                   onPress={handleClose}
-                  isDisabled={loading || saving}
+                  isDisabled={loading}
                 >
-                  {parsed ? t('addRecipe.discard') : t('common.cancel')}
+                  {t('common.cancel')}
                 </Button>
-                {parsed ? (
-                  <Button
-                    variant="primary"
-                    onPress={handleSave}
-                    isDisabled={saving}
-                  >
-                    {t('common.save')}
-                  </Button>
-                ) : (
-                  importMode !== 'image' && (
+                {importMode !== 'image' && (
                     <Button
                       variant="primary"
                       type="submit"
@@ -539,7 +373,6 @@ const AddRecipeModal = ({
                         ? t('addRecipe.extractRecipe')
                         : t('addRecipe.import')}
                     </Button>
-                  )
                 )}
               </div>
             </ModalFooter>

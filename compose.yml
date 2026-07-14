@@ -19,6 +19,7 @@ services:
     build: ./services/api
     env_file: .env
     environment:
+      DATABASE_URL: postgresql+asyncpg://platekeeper:platekeeper@db:5432/platekeeper
       R2_ENDPOINT_URL: ${R2_ENDPOINT_URL:-}
       R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
@@ -29,6 +30,16 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
+
+  worker:
+    build: ./services/api
+    command: ["uv", "run", "--no-sync", "python", "-m", "api.worker"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://platekeeper:platekeeper@db:5432/platekeeper
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   postgres_data:

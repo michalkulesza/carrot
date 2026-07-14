@@ -202,6 +202,9 @@ export const styles = StyleSheet.create({
   },
   pendingBody: { flex: 1, padding: 12, justifyContent: 'center' },
   pendingTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
-  pendingMeta: { fontSize: 12, color: colors.tertiaryLabel },
-  pendingSpinnerWrap: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  pendingMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pendingActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  pendingCancelWrap: { width: 44, alignItems: 'center', justifyContent: 'center' },
+  pendingActionPrimary: { fontSize: 13, color: colors.blue, fontWeight: '600' },
+  pendingActionSecondary: { fontSize: 13, color: colors.secondaryLabel },
 })
