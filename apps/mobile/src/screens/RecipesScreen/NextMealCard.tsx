@@ -26,7 +26,10 @@ const NextMealCard = () => {
       return
     }
 
-    router.push('/(tabs)/meal-plan')
+    router.push({
+      pathname: '/(tabs)/meal-plan',
+      params: { focusToday: String(Date.now()) },
+    })
   }, [entry, router])
 
   const handleRetry = useCallback(async () => {

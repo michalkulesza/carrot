@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -14,7 +14,7 @@ import {
 } from 'react-native'
 import GlassViewSafe from '../../components/GlassViewSafe'
 import { useTranslation } from 'react-i18next'
-import { useNavigation, useRouter } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
@@ -36,6 +36,7 @@ const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
   const navigation = useNavigation()
   const router = useRouter()
+  const { focusToday } = useLocalSearchParams<{ focusToday?: string }>()
   const insets = useSafeAreaInsets()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
   const api = useApiClient()
@@ -197,6 +198,10 @@ const MealPlanScreen = () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     handleScrollToToday()
   }, [handleScrollToToday])
+
+  useEffect(() => {
+    if (focusToday) handleScrollToToday()
+  }, [focusToday, handleScrollToToday])
 
   return (
     <View style={styles.container}>
