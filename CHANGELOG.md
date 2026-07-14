@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.1] — 2026-07-14
+
+### Ingredients, units & nutrition
+
+- ✨ **Feature** — Adjust recipe servings with a serving stepper that recalculates ingredient quantities live on web and iOS, including scaled shopping-list additions.
+
 ## [1.0.0] — 2026-07-14
 
 First public release. Carrot is a cross-platform recipe manager with a FastAPI
@@ -90,4 +96,5 @@ backend, a React web app, and a React Native (Expo) iOS app sharing a common
 - ✨ **Feature** — Rebranded to Carrot with new name, icons, and brand color, plus a marketing site at carrot.xcxz.xyz.
 - 🐛 **Bug** — Recipe thumbnails now stay cached, eliminating the image flash when opening a recipe's detail view.
 
+[1.0.1]: https://github.com/
 [1.0.0]: https://github.com/

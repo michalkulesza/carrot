@@ -1,10 +1,9 @@
 # TODO
 
-Items are grouped by purpose and ordered from highest to lowest importance within each group.
+Items are grouped by purpose and ordered from highest to lowest importance within each group. Completed items must remain at the very end of their category.
 
 ## Core product features
 
-- [x] **Ingredient scaling / adjust servings** — Add a serving-size stepper that recomputes every structured ingredient quantity live.
 - [ ] **Multiple meals per day** — Support breakfast, lunch, dinner, and leftovers instead of a single recipe for each date.
 - [ ] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [ ] **Useful Home screen** — Show tonight’s meal, active timers, unfinished imports, expiring pantry items, and recently cooked recipes.
@@ -13,6 +12,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Cook journal** — Record when a recipe was cooked, ratings, photos, modifications, and “change this next time” notes.
 - [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Calendar and reminder integration** — Send planned meals to the iOS Calendar and notify users when to start cooking or defrost ingredients.
+- [x] **Ingredient scaling / adjust servings** — Released in 1.0.1 with serving-size steppers on web and iOS, live structured-ingredient recalculation, and scaled shopping-list additions.
 
 ## Experience and product polish
 
