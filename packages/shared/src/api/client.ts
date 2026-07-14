@@ -195,6 +195,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<MealPlanEntry[]>
   }
 
+  const getNextMealPlanEntry = async (from: string): Promise<MealPlanEntry | null> => {
+    const res = await apiFetch(`/api/meal-plan/next?from=${encodeURIComponent(from)}`)
+    if (!res.ok) throw new Error('Failed to load next meal plan entry')
+    return res.json() as Promise<MealPlanEntry | null>
+  }
+
   const setMealPlanEntry = async (date: string, recipeId: string): Promise<MealPlanEntry> => {
     const res = await apiFetch(`/api/meal-plan/${date}`, {
       method: 'PUT',
@@ -732,6 +738,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     addTagToRecipe,
     removeTagFromRecipe,
     listMealPlan,
+    getNextMealPlanEntry,
     setMealPlanEntry,
     deleteMealPlanEntry,
     getPreferences,

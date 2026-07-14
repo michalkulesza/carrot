@@ -58,6 +58,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     void qc.invalidateQueries({ queryKey: ['tags'] })
     void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
     void qc.invalidateQueries({ queryKey: ['preferences'] })
+    void qc.invalidateQueries({ queryKey: ['mealPlan'] })
   }, [activeHouseholdId, qc])
 
   const switchHousehold = useCallback(async (id: string | null) => {

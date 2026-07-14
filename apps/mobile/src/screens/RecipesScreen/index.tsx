@@ -58,6 +58,7 @@ import ThumbnailImage from './ThumbnailImage'
 import PendingJobCard from './PendingJobCard'
 import HeaderTitle from './HeaderTitle'
 import HeaderRight from './HeaderRight'
+import NextMealCard from './NextMealCard'
 
 const RecipesScreen = () => {
   const navigation = useNavigation()
@@ -694,6 +695,7 @@ const RecipesScreen = () => {
           {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
           {groupedFilterTags.other.map(renderTag)}
         </ScrollView>
+        <NextMealCard />
       </Reanimated.View>
     </View>
   )

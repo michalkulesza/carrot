@@ -10,6 +10,7 @@ import {
   ChevronDown,
 } from 'react-feather'
 import HouseholdSwitcher from './HouseholdSwitcher'
+import NextMealCard from './NextMealCard'
 import { useHousehold } from '../context/HouseholdContext'
 
 interface NavItem {
@@ -152,6 +153,8 @@ const Sidebar = () => {
       </button>
 
       <div className="h-px bg-zinc-200 mx-1 mb-3" />
+
+      <NextMealCard compact={collapsed} className="mb-3" />
 
       <nav className="flex flex-col gap-0.5 flex-1">
         {NAV_ITEMS.map(({ to, end, labelKey, Icon }) => (

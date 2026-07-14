@@ -1,8 +1,9 @@
 import calendar as cal
+import re
 import uuid
 from datetime import date as DateType
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import and_, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +13,20 @@ from api.routes.context import get_active_household_id
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/meal-plan", tags=["meal-plan"])
+
+_ISO_DATE_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+
+def _parse_date(value: str) -> DateType:
+    if _ISO_DATE_PATTERN.fullmatch(value) is None:
+        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+    try:
+        return DateType.fromisoformat(value)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid date format, use YYYY-MM-DD",
+        ) from None
 
 
 def _entry_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, date: DateType):
@@ -32,6 +47,26 @@ def _recipe_access_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, re
         Recipe.user_id == user_id,
         or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
     )
+
+
+def _next_entry_statement(
+    user_id: uuid.UUID,
+    household_id: uuid.UUID | None,
+    from_date: DateType,
+):
+    if household_id is not None:
+        where = and_(
+            MealPlanEntry.household_id == household_id,
+            MealPlanEntry.date >= from_date,
+        )
+    else:
+        where = and_(
+            MealPlanEntry.user_id == user_id,
+            MealPlanEntry.household_id.is_(None),
+            MealPlanEntry.date >= from_date,
+        )
+
+    return select(MealPlanEntry).where(where).order_by(MealPlanEntry.date.asc()).limit(1)
 
 
 @router.get("", response_model=list[MealPlanEntryOut])
@@ -68,6 +103,21 @@ async def list_meal_plan(
     return [MealPlanEntryOut.model_validate(e) for e in result.scalars().all()]
 
 
+@router.get("/next", response_model=MealPlanEntryOut | None)
+async def get_next_meal_plan_entry(
+    from_: str = Query(alias="from"),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> MealPlanEntryOut | None:
+    from_date = _parse_date(from_)
+    statement = _next_entry_statement(user.id, household_id, from_date)
+    result = await session.execute(statement)
+    entry = result.scalar_one_or_none()
+
+    return MealPlanEntryOut.model_validate(entry) if entry is not None else None
+
+
 @router.put("/{date_str}", response_model=MealPlanEntryOut)
 async def set_meal_plan_entry(
     date_str: str,
@@ -76,10 +126,7 @@ async def set_meal_plan_entry(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> MealPlanEntryOut:
-    try:
-        date = DateType.fromisoformat(date_str)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+    date = _parse_date(date_str)
 
     recipe_result = await session.execute(
         select(Recipe).where(_recipe_access_filter(user.id, household_id, body.recipe_id))
@@ -114,10 +161,7 @@ async def delete_meal_plan_entry(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> None:
-    try:
-        date = DateType.fromisoformat(date_str)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format, use YYYY-MM-DD")
+    date = _parse_date(date_str)
 
     result = await session.execute(
         select(MealPlanEntry).where(_entry_filter(user.id, household_id, date))

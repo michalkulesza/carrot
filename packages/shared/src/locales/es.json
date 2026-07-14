@@ -135,6 +135,15 @@
     "expandSidebar": "Expandir barra lateral",
     "collapseSidebar": "Contraer barra lateral"
   },
+  "nextMeal": {
+    "title": "Próxima comida planificada",
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "empty": "No hay próximas comidas",
+    "openPlan": "Abrir el plan de comidas",
+    "error": "No se pudo cargar la próxima comida",
+    "retry": "Reintentar"
+  },
   "auth": {
     "signIn": "Iniciar sesión",
     "signingIn": "Iniciando sesión…",

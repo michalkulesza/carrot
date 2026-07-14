@@ -10,6 +10,7 @@
     "./hooks/useRecipes": "./src/hooks/useRecipes.ts",
     "./hooks/useTags": "./src/hooks/useTags.ts",
     "./hooks/useMealPlan": "./src/hooks/useMealPlan.ts",
+    "./hooks/useNextMealPlanEntry": "./src/hooks/useNextMealPlanEntry.ts",
     "./hooks/usePreferences": "./src/hooks/usePreferences.ts",
     "./hooks/useHouseholds": "./src/hooks/useHouseholds.ts",
     "./hooks/useInvitations": "./src/hooks/useInvitations.ts",

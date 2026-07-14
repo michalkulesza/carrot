@@ -137,6 +137,15 @@
     "expandSidebar": "Rozwiń pasek boczny",
     "collapseSidebar": "Zwiń pasek boczny"
   },
+  "nextMeal": {
+    "title": "Następny zaplanowany posiłek",
+    "today": "Dzisiaj",
+    "tomorrow": "Jutro",
+    "empty": "Brak nadchodzących posiłków",
+    "openPlan": "Otwórz plan posiłków",
+    "error": "Nie udało się wczytać następnego posiłku",
+    "retry": "Spróbuj ponownie"
+  },
   "auth": {
     "signIn": "Zaloguj się",
     "signingIn": "Loguję…",

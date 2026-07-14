@@ -49,6 +49,7 @@ const AppShell = () => {
     void qc.invalidateQueries({ queryKey: ['tags'] })
     void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
     void qc.invalidateQueries({ queryKey: ['preferences'] })
+    void qc.invalidateQueries({ queryKey: ['mealPlan'] })
   }, [user?.active_household_id, qc])
 
   const handleTagCreated = useCallback(

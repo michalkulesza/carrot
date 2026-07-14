@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from '@heroui/react'
 import type { RecipeOut, Tag, UserPreferences } from '@carrot/shared/types'
 import PageHeader from '../../components/PageHeader'
+import NextMealCard from '../../components/NextMealCard'
 import RecipeDetailModal from '../../components/RecipeDetailModal'
 import RecipesTable from '../../components/RecipesTable'
 import { deleteRecipe } from '../../api/client'
@@ -140,6 +141,7 @@ const RecipesPage = ({
       const next = new Set(prev)
       if (next.has(tagId)) next.delete(tagId)
       else next.add(tagId)
+
       return next
     })
   }, [])
@@ -180,6 +182,10 @@ const RecipesPage = ({
             onSelectRecipe={handleSelectSearchResult}
           />
         )}
+
+        <div className="md:hidden px-4 mt-3">
+          <NextMealCard />
+        </div>
 
         <FilterBar
           allTags={allTags}

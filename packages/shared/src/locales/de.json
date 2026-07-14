@@ -135,6 +135,15 @@
     "expandSidebar": "Seitenleiste erweitern",
     "collapseSidebar": "Seitenleiste einklappen"
   },
+  "nextMeal": {
+    "title": "Nächste geplante Mahlzeit",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "empty": "Keine bevorstehende Mahlzeit",
+    "openPlan": "Speiseplan öffnen",
+    "error": "Nächste Mahlzeit konnte nicht geladen werden",
+    "retry": "Erneut versuchen"
+  },
   "auth": {
     "signIn": "Anmelden",
     "signingIn": "Anmelden…",

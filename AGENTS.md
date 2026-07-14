@@ -1,6 +1,7 @@
 # Misc
 - Before committing, ask the user to confirm the change is fully complete and correct — do not commit on your own judgment that a task is "successful." Only commit after they confirm.
 - When implementing a plan from .md include that file in the commit
+- Keep plans under `docs/specs/` while they are pending or in progress. Move a plan into `docs/specs/completed/` only after its implementation is fully complete.
 
 # Production VPS access
 - The `myvps` SSH host (~/.ssh/config, root@167.235.18.105, key `~/.ssh/platekeeper_deploy`) is available for debugging production issues — use `ssh myvps` freely to check `docker ps`, `docker logs <container>`, Caddy config/logs (`/etc/caddy/Caddyfile`, `sudo journalctl -u caddy`), etc.
@@ -13,4 +14,3 @@ here automatically — this file only holds what's specific to `carrot`.
 
 ## Translations
 This project's locale files: en, pl, de, fr, es. Add new keys to all 5 when introducing strings.
-

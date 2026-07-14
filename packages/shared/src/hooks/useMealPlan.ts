@@ -14,12 +14,12 @@ export const useMealPlan = (month: string) => {
   const setEntry = useMutation({
     mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
       api.setMealPlanEntry(date, recipeId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan', month] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
   const deleteEntry = useMutation({
     mutationFn: api.deleteMealPlanEntry,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan', month] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
   return {

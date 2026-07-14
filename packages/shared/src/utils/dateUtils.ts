@@ -29,3 +29,26 @@ export const formatMonthYear = (date: Date, locale: string): string =>
 /** Locale-aware month name only (e.g. "January", "Janvier") */
 export const formatMonthLong = (date: Date, locale: string): string =>
   new Intl.DateTimeFormat(locale, { month: 'long' }).format(date)
+
+export const parseISODateLocal = (isoDate: string): Date => {
+  const [year, month, day] = isoDate.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export const formatNextMealDate = (
+  isoDate: string,
+  todayIso: string,
+  locale: string,
+  todayLabel: string,
+  tomorrowLabel: string,
+): string => {
+  if (isoDate === todayIso) return todayLabel
+
+  const tomorrow = parseISODateLocal(todayIso)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  if (isoDate === toISODate(tomorrow)) return tomorrowLabel
+
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(
+    parseISODateLocal(isoDate),
+  )
+}

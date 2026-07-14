@@ -135,6 +135,15 @@
     "expandSidebar": "Développer la barre latérale",
     "collapseSidebar": "Réduire la barre latérale"
   },
+  "nextMeal": {
+    "title": "Prochain repas prévu",
+    "today": "Aujourd’hui",
+    "tomorrow": "Demain",
+    "empty": "Aucun repas à venir",
+    "openPlan": "Ouvrir le planning",
+    "error": "Impossible de charger le prochain repas",
+    "retry": "Réessayer"
+  },
   "auth": {
     "signIn": "Se connecter",
     "signingIn": "Connexion…",

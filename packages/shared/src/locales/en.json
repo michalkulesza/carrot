@@ -135,6 +135,15 @@
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar"
   },
+  "nextMeal": {
+    "title": "Next planned meal",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "empty": "No upcoming meal",
+    "openPlan": "Open Meal Plan",
+    "error": "Couldn’t load next meal",
+    "retry": "Retry"
+  },
   "auth": {
     "signIn": "Sign in",
     "signingIn": "Signing in…",
