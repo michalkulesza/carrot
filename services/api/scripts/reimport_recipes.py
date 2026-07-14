@@ -91,43 +91,57 @@ async def _extract(url: str, available_tags: list[str], allergens: list[str]) ->
     return result
 
 
-async def main(apply: bool, limit: int | None, recipe_ids: set[uuid.UUID]) -> None:
+async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, str]:
     async with async_session_maker() as session:
-        statement = select(Recipe).where(Recipe.source_url.is_not(None), Recipe.source_url != "")
+        recipe = await session.get(Recipe, recipe_id)
+        if recipe is None:
+            return False, f"Skipped {recipe_id}: recipe no longer exists"
+
+        recipe_title = recipe.title
+        source_url = recipe.source_url
+        try:
+            available_tags, allergens = await _get_tags_and_allergens(session, recipe.user_id, recipe.household_id)
+            result = await _extract(source_url, available_tags, allergens)
+            preferences = await session.get(UserPreferences, recipe.user_id)
+            _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+            await session.commit()
+            return True, f"Re-imported {recipe_id}: {recipe.title}"
+        except Exception as exc:
+            await session.rollback()
+            return False, f"Skipped {recipe_id}: {recipe_title} ({source_url}; {exc})"
+
+
+async def main(apply: bool, limit: int | None, recipe_ids: set[uuid.UUID], concurrency: int) -> None:
+    async with async_session_maker() as session:
+        statement = select(Recipe.id).where(Recipe.source_url.is_not(None), Recipe.source_url != "")
         if recipe_ids:
             statement = statement.where(Recipe.id.in_(recipe_ids))
         if limit is not None:
             statement = statement.limit(limit)
-        recipe_ids_to_process = list((await session.scalars(
-            statement.order_by(Recipe.created_at).with_only_columns(Recipe.id)
-        )).all())
+        recipe_ids_to_process = list((await session.scalars(statement.order_by(Recipe.created_at))).all())
 
-        if not apply:
-            print(f"Would re-import {len(recipe_ids_to_process)} URL-backed recipe(s). Run again with --apply to update them.")
-            return
+    if not apply:
+        print(f"Would re-import {len(recipe_ids_to_process)} URL-backed recipe(s). Run again with --apply to update them.")
+        return
 
-        refreshed = 0
-        failed = 0
-        for recipe_id in recipe_ids_to_process:
-            recipe = await session.get(Recipe, recipe_id)
-            if recipe is None:
-                continue
-            recipe_title = recipe.title
-            source_url = recipe.source_url
-            try:
-                available_tags, allergens = await _get_tags_and_allergens(session, recipe.user_id, recipe.household_id)
-                result = await _extract(source_url, available_tags, allergens)
-                preferences = await session.get(UserPreferences, recipe.user_id)
-                _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
-                await session.commit()
-                refreshed += 1
-                print(f"Re-imported {recipe_id}: {recipe.title}")
-            except Exception as exc:
-                await session.rollback()
-                failed += 1
-                print(f"Skipped {recipe_id}: {recipe_title} ({source_url}; {exc})")
+    semaphore = asyncio.Semaphore(concurrency)
 
-        print(f"Finished: {refreshed} re-imported, {failed} skipped.")
+    async def run_recipe(recipe_id: uuid.UUID) -> tuple[bool, str]:
+        async with semaphore:
+            return await _reimport_recipe(recipe_id)
+
+    refreshed = 0
+    failed = 0
+    tasks = [asyncio.create_task(run_recipe(recipe_id)) for recipe_id in recipe_ids_to_process]
+    for task in asyncio.as_completed(tasks):
+        succeeded, message = await task
+        print(message)
+        if succeeded:
+            refreshed += 1
+        else:
+            failed += 1
+
+    print(f"Finished: {refreshed} re-imported, {failed} skipped.")
 
 
 if __name__ == "__main__":
@@ -137,5 +151,8 @@ if __name__ == "__main__":
     parser.add_argument("--apply", action="store_true", help="Write refreshed extraction results to the database")
     parser.add_argument("--limit", type=int, help="Process at most this many recipes")
     parser.add_argument("--recipe-id", action="append", default=[], help="Only re-import this recipe UUID; repeatable")
+    parser.add_argument("--concurrency", type=int, default=1, help="Number of parallel re-imports (default: 1)")
     args = parser.parse_args()
-    asyncio.run(main(args.apply, args.limit, {uuid.UUID(value) for value in args.recipe_id}))
+    if args.concurrency < 1:
+        parser.error("--concurrency must be at least 1")
+    asyncio.run(main(args.apply, args.limit, {uuid.UUID(value) for value in args.recipe_id}, args.concurrency))
