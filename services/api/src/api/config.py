@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     scrapecreators_api_key: str = ""
     gemini_api_key: str = ""
+    gemini_extraction_model: str = "gemini-2.5-flash"
     allowed_origins: str = "http://localhost:5173"
     database_url: str = "postgresql+asyncpg://platekeeper:platekeeper@localhost:5432/platekeeper"
     secret: str = "CHANGE-ME-IN-PRODUCTION-USE-LONG-RANDOM-STRING"

@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import httpx
 from bs4 import BeautifulSoup
 
+from api.config import settings
 from api.models import (
     ImportDebugUsage,
     ImportMetadata,
@@ -131,7 +132,6 @@ def _strip_html(html: str) -> str:
 
 async def _try_linked_url(
     url: str,
-    model: str = "gemini-2.5-flash-lite",
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
     usage: gemini_svc.UsageTracker | None = None,
@@ -154,7 +154,7 @@ async def _try_linked_url(
             return None
 
     result = await gemini_svc.extract_recipe(
-        source_text, source_hint="webpage", model=model,
+        source_text, source_hint="webpage", model=settings.gemini_extraction_model,
         available_tags=available_tags, allergens=allergens,
         usage=usage,
     )
@@ -197,12 +197,12 @@ async def _with_allergens(
     return result.model_copy(update={"recipe": recipe})
 
 
-def _attach_debug(result: ImportResult, usage: gemini_svc.UsageTracker, model: str) -> ImportResult:
+def _attach_debug(result: ImportResult, usage: gemini_svc.UsageTracker) -> ImportResult:
     """Attach aggregated token usage for every Gemini call made during this import."""
     if not usage.calls or result.stage == ImportStage.FAILED:
         return result
     debug = ImportDebugUsage(
-        model=model,
+        model=settings.gemini_extraction_model,
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
         total_tokens=usage.input_tokens + usage.output_tokens,
@@ -259,7 +259,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             result_out: list = []
             async for _ev in _run_gemini(
                 gemini_svc.extract_recipe(
-                    source_text, source_hint="webpage", model=model,
+                    source_text, source_hint="webpage", model=settings.gemini_extraction_model,
                     available_tags=available_tags, allergens=allergens,
                     usage=usage,
                 ),
@@ -269,7 +269,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             result = result_out[0]
             if _is_complete(result):
                 r = ImportResult(stage=stage, recipe=result, metadata=meta)
-                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
+                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage), cache_key=url)
             else:
                 yield _done_event(ImportResult(
                     stage=ImportStage.FAILED,
@@ -312,7 +312,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             async for _ev in _run_gemini(
                 gemini_svc.extract_recipe(
                     metadata.description, source_hint="instagram/tiktok caption",
-                    model=model, available_tags=available_tags, allergens=allergens,
+                    model=settings.gemini_extraction_model, available_tags=available_tags, allergens=allergens,
                     usage=usage,
                 ),
                 result_out_desc,
@@ -321,7 +321,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             result = result_out_desc[0]
             if _is_complete(result):
                 r = ImportResult(stage=ImportStage.DESCRIPTION, recipe=result, metadata=meta)
-                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
+                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage), cache_key=url)
                 return
         except Exception as exc:
             log.warning("Gemini description stage failed: %s", exc)
@@ -331,12 +331,12 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
         yield _stage_event("checking_links", "Checking linked page…")
         try:
             result = await _try_linked_url(
-                link, model=model, available_tags=available_tags, allergens=allergens,
+                link, available_tags=available_tags, allergens=allergens,
                 usage=usage,
             )
             if result and _is_complete(result):
                 r = ImportResult(stage=ImportStage.LINK, recipe=result, metadata=meta)
-                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
+                yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage), cache_key=url)
                 return
         except Exception as exc:
             log.warning("Link stage failed for %s: %s", link, exc)
@@ -350,7 +350,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             result_out_tr: list = []
             async for _ev in _run_gemini(
                 gemini_svc.extract_recipe(
-                    transcript, source_hint="video transcript", model=model,
+                    transcript, source_hint="video transcript", model=settings.gemini_extraction_model,
                     available_tags=available_tags, allergens=allergens,
                     usage=usage,
                 ),
@@ -360,7 +360,7 @@ async def run_import_stream(url: str, model: str = "gemini-2.5-flash-lite", avai
             result = result_out_tr[0]
             log.debug("Transcript extraction result: title=%r components=%d", result.title, len(result.components))
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
-            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model), cache_key=url)
+            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage), cache_key=url)
             return
     except Exception as exc:
         log.warning("Transcription stage failed: %s", exc)
@@ -385,7 +385,7 @@ async def run_text_import_stream(
         result_out_txt: list = []
         async for _ev in _run_gemini(
             gemini_svc.extract_recipe(
-                text[:6000], source_hint="pasted text", model=model,
+                text[:6000], source_hint="pasted text", model=settings.gemini_extraction_model,
                 available_tags=available_tags, allergens=allergens,
                 usage=usage,
             ),
@@ -395,7 +395,7 @@ async def run_text_import_stream(
         result = result_out_txt[0]
         if _is_complete(result):
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
-            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model))
+            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage))
         else:
             yield _done_event(ImportResult(
                 stage=ImportStage.FAILED, metadata=meta,
@@ -422,7 +422,7 @@ async def run_image_import_stream(
         result_out_img: list = []
         async for _ev in _run_gemini(
             gemini_svc.extract_recipe_from_image(
-                image_data, mime_type=mime_type, model=model,
+                image_data, mime_type=mime_type, model=settings.gemini_extraction_model,
                 available_tags=available_tags, allergens=allergens,
                 usage=usage,
             ),
@@ -432,7 +432,7 @@ async def run_image_import_stream(
         result = result_out_img[0]
         if _is_complete(result):
             r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
-            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage, model))
+            yield _done_event(_attach_debug(await _with_allergens(r, allergens, usage), usage))
         else:
             yield _done_event(ImportResult(
                 stage=ImportStage.FAILED, metadata=meta,

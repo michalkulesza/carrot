@@ -14,7 +14,7 @@ from api.models import RecipeExtraction, RecipeUnitVariants
 
 log = logging.getLogger(__name__)
 
-_DEFAULT_MODEL = "gemini-2.5-flash"
+_DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
 
 _T = TypeVar("_T")
 
@@ -79,6 +79,12 @@ _SYSTEM = """\
 You are a recipe extraction assistant. Given text from a social media caption,
 a webpage, or a video transcript, extract all recipe information you can find.
 The text may be in any language — extract faithfully in the original language.
+
+CRITICAL: Only extract ingredients, quantities, and steps that are explicitly present in
+the source text. Never add an ingredient that is not mentioned. Never change a number
+that is stated — copy quantities exactly as written. Estimation is permitted ONLY for
+nutrition and servings when they are not stated, and ONLY in those fields — never for
+ingredients or their amounts.
 
 Return JSON matching the provided schema. If no recipe content is present, return
 an object with null title, empty components array, and 0 for every nutrition field.
@@ -175,12 +181,13 @@ def _build_client() -> genai.Client:
 async def extract_recipe(
     text: str,
     source_hint: str = "",
-    model: str = _DEFAULT_MODEL,
+    model: str | None = None,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
     generous: bool = False,
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
+    extraction_model = model or settings.gemini_extraction_model
     parts = []
     if source_hint:
         parts.append(f"Source: {source_hint}")
@@ -194,10 +201,11 @@ async def extract_recipe(
     client = _build_client()
     response = await _with_retry(
         lambda: client.models.generate_content(
-            model=model,
+            model=extraction_model,
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=_SYSTEM,
+                temperature=0,
                 response_mime_type="application/json",
                 response_schema=RecipeExtraction,
             ),
@@ -216,12 +224,13 @@ async def extract_recipe(
 async def extract_recipe_from_image(
     image_data: bytes,
     mime_type: str = "image/jpeg",
-    model: str = _DEFAULT_MODEL,
+    model: str | None = None,
     available_tags: list[str] | None = None,
     allergens: list[str] | None = None,
     generous: bool = False,
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
+    extraction_model = model or settings.gemini_extraction_model
     parts_text = []
     if available_tags:
         parts_text.append(f"Available tags: {', '.join(available_tags)}")
@@ -239,13 +248,14 @@ async def extract_recipe_from_image(
     client = _build_client()
     response = await _with_retry(
         lambda: client.models.generate_content(
-            model=model,
+            model=extraction_model,
             contents=[
                 types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data)),
                 text_prompt,
             ],
             config=types.GenerateContentConfig(
                 system_instruction=_SYSTEM,
+                temperature=0,
                 response_mime_type="application/json",
                 response_schema=RecipeExtraction,
             ),
@@ -261,7 +271,9 @@ async def extract_recipe_from_image(
     return RecipeExtraction.model_validate(data)
 
 
-async def estimate_unit_variants(components: list[dict], model: str = _DEFAULT_MODEL) -> RecipeUnitVariants:
+async def estimate_unit_variants(
+    components: list[dict], model: str = _DEFAULT_MECHANICAL_MODEL
+) -> RecipeUnitVariants:
     prompt = json.dumps({"components": components}, ensure_ascii=False)
     instruction = """\
 You convert recipe units. Return the same number of components, in the same order.
@@ -302,7 +314,7 @@ class _ShoppingListValuesResult(BaseModel):
 
 async def recommend_shopping_list_values(
     ingredients: list[str],
-    model: str = _DEFAULT_MODEL,
+    model: str = _DEFAULT_MECHANICAL_MODEL,
 ) -> list[str]:
     """Return a practical shopping-list value for every ingredient, in order."""
     if not ingredients:
@@ -337,7 +349,7 @@ volumes, or other divisible measurements (for example, \"125 g butter\" stays
 async def analyze_allergens(
     ingredients: list[str],
     allergens: list[str],
-    model: str = _DEFAULT_MODEL,
+    model: str = _DEFAULT_MECHANICAL_MODEL,
     usage: UsageTracker | None = None,
 ) -> list[_IngredientFlag]:
     if not ingredients or not allergens:
