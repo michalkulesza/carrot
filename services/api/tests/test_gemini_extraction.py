@@ -11,7 +11,7 @@ from api.models import (
     RecipeSourceExtraction,
     StepRef,
 )
-from api.services import gemini, pipeline
+from api.services import gemini, import_worker, pipeline
 from api.services.import_worker import _step_ingredient_refs
 
 
@@ -139,6 +139,15 @@ def test_step_ingredient_refs_exclude_final_assembly_step() -> None:
         [{"ingredient_index": 0, "mention": "onion"}],
         [],
     ]
+
+
+def test_import_normalizes_malformed_parenthetical_ingredient_commas() -> None:
+    assert import_worker._normalize_ingredient_punctuation(
+        "1 clove garlic (, minced)"
+    ) == "1 clove garlic, minced"
+    assert import_worker._normalize_ingredient_punctuation(
+        "2 tsp lemongrass paste (, optional (Note 4))"
+    ) == "2 tsp lemongrass paste, optional (Note 4)"
 
 
 def _one_component_source() -> RecipeSourceExtraction:

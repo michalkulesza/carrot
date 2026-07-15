@@ -37,6 +37,35 @@ _POLL_INTERVAL_SECONDS = 2
 _MAX_RETRY_WINDOW = timedelta(minutes=30)
 
 
+def _normalize_ingredient_punctuation(value: str) -> str:
+    normalized = ""
+    index = 0
+
+    while index < len(value):
+        if value.startswith("(,", index):
+            depth = 1
+            content_start = index + 2
+            cursor = content_start
+
+            while cursor < len(value) and depth > 0:
+                if value[cursor] == "(":
+                    depth += 1
+                elif value[cursor] == ")":
+                    depth -= 1
+                cursor += 1
+
+            if depth == 0:
+                content = value[content_start:cursor - 1].strip()
+                normalized = normalized.rstrip() + f", {content}"
+                index = cursor
+                continue
+
+        normalized += value[index]
+        index += 1
+
+    return normalized
+
+
 async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uuid.UUID | None):
     tags = list((await session.scalars(select(Tag).where(_tag_filter(user_id, household_id)))).all())
     allergens: list[str] = []
@@ -53,7 +82,8 @@ async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uui
 
 def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
     name = ingredient.substitute if auto_substitute and ingredient.allergen and ingredient.substitute else ingredient.name
-    return " ".join(part for part in (ingredient.qty, ingredient.unit.value if ingredient.unit else None, name) if part)
+    value = " ".join(part for part in (ingredient.qty, ingredient.unit.value if ingredient.unit else None, name) if part)
+    return _normalize_ingredient_punctuation(value)
 
 
 def _step_ingredient_refs(component: RecipeComponent) -> list[list[dict]] | None:
@@ -87,10 +117,19 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
             "name": component.name or component.role,
             "yield_note": component.yield_note or "",
             "ingredients": flattened,
-            "shopping_list_ingredients": [ingredient.shopping_list_value or display for ingredient, display in zip(component.ingredients, flattened)],
+            "shopping_list_ingredients": [
+                _normalize_ingredient_punctuation(ingredient.shopping_list_value or display)
+                for ingredient, display in zip(component.ingredients, flattened)
+            ],
             "steps": component.steps,
-            "metric_ingredients": component.metric_ingredients or flattened,
-            "imperial_ingredients": component.imperial_ingredients or flattened,
+            "metric_ingredients": [
+                _normalize_ingredient_punctuation(value)
+                for value in component.metric_ingredients or flattened
+            ],
+            "imperial_ingredients": [
+                _normalize_ingredient_punctuation(value)
+                for value in component.imperial_ingredients or flattened
+            ],
             "metric_steps": component.metric_steps or component.steps,
             "imperial_steps": component.imperial_steps or component.steps,
             "ingredient_flags": [{

@@ -97,6 +97,9 @@ when stated; otherwise return null. For a stated servings range, use its midpoin
 a whole number. Separate qty, unit, and name only when doing so preserves the source exactly.
 Use only these units: """ + _ALLOWED_UNITS + """. For unsupported units, preserve the entire
 ingredient text in name with null qty and unit. Leave enrichment fields empty.
+Keep ingredient punctuation faithful: write preparation or alternatives after a
+comma directly (for example, "garlic, minced"), never inside an invented
+parenthetical such as "garlic (, minced)".
 """
 
 _UNIT_CONVERSION_SYSTEM = """\
