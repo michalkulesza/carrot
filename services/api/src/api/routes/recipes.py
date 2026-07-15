@@ -5,7 +5,8 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, delete, insert, or_, select
+from sqlalchemy import and_, delete, exists, insert, or_, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
@@ -17,6 +18,7 @@ from api.models import (
     RecipeOut,
     RecipeSaveRequest,
     Tag,
+    recipe_personal_links_table,
     user_recipe_favourites_table,
 )
 from api.routes.context import get_active_household_id
@@ -27,12 +29,24 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 _CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creator_handle", "components"]
 
 
+def _personally_linked(user_id: uuid.UUID):
+    return exists(
+        select(recipe_personal_links_table.c.recipe_id).where(
+            recipe_personal_links_table.c.user_id == user_id,
+            recipe_personal_links_table.c.recipe_id == Recipe.id,
+        )
+    )
+
+
 def _recipe_filter(user_id: uuid.UUID, household_id: uuid.UUID | None):
     if household_id is not None:
         return Recipe.household_id == household_id
-    return and_(
-        Recipe.user_id == user_id,
-        or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
+    return or_(
+        and_(
+            Recipe.user_id == user_id,
+            or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
+        ),
+        _personally_linked(user_id),
     )
 
 
@@ -78,12 +92,30 @@ async def _get_favourite_ids(session: AsyncSession, user_id: uuid.UUID) -> set[u
     return {row[0] for row in result}
 
 
-def _build_recipe_out(recipe: Recipe, favourite_ids: set[uuid.UUID] | None = None) -> RecipeOut:
+async def _get_personal_link_ids(session: AsyncSession, user_id: uuid.UUID) -> set[uuid.UUID]:
+    result = await session.execute(
+        select(recipe_personal_links_table.c.recipe_id)
+        .where(recipe_personal_links_table.c.user_id == user_id)
+    )
+    return {row[0] for row in result}
+
+
+def _build_recipe_out(
+    recipe: Recipe,
+    viewer_id: uuid.UUID,
+    favourite_ids: set[uuid.UUID] | None = None,
+    personal_link_ids: set[uuid.UUID] | None = None,
+) -> RecipeOut:
     out = RecipeOut.model_validate(recipe)
     if recipe.household_id is not None and recipe.author is not None:
         out.added_by = recipe.author.nickname or recipe.author.email
     if favourite_ids is not None:
         out.is_favourite = recipe.id in favourite_ids
+    # shared_to_personal reflects whether THIS viewer already has the recipe in
+    # their own personal library, not just whether the row was ever linked by anyone.
+    out.shared_to_personal = (recipe.user_id == viewer_id and recipe.shared_to_personal) or (
+        personal_link_ids is not None and recipe.id in personal_link_ids
+    )
     return out
 
 
@@ -218,7 +250,11 @@ async def list_recipes(
         .order_by(Recipe.position.asc().nullslast(), Recipe.created_at.desc())
     )
     favourite_ids = await _get_favourite_ids(session, user.id)
-    return [_build_recipe_out(r, favourite_ids) for r in result.scalars().all()]
+    personal_link_ids = await _get_personal_link_ids(session, user.id)
+    return [
+        _build_recipe_out(r, user.id, favourite_ids, personal_link_ids)
+        for r in result.scalars().all()
+    ]
 
 
 @router.post("", response_model=RecipeOut, status_code=201)
@@ -250,7 +286,7 @@ async def save_recipe(
     await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
     await session.commit()
     await session.refresh(recipe)
-    return _build_recipe_out(recipe)
+    return _build_recipe_out(recipe, user.id)
 
 
 @router.patch("/order", status_code=204)
@@ -311,7 +347,8 @@ async def update_recipe(
         from api.services import r2
         asyncio.create_task(asyncio.to_thread(r2.delete_image, old_thumbnail_url))
 
-    return _build_recipe_out(recipe)
+    personal_link_ids = await _get_personal_link_ids(session, user.id)
+    return _build_recipe_out(recipe, user.id, personal_link_ids=personal_link_ids)
 
 
 @router.post("/{recipe_id}/tags/{tag_id}", status_code=204)
@@ -400,7 +437,7 @@ async def link_recipe_to_household(
     recipe.shared_to_personal = True
     await session.commit()
     await session.refresh(recipe)
-    return _build_recipe_out(recipe)
+    return _build_recipe_out(recipe, user.id)
 
 
 @router.post("/{recipe_id}/link-to-personal", response_model=RecipeOut)
@@ -421,10 +458,13 @@ async def link_recipe_to_personal(
     recipe = result.scalar_one_or_none()
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    recipe.shared_to_personal = True
+    insert_stmt = pg_insert(recipe_personal_links_table).values(
+        user_id=user.id, recipe_id=recipe.id
+    ).on_conflict_do_nothing(index_elements=["user_id", "recipe_id"])
+    await session.execute(insert_stmt)
     await session.commit()
     await session.refresh(recipe)
-    return _build_recipe_out(recipe)
+    return _build_recipe_out(recipe, user.id, personal_link_ids={recipe.id})
 
 
 @router.post("/{recipe_id}/favourite")

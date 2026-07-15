@@ -4,11 +4,11 @@ import uuid
 from datetime import date as DateType
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
-from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe
+from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe, recipe_personal_links_table
 from api.routes.context import get_active_household_id
 from api.users import User, current_active_user
 
@@ -42,10 +42,21 @@ def _entry_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, date: Date
 def _recipe_access_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, recipe_id: uuid.UUID):
     if household_id is not None:
         return and_(Recipe.id == recipe_id, Recipe.household_id == household_id)
+    personally_linked = exists(
+        select(recipe_personal_links_table.c.recipe_id).where(
+            recipe_personal_links_table.c.user_id == user_id,
+            recipe_personal_links_table.c.recipe_id == recipe_id,
+        )
+    )
     return and_(
         Recipe.id == recipe_id,
-        Recipe.user_id == user_id,
-        or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
+        or_(
+            and_(
+                Recipe.user_id == user_id,
+                or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
+            ),
+            personally_linked,
+        ),
     )
 
 
