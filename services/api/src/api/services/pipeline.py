@@ -65,8 +65,15 @@ def _find_jsonld_recipe(html: str) -> dict | None:
         except (json.JSONDecodeError, TypeError):
             continue
         items = data if isinstance(data, list) else [data]
+        # Many SEO plugins (e.g. Yoast) nest all typed nodes under a shared
+        # "@graph" array instead of exposing Recipe at the top level.
+        items = [
+            node
+            for item in items
+            for node in ((item.get("@graph") or [item]) if isinstance(item, dict) else [item])
+        ]
         for item in items:
-            if item.get("@type") == "Recipe":
+            if isinstance(item, dict) and item.get("@type") == "Recipe":
                 return item
     return None
 
@@ -76,6 +83,16 @@ def _jsonld_recipe_steps(data: dict) -> list[str]:
     for s in data.get("recipeInstructions", []):
         if isinstance(s, str) and s.strip():
             steps.append(s)
+        elif isinstance(s, dict) and s.get("@type") == "HowToSection":
+            # WP Recipe Maker's condensed "Abbreviated recipe" section
+            # duplicates the real steps in one paragraph — skip it.
+            if (s.get("name") or "").strip().lower().startswith("abbreviated"):
+                continue
+            # A HowToSection groups its own HowToStep items under
+            # itemListElement instead of carrying step text directly.
+            for sub in s.get("itemListElement", []):
+                if isinstance(sub, dict) and sub.get("text", "").strip():
+                    steps.append(sub["text"])
         elif isinstance(s, dict) and s.get("text", "").strip():
             steps.append(s["text"])
     return steps
