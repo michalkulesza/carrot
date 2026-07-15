@@ -42,6 +42,8 @@ export const colors = {
   gray6: ios('systemGray6', '#f2f2f7'),
 
   brand: '#ea8e4e',
-  brandLight: '#f8e9e3',
+  brandLight: (Platform.OS === 'ios'
+    ? DynamicColorIOS({ light: '#f8e9e3', dark: '#4a2e23' })
+    : '#f8e9e3') as unknown as string,
   brandText,
 }

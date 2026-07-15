@@ -15,7 +15,7 @@
       "backgroundColor": "#cb6134",
       "imageWidth": 437
     },
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kulesza.carrot",
