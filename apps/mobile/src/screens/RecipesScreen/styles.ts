@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     marginHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 18,
     padding: 12,
     borderRadius: 12,
     backgroundColor: colors.background,
