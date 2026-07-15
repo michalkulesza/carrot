@@ -14,6 +14,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.5] — 2026-07-15
+
+### Recipes & importing
+
+- ✨ **Feature** — Metric ingredient quantities now show the equivalent imperial cup amount alongside them (e.g. "300ml chicken broth (1 cup)"), scaled to the current serving count.
+- ✨ **Feature** — Recipe live sync: household members now see each other's meal plan and recipe edits update in real time via SSE, without switching tabs.
+- ✨ **Feature** — Broadened recipe import support: sites embedding recipes as schema.org microdata (instead of JSON-LD), Yoast-style `@graph`-nested JSON-LD (RecipeTin Eats, Jamie Oliver, and others), and WP Recipe Maker's grouped `HowToSection` steps are now parsed correctly. Added dedicated parsers for kwestiasmaku.com and oliveandmango.com.
+- ✨ **Feature** — Removed custom tag creation across web, mobile, and backend — tags are now added from the existing predefined list only.
+- 🐛 **Bug** — Fixed cup-hint detection and embedded-unit scaling to catch mid-sentence quantities (e.g. "dissolved in 2 cups simmering water"), not just the leading one.
+- 🐛 **Bug** — Recipes with ingredients and steps split across separate components (e.g. "For the paste" / "For the pork" sections sharing one instruction list) are no longer rejected as incomplete.
+- 🐛 **Bug** — Fixed concurrent recipe re-imports timing out after 15-30s by reusing a single shared fetch session instead of opening a new one per request.
+- 🐛 **Bug** — Fixed tag editing on recipe details: removal was silently disabled outside edit mode, the picker always said "Add tag" even when removing, and the backdrop had no tap-to-dismiss.
+- 🐛 **Bug** — Ingredient group collapse toggle moved to the INGREDIENTS row so steps and title always stay visible; all groups (not just extra ones) are now collapsible.
+- 🐛 **Bug** — Fixed recipe detail total-time stat wrapping onto two lines by compacting the format (e.g. "2h30m").
+- 🐛 **Bug** — Personal library link is now scoped per user instead of a single shared flag, so one household member sending a recipe to their personal library no longer hides that option for everyone else.
+- 🐛 **Bug** — Fixed star icon vertical alignment on the recipe detail screen for single-line titles.
+
+### Households & sharing
+
+- 🐛 **Bug** — Household avatar in the Recipes header now shows a loading spinner instead of silently falling back to the personal avatar while households are still fetching.
+
+### Apps & platform
+
+- ✨ **Feature** — Mobile: next-meal card now scrolls with the recipe list instead of staying pinned under the header.
+- ✨ **Feature** — Mobile: tag picker now uses a native-style rounded search field and shifts above the keyboard while typing; the sheet's backdrop tint was removed and its card is now fully rounded with selected tags sorted first.
+
 ## [1.0.4] — 2026-07-15
 
 ### Recipes & importing

@@ -1,5 +1,15 @@
-import { useState, type RefObject } from 'react'
-import { ActivityIndicator, Linking, Pressable, ScrollView, Switch, Text, View } from 'react-native'
+import { useCallback, useState, type RefObject } from 'react'
+import {
+  ActivityIndicator,
+  Linking,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+  type NativeSyntheticEvent,
+  type TextLayoutEventData,
+} from 'react-native'
 import Avatar from '../../components/Avatar'
 import NetworkImage from '../../components/NetworkImage'
 import { useTranslation } from 'react-i18next'
@@ -86,6 +96,10 @@ const ReadView = ({
   const contributorName = recipe.household_id ? recipe.added_by ?? personalName : personalName
   const contributorTooltip = recipe.added_by ?? t('households.personalHousehold')
   const [openHouseholdAvatar, setOpenHouseholdAvatar] = useState<string | null>(null)
+  const [titleIsSingleLine, setTitleIsSingleLine] = useState(true)
+  const handleTitleTextLayout = useCallback((e: NativeSyntheticEvent<TextLayoutEventData>) => {
+    setTitleIsSingleLine(e.nativeEvent.lines.length <= 1)
+  }, [])
   const servingScale = recipe.servings && selectedServings
     ? selectedServings / recipe.servings
     : 1
@@ -121,7 +135,7 @@ const ReadView = ({
         )}
 
         <View style={styles.card}>
-          <View style={styles.titleRow}>
+          <View style={[styles.titleRow, titleIsSingleLine && styles.titleRowSingleLine]}>
             <Pressable
               onPress={handleToggleFavourite}
               hitSlop={8}
@@ -144,13 +158,15 @@ const ReadView = ({
                 accessibilityLabel={recipe.title}
                 accessibilityRole="link"
               >
-                <Text style={styles.title}>
+                <Text style={styles.title} onTextLayout={handleTitleTextLayout}>
                   {recipe.title}{' '}
                   <Feather name="link" size={20} color={colors.label} />
                 </Text>
               </Pressable>
             ) : (
-              <Text style={styles.title}>{recipe.title}</Text>
+              <Text style={styles.title} onTextLayout={handleTitleTextLayout}>
+                {recipe.title}
+              </Text>
             )}
           </View>
 

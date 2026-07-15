@@ -32,6 +32,9 @@ export const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
+  titleRowSingleLine: {
+    alignItems: 'center',
+  },
   favBtn: {
     width: 34,
     height: 34,
