@@ -140,7 +140,6 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
       enableDynamicSizing={false}
       enablePanDownToClose
       topInset={insets.top}
-      bottomInset={insets.bottom}
       onDismiss={handleClose}
       backdropComponent={renderBackdrop}
       backgroundStyle={styles.sheetBackground}
