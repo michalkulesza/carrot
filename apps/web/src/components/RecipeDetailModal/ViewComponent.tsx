@@ -5,6 +5,7 @@ import type { SaveComponent, StepIngredientRef } from '@carrot/shared/types'
 import {
   computeClientStepIngredientRefs,
   displayIngredient,
+  getMetricCupHint,
   getScaledIngredientValues,
 } from './helpers'
 import AllergenPopover from './AllergenPopover'
@@ -134,7 +135,10 @@ const ViewComponent = ({
                   className={`flex items-start gap-2 ${TEXT_SIZE_CLASSES[fontSizeIndex]}`}
                 >
                   <span className="text-zinc-300 mt-1 shrink-0">·</span>
-                  <span className="flex-1">{displayIngredient(ing, t)}</span>
+                  <span className="flex-1">
+                    {displayIngredient(ing, t)}
+                    {getMetricCupHint(comp, i, unitSystem, servingScale, t)}
+                  </span>
                   {flag && (
                     <AllergenPopover
                       flag={flag}

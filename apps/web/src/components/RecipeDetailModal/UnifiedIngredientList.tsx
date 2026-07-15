@@ -1,7 +1,11 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
-import { displayIngredient, getScaledIngredientValues } from './helpers'
+import {
+  displayIngredient,
+  getMetricCupHint,
+  getScaledIngredientValues,
+} from './helpers'
 import AllergenPopover from './AllergenPopover'
 
 const TEXT_SIZE_CLASSES = [
@@ -104,6 +108,13 @@ const UnifiedIngredientList = ({
                 <span className="text-zinc-300 mt-1 shrink-0">·</span>
                 <span className="flex-1">
                   {displayIngredient(ingredient, t)}
+                  {getMetricCupHint(
+                    component,
+                    ingredientIndex,
+                    unitSystem,
+                    servingScale,
+                    t
+                  )}
                 </span>
                 {flag && (
                   <AllergenPopover

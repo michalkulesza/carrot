@@ -2,7 +2,10 @@ import { useCallback, useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
-import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
+import {
+  getImperialCupQty,
+  scaleIngredientQuantity,
+} from '@carrot/shared/utils/ingredientScaling'
 import { styles } from './styles'
 import IngredientRow from './IngredientRow'
 
@@ -10,6 +13,7 @@ interface UnifiedIngredient {
   componentIndex: number
   ingredientIndex: number
   ingredient: string
+  cupHint: string
   shoppingListValue: string
 }
 
@@ -49,16 +53,27 @@ const UnifiedIngredientsSection = ({
             component.shopping_list_ingredients?.[ingredientIndex]
           const shoppingListValue =
             servingScale === 1 && originalValue ? originalValue : ingredient
+          const cupQty =
+            unitSystem === 'imperial'
+              ? null
+              : getImperialCupQty(
+                  component.imperial_ingredients?.[ingredientIndex],
+                  servingScale
+                )
+          const cupHint = cupQty
+            ? ` (${cupQty} ${t('units.cup', { defaultValue: 'cup' })})`
+            : ''
 
           return {
             componentIndex,
             ingredientIndex,
             ingredient,
+            cupHint,
             shoppingListValue,
           }
         })
       }),
-    [components, servingScale, unitSystem]
+    [components, servingScale, unitSystem, t]
   )
 
   const allAdded =
@@ -110,6 +125,7 @@ const UnifiedIngredientsSection = ({
           componentIndex,
           ingredientIndex,
           ingredient,
+          cupHint,
           shoppingListValue,
         }) => {
           const key = `${componentIndex}-${ingredientIndex}`
@@ -118,6 +134,7 @@ const UnifiedIngredientsSection = ({
             <IngredientRow
               key={key}
               ingredient={ingredient}
+              cupHint={cupHint}
               addMode={addMode}
               isAdded={sessionAdded.has(key)}
               onAdd={() => onAdd(key, shoppingListValue)}

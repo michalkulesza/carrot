@@ -7,6 +7,7 @@ import { styles } from './styles'
 
 const IngredientRow = ({
   ingredient,
+  cupHint = '',
   addMode = false,
   isAdded = false,
   onAdd,
@@ -14,6 +15,7 @@ const IngredientRow = ({
   lineHeight = 22,
 }: {
   ingredient: string
+  cupHint?: string
   addMode?: boolean
   isAdded?: boolean
   onAdd?: () => void
@@ -27,6 +29,7 @@ const IngredientRow = ({
       <Text style={styles.bullet}>{'•'}</Text>
       <Text style={[styles.ingredientText, { fontSize, lineHeight }]}>
         {displayValue}
+        {cupHint}
       </Text>
       {addMode && (
         <Pressable

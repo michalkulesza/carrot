@@ -4,7 +4,10 @@ import type {
   SaveComponent,
   StepIngredientRef,
 } from '@carrot/shared/types'
-import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
+import {
+  getImperialCupQty,
+  scaleIngredientQuantity,
+} from '@carrot/shared/utils/ingredientScaling'
 import { UNITS } from '../../api/client'
 
 export type Mode = 'view' | 'editing' | 'confirming'
@@ -109,6 +112,23 @@ export const getScaledIngredientValues = (
   return ingredients.map((ingredient) =>
     scaleIngredientQuantity(ingredient, servingScale)
   )
+}
+
+export const getMetricCupHint = (
+  component: SaveComponent,
+  ingredientIndex: number,
+  unitSystem: string,
+  servingScale: number,
+  t: (key: string, opts: { defaultValue: string }) => string
+): string => {
+  if (unitSystem === 'imperial') return ''
+
+  const qty = getImperialCupQty(
+    component.imperial_ingredients?.[ingredientIndex],
+    servingScale
+  )
+
+  return qty ? ` (${qty} ${t('units.cup', { defaultValue: 'cup' })})` : ''
 }
 
 export const getShoppingListIngredient = (

@@ -20,6 +20,7 @@ const EMBEDDED_QUANTITY_PATTERN = new RegExp(
   `(${SIMPLE_QUANTITY_PATTERN})(\\s*)(${UNIT_PATTERN}(?:es|s)?)\\b`,
   'gi',
 )
+const LEADING_CUP_PATTERN = new RegExp(`^(\\s*)(${SIMPLE_QUANTITY_PATTERN})\\s+cups?\\b`, 'i')
 
 const parseSlashFraction = (value: string): number | null => {
   const [numeratorText, denominatorText] = value.split(/[\/⁄]/)
@@ -102,4 +103,16 @@ export const scaleIngredientQuantity = (ingredient: string, scale: number): stri
   const rest = scaleEmbeddedQuantities(ingredient.slice(match[0].length), scale)
 
   return `${match[1]}${scaledQuantity}${rest}`
+}
+
+export const getImperialCupQty = (
+  imperialIngredient: string | undefined,
+  servingScale: number,
+): string | null => {
+  if (!imperialIngredient) return null
+
+  const scaled = scaleIngredientQuantity(imperialIngredient, servingScale)
+  const match = scaled.match(LEADING_CUP_PATTERN)
+
+  return match ? match[2] : null
 }

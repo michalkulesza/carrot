@@ -4,7 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import type { RecipeOut, SaveComponent, StepIngredientRef } from '@carrot/shared/types'
 import { buildClientStepRefs } from '@carrot/shared/utils/ingredientUtils'
-import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
+import {
+  getImperialCupQty,
+  scaleIngredientQuantity,
+} from '@carrot/shared/utils/ingredientScaling'
 import { styles } from './styles'
 import { colors } from '../../theme/colors'
 import { capitalizeFirst } from './helpers'
@@ -55,6 +58,18 @@ const ComponentSection = ({
   const ingredients = useMemo(
     () => ingredientValues.map((ingredient) => scaleIngredientQuantity(ingredient, servingScale)),
     [ingredientValues, servingScale],
+  )
+
+  const getCupHint = useCallback(
+    (ingredientIndex: number) => {
+      if (unitSystem === 'imperial') return ''
+      const qty = getImperialCupQty(
+        component.imperial_ingredients?.[ingredientIndex],
+        servingScale,
+      )
+      return qty ? ` (${qty} ${t('units.cup', { defaultValue: 'cup' })})` : ''
+    },
+    [component.imperial_ingredients, servingScale, t, unitSystem],
   )
 
   const stepRefs = useMemo<StepIngredientRef[][]>(
@@ -136,6 +151,7 @@ const ComponentSection = ({
             <IngredientRow
               key={i}
               ingredient={ingredient}
+              cupHint={getCupHint(i)}
               addMode={addMode}
               isAdded={sessionAdded?.has(`${index}-${i}`) ?? false}
               onAdd={() => onAdd?.(
