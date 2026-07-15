@@ -115,7 +115,7 @@ export const TagPickerModal = ({
   const [query, setQuery] = useState('')
   const [creating, setCreating] = useState(false)
 
-  const tagModalMarginBottom = useMemo(() => ({ marginBottom: insets.bottom + 12 }), [insets.bottom])
+  const tagModalPaddingBottom = useMemo(() => ({ paddingBottom: insets.bottom + 24 }), [insets.bottom])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -124,15 +124,17 @@ export const TagPickerModal = ({
 
   const groupedSections = useMemo(() => {
     const grouped = groupTagsByCategory(filtered)
+    const selectedFirst = (tags: Tag[]) =>
+      [...tags].sort((a, b) => Number(selectedIds.has(b.id)) - Number(selectedIds.has(a.id)))
     return [
       ...TAG_CATEGORIES.map((category) => ({
         key: category,
         title: t(`tags.category.${category}`),
-        tags: grouped[category],
+        tags: selectedFirst(grouped[category]),
       })),
-      { key: 'other', title: t('tags.category.other'), tags: grouped.other },
+      { key: 'other', title: t('tags.category.other'), tags: selectedFirst(grouped.other) },
     ].filter((section) => section.tags.length > 0)
-  }, [filtered, t])
+  }, [filtered, t, selectedIds])
 
   const trimmedQuery = query.trim()
   const exactMatch = allTags.some((tag) => tag.name.toLowerCase() === trimmedQuery.toLowerCase())
@@ -182,7 +184,7 @@ export const TagPickerModal = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.tagModalOverlay} onPress={onClose} />
-      <View style={[styles.tagModal, tagModalMarginBottom]}>
+      <View style={[styles.tagModal, tagModalPaddingBottom]}>
         <View style={styles.sheetHandle} />
         <View style={styles.tagModalHeader}>
           <Text style={styles.tagModalTitle}>{t('tags.editTags')}</Text>
@@ -385,11 +387,10 @@ const styles = StyleSheet.create({
   tagModalOverlay: { flex: 1, backgroundColor: 'transparent' },
   tagModal: {
     backgroundColor: PlatformColor('systemBackground') as unknown as string,
-    borderRadius: 20,
-    marginHorizontal: 8,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     paddingTop: 8,
     maxHeight: '72%',
-    paddingBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -1 },
     shadowOpacity: 0.15,
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     fontWeight: '600',
-    color: PlatformColor('secondaryLabel') as unknown as string,
+    color: PlatformColor('label') as unknown as string,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     paddingHorizontal: 16,
