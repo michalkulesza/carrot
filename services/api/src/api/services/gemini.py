@@ -7,7 +7,7 @@ from typing import Callable, TypeVar
 
 from google import genai
 from google.genai import types
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from api.config import settings
 from api.models import (
@@ -22,6 +22,7 @@ from api.models import (
 log = logging.getLogger(__name__)
 
 _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
+_MAX_ENRICHMENT_ATTEMPTS = 3
 
 _T = TypeVar("_T")
 
@@ -190,23 +191,50 @@ async def _enrich_recipe(
         prompt["available_tags"] = available_tags
 
     client = _build_client()
-    response = await _with_retry(
-        lambda: client.models.generate_content(
-            model=_DEFAULT_MECHANICAL_MODEL,
-            contents=json.dumps(prompt, ensure_ascii=False),
-            config=types.GenerateContentConfig(
-                system_instruction=_ENRICHMENT_SYSTEM,
-                temperature=0,
-                response_mime_type="application/json",
-                response_schema=RecipeEnrichment,
-            ),
-        ),
-        generous=generous,
-    )
-    if usage is not None:
-        usage.add(response)
+    validation_error: str | None = None
+    for attempt in range(1, _MAX_ENRICHMENT_ATTEMPTS + 1):
+        attempt_prompt = prompt.copy()
+        if validation_error:
+            attempt_prompt["previous_validation_error"] = (
+                f"Your previous response was invalid: {validation_error}. "
+                "Regenerate every enrichment field from source_recipe, preserving its exact "
+                "component, ingredient, and step counts."
+            )
 
-    return RecipeEnrichment.model_validate(json.loads(response.text))
+        response = await _with_retry(
+            lambda: client.models.generate_content(
+                model=_DEFAULT_MECHANICAL_MODEL,
+                contents=json.dumps(attempt_prompt, ensure_ascii=False),
+                config=types.GenerateContentConfig(
+                    system_instruction=_ENRICHMENT_SYSTEM,
+                    temperature=0,
+                    response_mime_type="application/json",
+                    response_schema=RecipeEnrichment,
+                ),
+            ),
+            generous=generous,
+        )
+        if usage is not None:
+            usage.add(response)
+
+        try:
+            enrichment = RecipeEnrichment.model_validate(json.loads(response.text))
+            # Validate every parallel output before accepting the enrichment. The
+            # source extraction remains fixed across retries.
+            assemble_recipe(source, enrichment)
+            return enrichment
+        except (json.JSONDecodeError, ValidationError, ValueError) as exc:
+            validation_error = str(exc)
+            if attempt == _MAX_ENRICHMENT_ATTEMPTS:
+                raise
+            log.warning(
+                "Gemini enrichment response failed validation (attempt %d/%d): %s",
+                attempt,
+                _MAX_ENRICHMENT_ATTEMPTS,
+                validation_error,
+            )
+
+    raise AssertionError("unreachable")
 
 
 def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment) -> RecipeExtraction:
