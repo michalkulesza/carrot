@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native'
+import { ActivityIndicator, Text, View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import type { HouseholdOut } from '@carrot/shared/types'
@@ -12,6 +12,7 @@ const HeaderTitle = ({
   activeHousehold,
   personalName,
   switchContextLabel,
+  isLoadingHouseholds,
 }: {
   title: string
   householdMenuActions: MenuAction[]
@@ -19,18 +20,25 @@ const HeaderTitle = ({
   activeHousehold: HouseholdOut | null
   personalName: string
   switchContextLabel: string
+  isLoadingHouseholds: boolean
 }) => (
   // width: '100%' on headerTitleWrap stops iOS from centering this custom
   // headerTitle view when the nav bar has extra room (e.g. iPhone Pro Max).
   <View style={styles.headerTitleWrap}>
-    <MenuView
-      title={switchContextLabel}
-      actions={householdMenuActions}
-      onPressAction={onHouseholdAction}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-    >
-      <Avatar name={activeHousehold ? activeHousehold.name : personalName} color={activeHousehold?.color} size={28} />
-    </MenuView>
+    {isLoadingHouseholds ? (
+      <View style={styles.headerAvatarLoading}>
+        <ActivityIndicator size="small" />
+      </View>
+    ) : (
+      <MenuView
+        title={switchContextLabel}
+        actions={householdMenuActions}
+        onPressAction={onHouseholdAction}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Avatar name={activeHousehold ? activeHousehold.name : personalName} color={activeHousehold?.color} size={28} />
+      </MenuView>
+    )}
     <Text style={styles.headerTitleText} numberOfLines={1}>
       {title}
     </Text>

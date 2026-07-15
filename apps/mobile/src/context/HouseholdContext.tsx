@@ -16,6 +16,7 @@ import { mobileClient } from '../api/client'
 
 interface HouseholdContextValue {
   households: HouseholdOut[]
+  isLoadingHouseholds: boolean
   activeHouseholdId: string | null
   activeHousehold: HouseholdOut | null
   invitations: InvitationOut[]
@@ -32,7 +33,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
   const { user, refreshUser } = useAuth()
   const qc = useQC()
 
-  const { households } = useHouseholds()
+  const { households, isLoading: isLoadingHouseholds } = useHouseholds()
   const { invitations } = useInvitations()
   const { notifications: leaveNotifications, dismiss: dismissLeaveNotificationMutation } =
     useHouseholdLeaveNotifications()
@@ -74,6 +75,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     <HouseholdContext.Provider
       value={{
         households,
+        isLoadingHouseholds,
         activeHouseholdId,
         activeHousehold,
         invitations,
