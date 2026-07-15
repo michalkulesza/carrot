@@ -1,3 +1,5 @@
+import { UNITS } from '../types'
+
 const VULGAR_FRACTIONS: Record<string, number> = {
   '⅛': 1 / 8,
   '¼': 1 / 4,
@@ -13,6 +15,11 @@ const VULGAR_FRACTIONS: Record<string, number> = {
 const VULGAR_FRACTION_PATTERN = Object.keys(VULGAR_FRACTIONS).join('')
 const SIMPLE_QUANTITY_PATTERN = `(?:\\d+(?:[.,]\\d+)?(?:[${VULGAR_FRACTION_PATTERN}]|\\s+(?:\\d+[\\/⁄]\\d+|[${VULGAR_FRACTION_PATTERN}]))?|\\d+[\\/⁄]\\d+|[${VULGAR_FRACTION_PATTERN}])`
 const LEADING_QUANTITY_PATTERN = new RegExp(`^(\\s*)(${SIMPLE_QUANTITY_PATTERN})(?=\\s|$)`)
+const UNIT_PATTERN = UNITS.join('|')
+const EMBEDDED_QUANTITY_PATTERN = new RegExp(
+  `(${SIMPLE_QUANTITY_PATTERN})(\\s*)(${UNIT_PATTERN}(?:es|s)?)\\b`,
+  'gi',
+)
 
 const parseSlashFraction = (value: string): number | null => {
   const [numeratorText, denominatorText] = value.split(/[\/⁄]/)
@@ -72,17 +79,27 @@ const formatQuantity = (value: number, decimalSeparator: '.' | ','): string => {
   return decimalSeparator === ',' ? decimal.replace('.', ',') : decimal
 }
 
+const scaleEmbeddedQuantities = (text: string, scale: number): string =>
+  text.replace(EMBEDDED_QUANTITY_PATTERN, (matchText, qtyText, spacing, unitText) => {
+    const quantity = parseQuantity(qtyText)
+    if (quantity === null) return matchText
+
+    const decimalSeparator = qtyText.includes(',') ? ',' : '.'
+    return `${formatQuantity(quantity * scale, decimalSeparator)}${spacing}${unitText}`
+  })
+
 export const scaleIngredientQuantity = (ingredient: string, scale: number): string => {
   if (!Number.isFinite(scale) || scale <= 0 || scale === 1) return ingredient
 
   const match = ingredient.match(LEADING_QUANTITY_PATTERN)
-  if (!match) return ingredient
+  if (!match) return scaleEmbeddedQuantities(ingredient, scale)
 
   const quantity = parseQuantity(match[2])
-  if (quantity === null) return ingredient
+  if (quantity === null) return scaleEmbeddedQuantities(ingredient, scale)
 
   const decimalSeparator = match[2].includes(',') ? ',' : '.'
   const scaledQuantity = formatQuantity(quantity * scale, decimalSeparator)
+  const rest = scaleEmbeddedQuantities(ingredient.slice(match[0].length), scale)
 
-  return `${match[1]}${scaledQuantity}${ingredient.slice(match[0].length)}`
+  return `${match[1]}${scaledQuantity}${rest}`
 }
