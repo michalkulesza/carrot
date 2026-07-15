@@ -19,8 +19,9 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   const weekday = formatWeekdayShort(date, i18n.language)
   const dayLabel = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(date)
   const monthLabel = dayLabel.replace(/^\d+\s*/, '')
-  const thumbUri = entry ? proxyThumbnailUrl(entry.recipe.thumbnail_url) : null
-  const accessibilityLabel = `${dayLabel}${entry ? ': ' + entry.recipe.title : ''}`
+  const entryTitle = entry?.recipe?.title ?? entry?.text
+  const thumbUri = entry?.recipe ? proxyThumbnailUrl(entry.recipe.thumbnail_url) : null
+  const accessibilityLabel = `${dayLabel}${entryTitle ? ': ' + entryTitle : ''}`
 
   const getDayRowStyle = useCallback(
     ({ pressed }: { pressed: boolean }) => [styles.dayRow, isToday && styles.dayRowToday, pressed && { opacity: 0.7 }],
@@ -44,12 +45,12 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
       <View style={styles.dayRowDivider} />
       <View style={styles.dayRowContent}>
         {entry ? (
-          <Text style={styles.dayRowRecipe} numberOfLines={2}>{entry.recipe.title}</Text>
+          <Text style={styles.dayRowRecipe} numberOfLines={2}>{entryTitle}</Text>
         ) : (
           <Text style={styles.dayRowEmpty}>{t('mealPlan.addDish')}</Text>
         )}
       </View>
-      {entry && (
+      {entry?.recipe && (
         thumbUri ? (
           <NetworkImage uri={thumbUri} style={styles.dayRowThumb} recyclingKey={thumbUri} />
         ) : (
@@ -62,8 +63,9 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   prev.isToday === next.isToday &&
   prev.onPress === next.onPress &&
   prev.date === next.date &&
-  prev.entry?.recipe.id === next.entry?.recipe.id &&
-  prev.entry?.recipe.thumbnail_url === next.entry?.recipe.thumbnail_url
+  prev.entry?.recipe?.id === next.entry?.recipe?.id &&
+  prev.entry?.recipe?.thumbnail_url === next.entry?.recipe?.thumbnail_url &&
+  prev.entry?.text === next.entry?.text
 )
 
 export default DayRow

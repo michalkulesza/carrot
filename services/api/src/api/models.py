@@ -5,7 +5,7 @@ from datetime import date as DateType, datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import JSON, Boolean, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -449,10 +449,11 @@ class MealPlanEntry(Base):
         PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
     )
     date: Mapped[DateType] = mapped_column(Date, nullable=False)
-    recipe_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False
+    recipe_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=True
     )
-    recipe: Mapped[Recipe] = relationship("Recipe", lazy="selectin")
+    text: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    recipe: Mapped[Recipe | None] = relationship("Recipe", lazy="selectin")
 
 
 class MealPlanEntryOut(BaseModel):
@@ -460,11 +461,22 @@ class MealPlanEntryOut(BaseModel):
 
     id: uuid.UUID
     date: DateType
-    recipe: RecipeOut
+    recipe: RecipeOut | None
+    text: str | None
 
 
 class MealPlanSetRequest(BaseModel):
-    recipe_id: uuid.UUID
+    recipe_id: uuid.UUID | None = None
+    text: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def validate_entry(self) -> "MealPlanSetRequest":
+        text = self.text.strip() if self.text else ""
+        text = text or None
+        if (self.recipe_id is None) == (text is None):
+            raise ValueError("Provide exactly one of recipe_id or text")
+        self.text = text
+        return self
 
 
 # ── User Preferences ──────────────────────────────────────────────────────────

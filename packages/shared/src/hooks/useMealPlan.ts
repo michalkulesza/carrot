@@ -15,8 +15,8 @@ export const useMealPlan = (month: string) => {
   })
 
   const setEntry = useMutation({
-    mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
-      api.setMealPlanEntry(date, recipeId),
+    mutationFn: ({ date, recipeId, text }: { date: string; recipeId?: string; text?: string }) =>
+      api.setMealPlanEntry(date, { recipeId, text }),
     onSuccess: (entry) => {
       if (entry.date >= todayIso) {
         qc.setQueryData<MealPlanEntry | null>(['mealPlan', 'next', todayIso], (current) => {

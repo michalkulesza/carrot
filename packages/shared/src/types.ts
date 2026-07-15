@@ -229,7 +229,8 @@ export interface RecipeStats {
 export interface MealPlanEntry {
   id: string
   date: string // "YYYY-MM-DD"
-  recipe: RecipeOut
+  recipe: RecipeOut | null
+  text: string | null
 }
 
 export interface UserPreferences {

@@ -66,7 +66,7 @@ async def _fetch_entries(
     from sqlalchemy import select
 
     result = await session.execute(select(MealPlanEntry).where(where))
-    return {str(e.date): e.recipe.title for e in result.scalars().all()}
+    return {str(e.date): e.recipe.title if e.recipe is not None else e.text or "" for e in result.scalars().all()}
 
 
 def _week_mondays(year: int, month: int) -> list[DateType]:

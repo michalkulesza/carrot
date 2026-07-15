@@ -117,7 +117,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     const { entries, setEntry } = useMealPlan(monthKey)
 
     const assignedDates = useMemo(
-      () => new Set(entries.filter((e) => e.recipe.id === recipeId).map((e) => e.date)),
+      () => new Set(entries.filter((e) => e.recipe?.id === recipeId).map((e) => e.date)),
       [entries, recipeId],
     )
 

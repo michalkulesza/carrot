@@ -13,6 +13,7 @@ from api.routes.meal_plan import (
     get_next_meal_plan_entry,
     router,
 )
+from api.models import MealPlanSetRequest
 
 
 @pytest.mark.parametrize(
@@ -30,6 +31,27 @@ def test_next_entry_route_exposes_from_query_parameter() -> None:
     route = next(route for route in router.routes if route.path == "/meal-plan/next")
 
     assert [parameter.alias for parameter in route.dependant.query_params] == ["from"]
+
+
+def test_plain_text_entry_is_trimmed() -> None:
+    entry = MealPlanSetRequest(text="  Frozen pizza  ")
+
+    assert entry.recipe_id is None
+    assert entry.text == "Frozen pizza"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {},
+        {"text": "   "},
+        {"text": "x" * 201},
+        {"recipe_id": uuid.uuid4(), "text": "Frozen pizza"},
+    ],
+)
+def test_meal_plan_entry_requires_exactly_one_source(payload: dict) -> None:
+    with pytest.raises(ValueError):
+        MealPlanSetRequest(**payload)
 
 
 def test_next_personal_entry_query_excludes_past_and_other_contexts() -> None:

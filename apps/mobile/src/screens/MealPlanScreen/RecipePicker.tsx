@@ -12,6 +12,7 @@ import { styles } from './styles'
 interface RecipePickerProps {
   currentRecipeId: string | null
   recipes: RecipeOut[]
+  onAddText: (text: string) => void
   onPick: (recipeId: string) => void
   onRemove: () => void
   onClose: () => void
@@ -27,12 +28,14 @@ const SNAP_POINTS = ['60%']
 const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   currentRecipeId,
   recipes,
+  onAddText,
   onPick,
   onRemove,
   onClose,
 }, ref) => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const [plainText, setPlainText] = useState('')
   const [search, setSearch] = useState('')
   const sheetRef = useRef<BottomSheetModal>(null)
 
@@ -55,14 +58,24 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   }, [recipes, search])
 
   const handleClose = useCallback(() => {
+    setPlainText('')
     setSearch('')
     onClose()
   }, [onClose])
 
   const handleRemovePress = useCallback(() => {
+    setPlainText('')
     setSearch('')
     onRemove()
   }, [onRemove])
+
+  const handleAddText = useCallback(() => {
+    const text = plainText.trim()
+    if (!text) return
+
+    setPlainText('')
+    onAddText(text)
+  }, [onAddText, plainText])
 
   const getPickerItemStyle = useCallback(
     (active: boolean) => ({ pressed }: { pressed: boolean }) => [
@@ -76,6 +89,15 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   const getRemoveButtonStyle = useCallback(
     ({ pressed }: { pressed: boolean }) => [styles.removeButton, pressed && { opacity: 0.7 }],
     [],
+  )
+
+  const getPlainTextAddButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [
+      styles.plainTextAddButton,
+      !plainText.trim() && styles.plainTextAddButtonDisabled,
+      pressed && { opacity: 0.7 },
+    ],
+    [plainText],
   )
 
   const renderItem = useCallback(
@@ -124,6 +146,30 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
       backgroundStyle={styles.sheetBackground}
       handleIndicatorStyle={styles.sheetHandle}
     >
+      <View style={styles.plainTextEntry}>
+        <BottomSheetTextInput
+          style={styles.plainTextInput}
+          placeholder={t('mealPlan.quickEntryPlaceholder')}
+          placeholderTextColor={PlatformColor('placeholderText') as unknown as string}
+          value={plainText}
+          onChangeText={setPlainText}
+          autoCapitalize="sentences"
+          autoCorrect
+          maxLength={200}
+          returnKeyType="done"
+          onSubmitEditing={handleAddText}
+          accessibilityLabel={t('mealPlan.quickEntryPlaceholder')}
+        />
+        <Pressable
+          style={getPlainTextAddButtonStyle}
+          onPress={handleAddText}
+          disabled={!plainText.trim()}
+          accessibilityLabel={t('mealPlan.addMeal')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.plainTextAddButtonText}>{t('mealPlan.addMeal')}</Text>
+        </Pressable>
+      </View>
       <View style={styles.pickerSearchContainer}>
         <Ionicons name="search" size={17} color={PlatformColor('secondaryLabel') as unknown as string} />
         <BottomSheetTextInput

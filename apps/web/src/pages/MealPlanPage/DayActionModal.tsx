@@ -35,8 +35,9 @@ const DayActionModal = ({
   const { t } = useTranslation()
   if (!entry) return null
 
-  const thumb = proxyUrl(entry.recipe.thumbnail_url)
-  const macroSummary = formatMacroSummary(entry.recipe)
+  const entryTitle = entry.recipe?.title ?? entry.text ?? ''
+  const thumb = entry.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
+  const macroSummary = entry.recipe ? formatMacroSummary(entry.recipe) : null
 
   return (
     <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -47,7 +48,7 @@ const DayActionModal = ({
               {thumb ? (
                 <RecipeThumb
                   src={thumb}
-                  alt={entry.recipe.title}
+                  alt={entryTitle}
                   className="w-12 h-12 rounded-xl shrink-0"
                 />
               ) : (
@@ -57,7 +58,7 @@ const DayActionModal = ({
               )}
               <div className="min-w-0">
                 <p className="text-sm font-semibold line-clamp-2 leading-snug">
-                  {entry.recipe.title}
+                  {entryTitle}
                 </p>
                 {macroSummary && (
                   <p className="text-xs text-zinc-400 mt-0.5">{macroSummary}</p>
@@ -66,21 +67,25 @@ const DayActionModal = ({
             </ModalHeader>
             <ModalBody className="pt-0 pb-4">
               <div className="flex flex-col gap-2">
-                <Button
-                  variant="secondary"
-                  fullWidth
-                  className="!rounded-lg"
-                  onPress={onViewRecipe}
-                >
-                  {t('mealPlan.viewRecipe')}
-                </Button>
+                {entry.recipe && (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    className="!rounded-lg"
+                    onPress={onViewRecipe}
+                  >
+                    {t('mealPlan.viewRecipe')}
+                  </Button>
+                )}
                 <Button
                   variant="secondary"
                   fullWidth
                   className="!rounded-lg"
                   onPress={onChangeRecipe}
                 >
-                  {t('mealPlan.changeRecipe')}
+                  {entry.recipe
+                    ? t('mealPlan.changeRecipe')
+                    : t('mealPlan.changeMeal')}
                 </Button>
                 <Button
                   variant="danger-soft"

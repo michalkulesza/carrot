@@ -201,11 +201,14 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<MealPlanEntry | null>
   }
 
-  const setMealPlanEntry = async (date: string, recipeId: string): Promise<MealPlanEntry> => {
+  const setMealPlanEntry = async (
+    date: string,
+    entry: { recipeId?: string; text?: string },
+  ): Promise<MealPlanEntry> => {
     const res = await apiFetch(`/api/meal-plan/${date}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipe_id: recipeId }),
+      body: JSON.stringify({ recipe_id: entry.recipeId, text: entry.text }),
     })
     if (!res.ok) throw new Error('Failed to set meal plan entry')
     return res.json() as Promise<MealPlanEntry>

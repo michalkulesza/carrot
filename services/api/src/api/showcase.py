@@ -156,8 +156,9 @@ async def reset_showcase_account() -> None:
         await session.flush()
 
         for entry_fixture in fixture.get("meal_plan_entries", []):
-            recipe_id = recipe_id_map.get(entry_fixture["recipe_fixture_id"])
-            if recipe_id is None:
+            recipe_id = recipe_id_map.get(entry_fixture.get("recipe_fixture_id"))
+            text = entry_fixture.get("text")
+            if recipe_id is None and not text:
                 continue
             session.add(
                 MealPlanEntry(
@@ -165,6 +166,7 @@ async def reset_showcase_account() -> None:
                     household_id=household_id,
                     date=datetime.fromisoformat(entry_fixture["date"]).date(),
                     recipe_id=recipe_id,
+                    text=text,
                 )
             )
 

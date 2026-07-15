@@ -100,6 +100,7 @@ const parseIngStr = (raw: string): { qty: string; name: string } => {
 export const aggregateIngredients = (entries: MealPlanEntry[]): AggregatedIngredient[] => {
   const map = new Map<string, { qty: string[]; name: string }>()
   for (const entry of entries) {
+    if (!entry.recipe) continue
     for (const component of entry.recipe.components) {
       for (const ingStr of component.ingredients) {
         if (!ingStr.trim()) continue

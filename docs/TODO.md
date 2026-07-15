@@ -10,7 +10,6 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Fix recipe share options in household context** — On recipe details, the share button is wrong in household context: it should also allow sending the recipe to my personal library, and it should hide "send to household" when the household already contains that recipe.
 - [ ] **Unified ingredient list with collapsible groups** — When a recipe has multiple ingredient groups (e.g. Main and Sauce), show one combined "Ingredients" list of everything at the top, then render each group as its own collapsible section that is collapsed by default, with a caret/chevron at the end of each group header.
 - [ ] **Personal-only recipe filter** — Add a filter to show only recipes in my personal library that don't belong to any household.
-- [ ] **Quick plain-text meal entries** — When assigning a recipe to a meal-plan day, add a text field at the very top to add a free-text entry (e.g. "Frozen pizza") without an actual recipe attached.
 - [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Multiple meals per day** — Support breakfast, lunch, dinner, and leftovers instead of a single recipe for each date.
 - [ ] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
@@ -25,6 +24,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Don't attach ingredients to the final assembly step** — When mapping ingredients to recipe steps, skip the last/final assembly step so ingredients aren't duplicated onto it.
 - [x] **Cooking time estimation** — Estimate each recipe's cooking time and show it in the stat boxes, in the far-left box.
 - [x] **Improve prompts** — Refined recipe-import query boundaries: source-only extraction schema, enrichment-only schema with a validated combiner, deduplicated allergen analysis, and honoured per-import model overrides. See docs/specs/refine-recipe-import-queries.md.
+- [x] **Quick plain-text meal entries** — Add a one-per-day free-text meal alongside recipes, shared within the active personal or household plan.
 
 ## Experience and product polish
 

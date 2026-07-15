@@ -14,7 +14,8 @@ interface CalendarDayCellProps {
 const CalendarDayCell = ({ cell, entry, onClick }: CalendarDayCellProps) => {
   const { t } = useTranslation()
   const { day, isCurrentMonth, isToday } = cell
-  const thumb = entry ? proxyUrl(entry.recipe.thumbnail_url) : null
+  const entryTitle = entry?.recipe?.title ?? entry?.text
+  const thumb = entry?.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
   const cellClassName = `border-r border-b border-zinc-200 p-2 text-left min-h-[110px] transition-colors group ${
     isCurrentMonth ? 'bg-background hover:bg-primary/5' : 'bg-zinc-50/50'
   }`
@@ -34,12 +35,12 @@ const CalendarDayCell = ({ cell, entry, onClick }: CalendarDayCellProps) => {
           {thumb && (
             <RecipeThumb
               src={thumb}
-              alt={entry.recipe.title}
+              alt={entryTitle ?? ''}
               className="w-5 h-5 rounded shrink-0"
             />
           )}
           <span className="text-xs font-medium text-primary truncate">
-            {entry.recipe.title}
+            {entryTitle}
           </span>
         </div>
       ) : (

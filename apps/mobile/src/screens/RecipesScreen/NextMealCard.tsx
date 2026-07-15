@@ -21,7 +21,7 @@ const NextMealCard = ({ enabled }: NextMealCardProps) => {
 
   const handleOpen = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    if (entry) {
+    if (entry?.recipe) {
       router.push({
         pathname: '/recipe/[id]',
         params: { id: entry.recipe.id, title: entry.recipe.title },
@@ -111,7 +111,8 @@ const NextMealCard = ({ enabled }: NextMealCardProps) => {
     t('nextMeal.today'),
     t('nextMeal.tomorrow'),
   )
-  const accessibilityLabel = `${t('nextMeal.title')}: ${entry.recipe.title}, ${dateLabel}`
+  const entryTitle = entry.recipe?.title ?? entry.text ?? ''
+  const accessibilityLabel = `${t('nextMeal.title')}: ${entryTitle}, ${dateLabel}`
 
   return (
     <Pressable
@@ -120,7 +121,7 @@ const NextMealCard = ({ enabled }: NextMealCardProps) => {
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
     >
-      {entry.recipe.thumbnail_url ? (
+      {entry.recipe?.thumbnail_url ? (
         <ThumbnailImage url={entry.recipe.thumbnail_url} style={styles.nextMealImage} />
       ) : (
         <View style={styles.nextMealFallbackIcon}>
@@ -130,7 +131,7 @@ const NextMealCard = ({ enabled }: NextMealCardProps) => {
       <View style={styles.nextMealBody}>
         <Text style={styles.nextMealLabel}>{t('nextMeal.title')}</Text>
         <Text style={styles.nextMealRecipeTitle} numberOfLines={1}>
-          {entry.recipe.title}
+          {entryTitle}
         </Text>
         <Text style={styles.nextMealDate}>{dateLabel}</Text>
       </View>

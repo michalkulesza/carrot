@@ -82,8 +82,8 @@ const MealPlanScreen = () => {
   const { showSpinner } = useScreenLoading(isLoading)
 
   const setEntry = useMutation({
-    mutationFn: ({ date, recipeId }: { date: string; recipeId: string }) =>
-      api.setMealPlanEntry(date, recipeId),
+    mutationFn: ({ date, recipeId, text }: { date: string; recipeId?: string; text?: string }) =>
+      api.setMealPlanEntry(date, { recipeId, text }),
     onSuccess: (entry) => {
       // The recipes tab stays mounted while navigating to the meal plan. Update its
       // empty next-meal cache immediately, then revalidate in case another date is
@@ -129,23 +129,31 @@ const MealPlanScreen = () => {
     const existing = entriesByDate.get(isoDate)
 
     if (existing) {
-      Alert.alert(existing.recipe.title, undefined, [
-        {
-          text: t('common.view'),
-          onPress: () => router.push({ pathname: '/recipe/[id]', params: { id: existing.recipe.id, title: existing.recipe.title } }),
+      const changeMealAction = {
+        text: existing.recipe ? t('mealPlan.changeRecipe') : t('mealPlan.changeMeal'),
+        onPress: () => {
+          setPickerDate(date)
+          pickerRef.current?.present()
         },
-        {
-          text: t('mealPlan.changeRecipe'),
-          onPress: () => {
-            setPickerDate(date)
-            pickerRef.current?.present()
-          },
-        },
-        {
-          text: t('mealPlan.removeFromPlan'),
-          style: 'destructive',
-          onPress: () => deleteEntry.mutate(isoDate),
-        },
+      }
+      const removeMealAction = {
+        text: t('mealPlan.removeFromPlan'),
+        style: 'destructive' as const,
+        onPress: () => deleteEntry.mutate(isoDate),
+      }
+      const actions = existing.recipe
+        ? [
+            {
+              text: t('common.view'),
+              onPress: () => router.push({ pathname: '/recipe/[id]', params: { id: existing.recipe!.id, title: existing.recipe!.title } }),
+            },
+            changeMealAction,
+            removeMealAction,
+          ]
+        : [changeMealAction, removeMealAction]
+
+      Alert.alert(existing.recipe?.title ?? existing.text ?? '', undefined, [
+        ...actions,
         { text: t('common.cancel'), style: 'cancel' },
       ])
     } else {
@@ -158,6 +166,17 @@ const MealPlanScreen = () => {
     (recipeId: string) => {
       if (!pickerDate) return
       setEntry.mutate({ date: toISODate(pickerDate), recipeId })
+      setPickerDate(null)
+      pickerRef.current?.dismiss()
+    },
+    [pickerDate, setEntry],
+  )
+
+  const handleAddText = useCallback(
+    (text: string) => {
+      if (!pickerDate) return
+
+      setEntry.mutate({ date: toISODate(pickerDate), text })
       setPickerDate(null)
       pickerRef.current?.dismiss()
     },
@@ -262,6 +281,7 @@ const MealPlanScreen = () => {
         ref={pickerRef}
         currentRecipeId={null}
         recipes={recipes}
+        onAddText={handleAddText}
         onPick={handlePickRecipe}
         onRemove={handleRemoveEntry}
         onClose={handleClosePicker}

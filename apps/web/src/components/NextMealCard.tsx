@@ -22,16 +22,21 @@ const NextMealCard = ({
 
   const openMealPlan = useCallback(() => navigate('/plan'), [navigate])
   const openRecipe = useCallback(() => {
-    if (!entry) return
+    if (!entry?.recipe) {
+      openMealPlan()
+
+      return
+    }
+
     navigate(`/?recipe=${encodeURIComponent(entry.recipe.id)}`)
-  }, [entry, navigate])
+  }, [entry, navigate, openMealPlan])
   const handleRetry = useCallback(() => void refetch(), [refetch])
 
   if (compact) {
     const label = error
       ? t('nextMeal.error')
       : entry
-        ? `${t('nextMeal.title')}: ${entry.recipe.title}`
+        ? `${t('nextMeal.title')}: ${entry.recipe?.title ?? entry.text}`
         : t('nextMeal.openPlan')
     const handleClick = error ? handleRetry : entry ? openRecipe : openMealPlan
 
@@ -114,14 +119,17 @@ const NextMealCard = ({
     t('nextMeal.today'),
     t('nextMeal.tomorrow')
   )
-  const thumbnailSrc = proxyUrl(entry.recipe.thumbnail_url)
+  const entryTitle = entry.recipe?.title ?? entry.text ?? ''
+  const thumbnailSrc = entry.recipe
+    ? proxyUrl(entry.recipe.thumbnail_url)
+    : null
 
   return (
     <button
       type="button"
       onClick={openRecipe}
       className={`w-full rounded-xl border border-zinc-200 bg-white p-3 text-left transition-colors hover:bg-zinc-50 ${className}`}
-      aria-label={`${t('nextMeal.title')}: ${entry.recipe.title}, ${dateLabel}`}
+      aria-label={`${t('nextMeal.title')}: ${entryTitle}, ${dateLabel}`}
     >
       <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
         {t('nextMeal.title')}
@@ -140,7 +148,7 @@ const NextMealCard = ({
         )}
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-zinc-900">
-            {entry.recipe.title}
+            {entryTitle}
           </span>
           <span className="mt-0.5 block text-xs text-zinc-500">
             {dateLabel}

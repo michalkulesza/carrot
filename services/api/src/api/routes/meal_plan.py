@@ -127,13 +127,14 @@ async def set_meal_plan_entry(
     household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> MealPlanEntryOut:
     date = _parse_date(date_str)
-
-    recipe_result = await session.execute(
-        select(Recipe).where(_recipe_access_filter(user.id, household_id, body.recipe_id))
-    )
-    recipe = recipe_result.scalar_one_or_none()
-    if recipe is None:
-        raise HTTPException(status_code=404, detail="Recipe not found")
+    recipe = None
+    if body.recipe_id is not None:
+        recipe_result = await session.execute(
+            select(Recipe).where(_recipe_access_filter(user.id, household_id, body.recipe_id))
+        )
+        recipe = recipe_result.scalar_one_or_none()
+        if recipe is None:
+            raise HTTPException(status_code=404, detail="Recipe not found")
 
     result = await session.execute(
         select(MealPlanEntry).where(_entry_filter(user.id, household_id, date))
@@ -146,10 +147,13 @@ async def set_meal_plan_entry(
             date=date,
             recipe_id=body.recipe_id,
             recipe=recipe,
+            text=body.text,
         )
         session.add(entry)
     else:
         entry.recipe_id = body.recipe_id
+        entry.recipe = recipe
+        entry.text = body.text
 
     await session.commit()
     await session.refresh(entry)

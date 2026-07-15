@@ -66,11 +66,15 @@ async def main() -> None:
             ],
             "meal_plan_entries": [
                 {
-                    "recipe_fixture_id": recipe_fixture_ids[entry.recipe_id],
+                    **(
+                        {"recipe_fixture_id": recipe_fixture_ids[entry.recipe_id]}
+                        if entry.recipe_id in recipe_fixture_ids
+                        else {"text": entry.text}
+                    ),
                     "date": entry.date.isoformat(),
                 }
                 for entry in meal_plan_entries
-                if entry.recipe_id in recipe_fixture_ids
+                if entry.recipe_id in recipe_fixture_ids or entry.text
             ],
             "shopping_list_items": [item.text for item in shopping_list_items],
         }

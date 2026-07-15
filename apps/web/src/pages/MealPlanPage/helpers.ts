@@ -50,7 +50,9 @@ const buildWeekRows = (
   year: number,
   month: number
 ): (string | null)[][] => {
-  const byDate = new Map(entries.map((e) => [e.date, e.recipe.title]))
+  const byDate = new Map(
+    entries.map((e) => [e.date, e.recipe?.title ?? e.text ?? ''])
+  )
   const firstDay = new Date(year, month - 1, 1)
   const lastDay = new Date(year, month, 0)
 

@@ -34,8 +34,9 @@ const DayRow = ({
   const { t } = useTranslation()
   const date = new Date(year, month - 1, day)
   const dayName = formatWeekdayShort(date, locale)
-  const thumb = entry ? proxyUrl(entry.recipe.thumbnail_url) : null
-  const macroSummary = entry ? formatMacroSummary(entry.recipe) : null
+  const entryTitle = entry?.recipe?.title ?? entry?.text
+  const thumb = entry?.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
+  const macroSummary = entry?.recipe ? formatMacroSummary(entry.recipe) : null
   const dateColumnClassName = `w-12 shrink-0 text-center ${isToday || isSelected ? 'text-primary' : 'text-zinc-500'}`
   const dayNumberClassName = `text-2xl font-bold leading-tight ${isSelected ? 'text-primary' : 'text-zinc-800'}`
   const dividerClassName = `w-px self-stretch ${isToday || isSelected ? 'bg-primary/30' : 'bg-zinc-200'}`
@@ -70,7 +71,7 @@ const DayRow = ({
           {thumb ? (
             <RecipeThumb
               src={thumb}
-              alt={entry.recipe.title}
+              alt={entryTitle ?? ''}
               className="w-12 h-12 rounded-xl shrink-0"
             />
           ) : (
@@ -80,7 +81,7 @@ const DayRow = ({
           )}
           <div className="min-w-0 flex-1 text-left">
             <p className="text-sm font-semibold line-clamp-2 text-zinc-800 leading-snug">
-              {entry.recipe.title}
+              {entryTitle}
             </p>
             {macroSummary && (
               <p className="text-xs text-zinc-400 mt-0.5">{macroSummary}</p>

@@ -160,7 +160,7 @@ const AssignToMealPlanModal = ({
   const assignedDates = useMemo(
     () =>
       new Set(
-        entries.filter((e) => e.recipe.id === recipeId).map((e) => e.date)
+        entries.filter((e) => e.recipe?.id === recipeId).map((e) => e.date)
       ),
     [entries, recipeId]
   )

@@ -148,6 +148,15 @@ const MealPlanPage = ({
     [targetDate, setEntry, closePicker]
   )
 
+  const handleAddText = useCallback(
+    (text: string) => {
+      if (!targetDate) return
+
+      setEntry.mutate({ date: targetDate, text }, { onSuccess: closePicker })
+    },
+    [targetDate, setEntry, closePicker]
+  )
+
   const handleRemove = useCallback(() => {
     if (!actionEntry) return
 
@@ -160,7 +169,7 @@ const MealPlanPage = ({
   const clearViewRecipe = useCallback(() => setViewRecipe(null), [])
 
   const handleViewRecipe = useCallback(() => {
-    if (actionEntry) setViewRecipe(actionEntry.recipe)
+    if (actionEntry?.recipe) setViewRecipe(actionEntry.recipe)
   }, [actionEntry])
 
   const handleChangeRecipe = useCallback(() => {
@@ -297,6 +306,7 @@ const MealPlanPage = ({
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
         busy={busy}
+        onAddText={handleAddText}
         onSelectRecipe={handleAssign}
       />
 
