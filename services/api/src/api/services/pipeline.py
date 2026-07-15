@@ -6,8 +6,8 @@ from collections.abc import AsyncGenerator, Awaitable
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
 from bs4 import BeautifulSoup
+from curl_cffi.requests import AsyncSession as CurlAsyncSession
 
 from api.models import (
     ImportMetadata,
@@ -26,6 +26,16 @@ log = logging.getLogger(__name__)
 # errors, HTTP status details, etc. shouldn't leak into the UI). The frontend
 # maps this to a translated, actionable message.
 IMPORT_ERROR_CODE = "extraction_failed"
+
+
+async def _fetch_html(url: str) -> str:
+    # Recipe sites (notably Shopify-hosted ones like andy-cooks.com) fingerprint
+    # the TLS handshake and block plain httpx/requests clients with a 429 even
+    # with a browser User-Agent header, so impersonate a real Chrome client.
+    async with CurlAsyncSession() as client:
+        r = await client.get(url, impersonate="chrome", timeout=15, allow_redirects=True)
+        r.raise_for_status()
+        return r.text
 
 
 async def _run_gemini(
@@ -144,10 +154,7 @@ async def _try_linked_url(
     usage: gemini_svc.UsageTracker | None = None,
 ) -> RecipeExtraction | None:
     try:
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-            r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            r.raise_for_status()
-            html = r.text
+        html = await _fetch_html(url)
     except Exception as exc:
         log.warning("Failed to fetch linked URL %s: %s", url, exc)
         return None
@@ -217,10 +224,7 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
     if not _is_social_url(url):
         yield _stage_event("fetching_page", "Fetching recipe page…")
         try:
-            async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
-                r = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-                r.raise_for_status()
-                html = r.text
+            html = await _fetch_html(url)
         except Exception as exc:
             log.warning("Could not fetch page %s: %s", url, exc)
             report_recipe_import_failure(

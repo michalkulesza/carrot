@@ -23,6 +23,7 @@ dependencies = [
     "pyjwt>=2.8",
     "google-auth>=2.0",
     "sentry-sdk[fastapi]>=2.0",
+    "curl-cffi>=0.15.0",
 ]
 
 [build-system]
