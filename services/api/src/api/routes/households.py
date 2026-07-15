@@ -3,7 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
@@ -14,6 +14,7 @@ from api.models import (
     HouseholdMember,
     InvitationStatus,
     Recipe,
+    recipe_personal_links_table,
 )
 from api.users import User, current_active_user
 
@@ -236,13 +237,24 @@ async def leave_household(
     if member is None:
         raise HTTPException(status_code=404, detail="Not a member")
 
-    # Snapshot shared_to_personal recipes into Personal
-    recipes_result = await session.execute(
-        select(Recipe).where(
-            Recipe.household_id == household_id,
-            Recipe.user_id == user.id,
-            Recipe.shared_to_personal.is_(True),
+    # Snapshot recipes this user had in their personal library into standalone
+    # copies: their own shared_to_personal recipes, plus any recipe from this
+    # household they individually linked to their personal library.
+    personal_link_ids = await session.execute(
+        select(recipe_personal_links_table.c.recipe_id).where(
+            recipe_personal_links_table.c.user_id == user.id
         )
+    )
+    linked_recipe_ids = {row[0] for row in personal_link_ids}
+
+    own_snapshot_condition = and_(Recipe.user_id == user.id, Recipe.shared_to_personal.is_(True))
+    snapshot_condition = (
+        or_(own_snapshot_condition, Recipe.id.in_(linked_recipe_ids))
+        if linked_recipe_ids
+        else own_snapshot_condition
+    )
+    recipes_result = await session.execute(
+        select(Recipe).where(Recipe.household_id == household_id, snapshot_condition)
     )
     for recipe in recipes_result.scalars().all():
         session.add(Recipe(
@@ -257,6 +269,14 @@ async def leave_household(
             source_url=recipe.source_url,
             components=recipe.components,
         ))
+
+    if linked_recipe_ids:
+        await session.execute(
+            delete(recipe_personal_links_table).where(
+                recipe_personal_links_table.c.user_id == user.id,
+                recipe_personal_links_table.c.recipe_id.in_(linked_recipe_ids),
+            )
+        )
 
     remaining_result = await session.execute(
         select(HouseholdMember.user_id).where(

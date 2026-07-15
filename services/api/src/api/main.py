@@ -132,6 +132,12 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_household_status ON import_jobs (household_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_user_status ON import_jobs (user_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_next_attempt_at ON import_jobs (next_attempt_at)"))
+        await conn.execute(text(
+            "INSERT INTO recipe_personal_links (user_id, recipe_id, linked_at) "
+            "SELECT user_id, id, updated_at FROM recipes "
+            "WHERE household_id IS NOT NULL AND shared_to_personal = TRUE "
+            "ON CONFLICT DO NOTHING"
+        ))
     await _seed_demo_user()
     await _seed_default_tags()
     await showcase.ensure_showcase_user()
