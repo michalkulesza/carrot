@@ -407,6 +407,30 @@ async def link_recipe_to_household(
     return _build_recipe_out(recipe)
 
 
+@router.post("/{recipe_id}/link-to-personal", response_model=RecipeOut)
+async def link_recipe_to_personal(
+    recipe_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    active_household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> RecipeOut:
+    if active_household_id is None:
+        raise HTTPException(status_code=400, detail="Not in a household context")
+    result = await session.execute(
+        select(Recipe).where(
+            Recipe.id == recipe_id,
+            Recipe.household_id == active_household_id,
+        )
+    )
+    recipe = result.scalar_one_or_none()
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    recipe.shared_to_personal = True
+    await session.commit()
+    await session.refresh(recipe)
+    return _build_recipe_out(recipe)
+
+
 @router.post("/{recipe_id}/favourite")
 async def toggle_favourite(
     recipe_id: uuid.UUID,

@@ -16,7 +16,7 @@ import type { AddIngredientToShoppingListSheetHandle } from '../../components/Ad
 import { styles } from './styles'
 import { useDisplayPrefs } from './useDisplayPrefs'
 import { useEditDraft } from './useEditDraft'
-import { useRecipeDetailHeader, SEND_TO_HOUSEHOLD_PREFIX } from './useRecipeDetailHeader'
+import { useRecipeDetailHeader, SEND_TO_HOUSEHOLD_PREFIX, SEND_TO_PERSONAL } from './useRecipeDetailHeader'
 import EditView from './EditView'
 import ReadView from './ReadView'
 
@@ -25,10 +25,10 @@ const RecipeDetailScreen = () => {
   const navigation = useNavigation()
   const { t } = useTranslation()
   const api = useApiClient()
-  const { recipes, isLoading, error, toggleFavourite, linkToHousehold } = useRecipes()
+  const { recipes, isLoading, error, toggleFavourite, linkToHousehold, linkToPersonal } = useRecipes()
   const { addItems } = useShoppingList()
   const { preferences } = usePreferences()
-  const { households } = useHousehold()
+  const { households, activeHouseholdId } = useHousehold()
   const [heroImageErrored, setHeroImageErrored] = useState(false)
   const [addMode, setAddMode] = useState(false)
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
@@ -88,7 +88,16 @@ const RecipeDetailScreen = () => {
 
   const handlePressRecipeAction = useCallback(
     ({ nativeEvent }: { nativeEvent: { event: string } }) => {
-      if (!recipe || !nativeEvent.event.startsWith(SEND_TO_HOUSEHOLD_PREFIX)) return
+      if (!recipe) return
+      if (nativeEvent.event === SEND_TO_PERSONAL) {
+        linkToPersonal.mutate(recipe.id, {
+          onSuccess: () => Alert.alert(t('recipes.recipeAddedToPersonalLibrary')),
+          onError: (err) =>
+            Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd')),
+        })
+        return
+      }
+      if (!nativeEvent.event.startsWith(SEND_TO_HOUSEHOLD_PREFIX)) return
       const householdId = nativeEvent.event.slice(SEND_TO_HOUSEHOLD_PREFIX.length)
       linkToHousehold.mutate(
         { id: recipe.id, householdId },
@@ -99,7 +108,7 @@ const RecipeDetailScreen = () => {
         },
       )
     },
-    [recipe, linkToHousehold, t],
+    [recipe, linkToHousehold, linkToPersonal, t],
   )
 
   const handleAddIngredient = useCallback((key: string, text: string) => {
@@ -131,6 +140,8 @@ const RecipeDetailScreen = () => {
     navigation,
     editing: editDraft.editing,
     addMode,
+    recipe: recipe ?? { household_id: null, shared_to_personal: false },
+    activeHouseholdId,
     onToggleAddMode: handleToggleAddMode,
     handleEdit: editDraft.handleEdit,
     handleCancelEdit: editDraft.handleCancelEdit,

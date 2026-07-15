@@ -48,6 +48,11 @@ export const useRecipes = (enabled = true) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
   })
 
+  const linkToPersonal = useMutation({
+    mutationFn: api.linkRecipeToPersonal,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+  })
+
   return {
     recipes: query.data ?? [],
     isLoading: query.isLoading,
@@ -61,6 +66,7 @@ export const useRecipes = (enabled = true) => {
     toggleFavourite,
     importCsv,
     linkToHousehold,
+    linkToPersonal,
   }
 }
 

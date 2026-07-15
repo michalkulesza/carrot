@@ -125,6 +125,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<RecipeOut>
   }
 
+  const linkRecipeToPersonal = async (id: string): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/recipes/${id}/link-to-personal`, { method: 'POST' })
+    await throwOnError(res, 'Failed to link recipe')
+    return res.json() as Promise<RecipeOut>
+  }
+
   const toggleFavourite = async (recipeId: string): Promise<{ is_favourite: boolean }> => {
     const res = await apiFetch(`/api/recipes/${recipeId}/favourite`, { method: 'POST' })
     if (!res.ok) throw new Error('Failed to toggle favourite')
@@ -696,6 +702,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     listRecipes,
     listPersonalRecipes,
     linkRecipeToHousehold,
+    linkRecipeToPersonal,
     toggleFavourite,
     reorderRecipes,
     importRecipes,

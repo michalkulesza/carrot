@@ -125,6 +125,8 @@
     "dragToReorder": "Ziehen zum Sortieren",
     "recipeActions": "Rezeptaktionen",
     "sendToHousehold": "An Haushalt senden",
+    "sendToPersonalLibrary": "An persönliche Bibliothek senden",
+    "recipeAddedToPersonalLibrary": "Rezept zu deiner persönlichen Bibliothek hinzugefügt",
     "rowActions": "Zeilenaktionen",
     "sortEditedNewest": "Bearbeitet: neueste zuerst",
     "sortEditedOldest": "Bearbeitet: älteste zuerst"

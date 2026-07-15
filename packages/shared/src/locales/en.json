@@ -43,6 +43,8 @@
     "sectionIngredients": "Ingredients",
     "recipeActions": "Recipe actions",
     "sendToHousehold": "Send to household",
+    "sendToPersonalLibrary": "Send to personal library",
+    "recipeAddedToPersonalLibrary": "Recipe added to your personal library",
     "rowActions": "Row actions",
     "dragToReorder": "Drag to reorder",
     "servings_one": "{{count}} serving",

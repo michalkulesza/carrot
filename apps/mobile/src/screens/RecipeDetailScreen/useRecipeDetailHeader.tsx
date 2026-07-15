@@ -10,6 +10,7 @@ import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
 export const SEND_TO_HOUSEHOLD_PREFIX = 'send-to-household-'
+export const SEND_TO_PERSONAL = 'send-to-personal'
 
 type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
   getState(): NavigationState | undefined
@@ -38,6 +39,8 @@ const EditHeaderRight = () => (
 
 const ViewHeaderRight = ({
   addMode,
+  recipe,
+  activeHouseholdId,
   onToggleAddMode,
   onOpenMealPlanSheet,
   households,
@@ -45,6 +48,8 @@ const ViewHeaderRight = ({
   onEdit,
 }: {
   addMode: boolean
+  recipe: { household_id: string | null; shared_to_personal: boolean }
+  activeHouseholdId: string | null
   onToggleAddMode: () => void
   onOpenMealPlanSheet: () => void
   households: HouseholdOut[]
@@ -53,16 +58,22 @@ const ViewHeaderRight = ({
 }) => {
   const { t } = useTranslation()
   const recipeActions = useMemo<MenuAction[]>(
-    () => [
-      households.length > 0
-        ? {
-            id: 'send-to-household',
-            title: t('recipes.sendToHousehold'),
-            subactions: households.map((h) => ({ id: `${SEND_TO_HOUSEHOLD_PREFIX}${h.id}`, title: h.name })),
-          }
-        : { id: 'send-to-household', title: t('recipes.sendToHousehold'), attributes: { disabled: true } },
-    ],
-    [households, t],
+    () => {
+      if (recipe.household_id === activeHouseholdId && !recipe.shared_to_personal) {
+        return [{ id: SEND_TO_PERSONAL, title: t('recipes.sendToPersonalLibrary') }]
+      }
+      if (recipe.household_id !== null) return []
+      return [
+        households.length > 0
+          ? {
+              id: 'send-to-household',
+              title: t('recipes.sendToHousehold'),
+              subactions: households.map((h) => ({ id: `${SEND_TO_HOUSEHOLD_PREFIX}${h.id}`, title: h.name })),
+            }
+          : { id: 'send-to-household', title: t('recipes.sendToHousehold'), attributes: { disabled: true } },
+      ]
+    },
+    [activeHouseholdId, households, recipe.household_id, recipe.shared_to_personal, t],
   )
   return (
     <View style={styles.headerBtns}>
@@ -83,16 +94,18 @@ const ViewHeaderRight = ({
       >
         <Feather name="calendar" size={20} color={colors.secondaryLabel} />
       </Pressable>
-      <MenuView title={t('recipes.recipeActions')} actions={recipeActions} onPressAction={onPressRecipeAction}>
-        <Pressable
-          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-          accessibilityLabel={t('recipes.recipeActions')}
-          accessibilityRole="button"
-          hitSlop={8}
-        >
-          <Feather name="share" size={20} color={colors.secondaryLabel} />
-        </Pressable>
-      </MenuView>
+      {recipeActions.length > 0 && (
+        <MenuView title={t('recipes.recipeActions')} actions={recipeActions} onPressAction={onPressRecipeAction}>
+          <Pressable
+            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+            accessibilityLabel={t('recipes.recipeActions')}
+            accessibilityRole="button"
+            hitSlop={8}
+          >
+            <Feather name="share" size={20} color={colors.secondaryLabel} />
+          </Pressable>
+        </MenuView>
+      )}
       <Pressable
         onPress={onEdit}
         style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
@@ -110,6 +123,8 @@ export const useRecipeDetailHeader = ({
   navigation,
   editing,
   addMode,
+  recipe,
+  activeHouseholdId,
   onToggleAddMode,
   handleEdit,
   handleCancelEdit,
@@ -120,6 +135,8 @@ export const useRecipeDetailHeader = ({
   navigation: RecipeDetailNavigation
   editing: boolean
   addMode: boolean
+  recipe: { household_id: string | null; shared_to_personal: boolean }
+  activeHouseholdId: string | null
   onToggleAddMode: () => void
   handleEdit: () => void
   handleCancelEdit: () => void
@@ -147,6 +164,8 @@ export const useRecipeDetailHeader = ({
         headerRight: () => (
           <ViewHeaderRight
             addMode={addMode}
+            recipe={recipe}
+            activeHouseholdId={activeHouseholdId}
             onToggleAddMode={onToggleAddMode}
             onOpenMealPlanSheet={handleOpenMealPlanSheet}
             households={households}
@@ -165,6 +184,8 @@ export const useRecipeDetailHeader = ({
     households,
     handlePressRecipeAction,
     addMode,
+    recipe,
+    activeHouseholdId,
     onToggleAddMode,
   ])
 }

@@ -127,6 +127,8 @@
     "dragToReorder": "Glisser pour réorganiser",
     "recipeActions": "Actions de la recette",
     "sendToHousehold": "Envoyer au foyer",
+    "sendToPersonalLibrary": "Envoyer à la bibliothèque personnelle",
+    "recipeAddedToPersonalLibrary": "Recette ajoutée à votre bibliothèque personnelle",
     "rowActions": "Actions de ligne"
   },
   "nav": {

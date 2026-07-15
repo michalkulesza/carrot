@@ -125,6 +125,8 @@
     "dragToReorder": "Arrastrar para reordenar",
     "recipeActions": "Acciones de la receta",
     "sendToHousehold": "Enviar al hogar",
+    "sendToPersonalLibrary": "Enviar a la biblioteca personal",
+    "recipeAddedToPersonalLibrary": "Receta añadida a tu biblioteca personal",
     "rowActions": "Acciones de fila",
     "sortEditedNewest": "Editado: más nuevo primero",
     "sortEditedOldest": "Editado: más antiguo primero"
