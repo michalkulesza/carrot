@@ -60,7 +60,18 @@ export const useImportJobs = (scopeKey: string | null) => {
 
   const retry = useMutation({ mutationFn: api.retryImportJob })
   const cancel = useMutation({ mutationFn: api.cancelImportJob })
-  const dismiss = useMutation({ mutationFn: api.dismissImportJob })
+  const dismiss = useMutation({
+    mutationFn: api.dismissImportJob,
+    onMutate: async (jobId) => {
+      await qc.cancelQueries({ queryKey })
+      const previousJobs = qc.getQueryData<ImportJob[]>(queryKey)
+      qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => jobs.filter((job) => job.id !== jobId))
+      return { previousJobs }
+    },
+    onError: (_error, _jobId, context) => {
+      if (context?.previousJobs) qc.setQueryData(queryKey, context.previousJobs)
+    },
+  })
 
   return { jobs: query.data ?? [], seed, retry, cancel, dismiss }
 }
