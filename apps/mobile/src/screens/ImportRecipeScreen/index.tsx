@@ -14,7 +14,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
+import { File } from 'expo-file-system'
 import * as ImagePicker from 'expo-image-picker'
+import { clearSharedPayloads, getSharedPayloads } from 'expo-sharing'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useLocalSearchParams, useRouter } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
@@ -36,9 +38,15 @@ import UrlInputView from './UrlInputView'
 import { useImportRecipeHeader } from './useImportRecipeHeader'
 import { styles } from './styles'
 import { createUuid } from '../../utils/uuid'
+import { setImportImagePreview } from '../../utils/importImagePreviews'
+import { resolveRecipePreview } from '../../utils/recipePreview'
 
 const ImportRecipeScreen = () => {
-  const { type: sharedTypeParam, value: sharedValueParam } = useLocalSearchParams<{ type?: string; value?: string }>()
+  const { type: sharedTypeParam, value: sharedValueParam, mimeType: sharedMimeTypeParam } = useLocalSearchParams<{
+    type?: string
+    value?: string
+    mimeType?: string
+  }>()
   const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
@@ -64,6 +72,7 @@ const ImportRecipeScreen = () => {
   const [error, setError] = useState<string | null>(null)
   const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
   const skipGuardRef = useRef(false)
+  const sharedUrlImportRef = useRef<string | null>(null)
 
   const activeAllergens = useMemo(() => {
     const p = preferences?.personal_allergens
@@ -73,13 +82,40 @@ const ImportRecipeScreen = () => {
   const autoSubstitute = preferences?.auto_substitute ?? false
 
   useEffect(() => {
-    if (!sharedTypeParam || !sharedValueParam || editable) return
-    switch (sharedTypeParam) {
-      case 'url':   setMode('share'); setUrl(sharedValueParam); break
-      case 'text':  setMode('text'); setPastedText(sharedValueParam); break
-      case 'image': setMode('gallery'); startImageImport(sharedValueParam, 'image/jpeg'); break
+    if (!sharedTypeParam || editable) return
+
+    if (sharedTypeParam === 'image' && !sharedValueParam) {
+      const payload = getSharedPayloads().find((item) => item.shareType === 'image')
+      if (!payload) return
+
+      const importSharedImage = async () => {
+        try {
+          const value = await new File(payload.value).base64()
+          setMode('gallery')
+          startImageImport(value, payload.mimeType ?? 'image/jpeg')
+        } finally {
+          clearSharedPayloads()
+        }
+      }
+
+      void importSharedImage()
+      return
     }
-  }, [sharedTypeParam, sharedValueParam])
+
+    if (!sharedValueParam) return
+
+    switch (sharedTypeParam) {
+      case 'url':
+        if (sharedUrlImportRef.current === sharedValueParam) return
+        sharedUrlImportRef.current = sharedValueParam
+        setMode('share')
+        setUrl(sharedValueParam)
+        void enqueue('url', { url: sharedValueParam })
+        break
+      case 'text': setMode('text'); setPastedText(sharedValueParam); break
+      case 'image': setMode('gallery'); startImageImport(sharedValueParam, sharedMimeTypeParam ?? 'image/jpeg'); break
+    }
+  }, [sharedMimeTypeParam, sharedTypeParam, sharedValueParam])
 
   useEffect(() => {
     const handleUrl = ({ url: incomingUrl }: { url: string }) => {
@@ -133,7 +169,19 @@ const ImportRecipeScreen = () => {
     setError(null)
     try {
       const job = await api.enqueueImportJob({ kind, input, idempotency_key: createUuid() })
+      if (kind === 'image') {
+        const mimeType = input.mime_type ?? 'image/jpeg'
+        const imageBase64 = input.image_base64
+        if (imageBase64) setImportImagePreview(job.id, `data:${mimeType};base64,${imageBase64}`)
+      }
       qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs.filter((item) => item.id !== job.id), job])
+      if (kind === 'url') {
+        void resolveRecipePreview(input.url).then((previewUrl) => {
+          if (!previewUrl) return
+          setImportImagePreview(job.id, previewUrl)
+          qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs])
+        })
+      }
       router.replace('/(tabs)/recipes')
     } catch (err) {
       setError(err instanceof Error ? err.message : t('importJobs.enqueueFailed'))

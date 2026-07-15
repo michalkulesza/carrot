@@ -1,12 +1,10 @@
 import * as Sentry from '@sentry/react-native'
 import { createApiClient } from '@carrot/shared/api/client'
-import { syncSharedAuth } from '../utils/sharedAuth'
 
 let _token: string | null = null
 
 export const setToken = (token: string | null): void => {
   _token = token
-  syncSharedAuth(token)
 }
 
 export const getToken = (): string | null => _token

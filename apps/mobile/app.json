@@ -48,7 +48,22 @@
           "faceIDPermission": false
         }
       ],
-      "expo-sharing",
+      "./plugins/withShareExtensionDisplayName",
+      [
+        "expo-sharing",
+        {
+          "ios": {
+            "enabled": true,
+            "extensionBundleIdentifier": "com.kulesza.carrot.ShareExtension",
+            "appGroupId": "group.com.kulesza.carrot",
+            "activationRule": {
+              "supportsText": true,
+              "supportsWebUrlWithMaxCount": 1,
+              "supportsImageWithMaxCount": 1
+            }
+          }
+        }
+      ],
       [
         "expo-image-picker",
         {

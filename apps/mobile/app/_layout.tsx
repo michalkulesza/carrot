@@ -1,13 +1,12 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
+import { AppState } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import * as Sentry from '@sentry/react-native'
 import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
-import { consumePendingShare, hasPendingShare } from '../src/utils/pendingShare'
 import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
 import BugReportButton from '../src/components/BugReportButton'
 import HeaderTitle from '../src/components/HeaderTitle'
@@ -62,7 +61,6 @@ function RootLayoutNav() {
   const router = useRouter()
   const qc = useQueryClient()
   const api = useApiClient()
-  const [processingShare, setProcessingShare] = useState(false)
   const { push: pushNotif } = useNotificationHistory()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
   useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
@@ -161,39 +159,6 @@ function RootLayoutNav() {
     }
   }, [user, loading, signupEmail, signupToken, segments])
 
-  // Fallback for the Share Extension: some host apps (e.g. Photos) decline to relay the
-  // extension's deep link, so the share would otherwise be silently lost. The extension always
-  // also persists the share to the App Group container, which we poll for here on launch and
-  // every time the app comes back to the foreground.
-  useEffect(() => {
-    if (loading || !user) return
-
-    const checkPendingShare = async () => {
-      // Consuming is async (file read + base64 decode); block interaction for that brief
-      // window so a manual tap (e.g. the "+" add-recipe button) can't push its own screen
-      // a moment before this pushes another import-recipe screen on top of it.
-      if (!hasPendingShare()) return
-      setProcessingShare(true)
-      try {
-        const pending = await consumePendingShare()
-        if (!pending) return
-        if (pending.type === 'job') {
-          router.replace('/(tabs)/recipes')
-        } else {
-          router.push({ pathname: '/import-recipe', params: { type: pending.type, value: pending.value } })
-        }
-      } finally {
-        setProcessingShare(false)
-      }
-    }
-
-    checkPendingShare()
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') checkPendingShare()
-    })
-    return () => subscription.remove()
-  }, [loading, user])
-
   // Invalidate all cached queries when the app returns to the foreground so that data
   // saved externally (e.g. via the Share Extension) appears without a manual pull-to-refresh.
   useEffect(() => {
@@ -216,6 +181,7 @@ function RootLayoutNav() {
       >
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="share" options={{ animation: 'none', headerShown: false }} />
         <Stack.Screen
           name="import-recipe"
           options={{
@@ -231,11 +197,6 @@ function RootLayoutNav() {
         <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
         <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
       </Stack>
-      {(loading || processingShare) && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" />
-        </View>
-      )}
     </>
   )
 }
@@ -276,12 +237,3 @@ const RootLayout = () => {
 }
 
 export default __DEV__ ? RootLayout : Sentry.wrap(RootLayout)
-
-const styles = StyleSheet.create({
-  loadingOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-})
