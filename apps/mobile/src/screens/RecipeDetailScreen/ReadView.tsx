@@ -234,7 +234,7 @@ const ReadView = ({
 
           <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
 
-          {recipe.components.length > 1 && (
+          {recipe.components.length > 0 && (
             <UnifiedIngredientsSection
               components={recipe.components}
               unitSystem={unitSystem}
@@ -264,6 +264,8 @@ const ReadView = ({
               fontSize={FONT_SIZES[fontSizeIndex]}
               lineHeight={LINE_HEIGHTS[fontSizeIndex]}
               collapsible={recipe.components.length > 1}
+              showIngredients={recipe.components.length > 1}
+              showGroupHeader={recipe.components.length > 1}
             />
           ))}
         </View>

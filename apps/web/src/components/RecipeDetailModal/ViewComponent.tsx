@@ -27,6 +27,8 @@ interface ViewComponentProps {
   fontSizeIndex: number
   servingScale: number
   collapsible?: boolean
+  showIngredients?: boolean
+  showGroupHeader?: boolean
 }
 
 const TEXT_SIZE_CLASSES = [
@@ -54,6 +56,8 @@ const ViewComponent = ({
   fontSizeIndex,
   servingScale,
   collapsible = false,
+  showIngredients = true,
+  showGroupHeader = true,
 }: ViewComponentProps) => {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(!collapsible)
@@ -76,9 +80,11 @@ const ViewComponent = ({
     sessionAdded?.has(`${componentIndex}-${i}`)
   )
 
+  if (!showIngredients && steps.length === 0) return null
+
   return (
     <div className="mb-5">
-      {collapsible ? (
+      {showGroupHeader && collapsible ? (
         <button
           type="button"
           onClick={() => setExpanded((current) => !current)}
@@ -89,13 +95,13 @@ const ViewComponent = ({
           {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
         </button>
       ) : (
-        !single && (
+        showGroupHeader && !single && (
           <h3 className="text-sm font-semibold text-zinc-600 mb-2">
             {comp.name}
           </h3>
         )
       )}
-      {expanded && ingredients.length > 0 && (
+      {showIngredients && expanded && ingredients.length > 0 && (
         <>
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs font-semibold uppercase text-zinc-400">

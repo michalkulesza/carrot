@@ -25,6 +25,8 @@ const ComponentSection = ({
   fontSize = 17,
   lineHeight = 22,
   collapsible = false,
+  showIngredients = true,
+  showGroupHeader = true,
 }: {
   component: SaveComponent
   index: number
@@ -39,6 +41,8 @@ const ComponentSection = ({
   fontSize?: number
   lineHeight?: number
   collapsible?: boolean
+  showIngredients?: boolean
+  showGroupHeader?: boolean
 }) => {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(!collapsible)
@@ -90,9 +94,11 @@ const ComponentSection = ({
 
   const groupName = capitalizeFirst(component.name) || t('recipes.sectionIngredients')
 
+  if (!showIngredients && steps.length === 0) return null
+
   return (
     <View style={styles.componentBlock}>
-      {collapsible ? (
+      {showGroupHeader && collapsible ? (
         <Pressable
           onPress={() => setExpanded((current) => !current)}
           style={styles.componentToggle}
@@ -107,11 +113,11 @@ const ComponentSection = ({
             color={colors.label}
           />
         </Pressable>
-      ) : component.name ? (
+      ) : showGroupHeader && component.name ? (
         <Text style={styles.componentName}>{capitalizeFirst(component.name)}</Text>
       ) : null}
 
-      {expanded && ingredients.length > 0 && (
+      {showIngredients && expanded && ingredients.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
