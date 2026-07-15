@@ -92,35 +92,34 @@ const ComponentSection = ({
     [ingredients, index, sessionAdded],
   )
 
-  const groupName = capitalizeFirst(component.name) || t('recipes.sectionIngredients')
-
   if (!showIngredients && steps.length === 0) return null
 
   return (
     <View style={styles.componentBlock}>
-      {showGroupHeader && collapsible ? (
-        <Pressable
-          onPress={() => setIngredientsExpanded((current) => !current)}
-          style={styles.componentToggle}
-          accessibilityLabel={groupName}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: ingredientsExpanded }}
-        >
-          <Text style={styles.componentToggleText}>{groupName}</Text>
-          <Feather
-            name={ingredientsExpanded ? 'chevron-up' : 'chevron-down'}
-            size={22}
-            color={colors.label}
-          />
-        </Pressable>
-      ) : showGroupHeader && component.name ? (
+      {showGroupHeader && component.name && (
         <Text style={styles.componentName}>{capitalizeFirst(component.name)}</Text>
-      ) : null}
+      )}
 
-      {showIngredients && ingredientsExpanded && ingredients.length > 0 && (
+      {showIngredients && ingredients.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
+            <Pressable
+              onPress={collapsible ? () => setIngredientsExpanded((current) => !current) : undefined}
+              style={styles.sectionHeaderToggle}
+              accessibilityRole="button"
+              accessibilityState={collapsible ? { expanded: ingredientsExpanded } : undefined}
+              hitSlop={8}
+            >
+              <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
+              {collapsible && (
+                <Feather
+                  name={ingredientsExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={colors.secondaryLabel}
+                  style={styles.sectionToggleIcon}
+                />
+              )}
+            </Pressable>
             {addMode && (
               <Pressable
                 onPress={allAdded ? undefined : handleAddAll}
@@ -133,7 +132,7 @@ const ComponentSection = ({
               </Pressable>
             )}
           </View>
-          {ingredients.map((ingredient, i) => (
+          {ingredientsExpanded && ingredients.map((ingredient, i) => (
             <IngredientRow
               key={i}
               ingredient={ingredient}

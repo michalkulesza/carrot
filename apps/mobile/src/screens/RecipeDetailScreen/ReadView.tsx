@@ -263,7 +263,7 @@ const ReadView = ({
               onAddAll={handleAddAll}
               fontSize={FONT_SIZES[fontSizeIndex]}
               lineHeight={LINE_HEIGHTS[fontSizeIndex]}
-              collapsible={recipe.components.length > 1 && i > 0}
+              collapsible={recipe.components.length > 1}
               showIngredients={recipe.components.length > 1}
               showGroupHeader={recipe.components.length > 1}
             />
