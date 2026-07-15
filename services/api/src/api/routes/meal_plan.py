@@ -1,15 +1,19 @@
+import asyncio
 import calendar as cal
+import json
 import re
 import uuid
 from datetime import date as DateType
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.broadcaster import broadcaster
 from api.database import get_async_session
 from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe, recipe_personal_links_table
-from api.routes.context import get_active_household_id
+from api.routes.context import get_active_household_id, get_scope_key
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/meal-plan", tags=["meal-plan"])
@@ -129,6 +133,36 @@ async def get_next_meal_plan_entry(
     return MealPlanEntryOut.model_validate(entry) if entry is not None else None
 
 
+# NOTE: /stream must be defined before /{date_str}
+@router.get("/stream")
+async def stream_meal_plan(
+    request: Request,
+    user: User = Depends(current_active_user),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> StreamingResponse:
+    scope = get_scope_key("meal-plan", user.id, household_id)
+
+    async def event_gen():
+        q = await broadcaster.subscribe(scope)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = await asyncio.wait_for(q.get(), timeout=15.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+        finally:
+            broadcaster.unsubscribe(scope, q)
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @router.put("/{date_str}", response_model=MealPlanEntryOut)
 async def set_meal_plan_entry(
     date_str: str,
@@ -168,6 +202,10 @@ async def set_meal_plan_entry(
 
     await session.commit()
     await session.refresh(entry)
+
+    scope = get_scope_key("meal-plan", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "meal_plan_changed", "date": date_str})
+
     return MealPlanEntryOut.model_validate(entry)
 
 
@@ -188,3 +226,6 @@ async def delete_meal_plan_entry(
         raise HTTPException(status_code=404, detail="Entry not found")
     await session.delete(entry)
     await session.commit()
+
+    scope = get_scope_key("meal-plan", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "meal_plan_changed", "date": date_str})

@@ -1,14 +1,16 @@
+import asyncio
 import csv
 import io
 import json
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import and_, delete, exists, insert, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.broadcaster import broadcaster
 from api.config import settings
 from api.database import get_async_session
 from api.models import (
@@ -21,7 +23,7 @@ from api.models import (
     recipe_personal_links_table,
     user_recipe_favourites_table,
 )
-from api.routes.context import get_active_household_id
+from api.routes.context import get_active_household_id, get_scope_key
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -257,6 +259,36 @@ async def list_recipes(
     ]
 
 
+# NOTE: /stream must be defined before /{recipe_id}
+@router.get("/stream")
+async def stream_recipes(
+    request: Request,
+    user: User = Depends(current_active_user),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> StreamingResponse:
+    scope = get_scope_key("recipes", user.id, household_id)
+
+    async def event_gen():
+        q = await broadcaster.subscribe(scope)
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                try:
+                    event = await asyncio.wait_for(q.get(), timeout=15.0)
+                    yield f"data: {json.dumps(event)}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": heartbeat\n\n"
+        finally:
+            broadcaster.unsubscribe(scope, q)
+
+    return StreamingResponse(
+        event_gen(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @router.post("", response_model=RecipeOut, status_code=201)
 async def save_recipe(
     body: RecipeSaveRequest,
@@ -286,6 +318,10 @@ async def save_recipe(
     await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
     await session.commit()
     await session.refresh(recipe)
+
+    scope = get_scope_key("recipes", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe.id)})
+
     return _build_recipe_out(recipe, user.id)
 
 
@@ -343,9 +379,11 @@ async def update_recipe(
     await session.refresh(recipe)
 
     if old_thumbnail_url and old_thumbnail_url != body.thumbnail_url and settings.r2_configured:
-        import asyncio
         from api.services import r2
         asyncio.create_task(asyncio.to_thread(r2.delete_image, old_thumbnail_url))
+
+    scope = get_scope_key("recipes", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe.id)})
 
     personal_link_ids = await _get_personal_link_ids(session, user.id)
     return _build_recipe_out(recipe, user.id, personal_link_ids=personal_link_ids)
@@ -526,6 +564,5 @@ async def delete_recipe(
     await session.commit()
 
     if thumbnail_url and settings.r2_configured:
-        import asyncio
         from api.services import r2
         asyncio.create_task(asyncio.to_thread(r2.delete_image, thumbnail_url))

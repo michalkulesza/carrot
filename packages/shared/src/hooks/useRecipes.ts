@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { RecipeOut, RecipeSaveRequest } from '../types'
@@ -5,6 +6,11 @@ import type { RecipeOut, RecipeSaveRequest } from '../types'
 export const useRecipes = (enabled = true) => {
   const api = useApiClient()
   const qc = useQueryClient()
+
+  useEffect(() => {
+    if (!enabled) return
+    return api.subscribeRecipes(() => qc.invalidateQueries({ queryKey: ['recipes'] }))
+  }, [api, qc, enabled])
 
   const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled })
 

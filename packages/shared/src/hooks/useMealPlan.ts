@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { MealPlanEntry } from '../types'
@@ -7,6 +8,10 @@ export const useMealPlan = (month: string) => {
   const api = useApiClient()
   const qc = useQueryClient()
   const todayIso = toISODate(new Date())
+
+  useEffect(() => {
+    return api.subscribeMealPlan(() => qc.invalidateQueries({ queryKey: ['mealPlan'] }))
+  }, [api, qc])
 
   const query = useQuery({
     queryKey: ['mealPlan', month],

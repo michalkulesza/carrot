@@ -27,3 +27,8 @@ async def get_active_household_id(
         # Stale active_household_id — reset silently
         raise HTTPException(status_code=403, detail="Not a member of the active household")
     return hid
+
+
+def get_scope_key(domain: str, user_id: uuid.UUID, household_id: uuid.UUID | None) -> str:
+    """Broadcaster subscription key: shared household scope, or a personal fallback."""
+    return f"{domain}:household:{household_id}" if household_id else f"{domain}:user:{user_id}"

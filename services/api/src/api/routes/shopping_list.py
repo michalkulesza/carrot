@@ -19,7 +19,7 @@ from api.models import (
     ShoppingListItemsCreate,
     ShoppingListReorderRequest,
 )
-from api.routes.context import get_active_household_id
+from api.routes.context import get_active_household_id, get_scope_key
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
@@ -35,7 +35,7 @@ def _scope_filter(user_id: uuid.UUID, household_id: uuid.UUID | None):
 
 
 def _scope_key(user_id: uuid.UUID, household_id: uuid.UUID | None) -> str:
-    return f"household:{household_id}" if household_id else f"user:{user_id}"
+    return get_scope_key("shopping-list", user_id, household_id)
 
 
 async def _snapshot(
