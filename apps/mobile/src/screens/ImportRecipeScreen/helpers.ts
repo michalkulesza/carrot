@@ -26,10 +26,10 @@ export interface EditableComponent {
   ingredient_flags: (AllergenFlag | null)[]
   step_ingredient_refs: StepIngredientRef[][] | null
 }
-
 export interface EditableRecipe {
   title: string
   servings: string
+  totalTimeMinutes: string
   kcal: string
   protein: string
   fat: string
@@ -100,6 +100,7 @@ export const toEditable = (result: ImportResult, autoSubstitute: boolean): Edita
   return {
     title: recipe?.title ?? '',
     servings: recipe?.servings?.toString() ?? '',
+    totalTimeMinutes: recipe?.total_time_minutes?.toString() ?? '',
     kcal: recipe?.kcal_per_serving?.toString() ?? '',
     protein: recipe?.protein_per_serving?.toString() ?? '',
     fat: recipe?.fat_per_serving?.toString() ?? '',
@@ -116,6 +117,7 @@ export const toEditable = (result: ImportResult, autoSubstitute: boolean): Edita
 export const blankRecipe = (): EditableRecipe => ({
   title: '',
   servings: '',
+  totalTimeMinutes: '',
   kcal: '',
   protein: '',
   fat: '',
@@ -147,6 +149,7 @@ export const buildRecipeSavePayload = (
 ): RecipeSaveRequest => ({
   title: editable.title,
   servings: editable.servings !== '' ? Number(editable.servings) : null,
+  total_time_minutes: editable.totalTimeMinutes !== '' ? Number(editable.totalTimeMinutes) : null,
   kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
   protein_per_serving: editable.protein !== '' ? Number(editable.protein) : null,
   fat_per_serving: editable.fat !== '' ? Number(editable.fat) : null,

@@ -22,6 +22,15 @@ import NotesSection from './NotesSection'
 import TagsSection from './TagsSection'
 import ServingStepper from './ServingStepper'
 
+const formatCookingTime = (minutes: number | null, t: (key: string) => string) => {
+  if (minutes === null) return ''
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours === 0) return `${minutes} ${t('recipes.minutesShort')}`
+  if (remainingMinutes === 0) return `${hours} ${t('recipes.hoursShort')}`
+  return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
+}
+
 const ReadView = ({
   recipe,
   selectedServings,
@@ -149,6 +158,7 @@ const ReadView = ({
           <NutritionBoxGrid
             editing={false}
             items={[
+              { label: t('recipes.totalTime'), value: formatCookingTime(recipe.total_time_minutes, t), accessibilityLabel: t('recipes.totalTime'), showDisclaimer: false },
               { label: t('recipes.colKcal'), value: recipe.kcal_per_serving?.toString() ?? '', accessibilityLabel: t('recipes.kcalPerServing') },
               { label: t('recipes.protein'), value: recipe.protein_per_serving?.toString() ?? '', accessibilityLabel: t('recipes.proteinPerServing'), unit: 'g' },
               { label: t('recipes.fat'), value: recipe.fat_per_serving?.toString() ?? '', accessibilityLabel: t('recipes.fatPerServing'), unit: 'g' },

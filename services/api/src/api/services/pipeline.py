@@ -80,6 +80,8 @@ def _jsonld_recipe_to_text(data: dict) -> str:
         lines.append(f"Title: {data['name']}")
     if data.get("recipeYield"):
         lines.append(f"Servings: {data['recipeYield']}")
+    if data.get("totalTime"):
+        lines.append(f"Total time: {data['totalTime']}")
     ingredients = [i for i in data.get("recipeIngredient", []) if isinstance(i, str) and i.strip()]
     if ingredients:
         lines.append("Ingredients:")

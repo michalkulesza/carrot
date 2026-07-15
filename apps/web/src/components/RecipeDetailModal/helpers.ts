@@ -20,6 +20,7 @@ export const getHeaderBg = (mode: Mode): string => {
 export interface EditState {
   title: string
   servings: string
+  totalTimeMinutes: string
   kcal: string
   protein: string
   fat: string
@@ -33,6 +34,7 @@ export const toEditState = (r: RecipeOut): EditState => {
   return {
     title: r.title,
     servings: r.servings?.toString() ?? '',
+    totalTimeMinutes: r.total_time_minutes?.toString() ?? '',
     kcal: r.kcal_per_serving?.toString() ?? '',
     protein: r.protein_per_serving?.toString() ?? '',
     fat: r.fat_per_serving?.toString() ?? '',
@@ -193,6 +195,7 @@ export const buildRecipeUpdateFromRecipe = (
 ): RecipeSaveRequest => ({
   title: recipe.title,
   servings: recipe.servings,
+  total_time_minutes: recipe.total_time_minutes,
   kcal_per_serving: recipe.kcal_per_serving,
   protein_per_serving: recipe.protein_per_serving,
   fat_per_serving: recipe.fat_per_serving,
@@ -263,6 +266,8 @@ export const buildRecipeUpdateFromDraft = (
 ): RecipeSaveRequest => ({
   title: draft.title,
   servings: draft.servings !== '' ? Number(draft.servings) : null,
+  total_time_minutes:
+    draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
   kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
   protein_per_serving: draft.protein !== '' ? Number(draft.protein) : null,
   fat_per_serving: draft.fat !== '' ? Number(draft.fat) : null,

@@ -10,7 +10,6 @@ export interface AllergenData {
   predefined: string[]
   custom: string[]
 }
-
 export interface AllergenFlag {
   allergen: string | null
   substitute: string | null
@@ -60,6 +59,7 @@ export interface Tag {
 export interface RecipeGroup {
   title: string | null
   servings: number | null
+  total_time_minutes: number | null
   kcal_per_serving: number | null
   protein_per_serving: number | null
   fat_per_serving: number | null
@@ -168,6 +168,7 @@ export interface SaveComponent {
 export interface RecipeSaveRequest {
   title: string
   servings: number | null
+  total_time_minutes: number | null
   kcal_per_serving: number | null
   protein_per_serving: number | null
   fat_per_serving: number | null
@@ -189,6 +190,7 @@ export interface RecipeOut {
   id: string
   title: string
   servings: number | null
+  total_time_minutes: number | null
   kcal_per_serving: number | null
   protein_per_serving: number | null
   fat_per_serving: number | null

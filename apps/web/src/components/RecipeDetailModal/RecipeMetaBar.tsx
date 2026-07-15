@@ -6,8 +6,15 @@ import NutritionBoxGrid from '../NutritionBoxGrid'
 import { getHeaderBg, type EditState, type Mode } from './helpers'
 import ServingStepper from './ServingStepper'
 
-type NutritionField = 'servings' | 'kcal' | 'protein' | 'fat' | 'carbs'
+type NutritionField =
+  | 'servings'
+  | 'totalTimeMinutes'
+  | 'kcal'
+  | 'protein'
+  | 'fat'
+  | 'carbs'
 const NUTRITION_FIELDS: readonly NutritionField[] = [
+  'totalTimeMinutes',
   'servings',
   'kcal',
   'protein',
@@ -33,6 +40,19 @@ interface RecipeMetaBarProps {
 
 const TEXT_SIZES = [14, 16, 17, 20, 22] as const
 
+const formatCookingTime = (
+  minutes: number | null,
+  t: (key: string) => string
+) => {
+  if (minutes === null) return ''
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours === 0) return `${minutes} ${t('recipes.minutesShort')}`
+  if (remainingMinutes === 0) return `${hours} ${t('recipes.hoursShort')}`
+
+  return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
+}
+
 const RecipeMetaBar = ({
   recipe,
   draft,
@@ -55,6 +75,14 @@ const RecipeMetaBar = ({
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0
 
   const nutritionItems = [
+    {
+      label: editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'),
+      value: editing
+        ? draft.totalTimeMinutes
+        : formatCookingTime(r.total_time_minutes, t),
+      accessibilityLabel: t('recipes.totalTime'),
+      showDisclaimer: false,
+    },
     {
       label: t('recipes.serves'),
       value: editing ? draft.servings : (r.servings?.toString() ?? ''),
@@ -85,7 +113,7 @@ const RecipeMetaBar = ({
   ]
   const visibleNutritionItems = editing
     ? nutritionItems
-    : nutritionItems.slice(1)
+    : [nutritionItems[0], ...nutritionItems.slice(2)]
 
   const handleNutritionChangeValue = (index: number, value: string) => {
     onNutritionChange(NUTRITION_FIELDS[index], value)

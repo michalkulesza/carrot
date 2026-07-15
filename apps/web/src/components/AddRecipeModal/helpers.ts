@@ -36,6 +36,7 @@ export interface EditableComponent {
 export interface EditableRecipe {
   title: string
   servings: string
+  totalTimeMinutes: string
   kcal: string
   protein: string
   fat: string
@@ -103,6 +104,7 @@ export const toEditable = (
   return {
     title: recipe?.title ?? '',
     servings: recipe?.servings?.toString() ?? '',
+    totalTimeMinutes: recipe?.total_time_minutes?.toString() ?? '',
     kcal: recipe?.kcal_per_serving?.toString() ?? '',
     protein: recipe?.protein_per_serving?.toString() ?? '',
     fat: recipe?.fat_per_serving?.toString() ?? '',
@@ -151,11 +153,15 @@ export const toEditable = (
         shopping_list_ingredients: c.ingredients.map((ing) => {
           const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
           const nameToUse = useSub ? ing.substitute! : ing.name
-          return ing.shopping_list_value || serializeIngredient({
-            qty: ing.qty ?? '',
-            unit: ing.unit ?? '',
-            name: nameToUse,
-          })
+
+          return (
+            ing.shopping_list_value ||
+            serializeIngredient({
+              qty: ing.qty ?? '',
+              unit: ing.unit ?? '',
+              name: nameToUse,
+            })
+          )
         }),
         steps: c.steps,
         metric_ingredients: c.metric_ingredients,
@@ -183,6 +189,8 @@ export const buildSaveRecipePayload = (
 ): RecipeSaveRequest => ({
   title: editable.title,
   servings: editable.servings !== '' ? Number(editable.servings) : null,
+  total_time_minutes:
+    editable.totalTimeMinutes !== '' ? Number(editable.totalTimeMinutes) : null,
   kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
   protein_per_serving:
     editable.protein !== '' ? Number(editable.protein) : null,

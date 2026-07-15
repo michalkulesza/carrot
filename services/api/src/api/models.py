@@ -186,6 +186,7 @@ class Recipe(Base):
     shared_to_personal: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     servings: Mapped[int | None] = mapped_column(nullable=True)
+    total_time_minutes: Mapped[int | None] = mapped_column(nullable=True)
     kcal_per_serving: Mapped[int | None] = mapped_column(nullable=True)
     protein_per_serving: Mapped[int | None] = mapped_column(nullable=True)
     fat_per_serving: Mapped[int | None] = mapped_column(nullable=True)
@@ -239,6 +240,7 @@ class RecipeComponent(BaseModel):
 class RecipeExtraction(BaseModel):
     title: str | None = None
     servings: int | None = None
+    total_time_minutes: int | None = None
     kcal_per_serving: int
     protein_per_serving: int
     fat_per_serving: int
@@ -331,6 +333,7 @@ class SaveComponent(BaseModel):
 class RecipeSaveRequest(BaseModel):
     title: str
     servings: int | None = None
+    total_time_minutes: int | None = None
     kcal_per_serving: int | None = None
     protein_per_serving: int | None = None
     fat_per_serving: int | None = None
@@ -354,6 +357,7 @@ class RecipeOut(BaseModel):
     id: uuid.UUID
     title: str
     servings: int | None
+    total_time_minutes: int | None = None
     kcal_per_serving: int | None
     protein_per_serving: int | None = None
     fat_per_serving: int | None = None

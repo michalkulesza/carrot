@@ -43,6 +43,8 @@ const EditableRecipeView = ({
 
   const setTitle = (title: string) => onChange({ ...recipe, title })
   const setServings = (servings: string) => onChange({ ...recipe, servings })
+  const setTotalTimeMinutes = (totalTimeMinutes: string) =>
+    onChange({ ...recipe, totalTimeMinutes })
   const setKcal = (kcal: string) => onChange({ ...recipe, kcal })
   const setProtein = (protein: string) => onChange({ ...recipe, protein })
   const setFat = (fat: string) => onChange({ ...recipe, fat })
@@ -58,9 +60,10 @@ const EditableRecipeView = ({
             ingredients: c.ingredients.map((ing, ii2) =>
               ii2 === ii ? val : ing
             ),
-            shopping_list_ingredients: c.shopping_list_ingredients?.map(
-              (value, ii2) => ii2 === ii ? serializeIngredient(val) : value,
-            ) ?? null,
+            shopping_list_ingredients:
+              c.shopping_list_ingredients?.map((value, ii2) =>
+                ii2 === ii ? serializeIngredient(val) : value
+              ) ?? null,
           }
     )
     onChange({ ...recipe, components })
@@ -183,6 +186,7 @@ const EditableRecipeView = ({
         <RecipeMacroPills
           recipe={recipe}
           setServings={setServings}
+          setTotalTimeMinutes={setTotalTimeMinutes}
           setKcal={setKcal}
           setProtein={setProtein}
           setFat={setFat}

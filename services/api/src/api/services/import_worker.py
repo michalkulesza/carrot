@@ -108,6 +108,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         shared_to_personal=job.shared_to_personal,
         title=recipe_data.title or "Imported Recipe",
         servings=recipe_data.servings,
+        total_time_minutes=recipe_data.total_time_minutes,
         kcal_per_serving=recipe_data.kcal_per_serving,
         protein_per_serving=recipe_data.protein_per_serving,
         fat_per_serving=recipe_data.fat_per_serving,

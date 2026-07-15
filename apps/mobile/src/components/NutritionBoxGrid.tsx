@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native'
 import { colors } from '../theme/colors'
 
 export interface NutritionBoxGridItem {
@@ -7,6 +7,7 @@ export interface NutritionBoxGridItem {
   value: string
   accessibilityLabel: string
   unit?: string
+  showDisclaimer?: boolean
 }
 
 interface NutritionBoxGridProps {
@@ -85,6 +86,7 @@ interface NutritionBoxProps {
   onChangeValue: (value: string) => void
   onToggleOpen: () => void
   onClose: () => void
+  wrapperStyle?: StyleProp<ViewStyle>
 }
 
 const NutritionBox = ({
@@ -96,11 +98,23 @@ const NutritionBox = ({
   onChangeValue,
   onToggleOpen,
   onClose,
+  wrapperStyle,
 }: NutritionBoxProps) => {
   const displayValue = item.value !== '' ? item.value : '—'
 
+  if (!editing && item.showDisclaimer === false) {
+    return (
+      <View style={[styles.boxWrapper, wrapperStyle]}>
+        <View style={styles.box}>
+          <Text style={styles.number}>{displayValue}</Text>
+          <Text style={styles.label}>{item.label}</Text>
+        </View>
+      </View>
+    )
+  }
+
   return (
-    <View style={styles.boxWrapper}>
+    <View style={[styles.boxWrapper, wrapperStyle]}>
       {editing ? (
         <EditableNutritionBox item={item} onChangeValue={onChangeValue} />
       ) : (
@@ -121,10 +135,11 @@ const NutritionBoxGrid = ({
   disclaimerText,
 }: NutritionBoxGridProps) => {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const hasSixItems = items.length > 5
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.row}>
+      <View style={[styles.row, hasSixItems && styles.wrappedRow]}>
         {items.map((item, i) => (
           <NutritionBox
             key={item.label}
@@ -136,6 +151,7 @@ const NutritionBoxGrid = ({
             onChangeValue={(value) => onChangeValue?.(i, value)}
             onToggleOpen={() => setOpenIndex((prev) => (prev === i ? null : i))}
             onClose={() => setOpenIndex(null)}
+            wrapperStyle={hasSixItems ? styles.sixBoxWrapper : undefined}
           />
         ))}
       </View>
@@ -146,7 +162,9 @@ const NutritionBoxGrid = ({
 const styles = StyleSheet.create({
   wrapper: { marginBottom: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  wrappedRow: { flexWrap: 'wrap' },
   boxWrapper: { position: 'relative', flex: 1 },
+  sixBoxWrapper: { flexGrow: 0, flexBasis: '31%' },
   box: {
     backgroundColor: colors.secondaryBackground,
     borderRadius: 10,

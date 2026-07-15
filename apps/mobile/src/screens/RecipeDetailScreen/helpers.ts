@@ -19,10 +19,10 @@ export interface EditComponent {
   shopping_list_ingredients: string[] | null
   steps: string[]
 }
-
 export interface EditDraft {
   title: string
   servings: string
+  totalTimeMinutes: string
   kcal: string
   protein: string
   fat: string
@@ -34,6 +34,7 @@ export interface EditDraft {
 export const buildDraft = (recipe: RecipeOut): EditDraft => ({
   title: recipe.title,
   servings: recipe.servings?.toString() ?? '',
+  totalTimeMinutes: recipe.total_time_minutes?.toString() ?? '',
   kcal: recipe.kcal_per_serving?.toString() ?? '',
   protein: recipe.protein_per_serving?.toString() ?? '',
   fat: recipe.fat_per_serving?.toString() ?? '',
@@ -56,6 +57,7 @@ export const buildRecipeSaveRequest = (
 ): RecipeSaveRequest => ({
   title: recipe.title,
   servings: recipe.servings,
+  total_time_minutes: recipe.total_time_minutes,
   kcal_per_serving: recipe.kcal_per_serving,
   protein_per_serving: recipe.protein_per_serving,
   fat_per_serving: recipe.fat_per_serving,

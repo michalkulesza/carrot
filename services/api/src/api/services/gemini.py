@@ -103,7 +103,7 @@ them. Produce unit conversions only in the parallel variant fields.
 CRITICAL: Only extract ingredients, quantities, and steps that are explicitly present in
 the source text. Never add an ingredient that is not mentioned. Never change a number
 that is stated — copy quantities exactly as written. Estimation is permitted ONLY for
-nutrition and servings when they are not stated, and ONLY in those fields — never for
+nutrition, servings, and total cooking time when they are not stated, and ONLY in those fields — never for
 ingredients or their amounts.
 
 Return JSON matching the provided schema. If no recipe content is present, return
@@ -146,6 +146,11 @@ given (e.g. "4 to 6 servings", "4-6 servings"), use the midpoint rounded to the
 nearest whole number (e.g. "4 to 6" → 5) — never concatenate the range into one
 number (e.g. "4 to 6" is NOT 46). If not stated, estimate a reasonable serving
 count based on the ingredient quantities and dish type.
+
+total_time_minutes: total elapsed time from starting preparation to serving, in
+whole minutes. Include prep, active cooking, passive cooking, and resting time.
+Extract it when stated; otherwise estimate a realistic total from the recipe's
+steps. If no recipe content is present at all, return null.
 
 kcal_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving: these
 are REQUIRED — always provide a number, never omit them. Extract from the text

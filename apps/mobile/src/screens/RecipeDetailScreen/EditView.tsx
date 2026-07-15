@@ -139,6 +139,7 @@ const EditView = ({
           <NutritionBoxGrid
             editing
             items={[
+              { label: t('recipes.totalTimeMinutes'), value: draft.totalTimeMinutes, accessibilityLabel: t('recipes.totalTime'), showDisclaimer: false },
               { label: t('recipes.serves'), value: draft.servings, accessibilityLabel: t('recipes.serves') },
               { label: t('recipes.colKcal'), value: draft.kcal, accessibilityLabel: t('recipes.kcalPerServing') },
               { label: t('recipes.protein'), value: draft.protein, accessibilityLabel: t('recipes.proteinPerServing'), unit: 'g' },

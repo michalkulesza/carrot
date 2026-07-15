@@ -234,6 +234,7 @@ async def save_recipe(
         shared_to_personal=body.shared_to_personal if household_id is not None else True,
         title=body.title,
         servings=body.servings,
+        total_time_minutes=body.total_time_minutes,
         kcal_per_serving=body.kcal_per_serving,
         protein_per_serving=body.protein_per_serving,
         fat_per_serving=body.fat_per_serving,
@@ -292,6 +293,7 @@ async def update_recipe(
 
     recipe.title = body.title
     recipe.servings = body.servings
+    recipe.total_time_minutes = body.total_time_minutes
     recipe.kcal_per_serving = body.kcal_per_serving
     recipe.protein_per_serving = body.protein_per_serving
     recipe.fat_per_serving = body.fat_per_serving

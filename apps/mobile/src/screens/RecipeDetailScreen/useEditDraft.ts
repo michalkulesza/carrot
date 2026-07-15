@@ -165,7 +165,7 @@ export const useEditDraft = ({
   }, [unitPickerTarget, draft, setIngredient])
 
   const handleNutritionChange = useCallback((index: number, value: string) => {
-    const key = (['servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
+    const key = (['totalTimeMinutes', 'servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
     setDraft((prev) => prev && { ...prev, [key]: value })
   }, [])
 
@@ -198,6 +198,7 @@ export const useEditDraft = ({
       const updated = await api.updateRecipe(recipeId, {
         title: draft.title,
         servings: draft.servings !== '' ? Number(draft.servings) : null,
+        total_time_minutes: draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
         kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
         protein_per_serving: draft.protein !== '' ? Number(draft.protein) : null,
         fat_per_serving: draft.fat !== '' ? Number(draft.fat) : null,

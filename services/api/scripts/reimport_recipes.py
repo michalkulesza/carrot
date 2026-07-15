@@ -61,6 +61,7 @@ def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: boo
 
     recipe.title = extraction.title or recipe.title
     recipe.servings = extraction.servings
+    recipe.total_time_minutes = extraction.total_time_minutes
     recipe.kcal_per_serving = extraction.kcal_per_serving
     recipe.protein_per_serving = extraction.protein_per_serving
     recipe.fat_per_serving = extraction.fat_per_serving

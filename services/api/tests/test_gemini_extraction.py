@@ -15,6 +15,7 @@ def _response(payload: dict) -> SimpleNamespace:
 
 def _extraction_payload() -> dict:
     return {
+        "total_time_minutes": 45,
         "kcal_per_serving": 0,
         "protein_per_serving": 0,
         "fat_per_serving": 0,
@@ -33,7 +34,7 @@ async def test_text_extraction_uses_configured_model_and_deterministic_sampling(
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
     monkeypatch.setattr(gemini.settings, "gemini_extraction_model", "configured-extraction-model")
 
-    await gemini.extract_recipe("Ingredients: 1 onion")
+    result = await gemini.extract_recipe("Ingredients: 1 onion")
 
     extraction_call, enrichment_call = generate_content.call_args_list
     assert extraction_call.kwargs["model"] == "configured-extraction-model"
@@ -41,6 +42,8 @@ async def test_text_extraction_uses_configured_model_and_deterministic_sampling(
     assert extraction_call.kwargs["config"].temperature == 0
     assert enrichment_call.kwargs["config"].temperature == 0
     assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
+    assert "total_time_minutes" in enrichment_call.kwargs["config"].system_instruction
+    assert result.total_time_minutes == 45
 
 
 @pytest.mark.asyncio

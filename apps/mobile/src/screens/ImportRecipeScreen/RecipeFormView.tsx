@@ -171,7 +171,7 @@ const RecipeFormView = ({
   }, [recipe, onChange])
 
   const handleNutritionChange = useCallback((index: number, value: string) => {
-    const key = (['servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
+    const key = (['totalTimeMinutes', 'servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
     onChange({ ...recipe, [key]: value })
   }, [recipe, onChange])
 
@@ -248,6 +248,7 @@ const RecipeFormView = ({
         <NutritionBoxGrid
           editing={editing}
           items={[
+            { label: editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'), value: recipe.totalTimeMinutes, accessibilityLabel: t('recipes.totalTime'), showDisclaimer: false },
             { label: t('recipes.serves'), value: recipe.servings, accessibilityLabel: t('recipes.serves') },
             {
               label: t('recipes.colKcal'),

@@ -4,6 +4,7 @@ import { clampToString, type EditableRecipe } from './helpers'
 interface RecipeMacroPillsProps {
   recipe: EditableRecipe
   setServings: (v: string) => void
+  setTotalTimeMinutes: (v: string) => void
   setKcal: (v: string) => void
   setProtein: (v: string) => void
   setFat: (v: string) => void
@@ -16,6 +17,7 @@ const numberInputClass =
 const RecipeMacroPills = ({
   recipe,
   setServings,
+  setTotalTimeMinutes,
   setKcal,
   setProtein,
   setFat,
@@ -25,6 +27,7 @@ const RecipeMacroPills = ({
 
   const hasAnyMacro =
     recipe.servings !== '' ||
+    recipe.totalTimeMinutes !== '' ||
     recipe.kcal !== '' ||
     recipe.protein !== '' ||
     recipe.fat !== '' ||
@@ -44,6 +47,21 @@ const RecipeMacroPills = ({
             onChange={(e) => setServings(clampToString(e.target.value, 1, 67))}
             className={`${numberInputClass} w-[2.2ch] text-primary`}
           />
+        </label>
+      )}
+      {recipe.totalTimeMinutes !== '' && (
+        <label className="flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium pl-3 pr-2 py-1.5 rounded-full cursor-text">
+          <input
+            type="number"
+            min={1}
+            max={9999}
+            value={recipe.totalTimeMinutes}
+            onChange={(e) =>
+              setTotalTimeMinutes(clampToString(e.target.value, 1, 9999))
+            }
+            className={`${numberInputClass} w-[3.8ch] text-primary`}
+          />
+          <span>{t('recipes.totalTimeMinutes')}</span>
         </label>
       )}
       {recipe.kcal !== '' && (
