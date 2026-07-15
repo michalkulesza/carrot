@@ -260,6 +260,84 @@ def test_strip_html_preserves_structural_container_with_noise_named_theme_class(
     assert "Ingredients: beef, mushrooms" in text
 
 
+def test_find_jsonld_recipe_unwraps_graph() -> None:
+    html = """
+    <html><head><script type="application/ld+json">
+    {"@context": "https://schema.org", "@graph": [
+      {"@type": "WebPage", "name": "irrelevant"},
+      {"@type": "Recipe", "name": "Graph Recipe", "recipeIngredient": ["1 egg"]}
+    ]}
+    </script></head><body></body></html>
+    """
+
+    recipe = pipeline._find_jsonld_recipe(html)
+
+    assert recipe is not None
+    assert recipe["name"] == "Graph Recipe"
+
+
+def test_jsonld_recipe_steps_unpacks_how_to_sections_and_skips_abbreviated() -> None:
+    data = {
+        "recipeInstructions": [
+            {"@type": "HowToSection", "name": "Abbreviated recipe:", "itemListElement": [
+                {"@type": "HowToStep", "text": "Do the whole thing quickly."},
+            ]},
+            {"@type": "HowToSection", "name": "Prep", "itemListElement": [
+                {"@type": "HowToStep", "text": "Chop the onion."},
+                {"@type": "HowToStep", "text": "Boil the water."},
+            ]},
+        ]
+    }
+
+    steps = pipeline._jsonld_recipe_steps(data)
+
+    assert steps == ["Chop the onion.", "Boil the water."]
+
+
+def test_find_microdata_recipe_handles_wrapper_and_repeated_step_patterns() -> None:
+    wrapper_html = """
+    <div itemscope itemtype="https://schema.org/Recipe">
+      <h1 itemprop="name">Test Cake</h1>
+      <li itemprop="recipeIngredient">2 cups flour</li>
+      <div itemprop="recipeInstructions">
+        <ol><li itemprop="text">Mix dry ingredients.</li></ol>
+      </div>
+    </div>
+    """
+    repeated_html = """
+    <div itemscope itemtype="http://schema.org/Recipe">
+      <span itemprop="name">Test Soup</span>
+      <span itemprop="recipeIngredient">1 onion</span>
+      <p itemprop="recipeInstructions">Chop the onion.</p>
+      <p itemprop="recipeInstructions">Simmer for 20 minutes.</p>
+    </div>
+    """
+
+    wrapper = pipeline._find_microdata_recipe(wrapper_html)
+    repeated = pipeline._find_microdata_recipe(repeated_html)
+
+    assert wrapper == {
+        "name": "Test Cake",
+        "recipeYield": None,
+        "totalTime": None,
+        "recipeIngredient": ["2 cups flour"],
+        "recipeInstructions": ["Mix dry ingredients."],
+        "nutrition": None,
+    }
+    assert repeated["recipeInstructions"] == ["Chop the onion.", "Simmer for 20 minutes."]
+
+
+def test_find_microdata_recipe_requires_both_ingredients_and_instructions() -> None:
+    html = """
+    <div itemscope itemtype="https://schema.org/Recipe">
+      <span itemprop="name">Missing Instructions</span>
+      <span itemprop="recipeIngredient">1 onion</span>
+    </div>
+    """
+
+    assert pipeline._find_microdata_recipe(html) is None
+
+
 @pytest.mark.asyncio
 async def test_estimate_unit_variants_uses_shared_conversion_contract(monkeypatch) -> None:
     generate_content = Mock(return_value=_response({"components": [{

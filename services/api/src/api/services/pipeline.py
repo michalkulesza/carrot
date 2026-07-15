@@ -78,6 +78,55 @@ def _find_jsonld_recipe(html: str) -> dict | None:
     return None
 
 
+def _find_microdata_recipe(html: str) -> dict | None:
+    """Returns a schema.org Recipe dict built from itemprop/itemscope microdata,
+    for sites (e.g. oliveandmango.com) that don't emit JSON-LD. Normalized into
+    the same shape as _find_jsonld_recipe's output so callers can't tell the two
+    apart."""
+    soup = BeautifulSoup(html, "html.parser")
+    container = soup.find(attrs={"itemtype": lambda v: v and v.rstrip("/").endswith("/Recipe")})
+    if container is None:
+        return None
+
+    def prop_texts(name: str) -> list[str]:
+        texts = []
+        for el in container.find_all(attrs={"itemprop": name}):
+            text = el.get("content") or el.get_text(" ", strip=True)
+            if text and text.strip():
+                texts.append(text.strip())
+        return texts
+
+    def prop_text(name: str) -> str | None:
+        texts = prop_texts(name)
+        return texts[0] if texts else None
+
+    ingredients = prop_texts("recipeIngredient") or prop_texts("ingredients")
+
+    instructions: list[str] = []
+    for el in container.find_all(attrs={"itemprop": "recipeInstructions"}):
+        # Instructions are marked up either as one wrapper with nested
+        # itemprop="text"/<li> steps, or as several repeated single-step
+        # elements — handle both by falling back to the element's own text.
+        steps = el.find_all(attrs={"itemprop": "text"}) or el.find_all("li")
+        if steps:
+            instructions.extend(s.get_text(" ", strip=True) for s in steps if s.get_text(strip=True))
+        elif el.get_text(strip=True):
+            instructions.append(el.get_text(" ", strip=True))
+
+    if not ingredients or not instructions:
+        return None
+
+    calories = prop_text("calories")
+    return {
+        "name": prop_text("name"),
+        "recipeYield": prop_text("recipeYield"),
+        "totalTime": prop_text("totalTime"),
+        "recipeIngredient": ingredients,
+        "recipeInstructions": instructions,
+        "nutrition": {"calories": calories} if calories else None,
+    }
+
+
 def _jsonld_recipe_steps(data: dict) -> list[str]:
     steps: list[str] = []
     for s in data.get("recipeInstructions", []):
@@ -181,7 +230,7 @@ async def _try_linked_url(
         log.warning("Failed to fetch linked URL %s: %s", url, exc)
         return None
 
-    jsonld = _find_jsonld_recipe(html)
+    jsonld = _find_jsonld_recipe(html) or _find_microdata_recipe(html)
     if jsonld and _jsonld_recipe_is_complete(jsonld):
         source_text = _jsonld_recipe_to_text(jsonld)
     else:
@@ -265,7 +314,7 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
         domain = urlparse(url).netloc.removeprefix("www.")
         meta = ImportMetadata(source_url=url, thumbnail_url=thumbnail_url, creator_handle=domain)
 
-        jsonld = _find_jsonld_recipe(html)
+        jsonld = _find_jsonld_recipe(html) or _find_microdata_recipe(html)
         if jsonld and _jsonld_recipe_is_complete(jsonld):
             # Structured JSON-LD is cleaner and more reliable input than scraped
             # page text, but tags/macros/qty-unit-note parsing still only ever
