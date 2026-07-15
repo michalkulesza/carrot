@@ -17,10 +17,10 @@ const SIMPLE_QUANTITY_PATTERN = `(?:\\d+(?:[.,]\\d+)?(?:[${VULGAR_FRACTION_PATTE
 const LEADING_QUANTITY_PATTERN = new RegExp(`^(\\s*)(${SIMPLE_QUANTITY_PATTERN})(?=\\s|$)`)
 const UNIT_PATTERN = UNITS.join('|')
 const EMBEDDED_QUANTITY_PATTERN = new RegExp(
-  `(${SIMPLE_QUANTITY_PATTERN})(\\s*)(${UNIT_PATTERN}(?:es|s)?)\\b`,
+  `(${SIMPLE_QUANTITY_PATTERN})(\\s*)((?:${UNIT_PATTERN})(?:es|s)?)\\b`,
   'gi',
 )
-const LEADING_CUP_PATTERN = new RegExp(`^(\\s*)(${SIMPLE_QUANTITY_PATTERN})\\s+cups?\\b`, 'i')
+const CUP_PATTERN = new RegExp(`(${SIMPLE_QUANTITY_PATTERN})\\s+cups?\\b`, 'i')
 
 const parseSlashFraction = (value: string): number | null => {
   const [numeratorText, denominatorText] = value.split(/[\/⁄]/)
@@ -112,7 +112,7 @@ export const getImperialCupQty = (
   if (!imperialIngredient) return null
 
   const scaled = scaleIngredientQuantity(imperialIngredient, servingScale)
-  const match = scaled.match(LEADING_CUP_PATTERN)
+  const match = scaled.match(CUP_PATTERN)
 
-  return match ? match[2] : null
+  return match ? match[1] : null
 }
