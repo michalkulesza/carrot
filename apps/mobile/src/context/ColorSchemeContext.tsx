@@ -42,7 +42,14 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
         }
       })
       .finally(() => {
-        void SplashScreen.hideAsync()
+        // Native chrome backed by blur/vibrancy materials (nav bar, tab bar, glass views) needs
+        // a beat to finish re-rendering against the applied trait collection before it's safe
+        // to reveal — hiding the splash right after the JS call still races it.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTimeout(() => void SplashScreen.hideAsync(), 100)
+          })
+        })
       })
   }, [])
 
