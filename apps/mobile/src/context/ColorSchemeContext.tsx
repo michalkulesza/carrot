@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useState } from 'react'
-import { Appearance } from 'react-native'
+import { Appearance, useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
 
@@ -60,3 +60,12 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
 }
 
 export const useAppearanceMode = () => useContext(ColorSchemeContext)
+
+// Native modules that expose their own explicit light/dark override (e.g. expo-glass-effect's
+// GlassView) need a resolved 'light' | 'dark' value rather than 'system', since relying on
+// ambient trait-collection propagation for those views can lag a frame behind the rest of the UI.
+export const useResolvedColorScheme = (): 'light' | 'dark' => {
+  const { mode } = useAppearanceMode()
+  const systemScheme = useColorScheme()
+  return mode === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : mode
+}
