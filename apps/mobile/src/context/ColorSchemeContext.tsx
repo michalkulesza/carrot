@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { Appearance, useColorScheme } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SplashScreen from 'expo-splash-screen'
+import PostSplashAnimation from '../components/PostSplashAnimation'
 
 // Keep the native splash up until the persisted appearance preference (if any) is
 // applied, so a device in dark mode never shows a light first frame before flipping.
@@ -28,6 +29,7 @@ const applyAppearanceMode = (mode: AppearanceMode) => {
 
 export const ColorSchemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [mode, setModeState] = useState<AppearanceMode>('system')
+  const [showPostSplashAnimation, setShowPostSplashAnimation] = useState(false)
 
   useLayoutEffect(() => {
     applyAppearanceMode('system')
@@ -42,15 +44,20 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
         }
       })
       .finally(() => {
-        // Native chrome backed by blur/vibrancy materials (nav bar, tab bar, glass views) needs
-        // a beat to finish re-rendering against the applied trait collection before it's safe
-        // to reveal — hiding the splash right after the JS call still races it.
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            setTimeout(() => void SplashScreen.hideAsync(), 100)
+            setShowPostSplashAnimation(true)
           })
         })
       })
+  }, [])
+
+  const handlePostSplashReady = useCallback(() => {
+    void SplashScreen.hideAsync()
+  }, [])
+
+  const handlePostSplashFinish = useCallback(() => {
+    setShowPostSplashAnimation(false)
   }, [])
 
   const setMode = useCallback((newMode: AppearanceMode) => {
@@ -62,6 +69,9 @@ export const ColorSchemeProvider = ({ children }: { children: React.ReactNode })
   return (
     <ColorSchemeContext.Provider value={{ mode, setMode }}>
       {children}
+      {showPostSplashAnimation && (
+        <PostSplashAnimation onReady={handlePostSplashReady} onFinish={handlePostSplashFinish} />
+      )}
     </ColorSchemeContext.Provider>
   )
 }
