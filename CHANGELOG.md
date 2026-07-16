@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.0.6] — 2026-07-16
+
+### Apps & platform
+
+- ✨ **Feature** — Mobile launch screen now uses a full-bleed Carrot splash followed by a 300 ms branded animation before the app appears.
+- 🐛 **Bug** — Fixed a dark-mode flash at mobile startup by applying the saved appearance preference before revealing the app and its navigation chrome.
+
 ## [1.0.5] — 2026-07-15
 
 ### Recipes & importing
