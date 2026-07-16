@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { Alert, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
@@ -191,6 +191,37 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     [],
   )
 
+  const subviewHeader = subview !== 'picker' && (
+    <View style={styles.subviewHeader}>
+      <Pressable
+        onPress={handleBackToPicker}
+        hitSlop={8}
+        style={({ pressed }) => [styles.subviewBackBtn, pressed && { opacity: 0.5 }]}
+        accessibilityLabel={t('common.back')}
+      >
+        <Feather name="chevron-left" size={22} color={PlatformColor('systemBlue') as unknown as string} />
+        <Text style={styles.subviewBackText}>{t('common.back')}</Text>
+      </Pressable>
+      <Text style={styles.subviewTitle}>{t(SUBVIEW_TITLE_KEY[subview])}</Text>
+    </View>
+  )
+
+  const errorBox = error && (
+    <View style={styles.errorBox}>
+      <Text style={styles.errorTitle}>{t('addRecipe.importFailed')}</Text>
+      <Text style={styles.errorMsg}>{error}</Text>
+      {subview === 'picker' && url.trim() && (
+        <Pressable
+          style={({ pressed }) => [styles.openInBrowserBtn, pressed && { opacity: 0.7 }]}
+          onPress={handleOpenInBrowser}
+          accessibilityLabel={t('addRecipe.openInBrowser')}
+        >
+          <Text style={styles.openInBrowserText}>{t('addRecipe.openInBrowser')}</Text>
+        </Pressable>
+      )}
+    </View>
+  )
+
   return (
     <BottomSheetModal
       ref={sheetRef}
@@ -204,73 +235,50 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       handleIndicatorStyle={styles.sheetHandle}
       onDismiss={reset}
     >
-      <BottomSheetView style={styles.container}>
-        {subview !== 'picker' && (
-          <View style={styles.subviewHeader}>
-            <Pressable
-              onPress={handleBackToPicker}
-              hitSlop={8}
-              style={({ pressed }) => [styles.subviewBackBtn, pressed && { opacity: 0.5 }]}
-              accessibilityLabel={t('common.back')}
-            >
-              <Feather name="chevron-left" size={22} color={PlatformColor('systemBlue') as unknown as string} />
-              <Text style={styles.subviewBackText}>{t('common.back')}</Text>
-            </Pressable>
-            <Text style={styles.subviewTitle}>{t(SUBVIEW_TITLE_KEY[subview])}</Text>
-          </View>
-        )}
-
-        {subview === 'picker' && (
-          <>
-            <QuickUrlInputRow
-              url={url}
-              onUrlChange={setUrl}
-              onPaste={handlePasteUrl}
-              onImport={handleImportUrl}
-              loading={loading}
-            />
-            <MethodPickerView
-              showPersonalLibrary={activeHouseholdId !== null}
-              onSelect={handleMethodSelect}
-            />
-          </>
-        )}
-
-        {subview === 'text' && (
-          <TextPasteView
-            text={pastedText}
-            onTextChange={setPastedText}
-            onPaste={handlePasteText}
-            onExtract={handleExtractText}
-            loading={loading}
-          />
-        )}
-
-        {subview === 'personal-library' && (
+      {subview === 'personal-library' ? (
+        <BottomSheetView style={styles.container}>
+          {subviewHeader}
           <PersonalRecipePickerView
             recipes={personalRecipes}
             isLoading={isLoadingPersonalRecipes}
             linkingRecipeId={linkingRecipeId}
             onSelect={handlePersonalRecipeSelect}
           />
-        )}
+          {errorBox}
+        </BottomSheetView>
+      ) : (
+        <BottomSheetScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+          {subviewHeader}
 
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorTitle}>{t('addRecipe.importFailed')}</Text>
-            <Text style={styles.errorMsg}>{error}</Text>
-            {subview === 'picker' && url.trim() && (
-              <Pressable
-                style={({ pressed }) => [styles.openInBrowserBtn, pressed && { opacity: 0.7 }]}
-                onPress={handleOpenInBrowser}
-                accessibilityLabel={t('addRecipe.openInBrowser')}
-              >
-                <Text style={styles.openInBrowserText}>{t('addRecipe.openInBrowser')}</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
-      </BottomSheetView>
+          {subview === 'picker' && (
+            <>
+              <QuickUrlInputRow
+                url={url}
+                onUrlChange={setUrl}
+                onPaste={handlePasteUrl}
+                onImport={handleImportUrl}
+                loading={loading}
+              />
+              <MethodPickerView
+                showPersonalLibrary={activeHouseholdId !== null}
+                onSelect={handleMethodSelect}
+              />
+            </>
+          )}
+
+          {subview === 'text' && (
+            <TextPasteView
+              text={pastedText}
+              onTextChange={setPastedText}
+              onPaste={handlePasteText}
+              onExtract={handleExtractText}
+              loading={loading}
+            />
+          )}
+
+          {errorBox}
+        </BottomSheetScrollView>
+      )}
     </BottomSheetModal>
   )
 })
