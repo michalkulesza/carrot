@@ -35,7 +35,8 @@
     "invalidImageUrl": "URL invalide. Veuillez entrer une adresse https:// valide.",
     "somethingWentWrong": "Une erreur est survenue",
     "tryAgain": "Réessayer",
-    "search": "Rechercher"
+    "search": "Rechercher",
+    "remove": "Supprimer"
   },
   "recipes": {
     "searchPlaceholder": "Chercher des recettes…",
@@ -566,7 +567,7 @@
     "qtyLabel": "qté",
     "unitLabel": "unité"
   },
-  "relatedRecipes": { "title": "Recettes associées", "add": "Ajouter des recettes associées" },
+  "relatedRecipes": { "title": "Recettes associées", "add": "Modifier les recettes associées" },
   "ads": {
     "advertisement": "Publicité",
     "placeholder": "Publicité"

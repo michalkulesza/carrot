@@ -35,7 +35,8 @@
     "invalidImageUrl": "URL no válida. Introduce una dirección https:// válida.",
     "somethingWentWrong": "Algo salió mal",
     "tryAgain": "Inténtalo de nuevo",
-    "search": "Buscar"
+    "search": "Buscar",
+    "remove": "Eliminar"
   },
   "recipes": {
     "searchPlaceholder": "Buscar recetas…",
@@ -565,7 +566,7 @@
     "qtyLabel": "cant.",
     "unitLabel": "unidad"
   },
-  "relatedRecipes": { "title": "Recetas relacionadas", "add": "Añadir recetas relacionadas" },
+  "relatedRecipes": { "title": "Recetas relacionadas", "add": "Editar recetas relacionadas" },
   "ads": {
     "advertisement": "Publicidad",
     "placeholder": "Anuncio"

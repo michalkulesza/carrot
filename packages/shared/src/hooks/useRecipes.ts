@@ -3,13 +3,37 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { RecipeOut, RecipeSaveRequest } from '../types'
 
+type RecipeStreamApi = {
+  subscribeRecipes: (onChange: () => void) => () => void
+}
+
+const recipeChangeListeners = new Set<() => void>()
+let stopRecipeStream: (() => void) | null = null
+
+const subscribeToRecipeChanges = (api: RecipeStreamApi, listener: () => void) => {
+  recipeChangeListeners.add(listener)
+  if (!stopRecipeStream) {
+    stopRecipeStream = api.subscribeRecipes(() => {
+      recipeChangeListeners.forEach((onChange) => onChange())
+    })
+  }
+
+  return () => {
+    recipeChangeListeners.delete(listener)
+    if (recipeChangeListeners.size === 0) {
+      stopRecipeStream?.()
+      stopRecipeStream = null
+    }
+  }
+}
+
 export const useRecipes = (enabled = true) => {
   const api = useApiClient()
   const qc = useQueryClient()
 
   useEffect(() => {
     if (!enabled) return
-    return api.subscribeRecipes(() => qc.invalidateQueries({ queryKey: ['recipes'] }))
+    return subscribeToRecipeChanges(api, () => void qc.invalidateQueries({ queryKey: ['recipes'] }))
   }, [api, qc, enabled])
 
   const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled })

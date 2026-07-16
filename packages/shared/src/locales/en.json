@@ -35,7 +35,8 @@
     "invalidImageUrl": "Invalid URL. Please enter a valid https:// address.",
     "somethingWentWrong": "Something went wrong",
     "tryAgain": "Try again",
-    "search": "Search"
+    "search": "Search",
+    "remove": "Remove"
   },
   "recipes": {
     "searchPlaceholder": "Search recipes…",
@@ -566,7 +567,7 @@
     "qtyLabel": "qty",
     "unitLabel": "unit"
   },
-  "relatedRecipes": { "title": "Related recipes", "add": "Add related recipes" },
+  "relatedRecipes": { "title": "Related recipes", "add": "Edit related recipes" },
   "ads": {
     "advertisement": "Advertisement",
     "placeholder": "Ad"

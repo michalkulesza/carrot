@@ -336,7 +336,6 @@ export const styles = StyleSheet.create({
   relatedRecipeCard: { width: 116, position: 'relative' },
   relatedRecipeImage: { width: 116, height: 76, borderRadius: 10, backgroundColor: colors.gray6 },
   relatedRecipeTitle: { marginTop: 5, fontSize: 13, color: colors.label },
-  relatedRecipeRemove: { position: 'absolute', right: 4, top: 4, backgroundColor: '#0008', borderRadius: 10, overflow: 'hidden' },
   relatedRecipeAdd: { width: 90, height: 76, borderRadius: 10, borderWidth: 1, borderStyle: 'dashed', borderColor: colors.opaqueSeparator, alignItems: 'center', justifyContent: 'center' },
   relatedRecipeAddText: { marginTop: 3, fontSize: 13, color: colors.blue },
   relatedPicker: { flex: 1, padding: 24, backgroundColor: colors.background },

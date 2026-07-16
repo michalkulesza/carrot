@@ -10,6 +10,7 @@ export const useRelatedRecipes = (recipeId: string | null) => {
     queryKey,
     queryFn: () => api.listRelatedRecipes(recipeId!),
     enabled: recipeId !== null,
+    refetchOnMount: 'always',
   })
   const save = useMutation({
     mutationFn: (recipeIds: string[]) => api.setRelatedRecipes(recipeId!, recipeIds),
@@ -18,5 +19,5 @@ export const useRelatedRecipes = (recipeId: string | null) => {
       void qc.invalidateQueries({ queryKey: ['recipes'] })
     },
   })
-  return { relatedRecipes: query.data ?? [], isLoading: query.isLoading, save }
+  return { relatedRecipes: query.data ?? [], isLoading: query.isLoading, refetch: query.refetch, save }
 }

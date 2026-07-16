@@ -35,7 +35,8 @@
     "invalidImageUrl": "Nieprawidłowy URL. Podaj prawidłowy adres https://.",
     "somethingWentWrong": "Coś poszło nie tak",
     "tryAgain": "Spróbuj ponownie",
-    "search": "Szukaj"
+    "search": "Szukaj",
+    "remove": "Usuń"
   },
   "recipes": {
     "searchPlaceholder": "Wyszukaj",
@@ -574,7 +575,7 @@
     "qtyLabel": "ilość",
     "unitLabel": "jednostka"
   },
-  "relatedRecipes": { "title": "Powiązane przepisy", "add": "Dodaj powiązane przepisy" },
+  "relatedRecipes": { "title": "Powiązane przepisy", "add": "Edytuj powiązane przepisy" },
   "ads": {
     "advertisement": "Reklama",
     "placeholder": "Reklama"
