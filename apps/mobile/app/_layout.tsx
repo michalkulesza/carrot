@@ -2,7 +2,7 @@ import '../src/i18n'
 import i18n from '../src/i18n'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ActivityIndicator, AppState, StyleSheet, View, useColorScheme } from 'react-native'
+import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
@@ -12,6 +12,7 @@ import { useNotificationHistory } from '../src/context/NotificationHistoryContex
 import BugReportButton from '../src/components/BugReportButton'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
+import { useResolvedColorScheme } from '../src/context/ColorSchemeContext'
 
 if (!__DEV__) {
   Sentry.init({
@@ -76,7 +77,7 @@ function RootLayoutNav() {
   const api = useApiClient()
   const { push: pushNotif } = useNotificationHistory()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
-  const colorScheme = useColorScheme()
+  const colorScheme = useResolvedColorScheme()
   const navigationTheme = useMemo<Theme>(
     () => ({
       dark: colorScheme === 'dark',

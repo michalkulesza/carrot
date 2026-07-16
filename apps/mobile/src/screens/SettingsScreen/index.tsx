@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { MenuView } from '@react-native-menu/menu'
 import { useAppearanceMode, type AppearanceMode } from '../../context/ColorSchemeContext'
 import { useCookingMode } from '../../context/CookingModeContext'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
@@ -31,8 +30,6 @@ import { persistLanguage } from '../../i18n'
 import HeaderTitle from '../../components/HeaderTitle'
 import { SHOW_STEP_QTY_STORAGE_KEY } from '../RecipeDetailScreen/helpers'
 import {
-  APPEARANCE_OPTIONS,
-  DEVELOPER_SETTINGS_EMAIL,
   KEEP_AWAKE_SHOPPING_STORAGE_KEY,
   LANGUAGES,
   WEEK_START_OPTIONS,
@@ -247,10 +244,6 @@ const SettingsScreen = () => {
   const currentAllergens: string[] =
     activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
 
-  const appearanceLabel = t(
-    APPEARANCE_OPTIONS.find((o) => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem',
-  )
-
   const weekStartLabel = t(
     WEEK_START_OPTIONS.find((o) => o.value === (preferences?.week_start_day ?? 1))?.labelKey ?? 'settings.monday',
   )
@@ -326,8 +319,10 @@ const SettingsScreen = () => {
         error={error}
         preferences={preferences}
         currentLanguageCode={preferences?.language ?? i18n.language}
+        appearanceMode={appearanceMode}
         onLanguagePicker={handleLanguagePicker}
         onUnitSystemToggle={handleUnitSystemToggle}
+        onAppearanceChange={handleAppearanceChange}
       />
 
       <SectionHeader label={t('settings.recipeImport')} />
@@ -412,31 +407,6 @@ const SettingsScreen = () => {
           />
         </View>
       </View>
-
-      {user?.email === DEVELOPER_SETTINGS_EMAIL && (
-        <>
-          <SectionHeader label={t('settings.developer')} />
-          <View style={styles.card}>
-            <MenuView
-              title={t('settings.appearance')}
-              onPressAction={handleAppearanceChange}
-              actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
-                id: value,
-                title: t(labelKey),
-                state: appearanceMode === value ? 'on' : 'off',
-              }))}
-            >
-              <View style={[styles.pickerRow, styles.switchRowBorder]}>
-                <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
-                <View style={styles.pickerRight}>
-                  <Text style={styles.pickerValue}>{appearanceLabel}</Text>
-                  <Text style={styles.pickerChevron}>›</Text>
-                </View>
-              </View>
-            </MenuView>
-          </View>
-        </>
-      )}
     </ScrollView>
   )
 }

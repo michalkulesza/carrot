@@ -1,7 +1,9 @@
 import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import { MenuView } from '@react-native-menu/menu'
 import type { UserPreferences } from '@carrot/shared/types'
-import { LANGUAGES } from './helpers'
+import type { AppearanceMode } from '../../context/ColorSchemeContext'
+import { APPEARANCE_OPTIONS, LANGUAGES } from './helpers'
 import { styles } from './styles'
 
 const PreferencesSection = ({
@@ -9,15 +11,19 @@ const PreferencesSection = ({
   error,
   preferences,
   currentLanguageCode,
+  appearanceMode,
   onLanguagePicker,
   onUnitSystemToggle,
+  onAppearanceChange,
 }: {
   loading: boolean
   error: Error | null
   preferences: UserPreferences | null | undefined
   currentLanguageCode: string
+  appearanceMode: AppearanceMode
   onLanguagePicker: () => void
   onUnitSystemToggle: (isMetric: boolean) => void
+  onAppearanceChange: (event: { nativeEvent: { event: string } }) => void
 }) => {
   const { t } = useTranslation()
 
@@ -38,6 +44,9 @@ const PreferencesSection = ({
   }
 
   const languageLabel = t(LANGUAGES.find((l) => l.code === currentLanguageCode)?.labelKey ?? 'languages.en')
+  const appearanceLabel = t(
+    APPEARANCE_OPTIONS.find((o) => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem',
+  )
 
   return (
     <>
@@ -68,6 +77,26 @@ const PreferencesSection = ({
             accessibilityLabel={t('settings.useMetricSystem')}
           />
         </View>
+      </View>
+
+      <View style={styles.card}>
+        <MenuView
+          title={t('settings.appearance')}
+          onPressAction={onAppearanceChange}
+          actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
+            id: value,
+            title: t(labelKey),
+            state: appearanceMode === value ? 'on' : 'off',
+          }))}
+        >
+          <View style={styles.pickerRow}>
+            <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
+            <View style={styles.pickerRight}>
+              <Text style={styles.pickerValue}>{appearanceLabel}</Text>
+              <Text style={styles.pickerChevron}>›</Text>
+            </View>
+          </View>
+        </MenuView>
       </View>
     </>
   )
