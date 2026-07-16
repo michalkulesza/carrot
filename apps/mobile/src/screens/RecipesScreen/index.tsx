@@ -686,9 +686,9 @@ const RecipesScreen = () => {
                     <PendingJobCard
                       key={job.id}
                       job={job}
-                      onRetry={() => retry.mutate(job.id)}
-                      onCancel={() => cancel.mutate(job.id)}
-                      onDismiss={() => dismiss.mutate(job.id)}
+                      onRetry={() => retry.mutateAsync(job.id)}
+                      onCancel={() => cancel.mutateAsync(job.id)}
+                      onDismiss={() => dismiss.mutateAsync(job.id)}
                     />
                   ))}
                 </View>
