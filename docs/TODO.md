@@ -4,7 +4,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Core product features
 
-RERUN PROD FULL EXTRACTION 
+- [ ] **RE RUN PRODUCTION** recipes 
 - [ ] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [ ] **Visual recipe library / grid view** — Let users switch between the compact list and a photo-forward card or grid view with useful metadata such as tags, cooking time, and favourite status.
 
@@ -21,7 +21,6 @@ RERUN PROD FULL EXTRACTION
 - [x] **Cooking time estimation** — Estimate each recipe's cooking time and show it in the stat boxes, in the far-left box.
 - [x] **Improve prompts** — Refined recipe-import query boundaries: source-only extraction schema, enrichment-only schema with a validated combiner, deduplicated allergen analysis, and honoured per-import model overrides. See docs/specs/refine-recipe-import-queries.md.
 - [x] **Quick plain-text meal entries** — Add a one-per-day free-text meal alongside recipes, shared within the active personal or household plan.
-- [x] **RE RUN PRODUCTION** recipes
 - [x] **Make sure sharing work on physical device**
 - [x] **Fix recipe share options in household context** — In household recipe details, offer adding household-only recipes to the personal library and hide household sharing for recipes already in a household.
 - [x] **Fix cooking mode sync** - between recipe details and app settings, they do not sync to eachother
