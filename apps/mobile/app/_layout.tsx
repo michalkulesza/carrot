@@ -2,7 +2,7 @@ import '../src/i18n'
 import i18n from '../src/i18n'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState, useColorScheme } from 'react-native'
+import { ActivityIndicator, AppState, StyleSheet, View, useColorScheme } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
@@ -219,9 +219,23 @@ function RootLayoutNav() {
         <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
         <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
       </Stack>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" />
+        </View>
+      )}
     </ThemeProvider>
   )
 }
+
+const styles = StyleSheet.create({
+  loadingOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+})
 
 const RootLayout = () => {
   return (
