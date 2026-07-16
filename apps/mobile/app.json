@@ -105,7 +105,8 @@
           }
         }
       ],
-      "expo-image"
+      "expo-image",
+      "expo-splash-screen"
     ],
     "extra": {
       "eas": {
