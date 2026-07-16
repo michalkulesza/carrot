@@ -4,7 +4,6 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Core product features
 
-- [ ] **Add related recipes** - Add ability to attach recipe to another recipe as mayb related or other better wording
 - [ ] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [ ] **Visual recipe library / grid view** — Let users switch between the compact list and a photo-forward card or grid view with useful metadata such as tags, cooking time, and favourite status.
 
@@ -26,6 +25,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Fix cooking mode sync** - between recipe details and app settings, they do not sync to eachother
 - [x] **Unified ingredient list with collapsible groups** — When a recipe has multiple ingredient groups (e.g. Main and Sauce), show one combined "Ingredients" list of everything at the top, then render each group as its own collapsible section that is collapsed by default, with a caret/chevron at the end of each group header.
 - [x] **RE RUN PRODUCTION** recipes
+- [x] **Add related recipes** — Add reciprocal links between recipes, with a related-recipes section on web and mobile.
 
 ## Experience and product polish
 
