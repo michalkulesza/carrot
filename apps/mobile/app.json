@@ -9,12 +9,6 @@
       "policy": "appVersion"
     },
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "cover",
-      "backgroundColor": "#cb6134",
-      "imageWidth": 437
-    },
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
@@ -106,7 +100,15 @@
         }
       ],
       "expo-image",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "imageWidth": 437,
+          "resizeMode": "cover",
+          "backgroundColor": "#cb6134"
+        }
+      ]
     ],
     "extra": {
       "eas": {

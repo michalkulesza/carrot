@@ -1,15 +1,17 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AppState } from 'react-native'
+import { AppState, useColorScheme } from 'react-native'
 import { Stack, useRouter, useSegments } from 'expo-router'
+import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
 import * as Notifications from 'expo-notifications'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
 import BugReportButton from '../src/components/BugReportButton'
 import HeaderTitle from '../src/components/HeaderTitle'
+import { colors } from '../src/theme/colors'
 
 if (!__DEV__) {
   Sentry.init({
@@ -49,6 +51,17 @@ const queryClient = new QueryClient({
   },
 })
 
+// Dynamic (PlatformColor/DynamicColorIOS) colors already flip with the OS appearance,
+// so a single theme object covers both light and dark without branching on colorScheme.
+const navigationThemeColors: Theme['colors'] = {
+  primary: colors.blue,
+  background: colors.background,
+  card: colors.secondaryBackground,
+  text: colors.label,
+  border: colors.separator,
+  notification: colors.red,
+}
+
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })
 // Bump when the cached query data shape changes in a way older persisted caches can't handle.
 const QUERY_CACHE_BUSTER = '1'
@@ -63,6 +76,15 @@ function RootLayoutNav() {
   const api = useApiClient()
   const { push: pushNotif } = useNotificationHistory()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
+  const colorScheme = useColorScheme()
+  const navigationTheme = useMemo<Theme>(
+    () => ({
+      dark: colorScheme === 'dark',
+      colors: navigationThemeColors,
+      fonts: DefaultTheme.fonts,
+    }),
+    [colorScheme],
+  )
   useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
 
   useEffect(() => {
@@ -170,7 +192,7 @@ function RootLayoutNav() {
   }, [loading, user, qc])
 
   return (
-    <>
+    <ThemeProvider value={navigationTheme}>
       <Stack
         screenOptions={{
           headerBackTitle: t('common.back'),
@@ -197,7 +219,7 @@ function RootLayoutNav() {
         <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
         <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
       </Stack>
-    </>
+    </ThemeProvider>
   )
 }
 
