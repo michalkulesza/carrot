@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { Alert, Linking, PlatformColor, Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { Alert, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
@@ -28,6 +28,10 @@ const SUBVIEW_TITLE_KEY: Record<Exclude<AddRecipeSubview, 'picker'>, string> = {
   'personal-library': 'addRecipe.fromPersonalLibrary',
 }
 
+// Fixed rather than dynamic so every subview renders at the same height instead of the
+// sheet resizing as the user switches between the picker, text-paste, and library views.
+const SNAP_POINTS = ['65%']
+
 const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const { t } = useTranslation()
   const router = useRouter()
@@ -46,11 +50,6 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
-  const [pickerHeight, setPickerHeight] = useState<number | undefined>(undefined)
-
-  const handlePickerLayout = useCallback((event: LayoutChangeEvent) => {
-    setPickerHeight(event.nativeEvent.layout.height)
-  }, [])
 
   const reset = useCallback(() => {
     setSubview('picker')
@@ -230,7 +229,8 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   return (
     <BottomSheetModal
       ref={sheetRef}
-      enableDynamicSizing
+      snapPoints={SNAP_POINTS}
+      enableDynamicSizing={false}
       enablePanDownToClose
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
@@ -241,24 +241,20 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       onDismiss={reset}
     >
       {subview === 'personal-library' ? (
-        // Pinned to the picker's measured height so switching subviews doesn't resize the
-        // sheet — the list fills that fixed space as the sheet's one scroll surface.
-        <BottomSheetView style={[styles.container, pickerHeight != null && { height: pickerHeight }]}>
-          {subviewHeader}
-          <PersonalRecipePickerView
-            recipes={personalRecipes}
-            isLoading={isLoadingPersonalRecipes}
-            linkingRecipeId={linkingRecipeId}
-            onSelect={handlePersonalRecipeSelect}
-          />
-          {errorBox}
-        </BottomSheetView>
+        <PersonalRecipePickerView
+          recipes={personalRecipes}
+          isLoading={isLoadingPersonalRecipes}
+          linkingRecipeId={linkingRecipeId}
+          onSelect={handlePersonalRecipeSelect}
+          header={subviewHeader}
+          error={errorBox}
+        />
       ) : (
         <BottomSheetScrollView style={styles.container} keyboardShouldPersistTaps="handled">
           {subviewHeader}
 
           {subview === 'picker' && (
-            <View onLayout={handlePickerLayout}>
+            <>
               <QuickUrlInputRow
                 url={url}
                 onUrlChange={setUrl}
@@ -270,7 +266,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 showPersonalLibrary={activeHouseholdId !== null}
                 onSelect={handleMethodSelect}
               />
-            </View>
+            </>
           )}
 
           {subview === 'text' && (

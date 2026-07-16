@@ -43,7 +43,7 @@ export const styles = StyleSheet.create({
   secondaryBtn: {
     borderWidth: 1,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 10,
+    borderRadius: 999,
     paddingVertical: 13,
     alignItems: 'center',
     justifyContent: 'center',

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import {
   ActivityIndicator,
   PlatformColor,
@@ -60,11 +60,15 @@ const PersonalRecipePickerView = ({
   isLoading,
   linkingRecipeId,
   onSelect,
+  header,
+  error,
 }: {
   recipes: RecipeOut[]
   isLoading: boolean
   linkingRecipeId: string | null
   onSelect: (id: string) => void
+  header?: ReactNode
+  error?: ReactNode
 }) => {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
@@ -88,41 +92,45 @@ const PersonalRecipePickerView = ({
 
   const emptyLabel = search.trim() ? t('mealPlan.noRecipesMatch') : t('mealPlan.noRecipesYet')
 
-  const searchInput = (
-    <BottomSheetTextInput
-      value={search}
-      onChangeText={setSearch}
-      placeholder={t('recipes.searchPlaceholder')}
-      placeholderTextColor={PlatformColor('tertiaryLabel') as unknown as string}
-      style={styles.personalRecipeSearch}
-      autoCapitalize="none"
-      autoCorrect={false}
-      returnKeyType="search"
-      accessibilityLabel={t('recipes.searchPlaceholder')}
-    />
+  const listHeader = (
+    <>
+      {header}
+      {error}
+      <BottomSheetTextInput
+        value={search}
+        onChangeText={setSearch}
+        placeholder={t('recipes.searchPlaceholder')}
+        placeholderTextColor={PlatformColor('tertiaryLabel') as unknown as string}
+        style={styles.personalRecipeSearch}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        accessibilityLabel={t('recipes.searchPlaceholder')}
+      />
+    </>
   )
 
   if (isLoading) {
     return (
       <View style={styles.personalRecipePicker}>
-        {searchInput}
+        {listHeader}
         <ActivityIndicator style={styles.personalRecipeLoading} size="large" />
       </View>
     )
   }
 
-  // The search input lives inside the list's header (rather than as a sibling above it)
-  // so it's part of the sheet's single registered scrollable — that's what lets the
-  // bottom sheet auto-scroll it above the keyboard when focused.
+  // The header (back button), error box, and search input all live inside the list's
+  // own header rather than as siblings around it — that keeps BottomSheetFlatList as the
+  // sheet's single direct scrollable child, which is what lets it fill the fixed sheet
+  // height and lets the sheet auto-scroll the search input above the keyboard when focused.
   return (
     <BottomSheetFlatList
-      style={styles.personalRecipeListWrap}
       contentContainerStyle={styles.personalRecipePicker}
       data={filteredRecipes}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       keyboardShouldPersistTaps="handled"
-      ListHeaderComponent={searchInput}
+      ListHeaderComponent={listHeader}
       ItemSeparatorComponent={PersonalRecipeSeparator}
       ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
     />
