@@ -88,34 +88,44 @@ const PersonalRecipePickerView = ({
 
   const emptyLabel = search.trim() ? t('mealPlan.noRecipesMatch') : t('mealPlan.noRecipesYet')
 
-  return (
-    <View style={styles.personalRecipePicker}>
-      <BottomSheetTextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder={t('recipes.searchPlaceholder')}
-        placeholderTextColor={PlatformColor('tertiaryLabel') as unknown as string}
-        style={styles.personalRecipeSearch}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-        accessibilityLabel={t('recipes.searchPlaceholder')}
-      />
-      {isLoading ? (
+  const searchInput = (
+    <BottomSheetTextInput
+      value={search}
+      onChangeText={setSearch}
+      placeholder={t('recipes.searchPlaceholder')}
+      placeholderTextColor={PlatformColor('tertiaryLabel') as unknown as string}
+      style={styles.personalRecipeSearch}
+      autoCapitalize="none"
+      autoCorrect={false}
+      returnKeyType="search"
+      accessibilityLabel={t('recipes.searchPlaceholder')}
+    />
+  )
+
+  if (isLoading) {
+    return (
+      <View style={styles.personalRecipePicker}>
+        {searchInput}
         <ActivityIndicator style={styles.personalRecipeLoading} size="large" />
-      ) : (
-        <View style={styles.personalRecipeListWrap}>
-          <BottomSheetFlatList
-            data={filteredRecipes}
-            renderItem={renderItem}
-            keyExtractor={keyExtractor}
-            keyboardShouldPersistTaps="handled"
-            ItemSeparatorComponent={PersonalRecipeSeparator}
-            ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
-          />
-        </View>
-      )}
-    </View>
+      </View>
+    )
+  }
+
+  // The search input lives inside the list's header (rather than as a sibling above it)
+  // so it's part of the sheet's single registered scrollable — that's what lets the
+  // bottom sheet auto-scroll it above the keyboard when focused.
+  return (
+    <BottomSheetFlatList
+      style={styles.personalRecipeListWrap}
+      contentContainerStyle={styles.personalRecipePicker}
+      data={filteredRecipes}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      keyboardShouldPersistTaps="handled"
+      ListHeaderComponent={searchInput}
+      ItemSeparatorComponent={PersonalRecipeSeparator}
+      ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
+    />
   )
 }
 
