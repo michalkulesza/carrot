@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { Alert, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
+import { Alert, Linking, PlatformColor, Pressable, Text, View, type LayoutChangeEvent } from 'react-native'
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, BottomSheetView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
@@ -46,6 +46,11 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
+  const [pickerHeight, setPickerHeight] = useState<number | undefined>(undefined)
+
+  const handlePickerLayout = useCallback((event: LayoutChangeEvent) => {
+    setPickerHeight(event.nativeEvent.layout.height)
+  }, [])
 
   const reset = useCallback(() => {
     setSubview('picker')
@@ -236,7 +241,9 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       onDismiss={reset}
     >
       {subview === 'personal-library' ? (
-        <BottomSheetView style={styles.container}>
+        // Pinned to the picker's measured height so switching subviews doesn't resize the
+        // sheet — the list fills that fixed space as the sheet's one scroll surface.
+        <BottomSheetView style={[styles.container, pickerHeight != null && { height: pickerHeight }]}>
           {subviewHeader}
           <PersonalRecipePickerView
             recipes={personalRecipes}
@@ -251,7 +258,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
           {subviewHeader}
 
           {subview === 'picker' && (
-            <>
+            <View onLayout={handlePickerLayout}>
               <QuickUrlInputRow
                 url={url}
                 onUrlChange={setUrl}
@@ -263,7 +270,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 showPersonalLibrary={activeHouseholdId !== null}
                 onSelect={handleMethodSelect}
               />
-            </>
+            </View>
           )}
 
           {subview === 'text' && (

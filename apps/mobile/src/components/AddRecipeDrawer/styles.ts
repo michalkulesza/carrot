@@ -163,8 +163,8 @@ export const styles = StyleSheet.create({
   },
 
   // Personal library picker
-  personalRecipePicker: { paddingHorizontal: 16, gap: 12 },
-  personalRecipeListWrap: { maxHeight: 380 },
+  personalRecipePicker: { flex: 1, paddingHorizontal: 16, gap: 12 },
+  personalRecipeListWrap: { flex: 1 },
   personalRecipeLoading: { paddingVertical: 40 },
   personalRecipeSearch: {
     height: 44,
