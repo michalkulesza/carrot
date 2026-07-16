@@ -3,12 +3,12 @@ import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import { colors } from '../../theme/colors'
-import type { ImportMode } from './helpers'
+import type { AddRecipeMethod } from './helpers'
 import { styles } from './styles'
 
 type FeatherIconName = ComponentProps<typeof Feather>['name']
 
-const METHODS: { key: ImportMode; icon: FeatherIconName; titleKey: string; descKey: string }[] = [
+const METHODS: { key: AddRecipeMethod; icon: FeatherIconName; titleKey: string; descKey: string }[] = [
   { key: 'camera', icon: 'camera', titleKey: 'addRecipe.methodCamera', descKey: 'addRecipe.methodCameraDesc' },
   { key: 'gallery', icon: 'image', titleKey: 'addRecipe.methodGallery', descKey: 'addRecipe.methodGalleryDesc' },
   { key: 'text', icon: 'clipboard', titleKey: 'addRecipe.methodText', descKey: 'addRecipe.methodTextDesc' },
@@ -20,7 +20,7 @@ const MethodPickerView = ({
   onSelect,
 }: {
   showPersonalLibrary: boolean
-  onSelect: (mode: ImportMode) => void
+  onSelect: (method: AddRecipeMethod) => void
 }) => {
   const { t } = useTranslation()
   const methods = showPersonalLibrary

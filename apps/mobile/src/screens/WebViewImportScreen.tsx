@@ -1,9 +1,12 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
-import { ActivityIndicator, PlatformColor, Pressable, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, PlatformColor, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
 import { WebView } from 'react-native-webview'
+import { useQueryClient } from '@tanstack/react-query'
+import { useApiClient } from '@carrot/shared/api/context'
+import { enqueueImport } from '../utils/enqueueImport'
 
 // Keep well under the backend's extraction cap so the page text doesn't blow up route params.
 const MAX_EXTRACTED_CHARS = 8000
@@ -49,6 +52,8 @@ const WebViewImportScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
+  const api = useApiClient()
+  const qc = useQueryClient()
   const webViewRef = useRef<WebView>(null)
   const [pageLoaded, setPageLoaded] = useState(false)
   const [extracting, setExtracting] = useState(false)
@@ -59,13 +64,21 @@ const WebViewImportScreen = () => {
   }, [])
 
   const handleMessage = useCallback(
-    (event: { nativeEvent: { data: string } }) => {
-      setExtracting(false)
+    async (event: { nativeEvent: { data: string } }) => {
       const text = event.nativeEvent.data.trim()
-      if (!text) return
-      router.replace({ pathname: '/import-recipe', params: { type: 'text', value: text } })
+      if (!text) {
+        setExtracting(false)
+        return
+      }
+      try {
+        await enqueueImport(api, qc, 'text', { text })
+        router.replace('/(tabs)/recipes')
+      } catch (err) {
+        setExtracting(false)
+        Alert.alert(t('addRecipe.importFailed'), err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
+      }
     },
-    [router]
+    [api, qc, router, t]
   )
 
   useLayoutEffect(() => {

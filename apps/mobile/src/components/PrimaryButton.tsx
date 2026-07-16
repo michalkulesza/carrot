@@ -1,8 +1,7 @@
 import type { StyleProp, ViewStyle } from 'react-native'
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native'
-import GlassViewSafe, { glassAvailable } from '../../components/GlassViewSafe'
-import { colors } from '../../theme/colors'
-import { styles } from './styles'
+import GlassViewSafe, { glassAvailable } from './GlassViewSafe'
+import { colors } from '../theme/colors'
 
 // Falls back to a flat fill with a manual opacity dim where Liquid Glass isn't available (Android, pre-iOS 18).
 const PrimaryButton = ({
@@ -46,3 +45,17 @@ const PrimaryButton = ({
 )
 
 export default PrimaryButton
+
+const styles = StyleSheet.create({
+  primaryBtn: {
+    backgroundColor: colors.blue,
+    borderRadius: 999,
+    overflow: 'hidden',
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 46,
+  },
+  primaryBtnText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  btnDisabled: { opacity: 0.4 },
+})

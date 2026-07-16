@@ -24,7 +24,7 @@ import type { NativeActionEvent } from '@react-native-menu/menu'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
-import { useIsFocused, useNavigation, useRouter } from 'expo-router'
+import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
@@ -61,11 +61,14 @@ import HeaderTitle from './HeaderTitle'
 import HeaderRight from './HeaderRight'
 import FloatingAddButton from './FloatingAddButton'
 import NextMealCard from './NextMealCard'
+import AddRecipeDrawer, { type AddRecipeDrawerHandle } from '../../components/AddRecipeDrawer'
 
 const RecipesScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
   const isFocused = useIsFocused()
+  const { openAddRecipe } = useLocalSearchParams<{ openAddRecipe?: string }>()
+  const addRecipeSheetRef = useRef<AddRecipeDrawerHandle>(null)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const headerHeight = useHeaderHeight()
@@ -87,6 +90,13 @@ const RecipesScreen = () => {
       }
     })
   }, [])
+
+  useEffect(() => {
+    if (openAddRecipe !== '1') return
+    addRecipeSheetRef.current?.present()
+    router.setParams({ openAddRecipe: undefined })
+  }, [openAddRecipe, router])
+
   const { user, loading: authLoading } = useAuth()
   const dataQueriesEnabled = !authLoading && user !== null
   const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
@@ -734,7 +744,8 @@ const RecipesScreen = () => {
           {groupedFilterTags.other.map(renderTag)}
         </ScrollView>
       </Reanimated.View>
-      <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} />
+      <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} sheetRef={addRecipeSheetRef} />
+      <AddRecipeDrawer ref={addRecipeSheetRef} />
     </View>
   )
 }

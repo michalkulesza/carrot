@@ -1,24 +1,28 @@
-import { PlatformColor, Pressable, Text, TextInput, View } from 'react-native'
+import { PlatformColor, Pressable, Text, View } from 'react-native'
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
+import PrimaryButton from '../PrimaryButton'
 import { styles } from './styles'
 
-const UrlInputView = ({
+const QuickUrlInputRow = ({
   url,
   onUrlChange,
   onPaste,
   onImport,
+  loading,
 }: {
   url: string
   onUrlChange: (v: string) => void
   onPaste: () => void
   onImport: () => void
+  loading: boolean
 }) => {
   const { t } = useTranslation()
 
   return (
-    <View style={styles.inputSection}>
+    <View style={styles.quickUrlSection}>
       <View style={styles.urlInputGroup}>
-        <TextInput
+        <BottomSheetTextInput
           style={styles.urlInput}
           value={url}
           onChangeText={onUrlChange}
@@ -36,13 +40,20 @@ const UrlInputView = ({
           style={({ pressed }) => [styles.pasteIconBtn, pressed && { opacity: 0.7 }]}
           onPress={onPaste}
           accessibilityLabel={t('addRecipe.paste')}
-          hitSlop={4}
+          hitSlop={8}
         >
           <Text style={styles.pasteIconBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
+      <PrimaryButton
+        onPress={onImport}
+        disabled={!url.trim() || loading}
+        loading={loading}
+        label={t('addRecipe.import')}
+        accessibilityLabel={t('addRecipe.import')}
+      />
     </View>
   )
 }
 
-export default UrlInputView
+export default QuickUrlInputRow

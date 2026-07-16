@@ -1,18 +1,17 @@
 import { useCallback, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
-  FlatList,
   PlatformColor,
   Pressable,
   Text,
-  TextInput,
   View,
   type ListRenderItemInfo,
 } from 'react-native'
+import { BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
-import NetworkImage from '../../components/NetworkImage'
+import NetworkImage from '../NetworkImage'
 import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { styles } from './styles'
 
@@ -54,6 +53,8 @@ const PersonalRecipeRow = ({
   )
 }
 
+const PersonalRecipeSeparator = () => <View style={styles.personalRecipeSeparator} />
+
 const PersonalRecipePickerView = ({
   recipes,
   isLoading,
@@ -85,15 +86,11 @@ const PersonalRecipePickerView = ({
   )
   const keyExtractor = useCallback((recipe: RecipeOut) => recipe.id, [])
 
-  if (isLoading) {
-    return <ActivityIndicator style={styles.personalRecipeLoading} size="large" />
-  }
-
   const emptyLabel = search.trim() ? t('mealPlan.noRecipesMatch') : t('mealPlan.noRecipesYet')
 
   return (
     <View style={styles.personalRecipePicker}>
-      <TextInput
+      <BottomSheetTextInput
         value={search}
         onChangeText={setSearch}
         placeholder={t('recipes.searchPlaceholder')}
@@ -104,18 +101,22 @@ const PersonalRecipePickerView = ({
         returnKeyType="search"
         accessibilityLabel={t('recipes.searchPlaceholder')}
       />
-      <FlatList
-        data={filteredRecipes}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        keyboardShouldPersistTaps="handled"
-        ItemSeparatorComponent={PersonalRecipeSeparator}
-        ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
-      />
+      {isLoading ? (
+        <ActivityIndicator style={styles.personalRecipeLoading} size="large" />
+      ) : (
+        <View style={styles.personalRecipeListWrap}>
+          <BottomSheetFlatList
+            data={filteredRecipes}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            keyboardShouldPersistTaps="handled"
+            ItemSeparatorComponent={PersonalRecipeSeparator}
+            ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
+          />
+        </View>
+      )}
     </View>
   )
 }
-
-const PersonalRecipeSeparator = () => <View style={styles.personalRecipeSeparator} />
 
 export default PersonalRecipePickerView

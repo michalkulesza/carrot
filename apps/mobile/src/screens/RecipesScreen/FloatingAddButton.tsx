@@ -1,21 +1,26 @@
-import { useCallback } from 'react'
+import { useCallback, type RefObject } from 'react'
 import { Pressable, StyleSheet } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
-import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import GlassViewSafe from '../../components/GlassViewSafe'
+import type { AddRecipeDrawerHandle } from '../../components/AddRecipeDrawer'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
-const FloatingAddButton = ({ accessibilityLabel }: { accessibilityLabel: string }) => {
-  const router = useRouter()
+const FloatingAddButton = ({
+  accessibilityLabel,
+  sheetRef,
+}: {
+  accessibilityLabel: string
+  sheetRef: RefObject<AddRecipeDrawerHandle | null>
+}) => {
   const insets = useSafeAreaInsets()
 
   const handlePress = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    router.push('/import-recipe')
-  }, [router])
+    sheetRef.current?.present()
+  }, [sheetRef])
 
   const getButtonStyle = useCallback(
     ({ pressed }: { pressed: boolean }) => [

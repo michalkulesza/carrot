@@ -183,7 +183,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="share" options={{ animation: 'none', headerShown: false }} />
         <Stack.Screen
-          name="import-recipe"
+          name="new-recipe"
           options={{
             headerTitle: () => <HeaderTitle title={t('addRecipe.addRecipe')} />,
             headerRight: () => <BugReportButton />,

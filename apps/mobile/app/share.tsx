@@ -5,29 +5,20 @@ import { ActivityIndicator, PlatformColor, StyleSheet, View } from 'react-native
 import { clearSharedPayloads, getSharedPayloads } from 'expo-sharing'
 import { useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '@carrot/shared/api/context'
-import type { ImportJob } from '@carrot/shared/types'
-import { createUuid } from '../src/utils/uuid'
-import { setImportImagePreview } from '../src/utils/importImagePreviews'
-import { resolveRecipePreview } from '../src/utils/recipePreview'
+import { enqueueImport } from '../src/utils/enqueueImport'
 
 type ShareParams = { type?: string; value?: string; mimeType?: string }
-type Destination = { pathname: '/import-recipe' }
+type Destination = { pathname: '/(tabs)/recipes'; params: { openAddRecipe: '1' } }
 type SharedImport = {
   kind: 'url' | 'text' | 'image'
   input: Record<string, string>
-  previewImageUri?: string
 }
 
 const getSharedImport = async (params: ShareParams): Promise<SharedImport | null> => {
   if (params.type === 'url' && params.value) return { kind: 'url', input: { url: params.value } }
   if (params.type === 'text' && params.value) return { kind: 'text', input: { text: params.value } }
   if (params.type === 'image' && params.value) {
-    const mimeType = params.mimeType ?? 'image/jpeg'
-    return {
-      kind: 'image',
-      input: { image_base64: params.value, mime_type: mimeType },
-      previewImageUri: `data:${mimeType};base64,${params.value}`,
-    }
+    return { kind: 'image', input: { image_base64: params.value, mime_type: params.mimeType ?? 'image/jpeg' } }
   }
 
   const payload = getSharedPayloads()[0]
@@ -37,12 +28,7 @@ const getSharedImport = async (params: ShareParams): Promise<SharedImport | null
   if (payload.shareType !== 'image') return null
 
   const imageBase64 = await new File(payload.value).base64()
-  const mimeType = payload.mimeType ?? 'image/jpeg'
-  return {
-    kind: 'image',
-    input: { image_base64: imageBase64, mime_type: mimeType },
-    previewImageUri: `data:${mimeType};base64,${imageBase64}`,
-  }
+  return { kind: 'image', input: { image_base64: imageBase64, mime_type: payload.mimeType ?? 'image/jpeg' } }
 }
 
 export default function ShareRedirect() {
@@ -61,30 +47,14 @@ export default function ShareRedirect() {
       try {
         const sharedImport = await getSharedImport(params)
         if (!sharedImport) {
-          setDestination({ pathname: '/import-recipe' })
+          setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
           return
         }
 
-        const job = await api.enqueueImportJob({
-          kind: sharedImport.kind,
-          input: sharedImport.input,
-          idempotency_key: createUuid(),
-        })
-        if (sharedImport.previewImageUri) setImportImagePreview(job.id, sharedImport.previewImageUri)
-        queryClient.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [
-          ...jobs.filter((item) => item.id !== job.id),
-          job,
-        ])
-        if (sharedImport.kind === 'url') {
-          void resolveRecipePreview(sharedImport.input.url).then((previewUrl) => {
-            if (!previewUrl) return
-            setImportImagePreview(job.id, previewUrl)
-            queryClient.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs])
-          })
-        }
+        await enqueueImport(api, queryClient, sharedImport.kind, sharedImport.input)
         router.replace('/(tabs)/recipes')
       } catch {
-        setDestination({ pathname: '/import-recipe' })
+        setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
       } finally {
         clearSharedPayloads()
       }

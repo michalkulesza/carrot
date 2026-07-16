@@ -1,23 +1,29 @@
-import { PlatformColor, Pressable, Text, TextInput, View } from 'react-native'
+import { PlatformColor, Pressable, Text, View } from 'react-native'
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import PrimaryButton from '../PrimaryButton'
 import { styles } from './styles'
 
 const TextPasteView = ({
   text,
   onTextChange,
   onPaste,
+  onExtract,
+  loading,
 }: {
   text: string
   onTextChange: (v: string) => void
   onPaste: () => void
+  onExtract: () => void
+  loading: boolean
 }) => {
   const { t } = useTranslation()
 
   return (
     <View style={styles.inputSection}>
       <View style={styles.textInputGroup}>
-        <TextInput
+        <BottomSheetTextInput
           style={styles.textPasteInput}
           value={text}
           onChangeText={onTextChange}
@@ -37,6 +43,13 @@ const TextPasteView = ({
           <Text style={styles.textPasteBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
+      <PrimaryButton
+        onPress={onExtract}
+        disabled={!text.trim() || loading}
+        loading={loading}
+        label={t('addRecipe.extractRecipe')}
+        accessibilityLabel={t('addRecipe.extractRecipe')}
+      />
     </View>
   )
 }
