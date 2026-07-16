@@ -8,7 +8,7 @@ from typing import Any
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import JSON, Boolean, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 
 from api.database import Base
 
@@ -75,7 +75,7 @@ class Household(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     color: Mapped[str] = mapped_column(String(20), nullable=False, default="#6366f1")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    allergens: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    allergens: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
 
 
 class HouseholdMember(Base):
@@ -456,7 +456,7 @@ class UserPreferences(Base):
     )
     week_start_day: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     auto_substitute: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    personal_allergens: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
+    personal_allergens: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     unit_system: Mapped[str] = mapped_column(String(20), default="metric", nullable=False)
     share_imports_to_personal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
