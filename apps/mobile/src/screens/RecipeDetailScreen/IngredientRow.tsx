@@ -23,7 +23,7 @@ const IngredientRow = ({
   lineHeight?: number
 }) => {
   const { t } = useTranslation()
-  const displayValue = displayIngredient(ingredient, t)
+  const displayValue = displayIngredient(ingredient)
   return (
     <View style={styles.ingredientRow}>
       <Text style={styles.bullet}>{'•'}</Text>

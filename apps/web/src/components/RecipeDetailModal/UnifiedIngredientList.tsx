@@ -107,7 +107,7 @@ const UnifiedIngredientList = ({
               >
                 <span className="text-zinc-300 mt-1 shrink-0">·</span>
                 <span className="flex-1">
-                  {displayIngredient(ingredient, t)}
+                  {displayIngredient(ingredient)}
                   {getMetricCupHint(
                     component,
                     ingredientIndex,

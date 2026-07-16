@@ -136,7 +136,7 @@ const ViewComponent = ({
                 >
                   <span className="text-zinc-300 mt-1 shrink-0">·</span>
                   <span className="flex-1">
-                    {displayIngredient(ing, t)}
+                    {displayIngredient(ing)}
                     {getMetricCupHint(comp, i, unitSystem, servingScale, t)}
                   </span>
                   {flag && (

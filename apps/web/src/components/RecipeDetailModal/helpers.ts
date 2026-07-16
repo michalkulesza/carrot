@@ -104,18 +104,12 @@ export const serializeIngredient = (ing: StructuredIngredient): string => {
   return [ing.qty, ing.unit, ing.name].filter(Boolean).join(' ')
 }
 
-export const displayIngredient = (
-  s: string,
-  t: (key: string, opts: { defaultValue: string }) => string
-): string => {
+export const displayIngredient = (s: string): string => {
   const parsed = parseIngredient(s)
   if (!parsed.unit)
     return typeof s === 'string' ? s : serializeIngredient(parsed)
 
-  return serializeIngredient({
-    ...parsed,
-    unit: t(`units.${parsed.unit}`, { defaultValue: parsed.unit }),
-  })
+  return serializeIngredient(parsed)
 }
 
 export const getScaledIngredientValues = (

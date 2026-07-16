@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next'
 import type { StepIngredientRef } from '@carrot/shared/types'
 import { parseDurationMatch } from '../../context/TimerContext'
 import { displayIngredient } from './helpers'
@@ -81,7 +80,6 @@ const StepText = ({
   componentIndex,
   stepIndex,
 }: StepTextProps) => {
-  const { t } = useTranslation()
   const filtered = buildSpans(step, stepRefs)
 
   const nodes: React.ReactNode[] = []
@@ -102,10 +100,7 @@ const StepText = ({
         />
       )
     } else {
-      const ingText = displayIngredient(
-        ingredients[span.ingredientIndex!] ?? '',
-        t
-      )
+      const ingText = displayIngredient(ingredients[span.ingredientIndex!] ?? '')
       nodes.push(
         <IngredientPill
           key={span.key}

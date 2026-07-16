@@ -63,7 +63,7 @@ const StepRow = ({
               <View key={ref.ingredient_index} style={styles.stepIngRow}>
                 <View style={styles.stepIngDot} />
                 <Text style={styles.stepIngItem}>
-                  {displayIngredient(rawIngredients[ref.ingredient_index] ?? '', t)}
+                  {displayIngredient(rawIngredients[ref.ingredient_index] ?? '')}
                 </Text>
               </View>
             ))}
