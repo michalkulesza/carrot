@@ -20,8 +20,7 @@ import Reanimated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import type { NativeActionEvent } from '@react-native-menu/menu'
-import { Swipeable } from 'react-native-gesture-handler'
+import { MenuView, type MenuAction, type NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
@@ -47,12 +46,17 @@ import { useAuth } from '../../context/AuthContext'
 import {
   MANAGE_TIP_MENU_ID,
   PERSONAL_MENU_ID,
+  RECIPE_DELETE_ACTION,
+  RECIPE_EDIT_ACTION,
+  RECIPE_FAVOURITE_ACTION,
+  RECIPE_SHARE_ACTION,
   SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY,
   SORT_OPTIONS,
   learnedSearchBarHeightDelta,
   setLearnedSearchBarHeightDelta,
   type SortMode,
 } from './helpers'
+import { SEND_TO_HOUSEHOLD_PREFIX, SEND_TO_PERSONAL } from '../RecipeDetailScreen/useRecipeDetailHeader'
 import { styles } from './styles'
 import ThumbnailImage from './ThumbnailImage'
 import PendingJobCard from './PendingJobCard'
@@ -98,7 +102,7 @@ const RecipesScreen = () => {
 
   const { user, loading: authLoading } = useAuth()
   const dataQueriesEnabled = !authLoading && user !== null
-  const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
+  const { recipes, isLoading, isFetching, error, linkToHousehold, linkToPersonal } = useRecipes(dataQueriesEnabled)
   const [switchingHousehold, setSwitchingHousehold] = useState(false)
   const householdFetchStartedRef = useRef(false)
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
@@ -113,8 +117,6 @@ const RecipesScreen = () => {
   const [filterFavourites, setFilterFavourites] = useState(false)
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [sort, setSort] = useState<SortMode>('newest')
-  const swipeableRefs = useRef<Map<string, Swipeable>>(new Map())
-  const openSwipeableId = useRef<string | null>(null)
   const seenIdsRef = useRef<Set<string>>(new Set())
   const initialLoadDoneRef = useRef(false)
   const knownRecipeIdsRef = useRef<Set<string>>(new Set())
@@ -178,38 +180,45 @@ const RecipesScreen = () => {
     [handleConfirmDelete, t],
   )
 
-  const renderSwipeActions = useCallback(
-    (item: RecipeOut) => {
-      const handleEditPress = () => {
-        swipeableRefs.current.get(item.id)?.close()
-        router.push({ pathname: '/recipe/[id]', params: { id: item.id, edit: '1' } })
-      }
-      const handleDeletePress = () => {
-        swipeableRefs.current.get(item.id)?.close()
-        handleDelete(item)
-      }
-      return (
-        <View style={styles.swipeActions}>
-          <Pressable
-            style={({ pressed }) => [styles.swipeEdit, pressed && { opacity: 0.7 }]}
-            onPress={handleEditPress}
-            accessibilityLabel={t('common.edit')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.swipeActionText}>{t('common.edit')}</Text>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.swipeDelete, pressed && { opacity: 0.7 }]}
-            onPress={handleDeletePress}
-            accessibilityLabel={t('common.delete')}
-            accessibilityRole="button"
-          >
-            <Text style={styles.swipeActionText}>{t('common.delete')}</Text>
-          </Pressable>
-        </View>
-      )
+  const buildRecipeMenuActions = useCallback(
+    (item: RecipeOut, isFav: boolean): MenuAction[] => {
+      const shareActions: MenuAction[] =
+        activeHouseholdId !== null && item.household_id === activeHouseholdId && !item.shared_to_personal
+          ? [{ id: SEND_TO_PERSONAL, title: t('recipes.sendToPersonalLibrary'), image: 'square.and.arrow.up' }]
+          : item.household_id !== null
+          ? []
+          : households.length === 0
+          ? [
+              {
+                id: RECIPE_SHARE_ACTION,
+                title: t('recipes.sendToHousehold'),
+                image: 'square.and.arrow.up',
+                attributes: { disabled: true },
+              },
+            ]
+          : [
+              {
+                id: RECIPE_SHARE_ACTION,
+                title: t('recipes.sendToHousehold'),
+                image: 'square.and.arrow.up',
+                subactions: households.map((h) => ({
+                  id: `${SEND_TO_HOUSEHOLD_PREFIX}${h.id}`,
+                  title: h.name,
+                })),
+              },
+            ]
+      return [
+        {
+          id: RECIPE_FAVOURITE_ACTION,
+          title: isFav ? t('recipes.removeFromFavourites') : t('recipes.addToFavourites'),
+          image: isFav ? 'star.slash' : 'star',
+        },
+        { id: RECIPE_EDIT_ACTION, title: t('common.edit'), image: 'pencil' },
+        ...shareActions,
+        { id: RECIPE_DELETE_ACTION, title: t('common.delete'), image: 'trash', attributes: { destructive: true } },
+      ]
     },
-    [handleDelete, router, t],
+    [activeHouseholdId, households, t],
   )
 
   const filterMenuActions = useMemo(() =>
@@ -467,6 +476,45 @@ const RecipesScreen = () => {
     [router],
   )
 
+  const handleRecipeMenuAction = useCallback(
+    (item: RecipeOut) =>
+      ({ nativeEvent }: NativeActionEvent) => {
+        const eventId = nativeEvent.event
+        if (eventId === RECIPE_FAVOURITE_ACTION) {
+          handleToggleFavourite(item)
+          return
+        }
+        if (eventId === RECIPE_EDIT_ACTION) {
+          router.push({ pathname: '/recipe/[id]', params: { id: item.id, edit: '1' } })
+          return
+        }
+        if (eventId === RECIPE_DELETE_ACTION) {
+          handleDelete(item)
+          return
+        }
+        if (eventId === SEND_TO_PERSONAL) {
+          linkToPersonal.mutate(item.id, {
+            onSuccess: () => Alert.alert(t('recipes.recipeAddedToPersonalLibrary')),
+            onError: (err) =>
+              Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd')),
+          })
+          return
+        }
+        if (eventId.startsWith(SEND_TO_HOUSEHOLD_PREFIX)) {
+          const householdId = eventId.slice(SEND_TO_HOUSEHOLD_PREFIX.length)
+          linkToHousehold.mutate(
+            { id: item.id, householdId },
+            {
+              onSuccess: () => Alert.alert(t('addRecipe.recipeAddedToHousehold')),
+              onError: (err) =>
+                Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd')),
+            },
+          )
+        }
+      },
+    [handleToggleFavourite, router, handleDelete, linkToPersonal, linkToHousehold, t],
+  )
+
   const renderTag = useCallback(
     (item: Tag) => {
       const isSelected = selectedTagIds.has(item.id)
@@ -521,27 +569,14 @@ const RecipesScreen = () => {
           exiting={FadeOut.duration(250)}
           layout={LinearTransition.duration(250)}
         >
-        <Swipeable
-          ref={(ref) => {
-            if (ref) swipeableRefs.current.set(item.id, ref)
-            else swipeableRefs.current.delete(item.id)
-          }}
-          renderRightActions={() => renderSwipeActions(item)}
-          onSwipeableOpen={() => {
-            if (openSwipeableId.current && openSwipeableId.current !== item.id) {
-              swipeableRefs.current.get(openSwipeableId.current)?.close()
-            }
-            openSwipeableId.current = item.id
-          }}
-          onSwipeableClose={() => {
-            if (openSwipeableId.current === item.id) openSwipeableId.current = null
-          }}
-          friction={2}
-          rightThreshold={40}
-          containerStyle={styles.swipeContainer}
+        <MenuView
+          title={item.title}
+          actions={buildRecipeMenuActions(item, isFav)}
+          onPressAction={handleRecipeMenuAction(item)}
+          shouldOpenOnLongPress
         >
           <Pressable
-            style={({ pressed }) => [styles.card, styles.cardInSwipeable, pressed && { opacity: 0.7 }]}
+            style={({ pressed }) => [styles.card, pressed && { opacity: 0.7 }]}
             onPress={() => handleRecipePress(item)}
             accessibilityLabel={item.title}
             accessibilityRole="button"
@@ -606,11 +641,19 @@ const RecipesScreen = () => {
               <Text style={[styles.favStar, isFav && styles.favStarActive]}>★</Text>
             </Pressable>
           </Pressable>
-        </Swipeable>
+        </MenuView>
         </Reanimated.View>
       )
     },
-    [handleRecipePress, handleToggleFavourite, renderSwipeActions, favouriteOverrides, recipeHouseholdAvatars, t],
+    [
+      handleRecipePress,
+      handleToggleFavourite,
+      buildRecipeMenuActions,
+      handleRecipeMenuAction,
+      favouriteOverrides,
+      recipeHouseholdAvatars,
+      t,
+    ],
   )
 
   const favChip = useMemo(
