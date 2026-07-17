@@ -498,7 +498,10 @@ async def set_related_recipes(
         (recipe_related_recipes_table.c.related_recipe_id == recipe_id)
     ))
     if targets:
-        await session.execute(insert(recipe_related_recipes_table), [
+        insert_stmt = pg_insert(recipe_related_recipes_table).on_conflict_do_nothing(
+            index_elements=["recipe_id", "related_recipe_id"]
+        )
+        await session.execute(insert_stmt, [
             {"recipe_id": min(recipe_id, target.id), "related_recipe_id": max(recipe_id, target.id)}
             for target in targets
         ])

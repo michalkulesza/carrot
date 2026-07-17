@@ -69,6 +69,7 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
   const selectedRef = useRef(new Set<string>())
   const [pendingRelatedRecipes, setPendingRelatedRecipes] = useState<RecipeOut[] | null>(null)
   const displayedRelatedRecipes = pendingRelatedRecipes ?? relatedRecipes
+  const saveRequestIdRef = useRef(0)
   const relatedQueryKey = ['recipes', recipeId, 'related'] as const
   const selectedIds = useMemo(() => new Set(displayedRelatedRecipes.map((recipe) => recipe.id)), [displayedRelatedRecipes])
   const relatedRecipeActions = useMemo<MenuAction[]>(() => [{
@@ -90,15 +91,18 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
     setSelected(next)
   }
   const saveRelatedRecipes = async (nextRelatedRecipes: RecipeOut[], closePicker = false) => {
+    const requestId = ++saveRequestIdRef.current
     setPendingRelatedRecipes(nextRelatedRecipes)
     try {
       const related = await api.setRelatedRecipes(recipeId, nextRelatedRecipes.map((recipe) => recipe.id))
+      if (requestId !== saveRequestIdRef.current) return
       queryClient.setQueryData(relatedQueryKey, related)
       setPendingRelatedRecipes(related)
       if (closePicker) setPickerOpen(false)
       void refetch()
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch {
+      if (requestId !== saveRequestIdRef.current) return
       setPendingRelatedRecipes(null)
       void queryClient.invalidateQueries({ queryKey: relatedQueryKey })
       if (closePicker) setPickerOpen(true)
