@@ -14,6 +14,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.1.0] — 2026-07-17
+
+### Recipes & cooking
+
+- ✨ **Feature** — Added guided Cook mode on web and mobile: work through recipe steps one at a time with swipe/keyboard navigation, adjustable text size, ingredient checklists, inline timers, saved progress, and a screen wake lock while cooking.
+- ✨ **Feature** — Recipes can now be linked as related recipes and opened directly from compact, title-aware chips on the recipe detail view.
+- ✨ **Feature** — Mobile ingredient editing now uses a wheel picker for quantities and units, including mixed fractions such as 1 1/2.
+- ✨ **Feature** — Ingredient quantities now use more compact unit labels throughout recipe details and steps.
+- 🐛 **Bug** — Removing related recipes quickly no longer causes a server error or loses a concurrent update.
+- 🐛 **Bug** — Completed text imports now transition smoothly from their placeholder card to the recipe.
+
+### Apps & platform
+
+- 🐛 **Bug** — Fixed recipe tag chips being invisible in dark mode.
+- 🐛 **Bug** — Refined the mobile Recipes filter chips for reliable contrast and a flatter native appearance.
+- 🐛 **Bug** — Renamed the recipe detail stat label from “Total time” to “Time”.
+
 ## [1.0.6] — 2026-07-16
 
 ### Apps & platform

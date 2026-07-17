@@ -3,7 +3,7 @@
     "name": "Carrot",
     "slug": "mobile",
     "scheme": "carrot",
-    "version": "1.0.6",
+    "version": "1.1.0",
     "orientation": "portrait",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -16,7 +16,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "34",
+      "buildNumber": "35",
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.kulesza.carrot"
