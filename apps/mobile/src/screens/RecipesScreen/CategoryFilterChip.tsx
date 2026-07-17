@@ -54,7 +54,7 @@ const CategoryFilterChip = ({
       >
         <GlassViewSafe
           style={StyleSheet.absoluteFill}
-          glassEffectStyle="clear"
+          glassEffectStyle={isActive ? 'clear' : 'regular'}
           tintColor={isActive ? colors.blue : colors.gray5}
         />
         <Text style={[styles.chipText, isActive && styles.chipTextSelected]} numberOfLines={1}>

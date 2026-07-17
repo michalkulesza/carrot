@@ -482,7 +482,7 @@ const RecipesScreen = () => {
         >
           <GlassViewSafe
             style={StyleSheet.absoluteFill}
-            glassEffectStyle="clear"
+            glassEffectStyle={isSelected ? 'clear' : 'regular'}
             tintColor={isSelected ? colors.blue : colors.gray5}
           />
           <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
@@ -631,7 +631,7 @@ const RecipesScreen = () => {
       >
         <GlassViewSafe
           style={StyleSheet.absoluteFill}
-          glassEffectStyle="clear"
+          glassEffectStyle={filterFavourites ? 'clear' : 'regular'}
           tintColor={filterFavourites ? colors.blue : colors.gray5}
         />
         <Text style={[styles.favChipText, filterFavourites && styles.chipTextSelected]}>★</Text>
