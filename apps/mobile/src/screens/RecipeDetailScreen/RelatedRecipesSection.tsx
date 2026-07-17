@@ -94,7 +94,7 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
             </Pressable>
           </MenuView>
         })}
-        <Pressable style={styles.relatedRecipeAdd} onPress={openPicker} accessibilityLabel={t('common.edit')}><Feather name="edit-2" size={22} color="#007aff" /><Text style={styles.relatedRecipeAddText}>{t('common.edit')}</Text></Pressable>
+        <Pressable style={styles.relatedRecipeAdd} onPress={openPicker} accessibilityLabel={t('common.edit')}><Feather name="edit-2" size={16} color="#007aff" /><Text style={styles.relatedRecipeAddText}>{t('common.edit')}</Text></Pressable>
       </ScrollView>
       <Modal visible={pickerOpen} animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <View style={[styles.relatedPicker, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
