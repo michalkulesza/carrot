@@ -33,30 +33,85 @@ export const parseIngredient = (s: string): StructuredIngredient => {
 export const serializeIngredient = (ing: StructuredIngredient): string =>
   [ing.qty, ing.unit, ing.name].filter(Boolean).join(' ')
 
-export const FRACTION_OPTIONS = ['0', '1/8', '1/4', '1/3', '3/8', '1/2', '5/8', '2/3', '3/4', '7/8'] as const
+export const FRACTION_OPTIONS = ['1/8', '1/4', '1/3', '3/8', '1/2', '5/8', '2/3', '3/4', '7/8'] as const
+export const DECIMAL_OPTIONS = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9'] as const
+export const QUANTITY_REMAINDER_OPTIONS = ['0', ...FRACTION_OPTIONS, ...DECIMAL_OPTIONS] as const
 
 const UNICODE_FRACTIONS: Record<string, string> = {
   '¼': '1/4', '½': '1/2', '¾': '3/4', '⅓': '1/3', '⅔': '2/3', '⅛': '1/8', '⅜': '3/8', '⅝': '5/8', '⅞': '7/8',
 }
 
-export const parseQtyParts = (qty: string): { whole: number; fraction: string } => {
-  const parts = (qty ?? '').trim().split(/\s+/)
+const fractionValue = (fraction: string): number => {
+  const [numerator, denominator] = fraction.split('/').map(Number)
+
+  return numerator / denominator
+}
+
+const remainderValue = (remainder: string): number =>
+  remainder.includes('/') ? fractionValue(remainder) : Number(remainder)
+
+const closestRemainder = (value: number, preferDecimal: boolean): string => {
+  const options = preferDecimal
+    ? [...DECIMAL_OPTIONS, ...FRACTION_OPTIONS, '0']
+    : [...FRACTION_OPTIONS, ...DECIMAL_OPTIONS, '0']
+
+  return options.reduce((closest, option) =>
+    Math.abs(remainderValue(option) - value) < Math.abs(remainderValue(closest) - value)
+      ? option
+      : closest,
+  )
+}
+
+export const parseQtyParts = (qty: string): { whole: number; remainder: string } => {
+  const normalizedQty = (qty ?? '').trim()
+  const decimalMatch = normalizedQty.match(/^(\d+)(?:[.,](\d+))?$/)
+
+  if (decimalMatch) {
+    const whole = parseInt(decimalMatch[1], 10)
+    const decimalPart = decimalMatch[2]
+
+    if (!decimalPart) return { whole, remainder: '0' }
+
+    return {
+      whole,
+      remainder: closestRemainder(Number(`0.${decimalPart}`), true),
+    }
+  }
+
+  const parts = normalizedQty.split(/\s+/)
   let whole = 0
-  let fraction = '0'
+  let remainder = '0'
+
   for (const part of parts) {
     if (/^\d+$/.test(part)) {
       whole = parseInt(part, 10)
       continue
     }
-    const normalized = UNICODE_FRACTIONS[part] ?? part
-    if ((FRACTION_OPTIONS as readonly string[]).includes(normalized)) fraction = normalized
+
+    const normalizedPart = UNICODE_FRACTIONS[part] ?? part
+
+    if ((FRACTION_OPTIONS as readonly string[]).includes(normalizedPart)) {
+      remainder = normalizedPart
+    }
   }
-  return { whole, fraction }
+
+  return { whole, remainder }
 }
 
-export const serializeQtyParts = (whole: number, fraction: string): string => {
-  if (fraction === '0') return whole > 0 ? String(whole) : ''
-  return whole > 0 ? `${whole} ${fraction}` : fraction
+export const serializeQtyParts = (
+  whole: number,
+  remainder: string,
+  decimalSeparator: '.' | ',',
+): string => {
+  if (remainder === '0') return whole > 0 ? String(whole) : ''
+
+  if ((DECIMAL_OPTIONS as readonly string[]).includes(remainder)) {
+    const decimal = (whole + Number(remainder)).toFixed(1)
+
+    return decimalSeparator === ',' ? decimal.replace('.', ',') : decimal
+  }
+
+  return whole > 0 ? `${whole} ${remainder}` : remainder
 }
 
 export const displayIngredient = (s: string): string => {

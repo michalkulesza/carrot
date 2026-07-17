@@ -1,9 +1,14 @@
 import { useCallback, useMemo } from 'react'
 import { Modal, PlatformColor, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Picker } from '@react-native-picker/picker'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { UNITS } from '@carrot/shared/types'
-import { FRACTION_OPTIONS, parseQtyParts, serializeQtyParts } from '@carrot/shared/utils/ingredientUtils'
+import {
+  parseQtyParts,
+  QUANTITY_REMAINDER_OPTIONS,
+  serializeQtyParts,
+} from '@carrot/shared/utils/ingredientUtils'
 import { colors } from '../theme/colors'
 
 const WHOLE_OPTIONS = Array.from({ length: 21 }, (_, i) => i)
@@ -21,16 +26,24 @@ export const QuantityUnitPickerModal = ({
   onChange: (qty: string, unit: string) => void
   onClose: () => void
 }) => {
-  const { t } = useTranslation()
-  const { whole, fraction } = useMemo(() => parseQtyParts(qty), [qty])
+  const { t, i18n } = useTranslation()
+  const insets = useSafeAreaInsets()
+  const { whole, remainder } = useMemo(() => parseQtyParts(qty), [qty])
+  const decimalSeparator = useMemo<'.' | ','>(() =>
+    new Intl.NumberFormat(i18n.language).format(1.1).includes(',') ? ',' : '.',
+  [i18n.language])
+  const sheetStyle = useMemo(
+    () => [styles.sheet, { paddingBottom: insets.bottom + 16 }],
+    [insets.bottom],
+  )
 
   const handleWholeChange = useCallback(
-    (value: number) => onChange(serializeQtyParts(value, fraction), unit),
-    [fraction, unit, onChange],
+    (value: number) => onChange(serializeQtyParts(value, remainder, decimalSeparator), unit),
+    [remainder, decimalSeparator, unit, onChange],
   )
-  const handleFractionChange = useCallback(
-    (value: string) => onChange(serializeQtyParts(whole, value), unit),
-    [whole, unit, onChange],
+  const handleRemainderChange = useCallback(
+    (value: string) => onChange(serializeQtyParts(whole, value, decimalSeparator), unit),
+    [whole, decimalSeparator, unit, onChange],
   )
   const handleUnitChange = useCallback(
     (value: string) => onChange(qty, value),
@@ -45,7 +58,7 @@ export const QuantityUnitPickerModal = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose} />
-      <View style={styles.sheet}>
+      <View style={sheetStyle}>
         <View style={styles.header}>
           <View style={styles.sheetHandle} />
           <Pressable
@@ -70,12 +83,16 @@ export const QuantityUnitPickerModal = ({
           </Picker>
           <Picker
             style={styles.wheel}
-            selectedValue={fraction}
-            onValueChange={handleFractionChange}
+            selectedValue={remainder}
+            onValueChange={handleRemainderChange}
             accessibilityLabel={t('units.qtyLabel')}
           >
-            {FRACTION_OPTIONS.map((value) => (
-              <Picker.Item key={value} label={value === '0' ? '—' : value} value={value} />
+            {QUANTITY_REMAINDER_OPTIONS.map((value) => (
+              <Picker.Item
+                key={value}
+                label={value === '0' ? '—' : value.replace('.', decimalSeparator)}
+                value={value}
+              />
             ))}
           </Picker>
           <Picker
@@ -86,7 +103,7 @@ export const QuantityUnitPickerModal = ({
           >
             <Picker.Item label="—" value="" />
             {UNITS.map((value) => (
-              <Picker.Item key={value} label={t(`units.${value}`)} value={value} />
+              <Picker.Item key={value} label={value} value={value} />
             ))}
           </Picker>
         </View>
@@ -97,12 +114,11 @@ export const QuantityUnitPickerModal = ({
 
 const styles = StyleSheet.create({
   pressedLight: { opacity: 0.7 },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)' },
+  overlay: { flex: 1 },
   sheet: {
     backgroundColor: PlatformColor('systemBackground') as unknown as string,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingBottom: 16,
   },
   header: {
     paddingTop: 8,
@@ -122,6 +138,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   doneText: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: colors.brand },
-  wheelRow: { flexDirection: 'row' },
+  wheelRow: { flexDirection: 'row', height: 280 },
   wheel: { flex: 1 },
 })

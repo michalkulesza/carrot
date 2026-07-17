@@ -12,6 +12,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Cook from what I have / pantry** — Track pantry staples, rank recipes by missing ingredients, and subtract pantry items from the shopping list.
 - [ ] **Calendar and reminder integration** — Send planned meals to the iOS Calendar and notify users when to start cooking or defrost ingredients.
 - [ ] **Personal-only recipe filter** — Add a filter to show only recipes in my personal library that don't belong to any household.
+-------------------------------------------------------------
 - [x] **When importing recipe send it to the background straight away** - inseatead of waiting at the skeleton screen, drop it in the bg, and show placeholder, redirect to recipe page
 - [x] **Ingredient scaling / adjust servings** — Released in 1.0.1 with serving-size steppers on web and iOS, live structured-ingredient recalculation, and scaled shopping-list additions.
 - [x] **Useful Home screen** — Show tonight’s meal
@@ -34,6 +35,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Delightful empty and loading states** — Extend shimmers to recipe lists and meal plans; add friendly empty states, restrained Carrot mascot moments, import-stage animation, haptics, and completion feedback.
 
 - [ ] **Colours and themes** — Define and apply a cohesive theme system.
+-------------------------------------------------------------
 - [x] **When loading from an empty state** — Wait for authentication before loading recipes and the next planned meal, rather than showing an unauthenticated error.
 - [x] **Correct household recipe contributor avatars** — Show the actual contributor alongside the household avatar when the recipe is also in a personal library.
 - [x] **Respect the safe area in meal-plan search** — Bound the picker drawer’s keyboard-expanded range to the device safe area.
@@ -50,6 +52,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Public sharing** — Create shareable public recipe pages.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
+-------------------------------------------------------------
 - [x] **Reduce extraction hallucinations (prompt/model tuning)** — Cheap first lever before a full validation pass: add an anti-fabrication clause to the extraction prompt, set `temperature=0`, and route the faithful-extraction call to `gemini-2.5-flash` (keeping shopping-list/unit-conversion on `flash-lite`). See `docs/specs/reduce-extraction-hallucinations.md`.
 
 ## Portfolio / showcase
@@ -58,3 +61,4 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Weekly meal-plan generator** — Auto-fill a week while honoring allergens, preferences, and variety, then generate its shopping list.
 - [ ] **Polished stats and insights dashboard** — Visualize cooking habits, favourite cuisines, streaks, and import history using the existing stats data.
 - [ ] **Operational import dashboard** — Track pipeline latency, queue depth, cost, cache-hit rate, failures, retries, model usage, and per-job traces.
+-------------------------------------------------------------

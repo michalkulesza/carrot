@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     height: 34,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -2,
+    marginTop: -4,
   },
   titleLinkWrap: {
     flex: 1,
@@ -262,6 +262,7 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colors.opaqueSeparator,
     paddingBottom: 4,
+    marginBottom: 10,
   },
   addTagBtn: {
     borderWidth: 1,
