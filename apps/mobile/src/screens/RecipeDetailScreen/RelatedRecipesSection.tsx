@@ -12,7 +12,49 @@ import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useRelatedRecipes } from '@carrot/shared/hooks/useRelatedRecipes'
 import type { RecipeOut } from '@carrot/shared/types'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
+import MarqueeText from '../../components/MarqueeText'
+import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { styles } from './styles'
+
+const RelatedRecipeCard = ({
+  recipe,
+  actions,
+  onPress,
+  onRemove,
+}: {
+  recipe: RecipeOut
+  actions: MenuAction[]
+  onPress: () => void
+  onRemove: () => void
+}) => {
+  const uri = proxyThumbnailUrl(recipe.thumbnail_url) || PLACEHOLDER_URL
+  return (
+    <MenuView
+      title={recipe.title}
+      actions={actions}
+      shouldOpenOnLongPress
+      onPressAction={({ nativeEvent }) => {
+        if (nativeEvent.event === 'remove') onRemove()
+      }}
+    >
+      <Pressable style={styles.relatedRecipeCard} onPress={onPress}>
+        {uri ? <Image source={{ uri }} style={styles.relatedRecipeImage} /> : <View style={styles.relatedRecipeImage} />}
+        <MarqueeSyncSlots>
+          {({ title: titleTurn }) => (
+            <MarqueeText
+              text={recipe.title}
+              style={styles.relatedRecipeTitle}
+              containerStyle={styles.relatedRecipeTitleContainer}
+              turn={titleTurn.turn}
+              onOverflowChange={titleTurn.onOverflowChange}
+              onDone={titleTurn.onDone}
+            />
+          )}
+        </MarqueeSyncSlots>
+      </Pressable>
+    </MenuView>
+  )
+}
 
 const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
   const { t } = useTranslation()
@@ -76,26 +118,20 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionLabel}>{t('relatedRecipes.title')}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
-        {displayedRelatedRecipes.map((recipe) => {
-          const uri = proxyThumbnailUrl(recipe.thumbnail_url) || PLACEHOLDER_URL
-          return <MenuView
-            key={recipe.id}
-            title={recipe.title}
-            actions={relatedRecipeActions}
-            shouldOpenOnLongPress
-            onPressAction={({ nativeEvent }) => {
-              if (nativeEvent.event === 'remove') removeRelatedRecipe(recipe.id)
-            }}
-          >
-            <Pressable style={styles.relatedRecipeCard} onPress={() => router.push(`/recipe/${recipe.id}`)}>
-              {uri ? <Image source={{ uri }} style={styles.relatedRecipeImage} /> : <View style={styles.relatedRecipeImage} />}
-              <Text numberOfLines={1} style={styles.relatedRecipeTitle}>{recipe.title}</Text>
-            </Pressable>
-          </MenuView>
-        })}
-        <Pressable style={styles.relatedRecipeAdd} onPress={openPicker} accessibilityLabel={t('common.edit')}><Feather name="edit-2" size={16} color="#007aff" /><Text style={styles.relatedRecipeAddText}>{t('common.edit')}</Text></Pressable>
-      </ScrollView>
+      <MarqueeSyncProvider>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
+          {displayedRelatedRecipes.map((recipe) => (
+            <RelatedRecipeCard
+              key={recipe.id}
+              recipe={recipe}
+              actions={relatedRecipeActions}
+              onPress={() => router.push(`/recipe/${recipe.id}`)}
+              onRemove={() => removeRelatedRecipe(recipe.id)}
+            />
+          ))}
+          <Pressable style={styles.relatedRecipeAdd} onPress={openPicker} accessibilityLabel={t('common.edit')}><Feather name="edit-2" size={16} color="#007aff" /><Text style={styles.relatedRecipeAddText}>{t('common.edit')}</Text></Pressable>
+        </ScrollView>
+      </MarqueeSyncProvider>
       <Modal visible={pickerOpen} animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <View style={[styles.relatedPicker, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}>
           <Text style={styles.relatedPickerTitle}>{t('relatedRecipes.add')}</Text>
