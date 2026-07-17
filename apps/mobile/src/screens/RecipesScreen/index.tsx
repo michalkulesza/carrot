@@ -37,7 +37,6 @@ import { tTag } from '@carrot/shared/utils/tagUtils'
 import Avatar from '../../components/Avatar'
 import { TAG_CATEGORIES, groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
 import CategoryFilterChip from './CategoryFilterChip'
-import GlassViewSafe from '../../components/GlassViewSafe'
 import MarqueeText from '../../components/MarqueeText'
 import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
@@ -475,16 +474,11 @@ const RecipesScreen = () => {
         <Pressable
           key={item.id}
           onPress={() => toggleTagId(item.id)}
-          style={({ pressed }) => [styles.chip, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.chip, isSelected && styles.chipActive, pressed && { opacity: 0.7 }]}
           accessibilityLabel={item.name}
           accessibilityRole="button"
           accessibilityState={{ selected: isSelected }}
         >
-          <GlassViewSafe
-            style={StyleSheet.absoluteFill}
-            glassEffectStyle={isSelected ? 'clear' : 'regular'}
-            tintColor={isSelected ? colors.blue : colors.gray5}
-          />
           <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
             {tTag(item.name, t)}
           </Text>
@@ -623,16 +617,11 @@ const RecipesScreen = () => {
     () => (
       <Pressable
         onPress={() => setFilterFavourites((v) => !v)}
-        style={({ pressed }) => [styles.favChip, pressed && { opacity: 0.7 }]}
+        style={({ pressed }) => [styles.favChip, filterFavourites && styles.chipActive, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t('recipes.filterFavourites')}
         accessibilityRole="button"
         accessibilityState={{ selected: filterFavourites }}
       >
-        <GlassViewSafe
-          style={StyleSheet.absoluteFill}
-          glassEffectStyle={filterFavourites ? 'clear' : 'regular'}
-          tintColor={filterFavourites ? colors.blue : colors.gray5}
-        />
         <Text style={[styles.favChipText, filterFavourites && styles.chipTextSelected]}>★</Text>
       </Pressable>
     ),
