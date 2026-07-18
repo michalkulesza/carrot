@@ -63,6 +63,10 @@ import FloatingAddButton from './FloatingAddButton'
 import NextMealCard from './NextMealCard'
 import AddRecipeDrawer, { type AddRecipeDrawerHandle } from '../../components/AddRecipeDrawer'
 
+type RecipeListItem =
+  | { type: 'import-job'; job: ImportJob }
+  | { type: 'recipe'; recipe: RecipeOut }
+
 const RecipesScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
@@ -409,6 +413,17 @@ const RecipesScreen = () => {
     })
   }, [recipesWithOverrides, query, tags, selectedTagIds, filterFavourites, sort])
 
+  // Keep import placeholders and recipes in one list. When an import completes,
+  // the cache update replaces the job item with its newly created recipe instead
+  // of briefly displaying both in separate list sections.
+  const recipeListItems = useMemo<RecipeListItem[]>(
+    () => [
+      ...(showImportJobs ? pendingJobs.map((job) => ({ type: 'import-job' as const, job })) : []),
+      ...filtered.map((recipe) => ({ type: 'recipe' as const, recipe })),
+    ],
+    [filtered, pendingJobs, showImportJobs],
+  )
+
   const toggleTagId = useCallback((tagId: string) => {
     setSelectedTagIds((prev) => {
       const next = new Set(prev)
@@ -546,7 +561,7 @@ const RecipesScreen = () => {
   )
 
   const renderRecipe = useCallback(
-    ({ item }: ListRenderItemInfo<RecipeOut>) => {
+    ({ item }: { item: RecipeOut }) => {
       const isFav = favouriteOverrides.has(item.id)
         ? favouriteOverrides.get(item.id)!
         : item.is_favourite
@@ -638,6 +653,22 @@ const RecipesScreen = () => {
     ],
   )
 
+  const renderRecipeListItem = useCallback(
+    ({ item }: ListRenderItemInfo<RecipeListItem>) => {
+      if (item.type === 'recipe') return renderRecipe({ item: item.recipe })
+
+      return (
+        <PendingJobCard
+          job={item.job}
+          onRetry={() => retry.mutateAsync(item.job.id)}
+          onCancel={() => cancel.mutateAsync(item.job.id)}
+          onDismiss={() => dismiss.mutateAsync(item.job.id)}
+        />
+      )
+    },
+    [cancel, dismiss, renderRecipe, retry],
+  )
+
   const favChip = useMemo(
     () => (
       <Pressable
@@ -685,28 +716,15 @@ const RecipesScreen = () => {
     <View style={styles.screen}>
       <MarqueeSyncProvider>
         <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={renderRecipe}
+          data={recipeListItems}
+          keyExtractor={(item) => item.type === 'recipe' ? item.recipe.id : `import-job-${item.job.id}`}
+          renderItem={renderRecipeListItem}
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={{ paddingBottom: insets.bottom + 88 }}
           ListHeaderComponent={
             <View>
               <Reanimated.View style={topSpacerStyle} />
               <NextMealCard enabled={dataQueriesEnabled} />
-              {showImportJobs && pendingJobs.length > 0 && (
-                <View>
-                  {pendingJobs.map((job: ImportJob) => (
-                    <PendingJobCard
-                      key={job.id}
-                      job={job}
-                      onRetry={() => retry.mutate(job.id)}
-                      onCancel={() => cancel.mutate(job.id)}
-                      onDismiss={() => dismiss.mutate(job.id)}
-                    />
-                  ))}
-                </View>
-              )}
             </View>
           }
           ListFooterComponent={
