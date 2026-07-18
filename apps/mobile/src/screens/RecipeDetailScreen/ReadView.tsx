@@ -54,6 +54,7 @@ const formatCookingTime = (
 
 const ReadView = ({
   recipe,
+  activeAllergens,
   selectedServings,
   addMode,
   showStepQty,
@@ -77,6 +78,7 @@ const ReadView = ({
   addIngredientSheetRef,
 }: {
   recipe: RecipeOut;
+  activeAllergens: string[];
   selectedServings: number | null;
   addMode: boolean;
   showStepQty: boolean;
@@ -227,7 +229,7 @@ const ReadView = ({
           </View>
 
           <TagsSection recipe={recipe} />
-          <AllergenBadges allergens={getRecipeAllergens(recipe)} />
+          <AllergenBadges allergens={getRecipeAllergens(recipe, activeAllergens)} />
 
           <NutritionBoxGrid
             editing={false}

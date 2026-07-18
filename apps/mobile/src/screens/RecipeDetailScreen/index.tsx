@@ -10,6 +10,7 @@ import { useShoppingList } from "@carrot/shared/hooks/useShoppingList";
 import { usePreferences } from "@carrot/shared/hooks/usePreferences";
 import type { RecipeOut } from "@carrot/shared/types";
 import { useHousehold } from "../../context/HouseholdContext";
+import { useResolvedColorScheme } from "../../context/ColorSchemeContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
 import type { AddIngredientToShoppingListSheetHandle } from "../../components/AddIngredientToShoppingListSheet";
 import { styles } from "./styles";
@@ -42,7 +43,8 @@ const RecipeDetailScreen = () => {
   } = useRecipes();
   const { addItems } = useShoppingList();
   const { preferences } = usePreferences();
-  const { households, activeHouseholdId } = useHousehold();
+  const { households, activeHouseholdId, activeHousehold } = useHousehold();
+  const colorScheme = useResolvedColorScheme();
   const [heroImageErrored, setHeroImageErrored] = useState(false);
   const [addMode, setAddMode] = useState(false);
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set());
@@ -244,6 +246,9 @@ const RecipeDetailScreen = () => {
     <>
       <ReadView
         recipe={recipe}
+        activeAllergens={
+          activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
+        }
         selectedServings={selectedServings}
         addMode={addMode}
         showStepQty={displayPrefs.showStepQty}
@@ -273,6 +278,7 @@ const RecipeDetailScreen = () => {
         recipe={recipe}
         visible={cookModeOpen}
         onClose={() => setCookModeOpen(false)}
+        colorScheme={colorScheme}
       />
     </>
   );

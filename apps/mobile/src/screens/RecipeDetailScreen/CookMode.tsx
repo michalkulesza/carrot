@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, BottomSheetScrollView, type BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
 import * as KeepAwake from "expo-keep-awake";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { useResolvedColorScheme } from "../../context/ColorSchemeContext";
 import type { RecipeOut } from "@carrot/shared/types";
 import { displayIngredient } from "@carrot/shared/utils/ingredientUtils";
 import { parseDurationMatches } from "@carrot/shared/utils/timerUtils";
@@ -35,14 +35,16 @@ const CookMode = ({
   recipe,
   visible,
   onClose,
+  colorScheme,
 }: {
   recipe: RecipeOut;
   visible: boolean;
   onClose: () => void;
+  colorScheme: "light" | "dark";
 }) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const dark = useResolvedColorScheme() === "dark";
+  const dark = colorScheme === "dark";
   const bg = dark ? "#20211f" : "#f7f5f0";
   const text = dark ? "#f4f1eb" : "#252421";
   const muted = dark ? "#aaa9a3" : "#74716b";
@@ -100,7 +102,7 @@ const CookMode = ({
     });
     void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_COOK_TAG);
     return () => {
-      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_COOK_TAG);
+      void KeepAwake.deactivateKeepAwake(KEEP_AWAKE_COOK_TAG);
     };
   }, [visible, storageKey, steps.length]);
   useEffect(() => {
@@ -195,6 +197,7 @@ const CookMode = ({
       onRequestClose={onClose}
     >
     <BottomSheetModalProvider>
+    <StatusBar style={dark ? "light" : "dark"} animated />
     <View
       style={[
         styles.root,

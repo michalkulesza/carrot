@@ -184,23 +184,4 @@ export const styles = StyleSheet.create({
   checkContent: { flex: 1 },
   checkLabel: { fontSize: 16, color: colors.label },
   checkDesc: { fontSize: 12, color: colors.tertiaryLabel, marginTop: 1 },
-  saveBtn: {
-    backgroundColor: colors.blue,
-    borderRadius: CARD_RADIUS,
-    paddingVertical: 11,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  saveBtnDisabled: { opacity: 0.6 },
-  saveBtnText: { color: colors.background, fontSize: 16, fontWeight: '600' },
-  reanalyzeBtn: {
-    backgroundColor: colors.secondaryBackground,
-    borderRadius: CARD_RADIUS,
-    paddingVertical: 11,
-    alignItems: 'center',
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: colors.opaqueSeparator,
-  },
-  reanalyzeBtnText: { color: colors.secondaryLabel, fontSize: 16, fontWeight: '600' },
 })

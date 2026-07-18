@@ -258,14 +258,14 @@ const SettingsScreen = () => {
     async (data: string[]) => {
       if (activeHousehold) {
         await api.updateHouseholdAllergens(activeHousehold.id, data);
-        refetchHouseholds();
+        await refetchHouseholds();
       } else {
-        await api.updatePreferences({
+        await update.mutateAsync({
           personal_allergens: data,
         } as Partial<UserPreferences>);
       }
     },
-    [activeHousehold, api, refetchHouseholds],
+    [activeHousehold, api, refetchHouseholds, update],
   );
 
   const handleAppearanceChange = useCallback(
@@ -453,7 +453,6 @@ const SettingsScreen = () => {
             allergens={currentAllergens}
             scopeLabel={allergenScopeLabel}
             onSave={handleSaveAllergens}
-            onReanalyze={api.streamReanalyze}
           />
         </View>
       </View>
