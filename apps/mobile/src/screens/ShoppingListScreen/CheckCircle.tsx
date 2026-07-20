@@ -1,5 +1,5 @@
-import { Pressable, View } from 'react-native'
-import { Feather } from '@expo/vector-icons'
+import { Pressable } from 'react-native'
+import CheckboxIcon from '../../components/CheckboxIcon'
 import { styles } from './styles'
 
 const CheckCircle = ({
@@ -19,13 +19,7 @@ const CheckCircle = ({
     accessibilityState={{ checked }}
     accessibilityLabel={accessibilityLabel}
   >
-    {checked ? (
-      <View style={styles.checkCircleFilled}>
-        <Feather name="check" size={13} color="#fff" />
-      </View>
-    ) : (
-      <View style={styles.checkCircleRing} />
-    )}
+    <CheckboxIcon checked={checked} />
   </Pressable>
 )
 

@@ -28,6 +28,7 @@ import {
   useTimers,
 } from "../../context/TimerContext";
 import { useIsAppActive } from "../../hooks/useIsAppActive";
+import CheckboxIcon from "../../components/CheckboxIcon";
 
 const KEEP_AWAKE_COOK_TAG = "cook-mode";
 const FONT_SCALE_STORAGE_KEY = "cook-mode-font-scale";
@@ -141,7 +142,6 @@ const CookMode = ({
   );
   const [index, setIndex] = useState(0);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [ingredientsOpen, setIngredientsOpen] = useState(false);
   const [instructionFontSize, setInstructionFontSize] = useState(39);
   const [instructionReady, setInstructionReady] = useState(false);
   const [fontScale, setFontScale] = useState(1);
@@ -242,10 +242,6 @@ const CookMode = ({
     }).start();
   }, [instructionReady, stepContentOpacity]);
   useEffect(() => {
-    if (ingredientsOpen) ingredientsSheetRef.current?.present();
-    else ingredientsSheetRef.current?.dismiss();
-  }, [ingredientsOpen]);
-  useEffect(() => {
     if (!visible) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
       onClose();
@@ -262,7 +258,7 @@ const CookMode = ({
           canIncreaseTextSize={fontScale < MAX_FONT_SCALE}
           onDecreaseTextSize={() => adjustFontScale(-FONT_SCALE_STEP)}
           onIncreaseTextSize={() => adjustFontScale(FONT_SCALE_STEP)}
-          onOpenIngredients={() => setIngredientsOpen(true)}
+          onOpenIngredients={() => ingredientsSheetRef.current?.present()}
           onClose={onClose}
           muted={muted}
           decreaseTextSizeLabel={t("cookMode.decreaseTextSize")}
@@ -472,7 +468,6 @@ const CookMode = ({
           snapPoints={["70%"]}
           enableDynamicSizing={false}
           enablePanDownToClose
-          onDismiss={() => setIngredientsOpen(false)}
           backdropComponent={renderIngredientsBackdrop}
           backgroundStyle={{ backgroundColor: sheetBackground }}
           handleIndicatorStyle={styles.sheetHandle}
@@ -495,16 +490,11 @@ const CookMode = ({
                       })
                     }
                     style={styles.ingredientRow}
+                    accessibilityLabel={ingredient.text}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: checked.has(ingredient.key) }}
                   >
-                    <Ionicons
-                      name={
-                        checked.has(ingredient.key)
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
-                      }
-                      size={24}
-                      color={checked.has(ingredient.key) ? "#ea8e4e" : muted}
-                    />
+                    <CheckboxIcon checked={checked.has(ingredient.key)} />
                     <Text
                       style={[
                         styles.ingredientText,

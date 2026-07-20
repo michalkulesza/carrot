@@ -11,6 +11,7 @@ import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useRelatedRecipes } from '@carrot/shared/hooks/useRelatedRecipes'
 import type { RecipeOut } from '@carrot/shared/types'
 import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
+import CheckboxIcon from '../../components/CheckboxIcon'
 import MarqueeText from '../../components/MarqueeText'
 import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { styles } from './styles'
@@ -151,7 +152,7 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
         accessibilityState={{ checked: isSelected, disabled: isSaving }}
       >
         <Text style={styles.relatedPickerRowTitle}>{recipe.title}</Text>
-        <Feather name={isSelected ? 'check-circle' : 'circle'} size={22} color={PlatformColor('systemBlue') as unknown as string} />
+        <CheckboxIcon checked={isSelected} />
       </Pressable>
     )
   }, [isSaving, selected, toggle])

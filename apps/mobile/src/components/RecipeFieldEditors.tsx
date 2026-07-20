@@ -16,6 +16,7 @@ import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
 import { colors } from '../theme/colors'
+import CheckboxIcon from './CheckboxIcon'
 
 // Shared editing controls used by both the import flow and in-place recipe editing.
 
@@ -148,10 +149,11 @@ export const TagPickerModal = ({
                       style={getTagListRowStyle}
                       onPress={() => handleTagRowPress(tag)}
                       accessibilityLabel={tag.name}
-                      accessibilityState={{ selected: isSelected }}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isSelected }}
                     >
                       <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
-                      {isSelected && <Text style={styles.tagCheck}>✓</Text>}
+                      <CheckboxIcon checked={isSelected} />
                     </Pressable>
                   )
                 })}
@@ -329,7 +331,6 @@ const styles = StyleSheet.create({
     borderColor: PlatformColor('separator') as unknown as string,
   },
   tagListText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
-  tagCheck: { fontSize: 16, color: colors.brand },
   tagEmpty: { padding: 16, fontSize: 13, lineHeight: 18, color: PlatformColor('tertiaryLabel') as unknown as string, textAlign: 'center' },
 
   sheetHandle: {

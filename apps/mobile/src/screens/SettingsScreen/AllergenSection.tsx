@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { ALLERGEN_KEYS, INTOLERANCE_KEYS } from '@carrot/shared/utils/allergenKeys'
+import CheckboxIcon from '../../components/CheckboxIcon'
 import { iKey } from './helpers'
 import { styles } from './styles'
 
@@ -56,9 +57,7 @@ const AccordionGroup = ({
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isSelected }}
               >
-                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                </View>
+                <CheckboxIcon checked={isSelected} />
                 <View style={styles.checkContent}>
                   <Text style={styles.checkLabel}>{t(`${namespace}.${k}`)}</Text>
                   {desc ? <Text style={styles.checkDesc}>{desc}</Text> : null}

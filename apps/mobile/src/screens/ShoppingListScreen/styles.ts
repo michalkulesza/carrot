@@ -22,22 +22,6 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  checkCircleRing: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: colors.blue,
-  },
-  checkCircleFilled: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: colors.gray2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
   presenceBar: {
     flexDirection: 'row',
     alignItems: 'center',
