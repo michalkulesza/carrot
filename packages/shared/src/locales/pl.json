@@ -614,5 +614,6 @@
   "ads": {
     "advertisement": "Reklama",
     "placeholder": "Reklama"
-  }
+  },
+  "publicShare": { "open": "Udostępnij publicznie", "sharePublicly": "Udostępnij publicznie", "title": "Udostępnij ten przepis", "description": "Każdy z linkiem może oglądać przepis przez siedem dni.", "link": "Publiczny link do przepisu", "share": "Udostępnij", "copy": "Kopiuj link", "expires": "Dostępne do {{date}}", "createError": "Nie udało się utworzyć publicznego linku.", "copyError": "Nie udało się skopiować linku.", "unavailable": "Ten przepis jest niedostępny.", "about": "O Carrot", "login": "Zaloguj się", "register": "Utwórz darmowe konto", "addToLibrary": "Dodaj do biblioteki", "minutes_one": "{{count}} minuta", "minutes_other": "{{count}} minut", "servings": "Porcje", "premiumNutrition": "Pełne informacje żywieniowe są funkcją Carrot Premium.", "source": "Zobacz źródło", "marketing": "Zapisuj, organizuj i gotuj przepisy z Carrot." }
 }

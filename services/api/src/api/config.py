@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     sentry_dsn: str = ""
     sentry_environment: str = "development"
     allowed_origins: str = "http://localhost:5173"
+    public_web_url: str = "http://localhost:5173"
     database_url: str = "postgresql+asyncpg://platekeeper:platekeeper@localhost:5432/platekeeper"
     secret: str = "CHANGE-ME-IN-PRODUCTION-USE-LONG-RANDOM-STRING"
 

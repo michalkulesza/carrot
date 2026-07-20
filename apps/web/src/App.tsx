@@ -11,8 +11,16 @@ import RegisterPage from './pages/RegisterPage'
 import VerifyPage from './pages/VerifyPage'
 import CompleteProfilePage from './pages/CompleteProfilePage'
 import { webClient } from './api/client'
+import { useAuth } from './context/AuthContext'
+import PublicRecipePage from './pages/PublicRecipePage'
 
 const queryClient = new QueryClient()
+
+const PublicRecipeRoute = () => {
+  const { user, loading } = useAuth()
+  if (loading) return <PublicRecipePage />
+  return user ? <AppShell /> : <PublicRecipePage />
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -29,6 +37,8 @@ const App = () => (
                 path="/complete-profile"
                 element={<CompleteProfilePage />}
               />
+              <Route path="/r/:token" element={<PublicRecipeRoute />} />
+              <Route path="/marketing" element={<PublicRecipePage />} />
               <Route
                 path="/*"
                 element={

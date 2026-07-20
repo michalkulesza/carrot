@@ -17,6 +17,8 @@ import type {
   AuthUser,
   ShoppingListItem,
   PresenceUser,
+  PublicRecipeOut,
+  RecipePublicShare,
 } from '../types'
 
 export interface ApiClientConfig {
@@ -99,6 +101,24 @@ export const createApiClient = (config: ApiClientConfig) => {
       body: JSON.stringify(data),
     })
     await throwOnError(res, 'Failed to update recipe')
+    return res.json() as Promise<RecipeOut>
+  }
+
+  const createPublicShare = async (id: string): Promise<RecipePublicShare> => {
+    const res = await apiFetch(`/api/recipes/${id}/public-share`, { method: 'POST' })
+    await throwOnError(res, 'Failed to create public share link')
+    return res.json() as Promise<RecipePublicShare>
+  }
+
+  const fetchPublicRecipe = async (token: string): Promise<PublicRecipeOut> => {
+    const res = await rawFetch(`${baseUrl}/api/public/recipes/${encodeURIComponent(token)}`, { credentials }, 'fetchPublicRecipe')
+    await throwOnError(res, 'Recipe unavailable')
+    return res.json() as Promise<PublicRecipeOut>
+  }
+
+  const addPublicRecipeToLibrary = async (token: string): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/public/recipes/${encodeURIComponent(token)}/add-to-library`, { method: 'POST' })
+    await throwOnError(res, 'Failed to add recipe to library')
     return res.json() as Promise<RecipeOut>
   }
 
@@ -773,6 +793,9 @@ export const createApiClient = (config: ApiClientConfig) => {
   return {
     saveRecipe,
     updateRecipe,
+    createPublicShare,
+    fetchPublicRecipe,
+    addPublicRecipeToLibrary,
     listRelatedRecipes,
     setRelatedRecipes,
     deleteRecipe,

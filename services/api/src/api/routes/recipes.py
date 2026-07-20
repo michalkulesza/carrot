@@ -4,6 +4,8 @@ import io
 import json
 import logging
 import uuid
+from datetime import datetime, timedelta
+import secrets
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -17,6 +19,8 @@ from api.database import get_async_session
 from api.models import (
     HouseholdMember,
     Recipe,
+    RecipePublicShare,
+    RecipePublicShareOut,
     RecipeEmbedding,
     RecipeOrderRequest,
     RecipeOut,
@@ -35,6 +39,7 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
 log = logging.getLogger(__name__)
 
 _CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creator_handle", "components"]
+_PUBLIC_SHARE_LIFETIME = timedelta(days=7)
 
 
 def _personally_linked(user_id: uuid.UUID):
@@ -66,6 +71,10 @@ def _recipe_write_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, rec
         Recipe.user_id == user_id,
         or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
     )
+
+
+def _public_share_token() -> str:
+    return secrets.token_urlsafe(32)
 
 
 async def _set_tags(session: AsyncSession, recipe: Recipe, tag_ids: list[uuid.UUID], user_id: uuid.UUID, household_id: uuid.UUID | None) -> None:
@@ -376,6 +385,38 @@ async def reorder_recipes(
         if recipe is not None:
             recipe.position = position
     await session.commit()
+
+
+@router.post("/{recipe_id}/public-share", response_model=RecipePublicShareOut)
+async def create_public_share(
+    recipe_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> RecipePublicShareOut:
+    recipe = await session.scalar(select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id)))
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    now = datetime.utcnow()
+    await session.execute(text("SELECT pg_advisory_xact_lock(hashtext(:recipe_id))"), {"recipe_id": str(recipe_id)})
+    share = await session.scalar(select(RecipePublicShare).where(RecipePublicShare.recipe_id == recipe_id).with_for_update())
+    if share is None:
+        token = _public_share_token()
+        while await session.scalar(select(RecipePublicShare.id).where(RecipePublicShare.token == token)):
+            token = _public_share_token()
+        share = RecipePublicShare(recipe_id=recipe_id, token=token, created_at=now, expires_at=now + _PUBLIC_SHARE_LIFETIME)
+        session.add(share)
+    elif share.expires_at <= now:
+        token = _public_share_token()
+        while await session.scalar(select(RecipePublicShare.id).where(RecipePublicShare.token == token)):
+            token = _public_share_token()
+        share.token = token
+        share.created_at = now
+        share.expires_at = now + _PUBLIC_SHARE_LIFETIME
+
+    await session.commit()
+    return RecipePublicShareOut(url=f"{settings.public_web_url.rstrip('/')}/r/{share.token}", expires_at=share.expires_at)
 
 
 @router.put("/{recipe_id}", response_model=RecipeOut)

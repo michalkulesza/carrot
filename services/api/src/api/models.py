@@ -222,6 +222,27 @@ class Recipe(Base):
     author: Mapped["User"] = relationship("User", foreign_keys="Recipe.user_id", lazy="selectin")  # type: ignore[name-defined]
 
 
+class RecipePublicShare(Base):
+    __tablename__ = "recipe_public_shares"
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    recipe_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), unique=True, nullable=False)
+    token: Mapped[str] = mapped_column(String(128), unique=True, nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+
+class RecipePublicShareLibraryAddition(Base):
+    __tablename__ = "recipe_public_share_library_additions"
+    __table_args__ = (UniqueConstraint("public_share_id", "user_id", name="uq_public_share_library_addition"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    public_share_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("recipe_public_shares.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    recipe_id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+
 class EmbeddingStatus(StrEnum):
     PENDING = "pending"
     RUNNING = "running"
@@ -444,6 +465,27 @@ class RecipeOut(BaseModel):
     shared_to_personal: bool = True
     added_by: str | None = None
     is_favourite: bool = False
+
+
+class PublicTagOut(BaseModel):
+    name: str
+    category: str | None = None
+
+
+class PublicRecipeOut(BaseModel):
+    title: str
+    servings: int | None
+    total_time_minutes: int | None = None
+    kcal_per_serving: int | None
+    thumbnail_url: str | None
+    source_url: str | None
+    components: list[Any]
+    tags: list[PublicTagOut] = []
+
+
+class RecipePublicShareOut(BaseModel):
+    url: str
+    expires_at: datetime
 
 
 class RelatedRecipeRequest(BaseModel):

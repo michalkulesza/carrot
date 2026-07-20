@@ -193,6 +193,27 @@ export interface RecipeOut {
   is_favourite: boolean
 }
 
+export interface PublicRecipeTag {
+  name: string
+  category: TagCategory | null
+}
+
+export interface PublicRecipeOut {
+  title: string
+  servings: number | null
+  total_time_minutes: number | null
+  kcal_per_serving: number | null
+  thumbnail_url: string | null
+  source_url: string | null
+  components: SaveComponent[]
+  tags: PublicRecipeTag[]
+}
+
+export interface RecipePublicShare {
+  url: string
+  expires_at: string
+}
+
 export interface RecipeStats {
   total_recipes: number
   total_ingredients: number

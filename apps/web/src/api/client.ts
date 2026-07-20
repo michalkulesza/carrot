@@ -13,6 +13,8 @@ export type {
   SaveComponent,
   RecipeSaveRequest,
   RecipeOut,
+  PublicRecipeOut,
+  RecipePublicShare,
   RecipeStats,
   MealPlanEntry,
   UserPreferences,
@@ -39,6 +41,9 @@ export const webClient = createApiClient({
 export const {
   saveRecipe,
   updateRecipe,
+  createPublicShare,
+  fetchPublicRecipe,
+  addPublicRecipeToLibrary,
   deleteRecipe,
   fetchStats,
   listRecipes,

@@ -606,5 +606,6 @@
   "ads": {
     "advertisement": "Advertisement",
     "placeholder": "Ad"
-  }
+  },
+  "publicShare": { "open": "Share publicly", "sharePublicly": "Share publicly", "title": "Share this recipe", "description": "Anyone with this link can view the recipe for seven days.", "link": "Public recipe link", "share": "Share", "copy": "Copy link", "expires": "Available until {{date}}", "createError": "Could not create a public link.", "copyError": "Could not copy the link.", "unavailable": "This recipe is unavailable.", "about": "About Carrot", "login": "Log in", "register": "Create your free account", "addToLibrary": "Add to library", "minutes_one": "{{count}} minute", "minutes_other": "{{count}} minutes", "servings": "Servings", "premiumNutrition": "Full nutrition information is a Carrot Premium feature.", "source": "View source", "marketing": "Save, organize, and cook recipes with Carrot." }
 }

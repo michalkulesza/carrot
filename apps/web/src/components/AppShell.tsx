@@ -22,6 +22,7 @@ import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { RecipeOut, UserPreferences } from '@carrot/shared/types'
+import PublicRecipePage from '../pages/PublicRecipePage'
 
 const AppShell = () => {
   const { t } = useTranslation()
@@ -29,6 +30,10 @@ const AppShell = () => {
   const [modalOpen, setModalOpen] = useState(false)
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const handlePublicRecipeAdded = useCallback(async (recipe: RecipeOut) => {
+    await qc.invalidateQueries({ queryKey: ['recipes'] })
+    navigate(`/?recipe=${recipe.id}`)
+  }, [navigate, qc])
 
   const { recipes, isLoading: recipesLoading } = useRecipes()
   const { tags: allTags } = useTags()
@@ -106,6 +111,7 @@ const AppShell = () => {
                 <Sidebar />
                 <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
                   <Routes>
+                    <Route path="/r/:token" element={<PublicRecipePage signedIn onAdded={handlePublicRecipeAdded} />} />
                     <Route
                       path="/"
                       element={

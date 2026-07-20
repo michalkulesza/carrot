@@ -49,8 +49,9 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Quality, release, and growth
 
-- [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Public sharing** — Create shareable public recipe pages.
+
+- [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
 -------------------------------------------------------------
@@ -58,8 +59,8 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Portfolio / showcase
 
-- [ ] **Semantic recipe search** — Use pgvector embeddings for natural-language queries such as “something warm and spicy for a cold night.”
 - [ ] **Weekly meal-plan generator** — Auto-fill a week while honoring allergens, preferences, and variety, then generate its shopping list.
 - [ ] **Polished stats and insights dashboard** — Visualize cooking habits, favourite cuisines, streaks, and import history using the existing stats data.
 - [ ] **Operational import dashboard** — Track pipeline latency, queue depth, cost, cache-hit rate, failures, retries, model usage, and per-job traces.
 -------------------------------------------------------------
+- [x] **Semantic recipe search** — Use pgvector embeddings for natural-language queries such as “something warm and spicy for a cold night.”

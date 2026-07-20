@@ -11,6 +11,7 @@ import { styles } from './styles'
 
 export const SEND_TO_HOUSEHOLD_PREFIX = 'send-to-household-'
 export const SEND_TO_PERSONAL = 'send-to-personal'
+export const SHARE_PUBLICLY = 'share-publicly'
 
 type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
   getState(): NavigationState | undefined
@@ -59,16 +60,18 @@ const ViewHeaderRight = ({
   const { t } = useTranslation()
   const recipeActions = useMemo<MenuAction[]>(
     () => {
+      const publicAction: MenuAction = { id: SHARE_PUBLICLY, title: t('publicShare.sharePublicly') }
       if (
         activeHouseholdId !== null &&
         recipe.household_id === activeHouseholdId &&
         !recipe.shared_to_personal
       ) {
-        return [{ id: SEND_TO_PERSONAL, title: t('recipes.sendToPersonalLibrary') }]
+        return [publicAction, { id: SEND_TO_PERSONAL, title: t('recipes.sendToPersonalLibrary') }]
       }
-      if (recipe.household_id !== null) return []
+      if (recipe.household_id !== null) return [publicAction]
       if (households.length === 0) {
         return [
+          publicAction,
           {
             id: 'send-to-household',
             title: t('recipes.sendToHousehold'),
@@ -77,6 +80,7 @@ const ViewHeaderRight = ({
         ]
       }
       return [
+        publicAction,
         {
           id: 'send-to-household',
           title: t('recipes.sendToHousehold'),

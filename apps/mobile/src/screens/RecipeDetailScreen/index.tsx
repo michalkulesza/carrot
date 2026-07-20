@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Share, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +20,7 @@ import {
   useRecipeDetailHeader,
   SEND_TO_HOUSEHOLD_PREFIX,
   SEND_TO_PERSONAL,
+  SHARE_PUBLICLY,
 } from "./useRecipeDetailHeader";
 import EditView from "./EditView";
 import ReadView from "./ReadView";
@@ -54,6 +55,7 @@ const RecipeDetailScreen = () => {
   const addIngredientSheetRef =
     useRef<AddIngredientToShoppingListSheetHandle>(null);
   const pendingIngredientKeyRef = useRef<string | null>(null);
+  const publicSharePendingRef = useRef(false);
 
   const displayPrefs = useDisplayPrefs();
 
@@ -106,8 +108,23 @@ const RecipeDetailScreen = () => {
   }, [selectedServings, setServings]);
 
   const handlePressRecipeAction = useCallback(
-    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
+    async ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       if (!recipe) return;
+      if (nativeEvent.event === SHARE_PUBLICLY) {
+        if (publicSharePendingRef.current) return;
+        publicSharePendingRef.current = true;
+        try {
+          const share = await api.createPublicShare(recipe.id);
+          await Share.share({ title: recipe.title, url: share.url, message: share.url });
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        } catch (error) {
+          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          Alert.alert(t('common.ok'), error instanceof Error ? error.message : t('publicShare.createError'));
+        } finally {
+          publicSharePendingRef.current = false;
+        }
+        return;
+      }
       if (nativeEvent.event === SEND_TO_PERSONAL) {
         linkToPersonal.mutate(recipe.id, {
           onSuccess: () =>
@@ -136,7 +153,7 @@ const RecipeDetailScreen = () => {
         },
       );
     },
-    [recipe, linkToHousehold, linkToPersonal, t],
+    [api, recipe, linkToHousehold, linkToPersonal, t],
   );
 
   const handleAddIngredient = useCallback((key: string, text: string) => {
