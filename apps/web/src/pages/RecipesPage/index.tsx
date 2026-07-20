@@ -9,6 +9,7 @@ import RecipeDetailModal from '../../components/RecipeDetailModal'
 import RecipesTable from '../../components/RecipesTable'
 import { deleteRecipe } from '../../api/client'
 import { useHousehold } from '../../context/HouseholdContext'
+import { useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import RecipeSearchInput from './RecipeSearchInput'
 import SearchOverlay from './SearchOverlay'
 import FilterBar from './FilterBar'
@@ -86,9 +87,17 @@ const RecipesPage = ({
   )
 
   const query = searchQuery.trim().toLowerCase()
+  const { semanticRecipes, isSemanticLoading } = useSemanticRecipeSearch(
+    searchQuery,
+    activeHouseholdId ?? 'personal',
+  )
   const showImportJobs = !query && !filterFavourites && selectedTagIds.size === 0
   const titleMatches = searchTitleMatches(recipes, query)
-  const ingredientMatches = searchIngredientMatches(recipes, query)
+  const rawIngredientMatches = searchIngredientMatches(recipes, query)
+  const titleMatchIds = new Set(titleMatches.map((recipe) => recipe.id))
+  const ingredientMatches = rawIngredientMatches.filter(({ recipe }) => !titleMatchIds.has(recipe.id))
+  const literalIds = new Set([...titleMatchIds, ...ingredientMatches.map(({ recipe }) => recipe.id)])
+  const semanticMatches = semanticRecipes.filter((recipe) => !literalIds.has(recipe.id))
 
   const openView = useCallback((recipe: RecipeOut) => {
     setOpenInEdit(false)
@@ -166,6 +175,7 @@ const RecipesPage = ({
   const searchInput = (
     <RecipeSearchInput
       searchQuery={searchQuery}
+      isSemanticLoading={isSemanticLoading}
       onSearchQueryChange={setSearchQuery}
     />
   )
@@ -181,6 +191,7 @@ const RecipesPage = ({
           <SearchOverlay
             titleMatches={titleMatches}
             ingredientMatches={ingredientMatches}
+            semanticMatches={semanticMatches}
             onSelectRecipe={handleSelectSearchResult}
           />
         )}

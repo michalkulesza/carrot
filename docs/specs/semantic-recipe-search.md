@@ -1,6 +1,6 @@
 # Semantic recipe search
 
-Status: pending
+Status: ready for review
 
 ## Goal
 

@@ -55,6 +55,8 @@
     "noResults": "Brak wyników",
     "sectionRecipes": "Przepisy",
     "sectionIngredients": "Składniki",
+    "sectionSuggested": "Sugerowane dopasowania",
+    "semanticSearchLoading": "Wyszukiwanie podobnych przepisów",
     "servings_one": "{{count}} porcja",
     "servings_few": "{{count}} porcje",
     "servings_many": "{{count}} porcji",

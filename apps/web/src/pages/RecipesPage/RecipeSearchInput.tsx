@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next'
 
 interface RecipeSearchInputProps {
   searchQuery: string
+  isSemanticLoading?: boolean
   onSearchQueryChange: (value: string) => void
 }
 
 const RecipeSearchInput = ({
   searchQuery,
+  isSemanticLoading = false,
   onSearchQueryChange,
 }: RecipeSearchInputProps) => {
   const { t } = useTranslation()
@@ -22,6 +24,9 @@ const RecipeSearchInput = ({
         placeholder={t('recipes.searchPlaceholder')}
         className="w-full pl-9 pr-8 py-2 text-sm rounded-full bg-white border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-zinc-400"
       />
+      {isSemanticLoading && (
+        <span className="absolute right-8 h-3 w-3 rounded-full border-2 border-zinc-300 border-t-primary animate-spin" aria-label={t('recipes.semanticSearchLoading')} />
+      )}
       {searchQuery && (
         <button
           type="button"

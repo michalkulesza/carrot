@@ -8,8 +8,9 @@ import uuid
 from datetime import datetime, timedelta
 
 import httpx
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select, text, update
 
+from api.config import settings
 from api.database import async_session_maker
 from api.models import (
     DeviceSubscription,
@@ -23,6 +24,8 @@ from api.models import (
     ImportResult,
     Ingredient,
     Recipe,
+    RecipeEmbedding,
+    EmbeddingStatus,
     RecipeComponent,
     Tag,
     UserPreferences,
@@ -30,6 +33,8 @@ from api.models import (
 from api.routes.imports import _event_for_job
 from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
+from api.services.embeddings import queue_recipe_embedding
+from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.pipeline import run_image_import_stream, run_import_stream, run_text_import_stream
 
 log = logging.getLogger(__name__)
@@ -155,6 +160,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     )
     session.add(recipe)
     await session.flush()
+    await queue_recipe_embedding(session, recipe)
     return recipe
 
 
@@ -283,7 +289,115 @@ async def _requeue_stale() -> None:
             job.next_attempt_at = datetime.utcnow()
             job.updated_at = datetime.utcnow()
             await _event_for_job(session, job, "import_job.retry_scheduled")
+        stale_embeddings = list((await session.scalars(
+            select(RecipeEmbedding)
+            .where(RecipeEmbedding.status == EmbeddingStatus.RUNNING)
+            .with_for_update(skip_locked=True)
+        )).all())
+        for embedding in stale_embeddings:
+            embedding.status = EmbeddingStatus.PENDING
+            embedding.next_attempt_at = datetime.utcnow()
+            embedding.claimed_at = None
         await session.commit()
+
+
+async def _claim_embedding_job() -> uuid.UUID | None:
+    now = datetime.utcnow()
+    async with async_session_maker() as session:
+        job = await session.scalar(
+            select(RecipeEmbedding)
+            .where(
+                RecipeEmbedding.status == EmbeddingStatus.PENDING,
+                RecipeEmbedding.next_attempt_at <= now,
+            )
+            .order_by(RecipeEmbedding.next_attempt_at, RecipeEmbedding.created_at)
+            .limit(1)
+            .with_for_update(skip_locked=True)
+        )
+        if job is None:
+            return None
+        job.status = EmbeddingStatus.RUNNING
+        job.claimed_at = now
+        await session.commit()
+        log.info("embedding_job_claimed recipe_id=%s", job.recipe_id)
+        return job.recipe_id
+
+
+async def _retry_embedding_job(recipe_id: uuid.UUID, error: Exception) -> None:
+    now = datetime.utcnow()
+    async with async_session_maker() as session:
+        job = await session.scalar(select(RecipeEmbedding).where(RecipeEmbedding.recipe_id == recipe_id).with_for_update())
+        if job is None:
+            return
+        job.retry_count += 1
+        job.last_error = type(error).__name__[:500]
+        job.claimed_at = None
+        message = str(error).lower()
+        retryable = any(value in message for value in ("429", "503", "timeout", "unavailable", "connection"))
+        if not retryable or job.retry_count >= settings.embedding_retry_cap:
+            job.status = EmbeddingStatus.FAILED
+            job.next_attempt_at = None
+            log.warning("embedding_job_terminal_failure recipe_id=%s retries=%d", recipe_id, job.retry_count)
+        else:
+            job.status = EmbeddingStatus.PENDING
+            delay = settings.embedding_retry_base_seconds * (2 ** min(job.retry_count - 1, 6))
+            job.next_attempt_at = now + timedelta(seconds=delay)
+            log.warning("embedding_job_retry recipe_id=%s retries=%d", recipe_id, job.retry_count)
+        await session.commit()
+
+
+async def _process_embedding_job(recipe_id: uuid.UUID) -> None:
+    try:
+        async with async_session_maker() as session:
+            recipe = await session.scalar(select(Recipe).where(Recipe.id == recipe_id))
+            if recipe is None:
+                return
+            document = build_embedding_document(recipe)
+            document_hash = embedding_document_hash(document)
+        vector = await generate_embedding(document, "RETRIEVAL_DOCUMENT")
+        async with async_session_maker() as session:
+            job = await session.scalar(select(RecipeEmbedding).where(RecipeEmbedding.recipe_id == recipe_id).with_for_update())
+            recipe = await session.scalar(select(Recipe).where(Recipe.id == recipe_id))
+            if job is None or recipe is None or job.status != EmbeddingStatus.RUNNING:
+                return
+            current_hash = embedding_document_hash(build_embedding_document(recipe))
+            if current_hash != document_hash:
+                job.status = EmbeddingStatus.PENDING
+                job.next_attempt_at = datetime.utcnow()
+                job.claimed_at = None
+                await session.commit()
+                return
+            await session.execute(
+                update(RecipeEmbedding)
+                .where(RecipeEmbedding.recipe_id == recipe_id)
+                .values(
+                    embedding=text("CAST(:embedding AS vector)"),
+                    model=settings.gemini_embedding_model,
+                    dimensions=settings.gemini_embedding_dimensions,
+                    document_version=settings.embedding_document_version,
+                    document_hash=document_hash,
+                    source_updated_at=recipe.updated_at,
+                    status=EmbeddingStatus.SUCCEEDED,
+                    retry_count=0,
+                    next_attempt_at=None,
+                    last_error=None,
+                    claimed_at=None,
+                )
+                .params(embedding=_vector_literal(vector))
+            )
+            await session.commit()
+            log.info("embedding_job_completed recipe_id=%s dimensions=%d", recipe_id, len(vector))
+    except Exception as error:
+        await _retry_embedding_job(recipe_id, error)
+
+
+async def _embedding_worker_loop() -> None:
+    while True:
+        recipe_id = await _claim_embedding_job()
+        if recipe_id is None:
+            await asyncio.sleep(_POLL_INTERVAL_SECONDS)
+            continue
+        await _process_embedding_job(recipe_id)
 
 
 async def _deliver_pushes() -> None:
@@ -332,4 +446,8 @@ async def _push_loop() -> None:
 
 async def run() -> None:
     await _requeue_stale()
-    await asyncio.gather(*(_worker_loop() for _ in range(3)), _push_loop())
+    await asyncio.gather(
+        *(_worker_loop() for _ in range(3)),
+        *(_embedding_worker_loop() for _ in range(settings.embedding_worker_batch_size)),
+        _push_loop(),
+    )

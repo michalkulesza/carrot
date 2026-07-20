@@ -7,6 +7,17 @@ class Settings(BaseSettings):
     scrapecreators_api_key: str = ""
     gemini_api_key: str = ""
     gemini_extraction_model: str = "gemini-2.5-flash"
+    semantic_search_enabled: bool = True
+    gemini_embedding_model: str = "gemini-embedding-2"
+    gemini_embedding_dimensions: int = 768
+    embedding_document_version: str = "v1"
+    semantic_search_similarity_cutoff: float = 0.55
+    semantic_search_max_results: int = 20
+    embedding_worker_batch_size: int = 3
+    embedding_retry_cap: int = 6
+    embedding_retry_base_seconds: int = 5
+    embedding_hnsw_m: int = 16
+    embedding_hnsw_ef_construction: int = 64
     sentry_dsn: str = ""
     sentry_environment: str = "development"
     allowed_origins: str = "http://localhost:5173"

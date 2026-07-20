@@ -135,6 +135,13 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<RecipeOut[]>
   }
 
+  const searchRecipes = async (query: string, signal?: AbortSignal): Promise<RecipeOut[]> => {
+    const params = new URLSearchParams({ q: query, limit: '20' })
+    const res = await apiFetch(`/api/recipes/search?${params.toString()}`, { signal })
+    if (!res.ok) throw new Error('Failed to search recipes')
+    return res.json() as Promise<RecipeOut[]>
+  }
+
   const listPersonalRecipes = async (): Promise<RecipeOut[]> => {
     const res = await apiFetch('/api/recipes?personal=true')
     if (!res.ok) throw new Error('Failed to load personal recipes')
@@ -771,6 +778,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     deleteRecipe,
     fetchStats,
     listRecipes,
+    searchRecipes,
     subscribeRecipes,
     listPersonalRecipes,
     linkRecipeToHousehold,

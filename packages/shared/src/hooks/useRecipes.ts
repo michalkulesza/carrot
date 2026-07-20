@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { RecipeOut, RecipeSaveRequest } from '../types'
@@ -103,6 +103,30 @@ export const useRecipes = (enabled = true) => {
 export const useRecipeStats = () => {
   const api = useApiClient()
   return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats })
+}
+
+export const useSemanticRecipeSearch = (query: string, scopeKey: string | null) => {
+  const api = useApiClient()
+  const normalizedQuery = query.trim().replace(/\s+/g, ' ').toLocaleLowerCase()
+  const [debouncedQuery, setDebouncedQuery] = useState(normalizedQuery)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(normalizedQuery), 350)
+    return () => clearTimeout(timer)
+  }, [normalizedQuery])
+
+  const enabled = Boolean(scopeKey && debouncedQuery.length >= 3)
+  const search = useQuery({
+    queryKey: ['recipes', 'semantic-search', scopeKey, debouncedQuery],
+    queryFn: ({ signal }) => api.searchRecipes(debouncedQuery, signal),
+    enabled,
+    retry: false,
+  })
+
+  return {
+    semanticRecipes: search.data ?? [],
+    isSemanticLoading: normalizedQuery.length >= 3 && (normalizedQuery !== debouncedQuery || search.isFetching),
+  }
 }
 
 export const usePersonalRecipes = (enabled = true) => {

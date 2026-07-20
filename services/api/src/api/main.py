@@ -10,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
-from api.database import Base, async_session_maker, engine, get_async_session
+from api.database import Base, async_session_maker, engine, get_async_session, initialize_vector_schema
 from api.models import Recipe, Tag
 from api.services import r2
 from api.services.monitoring import init_sentry
@@ -102,7 +102,11 @@ async def _seed_default_tags() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
+        await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
+        await initialize_vector_schema(conn)
+        await conn.execute(text("ALTER TABLE recipe_embeddings ADD COLUMN IF NOT EXISTS dimensions INTEGER NOT NULL DEFAULT 768"))
+        await conn.execute(text("ALTER TABLE recipe_embeddings ADD COLUMN IF NOT EXISTS document_version VARCHAR(30) NOT NULL DEFAULT 'v1'"))
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS position INTEGER"))
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS total_time_minutes INTEGER"))
         await conn.execute(text("ALTER TABLE households ADD COLUMN IF NOT EXISTS allergens JSONB"))

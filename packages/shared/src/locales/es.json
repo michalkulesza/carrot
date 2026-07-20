@@ -55,6 +55,8 @@
     "noResults": "Sin resultados",
     "sectionRecipes": "Recetas",
     "sectionIngredients": "Ingredientes",
+    "sectionSuggested": "Resultados sugeridos",
+    "semanticSearchLoading": "Buscando recetas similares",
     "servings_one": "{{count}} ración",
     "servings_other": "{{count}} raciones",
     "noRecipesYet": "Aún no hay recetas.",

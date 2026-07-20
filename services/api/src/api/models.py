@@ -7,10 +7,21 @@ from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, text
+from sqlalchemy.types import UserDefinedType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 
 from api.database import Base
+
+
+class Vector(UserDefinedType):
+    cache_ok = True
+
+    def __init__(self, dimensions: int) -> None:
+        self.dimensions = dimensions
+
+    def get_col_spec(self, **_: Any) -> str:
+        return f"VECTOR({self.dimensions})"
 
 
 # ── Unit enum ─────────────────────────────────────────────────────────────────
@@ -209,6 +220,37 @@ class Recipe(Base):
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=recipe_tags_table, lazy="selectin")
     author: Mapped["User"] = relationship("User", foreign_keys="Recipe.user_id", lazy="selectin")  # type: ignore[name-defined]
+
+
+class EmbeddingStatus(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class RecipeEmbedding(Base):
+    __tablename__ = "recipe_embeddings"
+    __table_args__ = (
+        Index("ix_recipe_embeddings_queue", "status", "next_attempt_at"),
+    )
+
+    recipe_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True
+    )
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(768), nullable=True)
+    model: Mapped[str] = mapped_column(String(100), nullable=False)
+    dimensions: Mapped[int] = mapped_column(Integer, nullable=False, default=768)
+    document_version: Mapped[str] = mapped_column(String(30), nullable=False, default="v1")
+    document_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    source_updated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=EmbeddingStatus.PENDING)
+    retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    claimed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 # ── Gemini extraction schema ──────────────────────────────────────────────────

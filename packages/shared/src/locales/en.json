@@ -55,6 +55,8 @@
     "noResults": "No results",
     "sectionRecipes": "Recipes",
     "sectionIngredients": "Ingredients",
+    "sectionSuggested": "Suggested matches",
+    "semanticSearchLoading": "Searching for related recipes",
     "recipeActions": "Recipe actions",
     "sendToHousehold": "Send to household",
     "sendToPersonalLibrary": "Send to personal library",

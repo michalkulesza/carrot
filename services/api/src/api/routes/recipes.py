@@ -2,11 +2,12 @@ import asyncio
 import csv
 import io
 import json
+import logging
 import uuid
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, delete, exists, insert, or_, select
+from sqlalchemy import and_, delete, exists, insert, or_, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,7 @@ from api.database import get_async_session
 from api.models import (
     HouseholdMember,
     Recipe,
+    RecipeEmbedding,
     RecipeOrderRequest,
     RecipeOut,
     RelatedRecipeRequest,
@@ -26,9 +28,11 @@ from api.models import (
     user_recipe_favourites_table,
 )
 from api.routes.context import get_active_household_id, get_scope_key
+from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
+log = logging.getLogger(__name__)
 
 _CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creator_handle", "components"]
 
@@ -218,6 +222,8 @@ async def import_recipes(
             components=components,
         )
         session.add(recipe)
+        await session.flush()
+        await queue_recipe_embedding(session, recipe)
         count += 1
 
     await session.commit()
@@ -245,6 +251,46 @@ async def list_recipes(
         _build_recipe_out(r, user.id, favourite_ids, personal_link_ids)
         for r in result.scalars().all()
     ]
+
+
+@router.get("/search", response_model=list[RecipeOut])
+async def search_recipes(
+    q: str = Query(min_length=3, max_length=300),
+    limit: int | None = Query(default=None, ge=1, le=20),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID | None = Depends(get_active_household_id),
+) -> list[RecipeOut]:
+    query = q.strip()
+    if len(query) < 3 or not settings.semantic_search_enabled:
+        return []
+    try:
+        vector = await asyncio.wait_for(generate_embedding(query, "RETRIEVAL_QUERY"), timeout=8)
+        vector_literal = _vector_literal(vector)
+        result_limit = min(limit or settings.semantic_search_max_results, settings.semantic_search_max_results)
+        distance = RecipeEmbedding.embedding.op("<=>")(text("CAST(:query_vector AS vector)"))
+        similarity = 1 - distance
+        recipes = list((await session.scalars(
+            select(Recipe)
+            .join(RecipeEmbedding, RecipeEmbedding.recipe_id == Recipe.id)
+            .where(
+                _recipe_filter(user.id, household_id),
+                RecipeEmbedding.model == settings.gemini_embedding_model,
+                RecipeEmbedding.dimensions == settings.gemini_embedding_dimensions,
+                RecipeEmbedding.document_version == settings.embedding_document_version,
+                RecipeEmbedding.status == "succeeded",
+                similarity >= settings.semantic_search_similarity_cutoff,
+            )
+            .order_by(distance)
+            .limit(result_limit)
+            .params(query_vector=vector_literal)
+        )).unique().all())
+        favourite_ids = await _get_favourite_ids(session, user.id)
+        personal_link_ids = await _get_personal_link_ids(session, user.id)
+        return [_build_recipe_out(recipe, user.id, favourite_ids, personal_link_ids) for recipe in recipes]
+    except Exception as error:
+        log.warning("semantic_search_failed query_length=%d error=%s", len(query), type(error).__name__)
+        return []
 
 
 # NOTE: /stream must be defined before /{recipe_id}
@@ -304,6 +350,8 @@ async def save_recipe(
     session.add(recipe)
     await session.flush()
     await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
+    await session.flush()
+    await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)
 
@@ -363,6 +411,8 @@ async def update_recipe(
         recipe.shared_to_personal = body.shared_to_personal
     await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
 
+    await session.flush()
+    await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)
 
@@ -401,6 +451,8 @@ async def add_tag_to_recipe(
     await session.refresh(recipe, attribute_names=["tags"])
     if tag not in recipe.tags:
         recipe.tags.append(tag)
+        await session.flush()
+        await queue_recipe_embedding(session, recipe)
         await session.commit()
 
 
@@ -420,6 +472,8 @@ async def remove_tag_from_recipe(
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     recipe.tags = [t for t in recipe.tags if t.id != tag_id]
+    await session.flush()
+    await queue_recipe_embedding(session, recipe)
     await session.commit()
 
 

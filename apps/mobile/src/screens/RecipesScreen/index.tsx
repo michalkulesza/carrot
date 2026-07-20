@@ -27,7 +27,7 @@ import * as Haptics from 'expo-haptics'
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useRecipes } from '@carrot/shared/hooks/useRecipes'
+import { useRecipes, useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { useApiClient } from '@carrot/shared/api/context'
@@ -118,6 +118,10 @@ const RecipesScreen = () => {
   const [filterFavourites, setFilterFavourites] = useState(false)
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [sort, setSort] = useState<SortMode>('newest')
+  const { semanticRecipes } = useSemanticRecipeSearch(
+    query,
+    user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
+  )
   const seenIdsRef = useRef<Set<string>>(new Set())
   const initialLoadDoneRef = useRef(false)
   const knownRecipeIdsRef = useRef<Set<string>>(new Set())
@@ -394,13 +398,7 @@ const RecipesScreen = () => {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const base = recipesWithOverrides.filter((r) => {
-      const matchesQuery = !q || r.title.toLowerCase().includes(q)
-      const matchesTag = matchesTagFilters(r.tags, tags, selectedTagIds)
-      const matchesFav = !filterFavourites || r.is_favourite
-      return matchesQuery && matchesTag && matchesFav
-    })
-    return [...base].sort((a, b) => {
+    const sortRecipes = (items: RecipeOut[]) => [...items].sort((a, b) => {
       if (sort === 'title_asc') return a.title.localeCompare(b.title)
       if (sort === 'title_desc') return b.title.localeCompare(a.title)
       if (sort === 'oldest')
@@ -411,7 +409,26 @@ const RecipesScreen = () => {
         return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime()
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
-  }, [recipesWithOverrides, query, tags, selectedTagIds, filterFavourites, sort])
+    const matchesActiveFilters = (r: RecipeOut) => {
+      const matchesTag = matchesTagFilters(r.tags, tags, selectedTagIds)
+      const matchesFav = !filterFavourites || r.is_favourite
+      return matchesTag && matchesFav
+    }
+    const literalMatches = recipesWithOverrides.filter((r) => {
+      const matchesQuery = !q || r.title.toLowerCase().includes(q)
+      return matchesQuery && matchesActiveFilters(r)
+    })
+    if (!q) return sortRecipes(literalMatches)
+
+    const literalIds = new Set(literalMatches.map((recipe) => recipe.id))
+    const semanticMatches = semanticRecipes
+      .map((recipe) => ({
+        ...recipe,
+        is_favourite: favouriteOverrides.has(recipe.id) ? favouriteOverrides.get(recipe.id)! : recipe.is_favourite,
+      }))
+      .filter((recipe) => !literalIds.has(recipe.id) && matchesActiveFilters(recipe))
+    return [...sortRecipes(literalMatches), ...semanticMatches]
+  }, [recipesWithOverrides, query, tags, selectedTagIds, filterFavourites, sort, semanticRecipes, favouriteOverrides])
 
   // Keep import placeholders and recipes in one list. When an import completes,
   // the cache update replaces the job item with its newly created recipe instead
