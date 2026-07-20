@@ -71,6 +71,10 @@ const buildLeaveAction = (n: HouseholdLeaveNotificationOut, t: TFunction): MenuA
 
 const buildNotifAction = (notif: NotificationItem): MenuAction | null => {
   switch (notif.type) {
+    case 'timer_done':
+      return { id: `timer-done-${notif.id}`, title: `✓ ${notif.title}`, subtitle: notif.body }
+    case 'invitation':
+      return { id: `invitation-dismiss-${notif.id}`, title: `🏠 ${notif.title}`, subtitle: notif.body }
     case 'recipe_imported':
       return { id: `recipe-imported-${notif.id}`, title: `✅ ${notif.title}`, subtitle: notif.body }
     case 'recipe_failed':
@@ -149,6 +153,10 @@ const BellMenu = () => {
         }
         case 'timer-cancel':
           cancelTimer(payload)
+          break
+        case 'timer-done':
+        case 'invitation-dismiss':
+          dismissNotif(payload)
           break
         case 'inv-accept':
           try {
