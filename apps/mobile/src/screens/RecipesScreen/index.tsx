@@ -499,7 +499,9 @@ const RecipesScreen = () => {
           .filter((recipe) => normalizedQuery && recipe.title.toLowerCase().includes(normalizedQuery))
           .map((recipe) => recipe.id),
       )
-      const firstSemanticIndex = filtered.findIndex((recipe) => !literalIds.has(recipe.id))
+      const firstSemanticIndex = normalizedQuery
+        ? filtered.findIndex((recipe) => !literalIds.has(recipe.id))
+        : -1
       const recipeItems = filtered.flatMap((recipe, index) => [
         ...(index === firstSemanticIndex ? [{ type: 'semantic-header' as const }] : []),
         { type: 'recipe' as const, recipe },

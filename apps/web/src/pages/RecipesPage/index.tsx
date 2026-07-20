@@ -172,10 +172,20 @@ const RecipesPage = ({
     }
   }, [deleteTarget, onRecipeDeleted, t])
 
+  const searchOverlay = query ? (
+    <SearchOverlay
+      titleMatches={titleMatches}
+      ingredientMatches={ingredientMatches}
+      semanticMatches={semanticMatches}
+      isSemanticLoading={isSemanticLoading}
+      onSelectRecipe={handleSelectSearchResult}
+    />
+  ) : null
   const searchInput = (
     <RecipeSearchInput
       searchQuery={searchQuery}
       isSemanticLoading={isSemanticLoading}
+      searchOverlay={searchOverlay}
       onSearchQueryChange={setSearchQuery}
     />
   )
@@ -186,17 +196,7 @@ const RecipesPage = ({
 
       <div className="md:hidden px-4 mt-3">{searchInput}</div>
 
-      <div className="relative">
-        {query && (
-          <SearchOverlay
-            titleMatches={titleMatches}
-            ingredientMatches={ingredientMatches}
-            semanticMatches={semanticMatches}
-            isSemanticLoading={isSemanticLoading}
-            onSelectRecipe={handleSelectSearchResult}
-          />
-        )}
-
+      <div>
         <div className="md:hidden px-4 mt-3">
           <NextMealCard />
         </div>

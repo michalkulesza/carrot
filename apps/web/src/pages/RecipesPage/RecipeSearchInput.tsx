@@ -1,15 +1,18 @@
 import { Search, X } from 'react-feather'
 import { useTranslation } from 'react-i18next'
+import type { ReactNode } from 'react'
 
 interface RecipeSearchInputProps {
   searchQuery: string
   isSemanticLoading?: boolean
+  searchOverlay?: ReactNode
   onSearchQueryChange: (value: string) => void
 }
 
 const RecipeSearchInput = ({
   searchQuery,
   isSemanticLoading = false,
+  searchOverlay,
   onSearchQueryChange,
 }: RecipeSearchInputProps) => {
   const { t } = useTranslation()
@@ -36,6 +39,7 @@ const RecipeSearchInput = ({
           <X className="w-4 h-4" />
         </button>
       )}
+      {searchOverlay}
     </div>
   )
 }

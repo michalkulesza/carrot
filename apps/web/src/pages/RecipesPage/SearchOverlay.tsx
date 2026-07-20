@@ -22,7 +22,7 @@ const SearchOverlay = ({
   const hasResults = titleMatches.length > 0 || ingredientMatches.length > 0 || semanticMatches.length > 0
 
   return (
-    <div className="absolute left-2 right-2 top-2 z-40 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
+    <div className="absolute left-0 right-0 top-full z-40 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
       <div className="max-h-[60vh] overflow-y-auto">
         {!hasResults && !isSemanticLoading ? (
           <p className="px-4 py-8 text-sm text-zinc-400 text-center">
