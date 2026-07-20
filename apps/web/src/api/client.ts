@@ -23,10 +23,17 @@ export type {
 } from '@carrot/shared/types'
 export { UNITS } from '@carrot/shared/types'
 
+let unauthorizedHandler: (() => void) | null = null
+
+export const setUnauthorizedHandler = (handler: (() => void) | null): void => {
+  unauthorizedHandler = handler
+}
+
 export const webClient = createApiClient({
   baseUrl: '',
   getAuthHeaders: () => ({}),
   credentials: 'include',
+  onUnauthorized: () => unauthorizedHandler?.(),
 })
 
 export const {

@@ -34,7 +34,15 @@ const KEEP_AWAKE_COOK_TAG = "cook-mode";
 const FONT_SCALE_STORAGE_KEY = "cook-mode-font-scale";
 const MIN_FONT_SCALE = 0.8;
 const MAX_FONT_SCALE = 1.35;
-const FONT_SCALE_STEP = 0.1;
+const FONT_SCALES = [MIN_FONT_SCALE, 1, MAX_FONT_SCALE];
+
+const getFontScaleIndex = (fontScale: number) => {
+  const closestScale = FONT_SCALES.reduce((closest, scale) =>
+    Math.abs(scale - fontScale) < Math.abs(closest - fontScale) ? scale : closest,
+  );
+
+  return FONT_SCALES.indexOf(closestScale);
+};
 
 const cookColor = (light: string, dark: string, colorScheme: "light" | "dark") =>
   (Platform.OS === "ios"
@@ -158,12 +166,11 @@ const CookMode = ({
   );
   const storageKey = `cook-mode:${recipe.id}`;
   const adjustFontScale = useCallback(
-    (delta: number) => {
-      const next = Math.min(
-        MAX_FONT_SCALE,
-        Math.max(MIN_FONT_SCALE, Number((fontScale + delta).toFixed(2))),
-      );
-      if (next === fontScale) return;
+    (direction: -1 | 1) => {
+      const currentIndex = getFontScaleIndex(fontScale);
+      const next = FONT_SCALES[currentIndex + direction];
+      if (next === undefined || next === fontScale) return;
+
       Animated.timing(stepContentOpacity, {
         toValue: 0,
         duration: 120,
@@ -171,8 +178,8 @@ const CookMode = ({
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (!finished) return;
-        setFontScale(next);
-        void AsyncStorage.setItem(FONT_SCALE_STORAGE_KEY, String(next));
+          setFontScale(next);
+          void AsyncStorage.setItem(FONT_SCALE_STORAGE_KEY, String(next));
       });
     },
     [fontScale, stepContentOpacity],
@@ -209,7 +216,7 @@ const CookMode = ({
     void AsyncStorage.getItem(FONT_SCALE_STORAGE_KEY).then((value) => {
       const savedScale = Number(value);
       if (savedScale >= MIN_FONT_SCALE && savedScale <= MAX_FONT_SCALE) {
-        setFontScale(savedScale);
+        setFontScale(FONT_SCALES[getFontScaleIndex(savedScale)]);
       }
     });
   }, []);
@@ -256,8 +263,8 @@ const CookMode = ({
         <CookModeToolbar
           canDecreaseTextSize={fontScale > MIN_FONT_SCALE}
           canIncreaseTextSize={fontScale < MAX_FONT_SCALE}
-          onDecreaseTextSize={() => adjustFontScale(-FONT_SCALE_STEP)}
-          onIncreaseTextSize={() => adjustFontScale(FONT_SCALE_STEP)}
+          onDecreaseTextSize={() => adjustFontScale(-1)}
+          onIncreaseTextSize={() => adjustFontScale(1)}
           onOpenIngredients={() => ingredientsSheetRef.current?.present()}
           onClose={onClose}
           muted={muted}

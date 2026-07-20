@@ -1,13 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import * as SecureStore from 'expo-secure-store'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { mobileClient, setToken } from '../api/client'
+import { mobileClient, setToken, setUnauthorizedHandler } from '../api/client'
 import { revokeGoogleSignin, signInWithGoogle } from '../utils/googleAuth'
 import type { AuthUser } from '@carrot/shared/types'
 
 const TOKEN_KEY = 'pk_auth_token'
 const PENDING_SIGNUP_KEY = 'pk_pending_signup'
-const USER_KEY = 'pk_auth_user'
 
 interface PendingSignup {
   email: string
@@ -31,25 +30,6 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-const readCachedUser = async (): Promise<AuthUser | null> => {
-  try {
-    const value = await AsyncStorage.getItem(USER_KEY)
-    return value ? (JSON.parse(value) as AuthUser) : null
-  } catch {
-    await AsyncStorage.removeItem(USER_KEY)
-    return null
-  }
-}
-
-const persistUser = (user: AuthUser | null) => {
-  if (user) {
-    void AsyncStorage.setItem(USER_KEY, JSON.stringify(user))
-    return
-  }
-
-  void AsyncStorage.removeItem(USER_KEY)
-}
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
@@ -57,35 +37,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [signupToken, setSignupToken] = useState<string | null>(null)
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      setToken(null)
+      setUser(null)
+      void SecureStore.deleteItemAsync(TOKEN_KEY)
+    }
+
+    setUnauthorizedHandler(handleUnauthorized)
+    return () => setUnauthorizedHandler(null)
+  }, [])
+
+  useEffect(() => {
     const init = async () => {
       try {
         const stored = await SecureStore.getItemAsync(TOKEN_KEY)
         if (stored) {
           setToken(stored)
-          const cachedUser = await readCachedUser()
-          if (cachedUser) {
-            setUser(cachedUser)
-            setLoading(false)
-
-            const refreshCachedUser = async () => {
-              try {
-                const me = await mobileClient.getMe()
-                setUser(me)
-                persistUser(me)
-                if (!me) {
-                  await SecureStore.deleteItemAsync(TOKEN_KEY)
-                  setToken(null)
-                }
-              } catch {}
-            }
-
-            void refreshCachedUser()
-            return
-          }
-
           const me = await mobileClient.getMe()
           setUser(me)
-          persistUser(me)
+          if (!me) {
+            await SecureStore.deleteItemAsync(TOKEN_KEY)
+            setToken(null)
+          }
         }
         if (!stored) {
           const pendingRaw = await SecureStore.getItemAsync(PENDING_SIGNUP_KEY)
@@ -110,7 +83,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     const me = await mobileClient.getMe()
     setUser(me)
-    persistUser(me)
   }, [])
 
   const loginWithGoogle = useCallback(async (): Promise<void> => {
@@ -120,7 +92,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(result.access_token)
     const me = await mobileClient.getMe()
     setUser(me)
-    persistUser(me)
   }, [])
 
   const requestSignupCode = useCallback(async (email: string): Promise<void> => {
@@ -145,7 +116,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync(PENDING_SIGNUP_KEY)
     const me = await mobileClient.getMe()
     setUser(me)
-    persistUser(me)
     setSignupEmail(null)
     setSignupToken(null)
   }, [signupToken])
@@ -155,7 +125,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync(TOKEN_KEY)
     setToken(null)
     setUser(null)
-    persistUser(null)
   }, [])
 
   const deleteAccount = useCallback(async (): Promise<void> => {
@@ -164,13 +133,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await SecureStore.deleteItemAsync(TOKEN_KEY)
     setToken(null)
     setUser(null)
-    persistUser(null)
   }, [])
 
   const refreshUser = useCallback(async (): Promise<void> => {
     const me = await mobileClient.getMe()
     setUser(me)
-    persistUser(me)
   }, [])
 
   return (

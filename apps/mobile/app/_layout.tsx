@@ -3,7 +3,7 @@ import i18n from '../src/i18n'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
-import { Stack, useRouter, useSegments } from 'expo-router'
+import { Redirect, Stack, useRouter, useSegments } from 'expo-router'
 import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/native'
 import * as Sentry from '@sentry/react-native'
 import * as Notifications from 'expo-notifications'
@@ -35,7 +35,7 @@ import { TimerProvider } from '../src/context/TimerContext'
 import { HouseholdProvider } from '../src/context/HouseholdContext'
 import { ColorSchemeProvider, useAppLaunch } from '../src/context/ColorSchemeContext'
 import { CookingModeProvider } from '../src/context/CookingModeContext'
-import { mobileClient } from '../src/api/client'
+import { getToken, mobileClient } from '../src/api/client'
 import { configureGoogleSignin } from '../src/utils/googleAuth'
 import { createUuid } from '../src/utils/uuid'
 
@@ -133,7 +133,7 @@ function RootLayoutNav() {
     void register()
     return () => {
       active = false
-      if (installationId) void api.unregisterDevice(installationId)
+      if (installationId && getToken()) void api.unregisterDevice(installationId)
     }
   }, [api, user?.id])
 
@@ -193,22 +193,6 @@ function RootLayoutNav() {
     }
   }, [pushNotif, qc, router, t])
 
-  useEffect(() => {
-    if (loading) return
-    const inAuth = segments[0] === '(auth)'
-    const inVerify = segments.includes('verify')
-    const inCompleteProfile = segments.includes('complete-profile')
-    if (!user && signupToken && !inCompleteProfile) {
-      router.replace('/(auth)/complete-profile')
-    } else if (!user && signupEmail && !signupToken && !inVerify) {
-      router.replace('/(auth)/verify')
-    } else if (!user && !signupEmail && !signupToken && !inAuth) {
-      router.replace('/(auth)/login')
-    } else if (user && inAuth) {
-      router.replace('/(tabs)')
-    }
-  }, [user, loading, signupEmail, signupToken, segments])
-
   // Invalidate all cached queries when the app returns to the foreground so that data
   // saved externally (e.g. via the Share Extension) appears without a manual pull-to-refresh.
   useEffect(() => {
@@ -218,6 +202,30 @@ function RootLayoutNav() {
     })
     return () => subscription.remove()
   }, [loading, user, qc])
+
+  if (loading) {
+    return null
+  }
+
+  const inAuth = segments[0] === '(auth)'
+  const inVerify = segments.includes('verify')
+  const inCompleteProfile = segments.includes('complete-profile')
+
+  if (!user && signupToken && !inCompleteProfile) {
+    return <Redirect href="/(auth)/complete-profile" />
+  }
+
+  if (!user && signupEmail && !signupToken && !inVerify) {
+    return <Redirect href="/(auth)/verify" />
+  }
+
+  if (!user && !signupEmail && !signupToken && !inAuth) {
+    return <Redirect href="/(auth)/login" />
+  }
+
+  if (user && inAuth) {
+    return <Redirect href="/(tabs)" />
+  }
 
   return (
     <ThemeProvider value={navigationTheme}>
@@ -265,6 +273,32 @@ const styles = StyleSheet.create({
   },
 })
 
+const AuthenticatedApp = () => {
+  const { user, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <View style={styles.loadingOverlay}>
+        <ActivityIndicator size="large" />
+      </View>
+    )
+  }
+
+  return (
+    <NotificationHistoryProvider>
+      {user ? (
+        <TimerProvider>
+          <HouseholdProvider>
+            <RootLayoutNav />
+          </HouseholdProvider>
+        </TimerProvider>
+      ) : (
+        <RootLayoutNav />
+      )}
+    </NotificationHistoryProvider>
+  )
+}
+
 const RootLayout = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -282,15 +316,9 @@ const RootLayout = () => {
               <I18nextProvider i18n={i18n}>
                 <ApiClientProvider client={mobileClient}>
                   <AuthProvider>
-                    <NotificationHistoryProvider>
-                      <TimerProvider>
-                        <HouseholdProvider>
-                          <AppStartupGate>
-                            <RootLayoutNav />
-                          </AppStartupGate>
-                        </HouseholdProvider>
-                      </TimerProvider>
-                    </NotificationHistoryProvider>
+                    <AppStartupGate>
+                      <AuthenticatedApp />
+                    </AppStartupGate>
                   </AuthProvider>
                 </ApiClientProvider>
               </I18nextProvider>

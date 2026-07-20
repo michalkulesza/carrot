@@ -29,6 +29,8 @@ export interface ApiClientConfig {
    * (network/TLS/DNS failures) — wire this to Sentry or similar. The user only ever
    * sees the generic message thrown alongside it. */
   reportError?: (error: unknown, context: string) => void
+  onUnauthorized?: () => void
+  isAuthenticated?: () => boolean
 }
 
 const GENERIC_NETWORK_ERROR = 'Unable to connect to the server. Please check your connection and try again.'
@@ -41,6 +43,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     loginEndpoint = '/api/auth/cookie/login',
     logoutEndpoint = '/api/auth/cookie/logout',
     reportError,
+    onUnauthorized,
+    isAuthenticated,
   } = config
 
   const rawFetch = async (url: string, init: RequestInit, context: string): Promise<Response> => {
@@ -52,9 +56,9 @@ export const createApiClient = (config: ApiClientConfig) => {
     }
   }
 
-  const apiFetch = (path: string, init: RequestInit = {}): Promise<Response> => {
+  const apiFetch = async (path: string, init: RequestInit = {}): Promise<Response> => {
     const authHeaders = getAuthHeaders()
-    return rawFetch(
+    const response = await rawFetch(
       `${baseUrl}${path}`,
       {
         credentials,
@@ -63,6 +67,10 @@ export const createApiClient = (config: ApiClientConfig) => {
       },
       path
     )
+
+    if (response.status === 401) onUnauthorized?.()
+
+    return response
   }
 
   const throwOnError = async (res: Response, fallback: string): Promise<void> => {
@@ -516,7 +524,7 @@ export const createApiClient = (config: ApiClientConfig) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await fetch(`${baseUrl}${logoutEndpoint}`, { method: 'POST', credentials })
+      await apiFetch(logoutEndpoint, { method: 'POST' })
     } catch (err) {
       reportError?.(err, 'logout')
     }
@@ -656,6 +664,8 @@ export const createApiClient = (config: ApiClientConfig) => {
     action: 'start' | 'stop' | 'keepalive',
     itemId: string | null
   ): Promise<void> => {
+    if (isAuthenticated && !isAuthenticated()) return
+
     const res = await apiFetch('/api/shopping-list/presence', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

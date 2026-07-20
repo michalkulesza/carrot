@@ -18,6 +18,7 @@ import {
   completeSignup as apiCompleteSignup,
   type AuthUser,
 } from '../api/auth'
+import { setUnauthorizedHandler } from '../api/client'
 
 const syncSentryUser = (u: AuthUser | null) => {
   Sentry.setUser(u ? { id: u.id, email: u.email } : null)
@@ -61,6 +62,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
   const [signupEmail, setSignupEmail] = useState<string | null>(null)
   const [signupToken, setSignupToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null)
+      syncSentryUser(null)
+    }
+
+    setUnauthorizedHandler(handleUnauthorized)
+
+    return () => setUnauthorizedHandler(null)
+  }, [])
 
   useEffect(() => {
     getMe().then((u) => {
