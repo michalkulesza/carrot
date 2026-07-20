@@ -382,8 +382,8 @@ async def _process_embedding_job(recipe_id: uuid.UUID) -> None:
                     next_attempt_at=None,
                     last_error=None,
                     claimed_at=None,
-                )
-                .params(embedding=_vector_literal(vector))
+                ),
+                {"embedding": _vector_literal(vector)},
             )
             await session.commit()
             log.info("embedding_job_completed recipe_id=%s dimensions=%d", recipe_id, len(vector))

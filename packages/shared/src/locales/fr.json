@@ -56,7 +56,7 @@
     "sectionRecipes": "Recettes",
     "sectionIngredients": "Ingrédients",
     "sectionSuggested": "Suggestions",
-    "semanticSearchLoading": "Recherche de recettes similaires",
+    "semanticSearchLoading": "Recherche de recettes…",
     "servings_one": "{{count}} portion",
     "servings_other": "{{count}} portions",
     "noRecipesYet": "Aucune recette pour l'instant.",

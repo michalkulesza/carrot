@@ -19,7 +19,7 @@ const SearchResultItem = ({
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 w-full text-left hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-b-0"
+      className="flex items-center gap-3 px-4 py-3 w-full text-left cursor-pointer hover:bg-zinc-50 transition-colors border-b border-zinc-100 last:border-b-0"
     >
       {thumb ? (
         <NetworkImage

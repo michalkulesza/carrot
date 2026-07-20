@@ -7,6 +7,7 @@ interface SearchOverlayProps {
   titleMatches: RecipeOut[]
   ingredientMatches: IngredientMatch[]
   semanticMatches: RecipeOut[]
+  isSemanticLoading: boolean
   onSelectRecipe: (recipe: RecipeOut) => void
 }
 
@@ -14,6 +15,7 @@ const SearchOverlay = ({
   titleMatches,
   ingredientMatches,
   semanticMatches,
+  isSemanticLoading,
   onSelectRecipe,
 }: SearchOverlayProps) => {
   const { t } = useTranslation()
@@ -22,11 +24,11 @@ const SearchOverlay = ({
   return (
     <div className="absolute left-2 right-2 top-2 z-40 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
       <div className="max-h-[60vh] overflow-y-auto">
-        {!hasResults ? (
+        {!hasResults && !isSemanticLoading ? (
           <p className="px-4 py-8 text-sm text-zinc-400 text-center">
             {t('recipes.noResults')}
           </p>
-        ) : (
+        ) : hasResults ? (
           <>
             {titleMatches.length > 0 && (
               <>
@@ -74,6 +76,12 @@ const SearchOverlay = ({
               </>
             )}
           </>
+        ) : null}
+        {isSemanticLoading && (
+          <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-zinc-400" role="status">
+            <span className="h-4 w-4 rounded-full border-2 border-zinc-300 border-t-primary animate-spin" />
+            {t('recipes.semanticSearchLoading')}
+          </div>
         )}
       </div>
     </div>

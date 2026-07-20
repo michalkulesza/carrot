@@ -192,6 +192,7 @@ const RecipesPage = ({
             titleMatches={titleMatches}
             ingredientMatches={ingredientMatches}
             semanticMatches={semanticMatches}
+            isSemanticLoading={isSemanticLoading}
             onSelectRecipe={handleSelectSearchResult}
           />
         )}

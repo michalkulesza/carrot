@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 
+import api.users
 from api.services.embeddings import backfill_embeddings
 
 

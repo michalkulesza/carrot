@@ -150,6 +150,17 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  searchLoading: { alignItems: 'center', gap: 8, padding: 40 },
+  searchLoadingText: { color: colors.secondaryLabel, fontSize: 16, lineHeight: 21 },
+  semanticHeader: {
+    color: colors.secondaryLabel,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginHorizontal: 16,
+    marginTop: 20,
+    textTransform: 'uppercase',
+  },
   clearFilter: { fontSize: 16, color: colors.blue, fontWeight: '500' },
   favBtn: {
     width: 40,

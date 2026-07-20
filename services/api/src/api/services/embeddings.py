@@ -118,6 +118,8 @@ async def backfill_embeddings(batch_size: int = 100) -> int:
             .outerjoin(RecipeEmbedding)
             .where(or_(
                 RecipeEmbedding.recipe_id.is_(None),
+                RecipeEmbedding.embedding.is_(None),
+                RecipeEmbedding.status != EmbeddingStatus.SUCCEEDED,
                 RecipeEmbedding.model != settings.gemini_embedding_model,
                 RecipeEmbedding.dimensions != settings.gemini_embedding_dimensions,
                 RecipeEmbedding.document_version != settings.embedding_document_version,

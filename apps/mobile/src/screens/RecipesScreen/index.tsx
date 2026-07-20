@@ -65,7 +65,64 @@ import AddRecipeDrawer, { type AddRecipeDrawerHandle } from '../../components/Ad
 
 type RecipeListItem =
   | { type: 'import-job'; job: ImportJob }
+  | { type: 'semantic-header' }
   | { type: 'recipe'; recipe: RecipeOut }
+
+interface RecipeSearchFooterProps {
+  filterFavourites: boolean
+  hasSearchQuery: boolean
+  isSemanticLoading: boolean
+  recipeCount: number
+  selectedTagCount: number
+  onClearFilters: () => void
+}
+
+const RecipeSearchFooter = ({
+  filterFavourites,
+  hasSearchQuery,
+  isSemanticLoading,
+  recipeCount,
+  selectedTagCount,
+  onClearFilters,
+}: RecipeSearchFooterProps) => {
+  const { t } = useTranslation()
+
+  if (isSemanticLoading) {
+    return (
+      <View style={styles.searchLoading} accessibilityLiveRegion="polite">
+        <ActivityIndicator accessibilityLabel={t('recipes.semanticSearchLoading')} />
+        <Text style={styles.searchLoadingText}>{t('recipes.semanticSearchLoading')}</Text>
+      </View>
+    )
+  }
+
+  if (recipeCount > 0) return null
+
+  const emptyLabel = hasSearchQuery
+    ? t('recipes.noResults')
+    : filterFavourites
+    ? t('recipes.noFavourites')
+    : selectedTagCount > 0
+    ? t('recipes.noRecipesWithTag')
+    : t('recipes.noRecipesYet')
+  const canClearFilters = selectedTagCount > 0 || filterFavourites
+
+  return (
+    <View style={styles.empty}>
+      <Text style={styles.emptyText}>{emptyLabel}</Text>
+      {canClearFilters && (
+        <Pressable
+          onPress={onClearFilters}
+          style={({ pressed }) => [pressed && { opacity: 0.7 }]}
+          accessibilityLabel={t('recipes.clearFilter')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.clearFilter}>{t('recipes.clearFilter')}</Text>
+        </Pressable>
+      )}
+    </View>
+  )
+}
 
 const RecipesScreen = () => {
   const navigation = useNavigation()
@@ -118,7 +175,7 @@ const RecipesScreen = () => {
   const [filterFavourites, setFilterFavourites] = useState(false)
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
   const [sort, setSort] = useState<SortMode>('newest')
-  const { semanticRecipes } = useSemanticRecipeSearch(
+  const { semanticRecipes, isSemanticLoading } = useSemanticRecipeSearch(
     query,
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
   )
@@ -395,6 +452,7 @@ const RecipesScreen = () => {
     [importJobs],
   )
   const showImportJobs = !query.trim() && !filterFavourites && selectedTagIds.size === 0
+  const hasSearchQuery = query.trim().length > 0
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -434,11 +492,24 @@ const RecipesScreen = () => {
   // the cache update replaces the job item with its newly created recipe instead
   // of briefly displaying both in separate list sections.
   const recipeListItems = useMemo<RecipeListItem[]>(
-    () => [
-      ...(showImportJobs ? pendingJobs.map((job) => ({ type: 'import-job' as const, job })) : []),
-      ...filtered.map((recipe) => ({ type: 'recipe' as const, recipe })),
-    ],
-    [filtered, pendingJobs, showImportJobs],
+    () => {
+      const normalizedQuery = query.trim().toLowerCase()
+      const literalIds = new Set(
+        recipesWithOverrides
+          .filter((recipe) => normalizedQuery && recipe.title.toLowerCase().includes(normalizedQuery))
+          .map((recipe) => recipe.id),
+      )
+      const firstSemanticIndex = filtered.findIndex((recipe) => !literalIds.has(recipe.id))
+      const recipeItems = filtered.flatMap((recipe, index) => [
+        ...(index === firstSemanticIndex ? [{ type: 'semantic-header' as const }] : []),
+        { type: 'recipe' as const, recipe },
+      ])
+      return [
+        ...(showImportJobs ? pendingJobs.map((job) => ({ type: 'import-job' as const, job })) : []),
+        ...recipeItems,
+      ]
+    },
+    [filtered, pendingJobs, query, recipesWithOverrides, showImportJobs],
   )
 
   const toggleTagId = useCallback((tagId: string) => {
@@ -448,6 +519,11 @@ const RecipesScreen = () => {
       else next.add(tagId)
       return next
     })
+  }, [])
+
+  const handleClearFilters = useCallback(() => {
+    setSelectedTagIds(new Set())
+    setFilterFavourites(false)
   }, [])
 
   const handleToggleFavourite = useCallback(
@@ -670,6 +746,9 @@ const RecipesScreen = () => {
   const renderRecipeListItem = useCallback(
     ({ item }: ListRenderItemInfo<RecipeListItem>) => {
       if (item.type === 'recipe') return renderRecipe({ item: item.recipe })
+      if (item.type === 'semantic-header') {
+        return <Text style={styles.semanticHeader}>{t('recipes.sectionSuggested')}</Text>
+      }
 
       return (
         <PendingJobCard
@@ -680,7 +759,7 @@ const RecipesScreen = () => {
         />
       )
     },
-    [cancel, dismiss, renderRecipe, retry],
+    [cancel, dismiss, renderRecipe, retry, t],
   )
 
   const favChip = useMemo(
@@ -731,38 +810,29 @@ const RecipesScreen = () => {
       <MarqueeSyncProvider>
         <FlatList
           data={recipeListItems}
-          keyExtractor={(item) => item.type === 'recipe' ? item.recipe.id : `import-job-${item.job.id}`}
+          keyExtractor={(item) => {
+            if (item.type === 'recipe') return item.recipe.id
+            if (item.type === 'semantic-header') return 'semantic-header'
+            return `import-job-${item.job.id}`
+          }}
           renderItem={renderRecipeListItem}
           contentInsetAdjustmentBehavior="never"
           contentContainerStyle={{ paddingBottom: insets.bottom + 88 }}
           ListHeaderComponent={
             <View>
               <Reanimated.View style={topSpacerStyle} />
-              <NextMealCard enabled={dataQueriesEnabled} />
+              {!isSearching && <NextMealCard enabled={dataQueriesEnabled} />}
             </View>
           }
           ListFooterComponent={
-            filtered.length === 0 ? (
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>
-                  {filterFavourites
-                    ? t('recipes.noFavourites')
-                    : selectedTagIds.size > 0
-                    ? t('recipes.noRecipesWithTag')
-                    : t('recipes.noRecipesYet')}
-                </Text>
-                {(selectedTagIds.size > 0 || filterFavourites) && (
-                  <Pressable
-                    onPress={() => { setSelectedTagIds(new Set()); setFilterFavourites(false) }}
-                    style={({ pressed }) => [pressed && { opacity: 0.7 }]}
-                    accessibilityLabel={t('recipes.clearFilter')}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.clearFilter}>{t('recipes.clearFilter')}</Text>
-                  </Pressable>
-                )}
-              </View>
-            ) : null
+            <RecipeSearchFooter
+              filterFavourites={filterFavourites}
+              hasSearchQuery={hasSearchQuery}
+              isSemanticLoading={isSemanticLoading}
+              recipeCount={filtered.length}
+              selectedTagCount={selectedTagIds.size}
+              onClearFilters={handleClearFilters}
+            />
           }
         />
       </MarqueeSyncProvider>
