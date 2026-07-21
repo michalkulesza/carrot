@@ -6,10 +6,9 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 - [ ] **Visual recipe library / grid view** — Let users switch between the compact list and a photo-forward card or grid view with useful metadata such as tags, cooking time, and favourite status.
 
-- [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Multiple meals per day** — Support breakfast, lunch, dinner, and leftovers instead of a single recipe for each date.
+- [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Cook from what I have / pantry** — Track pantry staples, rank recipes by missing ingredients, and subtract pantry items from the shopping list.
-- [ ] **Calendar and reminder integration** — Send planned meals to the iOS Calendar and notify users when to start cooking or defrost ingredients.
 - [ ] **Personal-only recipe filter** — Add a filter to show only recipes in my personal library that don't belong to any household.
 -------------------------------------------------------------
 - [x] **When importing recipe send it to the background straight away** - inseatead of waiting at the skeleton screen, drop it in the bg, and show placeholder, redirect to recipe page
@@ -31,7 +30,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Experience and product polish
 
-- [ ] **Haptics and native context menus** — Add meaningful haptic feedback and long-press recipe actions (favourite, plan, share, delete) with a peek preview.
+- [ ] **Web recipe details looks not great** !!!!!!!
 - [ ] **Anythign to do with top position px that is a hook that takes a while to reload ie jump when importing via share**
 - [ ] **Delightful empty and loading states** — Extend shimmers to recipe lists and meal plans; add friendly empty states, restrained Carrot mascot moments, import-stage animation, haptics, and completion feedback.
 
@@ -46,16 +45,17 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Collapse only extra ingredient groups** — For recipes with groups beyond Main, collapse each additional group’s ingredients only; keep the recipe steps visible.
 - [x] **Simplify tags and allergens** — Removed all custom-tag/custom-allergen support (predefined-only now); the full predefined tag and allergen lists are always sent to Gemini during import, and matched allergens show as badges on the recipe, independent of the viewer's own allergen preferences.
 - [x] **Move add recipe to bottom drawer**
+- [x] **Haptics and native context menus** — Add meaningful haptic feedback and long-press recipe actions (favourite, plan, share, delete) with a peek preview.
 
 ## Quality, release, and growth
 
-- [ ] **Public sharing** — Create shareable public recipe pages.
 
 - [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
 -------------------------------------------------------------
 - [x] **Reduce extraction hallucinations (prompt/model tuning)** — Cheap first lever before a full validation pass: add an anti-fabrication clause to the extraction prompt, set `temperature=0`, and route the faithful-extraction call to `gemini-2.5-flash` (keeping shopping-list/unit-conversion on `flash-lite`). See `docs/specs/reduce-extraction-hallucinations.md`.
+- [x] **Public sharing** — Create shareable public recipe pages.
 
 ## Portfolio / showcase
 
