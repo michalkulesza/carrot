@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
 import * as ImagePicker from 'expo-image-picker'
+import * as Haptics from 'expo-haptics'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useApiClient } from '@carrot/shared/api/context'
 import { usePersonalRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useHousehold } from '../../context/HouseholdContext'
@@ -35,6 +37,7 @@ const SNAP_POINTS = ['65%']
 const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const { t } = useTranslation()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const api = useApiClient()
   const qc = useQueryClient()
   const { activeHouseholdId } = useHousehold()
@@ -83,11 +86,13 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   }, [])
 
   const handlePasteUrl = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     const text = await Clipboard.getStringAsync()
     if (text) setUrl(text.trim())
   }, [])
 
   const handlePasteText = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     const text = await Clipboard.getStringAsync()
     if (text) setPastedText((prev) => (prev ? prev + '\n' + text : text))
   }, [])
@@ -97,6 +102,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     setError(null)
     try {
       await enqueueImport(api, qc, kind, input)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sheetRef.current?.dismiss()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
@@ -105,12 +111,18 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     }
   }, [api, qc, t])
 
-  const handleImportUrl = useCallback(() => {
-    if (url.trim()) void runEnqueue('url', { url: url.trim() })
+  const handleImportUrl = useCallback(async () => {
+    if (url.trim()) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      await runEnqueue('url', { url: url.trim() })
+    }
   }, [runEnqueue, url])
 
-  const handleExtractText = useCallback(() => {
-    if (pastedText.trim()) void runEnqueue('text', { text: pastedText.trim() })
+  const handleExtractText = useCallback(async () => {
+    if (pastedText.trim()) {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      await runEnqueue('text', { text: pastedText.trim() })
+    }
   }, [runEnqueue, pastedText])
 
   const handleCameraPick = useCallback(async () => {
@@ -165,11 +177,13 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const handlePersonalRecipeSelect = useCallback(async (recipeId: string) => {
     if (!activeHouseholdId) return
 
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setLinkingRecipeId(recipeId)
     setError(null)
     try {
       await api.linkRecipeToHousehold(recipeId, activeHouseholdId)
       await qc.invalidateQueries({ queryKey: ['recipes'] })
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sheetRef.current?.dismiss()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('addRecipe.failedToAdd'))
@@ -178,12 +192,14 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     }
   }, [activeHouseholdId, api, qc, t])
 
-  const handleBackToPicker = useCallback(() => {
+  const handleBackToPicker = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSubview('picker')
     setError(null)
   }, [])
 
-  const handleOpenInBrowser = useCallback(() => {
+  const handleOpenInBrowser = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     sheetRef.current?.dismiss()
     router.push({ pathname: '/webview-import', params: { url: url.trim() } })
   }, [router, url])
@@ -232,6 +248,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       snapPoints={SNAP_POINTS}
       enableDynamicSizing={false}
       enablePanDownToClose
+      topInset={insets.top}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"

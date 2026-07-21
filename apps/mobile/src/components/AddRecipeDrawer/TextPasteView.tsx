@@ -1,7 +1,6 @@
 import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
 import PrimaryButton from '../PrimaryButton'
 import { styles } from './styles'
 
@@ -35,12 +34,11 @@ const TextPasteView = ({
           accessibilityLabel={t('addRecipe.methodText')}
         />
         <Pressable
-          style={({ pressed }) => [styles.textPasteInlineBtn, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [styles.pasteIconBtn, styles.textPasteInlineBtn, pressed && { opacity: 0.7 }]}
           onPress={onPaste}
           accessibilityLabel={t('addRecipe.paste')}
         >
-          <Feather name="clipboard" size={16} color={PlatformColor('systemBlue') as unknown as string} />
-          <Text style={styles.textPasteBtnText}>{t('addRecipe.paste')}</Text>
+          <Text style={styles.pasteIconBtnText}>{t('addRecipe.paste')}</Text>
         </Pressable>
       </View>
       <PrimaryButton

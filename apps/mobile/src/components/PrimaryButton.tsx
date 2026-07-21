@@ -1,5 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native'
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import GlassViewSafe, { glassAvailable } from './GlassViewSafe'
 import { colors } from '../theme/colors'
 
@@ -26,7 +27,10 @@ const PrimaryButton = ({
       disabled && styles.btnDisabled,
       pressed && !glassAvailable && { opacity: 0.7 },
     ]}
-    onPress={onPress}
+    onPress={() => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      onPress()
+    }}
     disabled={disabled}
     accessibilityLabel={accessibilityLabel}
   >

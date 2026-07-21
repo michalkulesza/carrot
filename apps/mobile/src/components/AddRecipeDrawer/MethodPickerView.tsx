@@ -2,6 +2,7 @@ import type { ComponentProps } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { colors } from '../../theme/colors'
 import type { AddRecipeMethod } from './helpers'
 import { styles } from './styles'
@@ -35,6 +36,11 @@ const MethodPickerView = ({
       ]
     : METHODS
 
+  const handleSelect = async (method: AddRecipeMethod) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    onSelect(method)
+  }
+
   return (
     <View style={styles.pickerWrap}>
       <View style={styles.pickerGroup}>
@@ -46,7 +52,7 @@ const MethodPickerView = ({
               mi < methods.length - 1 && styles.methodRowBorder,
               pressed && styles.methodRowPressed,
             ]}
-            onPress={() => onSelect(method.key)}
+            onPress={() => void handleSelect(method.key)}
             accessibilityLabel={t(method.titleKey)}
             accessibilityHint={t(method.descKey)}
           >

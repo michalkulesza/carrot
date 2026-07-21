@@ -30,6 +30,11 @@ const AddItemRow = ({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
   }, [text, onAdd])
 
+  const handleFocus = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    onFocusInput()
+  }, [onFocusInput])
+
   return (
     <Pressable style={styles.addRow} onPress={() => inputRef.current?.focus()}>
       <View style={styles.addIconWrap}>
@@ -40,7 +45,7 @@ const AddItemRow = ({
         style={styles.addInput}
         value={text}
         onChangeText={setText}
-        onFocus={onFocusInput}
+        onFocus={handleFocus}
         onBlur={onBlurInput}
         placeholder={t('shoppingList.addItemPlaceholder')}
         placeholderTextColor={colors.placeholderText}

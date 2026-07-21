@@ -130,23 +130,7 @@ export const styles = StyleSheet.create({
     maxHeight: 240,
     textAlignVertical: 'top',
   },
-  textPasteInlineBtn: {
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: PlatformColor('systemBackground') as unknown as string,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  textPasteBtnText: {
-    fontSize: 16,
-    color: PlatformColor('systemBlue') as unknown as string,
-    fontWeight: '500',
-  },
+  textPasteInlineBtn: { alignSelf: 'flex-end' },
 
   // Share tip card
   shareTipCard: {
@@ -170,10 +154,10 @@ export const styles = StyleSheet.create({
     height: 44,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: 999,
+    paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: PlatformColor('systemBackground') as unknown as string,
+    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
     color: PlatformColor('label') as unknown as string,
   },
   personalRecipeRow: {

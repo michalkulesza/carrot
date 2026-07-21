@@ -157,6 +157,7 @@ const MealPlanScreen = () => {
         { text: t('common.cancel'), style: 'cancel' },
       ])
     } else {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       setPickerDate(date)
       pickerRef.current?.present()
     }

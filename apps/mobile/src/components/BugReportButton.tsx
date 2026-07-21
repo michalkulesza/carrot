@@ -2,6 +2,7 @@ import { useCallback, useRef } from 'react'
 import { Pressable, StyleSheet } from 'react-native'
 import { useRouter, usePathname } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import { colors } from '../theme/colors'
 import { startBugReportScreenshot } from '../lib/bugReportScreenshot'
@@ -16,6 +17,7 @@ const BugReportButton = () => {
     if (isNavigatingRef.current) return
     isNavigatingRef.current = true
 
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     startBugReportScreenshot()
     router.push({ pathname: '/bug-report', params: { route: pathname } })
 

@@ -308,6 +308,7 @@ const RecipesScreen = () => {
       if (nativeEvent.event === MANAGE_TIP_MENU_ID) return
       const id = nativeEvent.event === PERSONAL_MENU_ID ? null : nativeEvent.event
       if (id !== activeHouseholdId) {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         setSwitchingHousehold(true)
         householdFetchStartedRef.current = false
         switchHousehold(id).catch(() => setSwitchingHousehold(false))
@@ -315,6 +316,10 @@ const RecipesScreen = () => {
     },
     [activeHouseholdId, switchHousehold],
   )
+
+  const handleHouseholdMenuOpen = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }, [])
 
   // switchHousehold only awaits the API call + user refresh — the recipes query
   // invalidation happens afterwards, asynchronously, in HouseholdContext. Keep the
@@ -336,7 +341,10 @@ const RecipesScreen = () => {
     (e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text),
     [],
   )
-  const handleSearchCancel = useCallback(() => setQuery(''), [])
+  const handleSearchCancel = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setQuery('')
+  }, [])
 
   // useHeaderHeight() only reports the search bar's expanded height once UIKit's own
   // reveal animation has already finished, so animating off of it lags a full cycle
@@ -376,6 +384,7 @@ const RecipesScreen = () => {
     // below triggers a re-render of the (possibly long) recipe list, and letting that run
     // first delays the shared-value mutation reaching the UI thread, which reads as the
     // tag bar fading late instead of immediately on tap.
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     tagBarVisibleSV.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) })
     animateHeaderHeight(true)
     setIsSearching(true)
@@ -404,6 +413,7 @@ const RecipesScreen = () => {
           title={t('nav.recipes')}
           householdMenuActions={householdMenuActions}
           onHouseholdAction={handleHouseholdAction}
+          onHouseholdMenuOpen={handleHouseholdMenuOpen}
           activeHousehold={activeHousehold}
           personalName={personalName}
           switchContextLabel={t('households.switchContext')}
@@ -425,6 +435,7 @@ const RecipesScreen = () => {
     handleFilterAction,
     householdMenuActions,
     handleHouseholdAction,
+    handleHouseholdMenuOpen,
     activeHousehold,
     isLoadingHouseholds,
     user,
@@ -524,6 +535,7 @@ const RecipesScreen = () => {
   }, [])
 
   const handleClearFilters = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setSelectedTagIds(new Set())
     setFilterFavourites(false)
   }, [])
@@ -621,7 +633,10 @@ const RecipesScreen = () => {
       return (
         <Pressable
           key={item.id}
-          onPress={() => toggleTagId(item.id)}
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            toggleTagId(item.id)
+          }}
           style={({ pressed }) => [styles.chip, isSelected && styles.chipActive, pressed && { opacity: 0.7 }]}
           accessibilityLabel={item.name}
           accessibilityRole="button"
@@ -767,7 +782,10 @@ const RecipesScreen = () => {
   const favChip = useMemo(
     () => (
       <Pressable
-        onPress={() => setFilterFavourites((v) => !v)}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          setFilterFavourites((v) => !v)
+        }}
         style={({ pressed }) => [styles.favChip, filterFavourites && styles.chipActive, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t('recipes.filterFavourites')}
         accessibilityRole="button"

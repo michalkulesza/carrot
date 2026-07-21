@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import * as Haptics from 'expo-haptics'
 import { ALLERGEN_KEYS, INTOLERANCE_KEYS } from '@carrot/shared/utils/allergenKeys'
 import CheckboxIcon from '../../components/CheckboxIcon'
 import { iKey } from './helpers'
@@ -34,7 +35,10 @@ const AccordionGroup = ({
     <View style={styles.accordionBlock}>
       <Pressable
         style={({ pressed }) => [styles.accordionHeader, pressed && { opacity: 0.7 }]}
-        onPress={() => onToggleExpand(isExpanded ? null : sectionKey)}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onToggleExpand(isExpanded ? null : sectionKey)
+        }}
         accessibilityLabel={label}
         accessibilityRole="button"
         accessibilityState={{ expanded: isExpanded }}
@@ -52,7 +56,10 @@ const AccordionGroup = ({
               <Pressable
                 key={key}
                 style={({ pressed }) => [styles.checkRow, pressed && { opacity: 0.7 }]}
-                onPress={() => onToggleKey(key)}
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+                  onToggleKey(key)
+                }}
                 accessibilityLabel={t(`${namespace}.${k}`)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isSelected }}

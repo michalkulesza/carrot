@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import * as Haptics from 'expo-haptics'
 import PrimaryButton from '../../components/PrimaryButton'
 import { styles } from './styles'
 
@@ -20,7 +21,10 @@ const ActionBar = ({
     <View style={[styles.actionBar, { paddingBottom: Math.max(bottomInset, 16) }]}>
       <Pressable
         style={({ pressed }) => [styles.secondaryBtn, styles.flex, pressed && { opacity: 0.7 }]}
-        onPress={onDiscard}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onDiscard()
+        }}
         disabled={saving}
         accessibilityLabel={t('addRecipe.discard')}
       >

@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react'
 import { Pressable, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import BellMenu from '../../components/BellMenu'
@@ -15,7 +16,10 @@ const MealPlanHeaderRight = ({ exporting, onExportPdf }: { exporting: boolean; o
   return (
     <View style={styles.headerRight}>
       <Pressable
-        onPress={onExportPdf}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onExportPdf()
+        }}
         disabled={exporting}
         hitSlop={8}
         style={({ pressed }) => [styles.exportBtn, pressed && { opacity: 0.7 }]}

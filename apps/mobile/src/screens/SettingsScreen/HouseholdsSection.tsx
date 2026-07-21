@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import * as Haptics from 'expo-haptics'
 import type { HouseholdOut } from '@carrot/shared/types'
 import { styles } from './styles'
 
@@ -38,7 +39,10 @@ const HouseholdsSection = ({
             </View>
             <Pressable
               style={({ pressed }) => [styles.manageBtn, pressed && { opacity: 0.7 }]}
-              onPress={() => onManage(h)}
+              onPress={() => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                onManage(h)
+              }}
               accessibilityLabel={t('settings.manage')}
               accessibilityRole="button"
             >
@@ -49,7 +53,10 @@ const HouseholdsSection = ({
       )}
       <Pressable
         style={({ pressed }) => [styles.newHouseholdRow, pressed && { opacity: 0.7 }]}
-        onPress={onCreateHousehold}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onCreateHousehold()
+        }}
         accessibilityLabel={t('settings.newHousehold')}
         accessibilityRole="button"
       >

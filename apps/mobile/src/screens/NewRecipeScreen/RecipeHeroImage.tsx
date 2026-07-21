@@ -1,6 +1,7 @@
 import { ActivityIndicator, PlatformColor, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import NetworkImage from '../../components/NetworkImage'
 import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { styles } from './styles'
@@ -21,6 +22,10 @@ const RecipeHeroImage = ({
   onPickImage: () => void
 }) => {
   const { t } = useTranslation()
+  const handlePickImage = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    onPickImage()
+  }
 
   if (thumbnailUrl) {
     return (
@@ -33,7 +38,7 @@ const RecipeHeroImage = ({
         {editing && (
           <Pressable
             style={({ pressed }) => [styles.previewHeroEditBtn, pressed && { opacity: 0.7 }]}
-            onPress={onPickImage}
+            onPress={handlePickImage}
             disabled={uploadingThumb}
             accessibilityLabel={t('common.changePhoto')}
           >
@@ -55,7 +60,7 @@ const RecipeHeroImage = ({
     return (
       <Pressable
         style={({ pressed }) => [styles.previewHeroImage, styles.previewHeroPlaceholder, pressed && { opacity: 0.7 }]}
-        onPress={onPickImage}
+        onPress={handlePickImage}
         disabled={uploadingThumb}
         accessibilityLabel={t('common.addPhoto')}
       >

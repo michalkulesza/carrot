@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -21,6 +20,7 @@ import { colors } from '../src/theme/colors'
 import { useAuth } from '../src/context/AuthContext'
 import { useHousehold } from '../src/context/HouseholdContext'
 import { takeBugReportScreenshot } from '../src/lib/bugReportScreenshot'
+import PrimaryButton from '../src/components/PrimaryButton'
 
 const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
@@ -145,23 +145,13 @@ const BugReportScreen = () => {
             <Text style={styles.screenshotNote}>{t('bugReport.screenshotNote')}</Text>
           )}
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              !canSubmit && styles.buttonDisabled,
-              pressed && canSubmit && { opacity: 0.7 },
-            ]}
+          <PrimaryButton
             onPress={handleSubmit}
             disabled={!canSubmit}
+            loading={submitting}
+            label={t('bugReport.submit')}
             accessibilityLabel={t('bugReport.submit')}
-            accessibilityRole="button"
-          >
-            {submitting ? (
-              <ActivityIndicator color={colors.background} />
-            ) : (
-              <Text style={styles.buttonText}>{t('bugReport.submit')}</Text>
-            )}
-          </Pressable>
+          />
         </View>
       </KeyboardAvoidingView>
     </>
@@ -199,9 +189,6 @@ const styles = StyleSheet.create({
     color: colors.secondaryLabel,
     marginBottom: 20,
   },
-  button: { borderRadius: 8, paddingVertical: 14, alignItems: 'center', backgroundColor: colors.blue },
-  buttonDisabled: { backgroundColor: colors.gray4 },
-  buttonText: { color: colors.background, fontSize: 16, fontWeight: '600' },
 })
 
 export default BugReportScreen

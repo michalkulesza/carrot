@@ -4,6 +4,7 @@ import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { Feather } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { useRouter, usePathname } from 'expo-router'
 import type { InvitationOut, HouseholdLeaveNotificationOut } from '@carrot/shared/types'
 import { colors } from '../theme/colors'
@@ -134,6 +135,11 @@ const BellMenu = () => {
   const handleAction = useCallback(
     async ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       const id = nativeEvent.event
+      if (id === 'clear-history') {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      } else {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      }
       // Split "namespace-action-payload" → key = "namespace-action", payload = rest
       const sep = id.indexOf('-', id.indexOf('-') + 1)
       const key = sep === -1 ? id : id.slice(0, sep)
@@ -202,7 +208,12 @@ const BellMenu = () => {
   )
 
   return (
-    <MenuView title={t('bell.notifications')} actions={actions} onPressAction={handleAction}>
+    <MenuView
+      title={t('bell.notifications')}
+      actions={actions}
+      onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+      onPressAction={handleAction}
+    >
       <View style={styles.bellBtn}>
         <Feather name="bell" size={22} color={colors.secondaryLabel} />
         {totalCount > 0 && (

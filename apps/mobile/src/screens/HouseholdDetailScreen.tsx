@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import * as Haptics from 'expo-haptics'
 import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { useMembers } from '@carrot/shared/hooks/useMembers'
 import type { MemberOut } from '@carrot/shared/types'
@@ -104,9 +105,11 @@ const HouseholdDetailScreen = () => {
   const [inviting, setInviting] = useState(false)
 
   const handleSave = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setSaving(true)
     try {
       await update.mutateAsync({ id: householdId, data: { name: name.trim() || undefined, color } })
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch (e) {
       Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
     } finally {
@@ -130,10 +133,12 @@ const HouseholdDetailScreen = () => {
   const handleInvite = useCallback(async () => {
     const email = inviteEmail.trim()
     if (!email) return
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setInviting(true)
     try {
       await invite.mutateAsync({ householdId, email })
       setInviteEmail('')
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       Alert.alert(t('common.ok'), t('settings.invitationSent'))
     } catch (e) {
       Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.invitationFailed'))
@@ -145,6 +150,7 @@ const HouseholdDetailScreen = () => {
   const handleLeaveOnPress = useCallback(async () => {
     try {
       await leave.mutateAsync(householdId)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       if (user?.active_household_id === householdId) {
         await refreshUser()
       }
@@ -155,6 +161,7 @@ const HouseholdDetailScreen = () => {
   }, [householdId, leave, user, refreshUser, router, t])
 
   const handleLeave = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     Alert.alert(t('settings.leaveHousehold'), t('settings.areYouSure'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -206,7 +213,10 @@ const HouseholdDetailScreen = () => {
         {PRESET_COLORS.map((c) => (
           <Pressable
             key={c}
-            onPress={() => setColor(c)}
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+              setColor(c)
+            }}
             style={getPressableStyle(c)}
             accessibilityLabel={c}
             accessibilityRole="radio"

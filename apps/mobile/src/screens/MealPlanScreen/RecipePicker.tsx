@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState
 import { ListRenderItemInfo, PlatformColor, Pressable, Text, View } from 'react-native'
 import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { Ionicons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RecipeOut } from '@carrot/shared/types'
@@ -64,6 +65,7 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
   }, [onClose])
 
   const handleRemovePress = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setPlainText('')
     setSearch('')
     onRemove()
@@ -73,6 +75,7 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
     const text = plainText.trim()
     if (!text) return
 
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setPlainText('')
     onAddText(text)
   }, [onAddText, plainText])
@@ -105,6 +108,7 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
       const thumbUri = proxyThumbnailUrl(item.thumbnail_url)
       const isActive = item.id === currentRecipeId
       const handlePress = () => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         setSearch('')
         onPick(item.id)
       }

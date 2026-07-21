@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
+import * as Haptics from 'expo-haptics'
 import type { Tag, TagCategory } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import { colors } from '../../theme/colors'
@@ -39,12 +40,20 @@ const CategoryFilterChip = ({
   )
 
   const handlePressAction = useCallback(
-    ({ nativeEvent }: NativeActionEvent) => onToggle(nativeEvent.event),
+    ({ nativeEvent }: NativeActionEvent) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+      onToggle(nativeEvent.event)
+    },
     [onToggle],
   )
 
   return (
-    <MenuView title={t(`tags.category.${category}`)} actions={actions} onPressAction={handlePressAction}>
+    <MenuView
+      title={t(`tags.category.${category}`)}
+      actions={actions}
+      onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+      onPressAction={handlePressAction}
+    >
       <Pressable
         style={({ pressed }) => [styles.chip, isActive && styles.chipActive, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t(`tags.category.${category}`)}

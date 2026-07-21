@@ -1,6 +1,7 @@
 import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { MenuView } from '@react-native-menu/menu'
+import * as Haptics from 'expo-haptics'
 import type { UserPreferences } from '@carrot/shared/types'
 import type { AppearanceMode } from '../../context/ColorSchemeContext'
 import { APPEARANCE_OPTIONS, LANGUAGES } from './helpers'
@@ -58,7 +59,10 @@ const PreferencesSection = ({
           </View>
           <Switch
             value={preferences?.unit_system !== 'imperial'}
-            onValueChange={onUnitSystemToggle}
+            onValueChange={(isMetric) => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+              onUnitSystemToggle(isMetric)
+            }}
             accessibilityLabel={t('settings.useMetricSystem')}
           />
         </View>
@@ -67,7 +71,10 @@ const PreferencesSection = ({
       <View style={styles.card}>
         <Pressable
           style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={onLanguagePicker}
+          onPress={() => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            onLanguagePicker()
+          }}
           accessibilityLabel={t('settings.language')}
           accessibilityRole="button"
         >
@@ -82,7 +89,11 @@ const PreferencesSection = ({
       <View style={styles.card}>
         <MenuView
           title={t('settings.appearance')}
-          onPressAction={onAppearanceChange}
+          onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+          onPressAction={(event) => {
+            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+            onAppearanceChange(event)
+          }}
           actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
             id: value,
             title: t(labelKey),
