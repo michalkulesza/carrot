@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database import get_async_session
 from api.models import (
     PublicRecipeOut,
+    PublicRecipeLibraryAddRequest,
     PublicTagOut,
+    HouseholdMember,
     Recipe,
     RecipeOut,
     RecipePublicShare,
@@ -55,6 +57,7 @@ async def get_public_recipe(token: str, session: AsyncSession = Depends(get_asyn
 @router.post("/{token}/add-to-library", response_model=RecipeOut)
 async def add_public_recipe_to_library(
     token: str,
+    body: PublicRecipeLibraryAddRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> RecipeOut:
@@ -68,8 +71,16 @@ async def add_public_recipe_to_library(
         if recipe is not None:
             return _build_recipe_out(recipe, user.id)
 
+    if body.household_id is not None:
+        membership = await session.scalar(select(HouseholdMember).where(
+            HouseholdMember.household_id == body.household_id,
+            HouseholdMember.user_id == user.id,
+        ))
+        if membership is None:
+            raise HTTPException(status_code=403, detail="Not a member of that household")
+
     recipe = Recipe(
-        user_id=user.id, household_id=None, shared_to_personal=True, title=source.title,
+        user_id=user.id, household_id=body.household_id, shared_to_personal=True, title=source.title,
         servings=source.servings, total_time_minutes=source.total_time_minutes,
         kcal_per_serving=source.kcal_per_serving, protein_per_serving=source.protein_per_serving,
         fat_per_serving=source.fat_per_serving, carbs_per_serving=source.carbs_per_serving,

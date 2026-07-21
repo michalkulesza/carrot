@@ -20,13 +20,13 @@ const ServingStepper = ({
   return (
     <div className="flex min-h-11 items-center justify-between">
       <span className="text-sm text-zinc-700">{t('recipes.serves')}</span>
-      <div className="flex items-center rounded-[10px] bg-zinc-100">
+      <div className="flex items-center overflow-hidden rounded-[10px] bg-zinc-100">
         <button
           type="button"
           onClick={onDecrease}
           disabled={!canDecrease}
           aria-label={t('recipes.decreaseServings')}
-          className="flex h-11 w-11 items-center justify-center text-primary transition-colors hover:bg-zinc-200 disabled:text-zinc-300 disabled:hover:bg-transparent"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center text-primary transition-colors hover:bg-zinc-200 disabled:cursor-default disabled:text-zinc-300 disabled:hover:bg-transparent"
         >
           <Minus size={20} aria-hidden="true" />
         </button>
@@ -43,7 +43,7 @@ const ServingStepper = ({
           onClick={onIncrease}
           disabled={!canIncrease}
           aria-label={t('recipes.increaseServings')}
-          className="flex h-11 w-11 items-center justify-center text-primary transition-colors hover:bg-zinc-200 disabled:text-zinc-300 disabled:hover:bg-transparent"
+          className="flex h-11 w-11 cursor-pointer items-center justify-center text-primary transition-colors hover:bg-zinc-200 disabled:cursor-default disabled:text-zinc-300 disabled:hover:bg-transparent"
         >
           <Plus size={20} aria-hidden="true" />
         </button>

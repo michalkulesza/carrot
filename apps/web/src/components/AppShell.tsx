@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plus } from 'react-feather'
-import { Routes, Route, useNavigate } from 'react-router-dom'
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
@@ -23,12 +23,30 @@ import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { RecipeOut, UserPreferences } from '@carrot/shared/types'
 import PublicRecipePage from '../pages/PublicRecipePage'
+import { useHousehold } from '../context/HouseholdContext'
+
+const PublicRecipeOverlay = ({ onAdded }: { onAdded: (recipe: RecipeOut) => Promise<void> }) => {
+  const { households, activeHouseholdId } = useHousehold()
+  const navigate = useNavigate()
+  useEffect(() => {
+    console.log('[PublicShare] authenticated recipe overlay mounted')
+  }, [])
+
+  return <PublicRecipePage
+    signedIn
+    households={households}
+    activeHouseholdId={activeHouseholdId}
+    onAdded={onAdded}
+    onClose={() => navigate('/')}
+  />
+}
 
 const AppShell = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const qc = useQueryClient()
   const handlePublicRecipeAdded = useCallback(async (recipe: RecipeOut) => {
     await qc.invalidateQueries({ queryKey: ['recipes'] })
@@ -101,6 +119,18 @@ const AppShell = () => {
   }, [navigate])
 
   const closeAddRecipe = useCallback(() => setModalOpen(false), [])
+  const showingPublicRecipe = location.pathname.startsWith('/r/')
+  const recipesPage = (
+    <RecipesPage
+      recipes={recipes}
+      loading={recipesLoading}
+      allTags={allTags}
+      onRecipeUpdated={handleRecipeUpdated}
+      onRecipeDeleted={handleRecipeDeleted}
+      preferences={preferences}
+      importJobs={importJobs}
+    />
+  )
 
   return (
     <NotificationHistoryProvider>
@@ -108,22 +138,13 @@ const AppShell = () => {
         <HouseholdProvider>
           <div className="min-h-screen bg-background md:bg-zinc-100">
               <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
-                <Sidebar />
+                <Sidebar hideNextMeal={location.pathname.startsWith('/r/')} />
                 <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
-                  <Routes>
-                    <Route path="/r/:token" element={<PublicRecipePage signedIn onAdded={handlePublicRecipeAdded} />} />
+                  {showingPublicRecipe ? <>{recipesPage}<PublicRecipeOverlay onAdded={handlePublicRecipeAdded} /></> : <Routes>
                     <Route
                       path="/"
                       element={
-                        <RecipesPage
-                          recipes={recipes}
-                          loading={recipesLoading}
-                          allTags={allTags}
-                          onRecipeUpdated={handleRecipeUpdated}
-                          onRecipeDeleted={handleRecipeDeleted}
-                          preferences={preferences}
-                          importJobs={importJobs}
-                        />
+                        recipesPage
                       }
                     />
                     <Route
@@ -150,7 +171,7 @@ const AppShell = () => {
                         />
                       }
                     />
-                  </Routes>
+                  </Routes>}
                 </div>
               </div>
 

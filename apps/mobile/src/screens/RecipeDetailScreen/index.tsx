@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Share, Text, View } from "react-native";
+import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Share, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,11 +20,26 @@ import {
   useRecipeDetailHeader,
   SEND_TO_HOUSEHOLD_PREFIX,
   SEND_TO_PERSONAL,
-  SHARE_PUBLICLY,
 } from "./useRecipeDetailHeader";
 import EditView from "./EditView";
 import ReadView from "./ReadView";
 import CookMode from "./CookMode";
+import { createMobilePublicShare } from '../../api/client'
+
+const showPublicShareSheet = async (title: string, url: string): Promise<void> => {
+  if (Platform.OS !== 'ios') {
+    await Share.share({ title, url, message: url });
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    ActionSheetIOS.showShareActionSheetWithOptions(
+      { subject: title, url },
+      reject,
+      () => resolve(),
+    );
+  });
+}
 
 const RecipeDetailScreen = () => {
   const { id: recipeId, edit: autoEditParam } = useLocalSearchParams<{
@@ -107,24 +122,30 @@ const RecipeDetailScreen = () => {
     void Haptics.selectionAsync();
   }, [selectedServings, setServings]);
 
+  const handleSharePublicly = useCallback(async () => {
+    if (!recipe || publicSharePendingRef.current) return;
+    publicSharePendingRef.current = true;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      const share = await createMobilePublicShare(recipe.id);
+
+      await showPublicShareSheet(recipe.title, share.url);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(t('common.ok'), error instanceof Error ? error.message : t('publicShare.createError'));
+    } finally {
+      publicSharePendingRef.current = false;
+    }
+  }, [recipe, t]);
+
+  const startPublicShare = useCallback(() => {
+    void handleSharePublicly();
+  }, [handleSharePublicly]);
+
   const handlePressRecipeAction = useCallback(
-    async ({ nativeEvent }: { nativeEvent: { event: string } }) => {
+    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       if (!recipe) return;
-      if (nativeEvent.event === SHARE_PUBLICLY) {
-        if (publicSharePendingRef.current) return;
-        publicSharePendingRef.current = true;
-        try {
-          const share = await api.createPublicShare(recipe.id);
-          await Share.share({ title: recipe.title, url: share.url, message: share.url });
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        } catch (error) {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert(t('common.ok'), error instanceof Error ? error.message : t('publicShare.createError'));
-        } finally {
-          publicSharePendingRef.current = false;
-        }
-        return;
-      }
       if (nativeEvent.event === SEND_TO_PERSONAL) {
         linkToPersonal.mutate(recipe.id, {
           onSuccess: () =>
@@ -153,7 +174,7 @@ const RecipeDetailScreen = () => {
         },
       );
     },
-    [api, recipe, linkToHousehold, linkToPersonal, t],
+    [recipe, linkToHousehold, linkToPersonal, t],
   );
 
   const handleAddIngredient = useCallback((key: string, text: string) => {
@@ -193,6 +214,7 @@ const RecipeDetailScreen = () => {
     handleOpenMealPlanSheet,
     households,
     handlePressRecipeAction,
+    handleSharePublicly: startPublicShare,
   });
 
   if (isLoading) {

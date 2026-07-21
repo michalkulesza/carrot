@@ -32,6 +32,7 @@ interface ViewComponentProps {
   collapsible?: boolean
   showIngredients?: boolean
   showGroupHeader?: boolean
+  readOnly?: boolean
 }
 
 const TEXT_SIZE_CLASSES = [
@@ -63,6 +64,7 @@ const ViewComponent = ({
   collapsible = false,
   showIngredients = true,
   showGroupHeader = true,
+  readOnly = false,
 }: ViewComponentProps) => {
   const { t } = useTranslation()
   const [ingredientsExpanded, setIngredientsExpanded] = useState(!collapsible)

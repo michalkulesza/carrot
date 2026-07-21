@@ -42,6 +42,7 @@ interface RecipeHeroSectionProps {
   onToggleFavourite: () => void
   onEdit: () => void
   onDelete: () => void
+  readOnly?: boolean
 }
 
 const RecipeHeroSection = ({
@@ -63,6 +64,7 @@ const RecipeHeroSection = ({
   onToggleFavourite,
   onEdit,
   onDelete,
+  readOnly = false,
 }: RecipeHeroSectionProps) => {
   const { t } = useTranslation()
   const r = recipe
@@ -112,12 +114,12 @@ const RecipeHeroSection = ({
         onRemove={onTagRemove}
         onCreateTag={onTagCreate}
         editable={mode === 'editing'}
-        addable
+        addable={!readOnly}
       />
     </div>
   )
 
-  const toolbar = mode === 'view' && (
+  const toolbar = !readOnly && mode === 'view' && (
     <div className="absolute top-3 right-3 flex gap-1 z-10">
       <button
         type="button"
@@ -218,9 +220,9 @@ const RecipeHeroSection = ({
         </button>
       )}
 
-      <div className={`px-10 pb-1 ${proxied ? 'pt-5' : 'pt-14'}`}>
+      <div className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pb-1 ${proxied ? 'pt-5' : 'pt-14'}`}>
         <div className="flex items-start gap-2">
-          {mode === 'view' && (
+          {!readOnly && mode === 'view' && (
             <button
               type="button"
               onClick={onToggleFavourite}

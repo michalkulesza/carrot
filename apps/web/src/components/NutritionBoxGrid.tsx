@@ -5,6 +5,7 @@ export interface NutritionBoxGridItem {
   value: string
   accessibilityLabel: string
   showDisclaimer?: boolean
+  blurred?: boolean
 }
 
 interface NutritionBoxGridProps {
@@ -66,7 +67,7 @@ const NutritionBoxDisplay = ({ item, onToggle }: NutritionBoxDisplayProps) => {
       aria-label={item.accessibilityLabel}
       className="w-full flex flex-col items-center justify-center rounded-[10px] bg-zinc-100 px-2 py-2 min-w-0 hover:bg-zinc-200 transition-colors"
     >
-      <span className="text-base font-semibold text-zinc-900">
+      <span className={`text-base font-semibold text-zinc-900 ${item.blurred ? 'blur-[4px] select-none' : ''}`}>
         {displayValue}
       </span>
       <span className="mt-1 text-xs text-zinc-500 truncate max-w-full">

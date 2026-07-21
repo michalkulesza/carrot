@@ -1,5 +1,5 @@
 import { type FormEvent, useCallback, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
@@ -33,6 +33,10 @@ const LoginPage = () => {
   const { login, loginWithGoogle } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const nextPath = searchParams.get('next')?.startsWith('/r/')
+    ? searchParams.get('next')!
+    : '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -52,7 +56,7 @@ const LoginPage = () => {
 
       try {
         await login(email, password)
-        navigate('/', { replace: true })
+        navigate(nextPath, { replace: true })
       } catch (err) {
         const fallbackMessage =
           err instanceof Error ? err.message : t('auth.loginFailed')
@@ -66,7 +70,7 @@ const LoginPage = () => {
         signInInProgressRef.current = false
       }
     },
-    [email, password, login, navigate, t]
+    [email, password, login, navigate, nextPath, t]
   )
 
   const handleGoogleCredential = useCallback(
@@ -79,7 +83,7 @@ const LoginPage = () => {
 
       try {
         await loginWithGoogle(idToken)
-        navigate('/', { replace: true })
+        navigate(nextPath, { replace: true })
       } catch {
         setError(t('auth.googleSignInError'))
       } finally {
@@ -87,7 +91,7 @@ const LoginPage = () => {
         signInInProgressRef.current = false
       }
     },
-    [loginWithGoogle, navigate, t]
+    [loginWithGoogle, navigate, nextPath, t]
   )
 
   const handleGoogleError = useCallback(() => {

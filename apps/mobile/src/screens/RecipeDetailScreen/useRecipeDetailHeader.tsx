@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather, Ionicons } from '@expo/vector-icons'
@@ -46,6 +46,7 @@ const ViewHeaderRight = ({
   onOpenMealPlanSheet,
   households,
   onPressRecipeAction,
+  onSharePublicly,
   onEdit,
 }: {
   addMode: boolean
@@ -55,9 +56,11 @@ const ViewHeaderRight = ({
   onOpenMealPlanSheet: () => void
   households: HouseholdOut[]
   onPressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
+  onSharePublicly: () => void
   onEdit: () => void
 }) => {
   const { t } = useTranslation()
+  const publicShareSelectedRef = useRef(false)
   const recipeActions = useMemo<MenuAction[]>(
     () => {
       const publicAction: MenuAction = { id: SHARE_PUBLICLY, title: t('publicShare.sharePublicly') }
@@ -90,6 +93,20 @@ const ViewHeaderRight = ({
     },
     [activeHouseholdId, households, recipe.household_id, recipe.shared_to_personal, t],
   )
+  const handleMenuAction = useCallback(({ nativeEvent }: { nativeEvent: { event: string } }) => {
+    if (nativeEvent.event === SHARE_PUBLICLY) {
+      publicShareSelectedRef.current = true
+      return
+    }
+    onPressRecipeAction({ nativeEvent })
+  }, [onPressRecipeAction])
+
+  const handleMenuClose = useCallback(() => {
+    if (!publicShareSelectedRef.current) return
+    publicShareSelectedRef.current = false
+    setTimeout(onSharePublicly, 0)
+  }, [onSharePublicly])
+
   return (
     <View style={styles.headerBtns}>
       <Pressable
@@ -110,7 +127,12 @@ const ViewHeaderRight = ({
         <Feather name="calendar" size={20} color={colors.secondaryLabel} />
       </Pressable>
       {recipeActions.length > 0 && (
-        <MenuView title={t('recipes.recipeActions')} actions={recipeActions} onPressAction={onPressRecipeAction}>
+        <MenuView
+          title={t('recipes.recipeActions')}
+          actions={recipeActions}
+          onPressAction={handleMenuAction}
+          onCloseMenu={handleMenuClose}
+        >
           <Pressable
             style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
             accessibilityLabel={t('recipes.recipeActions')}
@@ -146,6 +168,7 @@ export const useRecipeDetailHeader = ({
   handleOpenMealPlanSheet,
   households,
   handlePressRecipeAction,
+  handleSharePublicly,
 }: {
   navigation: RecipeDetailNavigation
   editing: boolean
@@ -158,6 +181,7 @@ export const useRecipeDetailHeader = ({
   handleOpenMealPlanSheet: () => void
   households: HouseholdOut[]
   handlePressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
+  handleSharePublicly: () => void
 }) => {
   useLayoutEffect(() => {
     if (editing) {
@@ -185,6 +209,7 @@ export const useRecipeDetailHeader = ({
             onOpenMealPlanSheet={handleOpenMealPlanSheet}
             households={households}
             onPressRecipeAction={handlePressRecipeAction}
+            onSharePublicly={handleSharePublicly}
             onEdit={handleEdit}
           />
         ),

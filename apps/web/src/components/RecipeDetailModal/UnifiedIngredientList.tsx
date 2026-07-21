@@ -37,6 +37,7 @@ const UnifiedIngredientList = ({
   onAddIngredient,
   onAddAllIngredients,
   fontSizeIndex,
+  readOnly = false,
 }: {
   components: SaveComponent[]
   unitSystem: string
@@ -51,6 +52,7 @@ const UnifiedIngredientList = ({
   onAddIngredient: (componentIndex: number, ingredientIndex: number) => void
   onAddAllIngredients: () => void
   fontSizeIndex: number
+  readOnly?: boolean
 }) => {
   const { t } = useTranslation()
   const ingredients = useMemo<UnifiedIngredient[]>(
@@ -131,7 +133,7 @@ const UnifiedIngredientList = ({
                     t
                   )}
                 </span>
-                {flag && (
+                {!readOnly && flag && (
                   <AllergenPopover
                     flag={flag}
                     activeAllergens={activeAllergens}

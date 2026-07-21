@@ -175,7 +175,10 @@ const ShoppingListScreen = () => {
         cancelButtonIndex: 1,
       },
       (idx) => {
-        if (idx === 0) clearCompleted.mutate()
+        if (idx === 0) {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+          clearCompleted.mutate()
+        }
       }
     )
   }, [clearCompleted, t])
@@ -200,6 +203,7 @@ const ShoppingListScreen = () => {
       setEditingId(item.id)
       setEditingText(item.text)
       setEditing(item.id)
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
     },
     [setEditing]
   )
@@ -209,6 +213,7 @@ const ShoppingListScreen = () => {
       const text = editingText.trim()
       if (text && text !== originalText) {
         editText.mutate({ id, text })
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       }
       setEditingId(null)
       setEditingText('')
@@ -300,7 +305,10 @@ const ShoppingListScreen = () => {
                 </View>
               ) : (
                 <Pressable
-                  onLongPress={drag}
+                  onLongPress={() => {
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                    drag()
+                  }}
                   disabled={isActive}
                   hitSlop={8}
                   style={styles.dragHandle}

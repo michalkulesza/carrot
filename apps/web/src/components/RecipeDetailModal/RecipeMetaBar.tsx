@@ -1,4 +1,5 @@
 import { PlayCircle, Type } from 'react-feather'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import HouseholdAvatarIndicators from '../HouseholdAvatarIndicators'
@@ -36,6 +37,9 @@ interface RecipeMetaBarProps {
   onDecreaseServings: () => void
   onIncreaseServings: () => void
   onOpenCookMode: () => void
+  readOnly?: boolean
+  primaryAction?: { label: string; onClick: () => void; disabled: boolean }
+  primaryActionContent?: ReactNode
 }
 
 const TEXT_SIZES = [14, 16, 17, 20, 22] as const
@@ -67,6 +71,9 @@ const RecipeMetaBar = ({
   onDecreaseServings,
   onIncreaseServings,
   onOpenCookMode,
+  readOnly = false,
+  primaryAction,
+  primaryActionContent,
 }: RecipeMetaBarProps) => {
   const { t } = useTranslation()
   const r = recipe
@@ -97,18 +104,21 @@ const RecipeMetaBar = ({
       label: t('recipes.protein'),
       value: editing
         ? draft.protein
-        : (r.protein_per_serving?.toString() ?? ''),
+        : (r.protein_per_serving === null ? '' : `${r.protein_per_serving}${readOnly ? 'g' : ''}`),
       accessibilityLabel: t('recipes.proteinPerServing'),
+      blurred: readOnly,
     },
     {
       label: t('recipes.fat'),
-      value: editing ? draft.fat : (r.fat_per_serving?.toString() ?? ''),
+      value: editing ? draft.fat : (r.fat_per_serving === null ? '' : `${r.fat_per_serving}${readOnly ? 'g' : ''}`),
       accessibilityLabel: t('recipes.fatPerServing'),
+      blurred: readOnly,
     },
     {
       label: t('recipes.carbs'),
-      value: editing ? draft.carbs : (r.carbs_per_serving?.toString() ?? ''),
+      value: editing ? draft.carbs : (r.carbs_per_serving === null ? '' : `${r.carbs_per_serving}${readOnly ? 'g' : ''}`),
       accessibilityLabel: t('recipes.carbsPerServing'),
+      blurred: readOnly,
     },
   ]
   const visibleNutritionItems = editing
@@ -120,7 +130,7 @@ const RecipeMetaBar = ({
   }
 
   return (
-    <div className={`px-10 pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}>
+    <div className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}>
       <NutritionBoxGrid
         editing={editing}
         items={visibleNutritionItems}
@@ -134,9 +144,14 @@ const RecipeMetaBar = ({
           onIncrease={onIncreaseServings}
         />
       )}
-      <HouseholdAvatarIndicators recipe={r} />
+      {!readOnly && <HouseholdAvatarIndicators recipe={r} />}
 
-      {mode === 'view' && (
+      {primaryActionContent ?? (primaryAction && mode === 'view' && (
+        <button type="button" onClick={primaryAction.onClick} disabled={primaryAction.disabled} className="my-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 disabled:cursor-default disabled:opacity-60">
+          {primaryAction.label}
+        </button>
+      ))}
+      {!readOnly && mode === 'view' && (
         <div className="border-y border-zinc-200 divide-y divide-zinc-200">
           {'wakeLock' in navigator && (
             <div className="flex items-center justify-between py-2.5">
@@ -176,7 +191,7 @@ const RecipeMetaBar = ({
           </label>
         </div>
       )}
-      {mode === 'view' && (
+      {!readOnly && mode === 'view' && (
         <button
           type="button"
           onClick={onOpenCookMode}

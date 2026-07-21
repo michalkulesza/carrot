@@ -483,6 +483,10 @@ class PublicRecipeOut(BaseModel):
     tags: list[PublicTagOut] = []
 
 
+class PublicRecipeLibraryAddRequest(BaseModel):
+    household_id: uuid.UUID | None = None
+
+
 class RecipePublicShareOut(BaseModel):
     url: str
     expires_at: datetime

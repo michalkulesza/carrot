@@ -113,7 +113,7 @@ const StepText = ({
   }
   if (pos < step.length) nodes.push(step.slice(pos))
 
-  return <span className="flex-1">{nodes}</span>
+  return <span className="flex-1 text-zinc-900">{nodes}</span>
 }
 
 export default StepText

@@ -105,7 +105,11 @@ export const createApiClient = (config: ApiClientConfig) => {
   }
 
   const createPublicShare = async (id: string): Promise<RecipePublicShare> => {
-    const res = await apiFetch(`/api/recipes/${id}/public-share`, { method: 'POST' })
+    const res = await apiFetch(`/api/recipes/${id}/public-share`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    })
     await throwOnError(res, 'Failed to create public share link')
     return res.json() as Promise<RecipePublicShare>
   }
@@ -116,8 +120,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<PublicRecipeOut>
   }
 
-  const addPublicRecipeToLibrary = async (token: string): Promise<RecipeOut> => {
-    const res = await apiFetch(`/api/public/recipes/${encodeURIComponent(token)}/add-to-library`, { method: 'POST' })
+  const addPublicRecipeToLibrary = async (token: string, householdId?: string | null): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/public/recipes/${encodeURIComponent(token)}/add-to-library`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ household_id: householdId ?? null }),
+    })
     await throwOnError(res, 'Failed to add recipe to library')
     return res.json() as Promise<RecipeOut>
   }
