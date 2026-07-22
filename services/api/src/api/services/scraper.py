@@ -21,6 +21,7 @@ class ReelMetadata:
     description: str
     thumbnail_url: str | None
     creator_handle: str | None
+    video_url: str | None
     linked_urls: list[str] = field(default_factory=list)
 
 
@@ -51,6 +52,7 @@ class ScrapeCreatorsClient:
             description = data.get("desc", "") or ""
             thumbnail_url = data.get("cover", data.get("dynamicCover"))
             creator_handle = (data.get("author") or {}).get("uniqueId")
+            video_url = data.get("video_url") or data.get("play") or (data.get("video") or {}).get("playAddr")
             canonical_url = url
         else:
             # Instagram response: data.data.xdt_shortcode_media
@@ -59,6 +61,7 @@ class ScrapeCreatorsClient:
             description = edges[0]["node"]["text"] if edges else ""
             thumbnail_url = media.get("thumbnail_src") or media.get("display_url")
             creator_handle = (media.get("owner") or {}).get("username")
+            video_url = media.get("video_url") or data.get("video_url")
             canonical_url = url
 
         linked_urls = _URL_RE.findall(description)
@@ -68,25 +71,9 @@ class ScrapeCreatorsClient:
             description=description,
             thumbnail_url=thumbnail_url,
             creator_handle=creator_handle,
+            video_url=video_url if isinstance(video_url, str) else None,
             linked_urls=linked_urls,
         )
-
-    async def fetch_transcript(self, url: str) -> str:
-        platform = self._platform(url)
-        endpoint = (
-            f"{_BASE}/v1/tiktok/video/transcript" if platform == "tiktok"
-            else f"{_BASE}/v2/instagram/media/transcript"
-        )
-        async with httpx.AsyncClient(timeout=60) as client:
-            r = await client.get(endpoint, headers=self._headers, params={"url": url})
-            r.raise_for_status()
-            data = r.json()
-
-        # transcripts is an array; join all segments
-        transcripts = data.get("transcripts") or []
-        if transcripts:
-            return " ".join(t.get("text") or "" for t in transcripts).strip()
-        return data.get("text", "")
 
 
 scraper = ScrapeCreatorsClient()

@@ -114,6 +114,27 @@ async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None
 
 
 @pytest.mark.asyncio
+async def test_audio_transcription_uses_flash_and_faithful_prompt(monkeypatch) -> None:
+    response = SimpleNamespace(text="Dodaj dwie łyżki oliwy.")
+    generate_content = Mock(return_value=response)
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    transcript = await gemini.transcribe_audio(b"mp3-audio")
+
+    call = generate_content.call_args
+    audio_part, request = call.kwargs["contents"]
+    assert transcript == "Dodaj dwie łyżki oliwy."
+    assert call.kwargs["model"] == "gemini-2.5-flash"
+    assert audio_part.inline_data.mime_type == "audio/mpeg"
+    assert audio_part.inline_data.data == b"mp3-audio"
+    assert request == "Transcribe the spoken audio in this file."
+    assert call.kwargs["config"].temperature == 0
+    assert "[inaudible]" in call.kwargs["config"].system_instruction
+    assert "never translate" in call.kwargs["config"].system_instruction
+
+
+@pytest.mark.asyncio
 async def test_shopping_list_values_stay_on_flash_lite_by_default(monkeypatch) -> None:
     generate_content = Mock(return_value=_response({"values": ["1 onion"]}))
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))

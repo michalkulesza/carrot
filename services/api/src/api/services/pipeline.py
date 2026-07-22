@@ -20,6 +20,7 @@ from api.services import cache as cache_svc
 from api.services import gemini as gemini_svc
 from api.services.monitoring import report_recipe_import_failure
 from api.services.scraper import ReelMetadata, scraper
+from api.services.transcription import transcribe_video
 
 log = logging.getLogger(__name__)
 
@@ -501,29 +502,30 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
             log.warning("Link stage failed for %s: %s", link, exc)
 
     # Stage 3 — transcript
-    yield _stage_event("fetching_transcript", "Fetching video transcript…")
-    try:
-        transcript = await scraper.fetch_transcript(url)
-        if transcript.strip():
-            yield _stage_event("analyzing_transcript", "Analyzing transcript with Gemini…")
-            result_out_tr: list = []
-            async for _ev in _run_gemini(
-                gemini_svc.extract_recipe(
-                    transcript, source_hint="video transcript", model=model,
-                    available_tags=available_tags,
-                    usage=usage,
-                ),
-                result_out_tr,
-            ):
-                yield _ev
-            result = result_out_tr[0]
-            log.debug("Transcript extraction result: title=%r components=%d", result.title, len(result.components))
-            if _is_complete(result):
-                r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
-                yield _done_event(await _with_allergens(r, allergens, usage), cache_key=url)
-                return
-    except Exception as exc:
-        log.warning("Transcription stage failed: %s", exc)
+    if metadata.video_url:
+        yield _stage_event("fetching_transcript", "Transcribing video audio…")
+        try:
+            transcript = await transcribe_video(metadata.video_url, usage=usage)
+            if transcript.strip():
+                yield _stage_event("analyzing_transcript", "Analyzing transcript with Gemini…")
+                result_out_tr: list = []
+                async for _ev in _run_gemini(
+                    gemini_svc.extract_recipe(
+                        transcript, source_hint="video transcript", model=model,
+                        available_tags=available_tags,
+                        usage=usage,
+                    ),
+                    result_out_tr,
+                ):
+                    yield _ev
+                result = result_out_tr[0]
+                log.debug("Transcript extraction result: title=%r components=%d", result.title, len(result.components))
+                if _is_complete(result):
+                    r = ImportResult(stage=ImportStage.TRANSCRIPT, recipe=result, metadata=meta)
+                    yield _done_event(await _with_allergens(r, allergens, usage), cache_key=url)
+                    return
+        except Exception as exc:
+            log.warning("Transcription stage failed: %s", exc)
 
     report_recipe_import_failure(
         input_kind="url", source_url=url, reason="no_complete_recipe_extracted",
@@ -618,5 +620,3 @@ async def run_image_import_stream(
             stage=ImportStage.FAILED, metadata=meta,
             error=f"Gemini image extraction failed: {exc}",
         ))
-
-

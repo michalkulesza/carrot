@@ -24,6 +24,7 @@ from api.models import (
 log = logging.getLogger(__name__)
 
 _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
+_TRANSCRIPTION_MODEL = "gemini-2.5-flash"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
 _T = TypeVar("_T")
@@ -100,6 +101,22 @@ ingredient text in name with null qty and unit. Leave enrichment fields empty.
 Keep ingredient punctuation faithful: write preparation or alternatives after a
 comma directly (for example, "garlic, minced"), never inside an invented
 parenthetical such as "garlic (, minced)".
+"""
+
+_TRANSCRIPTION_SYSTEM = """\
+You are a precise audio transcription system. Transcribe only the spoken audio
+you can hear. Detect the language automatically; it may be Polish, Spanish,
+German, French, English, or a mixture. Return the transcript in the original
+spoken language and never translate, summarize, explain, or format it as a
+recipe.
+
+Preserve every spoken ingredient, amount, unit, temperature, duration, and
+correction exactly, including code-switching. Use normal punctuation and
+paragraph breaks to make the speech readable. Omit non-speech sounds and
+meaningless filler words, but never omit meaningful speech. If a word or phrase
+cannot be understood, write [inaudible] rather than guessing. Do not use the
+video title, caption, visual content, or general cooking knowledge to fill in
+anything that is not audible.
 """
 
 _UNIT_CONVERSION_SYSTEM = """\
@@ -195,6 +212,29 @@ Return exactly as many entries as there are input ingredients, in the same order
 
 def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
+
+
+async def transcribe_audio(audio_data: bytes, usage: UsageTracker | None = None) -> str:
+    client = _build_client()
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=_TRANSCRIPTION_MODEL,
+            contents=[
+                types.Part.from_bytes(data=audio_data, mime_type="audio/mpeg"),
+                "Transcribe the spoken audio in this file.",
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=_TRANSCRIPTION_SYSTEM,
+                temperature=0,
+            ),
+        ),
+    )
+    if usage is not None:
+        usage.add(response)
+    transcript = (response.text or "").strip()
+    if not transcript:
+        raise RuntimeError("Gemini returned an empty transcript")
+    return transcript
 
 
 def _source_ingredient_display(ingredient) -> str:
