@@ -1,9 +1,8 @@
 import { useCallback, type RefObject } from 'react'
-import { Pressable, StyleSheet } from 'react-native'
+import { Pressable } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import GlassViewSafe from '../../components/GlassViewSafe'
 import type { AddRecipeDrawerHandle } from '../../components/AddRecipeDrawer'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
@@ -38,12 +37,7 @@ const FloatingAddButton = ({
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
     >
-      <GlassViewSafe
-        style={StyleSheet.absoluteFill}
-        glassEffectStyle="clear"
-        tintColor={colors.orangeGlass}
-      />
-      <Feather name="plus" size={24} color={colors.brandText} />
+      <Feather name="plus" size={24} color="#fff" />
     </Pressable>
   )
 }
