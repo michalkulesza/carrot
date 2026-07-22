@@ -578,6 +578,69 @@ async def test_incomplete_text_import_is_reported_to_sentry(monkeypatch) -> None
 
 
 @pytest.mark.asyncio
+async def test_incomplete_url_import_requires_manual_completion(monkeypatch) -> None:
+    extraction = RecipeExtraction.model_validate(_enrichment_payload())
+
+    async def fake_fetch_html(*args, **kwargs):
+        return "<html><head><title>Ingredients only</title></head><body>1 onion</body></html>"
+
+    async def fake_extract_recipe(*args, **kwargs):
+        return extraction
+
+    monkeypatch.setattr(pipeline, "_fetch_html", fake_fetch_html)
+    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
+
+    events = [
+        event async for event in pipeline.run_import_stream("https://example.com/ingredients-only")
+    ]
+
+    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
+
+
+@pytest.mark.asyncio
+async def test_incomplete_social_import_requires_manual_completion(monkeypatch) -> None:
+    metadata = pipeline.ReelMetadata(
+        source_url="https://www.instagram.com/p/ingredients-only",
+        canonical_url="https://www.instagram.com/p/ingredients-only",
+        thumbnail_url=None,
+        creator_handle="example",
+        description="Ingredients: 1 onion",
+        linked_urls=[],
+        video_url=None,
+    )
+    extraction = RecipeExtraction.model_validate(_enrichment_payload())
+
+    async def fake_fetch_reel(*args, **kwargs):
+        return metadata
+
+    async def fake_extract_recipe(*args, **kwargs):
+        return extraction
+
+    monkeypatch.setattr(pipeline.scraper, "fetch_reel", fake_fetch_reel)
+    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
+
+    events = [
+        event async for event in pipeline.run_import_stream("https://www.instagram.com/p/ingredients-only")
+    ]
+
+    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
+
+
+@pytest.mark.asyncio
+async def test_unavailable_social_metadata_requires_manual_completion(monkeypatch) -> None:
+    async def fake_fetch_reel(*args, **kwargs):
+        raise RuntimeError("Scraper unavailable")
+
+    monkeypatch.setattr(pipeline.scraper, "fetch_reel", fake_fetch_reel)
+
+    events = [
+        event async for event in pipeline.run_import_stream("https://www.instagram.com/p/ingredients-only")
+    ]
+
+    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
+
+
+@pytest.mark.asyncio
 async def test_import_without_allergens_makes_one_extraction_call_and_no_allergen_call(monkeypatch) -> None:
     extraction = RecipeExtraction.model_validate(_enrichment_payload(components=[{
         "role": "main",

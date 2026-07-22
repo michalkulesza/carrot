@@ -20,7 +20,7 @@ from api.models import (
 from api.services import cache as cache_svc
 from api.services import gemini as gemini_svc
 from api.services.monitoring import report_recipe_import_failure
-from api.services.scraper import ReelMetadata, ScrapeCreatorsHttpError, scraper
+from api.services.scraper import ReelMetadata, scraper
 from api.services.transcription import transcribe_video
 
 log = logging.getLogger(__name__)
@@ -430,7 +430,10 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
                 yield _done_event(ImportResult(
                     stage=ImportStage.FAILED,
                     metadata=meta,
-                    error=IMPORT_ERROR_CODE,
+                    # The page was reachable, but its recipe is incomplete
+                    # (for example, ingredients without instructions). Let
+                    # the user finish the recipe manually from the source.
+                    error=USER_ACTION_REQUIRED_ERROR_CODE,
                 ))
         except Exception as exc:
             log.warning("Gemini extraction failed for %s: %s", url, exc)
@@ -450,20 +453,18 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
         metadata: ReelMetadata = await scraper.fetch_reel(url)
     except Exception as exc:
         log.warning("Could not fetch reel %s: %s", url, exc)
-        requires_manual_action = (
-            isinstance(exc, ScrapeCreatorsHttpError)
-            and exc.response.status_code == 403
-        )
         report_recipe_import_failure(
             input_kind="url",
             source_url=url,
-            reason="scrapecreators_post_forbidden" if requires_manual_action else "could_not_fetch_social_metadata",
+            reason="could_not_fetch_social_metadata",
             error=exc,
         )
         yield _done_event(ImportResult(
             stage=ImportStage.FAILED,
             metadata=ImportMetadata(source_url=url),
-            error=USER_ACTION_REQUIRED_ERROR_CODE if requires_manual_action else IMPORT_ERROR_CODE,
+            # Social posts can still be completed manually, even when the
+            # scraper cannot retrieve their metadata.
+            error=USER_ACTION_REQUIRED_ERROR_CODE,
         ))
         return
 
@@ -549,7 +550,10 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
     yield _done_event(ImportResult(
         stage=ImportStage.FAILED,
         metadata=meta,
-        error=USER_ACTION_REQUIRED_ERROR_CODE if requires_manual_action else IMPORT_ERROR_CODE,
+        # The available social content did not contain a complete recipe. This
+        # includes image posts and captions with ingredients but no steps, so
+        # direct the user to finish the recipe manually.
+        error=USER_ACTION_REQUIRED_ERROR_CODE,
     ))
 
 
