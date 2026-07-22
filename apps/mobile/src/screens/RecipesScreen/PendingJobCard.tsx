@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Alert, Image, PlatformColor, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
@@ -28,6 +28,7 @@ const PendingJobCard = ({
   const { t } = useTranslation()
   const [actionPending, setActionPending] = useState(false)
   const actionInProgress = useRef(false)
+  const sourceUrlOpening = useRef(false)
   const retryScheduled = job.status === 'pending' && job.retry_count > 0
   const importingMemberName = job.created_by_name ?? t('importJobs.someone')
   const imagePreview = getImportImagePreview(job.id)
@@ -57,21 +58,49 @@ const PendingJobCard = ({
   const handleCancel = () => void handleAction(onCancel)
   const handleDismiss = () => void handleAction(onDismiss)
   const requiresUserAction = job.status === 'failed' && job.failure_code === 'user_action_required'
+  const canOpenSourceUrl = Boolean(job.source_url)
   const handleUserAction = () => {
     Alert.alert(t('importJobs.userActionRequired.title'), t('importJobs.userActionRequired.body'), [
-      { text: t('common.remove'), style: 'destructive', onPress: handleDismiss },
-      { text: t('importJobs.userActionRequired.continue'), onPress: onContinueManually },
+      { text: t('importJobs.dismiss'), style: 'destructive', onPress: handleDismiss },
+      {
+        text: t('importJobs.userActionRequired.continue'),
+        onPress: () => {
+          onContinueManually()
+          handleDismiss()
+        },
+      },
+    ])
+  }
+  const handleOpenSourceUrl = async () => {
+    if (!job.source_url || sourceUrlOpening.current) return
+
+    sourceUrlOpening.current = true
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    try {
+      await Linking.openURL(job.source_url)
+    } catch {
+      Alert.alert(t('common.whoops'), t('common.somethingWentWrong'))
+    } finally {
+      sourceUrlOpening.current = false
+    }
+  }
+  const handleSourceUrlMenu = () => {
+    if (!job.source_url) return
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    Alert.alert(job.source_url, undefined, [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('importJobs.openLink'), onPress: () => void handleOpenSourceUrl() },
     ])
   }
 
-  useEffect(() => () => clearImportImagePreview(job.id), [job.id])
-
-  return (
-    <View style={[styles.pendingCard, requiresUserAction && styles.pendingCardActionRequired]}>
+  const cardContent = (
+    <>
       <View style={styles.pendingImageWrap}>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.pendingImage} />}
         {job.status === 'failed' ? (
-          <Feather name="alert-circle" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
+          <View style={styles.pendingFailureOverlay}>
+            <Feather name="alert-circle" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
+          </View>
         ) : (
           <View style={styles.pendingSpinnerOverlay}>
             <ActivityIndicator size="small" color={colors.tertiaryLabel} />
@@ -101,6 +130,26 @@ const PendingJobCard = ({
           <Avatar name={importingMemberName} size={18} />
         </View>
       </View>
+    </>
+  )
+
+  useEffect(() => () => clearImportImagePreview(job.id), [job.id])
+
+  return (
+    <View style={[styles.pendingCard, requiresUserAction && styles.pendingCardActionRequired]}>
+      {canOpenSourceUrl ? (
+        <Pressable
+          style={styles.pendingContent}
+          onLongPress={handleSourceUrlMenu}
+          delayLongPress={500}
+          accessibilityRole="button"
+          accessibilityLabel={job.source_url ?? ''}
+        >
+          {cardContent}
+        </Pressable>
+      ) : (
+        <View style={styles.pendingContent}>{cardContent}</View>
+      )}
       {requiresUserAction ? (
         <View style={styles.pendingCancelWrap}>
           <Pressable style={styles.pendingIconAction} onPress={handleUserAction} accessibilityLabel={t('importJobs.userActionRequired.continue')}>

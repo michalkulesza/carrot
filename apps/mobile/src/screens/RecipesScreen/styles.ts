@@ -196,6 +196,7 @@ export const styles = StyleSheet.create({
     opacity: 0.85,
   },
   pendingCardActionRequired: { backgroundColor: colors.brandLight, opacity: 1 },
+  pendingContent: { flex: 1, flexDirection: 'row', minWidth: 0 },
   pendingImageWrap: {
     width: 100,
     height: 100,
@@ -207,6 +208,11 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pendingImage: { width: '100%', height: '100%' },
+  pendingFailureOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pendingSpinnerOverlay: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',

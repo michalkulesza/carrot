@@ -13,7 +13,7 @@ import { useApiClient } from '@carrot/shared/api/context'
 import { usePersonalRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useHousehold } from '../../context/HouseholdContext'
 import { enqueueImport } from '../../utils/enqueueImport'
-import type { AddRecipeMethod, AddRecipeSubview } from './helpers'
+import { normalizeHttpUrl, type AddRecipeMethod, type AddRecipeSubview } from './helpers'
 import MethodPickerView from './MethodPickerView'
 import QuickUrlInputRow from './QuickUrlInputRow'
 import TextPasteView from './TextPasteView'
@@ -34,15 +34,6 @@ const SUBVIEW_TITLE_KEY: Record<Exclude<AddRecipeSubview, 'picker'>, string> = {
 // Fixed rather than dynamic so every subview renders at the same height instead of the
 // sheet resizing as the user switches between the picker, text-paste, and library views.
 const SNAP_POINTS = ['65%']
-
-const isValidHttpUrl = (value: string) => {
-  try {
-    const parsed = new URL(value)
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
-  } catch {
-    return false
-  }
-}
 
 const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const { t } = useTranslation()
@@ -128,9 +119,10 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   }, [api, qc, t])
 
   const handleImportUrl = useCallback(async () => {
-    if (isValidHttpUrl(url.trim())) {
+    const normalizedUrl = normalizeHttpUrl(url)
+    if (normalizedUrl) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      await runEnqueue('url', { url: url.trim() })
+      await runEnqueue('url', { url: normalizedUrl })
     }
   }, [runEnqueue, url])
 
@@ -278,7 +270,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 onPaste={handlePasteUrl}
                 onImport={handleImportUrl}
                 loading={loading}
-                canImport={isValidHttpUrl(url.trim())}
+                canImport={normalizeHttpUrl(url) !== null}
               />
               <MethodPickerView
                 showPersonalLibrary={activeHouseholdId !== null}
