@@ -34,6 +34,8 @@
     "uploadFailed": "Nie udało się przesłać zdjęcia. Spróbuj ponownie.",
     "invalidImageUrl": "Nieprawidłowy URL. Podaj prawidłowy adres https://.",
     "somethingWentWrong": "Coś poszło nie tak",
+    "whoops": "Ups",
+    "deviceOffline": "Twoje urządzenie jest offline. Sprawdź połączenie i spróbuj ponownie.",
     "tryAgain": "Spróbuj ponownie",
     "search": "Szukaj",
     "remove": "Usuń"
@@ -524,15 +526,21 @@
   "importJobs": {
     "queued": "Import przepisu dodany do kolejki",
     "pending": "Import rozpocznie się wkrótce",
-    "running": "Wyodrębnianie przepisu…",
+    "running": "Importowanie przepisu…",
     "takingLonger": "To trwa dłużej niż zwykle…",
     "retry": "Spróbuj ponownie",
     "cancel": "Anuluj",
     "dismiss": "Odrzuć",
     "enqueueFailed": "Nie udało się rozpocząć importu. Spróbuj ponownie.",
     "someone": "Ktoś",
+    "userActionRequired": {
+      "title": "Przepis wymaga Twojej pomocy",
+      "body": "Automatyczne pobranie przepisu nie było możliwe. Skopiuj tekst przepisu ze źródła, a następnie wklej go do importu tekstu.",
+      "continue": "Kontynuuj"
+    },
     "failure": {
-      "extraction_failed": "Nie udało się wyodrębnić przepisu.",
+      "extraction_failed": "Import przepisu nie powiódł się",
+      "user_action_required": "Przepis wymaga Twojej pomocy",
       "invalid_input": "Ten format importu nie jest obsługiwany.",
       "household_access_changed": "Nie masz już dostępu do tego gospodarstwa.",
       "retries_exhausted": "Import nie zakończył się po kilku próbach.",

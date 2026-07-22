@@ -10,12 +10,14 @@ const QuickUrlInputRow = ({
   onPaste,
   onImport,
   loading,
+  canImport,
 }: {
   url: string
   onUrlChange: (v: string) => void
   onPaste: () => void
   onImport: () => void
   loading: boolean
+  canImport: boolean
 }) => {
   const { t } = useTranslation()
 
@@ -47,7 +49,7 @@ const QuickUrlInputRow = ({
       </View>
       <PrimaryButton
         onPress={onImport}
-        disabled={!url.trim() || loading}
+        disabled={!canImport || loading}
         loading={loading}
         label={t('addRecipe.import')}
         accessibilityLabel={t('addRecipe.import')}

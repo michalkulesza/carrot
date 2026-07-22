@@ -35,10 +35,12 @@ def _scope_filter(model, user_id: uuid.UUID, household_id: uuid.UUID | None):
 
 
 def _job_out(job: ImportJob, creator_name: str | None) -> ImportJobOut:
+    source_url = job.input.get("url") if job.kind == "url" else None
     return ImportJobOut(
         id=job.id,
         status=job.status,
         kind=job.kind,
+        source_url=source_url,
         household_id=job.household_id,
         created_by_user_id=job.user_id,
         created_by_name=creator_name,

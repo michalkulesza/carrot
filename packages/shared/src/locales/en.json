@@ -34,6 +34,8 @@
     "uploadFailed": "Couldn't upload the photo. Please try again.",
     "invalidImageUrl": "Invalid URL. Please enter a valid https:// address.",
     "somethingWentWrong": "Something went wrong",
+    "whoops": "Whoops",
+    "deviceOffline": "Your device appears to be offline. Please check your connection and try again.",
     "tryAgain": "Try again",
     "search": "Search",
     "remove": "Remove"
@@ -499,15 +501,21 @@
   "importJobs": {
     "queued": "Recipe import queued",
     "pending": "Import will start soon",
-    "running": "Extracting recipe…",
+    "running": "Importing a recipe…",
     "takingLonger": "Taking longer than usual…",
     "retry": "Retry",
     "cancel": "Cancel",
     "dismiss": "Dismiss",
     "enqueueFailed": "Could not start the import. Please try again.",
     "someone": "Someone",
+    "userActionRequired": {
+      "title": "Recipe needs your input",
+      "body": "Automatic recipe extraction wasn't possible. Copy the recipe text from the source, then paste it into Text Import.",
+      "continue": "Continue"
+    },
     "failure": {
-      "extraction_failed": "We couldn't extract a recipe from this import.",
+      "extraction_failed": "Recipe import failed",
+      "user_action_required": "Recipe needs your input",
       "invalid_input": "This import input isn't supported.",
       "household_access_changed": "You no longer have access to this household.",
       "retries_exhausted": "The import could not be completed after several attempts.",

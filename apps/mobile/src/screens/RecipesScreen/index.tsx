@@ -5,6 +5,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Linking,
   ListRenderItemInfo,
   Pressable,
   ScrollView,
@@ -773,6 +774,10 @@ const RecipesScreen = () => {
           onRetry={() => retry.mutateAsync(item.job.id)}
           onCancel={() => cancel.mutateAsync(item.job.id)}
           onDismiss={() => dismiss.mutateAsync(item.job.id)}
+          onContinueManually={() => {
+            addRecipeSheetRef.current?.presentTextImport()
+            if (item.job.source_url) void Linking.openURL(item.job.source_url)
+          }}
         />
       )
     },

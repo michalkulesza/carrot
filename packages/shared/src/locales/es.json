@@ -34,6 +34,8 @@
     "uploadFailed": "No se pudo subir la foto. Por favor, inténtalo de nuevo.",
     "invalidImageUrl": "URL no válida. Introduce una dirección https:// válida.",
     "somethingWentWrong": "Algo salió mal",
+    "whoops": "Ups",
+    "deviceOffline": "Tu dispositivo parece estar sin conexión. Comprueba tu conexión e inténtalo de nuevo.",
     "tryAgain": "Inténtalo de nuevo",
     "search": "Buscar",
     "remove": "Eliminar"
@@ -515,15 +517,21 @@
   "importJobs": {
     "queued": "Importación de receta en cola",
     "pending": "La importación comenzará pronto",
-    "running": "Extrayendo receta…",
+    "running": "Importando una receta…",
     "takingLonger": "Está tardando más de lo habitual…",
     "retry": "Reintentar",
     "cancel": "Cancelar",
     "dismiss": "Descartar",
     "enqueueFailed": "No se pudo iniciar la importación. Inténtalo de nuevo.",
     "someone": "Alguien",
+    "userActionRequired": {
+      "title": "La receta necesita tu ayuda",
+      "body": "No se pudo extraer la receta automáticamente. Copia el texto de la receta desde la fuente y pégalo en la importación de texto.",
+      "continue": "Continuar"
+    },
     "failure": {
-      "extraction_failed": "No se pudo extraer una receta de esta importación.",
+      "extraction_failed": "La importación de la receta falló",
+      "user_action_required": "La receta necesita tu ayuda",
       "invalid_input": "Esta entrada de importación no es compatible.",
       "household_access_changed": "Ya no tienes acceso a este hogar.",
       "retries_exhausted": "No se pudo completar la importación tras varios intentos.",

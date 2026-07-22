@@ -658,6 +658,7 @@ class ImportJobStatus(StrEnum):
 
 class ImportFailureCode(StrEnum):
     EXTRACTION_FAILED = "extraction_failed"
+    USER_ACTION_REQUIRED = "user_action_required"
     INVALID_INPUT = "invalid_input"
     HOUSEHOLD_ACCESS_CHANGED = "household_access_changed"
     RETRIES_EXHAUSTED = "retries_exhausted"
@@ -717,6 +718,7 @@ class ImportJobOut(BaseModel):
     id: uuid.UUID
     status: str
     kind: str
+    source_url: str | None = None
     household_id: uuid.UUID | None
     created_by_user_id: uuid.UUID
     created_by_name: str | None = None

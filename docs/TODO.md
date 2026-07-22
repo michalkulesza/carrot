@@ -27,6 +27,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Add related recipes** — Add reciprocal links between recipes, with a related-recipes section on web and mobile.
 - [x] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [x] **Custom tags** - Bring back custom tags
+- [ ] **Web recipe import source icons** — Add icons for supported sources beneath the import method buttons.
 
 ## Experience and product polish
 

@@ -88,6 +88,7 @@ export type ImportJobKind = 'url' | 'text' | 'image'
 export type ImportJobStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled'
 export type ImportFailureCode =
   | 'extraction_failed'
+  | 'user_action_required'
   | 'invalid_input'
   | 'household_access_changed'
   | 'retries_exhausted'
@@ -104,6 +105,7 @@ export interface ImportJob {
   id: string
   status: ImportJobStatus
   kind: ImportJobKind
+  source_url: string | null
   household_id: string | null
   created_by_user_id: string
   created_by_name: string | null

@@ -45,6 +45,7 @@ const AppShell = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [modalOpen, setModalOpen] = useState(false)
+  const [modalImportMode, setModalImportMode] = useState<'url' | 'text' | 'image'>('url')
   const navigate = useNavigate()
   const location = useLocation()
   const qc = useQueryClient()
@@ -58,7 +59,7 @@ const AppShell = () => {
   const { data: statsData } = useRecipeStats()
   const stats = statsData ?? null
   const { preferences } = usePreferences()
-  const { jobs: importJobs, seed: seedImportJob } = useImportJobs(
+  const { jobs: importJobs, seed: seedImportJob, retry: retryImportJob, dismiss: dismissImportJob } = useImportJobs(
     user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null,
   )
 
@@ -115,8 +116,14 @@ const AppShell = () => {
 
   const openAddRecipe = useCallback(() => {
     navigate('/')
+    setModalImportMode('url')
     setModalOpen(true)
   }, [navigate])
+  const openTextImport = useCallback((sourceUrl: string | null) => {
+    setModalImportMode('text')
+    setModalOpen(true)
+    if (sourceUrl) window.open(sourceUrl, '_blank', 'noopener,noreferrer')
+  }, [])
 
   const closeAddRecipe = useCallback(() => setModalOpen(false), [])
   const showingPublicRecipe = location.pathname.startsWith('/r/')
@@ -129,6 +136,9 @@ const AppShell = () => {
       onRecipeDeleted={handleRecipeDeleted}
       preferences={preferences}
       importJobs={importJobs}
+      onRetryImportJob={retryImportJob.mutateAsync}
+      onDismissImportJob={dismissImportJob.mutateAsync}
+      onContinueImportManually={openTextImport}
     />
   )
 
@@ -187,6 +197,7 @@ const AppShell = () => {
 
               <AddRecipeModal
                 isOpen={modalOpen}
+                initialImportMode={modalImportMode}
                 onClose={closeAddRecipe}
                 onSaved={handleRecipeSaved}
                 onImportEnqueued={(job) => {

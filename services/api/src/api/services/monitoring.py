@@ -1,6 +1,14 @@
 import sentry_sdk
+from urllib.parse import urlsplit, urlunsplit
 
 from api.config import settings
+
+
+def _sanitize_source_url(source_url: str | None) -> str | None:
+    if not source_url:
+        return None
+    parsed = urlsplit(source_url)
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
 
 
 def init_sentry() -> None:
@@ -26,7 +34,7 @@ def report_recipe_import_failure(
         scope.set_tag("operation", "recipe_import")
         scope.set_tag("input_kind", input_kind)
         scope.set_context("recipe_import", {
-            "source_url": source_url,
+            "source_url": _sanitize_source_url(source_url),
             "input_size": input_size,
             "reason": reason,
         })

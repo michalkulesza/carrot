@@ -34,6 +34,8 @@
     "uploadFailed": "Foto konnte nicht hochgeladen werden. Bitte erneut versuchen.",
     "invalidImageUrl": "Ungültige URL. Bitte eine gültige https://-Adresse eingeben.",
     "somethingWentWrong": "Etwas ist schiefgelaufen",
+    "whoops": "Ups",
+    "deviceOffline": "Dein Gerät scheint offline zu sein. Prüfe deine Verbindung und versuche es erneut.",
     "tryAgain": "Erneut versuchen",
     "search": "Suche",
     "remove": "Entfernen"
@@ -516,15 +518,21 @@
   "importJobs": {
     "queued": "Rezeptimport vorgemerkt",
     "pending": "Der Import startet bald",
-    "running": "Rezept wird extrahiert…",
+    "running": "Rezept wird importiert…",
     "takingLonger": "Es dauert länger als gewöhnlich…",
     "retry": "Erneut versuchen",
     "cancel": "Abbrechen",
     "dismiss": "Ausblenden",
     "enqueueFailed": "Der Import konnte nicht gestartet werden. Bitte versuche es erneut.",
     "someone": "Jemand",
+    "userActionRequired": {
+      "title": "Das Rezept braucht deine Hilfe",
+      "body": "Das Rezept konnte nicht automatisch extrahiert werden. Kopiere den Rezepttext aus der Quelle und füge ihn in den Textimport ein.",
+      "continue": "Weiter"
+    },
     "failure": {
-      "extraction_failed": "Aus diesem Import konnte kein Rezept extrahiert werden.",
+      "extraction_failed": "Rezeptimport fehlgeschlagen",
+      "user_action_required": "Das Rezept braucht deine Hilfe",
       "invalid_input": "Diese Import-Eingabe wird nicht unterstützt.",
       "household_access_changed": "Du hast keinen Zugriff mehr auf diesen Haushalt.",
       "retries_exhausted": "Der Import konnte nach mehreren Versuchen nicht abgeschlossen werden.",

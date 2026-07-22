@@ -195,6 +195,7 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     opacity: 0.85,
   },
+  pendingCardActionRequired: { backgroundColor: colors.brandLight, opacity: 1 },
   pendingImageWrap: {
     width: 100,
     height: 100,
@@ -214,9 +215,9 @@ export const styles = StyleSheet.create({
   },
   pendingBody: { flex: 1, padding: 12, justifyContent: 'center' },
   pendingTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  pendingUrlRow: { marginBottom: 2 },
   pendingMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pendingActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pendingCancelWrap: { width: 44, alignItems: 'center', justifyContent: 'center' },
-  pendingActionPrimary: { fontSize: 13, color: colors.blue, fontWeight: '600' },
-  pendingActionSecondary: { fontSize: 13, color: colors.secondaryLabel },
+  pendingActionRow: { width: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  pendingIconAction: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 })

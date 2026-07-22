@@ -14,6 +14,16 @@ _BASE = "https://api.scrapecreators.com"
 _URL_RE = re.compile(r"https?://[^\s]+")
 
 
+class ScrapeCreatorsHttpError(httpx.HTTPStatusError):
+    def __init__(self, response: httpx.Response, endpoint: str) -> None:
+        super().__init__(
+            f"ScrapeCreators {endpoint} request failed with status {response.status_code}",
+            request=response.request,
+            response=response,
+        )
+        self.endpoint = endpoint
+
+
 @dataclass
 class ReelMetadata:
     source_url: str
@@ -27,12 +37,22 @@ class ReelMetadata:
 
 class ScrapeCreatorsClient:
     def __init__(self) -> None:
-        self._headers = {"x-api-key": settings.scrapecreators_api_key}
+        self._headers = {
+            "x-api-key": settings.scrapecreators_api_key,
+            "x-cache-max-age": "7d",
+        }
 
     def _platform(self, url: str) -> str:
         if "tiktok.com" in url:
             return "tiktok"
         return "instagram"
+
+    async def _get(self, endpoint: str, url: str) -> dict:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.get(endpoint, headers=self._headers, params={"url": url})
+        if response.is_error:
+            raise ScrapeCreatorsHttpError(response, endpoint)
+        return response.json()
 
     async def fetch_reel(self, url: str) -> ReelMetadata:
         platform = self._platform(url)
@@ -40,10 +60,7 @@ class ScrapeCreatorsClient:
             f"{_BASE}/v1/tiktok/video" if platform == "tiktok"
             else f"{_BASE}/v1/instagram/post"
         )
-        async with httpx.AsyncClient(timeout=30) as client:
-            r = await client.get(endpoint, headers=self._headers, params={"url": url})
-            r.raise_for_status()
-            data = r.json()
+        data = await self._get(endpoint, url)
 
         import json as _json
         log.debug("ScrapeCreators raw response: %s", _json.dumps(data, indent=2)[:3000])

@@ -54,6 +54,7 @@ async def test_text_extraction_uses_configured_model_and_deterministic_sampling(
     assert enrichment_call.kwargs["config"].temperature == 0
     assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
     assert "total_time_minutes" in enrichment_call.kwargs["config"].system_instruction
+    assert "exclude unattended resting" in enrichment_call.kwargs["config"].system_instruction
     assert result.total_time_minutes == 45
 
 
@@ -100,6 +101,27 @@ async def test_enrichment_falls_back_only_for_misaligned_field(monkeypatch) -> N
 
 
 @pytest.mark.asyncio
+async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> None:
+    source = _one_component_source().model_dump(mode="json")
+    missing_time = _matching_enrichment(total_time_minutes=None).model_dump(mode="json")
+    complete = _matching_enrichment(total_time_minutes=565).model_dump(mode="json")
+    generate_content = Mock(side_effect=[
+        _response(source),
+        _response(missing_time),
+        _response(complete),
+    ])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    result = await gemini.extract_recipe("Ingredients: 1 onion")
+
+    retry_prompt = json.loads(generate_content.call_args_list[2].kwargs["contents"])
+    assert result.total_time_minutes == 565
+    assert generate_content.call_count == 3
+    assert "total_time_minutes must be calculated" in retry_prompt["previous_validation_error"]
+
+
+@pytest.mark.asyncio
 async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None:
     generate_content = Mock(side_effect=[_response(_source_payload()), _response(_enrichment_payload())])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
@@ -132,6 +154,7 @@ async def test_audio_transcription_uses_flash_and_faithful_prompt(monkeypatch) -
     assert call.kwargs["config"].temperature == 0
     assert "[inaudible]" in call.kwargs["config"].system_instruction
     assert "never translate" in call.kwargs["config"].system_instruction
+    assert "do not add headings" in call.kwargs["config"].system_instruction
 
 
 @pytest.mark.asyncio

@@ -74,7 +74,25 @@ export const useImportJobs = (scopeKey: string | null) => {
     }
   }, [api, qc, scopeKey])
 
-  const retry = useMutation({ mutationFn: api.retryImportJob })
+  const retry = useMutation({
+    mutationFn: api.retryImportJob,
+    onMutate: async (jobId) => {
+      await qc.cancelQueries({ queryKey })
+      const previousJobs = qc.getQueryData<ImportJob[]>(queryKey)
+      qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => jobs.map((job) => (
+        job.id === jobId
+          ? { ...job, status: 'pending', failure_code: null, next_attempt_at: new Date().toISOString() }
+          : job
+      )))
+      return { previousJobs }
+    },
+    onError: (_error, _jobId, context) => {
+      if (context?.previousJobs) qc.setQueryData(queryKey, context.previousJobs)
+    },
+    onSuccess: (job) => {
+      qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, 'import_job.created', job))
+    },
+  })
   const cancel = useMutation({ mutationFn: api.cancelImportJob })
   const dismiss = useMutation({
     mutationFn: api.dismissImportJob,

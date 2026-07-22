@@ -38,6 +38,9 @@ interface RecipesPageProps {
   onRecipeDeleted: (id: string) => void
   preferences: UserPreferences | null
   importJobs: ImportJob[]
+  onRetryImportJob: (jobId: string) => Promise<unknown>
+  onDismissImportJob: (jobId: string) => Promise<unknown>
+  onContinueImportManually: (sourceUrl: string | null) => void
 }
 
 const RecipesPage = ({
@@ -48,6 +51,9 @@ const RecipesPage = ({
   onRecipeDeleted,
   preferences,
   importJobs,
+  onRetryImportJob,
+  onDismissImportJob,
+  onContinueImportManually,
 }: RecipesPageProps) => {
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const { t } = useTranslation()
@@ -209,7 +215,7 @@ const RecipesPage = ({
           onToggleTag={handleToggleTag}
         />
 
-        {showImportJobs && <ImportJobCards jobs={importJobs} />}
+        {showImportJobs && <ImportJobCards jobs={importJobs} onRetry={onRetryImportJob} onDismiss={onDismissImportJob} onContinueManually={onContinueImportManually} />}
 
         {loading ? (
           <RecipesLoadingSkeleton />

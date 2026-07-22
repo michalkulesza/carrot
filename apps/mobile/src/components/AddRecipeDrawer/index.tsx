@@ -22,6 +22,7 @@ import { styles } from './styles'
 
 export interface AddRecipeDrawerHandle {
   present: () => void
+  presentTextImport: () => void
   dismiss: () => void
 }
 
@@ -33,6 +34,15 @@ const SUBVIEW_TITLE_KEY: Record<Exclude<AddRecipeSubview, 'picker'>, string> = {
 // Fixed rather than dynamic so every subview renders at the same height instead of the
 // sheet resizing as the user switches between the picker, text-paste, and library views.
 const SNAP_POINTS = ['65%']
+
+const isValidHttpUrl = (value: string) => {
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
 
 const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const { t } = useTranslation()
@@ -65,6 +75,11 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
 
   useImperativeHandle(ref, () => ({
     present: () => sheetRef.current?.present(),
+    presentTextImport: () => {
+      setSubview('text')
+      setError(null)
+      sheetRef.current?.present()
+    },
     dismiss: () => sheetRef.current?.dismiss(),
   }))
 
@@ -105,14 +120,15 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sheetRef.current?.dismiss()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
+      const offline = err instanceof TypeError || (err instanceof Error && /network|offline|fetch/i.test(err.message))
+      Alert.alert(t('common.whoops'), offline ? t('common.deviceOffline') : t('common.somethingWentWrong'))
     } finally {
       setLoading(false)
     }
   }, [api, qc, t])
 
   const handleImportUrl = useCallback(async () => {
-    if (url.trim()) {
+    if (isValidHttpUrl(url.trim())) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       await runEnqueue('url', { url: url.trim() })
     }
@@ -226,22 +242,6 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     </View>
   )
 
-  const errorBox = error && (
-    <View style={styles.errorBox}>
-      <Text style={styles.errorTitle}>{t('addRecipe.importFailed')}</Text>
-      <Text style={styles.errorMsg}>{error}</Text>
-      {subview === 'picker' && url.trim() && (
-        <Pressable
-          style={({ pressed }) => [styles.openInBrowserBtn, pressed && { opacity: 0.7 }]}
-          onPress={handleOpenInBrowser}
-          accessibilityLabel={t('addRecipe.openInBrowser')}
-        >
-          <Text style={styles.openInBrowserText}>{t('addRecipe.openInBrowser')}</Text>
-        </Pressable>
-      )}
-    </View>
-  )
-
   return (
     <BottomSheetModal
       ref={sheetRef}
@@ -264,7 +264,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
           linkingRecipeId={linkingRecipeId}
           onSelect={handlePersonalRecipeSelect}
           header={subviewHeader}
-          error={errorBox}
+          error={null}
         />
       ) : (
         <BottomSheetScrollView style={styles.container} keyboardShouldPersistTaps="handled">
@@ -278,6 +278,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 onPaste={handlePasteUrl}
                 onImport={handleImportUrl}
                 loading={loading}
+                canImport={isValidHttpUrl(url.trim())}
               />
               <MethodPickerView
                 showPersonalLibrary={activeHouseholdId !== null}
@@ -296,7 +297,6 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
             />
           )}
 
-          {errorBox}
         </BottomSheetScrollView>
       )}
     </BottomSheetModal>

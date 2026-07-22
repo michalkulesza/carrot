@@ -34,6 +34,8 @@
     "uploadFailed": "Impossible d'envoyer la photo. Veuillez réessayer.",
     "invalidImageUrl": "URL invalide. Veuillez entrer une adresse https:// valide.",
     "somethingWentWrong": "Une erreur est survenue",
+    "whoops": "Oups",
+    "deviceOffline": "Votre appareil semble hors ligne. Vérifiez votre connexion et réessayez.",
     "tryAgain": "Réessayer",
     "search": "Rechercher",
     "remove": "Supprimer"
@@ -516,15 +518,21 @@
   "importJobs": {
     "queued": "Importation de recette mise en file d’attente",
     "pending": "L’importation commencera bientôt",
-    "running": "Extraction de la recette…",
+    "running": "Importation de la recette…",
     "takingLonger": "Cela prend plus de temps que prévu…",
     "retry": "Réessayer",
     "cancel": "Annuler",
     "dismiss": "Masquer",
     "enqueueFailed": "Impossible de démarrer l’importation. Réessayez.",
     "someone": "Quelqu’un",
+    "userActionRequired": {
+      "title": "La recette nécessite votre aide",
+      "body": "L’extraction automatique de la recette n’a pas été possible. Copiez le texte de la recette depuis la source, puis collez-le dans l’import de texte.",
+      "continue": "Continuer"
+    },
     "failure": {
-      "extraction_failed": "Impossible d’extraire une recette de cette importation.",
+      "extraction_failed": "Échec de l’importation de la recette",
+      "user_action_required": "La recette nécessite votre aide",
       "invalid_input": "Cette entrée d’importation n’est pas prise en charge.",
       "household_access_changed": "Vous n’avez plus accès à ce foyer.",
       "retries_exhausted": "L’importation n’a pas pu être terminée après plusieurs tentatives.",

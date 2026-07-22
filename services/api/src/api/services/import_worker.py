@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
-import random
 import uuid
 from datetime import datetime, timedelta
 
@@ -35,11 +34,19 @@ from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
+from api.services.monitoring import report_recipe_import_failure
 from api.services.pipeline import run_image_import_stream, run_import_stream, run_text_import_stream
 
 log = logging.getLogger(__name__)
 _POLL_INTERVAL_SECONDS = 2
-_MAX_RETRY_WINDOW = timedelta(minutes=30)
+_MAX_IMPORT_RETRIES = 3
+_IMPORT_RETRY_DELAY_SECONDS = 30
+
+
+class ImportPipelineFailure(Exception):
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
 
 
 def _normalize_ingredient_punctuation(value: str) -> str:
@@ -203,15 +210,17 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         if event["type"] == "done":
             result = ImportResult.model_validate(event["result"])
     if result is None or result.recipe is None or result.stage == "failed":
-        raise ValueError("extraction_failed")
+        raise ImportPipelineFailure(result.error if result else "extraction_failed")
     return result
 
 
 def _is_transient(error: Exception) -> bool:
     if isinstance(error, (httpx.NetworkError, httpx.TimeoutException, TimeoutError, ConnectionError)):
         return True
+    if isinstance(error, httpx.HTTPStatusError):
+        return error.response.status_code in (500, 503)
     message = str(error).lower()
-    return "429" in message or "503" in message or "rate limit" in message or "timeout" in message
+    return "429" in message or "500" in message or "503" in message or "rate limit" in message or "timeout" in message
 
 
 async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
@@ -220,22 +229,29 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
         job = await session.scalar(select(ImportJob).where(ImportJob.id == job_id).with_for_update())
         if job is None or job.status == ImportJobStatus.CANCELLED:
             return
-        retry_deadline = (job.started_at or now) + _MAX_RETRY_WINDOW
-        if _is_transient(error) and now < retry_deadline:
+        if _is_transient(error) and job.retry_count < _MAX_IMPORT_RETRIES:
             job.status = ImportJobStatus.PENDING
             job.retry_count += 1
-            delay = min(60, 2 ** min(job.retry_count, 6)) + random.uniform(0, 1)
-            job.next_attempt_at = now + timedelta(seconds=delay)
+            job.next_attempt_at = now + timedelta(seconds=_IMPORT_RETRY_DELAY_SECONDS)
             job.diagnostic_error = str(error)[:500]
             job.updated_at = now
             await _event_for_job(session, job, "import_job.retry_scheduled")
         else:
             job.status = ImportJobStatus.FAILED
-            job.failure_code = ImportFailureCode.RETRIES_EXHAUSTED if _is_transient(error) else ImportFailureCode.EXTRACTION_FAILED
+            if isinstance(error, ImportPipelineFailure) and error.code == ImportFailureCode.USER_ACTION_REQUIRED.value:
+                job.failure_code = ImportFailureCode.USER_ACTION_REQUIRED
+            else:
+                job.failure_code = ImportFailureCode.RETRIES_EXHAUSTED if _is_transient(error) else ImportFailureCode.EXTRACTION_FAILED
             job.diagnostic_error = str(error)[:500]
             job.next_attempt_at = None
             job.updated_at = now
             await _event_for_job(session, job, "import_job.failed")
+            report_recipe_import_failure(
+                input_kind=job.kind,
+                source_url=job.input.get("url") if job.kind == ImportJobKind.URL else None,
+                reason=job.failure_code,
+                error=error,
+            )
         await session.commit()
 
 
@@ -415,10 +431,11 @@ async def _deliver_pushes() -> None:
             subscriptions = list((await session.scalars(select(DeviceSubscription).where(DeviceSubscription.user_id == event.user_id))).all())
             for subscription in subscriptions:
                 success = event.type == "import_job.succeeded"
+                requires_user_action = event.payload.get("failure_code") == ImportFailureCode.USER_ACTION_REQUIRED
                 await apns_svc.send_alert(
                     subscription.token,
-                    title="Recipe added" if success else "Couldn't add recipe",
-                    body="Tap to view your new recipe." if success else "Tap to see the failed import.",
+                    title="Recipe added" if success else "Recipe needs your input" if requires_user_action else "Couldn't add recipe",
+                    body="Tap to view your new recipe." if success else "Open the import to continue manually." if requires_user_action else "Tap to see the failed import.",
                     data={"type": "recipe_imported" if success else "recipe_failed", "job_id": str(event.job_id), "recipe_id": event.payload.get("result_recipe_id")},
                 )
             event.push_dispatched_at = datetime.utcnow()

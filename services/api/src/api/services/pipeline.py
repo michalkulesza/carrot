@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
 from curl_cffi.requests import AsyncSession as CurlAsyncSession
+import httpx
 
 from api.models import (
     ImportMetadata,
@@ -19,7 +20,7 @@ from api.models import (
 from api.services import cache as cache_svc
 from api.services import gemini as gemini_svc
 from api.services.monitoring import report_recipe_import_failure
-from api.services.scraper import ReelMetadata, scraper
+from api.services.scraper import ReelMetadata, ScrapeCreatorsHttpError, scraper
 from api.services.transcription import transcribe_video
 
 log = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ log = logging.getLogger(__name__)
 # errors, HTTP status details, etc. shouldn't leak into the UI). The frontend
 # maps this to a translated, actionable message.
 IMPORT_ERROR_CODE = "extraction_failed"
+USER_ACTION_REQUIRED_ERROR_CODE = "user_action_required"
 
 
 # Reused across calls: opening a new CurlAsyncSession per request under
@@ -448,13 +450,20 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
         metadata: ReelMetadata = await scraper.fetch_reel(url)
     except Exception as exc:
         log.warning("Could not fetch reel %s: %s", url, exc)
+        requires_manual_action = (
+            isinstance(exc, ScrapeCreatorsHttpError)
+            and exc.response.status_code == 403
+        )
         report_recipe_import_failure(
-            input_kind="url", source_url=url, reason="could_not_fetch_social_metadata", error=exc,
+            input_kind="url",
+            source_url=url,
+            reason="scrapecreators_post_forbidden" if requires_manual_action else "could_not_fetch_social_metadata",
+            error=exc,
         )
         yield _done_event(ImportResult(
             stage=ImportStage.FAILED,
             metadata=ImportMetadata(source_url=url),
-            error=IMPORT_ERROR_CODE,
+            error=USER_ACTION_REQUIRED_ERROR_CODE if requires_manual_action else IMPORT_ERROR_CODE,
         ))
         return
 
@@ -502,6 +511,7 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
             log.warning("Link stage failed for %s: %s", link, exc)
 
     # Stage 3 — transcript
+    requires_manual_action = False
     if metadata.video_url:
         yield _stage_event("fetching_transcript", "Transcribing video audio…")
         try:
@@ -526,14 +536,20 @@ async def run_import_stream(url: str, model: str | None = None, available_tags: 
                     return
         except Exception as exc:
             log.warning("Transcription stage failed: %s", exc)
+            requires_manual_action = (
+                isinstance(exc, httpx.HTTPStatusError)
+                and exc.response.status_code in (403, 404)
+            )
 
     report_recipe_import_failure(
-        input_kind="url", source_url=url, reason="no_complete_recipe_extracted",
+        input_kind="url",
+        source_url=url,
+        reason="video_source_unavailable" if requires_manual_action else "no_complete_recipe_extracted",
     )
     yield _done_event(ImportResult(
         stage=ImportStage.FAILED,
         metadata=meta,
-        error=IMPORT_ERROR_CODE,
+        error=USER_ACTION_REQUIRED_ERROR_CODE if requires_manual_action else IMPORT_ERROR_CODE,
     ))
 
 

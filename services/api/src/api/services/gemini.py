@@ -110,13 +110,15 @@ German, French, English, or a mixture. Return the transcript in the original
 spoken language and never translate, summarize, explain, or format it as a
 recipe.
 
-Preserve every spoken ingredient, amount, unit, temperature, duration, and
-correction exactly, including code-switching. Use normal punctuation and
-paragraph breaks to make the speech readable. Omit non-speech sounds and
-meaningless filler words, but never omit meaningful speech. If a word or phrase
-cannot be understood, write [inaudible] rather than guessing. Do not use the
-video title, caption, visual content, or general cooking knowledge to fill in
-anything that is not audible.
+Produce concise recipe notes rather than a word-for-word transcript. Preserve
+every spoken ingredient, amount, unit, temperature, duration, technique, and
+correction exactly, including code-switching. Remove greetings, verbal filler,
+repetitions, self-references, and visual narration that do not change the
+recipe. Use natural sentences and paragraph breaks, but do not add headings,
+numbered steps, bullets, or other structure that was not spoken. If a word or
+phrase cannot be understood, write [inaudible] rather than guessing. Do not use
+the video title, caption, visual content, or general cooking knowledge to fill
+in anything that is not audible.
 """
 
 _UNIT_CONVERSION_SYSTEM = """\
@@ -165,10 +167,11 @@ weights, volumes, or other divisible measurements (e.g. "125 g butter" stays
 what to buy. If no quantity is given, return the ingredient name.
 shopping_list_values must have exactly one entry per source ingredient, in order.
 
-total_time_minutes: total elapsed time from starting preparation to serving, in
-whole minutes. Include prep, active cooking, passive cooking, and resting time.
-Extract it when stated; otherwise estimate a realistic total from the recipe's
-steps. If no recipe content is present at all, return null.
+total_time_minutes: practical kitchen time in whole minutes. Include preparation
+and cooking or baking time, but exclude unattended resting, proofing, chilling,
+marinating, and other long passive waits. Extract it when stated; otherwise
+estimate a realistic total from the recipe's steps. If no recipe content is
+present at all, return null.
 
 kcal_per_serving, protein_per_serving, fat_per_serving, carbs_per_serving: these
 are REQUIRED — always provide a number, never omit them. Extract from the text
@@ -385,7 +388,15 @@ async def _enrich_recipe(
 
         try:
             enrichment = RecipeEnrichment.model_validate(json.loads(response.text))
-        except (json.JSONDecodeError, ValidationError) as exc:
+            has_recipe_content = any(
+                component.ingredients or component.steps
+                for component in source.components
+            )
+            if has_recipe_content and enrichment.total_time_minutes is None:
+                raise ValueError(
+                    "total_time_minutes must be calculated for a recipe with content"
+                )
+        except (json.JSONDecodeError, ValidationError, ValueError) as exc:
             validation_error = str(exc)
             if attempt == _MAX_ENRICHMENT_ATTEMPTS:
                 raise
