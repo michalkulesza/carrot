@@ -159,6 +159,21 @@ export const buildClientStepRefs = (
     return refs
   })
 
+export const mergeStepIngredientRefs = (
+  importedRefs: StepIngredientRef[][] | null | undefined,
+  clientRefs: StepIngredientRef[][],
+): StepIngredientRef[][] =>
+  clientRefs.map((fallbackRefs, stepIndex) => {
+    const refs = importedRefs?.[stepIndex] ?? []
+    const referencedIngredientIndexes = new Set(
+      refs.map((ref) => ref.ingredient_index),
+    )
+    const missingRefs = fallbackRefs.filter(
+      (ref) => !referencedIngredientIndexes.has(ref.ingredient_index),
+    )
+    return [...refs, ...missingRefs]
+  })
+
 export interface AggregatedIngredient {
   key: string
   name: string

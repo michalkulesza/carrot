@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent, StepIngredientRef } from '@carrot/shared/types'
+import { mergeStepIngredientRefs } from '@carrot/shared/utils/ingredientUtils'
 import {
   computeClientStepIngredientRefs,
   displayIngredient,
@@ -77,11 +78,13 @@ const ViewComponent = ({
       ? (comp.imperial_steps ?? comp.steps)
       : (comp.metric_steps ?? comp.steps)
 
-  const clientRefs = useMemo<StepIngredientRef[][] | null>(() => {
-    if (comp.step_ingredient_refs != null) return null
-
+  const clientRefs = useMemo<StepIngredientRef[][]>(() => {
     return computeClientStepIngredientRefs({ ...comp, ingredients, steps })
   }, [comp, ingredients, steps])
+  const stepRefs = useMemo(
+    () => mergeStepIngredientRefs(comp.step_ingredient_refs, clientRefs),
+    [clientRefs, comp.step_ingredient_refs],
+  )
 
   const allIngredientsAdded = ingredients.every((_, i) =>
     sessionAdded?.has(`${componentIndex}-${i}`)
@@ -215,8 +218,7 @@ const ViewComponent = ({
           <ol className="space-y-2">
             {steps.map((step, i) => {
               const timerId = `${recipeId}-c${componentIndex}-s${i}`
-              const stepRefs =
-                comp.step_ingredient_refs?.[i] ?? clientRefs?.[i] ?? []
+              const refs = stepRefs[i] ?? []
 
               return (
                 <li
@@ -229,7 +231,7 @@ const ViewComponent = ({
                   </span>
                   <StepText
                     step={step}
-                    stepRefs={stepRefs}
+                    stepRefs={refs}
                     ingredients={ingredients}
                     timerId={timerId}
                     recipeId={recipeId}

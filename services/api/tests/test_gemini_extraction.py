@@ -190,14 +190,14 @@ def test_step_ingredient_refs_exclude_final_assembly_step() -> None:
     component = RecipeComponent(
         steps=["Chop the onion.", "Cook the onion.", "Assemble and serve."],
         step_refs=[
-            StepRef(step_index=0, ingredient_index=0, mention="onion"),
+            StepRef(step_index=0, ingredient_index=0, mention="onion", display="1 onion"),
             StepRef(step_index=1, ingredient_index=0, mention="onion"),
             StepRef(step_index=2, ingredient_index=0, mention="onion"),
         ],
     )
 
     assert _step_ingredient_refs(component) == [
-        [{"ingredient_index": 0, "mention": "onion"}],
+        [{"ingredient_index": 0, "mention": "onion", "display": "1 onion"}],
         [{"ingredient_index": 0, "mention": "onion"}],
         [],
     ]

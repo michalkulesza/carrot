@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import type { RecipeOut, SaveComponent, StepIngredientRef } from '@carrot/shared/types'
-import { buildClientStepRefs } from '@carrot/shared/utils/ingredientUtils'
+import { buildClientStepRefs, mergeStepIngredientRefs } from '@carrot/shared/utils/ingredientUtils'
 import {
   getImperialCupQty,
   scaleIngredientQuantity,
@@ -75,10 +75,10 @@ const ComponentSection = ({
   )
 
   const stepRefs = useMemo<StepIngredientRef[][]>(
-    () =>
-      component.step_ingredient_refs != null
-        ? component.step_ingredient_refs
-        : buildClientStepRefs(steps, ingredients),
+    () => mergeStepIngredientRefs(
+      component.step_ingredient_refs,
+      buildClientStepRefs(steps, ingredients),
+    ),
     [component.step_ingredient_refs, steps, ingredients],
   )
 
@@ -181,6 +181,7 @@ const ComponentSection = ({
               componentIndex={index}
               stepRefs={stepRefs[i] ?? []}
               rawIngredients={ingredients}
+              servingScale={servingScale}
               showStepQty={showStepQty}
               fontSize={fontSize}
               lineHeight={lineHeight}

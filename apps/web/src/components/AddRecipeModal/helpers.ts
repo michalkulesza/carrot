@@ -134,6 +134,7 @@ export const toEditable = (
             arr[ref.step_index].push({
               ingredient_index: ref.ingredient_index,
               mention: ref.mention,
+              display: ref.display,
             })
           }
         }

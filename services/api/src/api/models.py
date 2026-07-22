@@ -289,6 +289,7 @@ class StepRef(BaseModel):
     step_index: int
     ingredient_index: int
     mention: str
+    display: str | None = None
 
 
 class RecipeComponent(BaseModel):

@@ -27,6 +27,7 @@ export interface StepRef {
   step_index: number
   ingredient_index: number
   mention: string
+  display?: string | null
 }
 
 export interface RecipeComponent {
@@ -139,6 +140,7 @@ export interface ImportJobEvent {
 export interface StepIngredientRef {
   ingredient_index: number
   mention: string
+  display?: string | null
 }
 
 export interface SaveComponent {

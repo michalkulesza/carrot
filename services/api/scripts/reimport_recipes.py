@@ -32,7 +32,13 @@ def _step_ingredient_refs(component: RecipeComponent) -> list[list[dict]] | None
     refs: list[list[dict]] = [[] for _ in component.steps]
     for ref in component.step_refs:
         if ref.step_index < len(refs) - 1:
-            refs[ref.step_index].append({"ingredient_index": ref.ingredient_index, "mention": ref.mention})
+            serialized_ref = {
+                "ingredient_index": ref.ingredient_index,
+                "mention": ref.mention,
+            }
+            if ref.display:
+                serialized_ref["display"] = ref.display
+            refs[ref.step_index].append(serialized_ref)
     return refs
 
 

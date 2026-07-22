@@ -37,7 +37,7 @@ const CookMode = ({
             ...new Set(
               (component.step_ingredient_refs?.[stepIndex] ?? []).map((ref) =>
                 displayIngredient(
-                  component.ingredients[ref.ingredient_index] ?? ''
+                  ref.display ?? component.ingredients[ref.ingredient_index] ?? ''
                 )
               )
             ),

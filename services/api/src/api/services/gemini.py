@@ -192,6 +192,9 @@ skin on"), plural, abbreviation, or any morphological variant — add one entry:
   step_index: 0-based index of the step in this component's steps list
   ingredient_index: 0-based index of the ingredient in this component's ingredients list
   mention: the exact substring as it appears in the step text
+  display: a concise ingredient line for this step only. When the step uses a
+  portion of a divided ingredient, include exactly that portion and ingredient
+  name (for example, "1 tsp soy sauce"); otherwise return null.
 Match across all languages. For inflected languages (Polish, Russian, Czech,
 German, etc.) recognise all grammatical case and number variants of the
 ingredient name. Leave step_refs empty only if no ingredient is referenced.

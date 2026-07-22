@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut, StepIngredientRef } from '@carrot/shared/types'
 import { displayIngredient } from '@carrot/shared/utils/ingredientUtils'
+import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 import { parseDurationMatch } from '../../context/TimerContext'
 import { styles } from './styles'
 import StepText from './StepText'
@@ -14,6 +15,7 @@ const StepRow = ({
   componentIndex,
   stepRefs,
   rawIngredients,
+  servingScale,
   showStepQty = true,
   fontSize = 17,
   lineHeight = 22,
@@ -24,6 +26,7 @@ const StepRow = ({
   componentIndex: number
   stepRefs: StepIngredientRef[]
   rawIngredients: string[]
+  servingScale: number
   showStepQty?: boolean
   fontSize?: number
   lineHeight?: number
@@ -40,6 +43,14 @@ const StepRow = ({
       return true
     })
   }, [stepRefs])
+
+  const getStepIngredientDisplay = (ref: StepIngredientRef) => {
+    const fallback = rawIngredients[ref.ingredient_index] ?? ''
+    const value = ref.display
+      ? scaleIngredientQuantity(ref.display, servingScale)
+      : fallback
+    return displayIngredient(value)
+  }
 
   return (
     <View style={styles.stepRow}>
@@ -63,7 +74,7 @@ const StepRow = ({
               <View key={ref.ingredient_index} style={styles.stepIngRow}>
                 <View style={styles.stepIngDot} />
                 <Text style={styles.stepIngItem}>
-                  {displayIngredient(rawIngredients[ref.ingredient_index] ?? '')}
+                  {getStepIngredientDisplay(ref)}
                 </Text>
               </View>
             ))}
