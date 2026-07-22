@@ -1,6 +1,8 @@
 import argparse
 import asyncio
 import uuid
+from collections import defaultdict, deque
+from time import monotonic
 
 from sqlalchemy import select
 
@@ -8,7 +10,14 @@ from api.database import async_session_maker
 from api.models import ImportResult, Ingredient, Recipe, RecipeComponent, RecipeExtraction, UserPreferences
 from api.services.import_worker import _get_tags_and_allergens
 from api.services.monitoring import init_sentry
-from api.services.pipeline import run_import_stream
+from api.services.pipeline import IMPORT_ERROR_CODE, run_import_stream
+from api.services.reimport_scheduler import QueuedRecipe, next_ready_recipe, next_retry_at, recipe_domain
+
+
+class ReimportFailure(Exception):
+    def __init__(self, message: str, retryable: bool) -> None:
+        super().__init__(message)
+        self.retryable = retryable
 
 
 def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
@@ -84,15 +93,16 @@ async def _extract(url: str, available_tags: list[str], allergens: list[str]) ->
             result = ImportResult.model_validate(event["result"])
 
     if result is None or result.recipe is None:
-        raise ValueError(result.error if result else "re-import did not return a result")
+        error = result.error if result else "re-import did not return a result"
+        raise ReimportFailure(error, retryable=error == IMPORT_ERROR_CODE)
     return result
 
 
-async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, str]:
+async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
     async with async_session_maker() as session:
         recipe = await session.get(Recipe, recipe_id)
         if recipe is None:
-            return False, f"Skipped {recipe_id}: recipe no longer exists"
+            return False, False, f"Skipped {recipe_id}: recipe no longer exists"
 
         recipe_title = recipe.title
         source_url = recipe.source_url
@@ -102,39 +112,68 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, str]:
             preferences = await session.get(UserPreferences, recipe.user_id)
             _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
             await session.commit()
-            return True, f"Re-imported {recipe_id}: {recipe.title}"
+            return True, False, f"Re-imported {recipe_id}: {recipe.title}"
+        except ReimportFailure as exc:
+            await session.rollback()
+            return False, exc.retryable, f"Skipped {recipe_id}: {recipe_title} ({source_url}; {exc})"
         except Exception as exc:
             await session.rollback()
-            return False, f"Skipped {recipe_id}: {recipe_title} ({source_url}; {exc})"
+            return False, False, f"Skipped {recipe_id}: {recipe_title} ({source_url}; {exc})"
 
 
-async def main(apply: bool, limit: int | None, recipe_ids: set[uuid.UUID], concurrency: int) -> None:
+async def main(
+    apply: bool,
+    limit: int | None,
+    recipe_ids: set[uuid.UUID],
+    retry_delay_seconds: int,
+    max_retries: int,
+) -> None:
     async with async_session_maker() as session:
-        statement = select(Recipe.id).where(Recipe.source_url.is_not(None), Recipe.source_url != "")
+        statement = select(Recipe.id, Recipe.source_url).where(Recipe.source_url.is_not(None), Recipe.source_url != "")
         if recipe_ids:
             statement = statement.where(Recipe.id.in_(recipe_ids))
         if limit is not None:
             statement = statement.limit(limit)
-        recipe_ids_to_process = list((await session.scalars(statement.order_by(Recipe.created_at))).all())
+        recipe_rows = list((await session.execute(statement.order_by(Recipe.created_at))).all())
 
     if not apply:
-        print(f"Would re-import {len(recipe_ids_to_process)} URL-backed recipe(s). Run again with --apply to update them.")
+        print(f"Would re-import {len(recipe_rows)} URL-backed recipe(s). Run again with --apply to update them.")
         return
 
-    semaphore = asyncio.Semaphore(concurrency)
-
-    async def run_recipe(recipe_id: uuid.UUID) -> tuple[bool, str]:
-        async with semaphore:
-            return await _reimport_recipe(recipe_id)
+    recipes_by_domain: dict[str, deque[QueuedRecipe]] = defaultdict(deque)
+    domain_order: deque[str] = deque()
+    for recipe_id, source_url in recipe_rows:
+        domain = recipe_domain(source_url)
+        if not recipes_by_domain[domain]:
+            domain_order.append(domain)
+        recipes_by_domain[domain].append(QueuedRecipe(recipe_id=recipe_id, domain=domain))
 
     refreshed = 0
     failed = 0
-    tasks = [asyncio.create_task(run_recipe(recipe_id)) for recipe_id in recipe_ids_to_process]
-    for task in asyncio.as_completed(tasks):
-        succeeded, message = await task
+    while any(recipes_by_domain.values()):
+        now = monotonic()
+        queued_recipe = next_ready_recipe(domain_order, recipes_by_domain, now)
+        if queued_recipe is None:
+            retry_at = next_retry_at(recipes_by_domain)
+            if retry_at is None:
+                break
+            delay = max(0, retry_at - now)
+            print(f"All remaining recipes are cooling down; waiting {delay:.0f} seconds before retrying.")
+            await asyncio.sleep(delay)
+            continue
+
+        succeeded, retryable, message = await _reimport_recipe(queued_recipe.recipe_id)
         print(message)
         if succeeded:
             refreshed += 1
+        elif retryable and queued_recipe.retries < max_retries:
+            queued_recipe.retries += 1
+            queued_recipe.retry_at = monotonic() + retry_delay_seconds
+            recipes_by_domain[queued_recipe.domain].append(queued_recipe)
+            print(
+                f"Deferring {queued_recipe.recipe_id} after a transient source failure "
+                f"(retry {queued_recipe.retries}/{max_retries})."
+            )
         else:
             failed += 1
 
@@ -149,8 +188,17 @@ if __name__ == "__main__":
     parser.add_argument("--apply", action="store_true", help="Write refreshed extraction results to the database")
     parser.add_argument("--limit", type=int, help="Process at most this many recipes")
     parser.add_argument("--recipe-id", action="append", default=[], help="Only re-import this recipe UUID; repeatable")
-    parser.add_argument("--concurrency", type=int, default=1, help="Number of parallel re-imports (default: 1)")
+    parser.add_argument("--retry-delay-seconds", type=int, default=60, help="Cooldown before retrying a rate-limited source (default: 60)")
+    parser.add_argument("--max-retries", type=int, default=3, help="Retries for a transient source failure (default: 3)")
     args = parser.parse_args()
-    if args.concurrency < 1:
-        parser.error("--concurrency must be at least 1")
-    asyncio.run(main(args.apply, args.limit, {uuid.UUID(value) for value in args.recipe_id}, args.concurrency))
+    if args.retry_delay_seconds < 1:
+        parser.error("--retry-delay-seconds must be at least 1")
+    if args.max_retries < 0:
+        parser.error("--max-retries must be at least 0")
+    asyncio.run(main(
+        args.apply,
+        args.limit,
+        {uuid.UUID(value) for value in args.recipe_id},
+        args.retry_delay_seconds,
+        args.max_retries,
+    ))
