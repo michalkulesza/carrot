@@ -86,7 +86,7 @@ const CreateHouseholdModal = ({
                     <button
                       key={c}
                       type="button"
-                      className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110"
+                      className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
                       style={buildColorSwatchStyle(c, color)}
                       onClick={() => setColor(c)}
                     />
