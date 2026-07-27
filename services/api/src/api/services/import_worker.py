@@ -30,6 +30,7 @@ from api.models import (
     UserPreferences,
 )
 from api.routes.imports import _event_for_job
+from api.routes.recipes import _link_recipe_to_household
 from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
 from api.services.embeddings import queue_recipe_embedding
@@ -78,15 +79,13 @@ def _normalize_ingredient_punctuation(value: str) -> str:
     return normalized
 
 
-async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uuid.UUID | None):
-    tags = list((await session.scalars(select(Tag).where(_tag_filter(user_id, household_id)))).all())
-    allergens: list[str] = []
-    if household_id:
-        household = await session.get(Household, household_id)
-        allergens = list(household.allergens) if household and household.allergens else []
-    else:
-        preferences = await session.get(UserPreferences, user_id)
-        allergens = list(preferences.personal_allergens) if preferences and preferences.personal_allergens else []
+async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uuid.UUID):
+    tags = list((await session.scalars(select(Tag).where(_tag_filter(household_id)))).all())
+    household = await session.get(Household, household_id)
+    household_allergens = set(household.allergens) if household and household.allergens else set()
+    preferences = await session.get(UserPreferences, user_id)
+    personal_allergens = set(preferences.personal_allergens) if preferences and preferences.personal_allergens else set()
+    allergens = list(household_allergens | personal_allergens)
     return [tag.name for tag in tags], allergens
 
 
@@ -119,7 +118,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     tags: list[Tag] = []
     if recipe_data.tags:
         tags = list((await session.scalars(
-            select(Tag).where(_tag_filter(job.user_id, job.household_id), func.lower(Tag.name).in_([name.lower() for name in recipe_data.tags]))
+            select(Tag).where(_tag_filter(job.household_id), func.lower(Tag.name).in_([name.lower() for name in recipe_data.tags]))
         )).all())
     preferences = await session.get(UserPreferences, job.user_id)
     auto_substitute = bool(preferences and preferences.auto_substitute)
@@ -155,9 +154,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         })
     metadata = result.metadata
     recipe = Recipe(
-        user_id=job.user_id,
-        household_id=job.household_id,
-        shared_to_personal=job.shared_to_personal,
+        author_id=job.user_id,
         title=recipe_data.title or "Imported Recipe",
         servings=recipe_data.servings,
         total_time_minutes=recipe_data.total_time_minutes,
@@ -173,6 +170,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     )
     session.add(recipe)
     await session.flush()
+    await _link_recipe_to_household(session, recipe.id, job.household_id)
     await queue_recipe_embedding(session, recipe)
     return recipe
 
@@ -198,8 +196,6 @@ async def _claim_job() -> uuid.UUID | None:
 
 
 async def _is_member(session, job: ImportJob) -> bool:
-    if job.household_id is None:
-        return True
     return await session.get(HouseholdMember, {"household_id": job.household_id, "user_id": job.user_id}) is not None
 
 

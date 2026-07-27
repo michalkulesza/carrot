@@ -23,9 +23,11 @@ from api.models import (
     ShoppingListItem,
     Tag,
     UserPreferences,
+    recipe_households_table,
     recipe_tags_table,
     user_recipe_favourites_table,
 )
+from api.routes.households import generate_invite_code
 from api.users import SHOWCASE_EMAIL, User, UserCreate, UserManager
 
 logger = logging.getLogger(__name__)
@@ -75,10 +77,11 @@ async def ensure_showcase_user() -> None:
         )
         household = household_result.scalars().first()
         if household is None:
-            household = Household(name=SHOWCASE_HOUSEHOLD_NAME)
+            invite_code = await generate_invite_code(session)
+            household = Household(name=SHOWCASE_HOUSEHOLD_NAME, invite_code=invite_code)
             session.add(household)
             await session.flush()
-            session.add(HouseholdMember(household_id=household.id, user_id=user.id))
+            session.add(HouseholdMember(household_id=household.id, user_id=user.id, role="admin"))
             user.active_household_id = household.id
 
         preferences_result = await session.execute(
@@ -118,7 +121,7 @@ async def reset_showcase_account() -> None:
         await session.execute(
             user_recipe_favourites_table.delete().where(user_recipe_favourites_table.c.user_id == user_id)
         )
-        await session.execute(delete(Recipe).where(Recipe.user_id == user_id))
+        await session.execute(delete(Recipe).where(Recipe.author_id == user_id))
 
         recipe_id_map: dict[str, uuid.UUID] = {}
         for recipe_fixture in fixture.get("recipes", []):
@@ -126,9 +129,7 @@ async def reset_showcase_account() -> None:
             recipe_id_map[recipe_fixture["fixture_id"]] = new_id
             recipe = Recipe(
                 id=new_id,
-                user_id=user_id,
-                household_id=household_id,
-                shared_to_personal=recipe_fixture.get("shared_to_personal", True),
+                author_id=user_id,
                 title=recipe_fixture["title"],
                 servings=recipe_fixture.get("servings"),
                 kcal_per_serving=recipe_fixture.get("kcal_per_serving"),
@@ -139,10 +140,14 @@ async def reset_showcase_account() -> None:
                 notes=recipe_fixture.get("notes"),
             )
             session.add(recipe)
+            await session.flush()
+            if household_id is not None:
+                await session.execute(
+                    recipe_households_table.insert().values(recipe_id=recipe.id, household_id=household_id)
+                )
 
             tag_names = recipe_fixture.get("tag_names", [])
             if tag_names:
-                await session.flush()
                 tag_result = await session.execute(select(Tag).where(Tag.name.in_(tag_names)))
                 tags_by_name = {t.name: t for t in tag_result.scalars().all()}
                 for name in tag_names:

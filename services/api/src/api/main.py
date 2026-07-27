@@ -12,8 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.config import settings
 from api.database import Base, async_session_maker, engine, get_async_session, initialize_vector_schema
 from api.models import Recipe, Tag
-from api.services import r2
 from api.services.monitoring import init_sentry
+from api.services.orphan_cleanup import delete_orphan_recipes
 from api.routes.auth import router as auth_verify_router
 from api.routes.allergens import router as allergens_router
 from api.routes.export import router as export_router
@@ -345,12 +345,15 @@ async def delete_me(
     session: AsyncSession = Depends(get_async_session),
     user_manager: UserManager = Depends(get_user_manager),
 ) -> None:
-    if settings.r2_configured:
-        result = await session.execute(select(Recipe.thumbnail_url).where(Recipe.user_id == user.id))
-        for (thumbnail_url,) in result.all():
-            if thumbnail_url:
-                asyncio.create_task(asyncio.to_thread(r2.delete_image, thumbnail_url))
+    authored_result = await session.execute(select(Recipe.id).where(Recipe.author_id == user.id))
+    authored_recipe_ids = [row[0] for row in authored_result.all()]
+
     await user_manager.delete(user)
+
+    # author_id is ON DELETE SET NULL, so household recipes survive for other
+    # members — only sweep the ones that are now author-less with no household link.
+    await delete_orphan_recipes(session, authored_recipe_ids)
+    await session.commit()
 
 
 app.include_router(me_router, prefix="/api/users", tags=["users"])
