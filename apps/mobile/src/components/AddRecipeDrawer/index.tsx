@@ -10,7 +10,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useApiClient } from '@carrot/shared/api/context'
-import { usePersonalRecipes } from '@carrot/shared/hooks/useRecipes'
+import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useHousehold } from '../../context/HouseholdContext'
 import { enqueueImport } from '../../utils/enqueueImport'
 import { normalizeHttpUrl, type AddRecipeMethod, type AddRecipeSubview } from './helpers'
@@ -42,10 +42,10 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const api = useApiClient()
   const qc = useQueryClient()
   const { activeHouseholdId } = useHousehold()
-  const {
-    data: personalRecipes = [],
-    isLoading: isLoadingPersonalRecipes,
-  } = usePersonalRecipes(activeHouseholdId !== null)
+  const { data: myRecipes = [], isLoading: isLoadingPersonalRecipes } = useMyRecipes()
+  const personalRecipes = myRecipes.filter(
+    (r) => !activeHouseholdId || !r.household_ids.includes(activeHouseholdId),
+  )
 
   const sheetRef = useRef<BottomSheetModal>(null)
   const [subview, setSubview] = useState<AddRecipeSubview>('picker')
@@ -184,13 +184,16 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
 
   const handlePersonalRecipeSelect = useCallback(async (recipeId: string) => {
     if (!activeHouseholdId) return
+    const recipe = personalRecipes.find((r) => r.id === recipeId)
+    if (!recipe) return
 
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setLinkingRecipeId(recipeId)
     setError(null)
     try {
-      await api.linkRecipeToHousehold(recipeId, activeHouseholdId)
+      await api.setRecipeHouseholds(recipeId, [...recipe.household_ids, activeHouseholdId])
       await qc.invalidateQueries({ queryKey: ['recipes'] })
+      await qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sheetRef.current?.dismiss()
     } catch (err) {
@@ -198,7 +201,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     } finally {
       setLinkingRecipeId(null)
     }
-  }, [activeHouseholdId, api, qc, t])
+  }, [activeHouseholdId, personalRecipes, api, qc, t])
 
   const handleBackToPicker = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -273,7 +276,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 canImport={normalizeHttpUrl(url) !== null}
               />
               <MethodPickerView
-                showPersonalLibrary={activeHouseholdId !== null}
+                showPersonalLibrary={personalRecipes.length > 0}
                 onSelect={handleMethodSelect}
               />
             </>

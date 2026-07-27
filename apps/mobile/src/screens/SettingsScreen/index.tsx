@@ -42,6 +42,7 @@ import SectionHeader from "./SectionHeader";
 import StatsSection from "./StatsSection";
 import PreferencesSection from "./PreferencesSection";
 import HouseholdsSection from "./HouseholdsSection";
+import MyRecipesSection from "./MyRecipesSection";
 import AllergenSection from "./AllergenSection";
 
 const SettingsHeaderRight = () => (
@@ -60,7 +61,7 @@ const SettingsScreen = () => {
   const { showSpinner } = useScreenLoading(isLoading);
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold();
-  const { create: createHousehold } = useHouseholds();
+  const { create: createHousehold, joinByCode } = useHouseholds();
   const api = useApiClient();
   const insets = useSafeAreaInsets();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } = useCookingMode();
@@ -114,15 +115,6 @@ const SettingsScreen = () => {
   const handleWeekStartChange = useCallback(
     (value: number) => {
       update.mutate({ week_start_day: value } as Partial<UserPreferences>);
-    },
-    [update],
-  );
-
-  const handleShareImportsToggle = useCallback(
-    (value: boolean) => {
-      update.mutate({
-        share_imports_to_personal: value,
-      } as Partial<UserPreferences>);
     },
     [update],
   );
@@ -244,6 +236,29 @@ const SettingsScreen = () => {
     );
   }, [t, handleHouseholdNameSubmit]);
 
+  const handleJoinCodeSubmit = useCallback(
+    async (code?: string) => {
+      if (!code?.trim()) return;
+      try {
+        await joinByCode.mutateAsync(code.trim());
+        refetchHouseholds();
+      } catch (e) {
+        Alert.alert(t("common.ok"), e instanceof Error ? e.message : t("households.joinFailed"));
+      }
+    },
+    [joinByCode, refetchHouseholds, t],
+  );
+
+  const handleJoinByCode = useCallback(() => {
+    Alert.prompt(
+      t("households.haveACode"),
+      t("households.codePlaceholder"),
+      handleJoinCodeSubmit,
+      "plain-text",
+      "",
+    );
+  }, [t, handleJoinCodeSubmit]);
+
   const handleManageHousehold = useCallback(
     (household: HouseholdOut) => {
       router.push({
@@ -277,7 +292,7 @@ const SettingsScreen = () => {
 
   const allergenScopeLabel = activeHousehold
     ? t("settings.householdScope", { name: activeHousehold.name })
-    : t("settings.personalScope");
+    : t("settings.myAllergensLabel");
 
   const currentAllergens: string[] =
     activeHousehold?.allergens ?? preferences?.personal_allergens ?? [];
@@ -346,7 +361,10 @@ const SettingsScreen = () => {
         activeHouseholdId={activeHouseholdId}
         onManage={handleManageHousehold}
         onCreateHousehold={handleCreateHousehold}
+        onJoinByCode={handleJoinByCode}
       />
+
+      <MyRecipesSection households={households} activeHouseholdId={activeHouseholdId} />
 
       <SectionHeader label={t("settings.preferences")} />
       <PreferencesSection
@@ -359,25 +377,6 @@ const SettingsScreen = () => {
         onUnitSystemToggle={handleUnitSystemToggle}
         onAppearanceChange={handleAppearanceChange}
       />
-
-      <SectionHeader label={t("settings.recipeImport")} />
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>
-              {t("settings.shareImportsToPersonal")}
-            </Text>
-            <Text style={styles.cardDesc}>
-              {t("settings.shareImportsToPersonalDesc")}
-            </Text>
-          </View>
-          <Switch
-            value={preferences?.share_imports_to_personal ?? false}
-            onValueChange={handleShareImportsToggle}
-            accessibilityLabel={t("settings.shareImportsToPersonal")}
-          />
-        </View>
-      </View>
 
       <SectionHeader label={t("settings.recipeDetail")} />
       <View style={styles.card}>

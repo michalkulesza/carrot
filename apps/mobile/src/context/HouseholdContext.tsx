@@ -29,12 +29,17 @@ interface HouseholdContextValue {
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
+const GATE_INVITATIONS_POLL_MS = 10_000
+const BELL_INVITATIONS_POLL_MS = 30_000
+
 export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
   const { user, refreshUser } = useAuth()
   const qc = useQC()
 
   const { households, isLoading: isLoadingHouseholds } = useHouseholds()
-  const { invitations } = useInvitations()
+  const { invitations } = useInvitations(
+    households.length === 0 ? GATE_INVITATIONS_POLL_MS : BELL_INVITATIONS_POLL_MS,
+  )
   const { notifications: leaveNotifications, dismiss: dismissLeaveNotificationMutation } =
     useHouseholdLeaveNotifications()
 

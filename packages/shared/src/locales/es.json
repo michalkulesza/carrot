@@ -40,7 +40,8 @@
     "tryAgain": "Inténtalo de nuevo",
     "search": "Buscar",
     "remove": "Eliminar",
-    "or": "o"
+    "or": "o",
+    "copy": "Copiar"
   },
   "cookMode": {
     "start": "Modo cocina",
@@ -335,6 +336,7 @@
     "makeAdmin": "Hacer administrador",
     "inviteCode": "Código de invitación",
     "codeCopied": "Código copiado",
+    "regenerate": "Regenerar",
     "recipesLabel": "Recetas",
     "ingredientsLabel": "Ingredientes",
     "avgKcal": "Kcal prom.",

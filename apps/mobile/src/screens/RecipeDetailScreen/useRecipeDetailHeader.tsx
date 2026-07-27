@@ -9,8 +9,7 @@ import BugReportButton from '../../components/BugReportButton'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
-export const SEND_TO_HOUSEHOLD_PREFIX = 'send-to-household-'
-export const SEND_TO_PERSONAL = 'send-to-personal'
+export const TOGGLE_HOUSEHOLD_PREFIX = 'toggle-household-'
 export const SHARE_PUBLICLY = 'share-publicly'
 
 type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
@@ -41,7 +40,6 @@ const EditHeaderRight = () => (
 const ViewHeaderRight = ({
   addMode,
   recipe,
-  activeHouseholdId,
   onToggleAddMode,
   onOpenMealPlanSheet,
   households,
@@ -50,8 +48,7 @@ const ViewHeaderRight = ({
   onEdit,
 }: {
   addMode: boolean
-  recipe: { household_id: string | null; shared_to_personal: boolean }
-  activeHouseholdId: string | null
+  recipe: { household_ids: string[] }
   onToggleAddMode: () => void
   onOpenMealPlanSheet: () => void
   households: HouseholdOut[]
@@ -64,34 +61,21 @@ const ViewHeaderRight = ({
   const recipeActions = useMemo<MenuAction[]>(
     () => {
       const publicAction: MenuAction = { id: SHARE_PUBLICLY, title: t('publicShare.sharePublicly') }
-      if (
-        activeHouseholdId !== null &&
-        recipe.household_id === activeHouseholdId &&
-        !recipe.shared_to_personal
-      ) {
-        return [publicAction, { id: SEND_TO_PERSONAL, title: t('recipes.sendToPersonalLibrary') }]
-      }
-      if (recipe.household_id !== null) return [publicAction]
-      if (households.length === 0) {
-        return [
-          publicAction,
-          {
-            id: 'send-to-household',
-            title: t('recipes.sendToHousehold'),
-            attributes: { disabled: true },
-          },
-        ]
-      }
+      if (households.length === 0) return [publicAction]
       return [
         publicAction,
         {
-          id: 'send-to-household',
-          title: t('recipes.sendToHousehold'),
-          subactions: households.map((h) => ({ id: `${SEND_TO_HOUSEHOLD_PREFIX}${h.id}`, title: h.name })),
+          id: 'in-households',
+          title: t('recipes.inHouseholds'),
+          subactions: households.map((h) => ({
+            id: `${TOGGLE_HOUSEHOLD_PREFIX}${h.id}`,
+            title: h.name,
+            state: recipe.household_ids.includes(h.id) ? 'on' : 'off',
+          })),
         },
       ]
     },
-    [activeHouseholdId, households, recipe.household_id, recipe.shared_to_personal, t],
+    [households, recipe.household_ids, t],
   )
   const handleMenuAction = useCallback(({ nativeEvent }: { nativeEvent: { event: string } }) => {
     if (nativeEvent.event === SHARE_PUBLICLY) {
@@ -162,7 +146,6 @@ export const useRecipeDetailHeader = ({
   cooking,
   addMode,
   recipe,
-  activeHouseholdId,
   onToggleAddMode,
   handleEdit,
   handleCancelEdit,
@@ -175,8 +158,7 @@ export const useRecipeDetailHeader = ({
   editing: boolean
   cooking: boolean
   addMode: boolean
-  recipe: { household_id: string | null; shared_to_personal: boolean }
-  activeHouseholdId: string | null
+  recipe: { household_ids: string[] }
   onToggleAddMode: () => void
   handleEdit: () => void
   handleCancelEdit: () => void
@@ -207,7 +189,6 @@ export const useRecipeDetailHeader = ({
           <ViewHeaderRight
             addMode={addMode}
             recipe={recipe}
-            activeHouseholdId={activeHouseholdId}
             onToggleAddMode={onToggleAddMode}
             onOpenMealPlanSheet={handleOpenMealPlanSheet}
             households={households}
@@ -229,7 +210,6 @@ export const useRecipeDetailHeader = ({
     handlePressRecipeAction,
     addMode,
     recipe,
-    activeHouseholdId,
     onToggleAddMode,
   ])
 }

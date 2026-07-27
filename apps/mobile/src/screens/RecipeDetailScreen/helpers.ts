@@ -78,7 +78,6 @@ export const buildRecipeSaveRequest = (
   notes: recipe.notes,
   components: recipe.components,
   tag_ids: recipe.tags.map((tag) => tag.id),
-  shared_to_personal: recipe.shared_to_personal,
   ...overrides,
 })
 

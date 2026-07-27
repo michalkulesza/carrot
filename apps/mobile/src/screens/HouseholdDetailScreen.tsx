@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
+import * as Clipboard from 'expo-clipboard'
 import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { useMembers } from '@carrot/shared/hooks/useMembers'
 import type { MemberOut } from '@carrot/shared/types'
@@ -52,29 +53,83 @@ const HeaderSaveButton = ({ saving, isDirty, onPress }: HeaderSaveButtonProps) =
   )
 }
 
-const MemberRow = ({ member }: { member: MemberOut }) => (
-  <View style={styles.memberRow}>
-    <Avatar name={member.nickname || member.email} size={32} />
-    <Text style={styles.memberName} numberOfLines={1}>
-      {member.nickname || member.email}
-    </Text>
-  </View>
-)
+interface MemberRowProps {
+  member: MemberOut
+  isAdmin: boolean
+  isSelf: boolean
+  busy: boolean
+  onRemove: (userId: string) => void
+  onPromote: (userId: string) => void
+}
+
+const MemberRow = ({ member, isAdmin, isSelf, busy, onRemove, onPromote }: MemberRowProps) => {
+  const { t } = useTranslation()
+  const handleRemove = useCallback(() => onRemove(member.user_id), [member.user_id, onRemove])
+  const handlePromote = useCallback(() => onPromote(member.user_id), [member.user_id, onPromote])
+
+  return (
+    <View style={styles.memberRow}>
+      <Avatar name={member.nickname || member.email} size={32} />
+      <Text style={styles.memberName} numberOfLines={1}>
+        {member.nickname || member.email}
+      </Text>
+      {member.role === 'admin' && (
+        <View style={styles.adminBadge}>
+          <Text style={styles.adminBadgeText}>{t('settings.admin')}</Text>
+        </View>
+      )}
+      {isAdmin && !isSelf && !busy && (
+        <View style={styles.memberActions}>
+          {member.role !== 'admin' && (
+            <Pressable onPress={handlePromote} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.memberActionText}>{t('settings.makeAdmin')}</Text>
+            </Pressable>
+          )}
+          <Pressable onPress={handleRemove} hitSlop={8} accessibilityRole="button">
+            <Text style={styles.memberActionTextDanger}>{t('common.remove')}</Text>
+          </Pressable>
+        </View>
+      )}
+      {isAdmin && !isSelf && busy && <ActivityIndicator size="small" />}
+    </View>
+  )
+}
 
 interface MembersListProps {
   loading: boolean
-  members: MemberOut[] | undefined
+  members: MemberOut[]
+  isAdmin: boolean
+  currentUserId: string | undefined
+  busyUserId: string | null
+  onRemove: (userId: string) => void
+  onPromote: (userId: string) => void
 }
 
-const MembersList = ({ loading, members }: MembersListProps) => {
+const MembersList = ({
+  loading,
+  members,
+  isAdmin,
+  currentUserId,
+  busyUserId,
+  onRemove,
+  onPromote,
+}: MembersListProps) => {
   if (loading) {
     return <ActivityIndicator style={styles.membersLoading} />
   }
 
   return (
     <>
-      {(members ?? []).map((m) => (
-        <MemberRow key={m.user_id.toString()} member={m} />
+      {members.map((m) => (
+        <MemberRow
+          key={m.user_id.toString()}
+          member={m}
+          isAdmin={isAdmin}
+          isSelf={m.user_id === currentUserId}
+          busy={busyUserId === m.user_id}
+          onRemove={onRemove}
+          onPromote={onPromote}
+        />
       ))}
     </>
   )
@@ -85,8 +140,8 @@ const HouseholdDetailScreen = () => {
   const router = useRouter()
   const { t } = useTranslation()
   const { user, refreshUser } = useAuth()
-  const { households, update, leave, invite } = useHouseholds()
-  const { data: members, isLoading: membersLoading } = useMembers(householdId)
+  const { households, update, leave, invite, rotateCode } = useHouseholds()
+  const { members, isLoading: membersLoading, remove, promote } = useMembers(householdId)
   const insets = useSafeAreaInsets()
 
   const household = households.find((h) => h.id === householdId)
@@ -95,6 +150,11 @@ const HouseholdDetailScreen = () => {
   const [inviteEmail, setInviteEmail] = useState('')
   const [saving, setSaving] = useState(false)
   const [inviting, setInviting] = useState(false)
+  const [rotating, setRotating] = useState(false)
+  const [busyUserId, setBusyUserId] = useState<string | null>(null)
+
+  const currentMember = members.find((m) => m.user_id === user?.id)
+  const isAdmin = currentMember?.role === 'admin'
 
   const handleSave = useCallback(async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -138,6 +198,53 @@ const HouseholdDetailScreen = () => {
       setInviting(false)
     }
   }, [householdId, inviteEmail, invite, t])
+
+  const handleCopyCode = useCallback(async () => {
+    if (!household) return
+    await Clipboard.setStringAsync(household.invite_code)
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+  }, [household])
+
+  const handleRotateCode = useCallback(async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setRotating(true)
+    try {
+      await rotateCode.mutateAsync(householdId)
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    } catch (e) {
+      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+    } finally {
+      setRotating(false)
+    }
+  }, [householdId, rotateCode, t])
+
+  const handleRemoveMember = useCallback(
+    async (userId: string) => {
+      setBusyUserId(userId)
+      try {
+        await remove.mutateAsync(userId)
+      } catch (e) {
+        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+      } finally {
+        setBusyUserId(null)
+      }
+    },
+    [remove, t],
+  )
+
+  const handlePromoteMember = useCallback(
+    async (userId: string) => {
+      setBusyUserId(userId)
+      try {
+        await promote.mutateAsync(userId)
+      } catch (e) {
+        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+      } finally {
+        setBusyUserId(null)
+      }
+    },
+    [promote, t],
+  )
 
   const handleLeaveOnPress = useCallback(async () => {
     try {
@@ -217,9 +324,34 @@ const HouseholdDetailScreen = () => {
         ))}
       </View>
 
+      <Text style={styles.sectionHeader}>{t('settings.inviteCode')}</Text>
+      <View style={[styles.card, styles.inviteCodeRow]}>
+        <Text style={styles.inviteCodeText}>{household.invite_code}</Text>
+        <Pressable onPress={handleCopyCode} hitSlop={8} accessibilityRole="button">
+          <Text style={styles.inviteBtnText}>{t('common.copy')}</Text>
+        </Pressable>
+        {isAdmin && (
+          rotating ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <Pressable onPress={handleRotateCode} hitSlop={8} accessibilityRole="button">
+              <Text style={styles.inviteBtnText}>{t('settings.regenerate')}</Text>
+            </Pressable>
+          )
+        )}
+      </View>
+
       <Text style={styles.sectionHeader}>{t('settings.members')}</Text>
       <View style={styles.card}>
-        <MembersList loading={membersLoading} members={members} />
+        <MembersList
+          loading={membersLoading}
+          members={members}
+          isAdmin={isAdmin}
+          currentUserId={user?.id}
+          busyUserId={busyUserId}
+          onRemove={handleRemoveMember}
+          onPromote={handlePromoteMember}
+        />
       </View>
 
       <Text style={styles.sectionHeader}>{t('settings.inviteByEmail')}</Text>
@@ -336,6 +468,36 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.secondaryBackground,
   },
   memberName: { flex: 1, fontSize: 16, color: colors.label },
+  adminBadge: {
+    backgroundColor: colors.secondaryBackground,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  adminBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: colors.blue,
+  },
+  memberActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  memberActionText: { fontSize: 14, fontWeight: '600', color: colors.blue },
+  memberActionTextDanger: { fontSize: 14, fontWeight: '600', color: colors.red },
+  inviteCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    gap: 16,
+  },
+  inviteCodeText: {
+    flex: 1,
+    fontSize: 17,
+    fontWeight: '600',
+    letterSpacing: 2,
+    color: colors.label,
+  },
   inviteRow: {
     flexDirection: 'row',
     alignItems: 'center',

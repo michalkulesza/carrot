@@ -1,12 +1,17 @@
 import { useEffect } from 'react'
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
+import { Redirect, useSegments } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import { useHousehold } from '../../src/context/HouseholdContext'
 import { persistLanguage } from '../../src/i18n'
 
 export default function TabsLayout() {
   const { t, i18n } = useTranslation()
   const { preferences } = usePreferences()
+  const { households, isLoadingHouseholds } = useHousehold()
+  const segments = useSegments()
+  const gated = !isLoadingHouseholds && households.length === 0
 
   useEffect(() => {
     const lang = preferences?.language
@@ -16,22 +21,32 @@ export default function TabsLayout() {
     }
   }, [preferences?.language, i18n])
 
+  if (gated && !segments.includes('settings')) {
+    return <Redirect href="/(tabs)/settings" />
+  }
+
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="recipes">
-        <NativeTabs.Trigger.Icon sf="book" md="menu_book" />
-        <NativeTabs.Trigger.Label>{t('nav.recipes')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {!gated && (
+        <NativeTabs.Trigger name="recipes">
+          <NativeTabs.Trigger.Icon sf="book" md="menu_book" />
+          <NativeTabs.Trigger.Label>{t('nav.recipes')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      )}
 
-      <NativeTabs.Trigger name="meal-plan">
-        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
-        <NativeTabs.Trigger.Label>{t('nav.mealPlan')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {!gated && (
+        <NativeTabs.Trigger name="meal-plan">
+          <NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
+          <NativeTabs.Trigger.Label>{t('nav.mealPlan')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      )}
 
-      <NativeTabs.Trigger name="shopping">
-        <NativeTabs.Trigger.Icon sf="cart" md="shopping_cart" />
-        <NativeTabs.Trigger.Label>{t('nav.shopping')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {!gated && (
+        <NativeTabs.Trigger name="shopping">
+          <NativeTabs.Trigger.Icon sf="cart" md="shopping_cart" />
+          <NativeTabs.Trigger.Label>{t('nav.shopping')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      )}
 
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />

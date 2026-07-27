@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useNavigation, useRouter } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
+import { unionAllergens } from '@carrot/shared/utils/unionAllergens'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
@@ -24,14 +25,17 @@ const NewRecipeScreen = () => {
   const qc = useQueryClient()
   const { tags, create: createTagMutation } = useTags()
   const { preferences } = usePreferences()
-  const { activeHouseholdId } = useHousehold()
+  const { activeHousehold } = useHousehold()
 
   const [editable, setEditable] = useState(() => blankRecipe())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
 
-  const activeAllergens = useMemo(() => preferences?.personal_allergens ?? [], [preferences])
+  const activeAllergens = useMemo(
+    () => unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens),
+    [activeHousehold, preferences],
+  )
   const selectedTagIds = useMemo(() => new Set(selectedTags.map((tag) => tag.id)), [selectedTags])
 
   const handleDiscard = useCallback(() => router.back(), [router])
@@ -42,8 +46,7 @@ const NewRecipeScreen = () => {
     setSaving(true)
     setError(null)
     try {
-      const sharedToPersonal = activeHouseholdId !== null && !!preferences?.share_imports_to_personal
-      await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags, sharedToPersonal))
+      await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags))
       await qc.invalidateQueries({ queryKey: ['recipes'] })
       router.back()
     } catch (err) {
@@ -51,7 +54,7 @@ const NewRecipeScreen = () => {
     } finally {
       setSaving(false)
     }
-  }, [editable, selectedTags, activeHouseholdId, preferences, api, qc, t, router])
+  }, [editable, selectedTags, api, qc, t, router])
 
   const handleTagAdd = useCallback((tag: Tag) => setSelectedTags((prev) => [...prev, tag]), [])
   const handleTagRemove = useCallback((id: string) => setSelectedTags((prev) => prev.filter((tag) => tag.id !== id)), [])

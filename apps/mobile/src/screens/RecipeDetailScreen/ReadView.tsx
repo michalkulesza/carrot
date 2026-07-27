@@ -17,7 +17,6 @@ import { useHousehold } from "../../context/HouseholdContext";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import type { EdgeInsets } from "react-native-safe-area-context";
 import type { RecipeOut } from "@carrot/shared/types";
-import { PERSONAL_LIBRARY_COLOR } from "@carrot/shared/utils/householdColors";
 import AddToMealPlanSheet, {
   type AddToMealPlanSheetHandle,
 } from "../../components/AddToMealPlanSheet";
@@ -118,30 +117,10 @@ const ReadView = ({
     recipe.servings && selectedServings
       ? selectedServings / recipe.servings
       : 1;
-  const recipeHousehold = recipe.household_id
-    ? households.find((h) => h.id === recipe.household_id)
-    : undefined;
-  const recipeMembers = [
-    ...(!recipe.household_id || recipe.shared_to_personal
-      ? [
-          {
-            id: "personal",
-            name: t("households.personal"),
-            label: t("households.you").charAt(0),
-            color: PERSONAL_LIBRARY_COLOR,
-          },
-        ]
-      : []),
-    ...(recipeHousehold
-      ? [
-          {
-            id: recipeHousehold.id,
-            name: recipeHousehold.name,
-            color: recipeHousehold.color,
-          },
-        ]
-      : []),
-  ];
+  const recipeMembers = recipe.household_ids
+    .map((id) => households.find((h) => h.id === id))
+    .filter((h): h is NonNullable<typeof h> => !!h)
+    .map((h) => ({ id: h.id, name: h.name, color: h.color }));
 
   return (
     <View style={styles.container}>

@@ -9,11 +9,13 @@ const HouseholdsSection = ({
   activeHouseholdId,
   onManage,
   onCreateHousehold,
+  onJoinByCode,
 }: {
   households: HouseholdOut[]
   activeHouseholdId: string | null | undefined
   onManage: (household: HouseholdOut) => void
   onCreateHousehold: () => void
+  onJoinByCode: () => void
 }) => {
   const { t } = useTranslation()
 
@@ -61,6 +63,17 @@ const HouseholdsSection = ({
         accessibilityRole="button"
       >
         <Text style={styles.newHouseholdText}>{t('settings.newHousehold')}</Text>
+      </Pressable>
+      <Pressable
+        style={({ pressed }) => [styles.newHouseholdRow, pressed && { opacity: 0.7 }]}
+        onPress={() => {
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+          onJoinByCode()
+        }}
+        accessibilityLabel={t('households.haveACode')}
+        accessibilityRole="button"
+      >
+        <Text style={styles.newHouseholdText}>{t('households.haveACode')}</Text>
       </Pressable>
     </View>
   )

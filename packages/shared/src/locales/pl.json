@@ -40,7 +40,8 @@
     "tryAgain": "Spróbuj ponownie",
     "search": "Szukaj",
     "remove": "Usuń",
-    "or": "lub"
+    "or": "lub",
+    "copy": "Kopiuj"
   },
   "cookMode": {
     "start": "Tryb gotowania",
@@ -344,6 +345,7 @@
     "makeAdmin": "Uczyń administratorem",
     "inviteCode": "Kod zaproszenia",
     "codeCopied": "Kod skopiowany",
+    "regenerate": "Wygeneruj ponownie",
     "recipesLabel": "Przepisy",
     "ingredientsLabel": "Składniki",
     "avgKcal": "Śr. kcal",

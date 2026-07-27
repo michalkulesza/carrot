@@ -11,7 +11,6 @@ const HeaderTitle = ({
   onHouseholdAction,
   onHouseholdMenuOpen,
   activeHousehold,
-  personalName,
   switchContextLabel,
   isLoadingHouseholds,
 }: {
@@ -20,7 +19,6 @@ const HeaderTitle = ({
   onHouseholdAction: ({ nativeEvent }: NativeActionEvent) => void
   onHouseholdMenuOpen: () => void
   activeHousehold: HouseholdOut | null
-  personalName: string
   switchContextLabel: string
   isLoadingHouseholds: boolean
 }) => (
@@ -39,7 +37,7 @@ const HeaderTitle = ({
         onOpenMenu={onHouseholdMenuOpen}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Avatar name={activeHousehold ? activeHousehold.name : personalName} color={activeHousehold?.color} size={28} />
+        <Avatar name={activeHousehold?.name ?? ''} color={activeHousehold?.color} size={28} />
       </MenuView>
     )}
     <Text style={styles.headerTitleText} numberOfLines={1}>

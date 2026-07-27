@@ -9,6 +9,8 @@ import { useRecipes } from "@carrot/shared/hooks/useRecipes";
 import { useShoppingList } from "@carrot/shared/hooks/useShoppingList";
 import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks/usePreferences";
 import type { RecipeOut } from "@carrot/shared/types";
+import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
+import { useAuth } from "../../context/AuthContext";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useResolvedColorScheme } from "../../context/ColorSchemeContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
@@ -18,8 +20,7 @@ import { useDisplayPrefs } from "./useDisplayPrefs";
 import { useEditDraft } from "./useEditDraft";
 import {
   useRecipeDetailHeader,
-  SEND_TO_HOUSEHOLD_PREFIX,
-  SEND_TO_PERSONAL,
+  TOGGLE_HOUSEHOLD_PREFIX,
 } from "./useRecipeDetailHeader";
 import EditView from "./EditView";
 import ReadView from "./ReadView";
@@ -65,12 +66,13 @@ const RecipeDetailScreen = () => {
     error,
     toggleFavourite,
     remove,
-    linkToHousehold,
-    linkToPersonal,
+    setHouseholds,
+    removeFromHousehold,
   } = useRecipes();
   const { addItems } = useShoppingList();
   const { preferences } = usePreferences();
   const { households, activeHouseholdId, activeHousehold } = useHousehold();
+  const { user } = useAuth();
   const colorScheme = useResolvedColorScheme();
   const [heroImageErrored, setHeroImageErrored] = useState(false);
   const [addMode, setAddMode] = useState(false);
@@ -137,29 +139,50 @@ const RecipeDetailScreen = () => {
     toggleFavourite.mutate(recipe.id);
   }, [recipe, toggleFavourite]);
 
+  const handleDeleteEverywhere = useCallback(() => {
+    if (!recipe || deletePendingRef.current) return
+    deletePendingRef.current = true
+    void remove.mutateAsync(recipe.id)
+      .then(() => navigation.goBack())
+      .catch(() => Alert.alert(t('common.ok'), t('recipes.failedToDelete')))
+      .finally(() => { deletePendingRef.current = false })
+  }, [navigation, recipe, remove, t])
+
+  const handleRemoveFromHousehold = useCallback(() => {
+    if (!recipe || !activeHouseholdId || deletePendingRef.current) return
+    deletePendingRef.current = true
+    void removeFromHousehold.mutateAsync({ id: recipe.id, householdId: activeHouseholdId })
+      .then(() => navigation.goBack())
+      .catch(() => Alert.alert(t('common.ok'), t('recipes.failedToDelete')))
+      .finally(() => { deletePendingRef.current = false })
+  }, [navigation, recipe, activeHouseholdId, removeFromHousehold, t])
+
   const handleDeleteRecipe = useCallback(() => {
     if (!recipe || deletePendingRef.current) return
+    const isAuthor = recipe.author_id === user?.id
+    const linkedToActiveHousehold =
+      !!activeHouseholdId && recipe.household_ids.includes(activeHouseholdId)
 
-    Alert.alert(
-      t('recipes.deleteTitle'),
-      t('recipes.deleteConfirm', { title: recipe.title }),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: () => {
-            if (deletePendingRef.current) return
-            deletePendingRef.current = true
-            void remove.mutateAsync(recipe.id)
-              .then(() => navigation.goBack())
-              .catch(() => Alert.alert(t('common.ok'), t('recipes.failedToDelete')))
-              .finally(() => { deletePendingRef.current = false })
-          },
-        },
-      ],
-    )
-  }, [navigation, recipe, remove, t])
+    const buttons: Parameters<typeof Alert.alert>[2] = [
+      { text: t('common.cancel'), style: 'cancel' },
+    ]
+    if (linkedToActiveHousehold && activeHousehold) {
+      buttons.push({
+        text: t('recipes.deleteFromHousehold', { name: activeHousehold.name }),
+        style: 'destructive',
+        onPress: handleRemoveFromHousehold,
+      })
+    }
+    if (isAuthor) {
+      buttons.push({
+        text: t('recipes.deleteEverywhere'),
+        style: 'destructive',
+        onPress: handleDeleteEverywhere,
+      })
+    }
+
+    Alert.alert(t('recipes.deleteTitle'), t('recipes.deleteConfirm', { title: recipe.title }), buttons)
+  }, [recipe, user, activeHouseholdId, activeHousehold, handleRemoveFromHousehold, handleDeleteEverywhere, t])
 
   const handleOpenCookMode = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -200,26 +223,14 @@ const RecipeDetailScreen = () => {
   const handlePressRecipeAction = useCallback(
     ({ nativeEvent }: { nativeEvent: { event: string } }) => {
       if (!recipe) return;
-      if (nativeEvent.event === SEND_TO_PERSONAL) {
-        linkToPersonal.mutate(recipe.id, {
-          onSuccess: () =>
-            Alert.alert(t("recipes.recipeAddedToPersonalLibrary")),
-          onError: (err) =>
-            Alert.alert(
-              t("common.ok"),
-              err instanceof Error ? err.message : t("addRecipe.failedToAdd"),
-            ),
-        });
-        return;
-      }
-      if (!nativeEvent.event.startsWith(SEND_TO_HOUSEHOLD_PREFIX)) return;
-      const householdId = nativeEvent.event.slice(
-        SEND_TO_HOUSEHOLD_PREFIX.length,
-      );
-      linkToHousehold.mutate(
-        { id: recipe.id, householdId },
+      if (!nativeEvent.event.startsWith(TOGGLE_HOUSEHOLD_PREFIX)) return;
+      const householdId = nativeEvent.event.slice(TOGGLE_HOUSEHOLD_PREFIX.length);
+      const householdIds = recipe.household_ids.includes(householdId)
+        ? recipe.household_ids.filter((id) => id !== householdId)
+        : [...recipe.household_ids, householdId];
+      setHouseholds.mutate(
+        { id: recipe.id, householdIds },
         {
-          onSuccess: () => Alert.alert(t("addRecipe.recipeAddedToHousehold")),
           onError: (err) =>
             Alert.alert(
               t("common.ok"),
@@ -228,7 +239,7 @@ const RecipeDetailScreen = () => {
         },
       );
     },
-    [recipe, linkToHousehold, linkToPersonal, t],
+    [recipe, setHouseholds, t],
   );
 
   const handleAddIngredient = useCallback((key: string, text: string) => {
@@ -261,8 +272,7 @@ const RecipeDetailScreen = () => {
     editing: editDraft.editing,
     cooking: cookModeOpen,
     addMode,
-    recipe: recipe ?? { household_id: null, shared_to_personal: false },
-    activeHouseholdId,
+    recipe: recipe ?? { household_ids: [] },
     onToggleAddMode: handleToggleAddMode,
     handleEdit: editDraft.handleEdit,
     handleCancelEdit: editDraft.handleCancelEdit,
@@ -336,7 +346,7 @@ const RecipeDetailScreen = () => {
       <ReadView
         recipe={recipe}
         activeAllergens={
-          activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
+          unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens)
         }
         selectedServings={selectedServings}
         addMode={addMode}

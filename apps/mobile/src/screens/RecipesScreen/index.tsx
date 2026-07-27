@@ -34,7 +34,6 @@ import { useTags } from '@carrot/shared/hooks/useTags'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ImportJob, RecipeOut, Tag } from '@carrot/shared/types'
-import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import Avatar from '../../components/Avatar'
 import { TAG_CATEGORIES, groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
@@ -47,15 +46,13 @@ import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
 import {
-  MANAGE_TIP_MENU_ID,
-  PERSONAL_MENU_ID,
   SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY,
   SORT_OPTIONS,
   learnedSearchBarHeightDelta,
   setLearnedSearchBarHeightDelta,
   type SortMode,
 } from './helpers'
-import { SEND_TO_HOUSEHOLD_PREFIX, SEND_TO_PERSONAL } from '../RecipeDetailScreen/useRecipeDetailHeader'
+import { TOGGLE_HOUSEHOLD_PREFIX } from '../RecipeDetailScreen/useRecipeDetailHeader'
 import { styles } from './styles'
 import ThumbnailImage from './ThumbnailImage'
 import PendingJobCard from './PendingJobCard'
@@ -162,7 +159,7 @@ const RecipesScreen = () => {
 
   const { user, loading: authLoading } = useAuth()
   const dataQueriesEnabled = !authLoading && user !== null
-  const { recipes, isLoading, isFetching, error, linkToHousehold, linkToPersonal } = useRecipes(dataQueriesEnabled)
+  const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
   const [switchingHousehold, setSwitchingHousehold] = useState(false)
   const householdFetchStartedRef = useRef(false)
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
@@ -170,7 +167,6 @@ const RecipesScreen = () => {
   const { households, isLoadingHouseholds, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
   const api = useApiClient()
   const qc = useQueryClient()
-  const personalName = useMemo(() => user?.nickname || user?.email || t('households.personal'), [user, t])
   const [query, setQuery] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set())
@@ -226,36 +222,58 @@ const RecipesScreen = () => {
     [api, qc, t],
   )
 
+  const handleConfirmRemoveFromHousehold = useCallback(
+    async (recipe: RecipeOut) => {
+      if (!activeHouseholdId) return
+      try {
+        await api.removeRecipeFromHousehold(recipe.id, activeHouseholdId)
+        qc.setQueryData<RecipeOut[]>(['recipes'], (old) => old?.filter((r) => r.id !== recipe.id) ?? [])
+        await qc.invalidateQueries({ queryKey: ['recipes'] })
+      } catch {
+        Alert.alert(t('recipes.failedToDelete'))
+      }
+    },
+    [api, qc, activeHouseholdId, t],
+  )
+
   const handleDelete = useCallback(
     (recipe: RecipeOut) => {
-      Alert.alert(
-        t('recipes.deleteTitle'),
-        t('recipes.deleteConfirm', { title: recipe.title }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.delete'),
-            style: 'destructive',
-            onPress: () => handleConfirmDelete(recipe),
-          },
-        ],
-      )
+      const isAuthor = recipe.author_id === user?.id
+      const linkedToActiveHousehold =
+        !!activeHouseholdId && recipe.household_ids.includes(activeHouseholdId)
+
+      const buttons: Parameters<typeof Alert.alert>[2] = [
+        { text: t('common.cancel'), style: 'cancel' },
+      ]
+      if (linkedToActiveHousehold && activeHousehold) {
+        buttons.push({
+          text: t('recipes.deleteFromHousehold', { name: activeHousehold.name }),
+          style: 'destructive',
+          onPress: () => handleConfirmRemoveFromHousehold(recipe),
+        })
+      }
+      if (isAuthor) {
+        buttons.push({
+          text: t('recipes.deleteEverywhere'),
+          style: 'destructive',
+          onPress: () => handleConfirmDelete(recipe),
+        })
+      }
+
+      Alert.alert(t('recipes.deleteTitle'), t('recipes.deleteConfirm', { title: recipe.title }), buttons)
     },
-    [handleConfirmDelete, t],
+    [handleConfirmDelete, handleConfirmRemoveFromHousehold, user, activeHouseholdId, activeHousehold, t],
   )
 
   const buildRecipeShareActions = useCallback(
-    (item: RecipeOut): { id: string; label: string }[] => {
-      if (activeHouseholdId !== null && item.household_id === activeHouseholdId && !item.shared_to_personal) {
-        return [{ id: SEND_TO_PERSONAL, label: t('recipes.sendToPersonalLibrary') }]
-      }
-      if (item.household_id !== null) return []
-      return households.map((h) => ({
-        id: `${SEND_TO_HOUSEHOLD_PREFIX}${h.id}`,
-        label: `${t('recipes.sendToHousehold')}: ${h.name}`,
-      }))
-    },
-    [activeHouseholdId, households, t],
+    (item: RecipeOut): { id: string; label: string }[] =>
+      households.map((h) => ({
+        id: `${TOGGLE_HOUSEHOLD_PREFIX}${h.id}`,
+        label: item.household_ids.includes(h.id)
+          ? t('recipes.deleteFromHousehold', { name: h.name })
+          : `${t('recipes.addToHousehold')}: ${h.name}`,
+      })),
+    [households, t],
   )
 
   const filterMenuActions = useMemo(() =>
@@ -275,40 +293,20 @@ const RecipesScreen = () => {
   )
 
   const householdMenuActions = useMemo(
-    () => [
-      {
-        id: PERSONAL_MENU_ID,
-        title: t('households.personal'),
-        state: 'off' as const,
-        image: activeHouseholdId === null ? 'checkmark.circle.fill' : 'circle',
-        // Must be a plain hex string, not colors.secondaryLabel (PlatformColor) — passing a
-        // PlatformColor object as imageColor here silently breaks the whole menu from opening.
-        imageColor: '#8e8e93',
-      },
-      ...households.map((h) => ({
+    () =>
+      households.map((h) => ({
         id: h.id,
         title: h.name,
         state: 'off' as const,
         image: h.id === activeHouseholdId ? 'checkmark.circle.fill' : 'circle.fill',
         imageColor: h.color,
       })),
-      ...(households.length === 0
-        ? [
-            {
-              id: MANAGE_TIP_MENU_ID,
-              title: t('households.manageTip'),
-              attributes: { disabled: true },
-            },
-          ]
-        : []),
-    ],
-    [households, activeHouseholdId, t],
+    [households, activeHouseholdId],
   )
 
   const handleHouseholdAction = useCallback(
     ({ nativeEvent }: NativeActionEvent) => {
-      if (nativeEvent.event === MANAGE_TIP_MENU_ID) return
-      const id = nativeEvent.event === PERSONAL_MENU_ID ? null : nativeEvent.event
+      const id = nativeEvent.event
       if (id !== activeHouseholdId) {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         setSwitchingHousehold(true)
@@ -417,7 +415,6 @@ const RecipesScreen = () => {
           onHouseholdAction={handleHouseholdAction}
           onHouseholdMenuOpen={handleHouseholdMenuOpen}
           activeHousehold={activeHousehold}
-          personalName={personalName}
           switchContextLabel={t('households.switchContext')}
           isLoadingHouseholds={isLoadingHouseholds}
         />
@@ -572,26 +569,20 @@ const RecipesScreen = () => {
   )
 
   const handleShareAction = useCallback(
-    (item: RecipeOut, shareId: string) => {
-      if (shareId === SEND_TO_PERSONAL) {
-        linkToPersonal.mutate(item.id, {
-          onSuccess: () => Alert.alert(t('recipes.recipeAddedToPersonalLibrary')),
-          onError: (err) =>
-            Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd')),
-        })
-        return
+    async (item: RecipeOut, shareId: string) => {
+      const householdId = shareId.slice(TOGGLE_HOUSEHOLD_PREFIX.length)
+      try {
+        if (item.household_ids.includes(householdId)) {
+          await api.removeRecipeFromHousehold(item.id, householdId)
+        } else {
+          await api.setRecipeHouseholds(item.id, [...item.household_ids, householdId])
+        }
+        await qc.invalidateQueries({ queryKey: ['recipes'] })
+      } catch (err) {
+        Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd'))
       }
-      const householdId = shareId.slice(SEND_TO_HOUSEHOLD_PREFIX.length)
-      linkToHousehold.mutate(
-        { id: item.id, householdId },
-        {
-          onSuccess: () => Alert.alert(t('addRecipe.recipeAddedToHousehold')),
-          onError: (err) =>
-            Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd')),
-        },
-      )
     },
-    [linkToPersonal, linkToHousehold, t],
+    [api, qc, t],
   )
 
   const handleRecipeLongPress = useCallback(
@@ -654,21 +645,12 @@ const RecipesScreen = () => {
   )
 
   const recipeHouseholdAvatars = useCallback(
-    (recipe: RecipeOut) => {
-      const household = recipe.household_id
-        ? households.find((candidate) => candidate.id === recipe.household_id)
-        : undefined
-      const avatars = []
-      if (!recipe.household_id || recipe.shared_to_personal) {
-        avatars.push({ key: 'personal', name: t('households.personal'), label: t('households.you').charAt(0), color: PERSONAL_LIBRARY_COLOR })
-      }
-      if (household) {
-        avatars.push({ key: household.id, name: household.name, color: household.color })
-      }
-
-      return avatars
-    },
-    [households, t],
+    (recipe: RecipeOut) =>
+      recipe.household_ids
+        .map((id) => households.find((candidate) => candidate.id === id))
+        .filter((h): h is NonNullable<typeof h> => !!h)
+        .map((h) => ({ key: h.id, name: h.name, color: h.color })),
+    [households],
   )
 
   const renderRecipe = useCallback(
