@@ -391,9 +391,11 @@ const SettingsScreen = () => {
         preferences={preferences}
         currentLanguageCode={preferences?.language ?? i18n.language}
         appearanceMode={appearanceMode}
+        weekStartLabel={weekStartLabel}
         onLanguagePicker={handleLanguagePicker}
         onUnitSystemToggle={handleUnitSystemToggle}
         onAppearanceChange={handleAppearanceChange}
+        onWeekStartPicker={handleWeekStartPicker}
       />
 
       <SectionHeader label={t("settings.recipeDetail")} />
@@ -466,24 +468,6 @@ const SettingsScreen = () => {
           </View>
         </Pressable>
       </View>
-      <View style={styles.card}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.pickerRow,
-            pressed && { opacity: 0.7 },
-          ]}
-          onPress={handleWeekStartPicker}
-          accessibilityLabel={t("settings.weekStartsOn")}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t("settings.weekStartsOn")}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerValue}>{weekStartLabel}</Text>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-      </View>
-
       <SectionHeader label={t("settings.allergiesIntolerances")} />
       <View style={styles.card}>
         <View style={styles.allergenPad}>

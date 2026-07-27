@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native'
+import { Pressable, Text } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import type { ShoppingCategory } from '@carrot/shared/types'
@@ -7,12 +7,10 @@ import { sectionStyles } from './sectionStyles'
 
 const ShoppingCategorySection = ({
   category,
-  activeCount,
   collapsed,
   onToggle,
 }: {
   category: ShoppingCategory
-  activeCount: number
   collapsed: boolean
   onToggle: () => void
 }) => {
@@ -26,10 +24,7 @@ const ShoppingCategorySection = ({
       accessibilityLabel={title}
       accessibilityState={{ expanded: !collapsed }}
     >
-      <View>
-        <Text style={sectionStyles.title}>{title}</Text>
-        <Text style={sectionStyles.count}>{activeCount}</Text>
-      </View>
+      <Text style={sectionStyles.title}>{title}</Text>
       <Feather
         name={collapsed ? 'chevron-down' : 'chevron-up'}
         size={20}

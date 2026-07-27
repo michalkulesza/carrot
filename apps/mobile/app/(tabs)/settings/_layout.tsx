@@ -9,6 +9,8 @@ export default function SettingsLayout() {
         headerShadowVisible: false,
         headerTitleAlign: 'left',
       }}
-    />
+    >
+      <Stack.Screen name="shopping-categories" options={{ title: '' }} />
+    </Stack>
   )
 }

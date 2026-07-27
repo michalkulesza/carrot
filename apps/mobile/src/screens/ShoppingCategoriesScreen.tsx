@@ -4,6 +4,7 @@ import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-
 import { Feather } from '@expo/vector-icons'
 import { Stack } from 'expo-router'
 import { useTranslation } from 'react-i18next'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   DEFAULT_SHOPPING_CATEGORIES,
   SHOPPING_CATEGORIES,
@@ -13,6 +14,7 @@ import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 
 const ShoppingCategoriesScreen = () => {
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   const { preferences, update } = usePreferences()
   const [categories, setCategories] = useState<ShoppingCategory[]>(DEFAULT_SHOPPING_CATEGORIES)
   const confirmedCategoriesRef = useRef<ShoppingCategory[]>(DEFAULT_SHOPPING_CATEGORIES)
@@ -64,7 +66,12 @@ const ShoppingCategoriesScreen = () => {
     ],
     [categories]
   )
-
+  const screenOptions = {
+    title: '',
+    headerBackTitle: t('common.back'),
+    headerTintColor: PlatformColor('label') as unknown as string,
+  }
+  const screenStyle = [styles.screen, { paddingTop: insets.top + 56 }]
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<ShoppingCategory>) => {
     const enabled = categories.includes(item)
     const locked = item === 'other'
@@ -72,12 +79,14 @@ const ShoppingCategoriesScreen = () => {
     return (
       <ScaleDecorator>
         <View style={[styles.row, isActive && styles.activeRow]}>
-          <Switch
-            value={enabled || locked}
-            disabled={locked}
-            onValueChange={(value) => handleToggle(item, value)}
-            accessibilityLabel={t(`shoppingList.categories.${item}`)}
-          />
+          <View style={styles.toggleControl}>
+            <Switch
+              value={enabled || locked}
+              disabled={locked}
+              onValueChange={(value) => handleToggle(item, value)}
+              accessibilityLabel={t(`shoppingList.categories.${item}`)}
+            />
+          </View>
           <Text style={styles.label}>{t(`shoppingList.categories.${item}`)}</Text>
           <Feather
             name={locked ? 'lock' : 'menu'}
@@ -93,8 +102,9 @@ const ShoppingCategoriesScreen = () => {
   }, [categories, handleToggle, t])
 
   return (
-    <View style={styles.screen}>
-      <Stack.Screen options={{ title: t('settings.shoppingCategories'), headerLargeTitle: true }} />
+    <View style={screenStyle}>
+      <Stack.Screen options={screenOptions} />
+      <Text style={styles.title}>{t('settings.shoppingCategories')}</Text>
       <Text style={styles.description}>{t('settings.shoppingCategoriesDesc')}</Text>
       <DraggableFlatList
         data={displayedCategories}
@@ -116,11 +126,13 @@ const ShoppingCategoriesScreen = () => {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: PlatformColor('systemGroupedBackground') as unknown as string },
-  description: { color: PlatformColor('secondaryLabel') as unknown as string, fontSize: 16, lineHeight: 21, margin: 16 },
+  title: { color: PlatformColor('label') as unknown as string, fontSize: 28, fontWeight: '700', lineHeight: 34, marginHorizontal: 16, marginTop: 16 },
+  description: { color: PlatformColor('secondaryLabel') as unknown as string, fontSize: 16, lineHeight: 21, marginHorizontal: 16, marginTop: 8, marginBottom: 16 },
   list: { backgroundColor: PlatformColor('secondarySystemGroupedBackground') as unknown as string, marginHorizontal: 16, borderRadius: 10 },
   row: { alignItems: 'center', flexDirection: 'row', gap: 12, minHeight: 52, paddingHorizontal: 16 },
   activeRow: { backgroundColor: PlatformColor('tertiarySystemFill') as unknown as string },
-  label: { color: PlatformColor('label') as unknown as string, flex: 1, fontSize: 16, lineHeight: 21 },
+  toggleControl: { alignItems: 'center', justifyContent: 'center', width: 52 },
+  label: { color: PlatformColor('label') as unknown as string, flex: 1, fontSize: 16, lineHeight: 21, marginLeft: 8 },
 })
 
 export default ShoppingCategoriesScreen

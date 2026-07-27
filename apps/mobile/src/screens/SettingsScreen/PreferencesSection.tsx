@@ -13,18 +13,22 @@ const PreferencesSection = ({
   preferences,
   currentLanguageCode,
   appearanceMode,
+  weekStartLabel,
   onLanguagePicker,
   onUnitSystemToggle,
   onAppearanceChange,
+  onWeekStartPicker,
 }: {
   loading: boolean
   error: Error | null
   preferences: UserPreferences | null | undefined
   currentLanguageCode: string
   appearanceMode: AppearanceMode
+  weekStartLabel: string
   onLanguagePicker: () => void
   onUnitSystemToggle: (isMetric: boolean) => void
   onAppearanceChange: (event: { nativeEvent: { event: string } }) => void
+  onWeekStartPicker: () => void
 }) => {
   const { t } = useTranslation()
 
@@ -81,6 +85,21 @@ const PreferencesSection = ({
           <Text style={styles.pickerLabel}>{t('settings.language')}</Text>
           <View style={styles.pickerRight}>
             <Text style={styles.pickerValue}>{languageLabel}</Text>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+      </View>
+
+      <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={onWeekStartPicker}
+          accessibilityLabel={t('settings.weekStartsOn')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t('settings.weekStartsOn')}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerValue}>{weekStartLabel}</Text>
             <Text style={styles.pickerChevron}>›</Text>
           </View>
         </Pressable>

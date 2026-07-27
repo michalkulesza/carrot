@@ -13,6 +13,5 @@ export const sectionStyles = StyleSheet.create({
     paddingBottom: 8,
   },
   title: { color: colors.label, fontSize: 17, lineHeight: 22, fontWeight: '600' },
-  count: { color: colors.secondaryLabel, fontSize: 13, lineHeight: 18 },
   clearCompleted: { alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 },
 })

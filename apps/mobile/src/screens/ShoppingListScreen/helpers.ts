@@ -6,7 +6,7 @@ import {
 } from '@carrot/shared/types'
 
 export type ShoppingListRow =
-  | { kind: 'section'; category: ShoppingCategory; activeCount: number; collapsed: boolean }
+  | { kind: 'section'; category: ShoppingCategory; collapsed: boolean }
   | { kind: 'item'; category: ShoppingCategory; item: ShoppingListItem }
   | { kind: 'add'; category: ShoppingCategory }
   | { kind: 'completed'; category: ShoppingCategory; item: ShoppingListItem }
@@ -43,7 +43,7 @@ export const buildShoppingListRows = ({
       .sort((a, b) => a.position - b.position)
     const collapsed = collapsedCategories[category] ?? false
 
-    rows.push({ kind: 'section', category, activeCount: activeItems.length, collapsed })
+    rows.push({ kind: 'section', category, collapsed })
     if (collapsed) continue
     rows.push(...activeItems.map((item) => ({ kind: 'item' as const, category, item })))
     rows.push({ kind: 'add', category })

@@ -220,7 +220,6 @@ const ShoppingListScreen = () => {
       return (
         <ShoppingCategorySection
           category={item.category}
-          activeCount={item.activeCount}
           collapsed={item.collapsed}
           onToggle={() => toggleCategory(item.category)}
         />
