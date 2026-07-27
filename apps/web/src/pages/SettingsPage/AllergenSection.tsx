@@ -1,11 +1,14 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Disclosure, toast } from '@heroui/react'
 import {
   ALLERGEN_KEYS,
   INTOLERANCE_KEYS,
 } from '@carrot/shared/utils/allergenKeys'
+import { streamReanalyze } from '../../api/client'
 import CheckboxGroup from './CheckboxGroup'
+
+const AUTO_SAVE_DELAY_MS = 3000
 
 interface AllergenSectionProps {
   allergens: string[]
@@ -20,7 +23,12 @@ const AllergenSection = ({
 }: AllergenSectionProps) => {
   const { t } = useTranslation()
   const [predefined, setPredefined] = useState<string[]>(allergens ?? [])
-  const [saving, setSaving] = useState(false)
+  const [reanalyzing, setReanalyzing] = useState(false)
+  const [reanalyzeProgress, setReanalyzeProgress] = useState<{
+    done: number
+    total: number
+  } | null>(null)
+  const isFirstRender = useRef(true)
 
   const togglePredefined = useCallback((key: string) => {
     setPredefined((prev) =>
@@ -28,20 +36,58 @@ const AllergenSection = ({
     )
   }, [])
 
-  const handleSave = useCallback(async () => {
-    setSaving(true)
-    try {
-      await onSave(predefined)
-      toast.success(t('settings.allergensSaved'), { timeout: 2000 })
-    } catch (e) {
-      toast.danger(
-        e instanceof Error ? e.message : t('settings.failedToSave'),
-        { timeout: 3000 }
-      )
-    } finally {
-      setSaving(false)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
     }
-  }, [onSave, predefined, t])
+
+    const timeoutId = setTimeout(() => {
+      onSave(predefined)
+        .then(() =>
+          toast.success(t('settings.allergensSaved'), { timeout: 2000 })
+        )
+        .catch((e) =>
+          toast.danger(
+            e instanceof Error ? e.message : t('settings.failedToSave'),
+            { timeout: 3000 }
+          )
+        )
+    }, AUTO_SAVE_DELAY_MS)
+
+    return () => clearTimeout(timeoutId)
+  }, [predefined, onSave, t])
+
+  const handleReanalyze = useCallback(() => {
+    setReanalyzing(true)
+    setReanalyzeProgress({ done: 0, total: 0 })
+    streamReanalyze({
+      onStart: (total) => setReanalyzeProgress({ done: 0, total }),
+      onProgress: (done, total) => setReanalyzeProgress({ done, total }),
+      onComplete: (analyzed) => {
+        setReanalyzing(false)
+        setReanalyzeProgress(null)
+        toast.success(t('settings.reanalyzedRecipes', { count: analyzed }), {
+          timeout: 3000,
+        })
+      },
+      onError: (msg) => {
+        setReanalyzing(false)
+        setReanalyzeProgress(null)
+        toast.danger(msg, { timeout: 3000 })
+      },
+    })
+  }, [t])
+
+  const hasProgress = reanalyzeProgress && reanalyzeProgress.total > 0
+  const reanalyzeButtonLabel = reanalyzing
+    ? hasProgress
+      ? t('settings.analyzingProgress', {
+          done: reanalyzeProgress.done,
+          total: reanalyzeProgress.total,
+        })
+      : t('settings.starting')
+    : t('settings.reAnalyzeRecipes')
 
   return (
     <div className="flex flex-col gap-4">
@@ -90,11 +136,11 @@ const AllergenSection = ({
       <div className="flex gap-2 flex-wrap">
         <Button
           size="sm"
-          variant="primary"
-          onPress={handleSave}
-          isDisabled={saving}
+          variant="secondary"
+          onPress={handleReanalyze}
+          isDisabled={reanalyzing}
         >
-          {saving ? t('common.saving') : t('common.save')}
+          {reanalyzeButtonLabel}
         </Button>
       </div>
     </div>
