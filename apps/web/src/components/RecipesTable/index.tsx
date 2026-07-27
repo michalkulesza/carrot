@@ -98,7 +98,7 @@ const RecipesTable = ({
                 align="right"
               />
             </div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
               {t('recipes.colHousehold')}
             </div>
             <ColHeader
