@@ -20,6 +20,8 @@ from api.models import (
     RecipeSourceExtraction,
     RecipeUnitVariants,
     ShoppingCategory,
+    SourceComponent,
+    StepRef,
 )
 
 log = logging.getLogger(__name__)
@@ -142,6 +144,8 @@ variants in parallel arrays:
   Celsius where applicable. Preserve every tsp and tbsp measurement exactly as
   stated; do not convert either unit to grams or millilitres. Convert every cup
   measurement to an ingredient-specific whole gram value; never use a range.
+  Convert physical length descriptions used for ingredients to centimetres
+  (for example, "2 inch knob of ginger" becomes "5 cm knob of ginger").
 - imperial_ingredients and imperial_steps: use cups/tbsp/tsp where practical and
   Fahrenheit. Preserve every tsp and tbsp measurement exactly as stated.
 Each variant array must have the same number of entries and order as the
@@ -223,6 +227,14 @@ You are an allergen detection assistant. Given a numbered list of ingredients an
 a list of allergens to check, identify which ingredients contain each allergen
 and suggest a substitute.
 
+Only report an allergen when the ingredient text itself provides reliable
+evidence that the allergen is present. Do not infer an allergen from a product
+that has brand- or recipe-dependent formulations. In particular, generic
+sauces, condiments, seasoning mixes, stocks, broths, pastes, dressings, and
+marinades are not proof of gluten or another allergen unless the ingredient text
+explicitly names an allergen-bearing component. "Chili garlic sauce" alone is
+not evidence of gluten; "chili garlic sauce containing wheat" is.
+
 For each ingredient return (in the same order):
 - allergen: the exact allergen name from the provided list if found, else null
 - substitute: the full replacement ingredient text. Replace the allergen
@@ -274,14 +286,25 @@ _COUNT_UNIT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _INLINE_CONVERTIBLE_MEASUREMENT_PATTERN = re.compile(
-    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:ml|l|g|kg|cups?|lbs?|pounds?|oz|ounces?)\b",
+    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:ml|l|g|kg|cups?|lbs?|pounds?|oz|ounces?|in(?:ch(?:es)?)?)\b",
     re.IGNORECASE,
 )
 _METRIC_CONVERSION_REQUIRED_PATTERN = re.compile(
-    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:cups?|lbs?|pounds?|oz|ounces?)\b",
+    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:cups?|lbs?|pounds?|oz|ounces?|in(?:ch(?:es)?)?)\b",
     re.IGNORECASE,
 )
-_METRIC_MEASUREMENT_PATTERN = re.compile(r"\b(?:ml|l|g|kg)\b", re.IGNORECASE)
+_METRIC_MEASUREMENT_PATTERN = re.compile(r"\b(?:ml|l|g|kg|cm)\b", re.IGNORECASE)
+_MATCH_WORD_PATTERN = re.compile(r"\w+", re.UNICODE)
+_VARIABLE_FORMULATION_PATTERN = re.compile(
+    r"\b(?:sauce|condiment|seasoning|stock|broth|bouillon|paste|mix|dressing|marinade)\b",
+    re.IGNORECASE,
+)
+_EXPLICIT_GLUTEN_SOURCE_PATTERN = re.compile(
+    r"\b(?:wheat|barley|rye|malt|spelt|flour|breadcrumbs?|bread|pasta|couscous|"
+    r"semolina|seitan|soy\s+sauce|teriyaki)\b",
+    re.IGNORECASE,
+)
+_GLUTEN_FREE_PATTERN = re.compile(r"\bgluten[-\s]?free\b", re.IGNORECASE)
 
 
 def _preserve_spoon_measurements(source_ingredients: list[str], variant_ingredients: list[str]) -> list[str]:
@@ -352,6 +375,80 @@ def _repair_shopping_list_categories(
     return categories
 
 
+def _normalized_match_text(value: str) -> str:
+    return " ".join(_MATCH_WORD_PATTERN.findall(value.casefold()))
+
+
+def _contains_normalized_phrase(value: str, phrase: str) -> bool:
+    return f" {phrase} " in f" {value} "
+
+
+def _ingredient_mention_score(mention: str, ingredient_name: str) -> tuple[int, int]:
+    normalized_mention = _normalized_match_text(mention)
+    normalized_name = _normalized_match_text(ingredient_name.split(",", 1)[0])
+    if not normalized_mention or not normalized_name:
+        return (0, 0)
+    if normalized_mention == normalized_name:
+        return (3, len(normalized_name))
+    if _contains_normalized_phrase(normalized_name, normalized_mention):
+        return (2, len(normalized_mention))
+    if _contains_normalized_phrase(normalized_mention, normalized_name):
+        return (1, len(normalized_name))
+    return (0, 0)
+
+
+def _repair_step_refs(
+    source_component: SourceComponent,
+    step_refs: list[StepRef],
+    component_index: int,
+    repairs: list[str],
+) -> list[StepRef]:
+    repaired: list[StepRef] = []
+    seen: set[tuple[int, int]] = set()
+
+    for ref in step_refs:
+        if not (0 <= ref.step_index < len(source_component.steps)):
+            repairs.append(f"component {component_index} contains an out-of-range step_ref")
+            continue
+        if not (0 <= ref.ingredient_index < len(source_component.ingredients)):
+            repairs.append(f"component {component_index} contains an out-of-range step_ref")
+            continue
+
+        normalized_step = _normalized_match_text(source_component.steps[ref.step_index])
+        normalized_mention = _normalized_match_text(ref.mention)
+        if not normalized_mention or not _contains_normalized_phrase(
+            normalized_step,
+            normalized_mention,
+        ):
+            repairs.append(
+                f"component {component_index} step_ref mention is absent from step {ref.step_index}"
+            )
+            continue
+
+        scores = [
+            _ingredient_mention_score(ref.mention, ingredient.name)
+            for ingredient in source_component.ingredients
+        ]
+        best_score = max(scores, default=(0, 0))
+        best_indexes = [index for index, score in enumerate(scores) if score == best_score]
+        current_score = scores[ref.ingredient_index]
+        ingredient_index = ref.ingredient_index
+        if best_score > current_score and len(best_indexes) == 1:
+            ingredient_index = best_indexes[0]
+            repairs.append(
+                f"component {component_index} remapped step_ref ingredient "
+                f"{ref.ingredient_index} to {ingredient_index}"
+            )
+
+        key = (ref.step_index, ingredient_index)
+        if key in seen:
+            continue
+        seen.add(key)
+        repaired.append(ref.model_copy(update={"ingredient_index": ingredient_index}))
+
+    return repaired
+
+
 def _repair_enrichment_alignment(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
@@ -378,13 +475,12 @@ def _repair_enrichment_alignment(
             )
             return fallback
 
-        valid_step_refs = [
-            ref for ref in component.step_refs
-            if 0 <= ref.step_index < len(step_fallback)
-            and 0 <= ref.ingredient_index < len(ingredient_fallback)
-        ]
-        if len(valid_step_refs) != len(component.step_refs):
-            repairs.append(f"component {index} contains out-of-range step_refs")
+        valid_step_refs = _repair_step_refs(
+            source_component,
+            component.step_refs,
+            index,
+            repairs,
+        )
 
         metric_ingredients = aligned_or_fallback(
             "metric_ingredients", component.metric_ingredients, ingredient_fallback,
@@ -733,6 +829,25 @@ class _ShoppingListValuesResult(BaseModel):
 class _ShoppingListCategoriesResult(BaseModel):
     categories: list[ShoppingCategory]
 
+
+def _discard_unsubstantiated_allergen_flags(
+    ingredients: list[str],
+    flags: list[_IngredientFlag],
+) -> list[_IngredientFlag]:
+    filtered: list[_IngredientFlag] = []
+    for ingredient, flag in zip(ingredients, flags):
+        is_uncertain_gluten_product = (
+            flag.allergen in {"gluten", "ncgs"}
+            and _VARIABLE_FORMULATION_PATTERN.search(ingredient)
+            and not _EXPLICIT_GLUTEN_SOURCE_PATTERN.search(ingredient)
+        )
+        if _GLUTEN_FREE_PATTERN.search(ingredient) or is_uncertain_gluten_product:
+            filtered.append(_IngredientFlag())
+        else:
+            filtered.append(flag)
+    return filtered
+
+
 async def recommend_shopping_list_values(
     ingredients: list[str],
     model: str = _DEFAULT_MECHANICAL_MODEL,
@@ -834,4 +949,7 @@ async def analyze_allergens(
     flags = result.results
     while len(flags) < len(ingredients):
         flags.append(_IngredientFlag())
-    return flags[:len(ingredients)]
+    return _discard_unsubstantiated_allergen_flags(
+        ingredients,
+        flags[:len(ingredients)],
+    )

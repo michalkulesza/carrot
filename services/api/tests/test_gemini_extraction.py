@@ -118,6 +118,34 @@ def test_metric_ingredients_require_a_metric_measurement() -> None:
     gemini._validate_metric_ingredients(enrichment)
 
 
+def test_metric_ingredient_length_is_converted_to_centimetres() -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{
+            "ingredients": [{"name": "2 inch knob of ginger, finely chopped"}],
+        }],
+    })
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": ["5 cm knob of ginger, finely chopped"],
+        "imperial_ingredients": ["2 inch knob of ginger, finely chopped"],
+        "metric_steps": [],
+        "imperial_steps": [],
+        "shopping_list_values": ["1 knob of ginger"],
+    }]))
+
+    repaired = gemini._repair_enrichment_alignment(source, enrichment)
+
+    assert repaired.components[0].metric_ingredients == [
+        "5 cm knob of ginger, finely chopped"
+    ]
+    gemini._validate_metric_ingredients(repaired)
+
+    repaired.components[0].metric_ingredients = [
+        "2 inch knob of ginger, finely chopped"
+    ]
+    with pytest.raises(ValueError, match="retains an unconverted measurement"):
+        gemini._validate_metric_ingredients(repaired)
+
+
 @pytest.mark.asyncio
 async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> None:
     source = _one_component_source().model_dump(mode="json")
@@ -306,6 +334,55 @@ def test_enrichment_preserves_discrete_ingredients_in_both_unit_variants() -> No
 
     assert component.metric_ingredients == ["1/2 sweet onion", "1 stalk celery"]
     assert component.imperial_ingredients == ["1/2 sweet onion", "1 stalk celery"]
+
+
+def test_enrichment_repairs_shifted_step_ingredient_references() -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{
+            "ingredients": [
+                {"name": "pork tenderloin"},
+                {"name": "kosher salt"},
+                {"name": "black pepper"},
+                {"name": "vegetable oil"},
+                {"name": "garlic, chopped"},
+                {"name": "ginger, finely chopped"},
+                {"name": "honey"},
+                {"name": "chili garlic sauce"},
+                {"name": "rice wine vinegar"},
+            ],
+            "steps": [
+                "Whisk together the honey, chili garlic sauce, and rice wine vinegar.",
+                "Heat the oil and cook the pork with salt and pepper.",
+            ],
+        }],
+    })
+    ingredient_values = [ingredient.name for ingredient in source.components[0].ingredients]
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": ingredient_values,
+        "imperial_ingredients": ingredient_values,
+        "metric_steps": source.components[0].steps,
+        "imperial_steps": source.components[0].steps,
+        "shopping_list_values": ingredient_values,
+        "step_refs": [
+            {"step_index": 0, "ingredient_index": 5, "mention": "honey"},
+            {"step_index": 0, "ingredient_index": 6, "mention": "chili garlic sauce"},
+            {"step_index": 0, "ingredient_index": 7, "mention": "rice wine vinegar"},
+            {"step_index": 1, "ingredient_index": 4, "mention": "oil"},
+            {"step_index": 1, "ingredient_index": 0, "mention": "not in the step"},
+        ],
+    }]))
+
+    repaired = gemini._repair_enrichment_alignment(source, enrichment)
+
+    assert [
+        (ref.step_index, ref.ingredient_index, ref.mention)
+        for ref in repaired.components[0].step_refs
+    ] == [
+        (0, 6, "honey"),
+        (0, 7, "chili garlic sauce"),
+        (0, 8, "rice wine vinegar"),
+        (1, 3, "oil"),
+    ]
 
 
 def test_assemble_recipe_rejects_mismatched_component_count() -> None:
@@ -719,6 +796,33 @@ async def test_import_with_allergens_only_dedicated_call_supplies_allergen_resul
     ingredient = events[-1]["result"]["recipe"]["components"][0]["ingredients"][0]
     assert ingredient["allergen"] == "peanuts"
     assert ingredient["substitute"] == "tahini"
+
+
+@pytest.mark.asyncio
+async def test_allergen_analysis_discards_uncertain_gluten_in_processed_sauces(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"results": [
+        {"allergen": "gluten", "substitute": "gluten-free hot sauce"},
+        {"allergen": "gluten", "substitute": "gluten-free sauce"},
+        {"allergen": "gluten", "substitute": "tamari"},
+    ]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    flags = await gemini.analyze_allergens(
+        [
+            "4 tbsp chili garlic sauce",
+            "2 tbsp gluten-free dipping sauce",
+            "2 tbsp sauce containing wheat",
+        ],
+        ["gluten"],
+    )
+
+    assert [flag.allergen for flag in flags] == [None, None, "gluten"]
+    assert flags[0].substitute is None
+    instruction = generate_content.call_args.kwargs["config"].system_instruction
+    assert '"Chili garlic sauce" alone is not evidence of gluten' in " ".join(
+        instruction.split()
+    )
 
 
 def test_enrichment_repairs_only_invalid_shopping_categories() -> None:

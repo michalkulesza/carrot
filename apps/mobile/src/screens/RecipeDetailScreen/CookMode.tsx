@@ -19,7 +19,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "expo-router";
 import type { RecipeOut } from "@carrot/shared/types";
-import { displayIngredient } from "@carrot/shared/utils/ingredientUtils";
+import {
+  buildClientStepRefs,
+  displayIngredient,
+  mergeStepIngredientRefs,
+} from "@carrot/shared/utils/ingredientUtils";
 import { parseDurationMatches } from "@carrot/shared/utils/timerUtils";
 import {
   formatCountdown,
@@ -142,22 +146,26 @@ const CookMode = ({
   const sheetBackground = cookColor("#eeece7", "#2b2d2a", colorScheme);
   const steps = useMemo(
     () =>
-      recipe.components.flatMap((component, componentIndex) =>
-        component.steps.map((text, stepIndex) => ({
+      recipe.components.flatMap((component, componentIndex) => {
+        const componentStepRefs = mergeStepIngredientRefs(
+          component.step_ingredient_refs,
+          buildClientStepRefs(component.steps, component.ingredients),
+        );
+        return component.steps.map((text, stepIndex) => ({
           componentIndex,
           stepIndex,
           text,
           ingredients: [
             ...new Set(
-              (component.step_ingredient_refs?.[stepIndex] ?? []).map((ref) =>
+              (componentStepRefs[stepIndex] ?? []).map((ref) =>
                 displayIngredient(
                   ref.display ?? component.ingredients[ref.ingredient_index] ?? "",
                 ),
               ),
             ),
           ],
-        })),
-      ),
+        }));
+      }),
     [recipe],
   );
   const [index, setIndex] = useState(0);

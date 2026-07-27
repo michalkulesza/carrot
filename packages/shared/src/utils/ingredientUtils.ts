@@ -120,6 +120,40 @@ export const displayIngredient = (s: string): string => {
   return serializeIngredient(parsed)
 }
 
+const STEP_REF_STOP_WORDS = new Set([
+  'and', 'avec', 'con', 'et', 'for', 'für', 'i', 'mit', 'oraz', 'para', 'the',
+  'und', 'with', 'y',
+])
+
+const isWordCharacter = (value: string | undefined): boolean =>
+  value !== undefined && /[\p{L}\p{N}_]/u.test(value)
+
+const findPhrasePositions = (text: string, phrase: string): number[] => {
+  const positions: number[] = []
+  let start = 0
+  while (start <= text.length - phrase.length) {
+    const position = text.indexOf(phrase, start)
+    if (position === -1) break
+    const end = position + phrase.length
+    if (!isWordCharacter(text[position - 1]) && !isWordCharacter(text[end])) {
+      positions.push(position)
+    }
+    start = end
+  }
+  return positions
+}
+
+const normalizedWords = (value: string): string =>
+  value.toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu)?.join(' ') ?? ''
+
+interface MatchSpan {
+  start: number
+  end: number
+}
+
+const overlapsSpan = (span: MatchSpan, occupied: MatchSpan[]): boolean =>
+  occupied.some((candidate) => span.start < candidate.end && span.end > candidate.start)
+
 export const buildClientStepRefs = (
   steps: string[],
   ingredients: string[],
@@ -128,35 +162,69 @@ export const buildClientStepRefs = (
     if (index === steps.length - 1) return []
 
     const refs: StepIngredientRef[] = []
-    const stepLower = step.toLowerCase()
-    ingredients.forEach((ingStr, ii) => {
-      const fullName = parseIngredient(ingStr).name.split(',')[0].trim().toLowerCase()
-      const candidates = [fullName]
-      for (const word of fullName.split(/\s+/)) {
-        if (word !== fullName && word.length >= 3 && !candidates.includes(word))
-          candidates.push(word)
-      }
-      for (const searchName of candidates) {
-        if (searchName.length < 3) continue
-        let matched = false
-        let idx = 0
-        while (true) {
-          const pos = stepLower.indexOf(searchName, idx)
-          if (pos === -1) break
-          const beforeOk = pos === 0 || !/\w/.test(stepLower[pos - 1])
-          const afterOk =
-            pos + searchName.length >= stepLower.length ||
-            !/\w/.test(stepLower[pos + searchName.length])
-          if (beforeOk && afterOk) {
-            refs.push({ ingredient_index: ii, mention: step.slice(pos, pos + searchName.length) })
-            matched = true
-          }
-          idx = pos + searchName.length
-        }
-        if (matched) break
+    const occupied: MatchSpan[] = []
+    const stepLower = step.toLocaleLowerCase()
+    const ingredientNames = ingredients.map((ingredient) =>
+      parseIngredient(ingredient).name.split(',')[0].trim().toLocaleLowerCase(),
+    )
+    const exactOrder = ingredientNames
+      .map((name, ingredientIndex) => ({ name, ingredientIndex }))
+      .filter(({ name }) => name.length >= 3)
+      .sort((a, b) => b.name.length - a.name.length)
+    const matchedIngredients = new Set<number>()
+
+    for (const { name, ingredientIndex } of exactOrder) {
+      const position = findPhrasePositions(stepLower, name).find((candidate) => {
+        const span = { start: candidate, end: candidate + name.length }
+        return !overlapsSpan(span, occupied)
+      })
+      if (position === undefined) continue
+
+      occupied.push({ start: position, end: position + name.length })
+      matchedIngredients.add(ingredientIndex)
+      refs.push({
+        ingredient_index: ingredientIndex,
+        mention: step.slice(position, position + name.length),
+      })
+    }
+
+    const tokenOwners = new Map<string, Set<number>>()
+    ingredientNames.forEach((name, ingredientIndex) => {
+      for (const token of new Set(normalizedWords(name).split(' '))) {
+        if (token.length < 3 || STEP_REF_STOP_WORDS.has(token)) continue
+        const owners = tokenOwners.get(token) ?? new Set<number>()
+        owners.add(ingredientIndex)
+        tokenOwners.set(token, owners)
       }
     })
-    return refs
+
+    ingredientNames.forEach((name, ingredientIndex) => {
+      if (matchedIngredients.has(ingredientIndex)) return
+      const tokens = [...new Set(normalizedWords(name).split(' '))]
+        .filter((token) =>
+          token.length >= 3
+          && !STEP_REF_STOP_WORDS.has(token)
+          && tokenOwners.get(token)?.size === 1,
+        )
+        .sort((a, b) => b.length - a.length)
+
+      for (const token of tokens) {
+        const position = findPhrasePositions(stepLower, token).find((candidate) => {
+          const span = { start: candidate, end: candidate + token.length }
+          return !overlapsSpan(span, occupied)
+        })
+        if (position === undefined) continue
+
+        occupied.push({ start: position, end: position + token.length })
+        refs.push({
+          ingredient_index: ingredientIndex,
+          mention: step.slice(position, position + token.length),
+        })
+        break
+      }
+    })
+
+    return refs.sort((a, b) => a.ingredient_index - b.ingredient_index)
   })
 
 export const mergeStepIngredientRefs = (
@@ -164,14 +232,25 @@ export const mergeStepIngredientRefs = (
   clientRefs: StepIngredientRef[][],
 ): StepIngredientRef[][] =>
   clientRefs.map((fallbackRefs, stepIndex) => {
-    const refs = importedRefs?.[stepIndex] ?? []
-    const referencedIngredientIndexes = new Set(
-      refs.map((ref) => ref.ingredient_index),
+    const fallbackByMention = new Map(
+      fallbackRefs.map((ref) => [normalizedWords(ref.mention), ref]),
     )
+    const refs = (importedRefs?.[stepIndex] ?? []).map((ref) => {
+      const fallback = fallbackByMention.get(normalizedWords(ref.mention))
+      return fallback && fallback.ingredient_index !== ref.ingredient_index
+        ? { ...ref, ingredient_index: fallback.ingredient_index, mention: fallback.mention }
+        : ref
+    })
+    const referencedIngredientIndexes = new Set(refs.map((ref) => ref.ingredient_index))
     const missingRefs = fallbackRefs.filter(
       (ref) => !referencedIngredientIndexes.has(ref.ingredient_index),
     )
-    return [...refs, ...missingRefs]
+    const seen = new Set<number>()
+    return [...refs, ...missingRefs].filter((ref) => {
+      if (seen.has(ref.ingredient_index)) return false
+      seen.add(ref.ingredient_index)
+      return true
+    })
   })
 
 export interface AggregatedIngredient {
