@@ -1,0 +1,100 @@
+import { StyleSheet } from 'react-native'
+import { colors } from '../../theme/colors'
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.secondaryBackground,
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    gap: 24,
+  },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  logo: { width: 64, height: 64, borderRadius: 16, alignSelf: 'center' },
+  titleBlock: { alignItems: 'center', gap: 4 },
+  title: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '700',
+    color: colors.label,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    lineHeight: 21,
+    color: colors.secondaryLabel,
+    textAlign: 'center',
+  },
+  primaryButton: {
+    backgroundColor: colors.brand,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  secondaryButton: {
+    backgroundColor: colors.background,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: '600',
+    color: colors.blue,
+  },
+  invitationsCard: {
+    backgroundColor: colors.background,
+    borderRadius: 14,
+    paddingVertical: 4,
+  },
+  invitationsLabel: {
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+    color: colors.tertiaryLabel,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
+  },
+  invitationsEmpty: {
+    fontSize: 16,
+    lineHeight: 21,
+    color: colors.tertiaryLabel,
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  invitationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  invitationRowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.separator,
+  },
+  invitationInfo: { flex: 1 },
+  invitationHouseholdName: { fontSize: 16, fontWeight: '500', color: colors.label },
+  invitationFrom: { fontSize: 13, color: colors.tertiaryLabel, marginTop: 1 },
+  invitationAcceptBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.brand,
+  },
+  invitationAcceptBtnText: { fontSize: 14, fontWeight: '600', color: '#ffffff' },
+})

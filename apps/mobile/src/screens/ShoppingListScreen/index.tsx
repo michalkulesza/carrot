@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { LinearTransition, useReducedMotion } from 'react-native-reanimated'
+import Animated, { FadeInDown, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated'
 import { useIsFocused } from 'expo-router'
 import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist'
 import { Swipeable } from 'react-native-gesture-handler'
@@ -242,67 +242,72 @@ const ShoppingListScreen = () => {
     const isEditing = editingId === shoppingItem.id
     const editor = lockedByOther(shoppingItem.id)
     const isLocked = !!editor && !isEditing
+    const entering = reduceMotion ? undefined : FadeInDown.duration(220)
+    const exiting = reduceMotion ? undefined : FadeOut.duration(200)
+
     return (
-      <ScaleDecorator>
-        <Swipeable renderRightActions={renderRightDelete(shoppingItem.id, isLocked)} overshootRight={false}>
-          <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
-            <CheckCircle
-              checked={isCompleted}
-              onPress={() => handleToggle(shoppingItem)}
-              accessibilityLabel={shoppingItem.text}
-            />
-            <View style={styles.textArea}>
-              {isEditing ? (
-                <TextInput
-                  style={styles.editInput}
-                  value={editingText}
-                  onChangeText={setEditingText}
-                  onSubmitEditing={() => handleEditSubmit(shoppingItem)}
-                  onBlur={() => handleEditSubmit(shoppingItem)}
-                  returnKeyType="done"
-                  autoFocus
-                  autoCapitalize="sentences"
-                  autoCorrect
-                />
+      <Animated.View entering={entering} exiting={exiting}>
+        <ScaleDecorator>
+          <Swipeable renderRightActions={renderRightDelete(shoppingItem.id, isLocked)} overshootRight={false}>
+            <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
+              <CheckCircle
+                checked={isCompleted}
+                onPress={() => handleToggle(shoppingItem)}
+                accessibilityLabel={shoppingItem.text}
+              />
+              <View style={styles.textArea}>
+                {isEditing ? (
+                  <TextInput
+                    style={styles.editInput}
+                    value={editingText}
+                    onChangeText={setEditingText}
+                    onSubmitEditing={() => handleEditSubmit(shoppingItem)}
+                    onBlur={() => handleEditSubmit(shoppingItem)}
+                    returnKeyType="done"
+                    autoFocus
+                    autoCapitalize="sentences"
+                    autoCorrect
+                  />
+                ) : (
+                  <Pressable
+                    onPress={() => !isLocked && handleEditStart(shoppingItem)}
+                    disabled={isLocked}
+                    accessibilityLabel={isLocked
+                      ? t('shoppingList.presenceEditing', { name: editor!.nickname })
+                      : shoppingItem.text}
+                  >
+                    <Text style={[styles.itemText, isCompleted && styles.completedText]}>{shoppingItem.text}</Text>
+                    {isLocked ? (
+                      <View style={styles.lockBadge}>
+                        <View style={[styles.lockDot, { backgroundColor: editor.color }]} />
+                        <Text style={styles.lockText}>{t('shoppingList.presenceEditing', { name: editor.nickname })}</Text>
+                      </View>
+                    ) : null}
+                  </Pressable>
+                )}
+              </View>
+              {!isCompleted && (isLocked ? (
+                <View style={styles.dragHandle}>
+                  <Feather name="lock" size={14} color={colors.gray3} />
+                </View>
               ) : (
                 <Pressable
-                  onPress={() => !isLocked && handleEditStart(shoppingItem)}
-                  disabled={isLocked}
-                  accessibilityLabel={isLocked
-                    ? t('shoppingList.presenceEditing', { name: editor!.nickname })
-                    : shoppingItem.text}
+                  onLongPress={() => {
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                    drag()
+                  }}
+                  disabled={isActive}
+                  hitSlop={8}
+                  style={styles.dragHandle}
+                  accessibilityLabel={t('recipes.dragToReorder')}
                 >
-                  <Text style={[styles.itemText, isCompleted && styles.completedText]}>{shoppingItem.text}</Text>
-                  {isLocked ? (
-                    <View style={styles.lockBadge}>
-                      <View style={[styles.lockDot, { backgroundColor: editor.color }]} />
-                      <Text style={styles.lockText}>{t('shoppingList.presenceEditing', { name: editor.nickname })}</Text>
-                    </View>
-                  ) : null}
+                  <Feather name="menu" size={18} color={colors.tertiaryLabel} />
                 </Pressable>
-              )}
+              ))}
             </View>
-            {!isCompleted && (isLocked ? (
-              <View style={styles.dragHandle}>
-                <Feather name="lock" size={14} color={colors.gray3} />
-              </View>
-            ) : (
-              <Pressable
-                onLongPress={() => {
-                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                  drag()
-                }}
-                disabled={isActive}
-                hitSlop={8}
-                style={styles.dragHandle}
-                accessibilityLabel={t('recipes.dragToReorder')}
-              >
-                <Feather name="menu" size={18} color={colors.tertiaryLabel} />
-              </Pressable>
-            ))}
-          </View>
-        </Swipeable>
-      </ScaleDecorator>
+          </Swipeable>
+        </ScaleDecorator>
+      </Animated.View>
     )
   }, [
     editingId,
@@ -313,6 +318,7 @@ const ShoppingListScreen = () => {
     handleToggle,
     lockedByOther,
     renderRightDelete,
+    reduceMotion,
     t,
     toggleCategory,
   ])

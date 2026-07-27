@@ -17,21 +17,31 @@ const ShoppingCategoriesScreen = () => {
   const [categories, setCategories] = useState<ShoppingCategory[]>(DEFAULT_SHOPPING_CATEGORIES)
   const confirmedCategoriesRef = useRef<ShoppingCategory[]>(DEFAULT_SHOPPING_CATEGORIES)
   const writeQueueRef = useRef(Promise.resolve())
+  const pendingWriteCountRef = useRef(0)
+  const latestActionIdRef = useRef(0)
 
   useEffect(() => {
-    if (!preferences) return
+    if (!preferences || pendingWriteCountRef.current > 0) return
     setCategories(preferences.shopping_categories)
     confirmedCategoriesRef.current = preferences.shopping_categories
   }, [preferences])
 
   const saveCategories = useCallback((nextCategories: ShoppingCategory[]) => {
+    const actionId = ++latestActionIdRef.current
+    pendingWriteCountRef.current += 1
+
     writeQueueRef.current = writeQueueRef.current
       .then(async () => {
-        const updated = await update.mutateAsync({ shopping_categories: nextCategories })
-        confirmedCategoriesRef.current = updated.shopping_categories
-      })
-      .catch(() => {
-        setCategories(confirmedCategoriesRef.current)
+        try {
+          const updated = await update.mutateAsync({ shopping_categories: nextCategories })
+          confirmedCategoriesRef.current = updated.shopping_categories
+        } catch {
+          if (actionId === latestActionIdRef.current) {
+            setCategories(confirmedCategoriesRef.current)
+          }
+        } finally {
+          pendingWriteCountRef.current -= 1
+        }
       })
   }, [update])
 
