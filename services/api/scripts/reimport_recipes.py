@@ -16,6 +16,7 @@ from api.models import (
     RecipeExtraction,
     ShoppingCategory,
     UserPreferences,
+    recipe_households_table,
 )
 from api.services.import_worker import _get_tags_and_allergens
 from api.services.monitoring import init_sentry
@@ -126,9 +127,19 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
         recipe_title = recipe.title
         source_url = recipe.source_url
         try:
-            available_tags, allergens = await _get_tags_and_allergens(session, recipe.user_id, recipe.household_id)
+            household_id = await session.scalar(
+                select(recipe_households_table.c.household_id)
+                .where(recipe_households_table.c.recipe_id == recipe.id)
+                .order_by(recipe_households_table.c.added_at)
+                .limit(1)
+            )
+            available_tags, allergens = await _get_tags_and_allergens(
+                session,
+                recipe.author_id,
+                household_id,
+            )
             result = await _extract(source_url, available_tags, allergens)
-            preferences = await session.get(UserPreferences, recipe.user_id)
+            preferences = await session.get(UserPreferences, recipe.author_id) if recipe.author_id else None
             _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
             await session.commit()
             return True, False, f"Re-imported {recipe_id}: {recipe.title}"

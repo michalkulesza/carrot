@@ -80,11 +80,19 @@ def _normalize_ingredient_punctuation(value: str) -> str:
     return normalized
 
 
-async def _get_tags_and_allergens(session, user_id: uuid.UUID, household_id: uuid.UUID):
-    tags = list((await session.scalars(select(Tag).where(_tag_filter(household_id)))).all())
-    household = await session.get(Household, household_id)
+async def _get_tags_and_allergens(
+    session,
+    user_id: uuid.UUID | None,
+    household_id: uuid.UUID | None,
+):
+    tags = []
+    household = None
+    if household_id is not None:
+        tags = list((await session.scalars(select(Tag).where(_tag_filter(household_id)))).all())
+        household = await session.get(Household, household_id)
+
     household_allergens = set(household.allergens) if household and household.allergens else set()
-    preferences = await session.get(UserPreferences, user_id)
+    preferences = await session.get(UserPreferences, user_id) if user_id is not None else None
     personal_allergens = set(preferences.personal_allergens) if preferences and preferences.personal_allergens else set()
     allergens = list(household_allergens | personal_allergens)
     return [tag.name for tag in tags], allergens
