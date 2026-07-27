@@ -73,6 +73,7 @@
     "servings_one": "{{count}} serving",
     "servings_other": "{{count}} servings",
     "noRecipesYet": "No recipes yet.",
+    "addFirstRecipe": "Add your first recipe",
     "addPrompt": "Tap the + Add button to import one.",
     "addARecipe": "Add a recipe",
     "extractingRecipe": "Extracting recipe…",

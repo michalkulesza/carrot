@@ -67,6 +67,7 @@
     "servings_one": "{{count}} portion",
     "servings_other": "{{count}} portions",
     "noRecipesYet": "Aucune recette pour l'instant.",
+    "addFirstRecipe": "Ajoutez votre première recette",
     "addPrompt": "Appuyez sur + Ajouter pour en importer une.",
     "addARecipe": "Ajouter une recette",
     "extractingRecipe": "Extraction de la recette…",

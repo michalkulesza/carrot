@@ -74,6 +74,7 @@ interface RecipeSearchFooterProps {
   recipeCount: number
   selectedTagCount: number
   onClearFilters: () => void
+  onAddRecipe: () => void
 }
 
 const RecipeSearchFooter = ({
@@ -83,6 +84,7 @@ const RecipeSearchFooter = ({
   recipeCount,
   selectedTagCount,
   onClearFilters,
+  onAddRecipe,
 }: RecipeSearchFooterProps) => {
   const { t } = useTranslation()
 
@@ -97,18 +99,20 @@ const RecipeSearchFooter = ({
 
   if (recipeCount > 0) return null
 
+  const isTrulyEmpty = !hasSearchQuery && !filterFavourites && selectedTagCount === 0
   const emptyLabel = hasSearchQuery
     ? t('recipes.noResults')
     : filterFavourites
     ? t('recipes.noFavourites')
     : selectedTagCount > 0
     ? t('recipes.noRecipesWithTag')
-    : t('recipes.noRecipesYet')
+    : t('recipes.addFirstRecipe')
   const canClearFilters = selectedTagCount > 0 || filterFavourites
 
   return (
     <View style={styles.empty}>
       <Text style={styles.emptyText}>{emptyLabel}</Text>
+      {isTrulyEmpty && <Text style={styles.emptySubtitle}>{t('recipes.addPrompt')}</Text>}
       {canClearFilters && (
         <Pressable
           onPress={onClearFilters}
@@ -117,6 +121,16 @@ const RecipeSearchFooter = ({
           accessibilityRole="button"
         >
           <Text style={styles.clearFilter}>{t('recipes.clearFilter')}</Text>
+        </Pressable>
+      )}
+      {isTrulyEmpty && (
+        <Pressable
+          onPress={onAddRecipe}
+          style={({ pressed }) => [styles.addRecipeButton, pressed && { opacity: 0.8 }]}
+          accessibilityLabel={t('recipes.addARecipe')}
+          accessibilityRole="button"
+        >
+          <Text style={styles.addRecipeButtonText}>{t('recipes.addARecipe')}</Text>
         </Pressable>
       )}
     </View>
@@ -158,13 +172,13 @@ const RecipesScreen = () => {
   }, [openAddRecipe, router])
 
   const { user, loading: authLoading } = useAuth()
-  const dataQueriesEnabled = !authLoading && user !== null
+  const { households, isLoadingHouseholds, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
+  const dataQueriesEnabled = !authLoading && user !== null && !isLoadingHouseholds && activeHouseholdId != null
   const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
   const [switchingHousehold, setSwitchingHousehold] = useState(false)
   const householdFetchStartedRef = useRef(false)
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { tags } = useTags()
-  const { households, isLoadingHouseholds, activeHouseholdId, activeHousehold, switchHousehold } = useHousehold()
   const api = useApiClient()
   const qc = useQueryClient()
   const [query, setQuery] = useState('')
@@ -803,7 +817,7 @@ const RecipesScreen = () => {
     )
   }
 
-  if (error) {
+  if (error && !isFetching) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{error.message}</Text>
@@ -838,6 +852,7 @@ const RecipesScreen = () => {
               recipeCount={filtered.length}
               selectedTagCount={selectedTagIds.size}
               onClearFilters={handleClearFilters}
+              onAddRecipe={() => addRecipeSheetRef.current?.present()}
             />
           }
         />

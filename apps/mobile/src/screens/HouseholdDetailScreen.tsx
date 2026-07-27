@@ -152,6 +152,7 @@ const HouseholdDetailScreen = () => {
   const [inviting, setInviting] = useState(false)
   const [rotating, setRotating] = useState(false)
   const [busyUserId, setBusyUserId] = useState<string | null>(null)
+  const [leaving, setLeaving] = useState(false)
 
   const currentMember = members.find((m) => m.user_id === user?.id)
   const isAdmin = currentMember?.role === 'admin'
@@ -247,6 +248,7 @@ const HouseholdDetailScreen = () => {
   )
 
   const handleLeaveOnPress = useCallback(async () => {
+    setLeaving(true)
     try {
       await leave.mutateAsync(householdId)
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -255,6 +257,7 @@ const HouseholdDetailScreen = () => {
       }
       router.back()
     } catch (e) {
+      setLeaving(false)
       Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.leaveFailed'))
     }
   }, [householdId, leave, user, refreshUser, router, t])
@@ -277,6 +280,7 @@ const HouseholdDetailScreen = () => {
   )
 
   if (!household) {
+    if (leaving) return null
     return (
       <View style={styles.center}>
         <Text style={styles.errorText}>{t('recipes.noResults')}</Text>

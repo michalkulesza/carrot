@@ -69,6 +69,7 @@
     "servings_many": "{{count}} porcji",
     "servings_other": "{{count}} porcji",
     "noRecipesYet": "Brak przepisów.",
+    "addFirstRecipe": "Dodaj swój pierwszy przepis",
     "addPrompt": "Naciśnij + Dodaj, aby zaimportować przepis.",
     "addARecipe": "Dodaj przepis",
     "extractingRecipe": "Ekstrahuję przepis…",

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Stack } from 'expo-router'
 import * as Haptics from 'expo-haptics'
@@ -27,6 +27,7 @@ const GettingStartedScreen = () => {
   const { invitations, refetchHouseholds, refetchInvitations } = useHousehold()
   const { create: createHousehold, joinByCode } = useHouseholds()
   const [busyInvitationId, setBusyInvitationId] = useState<string | null>(null)
+  const [creatingHousehold, setCreatingHousehold] = useState(false)
 
   const handleAcceptInvitation = useCallback(
     async (id: string) => {
@@ -52,12 +53,15 @@ const GettingStartedScreen = () => {
         Alert.alert(t('common.ok'), t('settings.householdNameTooShort'))
         return
       }
+      setCreatingHousehold(true)
       try {
         await createHousehold.mutateAsync({ name: trimmed })
         await refreshUser()
         refetchHouseholds()
       } catch (e) {
         Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+      } finally {
+        setCreatingHousehold(false)
       }
     },
     [createHousehold, refetchHouseholds, refreshUser, t],
@@ -153,10 +157,15 @@ const GettingStartedScreen = () => {
       <Pressable
         style={({ pressed }) => [styles.primaryButton, pressed && { opacity: 0.8 }]}
         onPress={handleCreateHousehold}
+        disabled={creatingHousehold}
         accessibilityLabel={t('households.createAHousehold')}
         accessibilityRole="button"
       >
-        <Text style={styles.primaryButtonText}>{t('households.createAHousehold')}</Text>
+        {creatingHousehold ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.primaryButtonText}>{t('households.createAHousehold')}</Text>
+        )}
       </Pressable>
     </ScrollView>
   )

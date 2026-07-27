@@ -164,6 +164,24 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 12,
   },
+  emptySubtitle: {
+    fontSize: 13,
+    color: colors.tertiaryLabel,
+    textAlign: 'center',
+    marginTop: -8,
+    marginBottom: 16,
+  },
+  addRecipeButton: {
+    backgroundColor: colors.brand,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  addRecipeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
   searchLoading: { alignItems: 'center', gap: 8, padding: 40 },
   searchLoadingText: { color: colors.secondaryLabel, fontSize: 16, lineHeight: 21 },
   semanticHeader: {

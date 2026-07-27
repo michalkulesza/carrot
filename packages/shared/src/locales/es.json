@@ -67,6 +67,7 @@
     "servings_one": "{{count}} ración",
     "servings_other": "{{count}} raciones",
     "noRecipesYet": "Aún no hay recetas.",
+    "addFirstRecipe": "Añade tu primera receta",
     "addPrompt": "Pulsa + Añadir para importar una.",
     "addARecipe": "Añadir una receta",
     "extractingRecipe": "Extrayendo receta…",
