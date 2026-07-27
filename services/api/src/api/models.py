@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
-from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, text
+from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -68,12 +68,13 @@ user_recipe_favourites_table = Table(
     Column("recipe_id", PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True),
 )
 
-recipe_personal_links_table = Table(
-    "recipe_personal_links",
+recipe_households_table = Table(
+    "recipe_households",
     Base.metadata,
-    Column("user_id", PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
     Column("recipe_id", PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True),
-    Column("linked_at", DateTime, default=datetime.utcnow, nullable=False),
+    Column("household_id", PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), primary_key=True),
+    Column("added_at", DateTime, default=datetime.utcnow, nullable=False),
+    Index("ix_recipe_households_household_id", "household_id"),
 )
 
 recipe_related_recipes_table = Table(
@@ -95,6 +96,7 @@ class Household(Base):
     color: Mapped[str] = mapped_column(String(20), nullable=False, default="#6366f1")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     allergens: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
+    invite_code: Mapped[str] = mapped_column(String(8), unique=True, nullable=False)
 
 
 class HouseholdMember(Base):
@@ -107,6 +109,7 @@ class HouseholdMember(Base):
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    role: Mapped[str] = mapped_column(String(20), nullable=False, default="member")
 
 
 class InvitationStatus(StrEnum):
@@ -181,9 +184,6 @@ class Tag(Base):
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(30), nullable=False)
     is_default: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True
-    )
     household_id: Mapped[uuid.UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
     )
@@ -196,13 +196,9 @@ class Recipe(Base):
     __tablename__ = "recipes"
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    author_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-    household_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
-    )
-    shared_to_personal: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     servings: Mapped[int | None] = mapped_column(nullable=True)
     total_time_minutes: Mapped[int | None] = mapped_column(nullable=True)
@@ -219,7 +215,7 @@ class Recipe(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=recipe_tags_table, lazy="selectin")
-    author: Mapped["User"] = relationship("User", foreign_keys="Recipe.user_id", lazy="selectin")  # type: ignore[name-defined]
+    author: Mapped["User | None"] = relationship("User", foreign_keys="Recipe.author_id", lazy="selectin")  # type: ignore[name-defined]
 
 
 class RecipePublicShare(Base):
@@ -440,7 +436,6 @@ class RecipeSaveRequest(BaseModel):
     notes: str | None = None
     components: list[SaveComponent]
     tag_ids: list[uuid.UUID] = []
-    shared_to_personal: bool = True
 
 
 class RecipeOut(BaseModel):
@@ -462,8 +457,8 @@ class RecipeOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     tags: list[TagOut] = []
-    household_id: uuid.UUID | None = None
-    shared_to_personal: bool = True
+    household_ids: list[uuid.UUID] = []
+    author_id: uuid.UUID | None = None
     added_by: str | None = None
     is_favourite: bool = False
 
@@ -506,28 +501,15 @@ class RecipeOrderRequest(BaseModel):
 class MealPlanEntry(Base):
     __tablename__ = "meal_plan_entries"
     __table_args__ = (
-        Index(
-            "uq_meal_plan_personal",
-            "user_id",
-            "date",
-            unique=True,
-            postgresql_where=text("household_id IS NULL"),
-        ),
-        Index(
-            "uq_meal_plan_household",
-            "household_id",
-            "date",
-            unique=True,
-            postgresql_where=text("household_id IS NOT NULL"),
-        ),
+        UniqueConstraint("household_id", "date", name="uq_meal_plan_household"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    household_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
+    household_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=False
     )
     date: Mapped[DateType] = mapped_column(Date, nullable=False)
     recipe_id: Mapped[uuid.UUID | None] = mapped_column(
@@ -573,7 +555,6 @@ class UserPreferences(Base):
     personal_allergens: Mapped[list[str] | None] = mapped_column(JSONB, nullable=True)
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     unit_system: Mapped[str] = mapped_column(String(20), default="metric", nullable=False)
-    share_imports_to_personal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     recipe_serving_overrides: Mapped[dict[str, int]] = mapped_column(JSONB, default=dict, nullable=False)
 
 
@@ -585,7 +566,6 @@ class UserPreferencesOut(BaseModel):
     personal_allergens: list[str] | None = None
     language: str = "en"
     unit_system: str = "metric"
-    share_imports_to_personal: bool = False
     recipe_serving_overrides: dict[str, int] = Field(default_factory=dict)
 
 
@@ -595,7 +575,6 @@ class UserPreferencesUpdate(BaseModel):
     personal_allergens: list[str] | None = None
     language: str | None = None
     unit_system: str | None = None
-    share_imports_to_personal: bool | None = None
 
 
 class RecipeServingPreferenceUpdate(BaseModel):
@@ -611,8 +590,8 @@ class ShoppingListItem(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    household_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
+    household_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=False
     )
     text: Mapped[str] = mapped_column(String, nullable=False)
     completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -685,11 +664,10 @@ class ImportJob(Base):
     user_id: Mapped[uuid.UUID] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    household_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=True
+    household_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=False
     )
     idempotency_key: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False, default=uuid.uuid4)
-    shared_to_personal: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=ImportJobStatus.PENDING)
     kind: Mapped[str] = mapped_column(String(20), nullable=False)
     input: Mapped[dict] = mapped_column(JSON, nullable=False)

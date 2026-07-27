@@ -185,6 +185,93 @@ async def lifespan(app: FastAPI):
             "COALESCE(personal_allergens->'predefined', '[]'::jsonb) || COALESCE(personal_allergens->'custom', '[]'::jsonb) "
             "WHERE personal_allergens IS NOT NULL AND jsonb_typeof(personal_allergens) = 'object'"
         ))
+
+        # households-v2: remove the NULL-household "personal" sentinel; recipes move to an
+        # author + m2m household model. See docs/specs/household-v2.md.
+        await conn.execute(text(
+            "CREATE TABLE IF NOT EXISTS recipe_households ("
+            "recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE, "
+            "household_id UUID NOT NULL REFERENCES households(id) ON DELETE CASCADE, "
+            "added_at TIMESTAMP NOT NULL DEFAULT NOW(), "
+            "PRIMARY KEY (recipe_id, household_id))"
+        ))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recipe_households_household_id ON recipe_households (household_id)"))
+        await conn.execute(text(
+            "INSERT INTO recipe_households (recipe_id, household_id, added_at) "
+            "SELECT id, household_id, created_at FROM recipes WHERE household_id IS NOT NULL "
+            "ON CONFLICT DO NOTHING"
+        ))
+
+        await conn.execute(text(
+            "DO $$ BEGIN "
+            "IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recipes' AND column_name = 'user_id') "
+            "THEN ALTER TABLE recipes RENAME COLUMN user_id TO author_id; END IF; "
+            "END $$;"
+        ))
+        await conn.execute(text("ALTER TABLE recipes ALTER COLUMN author_id DROP NOT NULL"))
+        await conn.execute(text(
+            "DO $$ DECLARE fk_name TEXT; BEGIN "
+            "SELECT tc.constraint_name INTO fk_name FROM information_schema.table_constraints tc "
+            "JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name "
+            "WHERE tc.table_name = 'recipes' AND tc.constraint_type = 'FOREIGN KEY' AND kcu.column_name = 'author_id' LIMIT 1; "
+            "IF fk_name IS NOT NULL THEN EXECUTE 'ALTER TABLE recipes DROP CONSTRAINT ' || quote_ident(fk_name); END IF; "
+            "END $$;"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE recipes ADD CONSTRAINT recipes_author_id_fkey "
+            "FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL"
+        ))
+
+        await conn.execute(text("ALTER TABLE households ADD COLUMN IF NOT EXISTS invite_code VARCHAR(8)"))
+        await conn.execute(text(
+            "DO $$ DECLARE h RECORD; candidate TEXT; BEGIN "
+            "FOR h IN SELECT id FROM households WHERE invite_code IS NULL LOOP "
+            "LOOP "
+            "candidate := upper(substr(md5(random()::text || clock_timestamp()::text), 1, 8)); "
+            "EXIT WHEN NOT EXISTS (SELECT 1 FROM households WHERE invite_code = candidate); "
+            "END LOOP; "
+            "UPDATE households SET invite_code = candidate WHERE id = h.id; "
+            "END LOOP; "
+            "END $$;"
+        ))
+        await conn.execute(text("ALTER TABLE households ALTER COLUMN invite_code SET NOT NULL"))
+        await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_households_invite_code ON households (invite_code)"))
+
+        await conn.execute(text("ALTER TABLE household_members ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'member'"))
+        await conn.execute(text(
+            "UPDATE household_members hm SET role = 'admin' "
+            "WHERE hm.joined_at = (SELECT MIN(joined_at) FROM household_members WHERE household_id = hm.household_id) "
+            "AND NOT EXISTS (SELECT 1 FROM household_members WHERE household_id = hm.household_id AND role = 'admin')"
+        ))
+
+        await conn.execute(text("DELETE FROM meal_plan_entries WHERE household_id IS NULL"))
+        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_personal"))
+        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_household"))
+        await conn.execute(text("ALTER TABLE meal_plan_entries ALTER COLUMN household_id SET NOT NULL"))
+        await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_meal_plan_household ON meal_plan_entries (household_id, date)"))
+
+        await conn.execute(text("DELETE FROM shopping_list_items WHERE household_id IS NULL"))
+        await conn.execute(text("ALTER TABLE shopping_list_items ALTER COLUMN household_id SET NOT NULL"))
+
+        await conn.execute(text("DELETE FROM import_jobs WHERE household_id IS NULL"))
+        await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN household_id SET NOT NULL"))
+
+        await conn.execute(text("DELETE FROM tags WHERE is_default = FALSE AND household_id IS NULL"))
+
+        await conn.execute(text("ALTER TABLE recipes DROP COLUMN IF EXISTS household_id"))
+        await conn.execute(text("ALTER TABLE recipes DROP COLUMN IF EXISTS shared_to_personal"))
+        await conn.execute(text("ALTER TABLE import_jobs DROP COLUMN IF EXISTS shared_to_personal"))
+        await conn.execute(text("ALTER TABLE tags DROP COLUMN IF EXISTS user_id"))
+        await conn.execute(text("ALTER TABLE user_preferences DROP COLUMN IF EXISTS share_imports_to_personal"))
+        await conn.execute(text("DROP TABLE IF EXISTS recipe_personal_links"))
+
+        # One-time orphan sweep. R2 thumbnails for pre-existing orphans are not purged here —
+        # that requires the app-layer helper (services/orphan_cleanup.py) and runs going forward
+        # from the routes that can create orphans, not from this SQL migration.
+        await conn.execute(text(
+            "DELETE FROM recipes WHERE author_id IS NULL "
+            "AND NOT EXISTS (SELECT 1 FROM recipe_households WHERE recipe_id = recipes.id)"
+        ))
     await _seed_demo_user()
     await _seed_default_tags()
     await showcase.ensure_showcase_user()
