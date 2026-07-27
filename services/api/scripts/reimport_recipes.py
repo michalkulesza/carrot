@@ -6,8 +6,17 @@ from time import monotonic
 
 from sqlalchemy import select
 
+from api import users
 from api.database import async_session_maker
-from api.models import ImportResult, Ingredient, Recipe, RecipeComponent, RecipeExtraction, UserPreferences
+from api.models import (
+    ImportResult,
+    Ingredient,
+    Recipe,
+    RecipeComponent,
+    RecipeExtraction,
+    ShoppingCategory,
+    UserPreferences,
+)
 from api.services.import_worker import _get_tags_and_allergens
 from api.services.monitoring import init_sentry
 from api.services.pipeline import IMPORT_ERROR_CODE, run_import_stream
@@ -53,6 +62,10 @@ def _components(extraction: RecipeExtraction, auto_substitute: bool) -> list[dic
             "shopping_list_ingredients": [
                 ingredient.shopping_list_value or display
                 for ingredient, display in zip(component.ingredients, flattened)
+            ],
+            "shopping_list_categories": [
+                ingredient.shopping_list_category or ShoppingCategory.OTHER
+                for ingredient in component.ingredients
             ],
             "steps": component.steps,
             "metric_ingredients": component.metric_ingredients or flattened,
