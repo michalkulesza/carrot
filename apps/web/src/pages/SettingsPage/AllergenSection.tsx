@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Disclosure, toast } from '@heroui/react'
 import {
@@ -7,6 +7,8 @@ import {
 } from '@carrot/shared/utils/allergenKeys'
 import { streamReanalyze } from '../../api/client'
 import CheckboxGroup from './CheckboxGroup'
+
+const AUTO_SAVE_DELAY_MS = 3000
 
 interface AllergenSectionProps {
   allergens: string[]
@@ -21,12 +23,12 @@ const AllergenSection = ({
 }: AllergenSectionProps) => {
   const { t } = useTranslation()
   const [predefined, setPredefined] = useState<string[]>(allergens ?? [])
-  const [saving, setSaving] = useState(false)
   const [reanalyzing, setReanalyzing] = useState(false)
   const [reanalyzeProgress, setReanalyzeProgress] = useState<{
     done: number
     total: number
   } | null>(null)
+  const isFirstRender = useRef(true)
 
   const togglePredefined = useCallback((key: string) => {
     setPredefined((prev) =>
@@ -34,20 +36,27 @@ const AllergenSection = ({
     )
   }, [])
 
-  const handleSave = useCallback(async () => {
-    setSaving(true)
-    try {
-      await onSave(predefined)
-      toast.success(t('settings.allergensSaved'), { timeout: 2000 })
-    } catch (e) {
-      toast.danger(
-        e instanceof Error ? e.message : t('settings.failedToSave'),
-        { timeout: 3000 }
-      )
-    } finally {
-      setSaving(false)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
     }
-  }, [onSave, predefined, t])
+
+    const timeoutId = setTimeout(() => {
+      onSave(predefined)
+        .then(() =>
+          toast.success(t('settings.allergensSaved'), { timeout: 2000 })
+        )
+        .catch((e) =>
+          toast.danger(
+            e instanceof Error ? e.message : t('settings.failedToSave'),
+            { timeout: 3000 }
+          )
+        )
+    }, AUTO_SAVE_DELAY_MS)
+
+    return () => clearTimeout(timeoutId)
+  }, [predefined, onSave, t])
 
   const handleReanalyze = useCallback(() => {
     setReanalyzing(true)
@@ -125,14 +134,6 @@ const AllergenSection = ({
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <Button
-          size="sm"
-          variant="primary"
-          onPress={handleSave}
-          isDisabled={saving}
-        >
-          {saving ? t('common.saving') : t('common.save')}
-        </Button>
         <Button
           size="sm"
           variant="secondary"
