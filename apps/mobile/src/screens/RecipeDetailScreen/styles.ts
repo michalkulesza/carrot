@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
   scroll: { flex: 1 },
   card: {
     backgroundColor: colors.background,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingTop: 20,
   },
   center: {
@@ -211,19 +211,14 @@ export const styles = StyleSheet.create({
     lineHeight: 22,
   },
   addIngredientBtn: { marginLeft: 8, marginTop: 2 },
-  allergenWarningWrapper: { position: 'relative', marginLeft: 8, marginTop: 2 },
+  allergenWarningWrapper: { position: 'relative', marginLeft: 8 },
   allergenWarningButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#fef3c7',
-    borderColor: '#fde68a',
+    justifyContent: 'center',
+    width: 20,
+    height: 22,
     borderRadius: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
   },
-  allergenWarningText: { color: '#92400e', fontSize: 12, fontWeight: '600' },
   stepRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 14 },
   stepNum: {
     fontSize: 16,

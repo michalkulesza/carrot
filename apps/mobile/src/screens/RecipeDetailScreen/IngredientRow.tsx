@@ -70,14 +70,15 @@ const IngredientRow = ({
             hitSlop={8}
             style={styles.allergenWarningButton}
             accessibilityRole="button"
-            accessibilityLabel={`${t('recipes.contains')}: ${allergenFlag!.allergen}`}
+            accessibilityLabel={`${t('recipes.contains')}: ${allergenLabel}`}
+            accessibilityState={{ expanded: isAllergenTooltipOpen }}
           >
             <Feather name="alert-triangle" size={18} color={colors.orange} />
-            <Text style={styles.allergenWarningText}>{allergenLabel}</Text>
           </Pressable>
           {isAllergenTooltipOpen && (
             <TooltipPopover
               text={allergenTooltip}
+              header={allergenLabel}
               alignRight
               onDismiss={() => setIsAllergenTooltipOpen(false)}
             />

@@ -208,6 +208,10 @@ const ReadView = ({
                 value: formatCookingTime(recipe.total_time_minutes, t),
                 accessibilityLabel: t("recipes.totalTime"),
                 showDisclaimer: false,
+                valueFontSize:
+                  recipe.total_time_minutes !== null && recipe.total_time_minutes >= 60
+                    ? 15
+                    : undefined,
               },
               {
                 label: t("recipes.colKcal"),

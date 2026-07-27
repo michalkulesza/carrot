@@ -8,6 +8,7 @@ export interface NutritionBoxGridItem {
   accessibilityLabel: string
   unit?: string
   showDisclaimer?: boolean
+  valueFontSize?: number
 }
 
 interface NutritionBoxGridProps {
@@ -55,7 +56,7 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
 
   return (
     <Pressable style={getPressableStyle} onPress={onPress} accessibilityLabel={item.accessibilityLabel}>
-      <Text style={styles.number}>{shownValue}</Text>
+      <Text style={[styles.number, item.valueFontSize && { fontSize: item.valueFontSize }]}>{shownValue}</Text>
       <Text style={styles.label}>{item.label}</Text>
     </Pressable>
   )
@@ -63,15 +64,25 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
 
 interface TooltipPopoverProps {
   text: string
+  header?: string
   alignRight: boolean
   fitContent?: boolean
   onDismiss: () => void
 }
 
-export const TooltipPopover = ({ text, alignRight, fitContent = false, onDismiss }: TooltipPopoverProps) => (
+export const TooltipPopover = ({ text, header, alignRight, fitContent = false, onDismiss }: TooltipPopoverProps) => (
   <>
-    <Pressable style={styles.backdrop} onPress={onDismiss} accessibilityLabel={text} />
+    <Pressable
+      style={styles.backdrop}
+      onPress={onDismiss}
+      accessibilityLabel={[header, text].filter(Boolean).join('. ')}
+    />
     <View style={[styles.popover, fitContent && styles.popoverFitContent, alignRight ? styles.popoverAlignRight : styles.popoverAlignLeft]}>
+      {header && (
+        <View style={styles.popoverHeader}>
+          <Text style={styles.popoverHeaderText}>{header}</Text>
+        </View>
+      )}
       <Text style={styles.popoverText}>{text}</Text>
     </View>
   </>
@@ -106,7 +117,7 @@ const NutritionBox = ({
     return (
       <View style={[styles.boxWrapper, wrapperStyle]}>
         <View style={styles.box}>
-          <Text style={styles.number}>{displayValue}</Text>
+          <Text style={[styles.number, item.valueFontSize && { fontSize: item.valueFontSize }]}>{displayValue}</Text>
           <Text style={styles.label}>{item.label}</Text>
         </View>
       </View>
@@ -210,6 +221,17 @@ const styles = StyleSheet.create({
   popoverFitContent: { width: 'auto', maxWidth: 220, alignSelf: 'flex-start' },
   popoverAlignLeft: { left: 0 },
   popoverAlignRight: { right: 0 },
+  popoverHeader: {
+    alignSelf: 'stretch',
+    backgroundColor: '#fef3c7',
+    borderColor: '#fde68a',
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  popoverHeaderText: { color: '#92400e', fontSize: 12, lineHeight: 16, fontWeight: '600' },
   popoverText: { fontSize: 13, lineHeight: 18, color: colors.label },
 })
 
