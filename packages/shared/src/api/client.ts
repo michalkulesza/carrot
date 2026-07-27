@@ -120,11 +120,11 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<PublicRecipeOut>
   }
 
-  const addPublicRecipeToLibrary = async (token: string, householdId?: string | null): Promise<RecipeOut> => {
+  const addPublicRecipeToLibrary = async (token: string, householdId: string): Promise<RecipeOut> => {
     const res = await apiFetch(`/api/public/recipes/${encodeURIComponent(token)}/add-to-library`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ household_id: householdId ?? null }),
+      body: JSON.stringify({ household_id: householdId }),
     })
     await throwOnError(res, 'Failed to add recipe to library')
     return res.json() as Promise<RecipeOut>
@@ -170,23 +170,25 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<RecipeOut[]>
   }
 
-  const listPersonalRecipes = async (): Promise<RecipeOut[]> => {
-    const res = await apiFetch('/api/recipes?personal=true')
-    if (!res.ok) throw new Error('Failed to load personal recipes')
+  const listMyRecipes = async (): Promise<RecipeOut[]> => {
+    const res = await apiFetch('/api/recipes/mine')
+    if (!res.ok) throw new Error('Failed to load your recipes')
     return res.json() as Promise<RecipeOut[]>
   }
 
-  const linkRecipeToHousehold = async (id: string, householdId?: string): Promise<RecipeOut> => {
-    const query = householdId ? `?target_household_id=${encodeURIComponent(householdId)}` : ''
-    const res = await apiFetch(`/api/recipes/${id}/link-to-household${query}`, { method: 'POST' })
-    await throwOnError(res, 'Failed to link recipe')
+  const setRecipeHouseholds = async (id: string, householdIds: string[]): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/recipes/${id}/households`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ household_ids: householdIds }),
+    })
+    await throwOnError(res, 'Failed to update recipe households')
     return res.json() as Promise<RecipeOut>
   }
 
-  const linkRecipeToPersonal = async (id: string): Promise<RecipeOut> => {
-    const res = await apiFetch(`/api/recipes/${id}/link-to-personal`, { method: 'POST' })
-    await throwOnError(res, 'Failed to link recipe')
-    return res.json() as Promise<RecipeOut>
+  const removeRecipeFromHousehold = async (id: string, householdId: string): Promise<void> => {
+    const res = await apiFetch(`/api/recipes/${id}/households/${householdId}`, { method: 'DELETE' })
+    await throwOnError(res, 'Failed to remove recipe from household')
   }
 
   const toggleFavourite = async (recipeId: string): Promise<{ is_favourite: boolean }> => {
@@ -410,10 +412,37 @@ export const createApiClient = (config: ApiClientConfig) => {
     await throwOnError(res, 'Failed to leave household')
   }
 
+  const joinHouseholdByCode = async (code: string): Promise<{ active_household_id: string }> => {
+    const res = await apiFetch('/api/households/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    })
+    await throwOnError(res, 'Failed to join household')
+    return res.json() as Promise<{ active_household_id: string }>
+  }
+
+  const rotateInviteCode = async (householdId: string): Promise<HouseholdOut> => {
+    const res = await apiFetch(`/api/households/${householdId}/rotate-code`, { method: 'POST' })
+    await throwOnError(res, 'Failed to rotate invite code')
+    return res.json() as Promise<HouseholdOut>
+  }
+
   const listMembers = async (householdId: string): Promise<MemberOut[]> => {
     const res = await apiFetch(`/api/households/${householdId}/members`)
     if (!res.ok) throw new Error('Failed to load members')
     return res.json() as Promise<MemberOut[]>
+  }
+
+  const removeMember = async (householdId: string, userId: string): Promise<void> => {
+    const res = await apiFetch(`/api/households/${householdId}/members/${userId}`, { method: 'DELETE' })
+    await throwOnError(res, 'Failed to remove member')
+  }
+
+  const promoteMember = async (householdId: string, userId: string): Promise<MemberOut> => {
+    const res = await apiFetch(`/api/households/${householdId}/members/${userId}/promote`, { method: 'POST' })
+    await throwOnError(res, 'Failed to promote member')
+    return res.json() as Promise<MemberOut>
   }
 
   const switchHousehold = async (householdId: string | null): Promise<void> => {
@@ -811,9 +840,9 @@ export const createApiClient = (config: ApiClientConfig) => {
     listRecipes,
     searchRecipes,
     subscribeRecipes,
-    listPersonalRecipes,
-    linkRecipeToHousehold,
-    linkRecipeToPersonal,
+    listMyRecipes,
+    setRecipeHouseholds,
+    removeRecipeFromHousehold,
     toggleFavourite,
     reorderRecipes,
     importRecipes,
@@ -836,7 +865,11 @@ export const createApiClient = (config: ApiClientConfig) => {
     listHouseholds,
     updateHousehold,
     leaveHousehold,
+    joinHouseholdByCode,
+    rotateInviteCode,
     listMembers,
+    removeMember,
+    promoteMember,
     switchHousehold,
     inviteUser,
     listInvitations,

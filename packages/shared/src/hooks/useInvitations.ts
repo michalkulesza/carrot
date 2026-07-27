@@ -1,14 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 
-export const useInvitations = () => {
+export const useInvitations = (refetchIntervalMs = 30_000) => {
   const api = useApiClient()
   const qc = useQueryClient()
 
   const query = useQuery({
     queryKey: ['invitations'],
     queryFn: api.listInvitations,
-    refetchInterval: 30_000,
+    refetchInterval: refetchIntervalMs,
   })
 
   const accept = useMutation({

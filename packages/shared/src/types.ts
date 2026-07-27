@@ -171,7 +171,6 @@ export interface RecipeSaveRequest {
   notes?: string | null
   components: SaveComponent[]
   tag_ids: string[]
-  shared_to_personal?: boolean
 }
 
 export interface RecipeOut {
@@ -191,8 +190,8 @@ export interface RecipeOut {
   created_at: string
   updated_at: string
   tags: Tag[]
-  household_id: string | null
-  shared_to_personal: boolean
+  household_ids: string[]
+  author_id: string | null
   added_by: string | null
   is_favourite: boolean
 }
@@ -244,7 +243,6 @@ export interface UserPreferences {
   personal_allergens: string[] | null
   language: string
   unit_system: string // "metric" | "imperial"
-  share_imports_to_personal: boolean
   recipe_serving_overrides: Record<string, number>
 }
 
@@ -261,13 +259,17 @@ export interface HouseholdOut {
   color: string
   created_at: string
   allergens: string[] | null
+  invite_code: string
 }
+
+export type HouseholdRole = 'admin' | 'member'
 
 export interface MemberOut {
   user_id: string
   email: string
   nickname: string | null
   joined_at: string
+  role: HouseholdRole
 }
 
 export interface InvitationOut {

@@ -24,6 +24,16 @@ export const useHouseholds = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['households'] }),
   })
 
+  const joinByCode = useMutation({
+    mutationFn: (code: string) => api.joinHouseholdByCode(code),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['households'] }),
+  })
+
+  const rotateCode = useMutation({
+    mutationFn: (householdId: string) => api.rotateInviteCode(householdId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['households'] }),
+  })
+
   const switchTo = useMutation({
     mutationFn: (id: string | null) => api.switchHousehold(id),
   })
@@ -46,6 +56,8 @@ export const useHouseholds = () => {
     create,
     update,
     leave,
+    joinByCode,
+    rotateCode,
     switchTo,
     invite,
     updateAllergens,

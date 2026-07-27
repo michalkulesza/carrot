@@ -72,15 +72,22 @@ export const useRecipes = (enabled = true) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
   })
 
-  const linkToHousehold = useMutation({
-    mutationFn: ({ id, householdId }: { id: string; householdId?: string }) =>
-      api.linkRecipeToHousehold(id, householdId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+  const setHouseholds = useMutation({
+    mutationFn: ({ id, householdIds }: { id: string; householdIds: string[] }) =>
+      api.setRecipeHouseholds(id, householdIds),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recipes'] })
+      qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
+    },
   })
 
-  const linkToPersonal = useMutation({
-    mutationFn: api.linkRecipeToPersonal,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+  const removeFromHousehold = useMutation({
+    mutationFn: ({ id, householdId }: { id: string; householdId: string }) =>
+      api.removeRecipeFromHousehold(id, householdId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recipes'] })
+      qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
+    },
   })
 
   return {
@@ -95,8 +102,8 @@ export const useRecipes = (enabled = true) => {
     reorder,
     toggleFavourite,
     importCsv,
-    linkToHousehold,
-    linkToPersonal,
+    setHouseholds,
+    removeFromHousehold,
   }
 }
 
@@ -129,7 +136,7 @@ export const useSemanticRecipeSearch = (query: string, scopeKey: string | null) 
   }
 }
 
-export const usePersonalRecipes = (enabled = true) => {
+export const useMyRecipes = (enabled = true) => {
   const api = useApiClient()
-  return useQuery({ queryKey: ['recipes', 'personal'], queryFn: api.listPersonalRecipes, enabled })
+  return useQuery({ queryKey: ['recipes', 'mine'], queryFn: api.listMyRecipes, enabled })
 }
