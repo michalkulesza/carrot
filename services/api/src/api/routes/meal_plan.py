@@ -7,13 +7,14 @@ from datetime import date as DateType
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, exists, or_, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
 from api.database import get_async_session
-from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe, recipe_personal_links_table
+from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe
 from api.routes.context import get_active_household_id, get_scope_key
+from api.routes.recipes import _recipe_filter
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/meal-plan", tags=["meal-plan"])
@@ -33,54 +34,19 @@ def _parse_date(value: str) -> DateType:
         ) from None
 
 
-def _entry_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, date: DateType):
-    if household_id is not None:
-        return and_(MealPlanEntry.household_id == household_id, MealPlanEntry.date == date)
-    return and_(
-        MealPlanEntry.user_id == user_id,
-        MealPlanEntry.household_id.is_(None),
-        MealPlanEntry.date == date,
+def _entry_filter(household_id: uuid.UUID, date: DateType):
+    return and_(MealPlanEntry.household_id == household_id, MealPlanEntry.date == date)
+
+
+def _recipe_access_filter(household_id: uuid.UUID, recipe_id: uuid.UUID):
+    return and_(Recipe.id == recipe_id, _recipe_filter(household_id))
+
+
+def _next_entry_statement(household_id: uuid.UUID, from_date: DateType):
+    where = and_(
+        MealPlanEntry.household_id == household_id,
+        MealPlanEntry.date >= from_date,
     )
-
-
-def _recipe_access_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, recipe_id: uuid.UUID):
-    if household_id is not None:
-        return and_(Recipe.id == recipe_id, Recipe.household_id == household_id)
-    personally_linked = exists(
-        select(recipe_personal_links_table.c.recipe_id).where(
-            recipe_personal_links_table.c.user_id == user_id,
-            recipe_personal_links_table.c.recipe_id == recipe_id,
-        )
-    )
-    return and_(
-        Recipe.id == recipe_id,
-        or_(
-            and_(
-                Recipe.user_id == user_id,
-                or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
-            ),
-            personally_linked,
-        ),
-    )
-
-
-def _next_entry_statement(
-    user_id: uuid.UUID,
-    household_id: uuid.UUID | None,
-    from_date: DateType,
-):
-    if household_id is not None:
-        where = and_(
-            MealPlanEntry.household_id == household_id,
-            MealPlanEntry.date >= from_date,
-        )
-    else:
-        where = and_(
-            MealPlanEntry.user_id == user_id,
-            MealPlanEntry.household_id.is_(None),
-            MealPlanEntry.date >= from_date,
-        )
-
     return select(MealPlanEntry).where(where).order_by(MealPlanEntry.date.asc()).limit(1)
 
 
@@ -89,7 +55,7 @@ async def list_meal_plan(
     month: str,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[MealPlanEntryOut]:
     try:
         year, m = int(month.split("-")[0]), int(month.split("-")[1])
@@ -100,19 +66,11 @@ async def list_meal_plan(
     start = DateType(year, m, 1)
     end = DateType(year, m, last_day)
 
-    if household_id is not None:
-        where = and_(
-            MealPlanEntry.household_id == household_id,
-            MealPlanEntry.date >= start,
-            MealPlanEntry.date <= end,
-        )
-    else:
-        where = and_(
-            MealPlanEntry.user_id == user.id,
-            MealPlanEntry.household_id.is_(None),
-            MealPlanEntry.date >= start,
-            MealPlanEntry.date <= end,
-        )
+    where = and_(
+        MealPlanEntry.household_id == household_id,
+        MealPlanEntry.date >= start,
+        MealPlanEntry.date <= end,
+    )
 
     result = await session.execute(select(MealPlanEntry).where(where))
     return [MealPlanEntryOut.model_validate(e) for e in result.scalars().all()]
@@ -123,10 +81,10 @@ async def get_next_meal_plan_entry(
     from_: str = Query(alias="from"),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> MealPlanEntryOut | None:
     from_date = _parse_date(from_)
-    statement = _next_entry_statement(user.id, household_id, from_date)
+    statement = _next_entry_statement(household_id, from_date)
     result = await session.execute(statement)
     entry = result.scalar_one_or_none()
 
@@ -138,7 +96,7 @@ async def get_next_meal_plan_entry(
 async def stream_meal_plan(
     request: Request,
     user: User = Depends(current_active_user),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     scope = get_scope_key("meal-plan", user.id, household_id)
 
@@ -169,20 +127,20 @@ async def set_meal_plan_entry(
     body: MealPlanSetRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> MealPlanEntryOut:
     date = _parse_date(date_str)
     recipe = None
     if body.recipe_id is not None:
         recipe_result = await session.execute(
-            select(Recipe).where(_recipe_access_filter(user.id, household_id, body.recipe_id))
+            select(Recipe).where(_recipe_access_filter(household_id, body.recipe_id))
         )
         recipe = recipe_result.scalar_one_or_none()
         if recipe is None:
             raise HTTPException(status_code=404, detail="Recipe not found")
 
     result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(user.id, household_id, date))
+        select(MealPlanEntry).where(_entry_filter(household_id, date))
     )
     entry = result.scalar_one_or_none()
     if entry is None:
@@ -214,12 +172,12 @@ async def delete_meal_plan_entry(
     date_str: str,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     date = _parse_date(date_str)
 
     result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(user.id, household_id, date))
+        select(MealPlanEntry).where(_entry_filter(household_id, date))
     )
     entry = result.scalar_one_or_none()
     if entry is None:

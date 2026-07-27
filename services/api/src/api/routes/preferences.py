@@ -28,7 +28,6 @@ async def get_preferences(
             auto_substitute=False,
             personal_allergens=None,
             language="en",
-            share_imports_to_personal=False,
         )
     return UserPreferencesOut.model_validate(prefs)
 
@@ -55,8 +54,6 @@ async def update_preferences(
             prefs.language = body.language
         if body.unit_system is not None:
             prefs.unit_system = body.unit_system
-        if body.share_imports_to_personal is not None:
-            prefs.share_imports_to_personal = body.share_imports_to_personal
         session.add(prefs)
     else:
         if body.week_start_day is not None:
@@ -69,8 +66,6 @@ async def update_preferences(
             prefs.language = body.language
         if body.unit_system is not None:
             prefs.unit_system = body.unit_system
-        if body.share_imports_to_personal is not None:
-            prefs.share_imports_to_personal = body.share_imports_to_personal
 
     await session.commit()
     await session.refresh(prefs)

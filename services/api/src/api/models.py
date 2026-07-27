@@ -480,7 +480,7 @@ class PublicRecipeOut(BaseModel):
 
 
 class PublicRecipeLibraryAddRequest(BaseModel):
-    household_id: uuid.UUID | None = None
+    household_id: uuid.UUID
 
 
 class RecipePublicShareOut(BaseModel):
@@ -494,6 +494,10 @@ class RelatedRecipeRequest(BaseModel):
 
 class RecipeOrderRequest(BaseModel):
     ids: list[uuid.UUID]
+
+
+class RecipeHouseholdsRequest(BaseModel):
+    household_ids: list[uuid.UUID]
 
 
 # ── Meal Plan ─────────────────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ from api.database import get_async_session
 from api.models import (
     HouseholdMember,
     Recipe,
+    RecipeHouseholdsRequest,
     RecipePublicShare,
     RecipePublicShareOut,
     RecipeEmbedding,
@@ -27,12 +28,13 @@ from api.models import (
     RelatedRecipeRequest,
     RecipeSaveRequest,
     Tag,
-    recipe_personal_links_table,
+    recipe_households_table,
     recipe_related_recipes_table,
     user_recipe_favourites_table,
 )
 from api.routes.context import get_active_household_id, get_scope_key
 from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
+from api.services.orphan_cleanup import delete_orphan_recipes
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -42,47 +44,29 @@ _CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creato
 _PUBLIC_SHARE_LIFETIME = timedelta(days=7)
 
 
-def _personally_linked(user_id: uuid.UUID):
+def _recipe_filter(household_id: uuid.UUID):
     return exists(
-        select(recipe_personal_links_table.c.recipe_id).where(
-            recipe_personal_links_table.c.user_id == user_id,
-            recipe_personal_links_table.c.recipe_id == Recipe.id,
+        select(recipe_households_table.c.recipe_id).where(
+            recipe_households_table.c.household_id == household_id,
+            recipe_households_table.c.recipe_id == Recipe.id,
         )
     )
 
 
-def _recipe_filter(user_id: uuid.UUID, household_id: uuid.UUID | None):
-    if household_id is not None:
-        return Recipe.household_id == household_id
-    return or_(
-        and_(
-            Recipe.user_id == user_id,
-            or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
-        ),
-        _personally_linked(user_id),
-    )
-
-
-def _recipe_write_filter(user_id: uuid.UUID, household_id: uuid.UUID | None, recipe_id: uuid.UUID):
-    if household_id is not None:
-        return and_(Recipe.id == recipe_id, Recipe.household_id == household_id)
-    return and_(
-        Recipe.id == recipe_id,
-        Recipe.user_id == user_id,
-        or_(Recipe.household_id.is_(None), Recipe.shared_to_personal.is_(True)),
-    )
+def _recipe_write_filter(household_id: uuid.UUID, recipe_id: uuid.UUID):
+    return and_(Recipe.id == recipe_id, _recipe_filter(household_id))
 
 
 def _public_share_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-async def _set_tags(session: AsyncSession, recipe: Recipe, tag_ids: list[uuid.UUID], user_id: uuid.UUID, household_id: uuid.UUID | None) -> None:
+async def _set_tags(session: AsyncSession, recipe: Recipe, tag_ids: list[uuid.UUID], household_id: uuid.UUID) -> None:
     await session.refresh(recipe, attribute_names=["tags"])
     if not tag_ids:
         recipe.tags = []
         return
-    tag_filter = or_(Tag.is_default.is_(True), Tag.household_id == household_id) if household_id else or_(Tag.is_default.is_(True), and_(Tag.user_id == user_id, Tag.household_id.is_(None)))
+    tag_filter = or_(Tag.is_default.is_(True), Tag.household_id == household_id)
     result = await session.execute(select(Tag).where(Tag.id.in_(tag_ids), tag_filter))
     recipe.tags = list(result.scalars().all())
 
@@ -95,30 +79,38 @@ async def _get_favourite_ids(session: AsyncSession, user_id: uuid.UUID) -> set[u
     return {row[0] for row in result}
 
 
-async def _get_personal_link_ids(session: AsyncSession, user_id: uuid.UUID) -> set[uuid.UUID]:
+async def _get_household_ids_map(session: AsyncSession, recipe_ids: list[uuid.UUID]) -> dict[uuid.UUID, list[uuid.UUID]]:
+    if not recipe_ids:
+        return {}
     result = await session.execute(
-        select(recipe_personal_links_table.c.recipe_id)
-        .where(recipe_personal_links_table.c.user_id == user_id)
+        select(recipe_households_table.c.recipe_id, recipe_households_table.c.household_id)
+        .where(recipe_households_table.c.recipe_id.in_(recipe_ids))
     )
-    return {row[0] for row in result}
+    household_ids_map: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for recipe_id, household_id in result.all():
+        household_ids_map.setdefault(recipe_id, []).append(household_id)
+    return household_ids_map
+
+
+async def _link_recipe_to_household(session: AsyncSession, recipe_id: uuid.UUID, household_id: uuid.UUID) -> None:
+    await session.execute(
+        pg_insert(recipe_households_table)
+        .values(recipe_id=recipe_id, household_id=household_id, added_at=datetime.utcnow())
+        .on_conflict_do_nothing(index_elements=["recipe_id", "household_id"])
+    )
 
 
 def _build_recipe_out(
     recipe: Recipe,
-    viewer_id: uuid.UUID,
     favourite_ids: set[uuid.UUID] | None = None,
-    personal_link_ids: set[uuid.UUID] | None = None,
+    household_ids: list[uuid.UUID] | None = None,
 ) -> RecipeOut:
     out = RecipeOut.model_validate(recipe)
-    if recipe.household_id is not None and recipe.author is not None:
+    if recipe.author is not None:
         out.added_by = recipe.author.nickname or recipe.author.email
     if favourite_ids is not None:
         out.is_favourite = recipe.id in favourite_ids
-    # shared_to_personal reflects whether THIS viewer already has the recipe in
-    # their own personal library, not just whether the row was ever linked by anyone.
-    out.shared_to_personal = (recipe.user_id == viewer_id and recipe.shared_to_personal) or (
-        personal_link_ids is not None and recipe.id in personal_link_ids
-    )
+    out.household_ids = household_ids or []
     return out
 
 
@@ -126,10 +118,10 @@ def _build_recipe_out(
 async def recipe_stats(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> dict:
     result = await session.execute(
-        select(Recipe).where(_recipe_filter(user.id, household_id))
+        select(Recipe).where(_recipe_filter(household_id))
     )
     recipes = result.scalars().all()
 
@@ -166,11 +158,11 @@ async def recipe_stats(
 async def export_recipes(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     result = await session.execute(
         select(Recipe)
-        .where(_recipe_filter(user.id, household_id))
+        .where(_recipe_filter(household_id))
         .order_by(Recipe.created_at.desc())
     )
     recipes = result.scalars().all()
@@ -200,7 +192,7 @@ async def import_recipes(
     file: UploadFile = File(...),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> dict:
     content = await file.read()
     try:
@@ -220,9 +212,7 @@ async def import_recipes(
             components = []
 
         recipe = Recipe(
-            user_id=user.id,
-            household_id=household_id,
-            shared_to_personal=True,
+            author_id=user.id,
             title=row.get("title") or "Untitled",
             servings=int(row["servings"]) if row.get("servings") else None,
             kcal_per_serving=int(row["kcal_per_serving"]) if row.get("kcal_per_serving") else None,
@@ -232,6 +222,7 @@ async def import_recipes(
         )
         session.add(recipe)
         await session.flush()
+        await _link_recipe_to_household(session, recipe.id, household_id)
         await queue_recipe_embedding(session, recipe)
         count += 1
 
@@ -241,24 +232,40 @@ async def import_recipes(
 
 @router.get("", response_model=list[RecipeOut])
 async def list_recipes(
-    personal: bool = False,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[RecipeOut]:
-    # personal=True forces strict personal scope (household_id IS NULL only)
-    effective_hid = None if personal else household_id
     result = await session.execute(
         select(Recipe)
-        .where(_recipe_filter(user.id, effective_hid) if not personal
-               else and_(Recipe.user_id == user.id, Recipe.household_id.is_(None)))
+        .where(_recipe_filter(household_id))
         .order_by(Recipe.position.asc().nullslast(), Recipe.created_at.desc())
     )
+    recipes = result.scalars().all()
     favourite_ids = await _get_favourite_ids(session, user.id)
-    personal_link_ids = await _get_personal_link_ids(session, user.id)
+    household_ids_map = await _get_household_ids_map(session, [r.id for r in recipes])
     return [
-        _build_recipe_out(r, user.id, favourite_ids, personal_link_ids)
-        for r in result.scalars().all()
+        _build_recipe_out(r, favourite_ids, household_ids_map.get(r.id))
+        for r in recipes
+    ]
+
+
+@router.get("/mine", response_model=list[RecipeOut])
+async def list_my_recipes(
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> list[RecipeOut]:
+    result = await session.execute(
+        select(Recipe)
+        .where(Recipe.author_id == user.id)
+        .order_by(Recipe.created_at.desc())
+    )
+    recipes = result.scalars().all()
+    favourite_ids = await _get_favourite_ids(session, user.id)
+    household_ids_map = await _get_household_ids_map(session, [r.id for r in recipes])
+    return [
+        _build_recipe_out(r, favourite_ids, household_ids_map.get(r.id))
+        for r in recipes
     ]
 
 
@@ -268,7 +275,7 @@ async def search_recipes(
     limit: int | None = Query(default=None, ge=1, le=20),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[RecipeOut]:
     query = q.strip()
     if len(query) < 3 or not settings.semantic_search_enabled:
@@ -283,7 +290,7 @@ async def search_recipes(
             select(Recipe)
             .join(RecipeEmbedding, RecipeEmbedding.recipe_id == Recipe.id)
             .where(
-                _recipe_filter(user.id, household_id),
+                _recipe_filter(household_id),
                 RecipeEmbedding.model == settings.gemini_embedding_model,
                 RecipeEmbedding.dimensions == settings.gemini_embedding_dimensions,
                 RecipeEmbedding.document_version == settings.embedding_document_version,
@@ -295,8 +302,8 @@ async def search_recipes(
             .params(query_vector=vector_literal)
         )).unique().all())
         favourite_ids = await _get_favourite_ids(session, user.id)
-        personal_link_ids = await _get_personal_link_ids(session, user.id)
-        return [_build_recipe_out(recipe, user.id, favourite_ids, personal_link_ids) for recipe in recipes]
+        household_ids_map = await _get_household_ids_map(session, [r.id for r in recipes])
+        return [_build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id)) for recipe in recipes]
     except Exception as error:
         log.warning("semantic_search_failed query_length=%d error=%s", len(query), type(error).__name__)
         return []
@@ -307,7 +314,7 @@ async def search_recipes(
 async def stream_recipes(
     request: Request,
     user: User = Depends(current_active_user),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     scope = get_scope_key("recipes", user.id, household_id)
 
@@ -337,12 +344,10 @@ async def save_recipe(
     body: RecipeSaveRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> RecipeOut:
     recipe = Recipe(
-        user_id=user.id,
-        household_id=household_id,
-        shared_to_personal=body.shared_to_personal if household_id is not None else True,
+        author_id=user.id,
         title=body.title,
         servings=body.servings,
         total_time_minutes=body.total_time_minutes,
@@ -358,7 +363,8 @@ async def save_recipe(
     )
     session.add(recipe)
     await session.flush()
-    await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
+    await _link_recipe_to_household(session, recipe.id, household_id)
+    await _set_tags(session, recipe, body.tag_ids, household_id)
     await session.flush()
     await queue_recipe_embedding(session, recipe)
     await session.commit()
@@ -367,7 +373,7 @@ async def save_recipe(
     scope = get_scope_key("recipes", user.id, household_id)
     await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe.id)})
 
-    return _build_recipe_out(recipe, user.id)
+    return _build_recipe_out(recipe, household_ids=[household_id])
 
 
 @router.patch("/order", status_code=204)
@@ -375,11 +381,11 @@ async def reorder_recipes(
     body: RecipeOrderRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     for position, recipe_id in enumerate(body.ids):
         result = await session.execute(
-            select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
+            select(Recipe).where(_recipe_write_filter(household_id, recipe_id))
         )
         recipe = result.scalar_one_or_none()
         if recipe is not None:
@@ -392,9 +398,9 @@ async def create_public_share(
     recipe_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> RecipePublicShareOut:
-    recipe = await session.scalar(select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id)))
+    recipe = await session.scalar(select(Recipe).where(_recipe_write_filter(household_id, recipe_id)))
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -425,10 +431,10 @@ async def update_recipe(
     body: RecipeSaveRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> RecipeOut:
     result = await session.execute(
-        select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
+        select(Recipe).where(_recipe_write_filter(household_id, recipe_id))
     )
     recipe = result.scalar_one_or_none()
     if recipe is None:
@@ -448,9 +454,7 @@ async def update_recipe(
     recipe.source_url = body.source_url
     recipe.notes = body.notes
     recipe.components = [c.model_dump() for c in body.components]
-    if household_id is not None:
-        recipe.shared_to_personal = body.shared_to_personal
-    await _set_tags(session, recipe, body.tag_ids, user.id, household_id)
+    await _set_tags(session, recipe, body.tag_ids, household_id)
 
     await session.flush()
     await queue_recipe_embedding(session, recipe)
@@ -464,8 +468,8 @@ async def update_recipe(
     scope = get_scope_key("recipes", user.id, household_id)
     await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe.id)})
 
-    personal_link_ids = await _get_personal_link_ids(session, user.id)
-    return _build_recipe_out(recipe, user.id, personal_link_ids=personal_link_ids)
+    household_ids_map = await _get_household_ids_map(session, [recipe.id])
+    return _build_recipe_out(recipe, household_ids=household_ids_map.get(recipe.id))
 
 
 @router.post("/{recipe_id}/tags/{tag_id}", status_code=204)
@@ -474,16 +478,16 @@ async def add_tag_to_recipe(
     tag_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     recipe_result = await session.execute(
-        select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
+        select(Recipe).where(_recipe_write_filter(household_id, recipe_id))
     )
     recipe = recipe_result.scalar_one_or_none()
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
-    tag_filter = or_(Tag.is_default.is_(True), Tag.household_id == household_id) if household_id else or_(Tag.is_default.is_(True), and_(Tag.user_id == user.id, Tag.household_id.is_(None)))
+    tag_filter = or_(Tag.is_default.is_(True), Tag.household_id == household_id)
     tag_result = await session.execute(select(Tag).where(Tag.id == tag_id, tag_filter))
     tag = tag_result.scalar_one_or_none()
     if tag is None:
@@ -503,10 +507,10 @@ async def remove_tag_from_recipe(
     tag_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     recipe_result = await session.execute(
-        select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
+        select(Recipe).where(_recipe_write_filter(household_id, recipe_id))
     )
     recipe = recipe_result.scalar_one_or_none()
     if recipe is None:
@@ -518,39 +522,81 @@ async def remove_tag_from_recipe(
     await session.commit()
 
 
-@router.post("/{recipe_id}/link-to-household", response_model=RecipeOut)
-async def link_recipe_to_household(
+async def _user_household_ids(session: AsyncSession, user_id: uuid.UUID) -> set[uuid.UUID]:
+    result = await session.execute(
+        select(HouseholdMember.household_id).where(HouseholdMember.user_id == user_id)
+    )
+    return {row[0] for row in result}
+
+
+@router.put("/{recipe_id}/households", response_model=RecipeOut)
+async def set_recipe_households(
     recipe_id: uuid.UUID,
-    target_household_id: uuid.UUID | None = None,
+    body: RecipeHouseholdsRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    active_household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> RecipeOut:
-    household_id = target_household_id or active_household_id
-    if household_id is None:
-        raise HTTPException(status_code=400, detail="Not in a household context")
-    if target_household_id is not None:
-        membership = await session.execute(
-            select(HouseholdMember).where(
-                HouseholdMember.household_id == target_household_id,
-                HouseholdMember.user_id == user.id,
-            )
-        )
-        if membership.scalar_one_or_none() is None:
-            raise HTTPException(status_code=403, detail="Not a member of that household")
-    result = await session.execute(
-        select(Recipe).where(Recipe.id == recipe_id, Recipe.user_id == user.id)
-    )
-    recipe = result.scalar_one_or_none()
+    recipe = await session.get(Recipe, recipe_id)
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
-    if recipe.household_id is not None:
-        raise HTTPException(status_code=400, detail="Recipe already belongs to a household")
-    recipe.household_id = household_id
-    recipe.shared_to_personal = True
+
+    member_household_ids = await _user_household_ids(session, user.id)
+    is_author = recipe.author_id == user.id
+    current_household_ids = await session.execute(
+        select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe_id)
+    )
+    is_linked_to_own_household = bool({row[0] for row in current_household_ids} & member_household_ids)
+    if not is_author and not is_linked_to_own_household:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    target_ids = set(body.household_ids)
+    if target_ids - member_household_ids:
+        raise HTTPException(status_code=403, detail="Not a member of one or more households")
+
+    await session.execute(delete(recipe_households_table).where(recipe_households_table.c.recipe_id == recipe_id))
+    for household_id in target_ids:
+        await _link_recipe_to_household(session, recipe_id, household_id)
+
+    await delete_orphan_recipes(session, [recipe_id])
     await session.commit()
-    await session.refresh(recipe)
-    return _build_recipe_out(recipe, user.id)
+
+    recipe = await session.get(Recipe, recipe_id)
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    household_ids_map = await _get_household_ids_map(session, [recipe.id])
+    return _build_recipe_out(recipe, household_ids=household_ids_map.get(recipe.id))
+
+
+@router.delete("/{recipe_id}/households/{household_id}", status_code=204)
+async def remove_recipe_from_household(
+    recipe_id: uuid.UUID,
+    household_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+) -> None:
+    membership = await session.execute(
+        select(HouseholdMember).where(
+            HouseholdMember.household_id == household_id,
+            HouseholdMember.user_id == user.id,
+        )
+    )
+    if membership.scalar_one_or_none() is None:
+        raise HTTPException(status_code=403, detail="Not a member of this household")
+
+    result = await session.execute(
+        delete(recipe_households_table).where(
+            recipe_households_table.c.recipe_id == recipe_id,
+            recipe_households_table.c.household_id == household_id,
+        )
+    )
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Recipe not found in this household")
+
+    await delete_orphan_recipes(session, [recipe_id])
+    await session.commit()
+
+    scope = get_scope_key("recipes", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
 
 
 @router.get("/{recipe_id}/related", response_model=list[RecipeOut])
@@ -558,7 +604,7 @@ async def list_related_recipes(
     recipe_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[RecipeOut]:
     related_ids = select(recipe_related_recipes_table.c.related_recipe_id).where(
         recipe_related_recipes_table.c.recipe_id == recipe_id
@@ -566,11 +612,11 @@ async def list_related_recipes(
         recipe_related_recipes_table.c.related_recipe_id == recipe_id
     ))
     recipes = list((await session.scalars(
-        select(Recipe).where(_recipe_filter(user.id, household_id), Recipe.id.in_(related_ids))
+        select(Recipe).where(_recipe_filter(household_id), Recipe.id.in_(related_ids))
     )).all())
     favourite_ids = await _get_favourite_ids(session, user.id)
-    personal_link_ids = await _get_personal_link_ids(session, user.id)
-    return [_build_recipe_out(recipe, user.id, favourite_ids, personal_link_ids) for recipe in recipes]
+    household_ids_map = await _get_household_ids_map(session, [r.id for r in recipes])
+    return [_build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id)) for recipe in recipes]
 
 
 @router.put("/{recipe_id}/related", response_model=list[RecipeOut])
@@ -579,15 +625,15 @@ async def set_related_recipes(
     body: RelatedRecipeRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[RecipeOut]:
-    source = await session.scalar(select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id)))
+    source = await session.scalar(select(Recipe).where(_recipe_write_filter(household_id, recipe_id)))
     if source is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
     target_ids = set(body.recipe_ids)
     if recipe_id in target_ids:
         raise HTTPException(status_code=422, detail="recipe_cannot_relate_to_itself")
-    targets = list((await session.scalars(select(Recipe).where(_recipe_filter(user.id, household_id), Recipe.id.in_(target_ids)))).all())
+    targets = list((await session.scalars(select(Recipe).where(_recipe_filter(household_id), Recipe.id.in_(target_ids)))).all())
     if len(targets) != len(target_ids):
         raise HTTPException(status_code=404, detail="Related recipe not found")
     await session.execute(delete(recipe_related_recipes_table).where(
@@ -606,35 +652,8 @@ async def set_related_recipes(
     scope = get_scope_key("recipes", user.id, household_id)
     await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
     favourite_ids = await _get_favourite_ids(session, user.id)
-    personal_link_ids = await _get_personal_link_ids(session, user.id)
-    return [_build_recipe_out(recipe, user.id, favourite_ids, personal_link_ids) for recipe in targets]
-
-
-@router.post("/{recipe_id}/link-to-personal", response_model=RecipeOut)
-async def link_recipe_to_personal(
-    recipe_id: uuid.UUID,
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session),
-    active_household_id: uuid.UUID | None = Depends(get_active_household_id),
-) -> RecipeOut:
-    if active_household_id is None:
-        raise HTTPException(status_code=400, detail="Not in a household context")
-    result = await session.execute(
-        select(Recipe).where(
-            Recipe.id == recipe_id,
-            Recipe.household_id == active_household_id,
-        )
-    )
-    recipe = result.scalar_one_or_none()
-    if recipe is None:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    insert_stmt = pg_insert(recipe_personal_links_table).values(
-        user_id=user.id, recipe_id=recipe.id
-    ).on_conflict_do_nothing(index_elements=["user_id", "recipe_id"])
-    await session.execute(insert_stmt)
-    await session.commit()
-    await session.refresh(recipe)
-    return _build_recipe_out(recipe, user.id, personal_link_ids={recipe.id})
+    household_ids_map = await _get_household_ids_map(session, [t.id for t in targets])
+    return [_build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id)) for recipe in targets]
 
 
 @router.post("/{recipe_id}/favourite")
@@ -642,10 +661,10 @@ async def toggle_favourite(
     recipe_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> dict:
     result = await session.execute(
-        select(Recipe).where(_recipe_filter(user.id, household_id), Recipe.id == recipe_id)
+        select(Recipe).where(_recipe_filter(household_id), Recipe.id == recipe_id)
     )
     if result.scalar_one_or_none() is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
@@ -683,17 +702,25 @@ async def delete_recipe(
     recipe_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
 ) -> None:
-    result = await session.execute(
-        select(Recipe).where(_recipe_write_filter(user.id, household_id, recipe_id))
-    )
-    recipe = result.scalar_one_or_none()
+    recipe = await session.get(Recipe, recipe_id)
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    if recipe.author_id != user.id:
+        raise HTTPException(status_code=403, detail="Only the author can delete this recipe everywhere")
+
+    household_ids_result = await session.execute(
+        select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe_id)
+    )
+    affected_household_ids = [row[0] for row in household_ids_result]
+
     thumbnail_url = recipe.thumbnail_url
     await session.delete(recipe)
     await session.commit()
+
+    for household_id in affected_household_ids:
+        scope = get_scope_key("recipes", user.id, household_id)
+        await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
 
     if thumbnail_url and settings.r2_configured:
         from api.services import r2

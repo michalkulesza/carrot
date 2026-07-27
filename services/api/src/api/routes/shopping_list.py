@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import and_, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
@@ -25,21 +25,16 @@ from api.users import User, current_active_user
 router = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
 
 
-def _scope_filter(user_id: uuid.UUID, household_id: uuid.UUID | None):
-    if household_id is not None:
-        return ShoppingListItem.household_id == household_id
-    return and_(
-        ShoppingListItem.user_id == user_id,
-        ShoppingListItem.household_id.is_(None),
-    )
+def _scope_filter(user_id: uuid.UUID, household_id: uuid.UUID):
+    return ShoppingListItem.household_id == household_id
 
 
-def _scope_key(user_id: uuid.UUID, household_id: uuid.UUID | None) -> str:
+def _scope_key(user_id: uuid.UUID, household_id: uuid.UUID) -> str:
     return get_scope_key("shopping-list", user_id, household_id)
 
 
 async def _snapshot(
-    session: AsyncSession, user_id: uuid.UUID, household_id: uuid.UUID | None
+    session: AsyncSession, user_id: uuid.UUID, household_id: uuid.UUID
 ) -> list[dict]:
     result = await session.execute(
         select(ShoppingListItem)
@@ -61,7 +56,7 @@ class PresenceBody(BaseModel):
 async def list_items(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[ShoppingListItemOut]:
     result = await session.execute(
         select(ShoppingListItem)
@@ -77,7 +72,7 @@ async def stream_shopping_list(
     request: Request,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     scope = _scope_key(user.id, household_id)
     initial_items = await _snapshot(session, user.id, household_id)
@@ -115,7 +110,7 @@ async def add_items(
     body: ShoppingListItemsCreate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[ShoppingListItemOut]:
     max_pos_result = await session.execute(
         select(func.max(ShoppingListItem.position))
@@ -155,7 +150,7 @@ async def add_items(
 async def update_presence(
     body: PresenceBody,
     user: User = Depends(current_active_user),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     scope = _scope_key(user.id, household_id)
     nickname = user.nickname or user.email.split("@")[0]
@@ -175,7 +170,7 @@ async def reorder_items(
     body: ShoppingListReorderRequest,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> dict:
     result = await session.execute(
         select(ShoppingListItem)
@@ -202,7 +197,7 @@ async def update_item(
     body: ShoppingListItemUpdate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> ShoppingListItemOut:
     result = await session.execute(
         select(ShoppingListItem)
@@ -248,7 +243,7 @@ async def update_item(
 async def clear_completed(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     result = await session.execute(
         select(ShoppingListItem)
@@ -269,7 +264,7 @@ async def delete_item(
     item_id: uuid.UUID,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
     result = await session.execute(
         select(ShoppingListItem)

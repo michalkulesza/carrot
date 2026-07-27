@@ -42,26 +42,18 @@ async def _fetch_entries(
     year: int,
     month: int,
     user: User,
-    household_id: uuid.UUID | None,
+    household_id: uuid.UUID,
     session: AsyncSession,
 ) -> dict[str, str]:
     last_day = cal.monthrange(year, month)[1]
     start = DateType(year, month, 1)
     end = DateType(year, month, last_day)
 
-    if household_id is not None:
-        where = and_(
-            MealPlanEntry.household_id == household_id,
-            MealPlanEntry.date >= start,
-            MealPlanEntry.date <= end,
-        )
-    else:
-        where = and_(
-            MealPlanEntry.user_id == user.id,
-            MealPlanEntry.household_id.is_(None),
-            MealPlanEntry.date >= start,
-            MealPlanEntry.date <= end,
-        )
+    where = and_(
+        MealPlanEntry.household_id == household_id,
+        MealPlanEntry.date >= start,
+        MealPlanEntry.date <= end,
+    )
 
     from sqlalchemy import select
 
@@ -210,7 +202,7 @@ async def export_meal_plan_xlsx(
     month: str,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> Response:
     year, m = _parse_month(month)
     by_date = await _fetch_entries(year, m, user, household_id, session)
@@ -228,7 +220,7 @@ async def export_meal_plan_pdf(
     month: str,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> Response:
     year, m = _parse_month(month)
     by_date = await _fetch_entries(year, m, user, household_id, session)

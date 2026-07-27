@@ -18,7 +18,7 @@ from api.models import (
     RecipePublicShareLibraryAddition,
     Tag,
 )
-from api.routes.recipes import _build_recipe_out
+from api.routes.recipes import _build_recipe_out, _get_household_ids_map, _link_recipe_to_household
 from api.services.embeddings import queue_recipe_embedding
 from api.users import User, current_active_user
 
@@ -69,18 +69,18 @@ async def add_public_recipe_to_library(
     if addition is not None:
         recipe = await session.get(Recipe, addition.recipe_id)
         if recipe is not None:
-            return _build_recipe_out(recipe, user.id)
+            household_ids_map = await _get_household_ids_map(session, [recipe.id])
+            return _build_recipe_out(recipe, household_ids=household_ids_map.get(recipe.id))
 
-    if body.household_id is not None:
-        membership = await session.scalar(select(HouseholdMember).where(
-            HouseholdMember.household_id == body.household_id,
-            HouseholdMember.user_id == user.id,
-        ))
-        if membership is None:
-            raise HTTPException(status_code=403, detail="Not a member of that household")
+    membership = await session.scalar(select(HouseholdMember).where(
+        HouseholdMember.household_id == body.household_id,
+        HouseholdMember.user_id == user.id,
+    ))
+    if membership is None:
+        raise HTTPException(status_code=403, detail="Not a member of that household")
 
     recipe = Recipe(
-        user_id=user.id, household_id=body.household_id, shared_to_personal=True, title=source.title,
+        author_id=user.id, title=source.title,
         servings=source.servings, total_time_minutes=source.total_time_minutes,
         kcal_per_serving=source.kcal_per_serving, protein_per_serving=source.protein_per_serving,
         fat_per_serving=source.fat_per_serving, carbs_per_serving=source.carbs_per_serving,
@@ -90,8 +90,9 @@ async def add_public_recipe_to_library(
     recipe.tags = [tag for tag in source.tags if tag.is_default]
     session.add(recipe)
     await session.flush()
+    await _link_recipe_to_household(session, recipe.id, body.household_id)
     session.add(RecipePublicShareLibraryAddition(public_share_id=share.id, user_id=user.id, recipe_id=recipe.id))
     await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)
-    return _build_recipe_out(recipe, user.id)
+    return _build_recipe_out(recipe, household_ids=[body.household_id])

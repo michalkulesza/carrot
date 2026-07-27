@@ -5,7 +5,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, delete, func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +19,6 @@ from api.models import (
     ImportJobEvent,
     ImportJobOut,
     ImportJobStatus,
-    UserPreferences,
 )
 from api.routes.context import get_active_household_id
 from api.users import User, current_active_user
@@ -28,9 +27,7 @@ router = APIRouter(prefix="/imports", tags=["imports"])
 _ACTIVE_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING)
 
 
-def _scope_filter(model, user_id: uuid.UUID, household_id: uuid.UUID | None):
-    if household_id is None:
-        return and_(model.household_id.is_(None), model.user_id == user_id)
+def _scope_filter(model, household_id: uuid.UUID):
     return model.household_id == household_id
 
 
@@ -87,10 +84,6 @@ async def _authorize_action(
     user: User,
     session: AsyncSession,
 ) -> None:
-    if job.household_id is None:
-        if job.user_id != user.id:
-            raise HTTPException(status_code=404, detail="import_job_not_found")
-        return
     member = await session.get(HouseholdMember, {"household_id": job.household_id, "user_id": user.id})
     if member is None:
         raise HTTPException(status_code=403, detail="not_a_household_member")
@@ -102,7 +95,7 @@ async def enqueue_import_job(
     response: Response,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> ImportJobOut:
     _validate_input(body)
     existing = await session.scalar(
@@ -124,18 +117,10 @@ async def enqueue_import_job(
     if (active_count or 0) >= 20:
         raise HTTPException(status_code=429, detail="import_queue_full")
 
-    shared_to_personal = False
-    if household_id is not None:
-        preference = await session.execute(
-            select(UserPreferences.share_imports_to_personal).where(UserPreferences.user_id == user.id)
-        )
-        shared_to_personal = bool(preference.scalar_one_or_none())
-
     job = ImportJob(
         user_id=user.id,
         household_id=household_id,
         idempotency_key=body.idempotency_key,
-        shared_to_personal=shared_to_personal,
         status=ImportJobStatus.PENDING,
         kind=body.kind,
         input=body.input,
@@ -164,14 +149,14 @@ async def import_job_events(
     last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
-    event_scope = _scope_filter(ImportJobEvent, user.id, household_id)
+    event_scope = _scope_filter(ImportJobEvent, household_id)
     watermark = await session.scalar(select(func.max(ImportJobEvent.id)).where(event_scope)) or 0
     jobs = list((await session.scalars(
         select(ImportJob)
         .where(
-            _scope_filter(ImportJob, user.id, household_id),
+            _scope_filter(ImportJob, household_id),
             ImportJob.dismissed_at.is_(None),
             ImportJob.status.in_((ImportJobStatus.PENDING, ImportJobStatus.RUNNING, ImportJobStatus.FAILED)),
         )
@@ -193,7 +178,7 @@ async def import_job_events(
             async with async_session_maker() as event_session:
                 rows = list((await event_session.scalars(
                     select(ImportJobEvent)
-                    .where(_scope_filter(ImportJobEvent, user.id, household_id), ImportJobEvent.id > cursor)
+                    .where(_scope_filter(ImportJobEvent, household_id), ImportJobEvent.id > cursor)
                     .order_by(ImportJobEvent.id)
                     .limit(100)
                 )).all())

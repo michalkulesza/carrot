@@ -13,6 +13,7 @@ from api.constants import ALLERGENS
 from api.database import get_async_session
 from api.models import AllergenFlag, Recipe
 from api.routes.context import get_active_household_id
+from api.routes.recipes import _recipe_filter
 from api.services import gemini as gemini_svc
 from api.users import User, current_active_user
 
@@ -36,13 +37,10 @@ def _get_ingredient_strings(components: list) -> list[tuple[int, int, str]]:
 @router.post("/reanalyze")
 async def reanalyze_allergens(
     user: User = Depends(current_active_user),
-    household_id: uuid.UUID | None = Depends(get_active_household_id),
+    household_id: uuid.UUID = Depends(get_active_household_id),
     session: AsyncSession = Depends(get_async_session),
 ) -> StreamingResponse:
-    if household_id:
-        query = select(Recipe).where(Recipe.household_id == household_id)
-    else:
-        query = select(Recipe).where(Recipe.user_id == user.id, Recipe.household_id.is_(None))
+    query = select(Recipe).where(_recipe_filter(household_id))
 
     result = await session.execute(query)
     recipes = result.scalars().all()
