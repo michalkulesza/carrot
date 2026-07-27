@@ -322,6 +322,7 @@
     "newHouseholdTitle": "Nouveau foyer",
     "householdNameOptional": "Nom",
     "householdNamePlaceholder": "Mon foyer",
+    "householdNameTooShort": "Le nom du foyer doit contenir au moins 3 caractères",
     "householdCreated": "Foyer créé",
     "createHouseholdFailed": "Échec de la création du foyer",
     "manageHousehold": "Gérer le foyer",

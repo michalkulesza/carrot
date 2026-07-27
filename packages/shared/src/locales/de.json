@@ -322,6 +322,7 @@
     "newHouseholdTitle": "Neuer Haushalt",
     "householdNameOptional": "Name",
     "householdNamePlaceholder": "Mein Haushalt",
+    "householdNameTooShort": "Der Haushaltsname muss mindestens 3 Zeichen lang sein",
     "householdCreated": "Haushalt erstellt",
     "createHouseholdFailed": "Haushalt konnte nicht erstellt werden",
     "manageHousehold": "Haushalt verwalten",

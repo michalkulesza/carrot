@@ -321,6 +321,7 @@
     "newHouseholdTitle": "Nuevo hogar",
     "householdNameOptional": "Nombre",
     "householdNamePlaceholder": "Mi hogar",
+    "householdNameTooShort": "El nombre del hogar debe tener al menos 3 caracteres",
     "householdCreated": "Hogar creado",
     "createHouseholdFailed": "No se pudo crear el hogar",
     "manageHousehold": "Gestionar hogar",

@@ -405,13 +405,13 @@ export const createApiClient = (config: ApiClientConfig) => {
   // ── Households ─────────────────────────────────────────────────────────────
 
   const createHousehold = async (
-    name?: string,
+    name: string,
     color?: string,
   ): Promise<HouseholdOut> => {
     const res = await apiFetch("/api/households", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name ?? null, color: color ?? "#6366f1" }),
+      body: JSON.stringify({ name, color: color ?? "#6366f1" }),
     });
     await throwOnError(res, "Failed to create household");
     return res.json() as Promise<HouseholdOut>;

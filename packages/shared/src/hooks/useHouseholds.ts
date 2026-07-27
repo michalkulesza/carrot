@@ -8,7 +8,7 @@ export const useHouseholds = () => {
   const query = useQuery({ queryKey: ['households'], queryFn: api.listHouseholds })
 
   const create = useMutation({
-    mutationFn: ({ name, color }: { name?: string; color?: string }) =>
+    mutationFn: ({ name, color }: { name: string; color?: string }) =>
       api.createHousehold(name, color),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['households'] }),
   })

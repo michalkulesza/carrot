@@ -55,7 +55,7 @@ const SettingsHeaderRight = () => (
 const SettingsScreen = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { user, logout, deleteAccount } = useAuth();
+  const { user, logout, deleteAccount, refreshUser } = useAuth();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const { preferences, isLoading, error, update } = usePreferences();
   const { showSpinner } = useScreenLoading(isLoading);
@@ -223,14 +223,22 @@ const SettingsScreen = () => {
 
   const handleHouseholdNameSubmit = useCallback(
     async (name?: string) => {
+      const trimmed = name?.trim() ?? "";
+      if (trimmed.length < 3) {
+        Alert.alert(t("common.ok"), t("settings.householdNameTooShort"));
+        return;
+      }
       try {
-        await createHousehold.mutateAsync({ name: name?.trim() || undefined });
+        await createHousehold.mutateAsync({ name: trimmed });
+        // The new household is set active server-side — refresh the cached
+        // user object too, or active_household_id stays stale on-device.
+        await refreshUser();
         refetchHouseholds();
       } catch (e) {
         Alert.alert(t("common.ok"), e instanceof Error ? e.message : "Error");
       }
     },
-    [createHousehold, refetchHouseholds, t],
+    [createHousehold, refetchHouseholds, refreshUser, t],
   );
 
   const handleCreateHousehold = useCallback(() => {
@@ -248,12 +256,15 @@ const SettingsScreen = () => {
       if (!code?.trim()) return;
       try {
         await joinByCode.mutateAsync(code.trim());
+        // Joining also sets the new household active server-side, so the
+        // cached user object needs refreshing too.
+        await refreshUser();
         refetchHouseholds();
       } catch (e) {
         Alert.alert(t("common.ok"), e instanceof Error ? e.message : t("households.joinFailed"));
       }
     },
-    [joinByCode, refetchHouseholds, t],
+    [joinByCode, refetchHouseholds, refreshUser, t],
   );
 
   const handleJoinByCode = useCallback(() => {

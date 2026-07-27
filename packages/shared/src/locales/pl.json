@@ -328,6 +328,7 @@
     "newHouseholdTitle": "Nowe gospodarstwo",
     "householdNameOptional": "Nazwa",
     "householdNamePlaceholder": "Moje gospodarstwo",
+    "householdNameTooShort": "Nazwa gospodarstwa musi mieć co najmniej 3 znaki",
     "householdCreated": "Gospodarstwo utworzone",
     "createHouseholdFailed": "Nie udało się utworzyć gospodarstwa",
     "manageHousehold": "Zarządzaj gospodarstwem",

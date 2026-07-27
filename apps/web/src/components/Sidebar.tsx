@@ -139,7 +139,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
             type="button"
             onClick={() => setSwitcherOpen(true)}
             title={householdSwitcherTitle}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-zinc-200/60 transition-colors mb-3 w-full text-left ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-zinc-200/60 transition-colors mb-3 w-full text-left cursor-pointer ${
               collapsed ? 'justify-center' : ''
             }`}
           >

@@ -322,6 +322,7 @@
     "newHouseholdTitle": "New household",
     "householdNameOptional": "Name",
     "householdNamePlaceholder": "My household",
+    "householdNameTooShort": "Household name must be at least 3 characters",
     "householdCreated": "Household created",
     "createHouseholdFailed": "Failed to create household",
     "manageHousehold": "Manage household",

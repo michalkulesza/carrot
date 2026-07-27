@@ -12,7 +12,10 @@ import {
   toast,
 } from '@heroui/react'
 import { createHousehold } from '../../api/client'
+import { useAuth } from '../../context/AuthContext'
 import { buildColorSwatchStyle, PRESET_COLORS } from './helpers'
+
+const MIN_NAME_LENGTH = 3
 
 interface CreateHouseholdModalProps {
   isOpen: boolean
@@ -26,16 +29,23 @@ const CreateHouseholdModal = ({
   onCreated,
 }: CreateHouseholdModalProps) => {
   const { t } = useTranslation()
+  const { refreshUser } = useAuth()
   const [name, setName] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isNameValid = name.trim().length >= MIN_NAME_LENGTH
 
   const handleCreate = useCallback(async () => {
+    if (!isNameValid) return
     setBusy(true)
     setError(null)
     try {
-      await createHousehold(name.trim() || undefined, color)
+      await createHousehold(name.trim(), color)
+      // The new household is set server-side as the user's active household —
+      // refresh the cached user object too, or the sidebar keeps showing the
+      // stale (pre-creation) active_household_id and renders no household name.
+      await refreshUser()
       toast.success(t('settings.householdCreated'), { timeout: 3000 })
       setName('')
       setColor(PRESET_COLORS[0])
@@ -48,7 +58,7 @@ const CreateHouseholdModal = ({
     } finally {
       setBusy(false)
     }
-  }, [name, color, onCreated, onClose, t])
+  }, [name, color, isNameValid, onCreated, onClose, refreshUser, t])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -102,7 +112,7 @@ const CreateHouseholdModal = ({
               <Button
                 variant="primary"
                 onPress={handleCreate}
-                isDisabled={busy}
+                isDisabled={busy || !isNameValid}
               >
                 {t('common.create')}
               </Button>

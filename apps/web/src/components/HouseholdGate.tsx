@@ -6,6 +6,7 @@ import { useGSAP } from '@gsap/react'
 import type { InvitationOut } from '@carrot/shared/types'
 import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { acceptInvitation } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 import { useHousehold } from '../context/HouseholdContext'
 import CreateHouseholdModal from '../pages/SettingsPage/CreateHouseholdModal'
 
@@ -15,13 +16,17 @@ const INVITE_CODE_PATTERN = /^[A-Z0-9]{8}$/i
 const CODE_BOX_IDLE_COLORS = { backgroundColor: '#ffffff', borderColor: '#e4e4e7', backgroundImage: 'none' }
 const CODE_LABEL_VALID_COLOR = { color: 'rgba(255,255,255,0.85)' }
 const CODE_LABEL_IDLE_COLOR = { color: '#a1a1aa' }
-const SHIMMER_GRADIENT =
-  'linear-gradient(120deg, #d97a3a 0%, #ea8e4e 30%, #f6c199 50%, #ea8e4e 70%, #d97a3a 100%)'
+// Two soft radial highlights floating independently over a flat orange base —
+// their positions are driven by CSS custom properties so GSAP can tween them.
+const FLUID_GRADIENT =
+  'radial-gradient(circle 200px at var(--gx1, 15%) var(--gy1, 25%), #f0a869 0%, transparent 70%),' +
+  'radial-gradient(circle 220px at var(--gx2, 85%) var(--gy2, 75%), #d97a3a 0%, transparent 70%)'
 
 // Builds (and returns) a timeline that morphs a box + its label between idle
-// and "active" (orange) states, with a slow looping gradient shimmer while
-// active. useGSAP reverts everything this creates whenever `active` flips,
-// so the shimmer tween is automatically killed on deactivation.
+// and "active" (orange) states, with two slow, independently-drifting radial
+// highlights while active. useGSAP reverts everything this creates whenever
+// `active` flips, so the drifting tweens are automatically killed on
+// deactivation.
 const buildGlowTimeline = (
   box: HTMLElement,
   label: HTMLElement | null,
@@ -30,9 +35,12 @@ const buildGlowTimeline = (
   const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'power2.out' } })
   if (active) {
     tl.set(box, {
-      backgroundImage: SHIMMER_GRADIENT,
-      backgroundSize: '200% 100%',
-      backgroundPosition: '0% 0%',
+      backgroundColor: '#ea8e4e',
+      backgroundImage: FLUID_GRADIENT,
+      '--gx1': '15%',
+      '--gy1': '25%',
+      '--gx2': '85%',
+      '--gy2': '75%',
     })
     tl.to(box, { borderColor: '#ea8e4e' }, 0)
     if (label) tl.to(label, CODE_LABEL_VALID_COLOR, 0)
@@ -42,11 +50,22 @@ const buildGlowTimeline = (
       { scale: 1.02, duration: 0.18, ease: 'power2.out', yoyo: true, repeat: 1 },
       0
     )
-    tl.to(
-      box,
-      { backgroundPosition: '100% 0%', duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 },
-      0.3
-    )
+    gsap.to(box, {
+      '--gx1': '80%',
+      '--gy1': '70%',
+      duration: 7,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    })
+    gsap.to(box, {
+      '--gx2': '20%',
+      '--gy2': '20%',
+      duration: 9,
+      ease: 'sine.inOut',
+      yoyo: true,
+      repeat: -1,
+    })
   } else {
     tl.to(box, CODE_BOX_IDLE_COLORS, 0)
     if (label) tl.to(label, CODE_LABEL_IDLE_COLOR, 0)
@@ -72,7 +91,7 @@ const GateInvitationRow = ({
   )
 
   return (
-    <li className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3">
+    <li className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white/95 px-4 py-3">
       <div className="min-w-0">
         <p className="text-sm font-medium truncate">
           {invitation.household_name}
@@ -90,25 +109,11 @@ const GateInvitationRow = ({
   )
 }
 
-// TEMP: dev-only fake invitation for visually testing the "Have you been
-// invited?" box. Remove before committing.
-const FAKE_DEV_INVITATION: InvitationOut = {
-  id: 'fake-dev-invitation',
-  household_id: 'fake-household',
-  household_name: "Kulesza Family",
-  invited_by_email: 'alt@demo.com',
-  invited_by_nickname: 'Alt Demo',
-  created_at: new Date().toISOString(),
-}
-
 const HouseholdGate = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation()
-  const { households, isLoadingHouseholds, invitations: realInvitations, refetchInvitations, refetchHouseholds } =
+  const { households, isLoadingHouseholds, invitations, refetchInvitations, refetchHouseholds } =
     useHousehold()
-  const isDev = (import.meta as unknown as { env: { DEV: boolean } }).env.DEV
-  const invitations = isDev && realInvitations.length === 0
-    ? [FAKE_DEV_INVITATION]
-    : realInvitations
+  const { refreshUser } = useAuth()
   const { joinByCode } = useHouseholds()
   const [busyInvitationId, setBusyInvitationId] = useState<string | null>(null)
   const [code, setCode] = useState('')
@@ -144,6 +149,9 @@ const HouseholdGate = ({ children }: { children: ReactNode }) => {
       setBusyInvitationId(id)
       try {
         await acceptInvitation(id)
+        // Accepting sets this household as active server-side — refresh the
+        // cached user object too, or active_household_id stays stale.
+        await refreshUser()
         refetchInvitations()
         refetchHouseholds()
         toast.success(t('bell.joinedHousehold'), { timeout: 3000 })
@@ -156,7 +164,7 @@ const HouseholdGate = ({ children }: { children: ReactNode }) => {
         setBusyInvitationId(null)
       }
     },
-    [refetchInvitations, refetchHouseholds, t]
+    [refetchInvitations, refetchHouseholds, refreshUser, t]
   )
 
   const handleJoinSubmit = useCallback(
@@ -167,6 +175,9 @@ const HouseholdGate = ({ children }: { children: ReactNode }) => {
       setJoinError(null)
       try {
         await joinByCode.mutateAsync(code.trim())
+        // Same as accepting an invite — joining also sets the new household
+        // active server-side, so the cached user object needs refreshing.
+        await refreshUser()
         setCode('')
       } catch (err) {
         setJoinError(
@@ -176,7 +187,7 @@ const HouseholdGate = ({ children }: { children: ReactNode }) => {
         setJoining(false)
       }
     },
-    [code, isValidCode, joinByCode, t]
+    [code, isValidCode, joinByCode, refreshUser, t]
   )
 
   const handleCreateOpen = useCallback(() => setCreateOpen(true), [])

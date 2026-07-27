@@ -39,7 +39,7 @@ _JOIN_RATE_WINDOW = timedelta(hours=1)
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
 class HouseholdCreate(BaseModel):
-    name: str | None = None
+    name: str
     color: str = "#6366f1"
 
 
@@ -334,7 +334,9 @@ async def create_household(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> HouseholdOut:
-    name = (body.name or "").strip() or f"{user.nickname or user.email}'s household"
+    name = body.name.strip()
+    if len(name) < 3:
+        raise HTTPException(status_code=400, detail="Household name must be at least 3 characters")
     color = body.color if body.color in PRESET_COLORS else PRESET_COLORS[0]
     invite_code = await generate_invite_code(session)
 
