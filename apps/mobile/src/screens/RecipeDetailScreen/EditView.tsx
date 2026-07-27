@@ -1,9 +1,9 @@
-import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActionSheetIOS, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import NetworkImage from '../../components/NetworkImage'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import type { EdgeInsets } from 'react-native-safe-area-context'
-import type { RecipeOut } from '@carrot/shared/types'
+import { SHOPPING_CATEGORIES, type RecipeOut } from '@carrot/shared/types'
 import { colors } from '../../theme/colors'
 import { IngredientEditor } from '../../components/RecipeFieldEditors'
 import { QuantityUnitPickerModal } from '../../components/QuantityUnitPickerModal'
@@ -30,6 +30,7 @@ const EditView = ({
   handleNutritionChange,
   updateComp,
   setIngredient,
+  setIngredientCategory,
   addIngredient,
   removeIngredient,
   setStep,
@@ -59,6 +60,7 @@ const EditView = ({
   | 'updateComp'
   | 'setIngredient'
   | 'addIngredient'
+  | 'setIngredientCategory'
   | 'removeIngredient'
   | 'setStep'
   | 'addStep'
@@ -173,6 +175,7 @@ const EditView = ({
               updateComp={updateComp}
               setIngredient={setIngredient}
               addIngredient={addIngredient}
+              setIngredientCategory={setIngredientCategory}
               removeIngredient={removeIngredient}
               setStep={setStep}
               addStep={addStep}
@@ -221,6 +224,7 @@ const EditComponentBlock = ({
   addStep,
   removeStep,
   setQtyUnitPickerTarget,
+  setIngredientCategory,
 }: {
   comp: EditComponent
   ci: number
@@ -234,9 +238,28 @@ const EditComponentBlock = ({
   | 'setStep'
   | 'addStep'
   | 'removeStep'
+  | 'setIngredientCategory'
   | 'setQtyUnitPickerTarget'
 >) => {
   const { t } = useTranslation()
+
+  const handleIngredientCategoryPress = (ii: number) => {
+    const categoryLabels = SHOPPING_CATEGORIES.map((category) => t(`shoppingList.categories.${category}`))
+    const cancelButtonIndex = categoryLabels.length
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [...categoryLabels, t('common.cancel')],
+        cancelButtonIndex,
+        title: t('shoppingList.category'),
+      },
+      (selectedIndex) => {
+        if (selectedIndex !== undefined && selectedIndex !== cancelButtonIndex) {
+          setIngredientCategory(ci, ii, SHOPPING_CATEGORIES[selectedIndex])
+        }
+      }
+    )
+  }
 
   return (
     <View style={styles.componentBlock}>
@@ -262,6 +285,8 @@ const EditComponentBlock = ({
             onReplace={() => {}}
             onRestore={() => {}}
             onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
+            categoryLabel={t(`shoppingList.categories.${comp.shopping_list_categories[ii]}`)}
+            onCategoryPress={() => handleIngredientCategoryPress(ii)}
           />
         ))}
         <Pressable

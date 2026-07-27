@@ -43,6 +43,18 @@ class UnitEnum(StrEnum):
     HANDFUL = "handful"
 
 
+class ShoppingCategory(StrEnum):
+    PRODUCE = "produce"
+    PANTRY = "pantry"
+    DAIRY_EGGS = "dairy_eggs"
+    MEAT_SEAFOOD = "meat_seafood"
+    FROZEN = "frozen"
+    OTHER = "other"
+
+
+DEFAULT_SHOPPING_CATEGORIES = tuple(ShoppingCategory)
+
+
 # ── Allergen helpers ──────────────────────────────────────────────────────────
 
 class AllergenFlag(BaseModel):
@@ -277,6 +289,7 @@ class Ingredient(BaseModel):
     unit: UnitEnum | None = None
     name: str
     shopping_list_value: str | None = None
+    shopping_list_category: ShoppingCategory | None = None
     allergen: str | None = None
     substitute: str | None = None
 
@@ -298,6 +311,7 @@ class RecipeComponent(BaseModel):
     imperial_ingredients: list[str] = []
     metric_steps: list[str] = []
     imperial_steps: list[str] = []
+    shopping_list_categories: list[ShoppingCategory] = []
     step_refs: list[StepRef] = []
 
 
@@ -342,6 +356,7 @@ class UnitVariantComponent(BaseModel):
 
 class EnrichmentComponent(UnitVariantComponent):
     shopping_list_values: list[str] = []
+    shopping_list_categories: list[str] = []
     step_refs: list[StepRef] = []
 
 
@@ -413,6 +428,16 @@ class SaveComponent(BaseModel):
     yield_note: str
     ingredients: list[str]
     shopping_list_ingredients: list[str] | None = None
+    shopping_list_categories: list[ShoppingCategory] | None = None
+
+    @model_validator(mode="after")
+    def align_shopping_list_categories(self) -> "SaveComponent":
+        if self.shopping_list_categories is None:
+            self.shopping_list_categories = [ShoppingCategory.OTHER] * len(self.ingredients)
+        elif len(self.shopping_list_categories) != len(self.ingredients):
+            raise ValueError("shopping_list_categories must align with ingredients")
+
+        return self
     steps: list[str]
     metric_ingredients: list[str] | None = None
     imperial_ingredients: list[str] | None = None
@@ -560,6 +585,10 @@ class UserPreferences(Base):
     language: Mapped[str] = mapped_column(String(10), default="en", nullable=False)
     unit_system: Mapped[str] = mapped_column(String(20), default="metric", nullable=False)
     recipe_serving_overrides: Mapped[dict[str, int]] = mapped_column(JSONB, default=dict, nullable=False)
+    shopping_categories: Mapped[list[ShoppingCategory]] = mapped_column(
+        JSONB, default=lambda: list(DEFAULT_SHOPPING_CATEGORIES), nullable=False
+    )
+    show_completed_shopping_items: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
 
 class UserPreferencesOut(BaseModel):
@@ -571,6 +600,10 @@ class UserPreferencesOut(BaseModel):
     language: str = "en"
     unit_system: str = "metric"
     recipe_serving_overrides: dict[str, int] = Field(default_factory=dict)
+    shopping_categories: list[ShoppingCategory] = Field(
+        default_factory=lambda: list(DEFAULT_SHOPPING_CATEGORIES)
+    )
+    show_completed_shopping_items: bool = False
 
 
 class UserPreferencesUpdate(BaseModel):
@@ -579,6 +612,20 @@ class UserPreferencesUpdate(BaseModel):
     personal_allergens: list[str] | None = None
     language: str | None = None
     unit_system: str | None = None
+    shopping_categories: list[ShoppingCategory] | None = None
+    show_completed_shopping_items: bool | None = None
+
+    @model_validator(mode="after")
+    def normalize_shopping_categories(self) -> "UserPreferencesUpdate":
+        if self.shopping_categories is None:
+            return self
+
+        categories = list(dict.fromkeys(self.shopping_categories))
+        if ShoppingCategory.OTHER not in categories:
+            categories.append(ShoppingCategory.OTHER)
+
+        self.shopping_categories = categories
+        return self
 
 
 class RecipeServingPreferenceUpdate(BaseModel):
@@ -600,6 +647,9 @@ class ShoppingListItem(Base):
     text: Mapped[str] = mapped_column(String, nullable=False)
     completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    category: Mapped[ShoppingCategory] = mapped_column(
+        String(32), nullable=False, default=ShoppingCategory.OTHER
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -613,12 +663,18 @@ class ShoppingListItemOut(BaseModel):
     text: str
     completed: bool
     position: int
+    category: ShoppingCategory
     created_at: datetime
     updated_at: datetime
 
 
+class ShoppingListItemCreate(BaseModel):
+    text: str
+    category: ShoppingCategory = ShoppingCategory.OTHER
+
+
 class ShoppingListItemsCreate(BaseModel):
-    items: list[str]
+    items: list[ShoppingListItemCreate]
 
 
 class ShoppingListItemUpdate(BaseModel):
@@ -627,7 +683,7 @@ class ShoppingListItemUpdate(BaseModel):
 
 
 class ShoppingListReorderRequest(BaseModel):
-    ids: list[uuid.UUID]
+    category_orders: dict[ShoppingCategory, list[uuid.UUID]]
 
 
 # ── Background Import Jobs ─────────────────────────────────────────────────────

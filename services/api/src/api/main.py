@@ -15,7 +15,6 @@ from api.models import Recipe, Tag
 from api.services.monitoring import init_sentry
 from api.services.orphan_cleanup import delete_orphan_recipes
 from api.routes.auth import router as auth_verify_router
-from api.routes.allergens import router as allergens_router
 from api.routes.export import router as export_router
 from api.routes.google_auth import router as google_auth_router
 from api.routes.households import router as households_router
@@ -125,6 +124,18 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_account BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS share_imports_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS recipe_serving_overrides JSONB NOT NULL DEFAULT '{}'::jsonb"))
+        await conn.execute(text(
+            "ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS shopping_categories "
+            "JSONB NOT NULL DEFAULT '[\"produce\", \"pantry\", \"dairy_eggs\", \"meat_seafood\", \"frozen\", \"other\"]'::jsonb"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS show_completed_shopping_items "
+            "BOOLEAN NOT NULL DEFAULT FALSE"
+        ))
+        await conn.execute(text(
+            "ALTER TABLE shopping_list_items ADD COLUMN IF NOT EXISTS category "
+            "VARCHAR(32) NOT NULL DEFAULT 'other'"
+        ))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS category VARCHAR(20)"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE"))
@@ -167,12 +178,6 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_household_status ON import_jobs (household_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_user_status ON import_jobs (user_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_next_attempt_at ON import_jobs (next_attempt_at)"))
-        await conn.execute(text(
-            "INSERT INTO recipe_personal_links (user_id, recipe_id, linked_at) "
-            "SELECT user_id, id, updated_at FROM recipes "
-            "WHERE household_id IS NOT NULL AND shared_to_personal = TRUE "
-            "ON CONFLICT DO NOTHING"
-        ))
         # Allergen preferences are predefined-only now — flatten the old
         # {predefined, custom} shape into a plain array of keys.
         await conn.execute(text(
@@ -197,9 +202,12 @@ async def lifespan(app: FastAPI):
         ))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_recipe_households_household_id ON recipe_households (household_id)"))
         await conn.execute(text(
-            "INSERT INTO recipe_households (recipe_id, household_id, added_at) "
+            "DO $$ BEGIN "
+            "IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'recipes' AND column_name = 'household_id') "
+            "THEN INSERT INTO recipe_households (recipe_id, household_id, added_at) "
             "SELECT id, household_id, created_at FROM recipes WHERE household_id IS NOT NULL "
-            "ON CONFLICT DO NOTHING"
+            "ON CONFLICT DO NOTHING; END IF; "
+            "END $$;"
         ))
 
         await conn.execute(text(
@@ -299,7 +307,6 @@ app.add_middleware(
 app.include_router(auth_verify_router, prefix="/api/auth", tags=["auth"])
 app.include_router(signup_router, prefix="/api/auth", tags=["auth"])
 app.include_router(google_auth_router, prefix="/api/auth", tags=["auth"])
-app.include_router(allergens_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
 app.include_router(images_router, prefix="/api")

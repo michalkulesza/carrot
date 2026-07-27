@@ -1,4 +1,4 @@
-import type { RecipeOut, RecipeSaveRequest, StepIngredientRef } from '@carrot/shared/types'
+import type { RecipeOut, RecipeSaveRequest, ShoppingCategory, StepIngredientRef } from '@carrot/shared/types'
 import { parseIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { DurationMatch } from '../../context/TimerContext'
 
@@ -27,6 +27,7 @@ export interface EditComponent {
   yield_note: string
   ingredients: StructuredIngredient[]
   shopping_list_ingredients: string[] | null
+  shopping_list_categories: ShoppingCategory[]
   steps: string[]
 }
 export interface EditDraft {
@@ -50,15 +51,23 @@ export const buildDraft = (recipe: RecipeOut): EditDraft => ({
   fat: recipe.fat_per_serving?.toString() ?? '',
   carbs: recipe.carbs_per_serving?.toString() ?? '',
   thumbnail_url: recipe.thumbnail_url,
-  components: recipe.components.map((c) => ({
-    name: c.name ?? '',
-    yield_note: c.yield_note ?? '',
-    ingredients: (c.ingredients as Array<string | StructuredIngredient>).map((raw) =>
+  components: recipe.components.map((component) => {
+    const shoppingListCategories = component.shopping_list_categories ?? []
+    const ingredients = (component.ingredients as Array<string | StructuredIngredient>).map((raw) =>
       typeof raw === 'string' ? parseIngredient(raw) : raw,
-    ),
-    shopping_list_ingredients: c.shopping_list_ingredients ?? null,
-    steps: c.steps,
-  })),
+    )
+
+    return {
+      name: component.name ?? '',
+      yield_note: component.yield_note ?? '',
+      ingredients,
+      shopping_list_ingredients: component.shopping_list_ingredients ?? null,
+      shopping_list_categories: ingredients.map(
+        (_, index) => shoppingListCategories[index] ?? 'other'
+      ),
+      steps: component.steps,
+    }
+  }),
 })
 
 export const buildRecipeSaveRequest = (

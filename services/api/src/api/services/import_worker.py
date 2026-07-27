@@ -28,6 +28,7 @@ from api.models import (
     RecipeComponent,
     Tag,
     UserPreferences,
+    ShoppingCategory,
 )
 from api.routes.imports import _event_for_job
 from api.routes.recipes import _link_recipe_to_household
@@ -132,6 +133,10 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
             "shopping_list_ingredients": [
                 _normalize_ingredient_punctuation(ingredient.shopping_list_value or display)
                 for ingredient, display in zip(component.ingredients, flattened)
+            ],
+            "shopping_list_categories": [
+                ingredient.shopping_list_category or ShoppingCategory.OTHER
+                for ingredient in component.ingredients
             ],
             "steps": component.steps,
             "metric_ingredients": [

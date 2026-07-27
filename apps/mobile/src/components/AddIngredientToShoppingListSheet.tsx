@@ -13,14 +13,15 @@ import {
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { colors } from '../theme/colors'
+import type { ShoppingListItemInput } from '@carrot/shared/types'
 
 export interface AddIngredientToShoppingListSheetHandle {
-  present: (initialText: string) => void
+  present: (item: ShoppingListItemInput) => void
   dismiss: () => void
 }
 
 interface AddIngredientToShoppingListSheetProps {
-  onConfirm: (text: string) => void
+  onConfirm: (item: ShoppingListItemInput) => void
 }
 
 // Renders as a centered alert-style popup, not a bottom sheet, despite the component's name.
@@ -31,10 +32,12 @@ const AddIngredientToShoppingListSheet = forwardRef<
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
   const [text, setText] = useState('')
+  const [category, setCategory] = useState<ShoppingListItemInput['category']>('other')
 
   useImperativeHandle(ref, () => ({
-    present: (initialText: string) => {
-      setText(initialText)
+    present: (item: ShoppingListItemInput) => {
+      setText(item.text)
+      setCategory(item.category)
       setVisible(true)
     },
     dismiss: () => setVisible(false),
@@ -49,10 +52,10 @@ const AddIngredientToShoppingListSheet = forwardRef<
 
   const handleAdd = useCallback(() => {
     if (!trimmedText) return
-    onConfirm(trimmedText)
+    onConfirm({ text: trimmedText, category })
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     setVisible(false)
-  }, [trimmedText, onConfirm])
+  }, [trimmedText, category, onConfirm])
 
   const getCancelButtonStyle = useCallback(
     ({ pressed }: PressableStateCallbackType) => [

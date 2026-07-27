@@ -12,14 +12,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.background,
   },
-  // DraggableFlatList's outer wrapper has no flex by default — without this it
-  // sizes to ~half the screen and clips the list. Must be flex: 1 to fill.
   listContainer: {
     flex: 1,
-  },
-  listContent: {
-    flexGrow: 1,
-    backgroundColor: colors.background,
   },
 
   presenceBar: {
@@ -147,27 +141,6 @@ export const styles = StyleSheet.create({
     padding: 0,
   },
 
-  completedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginTop: 24,
-    backgroundColor: colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.separator,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.separator,
-  },
-  completedLabel: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '400',
-    color: colors.secondaryLabel,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
   clearBtn: {
     fontSize: 13,
     lineHeight: 18,

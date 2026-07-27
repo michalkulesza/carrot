@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import type { SaveComponent } from '@carrot/shared/types'
+import type { SaveComponent, ShoppingCategory, ShoppingListItemInput } from '@carrot/shared/types'
 import {
   getImperialCupQty,
   scaleIngredientQuantity,
@@ -15,6 +15,7 @@ interface UnifiedIngredient {
   ingredient: string
   cupHint: string
   shoppingListValue: string
+  shoppingCategory: ShoppingCategory
 }
 
 const UnifiedIngredientsSection = ({
@@ -34,8 +35,8 @@ const UnifiedIngredientsSection = ({
   servingScale: number
   addMode: boolean
   sessionAdded: Set<string>
-  onAdd: (key: string, text: string) => void
-  onAddAll: (keys: string[], texts: string[]) => void
+  onAdd: (key: string, item: ShoppingListItemInput) => void
+  onAddAll: (keys: string[], items: ShoppingListItemInput[]) => void
   activeAllergens: string[]
   fontSize: number
   lineHeight: number
@@ -72,6 +73,7 @@ const UnifiedIngredientsSection = ({
             ingredient,
             cupHint,
             shoppingListValue,
+            shoppingCategory: component.shopping_list_categories?.[ingredientIndex] ?? 'other',
           }
         })
       }),
@@ -93,11 +95,14 @@ const UnifiedIngredientsSection = ({
       ({ componentIndex, ingredientIndex }) =>
         `${componentIndex}-${ingredientIndex}`
     )
-    const texts = unaddedIngredients.map(
-      ({ shoppingListValue }) => shoppingListValue
+    const items = unaddedIngredients.map(
+      ({ shoppingListValue, shoppingCategory }) => ({
+        text: shoppingListValue,
+        category: shoppingCategory,
+      })
     )
 
-    if (texts.length > 0) onAddAll(keys, texts)
+    if (items.length > 0) onAddAll(keys, items)
   }, [ingredients, onAddAll, sessionAdded])
 
   if (ingredients.length === 0) return null
@@ -129,6 +134,7 @@ const UnifiedIngredientsSection = ({
           ingredient,
           cupHint,
           shoppingListValue,
+          shoppingCategory,
         }) => {
           const key = `${componentIndex}-${ingredientIndex}`
 
@@ -139,7 +145,7 @@ const UnifiedIngredientsSection = ({
               cupHint={cupHint}
               addMode={addMode}
               isAdded={sessionAdded.has(key)}
-              onAdd={() => onAdd(key, shoppingListValue)}
+              onAdd={() => onAdd(key, { text: shoppingListValue, category: shoppingCategory })}
               allergenFlag={components[componentIndex].ingredient_flags?.[ingredientIndex] ?? null}
               activeAllergens={activeAllergens}
               fontSize={fontSize}

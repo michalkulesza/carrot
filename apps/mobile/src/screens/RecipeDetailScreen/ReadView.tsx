@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useHousehold } from "../../context/HouseholdContext";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import type { EdgeInsets } from "react-native-safe-area-context";
-import type { RecipeOut } from "@carrot/shared/types";
+import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
 import AddToMealPlanSheet, {
   type AddToMealPlanSheetHandle,
 } from "../../components/AddToMealPlanSheet";
@@ -90,9 +90,9 @@ const ReadView = ({
   setHeroImageErrored: (errored: boolean) => void;
   handleToggleKeepScreenOn: (val: boolean) => void;
   handleFontSizeChange: (index: number) => void;
-  handleAddIngredient: (key: string, text: string) => void;
-  handleAddAll: (keys: string[], texts: string[]) => void;
-  handleConfirmAddIngredient: (text: string) => void;
+  handleAddIngredient: (key: string, item: ShoppingListItemInput) => void;
+  handleAddAll: (keys: string[], items: ShoppingListItemInput[]) => void;
+  handleConfirmAddIngredient: (item: ShoppingListItemInput) => void;
   handleToggleFavourite: () => void;
   handleDecreaseServings: () => void;
   handleIncreaseServings: () => void;

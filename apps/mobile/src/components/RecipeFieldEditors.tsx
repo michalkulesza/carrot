@@ -177,6 +177,8 @@ export const IngredientEditor = ({
   onReplace,
   onRestore,
   onRemove,
+  categoryLabel,
+  onCategoryPress,
 }: {
   value: StructuredIngredient
   flag: AllergenFlag | null
@@ -186,6 +188,8 @@ export const IngredientEditor = ({
   onReplace: () => void
   onRestore: () => void
   onRemove?: () => void
+  categoryLabel?: string
+  onCategoryPress?: () => void
 }) => {
   const { t } = useTranslation()
 
@@ -227,6 +231,10 @@ export const IngredientEditor = ({
     ({ pressed }: { pressed: boolean }) => [styles.ingQtyUnitBtn, pressed && styles.pressedLight],
     [],
   )
+  const getCategoryButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.ingCategoryBtn, pressed && styles.pressedLight],
+    [],
+  )
   const getAllergenBadgeStyle = useCallback(
     ({ pressed }: { pressed: boolean }) => [styles.allergenBadge, pressed && styles.pressedLight],
     [],
@@ -261,6 +269,18 @@ export const IngredientEditor = ({
             {qtyUnitLabel || '—'}
           </Text>
         </Pressable>
+        {categoryLabel && onCategoryPress ? (
+          <Pressable
+            style={getCategoryButtonStyle}
+            onPress={onCategoryPress}
+            hitSlop={10}
+            accessibilityLabel={categoryLabel}
+          >
+            <Text style={styles.ingCategoryText} numberOfLines={1}>
+              {categoryLabel}
+            </Text>
+          </Pressable>
+        ) : null}
         <TextInput
           style={styles.ingName}
           value={value.name}
@@ -381,6 +401,18 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 5,
     paddingVertical: 4,
+  },
+  ingCategoryBtn: {
+    backgroundColor: PlatformColor('tertiarySystemFill') as unknown as string,
+    borderRadius: 6,
+    maxWidth: 88,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  ingCategoryText: {
+    color: PlatformColor('secondaryLabel') as unknown as string,
+    fontSize: 12,
+    lineHeight: 16,
   },
   allergenText: { fontSize: 11, lineHeight: 13, color: '#92400e', fontWeight: '600' },
 })

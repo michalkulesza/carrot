@@ -54,6 +54,10 @@ async def update_preferences(
             prefs.language = body.language
         if body.unit_system is not None:
             prefs.unit_system = body.unit_system
+        if body.shopping_categories is not None:
+            prefs.shopping_categories = body.shopping_categories
+        if body.show_completed_shopping_items is not None:
+            prefs.show_completed_shopping_items = body.show_completed_shopping_items
         session.add(prefs)
     else:
         if body.week_start_day is not None:
@@ -66,6 +70,10 @@ async def update_preferences(
             prefs.language = body.language
         if body.unit_system is not None:
             prefs.unit_system = body.unit_system
+        if body.shopping_categories is not None:
+            prefs.shopping_categories = body.shopping_categories
+        if body.show_completed_shopping_items is not None:
+            prefs.show_completed_shopping_items = body.show_completed_shopping_items
 
     await session.commit()
     await session.refresh(prefs)

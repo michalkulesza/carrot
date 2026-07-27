@@ -94,6 +94,13 @@ const SettingsScreen = () => {
     void AsyncStorage.setItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY, val ? "1" : "0");
   }, []);
 
+  const handleShowCompletedShoppingItemsToggle = useCallback(
+    (value: boolean) => {
+      update.mutate({ show_completed_shopping_items: value });
+    },
+    [update],
+  );
+
   const handleLanguageChange = useCallback(
     (code: string) => {
       void i18n.changeLanguage(code);
@@ -425,6 +432,28 @@ const SettingsScreen = () => {
             accessibilityLabel={t("settings.screenAwake")}
           />
         </View>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>{t("settings.showCompletedShoppingItems")}</Text>
+            <Text style={styles.cardDesc}>{t("settings.showCompletedShoppingItemsDesc")}</Text>
+          </View>
+          <Switch
+            value={preferences?.show_completed_shopping_items ?? false}
+            onValueChange={handleShowCompletedShoppingItemsToggle}
+            accessibilityLabel={t("settings.showCompletedShoppingItems")}
+          />
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push("/(tabs)/settings/shopping-categories")}
+          accessibilityLabel={t("settings.shoppingCategories")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.shoppingCategories")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
       </View>
       <View style={styles.card}>
         <Pressable

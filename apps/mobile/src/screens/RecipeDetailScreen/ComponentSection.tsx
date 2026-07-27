@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
-import type { RecipeOut, SaveComponent, StepIngredientRef } from '@carrot/shared/types'
+import type { RecipeOut, SaveComponent, ShoppingListItemInput, StepIngredientRef } from '@carrot/shared/types'
 import { buildClientStepRefs, mergeStepIngredientRefs } from '@carrot/shared/utils/ingredientUtils'
 import {
   getImperialCupQty,
@@ -40,8 +40,8 @@ const ComponentSection = ({
   unitSystem: string
   servingScale?: number
   sessionAdded?: Set<string>
-  onAdd?: (key: string, text: string) => void
-  onAddAll?: (keys: string[], texts: string[]) => void
+  onAdd?: (key: string, item: ShoppingListItemInput) => void
+  onAddAll?: (keys: string[], items: ShoppingListItemInput[]) => void
   fontSize?: number
   lineHeight?: number
   collapsible?: boolean
@@ -91,18 +91,26 @@ const ComponentSection = ({
     [component.shopping_list_ingredients, servingScale],
   )
 
+  const getShoppingCategory = useCallback(
+    (ingredientIndex: number) => component.shopping_list_categories?.[ingredientIndex] ?? 'other',
+    [component.shopping_list_categories],
+  )
+
   const handleAddAll = useCallback(() => {
     const keys: string[] = []
-    const texts: string[] = []
-    ingredients.forEach((ingredient, i) => {
-      const key = `${index}-${i}`
+    const items: ShoppingListItemInput[] = []
+    ingredients.forEach((ingredient, ingredientIndex) => {
+      const key = `${index}-${ingredientIndex}`
       if (!sessionAdded?.has(key)) {
         keys.push(key)
-        texts.push(getShoppingListValue(ingredient, i))
+        items.push({
+          text: getShoppingListValue(ingredient, ingredientIndex),
+          category: getShoppingCategory(ingredientIndex),
+        })
       }
     })
-    if (texts.length > 0) onAddAll?.(keys, texts)
-  }, [getShoppingListValue, ingredients, index, sessionAdded, onAddAll])
+    if (items.length > 0) onAddAll?.(keys, items)
+  }, [getShoppingCategory, getShoppingListValue, ingredients, index, sessionAdded, onAddAll])
 
   const allAdded = useMemo(
     () => ingredients.length > 0 && ingredients.every((_, i) => sessionAdded?.has(`${index}-${i}`)),
@@ -158,7 +166,10 @@ const ComponentSection = ({
               isAdded={sessionAdded?.has(`${index}-${i}`) ?? false}
               onAdd={() => onAdd?.(
                 `${index}-${i}`,
-                getShoppingListValue(ingredient, i),
+                {
+                  text: getShoppingListValue(ingredient, i),
+                  category: getShoppingCategory(i),
+                },
               )}
               allergenFlag={component.ingredient_flags?.[i] ?? null}
               activeAllergens={activeAllergens}

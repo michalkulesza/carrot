@@ -233,6 +233,7 @@ def _matching_enrichment(**overrides) -> RecipeEnrichment:
         "metric_steps": ["Chop the onion.", "Cook the onion."],
         "imperial_steps": ["Chop the onion.", "Cook the onion."],
         "shopping_list_values": ["1 onion"],
+        "shopping_list_categories": ["produce"],
         "step_refs": [{"step_index": 0, "ingredient_index": 0, "mention": "onion"}],
     }])
     payload.update(overrides)
@@ -255,6 +256,8 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     assert component.steps == ["Chop the onion.", "Cook the onion."]
     assert component.metric_ingredients == ["1 onion"]
     assert assembled.tags == ["soup"]
+    assert component.ingredients[0].shopping_list_category == "produce"
+    assert component.shopping_list_categories == ["produce"]
 
 
 def test_enrichment_preserves_tsp_and_tbsp_in_both_unit_variants() -> None:
@@ -716,3 +719,38 @@ async def test_import_with_allergens_only_dedicated_call_supplies_allergen_resul
     ingredient = events[-1]["result"]["recipe"]["components"][0]["ingredients"][0]
     assert ingredient["allergen"] == "peanuts"
     assert ingredient["substitute"] == "tahini"
+
+
+def test_enrichment_repairs_only_invalid_shopping_categories() -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{
+            "ingredients": [{"name": "onion"}, {"name": "mystery item"}],
+            "steps": [],
+        }],
+    })
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": ["onion", "mystery item"],
+        "imperial_ingredients": ["onion", "mystery item"],
+        "metric_steps": [],
+        "imperial_steps": [],
+        "shopping_list_values": ["1 onion", "1 mystery item"],
+        "shopping_list_categories": ["produce", "invented"],
+    }]))
+
+    repaired = gemini._repair_enrichment_alignment(source, enrichment)
+
+    assert repaired.components[0].shopping_list_categories == ["produce", "other"]
+
+
+@pytest.mark.asyncio
+async def test_enrichment_prompt_contains_fixed_shopping_category_catalog(monkeypatch) -> None:
+    generate_content = Mock(side_effect=[_response(_one_component_source().model_dump(mode="json")), _response(_matching_enrichment().model_dump(mode="json"))])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    await gemini.extract_recipe("Ingredients: 1 onion")
+
+    instruction = generate_content.call_args_list[1].kwargs["config"].system_instruction
+    assert "shopping_list_categories" in instruction
+    for category in ("produce", "pantry", "dairy_eggs", "meat_seafood", "frozen", "other"):
+        assert category in instruction

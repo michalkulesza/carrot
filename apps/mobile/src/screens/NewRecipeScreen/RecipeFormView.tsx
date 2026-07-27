@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
-import { Alert, PlatformColor, Pressable, Text, TextInput, View } from 'react-native'
+import { ActionSheetIOS, Alert, PlatformColor, Pressable, Text, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import * as ImagePicker from 'expo-image-picker'
 import NutritionBoxGrid from '../../components/NutritionBoxGrid'
 import { TagPickerModal, IngredientEditor } from '../../components/RecipeFieldEditors'
 import { QuantityUnitPickerModal } from '../../components/QuantityUnitPickerModal'
-import type { Tag } from '@carrot/shared/types'
+import { SHOPPING_CATEGORIES, type ShoppingCategory, type Tag } from '@carrot/shared/types'
 import { parseIngredient, serializeIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { tTag } from '@carrot/shared/utils/tagUtils'
@@ -110,6 +110,39 @@ const RecipeFormView = ({
     })
   }, [recipe, onChange])
 
+  const chooseIngredientCategory = useCallback((ci: number, ii: number) => {
+    const categoryLabels = SHOPPING_CATEGORIES.map((category) => t(`shoppingList.categories.${category}`))
+    const cancelButtonIndex = categoryLabels.length
+
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [...categoryLabels, t('common.cancel')],
+        cancelButtonIndex,
+        title: t('shoppingList.category'),
+      },
+      (selectedIndex) => {
+        if (selectedIndex === undefined || selectedIndex === cancelButtonIndex) return
+
+        const category = SHOPPING_CATEGORIES[selectedIndex]
+        onChange({
+          ...recipe,
+          components: recipe.components.map((component, componentIndex) => {
+            if (componentIndex !== ci) return component
+
+            const shoppingListCategories = component.shopping_list_categories ??
+              component.ingredients.map(() => 'other' as ShoppingCategory)
+            return {
+              ...component,
+              shopping_list_categories: shoppingListCategories.map((value, ingredientIndex) =>
+                ingredientIndex === ii ? category : value
+              ),
+            }
+          }),
+        })
+      }
+    )
+  }, [recipe, onChange, t])
+
   const addIngredient = useCallback((ci: number) => {
     onChange({
       ...recipe,
@@ -120,6 +153,9 @@ const RecipeFormView = ({
           shopping_list_ingredients: c.shopping_list_ingredients
             ? [...c.shopping_list_ingredients, '']
             : null,
+          shopping_list_categories: c.shopping_list_categories
+            ? [...c.shopping_list_categories, 'other']
+            : c.ingredients.map(() => 'other' as ShoppingCategory).concat('other'),
           ingredient_flags: [...c.ingredient_flags, null],
         },
       ),
@@ -136,6 +172,7 @@ const RecipeFormView = ({
           ...c,
           ingredients: c.ingredients.filter((_, idx) => idx !== ii),
           shopping_list_ingredients: c.shopping_list_ingredients?.filter((_, idx) => idx !== ii) ?? null,
+          shopping_list_categories: c.shopping_list_categories?.filter((_, idx) => idx !== ii) ?? null,
           ingredient_flags: c.ingredient_flags.filter((_, idx) => idx !== ii),
         },
       ),
@@ -333,6 +370,8 @@ const RecipeFormView = ({
                       onReplace={() => handleReplaceAllergen(ci, ii)}
                       onRestore={() => handleRestoreAllergen(ci, ii)}
                       onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
+                      categoryLabel={t(`shoppingList.categories.${comp.shopping_list_categories?.[ii] ?? 'other'}`)}
+                      onCategoryPress={() => chooseIngredientCategory(ci, ii)}
                     />
                   ) : (
                     <View key={ii} style={styles.previewIngredientRow}>

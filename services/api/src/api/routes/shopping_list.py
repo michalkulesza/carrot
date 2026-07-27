@@ -18,6 +18,7 @@ from api.models import (
     ShoppingListItemUpdate,
     ShoppingListItemsCreate,
     ShoppingListReorderRequest,
+    ShoppingCategory,
 )
 from api.routes.context import get_active_household_id, get_scope_key
 from api.users import User, current_active_user
@@ -39,7 +40,11 @@ async def _snapshot(
     result = await session.execute(
         select(ShoppingListItem)
         .where(_scope_filter(user_id, household_id))
-        .order_by(ShoppingListItem.completed.asc(), ShoppingListItem.position.asc())
+        .order_by(
+            ShoppingListItem.completed.asc(),
+            ShoppingListItem.category.asc(),
+            ShoppingListItem.position.asc(),
+        )
     )
     return [
         ShoppingListItemOut.model_validate(i).model_dump(mode="json")
@@ -61,7 +66,11 @@ async def list_items(
     result = await session.execute(
         select(ShoppingListItem)
         .where(_scope_filter(user.id, household_id))
-        .order_by(ShoppingListItem.completed.asc(), ShoppingListItem.position.asc())
+        .order_by(
+            ShoppingListItem.completed.asc(),
+            ShoppingListItem.category.asc(),
+            ShoppingListItem.position.asc(),
+        )
     )
     return [ShoppingListItemOut.model_validate(i) for i in result.scalars().all()]
 
@@ -112,24 +121,31 @@ async def add_items(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[ShoppingListItemOut]:
-    max_pos_result = await session.execute(
-        select(func.max(ShoppingListItem.position))
+    active_positions_result = await session.execute(
+        select(ShoppingListItem.category, ShoppingListItem.position)
         .where(_scope_filter(user.id, household_id))
         .where(ShoppingListItem.completed.is_(False))
     )
-    max_pos = max_pos_result.scalar() or -1
+    max_positions: dict[ShoppingCategory, int] = {}
+    for category, position in active_positions_result.all():
+        max_positions[category] = max(max_positions.get(category, -1), position)
 
+    next_positions = {category: position + 1 for category, position in max_positions.items()}
     new_items = []
-    for i, text in enumerate(body.items):
-        text = text.strip()
+    for input_item in body.items:
+        text = input_item.text.strip()
         if not text:
             continue
+
+        position = next_positions.get(input_item.category, 0)
+        next_positions[input_item.category] = position + 1
         item = ShoppingListItem(
             user_id=user.id,
             household_id=household_id,
             text=text,
+            category=input_item.category,
             completed=False,
-            position=max_pos + 1 + i,
+            position=position,
         )
         session.add(item)
         new_items.append(item)
@@ -172,16 +188,32 @@ async def reorder_items(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> dict:
+    ordered_ids = [
+        item_id
+        for category_ids in body.category_orders.values()
+        for item_id in category_ids
+    ]
+    if len(ordered_ids) != len(set(ordered_ids)):
+        raise HTTPException(status_code=422, detail="Each active item must appear exactly once")
+
     result = await session.execute(
         select(ShoppingListItem)
         .where(_scope_filter(user.id, household_id))
-        .where(ShoppingListItem.id.in_(body.ids))
         .where(ShoppingListItem.completed.is_(False))
     )
-    items_by_id = {i.id: i for i in result.scalars().all()}
-    for pos, item_id in enumerate(body.ids):
-        if item_id in items_by_id:
-            items_by_id[item_id].position = pos
+    items_by_id = {item.id: item for item in result.scalars().all()}
+    if set(ordered_ids) != set(items_by_id):
+        raise HTTPException(
+            status_code=422,
+            detail="Category orders must contain every active shopping list item exactly once",
+        )
+
+    for category, item_ids in body.category_orders.items():
+        for position, item_id in enumerate(item_ids):
+            item = items_by_id[item_id]
+            item.category = category
+            item.position = position
+
     await session.commit()
 
     scope = _scope_key(user.id, household_id)
@@ -222,6 +254,7 @@ async def update_item(
         max_pos_result = await session.execute(
             select(func.max(ShoppingListItem.position))
             .where(_scope_filter(user.id, household_id))
+            .where(ShoppingListItem.category == item.category)
             .where(ShoppingListItem.completed.is_(body.completed))
             .where(ShoppingListItem.id != item_id)
         )

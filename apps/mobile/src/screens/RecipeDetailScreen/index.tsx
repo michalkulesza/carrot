@@ -8,7 +8,7 @@ import { useApiClient } from "@carrot/shared/api/context";
 import { useRecipes } from "@carrot/shared/hooks/useRecipes";
 import { useShoppingList } from "@carrot/shared/hooks/useShoppingList";
 import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks/usePreferences";
-import type { RecipeOut } from "@carrot/shared/types";
+import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
 import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
 import { useAuth } from "../../context/AuthContext";
 import { useHousehold } from "../../context/HouseholdContext";
@@ -242,26 +242,26 @@ const RecipeDetailScreen = () => {
     [recipe, setHouseholds, t],
   );
 
-  const handleAddIngredient = useCallback((key: string, text: string) => {
+  const handleAddIngredient = useCallback((key: string, item: ShoppingListItemInput) => {
     pendingIngredientKeyRef.current = key;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    addIngredientSheetRef.current?.present(text);
+    addIngredientSheetRef.current?.present(item);
   }, []);
 
   const handleConfirmAddIngredient = useCallback(
-    (text: string) => {
-      addItems.mutate([text]);
+    (item: ShoppingListItemInput) => {
+      addItems.mutate([item]);
       const key = pendingIngredientKeyRef.current;
-      if (key) setSessionAdded((prev) => new Set([...prev, key]));
+      if (key) setSessionAdded((previous) => new Set([...previous, key]));
       pendingIngredientKeyRef.current = null;
     },
     [addItems],
   );
 
   const handleAddAll = useCallback(
-    (keys: string[], texts: string[]) => {
-      addItems.mutate(texts);
-      setSessionAdded((prev) => new Set([...prev, ...keys]));
+    (keys: string[], items: ShoppingListItemInput[]) => {
+      addItems.mutate(items);
+      setSessionAdded((previous) => new Set([...previous, ...keys]));
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     },
     [addItems],
@@ -324,6 +324,7 @@ const RecipeDetailScreen = () => {
         handleNutritionChange={editDraft.handleNutritionChange}
         updateComp={editDraft.updateComp}
         setIngredient={editDraft.setIngredient}
+        setIngredientCategory={editDraft.setIngredientCategory}
         addIngredient={editDraft.addIngredient}
         removeIngredient={editDraft.removeIngredient}
         setStep={editDraft.setStep}

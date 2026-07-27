@@ -1,9 +1,10 @@
 import { useCallback, useState, type ComponentType } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Book,
   Calendar,
+  Info,
   ShoppingCart,
   Settings,
   Sidebar as SidebarIcon,
@@ -24,8 +25,11 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/', end: true, labelKey: 'nav.recipes', Icon: Book },
   { to: '/plan', end: false, labelKey: 'nav.mealPlan', Icon: Calendar },
   { to: '/shopping', end: false, labelKey: 'nav.shopping', Icon: ShoppingCart },
+  { to: '/', end: true, labelKey: 'nav.gettingStarted', Icon: Info },
   { to: '/settings', end: false, labelKey: 'nav.settings', Icon: Settings },
 ]
+
+const GATED_VISIBLE_LABEL_KEYS = new Set(['nav.gettingStarted', 'nav.settings'])
 
 interface SidebarNavLinkProps {
   to: string
@@ -78,7 +82,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false)
   const gated = households.length === 0
   const navItems = gated
-    ? NAV_ITEMS.filter((item) => item.to === '/settings')
+    ? NAV_ITEMS.filter((item) => GATED_VISIBLE_LABEL_KEYS.has(item.labelKey))
     : NAV_ITEMS
   const bandColor = activeHousehold?.color ?? null
 
@@ -107,7 +111,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
       <div
         className={`flex items-center mb-5 ${collapsed ? 'justify-center' : 'justify-between px-1'}`}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <Link to="/" className="flex items-center gap-2 min-w-0">
           <img
             src="/favicon.svg"
             alt=""
@@ -118,7 +122,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
               Carrot
             </span>
           )}
-        </div>
+        </Link>
         <button
           type="button"
           onClick={() => setCollapsed((c) => !c)}
@@ -168,7 +172,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
       <nav className="flex flex-col gap-0.5 flex-1">
         {navItems.map(({ to, end, labelKey, Icon }) => (
           <SidebarNavLink
-            key={to}
+            key={labelKey}
             to={to}
             end={end}
             label={t(labelKey)}

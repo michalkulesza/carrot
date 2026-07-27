@@ -1,149 +1,66 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as KeepAwake from 'expo-keep-awake'
 import {
   ActionSheetIOS,
   ActivityIndicator,
-  Keyboard,
   Pressable,
-  TextInput,
   Text,
+  TextInput,
   View,
-  type LayoutChangeEvent,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LinearTransition, useReducedMotion } from 'react-native-reanimated'
 import { useIsFocused } from 'expo-router'
-import DraggableFlatList, { ScaleDecorator, RenderItemParams } from 'react-native-draggable-flatlist'
+import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist'
 import { Swipeable } from 'react-native-gesture-handler'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
-import type { ShoppingListItem, PresenceUser } from '@carrot/shared/types'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import type { PresenceUser, ShoppingCategory, ShoppingListItem } from '@carrot/shared/types'
 import { colors } from '../../theme/colors'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useIsAppActive } from '../../hooks/useIsAppActive'
+import { useHousehold } from '../../context/HouseholdContext'
 import { styles } from './styles'
 import CheckCircle from './CheckCircle'
 import PresenceBar from './PresenceBar'
-import ShoppingListFooter from './ShoppingListFooter'
+import AddItemRow from './AddItemRow'
+import ShoppingCategorySection from './ShoppingCategorySection'
+import { sectionStyles } from './sectionStyles'
 import { KEEP_AWAKE_SHOPPING_STORAGE_KEY } from '../SettingsScreen/helpers'
+import {
+  buildShoppingListRows,
+  categoryOrdersFromRows,
+  type ShoppingListRow,
+  visibleShoppingCategories,
+} from './helpers'
 
-// Standard iOS tab bar chrome height. The native UITabBar overlays the content,
-// and contentInsetAdjustmentBehavior is disabled (DraggableFlatList breaks it),
-// so we inset the bottom manually — same as the top nav bar.
-const TAB_BAR_HEIGHT = 49
 const KEEP_AWAKE_SHOPPING_TAG = 'shopping-list'
+const COMPLETED_GRACE_MS = 10_000
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const isFocused = useIsFocused()
   const isAppActive = useIsAppActive()
+  const { activeHouseholdId } = useHousehold()
+  const { preferences } = usePreferences()
+  const reduceMotion = useReducedMotion()
   const [keepScreenOn, setKeepScreenOn] = useState(false)
-
-  useEffect(() => {
-    if (!isFocused) {
-      setKeepScreenOn(false)
-      return
-    }
-
-    AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((value) => {
-      setKeepScreenOn(value === '1')
-    })
-  }, [isFocused])
-
-  useEffect(() => {
-    if (isAppActive && isFocused && keepScreenOn) {
-      void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_SHOPPING_TAG)
-    } else {
-      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
-    }
-
-    return () => {
-      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
-    }
-  }, [isAppActive, isFocused, keepScreenOn])
-
-  // DraggableFlatList's gesture-handler wrapping breaks the native
-  // contentInsetAdjustmentBehavior mechanism — set the inset manually instead.
-  const navBarInset = insets.top + 44
-  // Extra breathing room so the first row clears the transparent header and the
-  // list visibly scrolls underneath it.
-  const listTopInset = navBarInset + 12
-  // Clear the native tab bar so the last rows aren't hidden underneath it.
-  const listBottomInset = insets.bottom + TAB_BAR_HEIGHT
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- DraggableFlatList's ref type doesn't match its actual (gesture-handler) FlatList instance.
-  const flatListRef = useRef<any>(null)
-  // Total height of the FlatList's scrollable content, from onContentSizeChange.
-  const contentHeightRef = useRef(0)
-  // Rendered height of the footer (add row + optional completed section +
-  // bottom spacer), from its own onLayout. Since the add row is the very
-  // first element inside the footer, its absolute top within the scrollable
-  // content is always (contentHeight - footerHeight) — both are plain
-  // heights, not positions relative to some ambiguous wrapper, so this is
-  // exact regardless of how FlatList nests the header/footer internally.
-  const footerHeightRef = useRef(0)
-  // Whether the add-item input currently has focus — while true, every
-  // layout change (e.g. a new item pushing the row down) re-triggers the
-  // scroll so the row stays visible.
-  const isAddInputFocusedRef = useRef(false)
-  // Real keyboard height, added as extra bottom padding to the list's content
-  // so there is always genuine scrollable room to bring the add row above the
-  // keyboard — rather than relying on the container merely shrinking (which
-  // may not actually grow the scrollable range for this animated/gesture-
-  // wrapped FlatList in time for an immediate scrollToOffset call).
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
-
-  useEffect(() => {
-    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
-      setKeyboardHeight(e.endCoordinates.height)
-    })
-    const hideSub = Keyboard.addListener('keyboardWillHide', () => {
-      setKeyboardHeight(0)
-    })
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [])
-
-  const scrollToAddRow = useCallback(() => {
-    const addRowTop = contentHeightRef.current - footerHeightRef.current
-    const offset = Math.max(addRowTop - navBarInset, 0)
-    flatListRef.current?.scrollToOffset({ offset, animated: true })
-  }, [navBarInset])
-
-  const handleContentSizeChange = useCallback(
-    (_width: number, height: number) => {
-      contentHeightRef.current = height
-      if (isAddInputFocusedRef.current) scrollToAddRow()
-    },
-    [scrollToAddRow]
-  )
-
-  const handleFooterLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      footerHeightRef.current = event.nativeEvent.layout.height
-      if (isAddInputFocusedRef.current) scrollToAddRow()
-    },
-    [scrollToAddRow]
-  )
-
-  const handleFocusInput = useCallback(() => {
-    isAddInputFocusedRef.current = true
-    // Wait a beat for the extra keyboard-height padding (set via state above)
-    // to actually apply to the list's layout before scrolling to it.
-    setTimeout(scrollToAddRow, 50)
-    setTimeout(scrollToAddRow, 350)
-  }, [scrollToAddRow])
-
-  const handleBlurInput = useCallback(() => {
-    isAddInputFocusedRef.current = false
-  }, [])
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingText, setEditingText] = useState('')
+  const [collapsedCategories, setCollapsedCategories] = useState<Partial<Record<ShoppingCategory, boolean>>>({})
+  const [recentCompletedIds, setRecentCompletedIds] = useState<Set<string>>(new Set())
+  const completedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const collapseStorageKey = activeHouseholdId
+    ? `shopping-list-collapsed-categories:${activeHouseholdId}`
+    : null
 
   const {
+    items,
     incompleteItems,
     completedItems,
     isLoading,
@@ -157,13 +74,66 @@ const ShoppingListScreen = () => {
     clearCompleted,
   } = useShoppingList()
   const { busy, showSpinner } = useScreenLoading(isLoading)
+  const categories = useMemo(
+    () => visibleShoppingCategories(preferences?.shopping_categories),
+    [preferences?.shopping_categories]
+  )
+  const rows = useMemo(
+    () => buildShoppingListRows({
+      items,
+      categories,
+      collapsedCategories,
+      showCompleted: preferences?.show_completed_shopping_items ?? false,
+      recentCompletedIds,
+    }),
+    [items, categories, collapsedCategories, preferences?.show_completed_shopping_items, recentCompletedIds]
+  )
 
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingText, setEditingText] = useState('')
+  useEffect(() => {
+    if (!isFocused) {
+      setKeepScreenOn(false)
+      return
+    }
+    void AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((value) => {
+      setKeepScreenOn(value === '1')
+    })
+  }, [isFocused])
+
+  useEffect(() => {
+    if (!collapseStorageKey) {
+      setCollapsedCategories({})
+      return
+    }
+    void AsyncStorage.getItem(collapseStorageKey).then((value) => {
+      setCollapsedCategories(value ? JSON.parse(value) : {})
+    })
+  }, [collapseStorageKey])
+
+  useEffect(() => {
+    if (isAppActive && isFocused && keepScreenOn) {
+      void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_SHOPPING_TAG)
+    } else {
+      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
+    }
+    return () => {
+      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
+    }
+  }, [isAppActive, isFocused, keepScreenOn])
+
+  useEffect(() => () => {
+    Object.values(completedTimersRef.current).forEach(clearTimeout)
+  }, [])
+
+  const toggleCategory = useCallback((category: ShoppingCategory) => {
+    setCollapsedCategories((current) => {
+      const next = { ...current, [category]: !current[category] }
+      if (collapseStorageKey) void AsyncStorage.setItem(collapseStorageKey, JSON.stringify(next))
+      return next
+    })
+  }, [collapseStorageKey])
 
   const lockedByOther = useCallback(
-    (itemId: string): PresenceUser | undefined =>
-      presence.find((u) => u.item_id === itemId),
+    (itemId: string): PresenceUser | undefined => presence.find((user) => user.item_id === itemId),
     [presence]
   )
 
@@ -174,8 +144,8 @@ const ShoppingListScreen = () => {
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
       },
-      (idx) => {
-        if (idx === 0) {
+      (index) => {
+        if (index === 0) {
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
           clearCompleted.mutate()
         }
@@ -183,187 +153,218 @@ const ShoppingListScreen = () => {
     )
   }, [clearCompleted, t])
 
-  const handleAdd = useCallback(
-    (text: string) => {
-      addItems.mutate([text])
-    },
-    [addItems]
-  )
+  const handleAdd = useCallback((text: string, category: ShoppingCategory) => {
+    addItems.mutate([{ text, category }])
+  }, [addItems])
 
-  const handleToggle = useCallback(
-    (id: string, completed: boolean) => {
-      toggle.mutate({ id, completed })
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    },
-    [toggle]
-  )
+  const handleToggle = useCallback((item: ShoppingListItem) => {
+    toggle.mutate({ id: item.id, completed: item.completed })
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
-  const handleEditStart = useCallback(
-    (item: ShoppingListItem) => {
-      setEditingId(item.id)
-      setEditingText(item.text)
-      setEditing(item.id)
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-    },
-    [setEditing]
-  )
+    if (item.completed) {
+      clearTimeout(completedTimersRef.current[item.id])
+      delete completedTimersRef.current[item.id]
+      setRecentCompletedIds((current) => {
+        const next = new Set(current)
+        next.delete(item.id)
+        return next
+      })
+      return
+    }
 
-  const handleEditSubmit = useCallback(
-    (id: string, originalText: string) => {
-      const text = editingText.trim()
-      if (text && text !== originalText) {
-        editText.mutate({ id, text })
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      }
-      setEditingId(null)
-      setEditingText('')
-      setEditing(null)
-    },
-    [editingText, editText, setEditing]
-  )
+    setRecentCompletedIds((current) => new Set(current).add(item.id))
+    completedTimersRef.current[item.id] = setTimeout(() => {
+      setRecentCompletedIds((current) => {
+        const next = new Set(current)
+        next.delete(item.id)
+        return next
+      })
+      delete completedTimersRef.current[item.id]
+    }, COMPLETED_GRACE_MS)
+  }, [toggle])
 
-  const handleDelete = useCallback(
-    (id: string) => {
-      remove.mutate(id)
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    },
-    [remove]
-  )
+  const handleEditStart = useCallback((item: ShoppingListItem) => {
+    setEditingId(item.id)
+    setEditingText(item.text)
+    setEditing(item.id)
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+  }, [setEditing])
 
-  const renderRightDelete = useCallback(
-    (id: string, locked: boolean) => () =>
-      locked ? null : (
-        <Pressable
-          style={styles.deleteAction}
-          onPress={() => handleDelete(id)}
-          accessibilityLabel={t('common.delete')}
-        >
-          <Feather name="trash-2" size={18} color="#fff" />
-        </Pressable>
-      ),
-    [handleDelete, t]
-  )
+  const handleEditSubmit = useCallback((item: ShoppingListItem) => {
+    const text = editingText.trim()
+    if (text && text !== item.text) {
+      editText.mutate({ id: item.id, text })
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    }
+    setEditingId(null)
+    setEditingText('')
+    setEditing(null)
+  }, [editingText, editText, setEditing])
 
-  const renderItem = useCallback(
-    ({ item, drag, isActive }: RenderItemParams<ShoppingListItem>) => {
-      const isEditing = editingId === item.id
-      const editor = lockedByOther(item.id)
-      const isLocked = !!editor && !isEditing
+  const renderRightDelete = useCallback((itemId: string, locked: boolean) => () =>
+    locked ? null : (
+      <Pressable
+        style={styles.deleteAction}
+        onPress={() => {
+          remove.mutate(itemId)
+          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        }}
+        accessibilityLabel={t('common.delete')}
+      >
+        <Feather name="trash-2" size={18} color="#fff" />
+      </Pressable>
+    ), [remove, t])
 
+  const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<ShoppingListRow>) => {
+    if (item.kind === 'section') {
       return (
-        <ScaleDecorator>
-          <Swipeable
-            renderRightActions={renderRightDelete(item.id, isLocked)}
-            overshootRight={false}
-          >
-            <View style={[styles.item, isActive && styles.itemActive]}>
-              <CheckCircle
-                checked={false}
-                onPress={() => handleToggle(item.id, item.completed)}
-                accessibilityLabel={item.text}
-              />
+        <ShoppingCategorySection
+          category={item.category}
+          activeCount={item.activeCount}
+          collapsed={item.collapsed}
+          onToggle={() => toggleCategory(item.category)}
+        />
+      )
+    }
 
-              <View style={styles.textArea}>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.editInput}
-                    value={editingText}
-                    onChangeText={setEditingText}
-                    onSubmitEditing={() => handleEditSubmit(item.id, item.text)}
-                    onBlur={() => handleEditSubmit(item.id, item.text)}
-                    returnKeyType="done"
-                    autoFocus
-                    autoCapitalize="sentences"
-                    autoCorrect
-                  />
-                ) : (
-                  <Pressable
-                    onPress={() => !isLocked && handleEditStart(item)}
-                    disabled={isLocked}
-                    accessibilityLabel={
-                      isLocked
-                        ? t('shoppingList.presenceEditing', { name: editor!.nickname })
-                        : item.text
-                    }
-                  >
-                    <Text style={styles.itemText}>{item.text}</Text>
-                    {isLocked && (
-                      <View style={styles.lockBadge}>
-                        <View style={[styles.lockDot, { backgroundColor: editor!.color }]} />
-                        <Text style={styles.lockText}>
-                          {t('shoppingList.presenceEditing', { name: editor!.nickname })}
-                        </Text>
-                      </View>
-                    )}
-                  </Pressable>
-                )}
-              </View>
+    if (item.kind === 'add') {
+      return (
+        <AddItemRow
+          onAdd={(text) => handleAdd(text, item.category)}
+          onFocusInput={() => {}}
+          onBlurInput={() => {}}
+        />
+      )
+    }
 
-              {isLocked ? (
-                <View style={styles.dragHandle}>
-                  <Feather name="lock" size={14} color={colors.gray3} />
-                </View>
+    const shoppingItem = item.item
+    const isCompleted = item.kind === 'completed'
+    const isEditing = editingId === shoppingItem.id
+    const editor = lockedByOther(shoppingItem.id)
+    const isLocked = !!editor && !isEditing
+    return (
+      <ScaleDecorator>
+        <Swipeable renderRightActions={renderRightDelete(shoppingItem.id, isLocked)} overshootRight={false}>
+          <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
+            <CheckCircle
+              checked={isCompleted}
+              onPress={() => handleToggle(shoppingItem)}
+              accessibilityLabel={shoppingItem.text}
+            />
+            <View style={styles.textArea}>
+              {isEditing ? (
+                <TextInput
+                  style={styles.editInput}
+                  value={editingText}
+                  onChangeText={setEditingText}
+                  onSubmitEditing={() => handleEditSubmit(shoppingItem)}
+                  onBlur={() => handleEditSubmit(shoppingItem)}
+                  returnKeyType="done"
+                  autoFocus
+                  autoCapitalize="sentences"
+                  autoCorrect
+                />
               ) : (
                 <Pressable
-                  onLongPress={() => {
-                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                    drag()
-                  }}
-                  disabled={isActive}
-                  hitSlop={8}
-                  style={styles.dragHandle}
-                  accessibilityLabel={t('recipes.dragToReorder')}
+                  onPress={() => !isLocked && handleEditStart(shoppingItem)}
+                  disabled={isLocked}
+                  accessibilityLabel={isLocked
+                    ? t('shoppingList.presenceEditing', { name: editor!.nickname })
+                    : shoppingItem.text}
                 >
-                  <Feather name="menu" size={18} color={colors.tertiaryLabel} />
+                  <Text style={[styles.itemText, isCompleted && styles.completedText]}>{shoppingItem.text}</Text>
+                  {isLocked ? (
+                    <View style={styles.lockBadge}>
+                      <View style={[styles.lockDot, { backgroundColor: editor.color }]} />
+                      <Text style={styles.lockText}>{t('shoppingList.presenceEditing', { name: editor.nickname })}</Text>
+                    </View>
+                  ) : null}
                 </Pressable>
               )}
             </View>
-          </Swipeable>
-        </ScaleDecorator>
-      )
-    },
-    [editingId, editingText, lockedByOther, handleToggle, handleEditStart, handleEditSubmit, renderRightDelete, t]
-  )
+            {!isCompleted && (isLocked ? (
+              <View style={styles.dragHandle}>
+                <Feather name="lock" size={14} color={colors.gray3} />
+              </View>
+            ) : (
+              <Pressable
+                onLongPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                  drag()
+                }}
+                disabled={isActive}
+                hitSlop={8}
+                style={styles.dragHandle}
+                accessibilityLabel={t('recipes.dragToReorder')}
+              >
+                <Feather name="menu" size={18} color={colors.tertiaryLabel} />
+              </Pressable>
+            ))}
+          </View>
+        </Swipeable>
+      </ScaleDecorator>
+    )
+  }, [
+    editingId,
+    editingText,
+    handleAdd,
+    handleEditStart,
+    handleEditSubmit,
+    handleToggle,
+    lockedByOther,
+    renderRightDelete,
+    t,
+    toggleCategory,
+  ])
+
+  const handleDragEnd = useCallback(({ data }: { data: ShoppingListRow[] }) => {
+    const categoryOrders = categoryOrdersFromRows(data)
+    for (const item of incompleteItems) {
+      const included = Object.values(categoryOrders).some((ids) => ids?.includes(item.id))
+      if (!included) {
+        const order = categoryOrders[item.category] ?? []
+        order.push(item.id)
+        categoryOrders[item.category] = order
+      }
+    }
+    reorder.mutate(categoryOrders)
+  }, [incompleteItems, reorder])
 
   if (busy) {
-    // Defer to the root loadingOverlay while auth is bootstrapping.
-    return (
-      <View style={styles.center}>
-        {showSpinner && <ActivityIndicator size="large" />}
-      </View>
-    )
+    return <View style={styles.center}>{showSpinner ? <ActivityIndicator size="large" /> : null}</View>
   }
 
   return (
     <View style={styles.screen}>
       <DraggableFlatList
-        ref={flatListRef}
-        data={incompleteItems}
-        keyExtractor={(item) => item.id}
+        data={rows}
+        keyExtractor={(item) => item.kind === 'section' || item.kind === 'add'
+          ? `${item.kind}-${item.category}`
+          : `${item.kind}-${item.item.id}`}
         renderItem={renderItem}
-        onDragEnd={({ data }) => reorder.mutate(data.map((i) => i.id))}
+        onDragEnd={handleDragEnd}
         containerStyle={styles.listContainer}
-        ListHeaderComponent={<PresenceBar users={presence} />}
-        ListFooterComponent={
-          <ShoppingListFooter
-            completedItems={completedItems}
-            onAdd={handleAdd}
-            onFocusInput={handleFocusInput}
-            onBlurInput={handleBlurInput}
-            onToggle={handleToggle}
-            onClearCompleted={handleClearCompleted}
-            renderRightDelete={renderRightDelete}
-            bottomInset={listBottomInset}
-            onFooterLayout={handleFooterLayout}
-          />
+        itemLayoutAnimation={reduceMotion ? undefined : LinearTransition.duration(220)}
+        ListHeaderComponent={
+          <View>
+            <PresenceBar users={presence} />
+            {completedItems.length > 0 ? (
+              <Pressable
+                style={sectionStyles.clearCompleted}
+                onPress={handleClearCompleted}
+                accessibilityLabel={t('shoppingList.clearCompleted')}
+              >
+                <Text style={styles.clearBtn}>{t('shoppingList.clearCompleted')}</Text>
+              </Pressable>
+            ) : null}
+          </View>
         }
         contentInsetAdjustmentBehavior="never"
-        scrollIndicatorInsets={{ top: navBarInset, bottom: listBottomInset }}
-        contentContainerStyle={[styles.listContent, { paddingTop: listTopInset, paddingBottom: keyboardHeight }]}
-        onContentSizeChange={handleContentSizeChange}
+        contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: insets.bottom + 64 }}
       />
     </View>
   )
 }
+
 
 export default ShoppingListScreen

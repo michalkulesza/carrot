@@ -1,14 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
-import type { ShoppingListItem, PresenceUser } from '../types'
+import type {
+  PresenceUser,
+  ShoppingCategory,
+  ShoppingCategoryOrders,
+  ShoppingListItem,
+  ShoppingListItemInput,
+} from '../types'
 
 const QUERY_KEY = ['shopping-list'] as const
 const KEEPALIVE_INTERVAL_MS = 8_000
 
-// Monotonic counter so rapid successive adds never collide on the same
-// millisecond (Date.now() alone isn't unique enough for fast typing).
 let tempIdCounter = 0
+
+const isTemporaryItemId = (id: string) => id.startsWith('temp-')
 
 export const useShoppingList = () => {
   const api = useApiClient()
@@ -16,11 +22,39 @@ export const useShoppingList = () => {
   const [presence, setPresence] = useState<PresenceUser[]>([])
   const editingItemIdRef = useRef<string | null>(null)
   const keepaliveRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const pendingWriteCountRef = useRef(0)
+  const latestActionIdRef = useRef(0)
+  const temporaryItemIdsRef = useRef<Record<string, string>>({})
+  const addContextsRef = useRef(
+    new WeakMap<ShoppingListItemInput[], { temporaryIds: string[] }>()
+  )
 
-  // Subscribe to SSE stream on mount
+  const enqueueWrite = useCallback(
+    <T,>(write: () => Promise<T>) => {
+      const queuedWrite = writeQueueRef.current.then(write, write)
+      writeQueueRef.current = queuedWrite.then(
+        () => undefined,
+        () => undefined
+      )
+
+      return queuedWrite.finally(() => {
+        pendingWriteCountRef.current -= 1
+        if (pendingWriteCountRef.current === 0) {
+          void qc.invalidateQueries({ queryKey: QUERY_KEY })
+        }
+      })
+    },
+    [qc]
+  )
+
   useEffect(() => {
     const cancel = api.subscribeShoppingList(
-      (items) => qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, items),
+      (items) => {
+        if (pendingWriteCountRef.current === 0) {
+          qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, items)
+        }
+      },
       (users) => setPresence(users)
     )
     return cancel
@@ -45,7 +79,6 @@ export const useShoppingList = () => {
     [api]
   )
 
-  // Clean up presence on unmount
   useEffect(() => {
     return () => {
       if (keepaliveRef.current) clearInterval(keepaliveRef.current)
@@ -59,49 +92,164 @@ export const useShoppingList = () => {
   })
 
   const addItems = useMutation({
-    mutationFn: (items: string[]) => api.addShoppingListItems(items),
+    mutationFn: (items: ShoppingListItemInput[]) =>
+      enqueueWrite(async () => {
+        const addedItems = await api.addShoppingListItems(items)
+        const context = addContextsRef.current.get(items)
+        const temporaryIds = context?.temporaryIds ?? []
+        const replacements = addedItems.map((item, index) => [temporaryIds[index], item] as const)
+
+        for (const [temporaryId, item] of replacements) {
+          if (temporaryId) temporaryItemIdsRef.current[temporaryId] = item.id
+        }
+
+        qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, (current = []) =>
+          current.map((item) => {
+            const replacement = replacements.find(([temporaryId]) => temporaryId === item.id)?.[1]
+            return replacement
+              ? { ...replacement, category: item.category, position: item.position }
+              : item
+          })
+        )
+
+        return addedItems
+      }),
     onMutate: async (items) => {
+      pendingWriteCountRef.current += 1
+      const actionId = ++latestActionIdRef.current
       await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
-      const maxPos = prev.filter((i) => !i.completed).reduce((m, i) => Math.max(m, i.position), -1)
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      const nextPositionByCategory: Partial<Record<ShoppingCategory, number>> = {}
+
+      for (const item of previousItems) {
+        if (!item.completed) {
+          nextPositionByCategory[item.category] = Math.max(
+            nextPositionByCategory[item.category] ?? -1,
+            item.position + 1
+          )
+        }
+      }
+
       const now = new Date().toISOString()
-      const optimistic: ShoppingListItem[] = items.map((text, idx) => ({
-        id: `temp-${Date.now()}-${idx}-${tempIdCounter++}`,
-        user_id: '',
-        household_id: null,
-        text,
-        completed: false,
-        position: maxPos + 1 + idx,
-        created_at: now,
-        updated_at: now,
-      }))
-      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, [...prev, ...optimistic])
-      return { prev }
+      const optimisticItems = items.map((input) => {
+        const position = nextPositionByCategory[input.category] ?? 0
+        nextPositionByCategory[input.category] = position + 1
+
+        return {
+          id: `temp-${Date.now()}-${tempIdCounter++}`,
+          user_id: '',
+          household_id: null,
+          text: input.text,
+          category: input.category,
+          completed: false,
+          position,
+          created_at: now,
+          updated_at: now,
+        }
+      })
+      const temporaryIds = optimisticItems.map((item) => item.id)
+
+      addContextsRef.current.set(items, { temporaryIds })
+      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, [...previousItems, ...optimisticItems])
+      return { actionId, temporaryIds }
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
+    onError: (_error, _items, context) => {
+      if (!context) return
+      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, (current = []) =>
+        current.filter((item) => !context.temporaryIds.includes(item.id))
+      )
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   })
 
-  // Pass current completed state explicitly — onMutate runs before mutationFn,
-  // so reading from cache inside mutationFn would see the already-flipped value.
   const toggle = useMutation({
     mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
-      api.updateShoppingListItem(id, { completed: !completed }),
-    onMutate: async ({ id }) => {
+      enqueueWrite(async () => {
+        const itemId = temporaryItemIdsRef.current[id] ?? id
+        if (isTemporaryItemId(itemId)) {
+          throw new Error('The item was not added')
+        }
+        return api.updateShoppingListItem(itemId, { completed: !completed })
+      }),
+    onMutate: async ({ id, completed }) => {
+      pendingWriteCountRef.current += 1
+      const actionId = ++latestActionIdRef.current
       await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      const previousItem = previousItems.find((item) => item.id === id)
+      if (!previousItem) return { actionId, previousItem: null }
+
+      const nextCompleted = !completed
+      const nextPosition = previousItems
+        .filter(
+          (item) =>
+            item.id !== id &&
+            item.category === previousItem.category &&
+            item.completed === nextCompleted
+        )
+        .reduce((maximum, item) => Math.max(maximum, item.position), -1) + 1
+
       qc.setQueryData<ShoppingListItem[]>(
         QUERY_KEY,
-        prev.map((i) => (i.id === id ? { ...i, completed: !i.completed } : i))
+        previousItems.map((item) =>
+          item.id === id ? { ...item, completed: nextCompleted, position: nextPosition } : item
+        )
       )
-      return { prev }
+      return { actionId, previousItem }
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
+    onError: (_error, _variables, context) => {
+      if (!context?.previousItem || context.actionId !== latestActionIdRef.current) return
+      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, (current = []) =>
+        current.map((item) =>
+          item.id === context.previousItem.id ? context.previousItem : item
+        )
+      )
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+  })
+
+  const reorder = useMutation({
+    mutationFn: (categoryOrders: ShoppingCategoryOrders) =>
+      enqueueWrite(async () => {
+        const resolvedOrders: ShoppingCategoryOrders = {}
+        for (const [category, itemIds] of Object.entries(categoryOrders) as [
+          ShoppingCategory,
+          string[],
+        ][]) {
+          resolvedOrders[category] = itemIds.flatMap((id) => {
+            const resolvedId = temporaryItemIdsRef.current[id] ?? id
+            return isTemporaryItemId(resolvedId) ? [] : [resolvedId]
+          })
+        }
+        return api.reorderShoppingList(resolvedOrders)
+      }),
+    onMutate: async (categoryOrders) => {
+      pendingWriteCountRef.current += 1
+      const actionId = ++latestActionIdRef.current
+      await qc.cancelQueries({ queryKey: QUERY_KEY })
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      const orderById = new Map<string, { category: ShoppingCategory; position: number }>()
+
+      for (const [category, itemIds] of Object.entries(categoryOrders) as [
+        ShoppingCategory,
+        string[],
+      ][]) {
+        itemIds.forEach((id, position) => orderById.set(id, { category, position }))
+      }
+
+      qc.setQueryData<ShoppingListItem[]>(
+        QUERY_KEY,
+        previousItems.map((item) => {
+          const order = orderById.get(item.id)
+          return order && !item.completed
+            ? { ...item, category: order.category, position: order.position }
+            : item
+        })
+      )
+      return { actionId, previousItems }
+    },
+    onError: (_error, _categoryOrders, context) => {
+      if (!context || context.actionId !== latestActionIdRef.current) return
+      qc.setQueryData(QUERY_KEY, context.previousItems)
+    },
   })
 
   const editText = useMutation({
@@ -109,32 +257,15 @@ export const useShoppingList = () => {
       api.updateShoppingListItem(id, { text }),
     onMutate: async ({ id, text }) => {
       await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
       qc.setQueryData<ShoppingListItem[]>(
         QUERY_KEY,
-        prev.map((i) => (i.id === id ? { ...i, text } : i))
+        previousItems.map((item) => (item.id === id ? { ...item, text } : item))
       )
-      return { prev }
+      return { previousItems }
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
-    },
-    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
-  })
-
-  const reorder = useMutation({
-    mutationFn: (ids: string[]) => api.reorderShoppingList(ids),
-    onMutate: async (ids) => {
-      await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
-      const byId = Object.fromEntries(prev.map((i) => [i.id, i]))
-      const reordered = ids.map((id, pos) => ({ ...byId[id], position: pos }))
-      const completed = prev.filter((i) => i.completed)
-      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, [...reordered, ...completed])
-      return { prev }
-    },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
+    onError: (_error, _variables, context) => {
+      if (context) qc.setQueryData(QUERY_KEY, context.previousItems)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   })
@@ -143,12 +274,12 @@ export const useShoppingList = () => {
     mutationFn: (id: string) => api.deleteShoppingListItem(id),
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
-      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, prev.filter((i) => i.id !== id))
-      return { prev }
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, previousItems.filter((item) => item.id !== id))
+      return { previousItems }
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
+    onError: (_error, _id, context) => {
+      if (context) qc.setQueryData(QUERY_KEY, context.previousItems)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   })
@@ -157,19 +288,19 @@ export const useShoppingList = () => {
     mutationFn: () => api.clearCompletedShoppingList(),
     onMutate: async () => {
       await qc.cancelQueries({ queryKey: QUERY_KEY })
-      const prev = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
-      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, prev.filter((i) => !i.completed))
-      return { prev }
+      const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+      qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, previousItems.filter((item) => !item.completed))
+      return { previousItems }
     },
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) qc.setQueryData(QUERY_KEY, ctx.prev)
+    onError: (_error, _variables, context) => {
+      if (context) qc.setQueryData(QUERY_KEY, context.previousItems)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   })
 
   const items = query.data ?? []
-  const incompleteItems = items.filter((i) => !i.completed).sort((a, b) => a.position - b.position)
-  const completedItems = items.filter((i) => i.completed).sort((a, b) => a.position - b.position)
+  const incompleteItems = items.filter((item) => !item.completed).sort((a, b) => a.position - b.position)
+  const completedItems = items.filter((item) => item.completed).sort((a, b) => a.position - b.position)
 
   return {
     items,

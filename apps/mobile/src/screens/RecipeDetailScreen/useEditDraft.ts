@@ -5,7 +5,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { TFunction } from 'i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ApiClient } from '@carrot/shared/api/client'
-import type { RecipeOut } from '@carrot/shared/types'
+import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
 import { serializeIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { uploadThumbnailImage } from '../../api/uploadThumbnail'
 import { buildDraft, type EditComponent, type EditDraft } from './helpers'
@@ -89,6 +89,22 @@ export const useEditDraft = ({
     })
   }, [])
 
+  const setIngredientCategory = useCallback((ci: number, ii: number, category: ShoppingCategory) => {
+    setDraft((previous) => previous && {
+      ...previous,
+      components: previous.components.map((component, componentIndex) =>
+        componentIndex === ci
+          ? {
+              ...component,
+              shopping_list_categories: component.shopping_list_categories.map(
+                (value, ingredientIndex) => ingredientIndex === ii ? category : value
+              ),
+            }
+          : component
+      ),
+    })
+  }, [])
+
   const addIngredient = useCallback((ci: number) => {
     setDraft((prev) => prev && {
       ...prev,
@@ -100,6 +116,7 @@ export const useEditDraft = ({
               shopping_list_ingredients: c.shopping_list_ingredients
                 ? [...c.shopping_list_ingredients, '']
                 : null,
+              shopping_list_categories: [...c.shopping_list_categories, 'other'],
             }
           : c,
       ),
@@ -118,6 +135,7 @@ export const useEditDraft = ({
                 ...c,
                 ingredients: c.ingredients.filter((_, j) => j !== ii),
                 shopping_list_ingredients: c.shopping_list_ingredients?.filter((_, j) => j !== ii) ?? null,
+                shopping_list_categories: c.shopping_list_categories.filter((_, j) => j !== ii),
               }
             : c,
         ),
@@ -217,6 +235,9 @@ export const useEditDraft = ({
           shopping_list_ingredients: c.shopping_list_ingredients
             ?.filter((_, index) => Boolean(c.ingredients[index]?.name))
             ?? null,
+          shopping_list_categories: c.shopping_list_categories.filter(
+            (_, index) => Boolean(c.ingredients[index]?.name)
+          ),
           steps: c.steps.filter(Boolean),
           ingredient_flags: [],
           step_ingredient_refs: null,
@@ -252,6 +273,7 @@ export const useEditDraft = ({
     handleQtyUnitChange,
     handleNutritionChange,
     updateComp,
+    setIngredientCategory,
     setIngredient,
     addIngredient,
     removeIngredient,

@@ -19,6 +19,7 @@ from api.models import (
     RecipeExtraction,
     RecipeSourceExtraction,
     RecipeUnitVariants,
+    ShoppingCategory,
 )
 
 log = logging.getLogger(__name__)
@@ -27,6 +28,15 @@ _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
 _TRANSCRIPTION_MODEL = "gemini-2.5-flash"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
+
+_SHOPPING_CATEGORY_MEANINGS = {
+    "produce": "fresh fruit, vegetables, herbs, and salad greens",
+    "pantry": "shelf-stable food, dry goods, canned goods, and condiments",
+    "dairy_eggs": "milk, cheese, yogurt, butter, and eggs",
+    "meat_seafood": "meat, poultry, fish, and seafood",
+    "frozen": "frozen food",
+    "other": "anything not covered by the other categories",
+}
 _T = TypeVar("_T")
 
 
@@ -170,6 +180,14 @@ weights, volumes, or other divisible measurements (e.g. "125 g butter" stays
 what to buy. If no quantity is given, return the ingredient name.
 shopping_list_values must have exactly one entry per source ingredient, in order.
 
+shopping_list_categories must have exactly one entry per source ingredient, in
+the same order as shopping_list_values. Use exactly one stable ID, never a
+localized display label or an invented ID:
+""" + "\n".join(
+    f"- {category}: {meaning}"
+    for category, meaning in _SHOPPING_CATEGORY_MEANINGS.items()
+) + """
+
 total_time_minutes: practical kitchen time in whole minutes. Include preparation
 and cooking or baking time, but exclude unattended resting, proofing, chilling,
 marinating, and other long passive waits. Extract it when stated; otherwise
@@ -309,6 +327,31 @@ def _validate_metric_ingredients(enrichment: RecipeEnrichment) -> None:
                 )
 
 
+def _repair_shopping_list_categories(
+    values: list[str],
+    ingredient_count: int,
+    component_index: int,
+    repairs: list[str],
+) -> list[ShoppingCategory]:
+    if len(values) != ingredient_count:
+        repairs.append(
+            f"component {component_index} shopping_list_categories has {len(values)} entries, "
+            f"expected {ingredient_count}"
+        )
+
+    categories: list[ShoppingCategory] = []
+    for ingredient_index in range(ingredient_count):
+        value = values[ingredient_index] if ingredient_index < len(values) else None
+        try:
+            categories.append(ShoppingCategory(value))
+        except (TypeError, ValueError):
+            repairs.append(
+                f"component {component_index} shopping_list_categories[{ingredient_index}] is invalid"
+            )
+            categories.append(ShoppingCategory.OTHER)
+    return categories
+
+
 def _repair_enrichment_alignment(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
@@ -361,6 +404,12 @@ def _repair_enrichment_alignment(
             ),
             "shopping_list_values": aligned_or_fallback(
                 "shopping_list_values", component.shopping_list_values, ingredient_fallback,
+            ),
+            "shopping_list_categories": _repair_shopping_list_categories(
+                component.shopping_list_categories,
+                len(ingredient_fallback),
+                index,
+                repairs,
             ),
             "metric_steps": aligned_or_fallback("metric_steps", component.metric_steps, step_fallback),
             "imperial_steps": aligned_or_fallback("imperial_steps", component.imperial_steps, step_fallback),
@@ -441,12 +490,6 @@ async def _enrich_recipe(
 
 
 def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment) -> RecipeExtraction:
-    """Combines a faithful source extraction with its enrichment, validating alignment.
-
-    Canonical fields (title, servings, component metadata, ingredient qty/unit/name,
-    steps) always come from `source`, never from `enrichment` — this is what prevents
-    the enrichment call from silently overwriting the faithful extraction.
-    """
     if len(enrichment.components) != len(source.components):
         raise ValueError(
             f"Enrichment returned {len(enrichment.components)} components, "
@@ -468,6 +511,7 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
                     f"Component {index}: {field_name} has {len(values)} entries, "
                     f"expected {ingredient_count}"
                 )
+
         for field_name, values in (
             ("metric_steps", enriched.metric_steps),
             ("imperial_steps", enriched.imperial_steps),
@@ -477,13 +521,39 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
                     f"Component {index}: {field_name} has {len(values)} entries, "
                     f"expected {step_count}"
                 )
+
         for ref in enriched.step_refs:
-            if not (0 <= ref.step_index < step_count) or not (0 <= ref.ingredient_index < ingredient_count):
+            if not (0 <= ref.step_index < step_count) or not (
+                0 <= ref.ingredient_index < ingredient_count
+            ):
                 raise ValueError(f"Component {index}: step_ref {ref} is out of range")
 
+        category_repairs: list[str] = []
+        shopping_categories = _repair_shopping_list_categories(
+            enriched.shopping_list_categories,
+            ingredient_count,
+            index,
+            category_repairs,
+        )
+        if category_repairs:
+            log.warning(
+                "Repaired recipe component shopping categories: %s",
+                "; ".join(category_repairs),
+            )
+
         ingredients = [
-            Ingredient(qty=ing.qty, unit=ing.unit, name=ing.name, shopping_list_value=shopping_value)
-            for ing, shopping_value in zip(source_component.ingredients, enriched.shopping_list_values)
+            Ingredient(
+                qty=ingredient.qty,
+                unit=ingredient.unit,
+                name=ingredient.name,
+                shopping_list_value=shopping_value,
+                shopping_list_category=shopping_category,
+            )
+            for ingredient, shopping_value, shopping_category in zip(
+                source_component.ingredients,
+                enriched.shopping_list_values,
+                shopping_categories,
+            )
         ]
         components.append(RecipeComponent(
             role=source_component.role,
@@ -495,6 +565,7 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
             imperial_ingredients=enriched.imperial_ingredients,
             metric_steps=enriched.metric_steps,
             imperial_steps=enriched.imperial_steps,
+            shopping_list_categories=shopping_categories,
             step_refs=enriched.step_refs,
         ))
 
@@ -658,6 +729,10 @@ class _ShoppingListValuesResult(BaseModel):
     values: list[str]
 
 
+
+class _ShoppingListCategoriesResult(BaseModel):
+    categories: list[ShoppingCategory]
+
 async def recommend_shopping_list_values(
     ingredients: list[str],
     model: str = _DEFAULT_MECHANICAL_MODEL,
@@ -690,6 +765,39 @@ volumes, or other divisible measurements (for example, \"125 g butter\" stays
     if len(result.values) != len(ingredients):
         raise RuntimeError("Gemini returned the wrong number of shopping-list values")
     return result.values
+
+
+async def recommend_shopping_list_categories(
+    ingredients: list[str],
+    model: str = _DEFAULT_MECHANICAL_MODEL,
+) -> list[ShoppingCategory]:
+    if not ingredients:
+        return []
+
+    numbered = "\n".join(f"{index + 1}. {ingredient}" for index, ingredient in enumerate(ingredients))
+    category_lines = "\n".join(
+        f"- {category}: {meaning}"
+        for category, meaning in _SHOPPING_CATEGORY_MEANINGS.items()
+    )
+    instruction = (
+        "Classify each ingredient into exactly one shopping category. Return categories in "
+        "exactly the same order as the input. Return only these stable IDs, never localized "
+        f"labels or invented IDs:\n{category_lines}"
+    )
+    client = _build_client()
+    response = await _with_retry(lambda: client.models.generate_content(
+        model=model,
+        contents=numbered,
+        config=types.GenerateContentConfig(
+            system_instruction=instruction,
+            response_mime_type="application/json",
+            response_schema=_ShoppingListCategoriesResult,
+        ),
+    ))
+    result = _ShoppingListCategoriesResult.model_validate(json.loads(response.text))
+    if len(result.categories) != len(ingredients):
+        raise RuntimeError("Gemini returned the wrong number of shopping-list categories")
+    return result.categories
 
 
 async def analyze_allergens(

@@ -5,7 +5,6 @@ import {
   ALLERGEN_KEYS,
   INTOLERANCE_KEYS,
 } from '@carrot/shared/utils/allergenKeys'
-import { streamReanalyze } from '../../api/client'
 import CheckboxGroup from './CheckboxGroup'
 
 interface AllergenSectionProps {
@@ -22,11 +21,6 @@ const AllergenSection = ({
   const { t } = useTranslation()
   const [predefined, setPredefined] = useState<string[]>(allergens ?? [])
   const [saving, setSaving] = useState(false)
-  const [reanalyzing, setReanalyzing] = useState(false)
-  const [reanalyzeProgress, setReanalyzeProgress] = useState<{
-    done: number
-    total: number
-  } | null>(null)
 
   const togglePredefined = useCallback((key: string) => {
     setPredefined((prev) =>
@@ -48,37 +42,6 @@ const AllergenSection = ({
       setSaving(false)
     }
   }, [onSave, predefined, t])
-
-  const handleReanalyze = useCallback(() => {
-    setReanalyzing(true)
-    setReanalyzeProgress({ done: 0, total: 0 })
-    streamReanalyze({
-      onStart: (total) => setReanalyzeProgress({ done: 0, total }),
-      onProgress: (done, total) => setReanalyzeProgress({ done, total }),
-      onComplete: (analyzed) => {
-        setReanalyzing(false)
-        setReanalyzeProgress(null)
-        toast.success(t('settings.reanalyzedRecipes', { count: analyzed }), {
-          timeout: 3000,
-        })
-      },
-      onError: (msg) => {
-        setReanalyzing(false)
-        setReanalyzeProgress(null)
-        toast.danger(msg, { timeout: 3000 })
-      },
-    })
-  }, [t])
-
-  const hasProgress = reanalyzeProgress && reanalyzeProgress.total > 0
-  const reanalyzeButtonLabel = reanalyzing
-    ? hasProgress
-      ? t('settings.analyzingProgress', {
-          done: reanalyzeProgress.done,
-          total: reanalyzeProgress.total,
-        })
-      : t('settings.starting')
-    : t('settings.reAnalyzeRecipes')
 
   return (
     <div className="flex flex-col gap-4">
@@ -132,14 +95,6 @@ const AllergenSection = ({
           isDisabled={saving}
         >
           {saving ? t('common.saving') : t('common.save')}
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onPress={handleReanalyze}
-          isDisabled={reanalyzing}
-        >
-          {reanalyzeButtonLabel}
         </Button>
       </div>
     </div>
