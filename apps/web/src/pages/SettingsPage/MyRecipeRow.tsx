@@ -11,6 +11,7 @@ import HouseholdAvatarIndicators from '../../components/HouseholdAvatarIndicator
 import RecipeHouseholdsPicker from '../../components/RecipeDetailModal/RecipeHouseholdsPicker'
 import { proxyUrl } from '../../utils/imageUtils'
 import NetworkImage from '../../components/NetworkImage'
+import MyRecipeRowMenu from './MyRecipeRowMenu'
 
 interface MyRecipeRowProps {
   recipe: RecipeOut
@@ -106,35 +107,14 @@ const MyRecipeRow = ({
         <Button size="sm" variant="secondary" onPress={handleView}>
           {t('common.view')}
         </Button>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          size="sm"
-          variant="tertiary"
-          isDisabled={busy}
-          onPress={handleToggleManageHouseholds}
-        >
-          {t('recipes.addToHousehold')}
-        </Button>
-        {linkedToActiveHousehold && activeHousehold && (
-          <Button
-            size="sm"
-            variant="danger-soft"
-            isDisabled={busy}
-            onPress={handleRemoveFromHousehold}
-          >
-            {t('recipes.deleteFromHousehold', { name: activeHousehold.name })}
-          </Button>
-        )}
-        <Button
-          size="sm"
-          variant="danger-soft"
-          isDisabled={busy}
-          onPress={handleDeleteEverywhere}
-        >
-          {t('recipes.deleteEverywhere')}
-        </Button>
+        <MyRecipeRowMenu
+          busy={busy}
+          showDeleteFromHousehold={linkedToActiveHousehold && !!activeHousehold}
+          householdName={activeHousehold?.name}
+          onAddToHousehold={handleToggleManageHouseholds}
+          onDeleteFromHousehold={handleRemoveFromHousehold}
+          onDeleteEverywhere={handleDeleteEverywhere}
+        />
       </div>
 
       {managingHouseholds && (
