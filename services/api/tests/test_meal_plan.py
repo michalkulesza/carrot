@@ -54,19 +54,8 @@ def test_meal_plan_entry_requires_exactly_one_source(payload: dict) -> None:
         MealPlanSetRequest(**payload)
 
 
-def test_next_personal_entry_query_excludes_past_and_other_contexts() -> None:
-    statement = _next_entry_statement(uuid.uuid4(), None, date(2026, 7, 14))
-    sql = str(statement.compile(dialect=postgresql.dialect()))
-
-    assert "meal_plan_entries.user_id =" in sql
-    assert "meal_plan_entries.household_id IS NULL" in sql
-    assert "meal_plan_entries.date >=" in sql
-    assert "ORDER BY meal_plan_entries.date ASC" in sql
-    assert "LIMIT" in sql
-
-
 def test_next_household_entry_query_is_isolated_and_has_unlimited_look_ahead() -> None:
-    statement = _next_entry_statement(uuid.uuid4(), uuid.uuid4(), date(2026, 12, 31))
+    statement = _next_entry_statement(uuid.uuid4(), date(2026, 12, 31))
     sql = str(statement.compile(dialect=postgresql.dialect()))
 
     assert "meal_plan_entries.household_id =" in sql
