@@ -107,9 +107,9 @@ export const useRecipes = (enabled = true) => {
   }
 }
 
-export const useRecipeStats = () => {
+export const useRecipeStats = (enabled = true) => {
   const api = useApiClient()
-  return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats })
+  return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats, enabled })
 }
 
 export const useSemanticRecipeSearch = (query: string, scopeKey: string | null) => {

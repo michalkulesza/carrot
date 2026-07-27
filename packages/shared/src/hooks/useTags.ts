@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 
-export const useTags = () => {
+export const useTags = (enabled = true) => {
   const api = useApiClient()
   const qc = useQueryClient()
 
-  const query = useQuery({ queryKey: ['tags'], queryFn: api.listTags })
+  const query = useQuery({ queryKey: ['tags'], queryFn: api.listTags, enabled })
 
   const create = useMutation({
     mutationFn: api.createTag,

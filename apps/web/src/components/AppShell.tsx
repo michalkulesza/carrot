@@ -20,6 +20,7 @@ import { TimerProvider } from '../context/TimerContext'
 import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
 import { useRecipes, useRecipeStats } from '@carrot/shared/hooks/useRecipes'
 import { useTags } from '@carrot/shared/hooks/useTags'
+import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { RecipeOut, UserPreferences } from '@carrot/shared/types'
@@ -71,13 +72,15 @@ const AppShell = () => {
     navigate(`/?recipe=${recipe.id}`)
   }, [navigate, qc])
 
-  const { recipes, isLoading: recipesLoading } = useRecipes()
-  const { tags: allTags } = useTags()
-  const { data: statsData } = useRecipeStats()
+  const { households } = useHouseholds()
+  const hasHousehold = households.length > 0
+  const { recipes, isLoading: recipesLoading } = useRecipes(hasHousehold)
+  const { tags: allTags } = useTags(hasHousehold)
+  const { data: statsData } = useRecipeStats(hasHousehold)
   const stats = statsData ?? null
   const { preferences } = usePreferences()
   const { jobs: importJobs, seed: seedImportJob, retry: retryImportJob, dismiss: dismissImportJob } = useImportJobs(
-    user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null,
+    hasHousehold && user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null,
   )
 
   useEffect(() => {
