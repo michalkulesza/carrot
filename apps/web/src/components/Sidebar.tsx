@@ -83,7 +83,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
   const gated = households.length === 0
   const navItems = gated
     ? NAV_ITEMS.filter((item) => GATED_VISIBLE_LABEL_KEYS.has(item.labelKey))
-    : NAV_ITEMS
+    : NAV_ITEMS.filter((item) => item.labelKey !== 'nav.gettingStarted')
   const bandColor = activeHousehold?.color ?? null
 
   const handleSwitcherClose = useCallback(() => setSwitcherOpen(false), [])
