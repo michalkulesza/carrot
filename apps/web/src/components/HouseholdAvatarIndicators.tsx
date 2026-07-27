@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
-import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { useHousehold } from '../context/HouseholdContext'
 
 interface HouseholdAvatar {
@@ -34,40 +33,19 @@ const HouseholdAvatarIndicators = ({
 }: HouseholdAvatarIndicatorsProps) => {
   const { t } = useTranslation()
   const { households } = useHousehold()
-  const recipeHousehold = recipe.household_id
-    ? households.find((household) => household.id === recipe.household_id)
-    : undefined
 
   const avatars = useMemo<HouseholdAvatar[]>(
-    () => [
-      ...(!recipe.household_id || recipe.shared_to_personal
-        ? [
-            {
-              id: 'personal',
-              name: t('households.personal'),
-              label: t('households.you').charAt(0),
-              color: PERSONAL_LIBRARY_COLOR,
-              tooltip: t('households.personalHousehold'),
-            },
-          ]
-        : []),
-      ...(recipeHousehold
-        ? [
-            {
-              id: recipeHousehold.id,
-              name: recipeHousehold.name,
-              color: recipeHousehold.color,
-              tooltip: recipeHousehold.name,
-            },
-          ]
-        : []),
-    ],
-    [
-      recipe.household_id,
-      recipe.shared_to_personal,
-      recipeHousehold,
-      t,
-    ]
+    () =>
+      recipe.household_ids
+        .map((id) => households.find((household) => household.id === id))
+        .filter((household): household is NonNullable<typeof household> => !!household)
+        .map((household) => ({
+          id: household.id,
+          name: household.name,
+          color: household.color,
+          tooltip: household.name,
+        })),
+    [recipe.household_ids, households]
   )
   const avatarClassName =
     size === 'sm' ? 'h-6 w-6 text-[10px]' : 'h-7 w-7 text-[11px]'

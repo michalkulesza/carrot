@@ -17,11 +17,15 @@ import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
 import {
   addTagToRecipe,
   deleteRecipe,
+  removeRecipeFromHousehold,
   removeTagFromRecipe,
+  setRecipeHouseholds,
   toggleFavourite,
   updateRecipe,
   uploadThumbnail,
 } from '../../api/client'
+import { useAuth } from '../../context/AuthContext'
+import { useHousehold } from '../../context/HouseholdContext'
 import AssignToMealPlanModal from '../AssignToMealPlanModal'
 import {
   applyIngredientReplace,
@@ -71,6 +75,8 @@ const RecipeDetailModal = ({
   const wakeLock = useScreenWakeLock(Boolean(recipe))
   const { addItems: addShoppingListItems } = useShoppingList()
   const { preferences } = usePreferences()
+  const { user } = useAuth()
+  const { households, activeHouseholdId } = useHousehold()
   const { create: createTagMutation } = useTags()
   const [mode, setMode] = useState<Mode>('view')
   const [addMode, setAddMode] = useState(false)
@@ -293,7 +299,7 @@ const RecipeDetailModal = ({
       t('recipes.failedToRestoreIngredient')
     )
 
-  const handleDelete = async () => {
+  const handleDeleteEverywhere = async () => {
     setBusy(true)
     setError(null)
     try {
@@ -304,6 +310,36 @@ const RecipeDetailModal = ({
     } catch (err) {
       setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
       setMode('view')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRemoveFromHousehold = async () => {
+    if (!activeHouseholdId) return
+    setBusy(true)
+    setError(null)
+    try {
+      await removeRecipeFromHousehold(r.id, activeHouseholdId)
+      toast.danger(t('recipes.recipeDeleted'), { timeout: 3000 })
+      onDeleted?.(r.id)
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
+      setMode('view')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleHouseholdsChange = async (householdIds: string[]) => {
+    setBusy(true)
+    setError(null)
+    try {
+      const updated = await setRecipeHouseholds(r.id, householdIds)
+      onUpdated?.(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('recipes.failedToSave'))
     } finally {
       setBusy(false)
     }
@@ -536,13 +572,14 @@ const RecipeDetailModal = ({
                   recipe={r}
                   mode={mode}
                   busy={busy}
-                  sharedToPersonal={draft.shared_to_personal}
-                  onSharedToPersonalChange={(v) =>
-                    setDraft((d) => (d ? { ...d, shared_to_personal: v } : d))
-                  }
+                  isAuthor={!!user && r.author_id === user.id}
+                  households={households}
+                  activeHouseholdId={activeHouseholdId}
+                  onHouseholdsChange={handleHouseholdsChange}
                   onCancel={cancelMode}
                   onSave={handleSave}
-                  onDelete={handleDelete}
+                  onRemoveFromHousehold={handleRemoveFromHousehold}
+                  onDeleteEverywhere={handleDeleteEverywhere}
                   onClose={handleClose}
                 />
               </ModalFooter>

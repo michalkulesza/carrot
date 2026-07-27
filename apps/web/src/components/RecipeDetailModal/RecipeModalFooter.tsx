@@ -1,17 +1,21 @@
 import { useTranslation } from 'react-i18next'
-import { Button, Switch } from '@heroui/react'
-import type { RecipeOut } from '@carrot/shared/types'
+import { Button } from '@heroui/react'
+import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
 import type { Mode } from './helpers'
+import RecipeHouseholdsPicker from './RecipeHouseholdsPicker'
 
 interface RecipeModalFooterProps {
   recipe: RecipeOut
   mode: Mode
   busy: boolean
-  sharedToPersonal: boolean
-  onSharedToPersonalChange: (v: boolean) => void
+  isAuthor: boolean
+  households: HouseholdOut[]
+  activeHouseholdId: string | null
+  onHouseholdsChange: (householdIds: string[]) => void
   onCancel: () => void
   onSave: () => void
-  onDelete: () => void
+  onRemoveFromHousehold: () => void
+  onDeleteEverywhere: () => void
   onClose: () => void
 }
 
@@ -19,32 +23,30 @@ const RecipeModalFooter = ({
   recipe,
   mode,
   busy,
-  sharedToPersonal,
-  onSharedToPersonalChange,
+  isAuthor,
+  households,
+  activeHouseholdId,
+  onHouseholdsChange,
   onCancel,
   onSave,
-  onDelete,
+  onRemoveFromHousehold,
+  onDeleteEverywhere,
   onClose,
 }: RecipeModalFooterProps) => {
   const { t } = useTranslation()
+  const linkedToActiveHousehold =
+    !!activeHouseholdId && recipe.household_ids.includes(activeHouseholdId)
+  const activeHousehold = households.find((h) => h.id === activeHouseholdId)
 
   return (
     <>
-      {mode === 'editing' && recipe.household_id && (
-        <div className="flex items-center justify-between px-1">
-          <span className="text-sm text-zinc-600">
-            {t('recipes.alsoInPrivate')}
-          </span>
-          <Switch
-            size="sm"
-            isSelected={sharedToPersonal}
-            onChange={onSharedToPersonalChange}
-          >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-          </Switch>
-        </div>
+      {mode !== 'confirming' && (
+        <RecipeHouseholdsPicker
+          households={households}
+          householdIds={recipe.household_ids}
+          busy={busy}
+          onChange={onHouseholdsChange}
+        />
       )}
       <div className="flex justify-end gap-2">
         {mode === 'editing' && (
@@ -62,9 +64,26 @@ const RecipeModalFooter = ({
             <Button variant="tertiary" onPress={onCancel} isDisabled={busy}>
               {t('common.cancel')}
             </Button>
-            <Button variant="danger" onPress={onDelete} isDisabled={busy}>
-              {t('common.delete')}
-            </Button>
+            {linkedToActiveHousehold && activeHousehold && (
+              <Button
+                variant="danger-soft"
+                onPress={onRemoveFromHousehold}
+                isDisabled={busy}
+              >
+                {t('recipes.deleteFromHousehold', {
+                  name: activeHousehold.name,
+                })}
+              </Button>
+            )}
+            {isAuthor && (
+              <Button
+                variant="danger"
+                onPress={onDeleteEverywhere}
+                isDisabled={busy}
+              >
+                {t('recipes.deleteEverywhere')}
+              </Button>
+            )}
           </>
         )}
         {mode === 'view' && (

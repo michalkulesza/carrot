@@ -8,12 +8,11 @@ import {
   ModalBody,
 } from '@heroui/react'
 import { Check } from 'react-feather'
-import { Link } from 'react-router-dom'
-import { Trans, useTranslation } from 'react-i18next'
+import { useTranslation } from 'react-i18next'
 import { useHousehold } from '../context/HouseholdContext'
 
 interface HouseholdOption {
-  id: string | null
+  id: string
   name: string
   color: string | null
 }
@@ -21,7 +20,7 @@ interface HouseholdOption {
 interface HouseholdOptionRowProps {
   option: HouseholdOption
   active: boolean
-  onSelect: (id: string | null) => void
+  onSelect: (id: string) => void
 }
 
 const HouseholdOptionRow = ({
@@ -67,7 +66,7 @@ const HouseholdSwitcher = ({ isOpen, onClose }: HouseholdSwitcherProps) => {
   const { t } = useTranslation()
 
   const handleSwitch = useCallback(
-    async (id: string | null) => {
+    async (id: string) => {
       onClose()
 
       if (id !== activeHouseholdId) {
@@ -84,16 +83,9 @@ const HouseholdSwitcher = ({ isOpen, onClose }: HouseholdSwitcherProps) => {
     [onClose]
   )
 
-  const handleSettingsClick = useCallback(() => {
-    onClose()
-  }, [onClose])
-
   const options = useMemo<HouseholdOption[]>(
-    () => [
-      { id: null, name: t('households.personal'), color: null },
-      ...households.map((h) => ({ id: h.id, name: h.name, color: h.color })),
-    ],
-    [households, t]
+    () => households.map((h) => ({ id: h.id, name: h.name, color: h.color })),
+    [households]
   )
 
   return (
@@ -108,29 +100,13 @@ const HouseholdSwitcher = ({ isOpen, onClose }: HouseholdSwitcherProps) => {
               <ul className="flex flex-col gap-1">
                 {options.map((opt) => (
                   <HouseholdOptionRow
-                    key={opt.id ?? 'personal'}
+                    key={opt.id}
                     option={opt}
                     active={opt.id === activeHouseholdId}
                     onSelect={handleSwitch}
                   />
                 ))}
               </ul>
-              {households.length === 0 && (
-                <p className="px-3 pt-3 text-sm leading-5 text-zinc-500">
-                  <Trans
-                    i18nKey="households.manageTip"
-                    components={{
-                      settings: (
-                        <Link
-                          to="/settings"
-                          onClick={handleSettingsClick}
-                          className="font-medium text-primary hover:underline"
-                        />
-                      ),
-                    }}
-                  />
-                </p>
-              )}
             </ModalBody>
           </ModalDialog>
         </ModalContainer>

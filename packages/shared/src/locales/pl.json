@@ -39,7 +39,8 @@
     "deviceOffline": "Twoje urządzenie jest offline. Sprawdź połączenie i spróbuj ponownie.",
     "tryAgain": "Spróbuj ponownie",
     "search": "Szukaj",
-    "remove": "Usuń"
+    "remove": "Usuń",
+    "or": "lub"
   },
   "cookMode": {
     "start": "Tryb gotowania",
@@ -66,6 +67,7 @@
     "servings_other": "{{count}} porcji",
     "noRecipesYet": "Brak przepisów.",
     "addPrompt": "Naciśnij + Dodaj, aby zaimportować przepis.",
+    "addARecipe": "Dodaj przepis",
     "extractingRecipe": "Ekstrahuję przepis…",
     "extractingFrom_url": "Z URL",
     "extractingFrom_text": "Z tekstu",
@@ -145,7 +147,11 @@
     "recipeAddedToPersonalLibrary": "Przepis dodano do Twojej biblioteki osobistej",
     "rowActions": "Akcje wiersza",
     "sortEditedNewest": "Edytowane: od najnowszych",
-    "sortEditedOldest": "Edytowane: od najstarszych"
+    "sortEditedOldest": "Edytowane: od najstarszych",
+    "inHouseholds": "W gospodarstwach",
+    "addToHousehold": "Dodaj do gospodarstwa",
+    "deleteFromHousehold": "Usuń z {{name}}",
+    "deleteEverywhere": "Usuń wszędzie"
   },
   "nav": {
     "recipes": "Przepisy",
@@ -331,7 +337,13 @@
     "createHouseholdFailed": "Nie udało się utworzyć gospodarstwa",
     "manageHousehold": "Zarządzaj gospodarstwem",
     "personalScope": "Dotyczy twoich osobistych przepisów",
+    "myAllergensLabel": "Dotyczy twoich alergenów",
     "householdScope": "Dotyczy {{name}}",
+    "myRecipes": "Moje przepisy",
+    "admin": "Administrator",
+    "makeAdmin": "Uczyń administratorem",
+    "inviteCode": "Kod zaproszenia",
+    "codeCopied": "Kod skopiowany",
     "recipesLabel": "Przepisy",
     "ingredientsLabel": "Składniki",
     "avgKcal": "Śr. kcal",
@@ -439,7 +451,14 @@
     "switchContext": "Przełącz gospodarstwo domowe",
     "personal": "Osobiste",
     "personalHousehold": "Gospodarstwo osobiste",
-    "manageTip": "Gospodarstwami możesz zarządzać na stronie <settings>Ustawienia</settings>."
+    "manageTip": "Gospodarstwami możesz zarządzać na stronie <settings>Ustawienia</settings>.",
+    "gateTitle": "Dołącz do gospodarstwa lub je utwórz",
+    "gateSubtitle": "Gospodarstwa pozwalają dzielić się przepisami, planem posiłków i listą zakupów z osobami, z którymi gotujesz.",
+    "pendingInvitations": "Oczekujące zaproszenia",
+    "haveACode": "Masz kod zaproszenia?",
+    "codePlaceholder": "ABCD1234",
+    "join": "Dołącz",
+    "joinFailed": "Nie udało się dołączyć do gospodarstwa"
   },
   "tags": {
     "tags": "Tagi",
@@ -463,6 +482,7 @@
     "importRecipe": "Importuj przepis",
     "addRecipe": "Dodaj przepis",
     "fromPersonalLibrary": "Z osobistej biblioteki",
+    "fromMyRecipes": "Dodaj z moich przepisów",
     "fromPersonalLibraryDesc": "Wybierz przepis, aby dodać go do tego gospodarstwa domowego",
     "addPersonalRecipe": "Dodaj {{title}} do gospodarstwa domowego",
     "orImportFromUrl": "lub importuj z URL",

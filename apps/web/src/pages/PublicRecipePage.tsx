@@ -19,10 +19,12 @@ const PublicRecipePage = ({ signedIn = false, households = [], activeHouseholdId
   const { token = '' } = useParams()
   const { t } = useTranslation()
   const [adding, setAdding] = useState(false)
-  const [householdId, setHouseholdId] = useState<string | null>(activeHouseholdId)
+  const [householdId, setHouseholdId] = useState<string | null>(
+    activeHouseholdId ?? households[0]?.id ?? null
+  )
   const { data: recipe, isLoading, isError } = useQuery({ queryKey: ['public-recipe', token], queryFn: () => fetchPublicRecipe(token), retry: false, enabled: Boolean(token) })
   const handleAdd = useCallback(async () => {
-    if (adding) return
+    if (adding || !householdId) return
     setAdding(true)
     try { const added = await addPublicRecipeToLibrary(token, householdId); await onAdded?.(added) } finally { setAdding(false) }
   }, [adding, householdId, onAdded, token])
@@ -34,7 +36,7 @@ const PublicRecipePage = ({ signedIn = false, households = [], activeHouseholdId
   const primaryAction = signedIn && !needsHouseholdChoice
     ? { label: adding ? t('common.loading') : t('publicShare.addToLibrary'), onClick: () => void handleAdd(), disabled: adding }
     : !signedIn ? { label: `${t('publicShare.login')} — ${t('publicShare.addToLibrary')}`, onClick: () => window.open(`/login?next=${encodeURIComponent(`/r/${token}`)}`, '_blank', 'noopener,noreferrer'), disabled: false } : undefined
-  const householdAction = needsHouseholdChoice ? <div className="my-4 flex gap-3"><select value={householdId ?? ''} onChange={event => setHouseholdId(event.target.value || null)} className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm"><option value="">{t('nav.personalLibrary')}</option>{households.map(household => <option key={household.id} value={household.id}>{household.name}</option>)}</select><button type="button" disabled={adding} onClick={() => void handleAdd()} className="shrink-0 cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-default disabled:opacity-60">{adding ? t('common.loading') : t('publicShare.addToLibrary')}</button></div> : undefined
+  const householdAction = needsHouseholdChoice ? <div className="my-4 flex gap-3"><select value={householdId ?? ''} onChange={event => setHouseholdId(event.target.value || null)} className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm">{households.map(household => <option key={household.id} value={household.id}>{household.name}</option>)}</select><button type="button" disabled={adding || !householdId} onClick={() => void handleAdd()} className="shrink-0 cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:cursor-default disabled:opacity-60">{adding ? t('common.loading') : t('publicShare.addToLibrary')}</button></div> : undefined
   const publicHeader = !signedIn && <header className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-100 bg-white px-5 py-4 md:px-8"><Link to="/marketing" target="_blank" rel="noreferrer" className="flex items-center gap-2"><img src="/favicon.svg" alt="" className="h-7 w-7 rounded-lg" /><span className="text-lg font-bold tracking-tight">Carrot</span></Link><Link to="/register" target="_blank" rel="noreferrer" className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:brightness-95">{t('publicShare.register')}</Link></header>
   const content = <article className="bg-white">{publicHeader}<PublicRecipeDetailContent recipe={recipe} token={token} primaryAction={primaryAction} primaryActionContent={householdAction} /></article>
   if (!signedIn) return <main className="w-full md:my-2 md:rounded-xl md:shadow-sm">{content}</main>

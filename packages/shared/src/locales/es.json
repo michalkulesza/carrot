@@ -39,7 +39,8 @@
     "deviceOffline": "Tu dispositivo parece estar sin conexión. Comprueba tu conexión e inténtalo de nuevo.",
     "tryAgain": "Inténtalo de nuevo",
     "search": "Buscar",
-    "remove": "Eliminar"
+    "remove": "Eliminar",
+    "or": "o"
   },
   "cookMode": {
     "start": "Modo cocina",
@@ -64,6 +65,7 @@
     "servings_other": "{{count}} raciones",
     "noRecipesYet": "Aún no hay recetas.",
     "addPrompt": "Pulsa + Añadir para importar una.",
+    "addARecipe": "Añadir una receta",
     "extractingRecipe": "Extrayendo receta…",
     "extractingFrom_url": "Desde URL",
     "extractingFrom_text": "Desde texto",
@@ -143,7 +145,11 @@
     "recipeAddedToPersonalLibrary": "Receta añadida a tu biblioteca personal",
     "rowActions": "Acciones de fila",
     "sortEditedNewest": "Editado: más nuevo primero",
-    "sortEditedOldest": "Editado: más antiguo primero"
+    "sortEditedOldest": "Editado: más antiguo primero",
+    "inHouseholds": "En hogares",
+    "addToHousehold": "Añadir al hogar",
+    "deleteFromHousehold": "Eliminar de {{name}}",
+    "deleteEverywhere": "Eliminar en todas partes"
   },
   "nav": {
     "recipes": "Recetas",
@@ -322,7 +328,13 @@
     "createHouseholdFailed": "No se pudo crear el hogar",
     "manageHousehold": "Gestionar hogar",
     "personalScope": "Aplicado a tus recetas personales",
+    "myAllergensLabel": "Aplicado a tus alérgenos",
     "householdScope": "Aplicado a {{name}}",
+    "myRecipes": "Mis recetas",
+    "admin": "Administrador",
+    "makeAdmin": "Hacer administrador",
+    "inviteCode": "Código de invitación",
+    "codeCopied": "Código copiado",
     "recipesLabel": "Recetas",
     "ingredientsLabel": "Ingredientes",
     "avgKcal": "Kcal prom.",
@@ -430,7 +442,14 @@
     "switchContext": "Cambiar de hogar",
     "personal": "Personal",
     "personalHousehold": "Hogar personal",
-    "manageTip": "Puedes gestionar los hogares en la página de <settings>Ajustes</settings>."
+    "manageTip": "Puedes gestionar los hogares en la página de <settings>Ajustes</settings>.",
+    "gateTitle": "Únete o crea un hogar",
+    "gateSubtitle": "Los hogares te permiten compartir recetas, planes de comidas y listas de la compra con las personas con las que cocinas.",
+    "pendingInvitations": "Invitaciones pendientes",
+    "haveACode": "¿Tienes un código de invitación?",
+    "codePlaceholder": "ABCD1234",
+    "join": "Unirse",
+    "joinFailed": "No se pudo unir al hogar"
   },
   "tags": {
     "tags": "Etiquetas",
@@ -454,6 +473,7 @@
     "importRecipe": "Importar receta",
     "addRecipe": "Añadir receta",
     "fromPersonalLibrary": "De mi biblioteca personal",
+    "fromMyRecipes": "Añadir desde mis recetas",
     "fromPersonalLibraryDesc": "Elige una receta para añadirla a este hogar",
     "addPersonalRecipe": "Añadir {{title}} al hogar",
     "orImportFromUrl": "o importar desde URL",

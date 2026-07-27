@@ -39,7 +39,8 @@
     "deviceOffline": "Your device appears to be offline. Please check your connection and try again.",
     "tryAgain": "Try again",
     "search": "Search",
-    "remove": "Remove"
+    "remove": "Remove",
+    "or": "or"
   },
   "cookMode": {
     "start": "Cook mode",
@@ -70,6 +71,7 @@
     "servings_other": "{{count}} servings",
     "noRecipesYet": "No recipes yet.",
     "addPrompt": "Tap the + Add button to import one.",
+    "addARecipe": "Add a recipe",
     "extractingRecipe": "Extracting recipe…",
     "extractingFrom_url": "From URL",
     "extractingFrom_text": "From text",
@@ -143,7 +145,11 @@
     "replace": "Replace",
     "keepOriginal": "Keep original",
     "sortEditedNewest": "Edited: newest first",
-    "sortEditedOldest": "Edited: oldest first"
+    "sortEditedOldest": "Edited: oldest first",
+    "inHouseholds": "In households",
+    "addToHousehold": "Add to household",
+    "deleteFromHousehold": "Delete from {{name}}",
+    "deleteEverywhere": "Delete from everywhere"
   },
   "nav": {
     "recipes": "Recipes",
@@ -323,7 +329,13 @@
     "createHouseholdFailed": "Failed to create household",
     "manageHousehold": "Manage household",
     "personalScope": "Applied to your personal recipes",
+    "myAllergensLabel": "Applied to your allergens",
     "householdScope": "Applied to {{name}}",
+    "myRecipes": "My Recipes",
+    "admin": "Admin",
+    "makeAdmin": "Make admin",
+    "inviteCode": "Invite code",
+    "codeCopied": "Code copied",
     "recipesLabel": "Recipes",
     "ingredientsLabel": "Ingredients",
     "avgKcal": "Avg kcal",
@@ -431,7 +443,14 @@
     "switchContext": "Switch household",
     "personal": "Personal",
     "personalHousehold": "Personal Household",
-    "manageTip": "You can manage households in the <settings>Settings page</settings>."
+    "manageTip": "You can manage households in the <settings>Settings page</settings>.",
+    "gateTitle": "Join or create a household",
+    "gateSubtitle": "Households let you share recipes, meal plans, and shopping lists with the people you cook with.",
+    "pendingInvitations": "Pending invitations",
+    "haveACode": "Have an invite code?",
+    "codePlaceholder": "ABCD1234",
+    "join": "Join",
+    "joinFailed": "Failed to join household"
   },
   "tags": {
     "tags": "Tags",
@@ -455,6 +474,7 @@
     "importRecipe": "Import Recipe",
     "addRecipe": "Add Recipe",
     "fromPersonalLibrary": "From Personal Library",
+    "fromMyRecipes": "Add from my recipes",
     "fromPersonalLibraryDesc": "Choose a recipe to add to this household",
     "addPersonalRecipe": "Add {{title}} to household",
     "orImportFromUrl": "or import from URL",

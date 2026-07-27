@@ -72,10 +72,14 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
-  const { activeHousehold } = useHousehold()
+  const { households, activeHousehold } = useHousehold()
   const { t } = useTranslation()
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const gated = households.length === 0
+  const navItems = gated
+    ? NAV_ITEMS.filter((item) => item.to === '/settings')
+    : NAV_ITEMS
   const bandColor = activeHousehold?.color ?? null
 
   const handleSwitcherClose = useCallback(() => setSwitcherOpen(false), [])
@@ -83,12 +87,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
   const toggleSidebarLabel = collapsed
     ? t('nav.expandSidebar')
     : t('nav.collapseSidebar')
-  const householdSwitcherTitle = collapsed
-    ? (activeHousehold?.name ?? t('nav.personalLibrary'))
-    : undefined
-  const householdLabel = activeHousehold
-    ? activeHousehold.name
-    : t('nav.personalLibrary')
+  const householdSwitcherTitle = collapsed ? activeHousehold?.name : undefined
   const bandDotStyle = bandColor
     ? { width: 8, height: 8, backgroundColor: bandColor }
     : {
@@ -130,38 +129,44 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
         </button>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setSwitcherOpen(true)}
-        title={householdSwitcherTitle}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-zinc-200/60 transition-colors mb-3 w-full text-left ${
-          collapsed ? 'justify-center' : ''
-        }`}
-      >
-        <span className="shrink-0 rounded-full" style={bandDotStyle} />
-        {!collapsed && (
-          <>
-            <span
-              className="text-xs font-semibold uppercase tracking-wide truncate"
-              style={{ color: bandColor ?? undefined }}
-            >
-              {householdLabel}
-            </span>
-            <ChevronDown
-              size={12}
-              strokeWidth={2.5}
-              className="shrink-0 opacity-50 ml-auto"
-            />
-          </>
-        )}
-      </button>
+      {!gated && (
+        <>
+          <button
+            type="button"
+            onClick={() => setSwitcherOpen(true)}
+            title={householdSwitcherTitle}
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-zinc-200/60 transition-colors mb-3 w-full text-left ${
+              collapsed ? 'justify-center' : ''
+            }`}
+          >
+            <span className="shrink-0 rounded-full" style={bandDotStyle} />
+            {!collapsed && (
+              <>
+                <span
+                  className="text-xs font-semibold uppercase tracking-wide truncate"
+                  style={{ color: bandColor ?? undefined }}
+                >
+                  {activeHousehold?.name}
+                </span>
+                <ChevronDown
+                  size={12}
+                  strokeWidth={2.5}
+                  className="shrink-0 opacity-50 ml-auto"
+                />
+              </>
+            )}
+          </button>
 
-      <div className="h-px bg-zinc-200 mx-1 mb-3" />
+          <div className="h-px bg-zinc-200 mx-1 mb-3" />
+        </>
+      )}
 
-      {!hideNextMeal && <NextMealCard compact={collapsed} className="mb-3" />}
+      {!gated && !hideNextMeal && (
+        <NextMealCard compact={collapsed} className="mb-3" />
+      )}
 
       <nav className="flex flex-col gap-0.5 flex-1">
-        {NAV_ITEMS.map(({ to, end, labelKey, Icon }) => (
+        {navItems.map(({ to, end, labelKey, Icon }) => (
           <SidebarNavLink
             key={to}
             to={to}
@@ -173,7 +178,9 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
         ))}
       </nav>
 
-      <HouseholdSwitcher isOpen={switcherOpen} onClose={handleSwitcherClose} />
+      {!gated && (
+        <HouseholdSwitcher isOpen={switcherOpen} onClose={handleSwitcherClose} />
+      )}
     </aside>
   )
 }

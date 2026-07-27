@@ -2,10 +2,8 @@ import type {
   AllergenFlag,
   ImportResult,
   RecipeComponent,
-  RecipeSaveRequest,
   StageEvent,
   StepIngredientRef,
-  Tag,
 } from '@carrot/shared/types'
 import { UNITS } from '../../api/client'
 
@@ -189,45 +187,3 @@ export const toEditable = (
     }),
   }
 }
-
-export const buildSaveRecipePayload = (
-  editable: EditableRecipe,
-  selectedTags: Tag[],
-  sharedToPersonal: boolean
-): RecipeSaveRequest => ({
-  title: editable.title,
-  servings: editable.servings !== '' ? Number(editable.servings) : null,
-  total_time_minutes:
-    editable.totalTimeMinutes !== '' ? Number(editable.totalTimeMinutes) : null,
-  kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
-  protein_per_serving:
-    editable.protein !== '' ? Number(editable.protein) : null,
-  fat_per_serving: editable.fat !== '' ? Number(editable.fat) : null,
-  carbs_per_serving: editable.carbs !== '' ? Number(editable.carbs) : null,
-  thumbnail_url: editable.thumbnail_url,
-  creator_handle: editable.creator_handle,
-  source_url: editable.source_url,
-  components: editable.components.map((c) => ({
-    name: c.name,
-    yield_note: c.yield_note,
-    ingredients: c.ingredients.map(serializeIngredient),
-    shopping_list_ingredients: c.shopping_list_ingredients,
-    steps: c.steps,
-    metric_ingredients: c.metric_ingredients,
-    imperial_ingredients: c.imperial_ingredients,
-    metric_steps: c.metric_steps,
-    imperial_steps: c.imperial_steps,
-    ingredient_flags: c.ingredient_flags.map(
-      (f) =>
-        f ?? {
-          allergen: null,
-          substitute: null,
-          substitute_applied: false,
-          original_display: null,
-        }
-    ),
-    step_ingredient_refs: c.step_ingredient_refs,
-  })),
-  tag_ids: selectedTags.map((t) => t.id),
-  shared_to_personal: sharedToPersonal,
-})

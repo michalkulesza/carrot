@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Book, Calendar, ShoppingCart, Settings, Plus } from 'react-feather'
+import { useHousehold } from '../context/HouseholdContext'
 
 interface BottomNavProps {
   onAddRecipe: () => void
@@ -49,27 +50,36 @@ const AddRecipeButton = ({ onAddRecipe, label }: AddRecipeButtonProps) => (
 
 const BottomNav = ({ onAddRecipe }: BottomNavProps) => {
   const { t } = useTranslation()
+  const { households } = useHousehold()
+  const gated = households.length === 0
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-100 pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-end max-w-lg mx-auto">
-        <NavItem
-          to="/"
-          end
-          icon={<Book size={22} />}
-          label={t('nav.recipes')}
-        />
-        <NavItem
-          to="/plan"
-          icon={<Calendar size={22} />}
-          label={t('nav.mealPlan')}
-        />
-        <AddRecipeButton onAddRecipe={onAddRecipe} label={t('nav.addRecipe')} />
-        <NavItem
-          to="/shopping"
-          icon={<ShoppingCart size={22} />}
-          label={t('nav.shopping')}
-        />
+        {!gated && (
+          <>
+            <NavItem
+              to="/"
+              end
+              icon={<Book size={22} />}
+              label={t('nav.recipes')}
+            />
+            <NavItem
+              to="/plan"
+              icon={<Calendar size={22} />}
+              label={t('nav.mealPlan')}
+            />
+            <AddRecipeButton
+              onAddRecipe={onAddRecipe}
+              label={t('nav.addRecipe')}
+            />
+            <NavItem
+              to="/shopping"
+              icon={<ShoppingCart size={22} />}
+              label={t('nav.shopping')}
+            />
+          </>
+        )}
         <NavItem
           to="/settings"
           icon={<Settings size={22} />}

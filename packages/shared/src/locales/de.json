@@ -39,7 +39,8 @@
     "deviceOffline": "Dein Gerät scheint offline zu sein. Prüfe deine Verbindung und versuche es erneut.",
     "tryAgain": "Erneut versuchen",
     "search": "Suche",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "or": "oder"
   },
   "cookMode": {
     "start": "Kochmodus",
@@ -64,6 +65,7 @@
     "servings_other": "{{count}} Portionen",
     "noRecipesYet": "Noch keine Rezepte.",
     "addPrompt": "Tippe auf + Hinzufügen, um eines zu importieren.",
+    "addARecipe": "Rezept hinzufügen",
     "extractingRecipe": "Rezept wird extrahiert…",
     "extractingFrom_url": "Von URL",
     "extractingFrom_text": "Von Text",
@@ -143,7 +145,11 @@
     "recipeAddedToPersonalLibrary": "Rezept zu deiner persönlichen Bibliothek hinzugefügt",
     "rowActions": "Zeilenaktionen",
     "sortEditedNewest": "Bearbeitet: neueste zuerst",
-    "sortEditedOldest": "Bearbeitet: älteste zuerst"
+    "sortEditedOldest": "Bearbeitet: älteste zuerst",
+    "inHouseholds": "In Haushalten",
+    "addToHousehold": "Zu Haushalt hinzufügen",
+    "deleteFromHousehold": "Aus {{name}} entfernen",
+    "deleteEverywhere": "Überall löschen"
   },
   "nav": {
     "recipes": "Rezepte",
@@ -323,7 +329,13 @@
     "createHouseholdFailed": "Haushalt konnte nicht erstellt werden",
     "manageHousehold": "Haushalt verwalten",
     "personalScope": "Gilt für deine persönlichen Rezepte",
+    "myAllergensLabel": "Gilt für deine Allergene",
     "householdScope": "Gilt für {{name}}",
+    "myRecipes": "Meine Rezepte",
+    "admin": "Admin",
+    "makeAdmin": "Zum Admin machen",
+    "inviteCode": "Einladungscode",
+    "codeCopied": "Code kopiert",
     "recipesLabel": "Rezepte",
     "ingredientsLabel": "Zutaten",
     "avgKcal": "Ø kcal",
@@ -431,7 +443,14 @@
     "switchContext": "Haushalt wechseln",
     "personal": "Persönlich",
     "personalHousehold": "Persönlicher Haushalt",
-    "manageTip": "Du kannst Haushalte auf der Seite <settings>Einstellungen</settings> verwalten."
+    "manageTip": "Du kannst Haushalte auf der Seite <settings>Einstellungen</settings> verwalten.",
+    "gateTitle": "Haushalt beitreten oder erstellen",
+    "gateSubtitle": "Mit Haushalten kannst du Rezepte, Essenspläne und Einkaufslisten mit den Menschen teilen, mit denen du kochst.",
+    "pendingInvitations": "Ausstehende Einladungen",
+    "haveACode": "Hast du einen Einladungscode?",
+    "codePlaceholder": "ABCD1234",
+    "join": "Beitreten",
+    "joinFailed": "Beitritt zum Haushalt fehlgeschlagen"
   },
   "tags": {
     "tags": "Tags",
@@ -455,6 +474,7 @@
     "importRecipe": "Rezept importieren",
     "addRecipe": "Rezept hinzufügen",
     "fromPersonalLibrary": "Aus persönlicher Bibliothek",
+    "fromMyRecipes": "Aus meinen Rezepten hinzufügen",
     "fromPersonalLibraryDesc": "Wähle ein Rezept aus, das diesem Haushalt hinzugefügt werden soll",
     "addPersonalRecipe": "{{title}} zum Haushalt hinzufügen",
     "orImportFromUrl": "oder von URL importieren",

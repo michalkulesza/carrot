@@ -49,7 +49,6 @@ export interface EditState {
   carbs: string
   thumbnail_url: string | null
   components: SaveComponent[]
-  shared_to_personal: boolean
 }
 
 export const toEditState = (r: RecipeOut): EditState => {
@@ -70,7 +69,6 @@ export const toEditState = (r: RecipeOut): EditState => {
         ? [...c.ingredient_flags]
         : undefined,
     })),
-    shared_to_personal: r.shared_to_personal ?? true,
   }
 }
 
@@ -246,7 +244,6 @@ export const buildRecipeUpdateFromRecipe = (
   notes: overrides.notes,
   components: overrides.components,
   tag_ids: overrides.tagIds,
-  shared_to_personal: recipe.shared_to_personal,
 })
 
 export const applyIngredientReplace = (
@@ -318,5 +315,4 @@ export const buildRecipeUpdateFromDraft = (
   notes: notes.trim() || null,
   components: draft.components,
   tag_ids: tagIds,
-  shared_to_personal: draft.shared_to_personal,
 })

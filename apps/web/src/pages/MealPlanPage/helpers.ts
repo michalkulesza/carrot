@@ -6,12 +6,10 @@ import {
   toISODate,
   formatMonthLong,
 } from '@carrot/shared/utils/dateUtils'
+import { unionAllergens } from '@carrot/shared/utils/unionAllergens'
 import i18n from '../../i18n'
 
-export const getActiveAllergens = (
-  householdAllergens: string[] | null | undefined,
-  personalAllergens: string[] | null | undefined
-): string[] => householdAllergens ?? personalAllergens ?? []
+export const getActiveAllergens = unionAllergens
 
 export interface CalendarCell {
   dateStr: string

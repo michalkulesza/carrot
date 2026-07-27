@@ -15,6 +15,7 @@ import ShoppingListPage from '../pages/ShoppingListPage'
 import SettingsPage from '../pages/SettingsPage'
 import { useAuth } from '../context/AuthContext'
 import { HouseholdProvider } from '../context/HouseholdContext'
+import HouseholdGate from './HouseholdGate'
 import { TimerProvider } from '../context/TimerContext'
 import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
 import { useRecipes, useRecipeStats } from '@carrot/shared/hooks/useRecipes'
@@ -139,6 +140,7 @@ const AppShell = () => {
       onRetryImportJob={retryImportJob.mutateAsync}
       onDismissImportJob={dismissImportJob.mutateAsync}
       onContinueImportManually={openTextImport}
+      onAddRecipe={openAddRecipe}
     />
   )
 
@@ -154,22 +156,31 @@ const AppShell = () => {
                     <Route
                       path="/"
                       element={
-                        recipesPage
+                        <HouseholdGate>{recipesPage}</HouseholdGate>
                       }
                     />
                     <Route
                       path="/plan"
                       element={
-                        <MealPlanPage
-                          recipes={recipes}
-                          preferences={preferences}
-                          allTags={allTags}
-                          onRecipeUpdated={handleRecipeUpdated}
-                          onRecipeDeleted={handleRecipeDeleted}
-                        />
+                        <HouseholdGate>
+                          <MealPlanPage
+                            recipes={recipes}
+                            preferences={preferences}
+                            allTags={allTags}
+                            onRecipeUpdated={handleRecipeUpdated}
+                            onRecipeDeleted={handleRecipeDeleted}
+                          />
+                        </HouseholdGate>
                       }
                     />
-                    <Route path="/shopping" element={<ShoppingListPage />} />
+                    <Route
+                      path="/shopping"
+                      element={
+                        <HouseholdGate>
+                          <ShoppingListPage />
+                        </HouseholdGate>
+                      }
+                    />
                     <Route
                       path="/settings"
                       element={

@@ -39,7 +39,8 @@
     "deviceOffline": "Votre appareil semble hors ligne. Vérifiez votre connexion et réessayez.",
     "tryAgain": "Réessayer",
     "search": "Rechercher",
-    "remove": "Supprimer"
+    "remove": "Supprimer",
+    "or": "ou"
   },
   "cookMode": {
     "start": "Mode cuisine",
@@ -64,6 +65,7 @@
     "servings_other": "{{count}} portions",
     "noRecipesYet": "Aucune recette pour l'instant.",
     "addPrompt": "Appuyez sur + Ajouter pour en importer une.",
+    "addARecipe": "Ajouter une recette",
     "extractingRecipe": "Extraction de la recette…",
     "extractingFrom_url": "Depuis l'URL",
     "extractingFrom_text": "Depuis le texte",
@@ -143,7 +145,11 @@
     "sendToHousehold": "Envoyer au foyer",
     "sendToPersonalLibrary": "Envoyer à la bibliothèque personnelle",
     "recipeAddedToPersonalLibrary": "Recette ajoutée à votre bibliothèque personnelle",
-    "rowActions": "Actions de ligne"
+    "rowActions": "Actions de ligne",
+    "inHouseholds": "Dans les foyers",
+    "addToHousehold": "Ajouter au foyer",
+    "deleteFromHousehold": "Supprimer de {{name}}",
+    "deleteEverywhere": "Supprimer partout"
   },
   "nav": {
     "recipes": "Recettes",
@@ -323,7 +329,13 @@
     "createHouseholdFailed": "Échec de la création du foyer",
     "manageHousehold": "Gérer le foyer",
     "personalScope": "Appliqué à vos recettes personnelles",
+    "myAllergensLabel": "Appliqué à vos allergènes",
     "householdScope": "Appliqué à {{name}}",
+    "myRecipes": "Mes recettes",
+    "admin": "Admin",
+    "makeAdmin": "Nommer admin",
+    "inviteCode": "Code d'invitation",
+    "codeCopied": "Code copié",
     "recipesLabel": "Recettes",
     "ingredientsLabel": "Ingrédients",
     "avgKcal": "Kcal moy.",
@@ -431,7 +443,14 @@
     "switchContext": "Changer de foyer",
     "personal": "Personnel",
     "personalHousehold": "Foyer personnel",
-    "manageTip": "Vous pouvez gérer les foyers sur la page <settings>Paramètres</settings>."
+    "manageTip": "Vous pouvez gérer les foyers sur la page <settings>Paramètres</settings>.",
+    "gateTitle": "Rejoindre ou créer un foyer",
+    "gateSubtitle": "Les foyers vous permettent de partager des recettes, des plannings de repas et des listes de courses avec les personnes avec qui vous cuisinez.",
+    "pendingInvitations": "Invitations en attente",
+    "haveACode": "Vous avez un code d'invitation ?",
+    "codePlaceholder": "ABCD1234",
+    "join": "Rejoindre",
+    "joinFailed": "Échec de l'adhésion au foyer"
   },
   "tags": {
     "tags": "Tags",
@@ -455,6 +474,7 @@
     "importRecipe": "Importer une recette",
     "addRecipe": "Ajouter une recette",
     "fromPersonalLibrary": "De ma bibliothèque personnelle",
+    "fromMyRecipes": "Ajouter depuis mes recettes",
     "fromPersonalLibraryDesc": "Choisissez une recette à ajouter à ce foyer",
     "addPersonalRecipe": "Ajouter {{title}} au foyer",
     "orImportFromUrl": "ou importer depuis une URL",

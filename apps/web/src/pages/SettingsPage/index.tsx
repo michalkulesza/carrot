@@ -19,6 +19,7 @@ import { useCookingMode } from '../../context/CookingModeContext'
 import ProfileSection from './ProfileSection'
 import StatsSection from './StatsSection'
 import HouseholdsSection from './HouseholdsSection'
+import MyRecipesSection from './MyRecipesSection'
 import AllergiesSection from './AllergiesSection'
 import AccountSection from './AccountSection'
 import PreferencesSection from './PreferencesSection'
@@ -133,7 +134,7 @@ const SettingsPage = ({
 
   const allergenScopeLabel = activeHousehold
     ? t('settings.householdScope', { name: activeHousehold.name })
-    : t('settings.personalScope')
+    : t('settings.myAllergensLabel')
 
   const currentAllergens =
     activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
@@ -155,6 +156,11 @@ const SettingsPage = ({
           activeHouseholdId={activeHouseholdId}
           onCreateNew={handleCreateOpen}
           onManage={setManagingHousehold}
+        />
+
+        <MyRecipesSection
+          households={households}
+          activeHouseholdId={activeHouseholdId}
         />
 
         <AllergiesSection

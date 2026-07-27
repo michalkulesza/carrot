@@ -14,6 +14,7 @@ import { useAuth } from './AuthContext'
 
 interface HouseholdContextValue {
   households: HouseholdOut[]
+  isLoadingHouseholds: boolean
   activeHouseholdId: string | null
   activeHousehold: HouseholdOut | null
   invitations: InvitationOut[]
@@ -24,12 +25,17 @@ interface HouseholdContextValue {
 
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
+const GATE_INVITATIONS_POLL_MS = 10_000
+const BELL_INVITATIONS_POLL_MS = 30_000
+
 export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
   const { user, refreshUser } = useAuth()
   const qc = useQueryClient()
 
-  const { households } = useHouseholds()
-  const { invitations } = useInvitations()
+  const { households, isLoading: isLoadingHouseholds } = useHouseholds()
+  const { invitations } = useInvitations(
+    households.length === 0 ? GATE_INVITATIONS_POLL_MS : BELL_INVITATIONS_POLL_MS
+  )
 
   const activeHouseholdId = user?.active_household_id ?? null
   const activeHousehold =
@@ -54,6 +60,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
   const value = useMemo(
     () => ({
       households,
+      isLoadingHouseholds,
       activeHouseholdId,
       activeHousehold,
       invitations,
@@ -63,6 +70,7 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     }),
     [
       households,
+      isLoadingHouseholds,
       activeHouseholdId,
       activeHousehold,
       invitations,

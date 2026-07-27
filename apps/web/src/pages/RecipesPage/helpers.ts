@@ -5,6 +5,7 @@ import type {
   UserPreferences,
 } from '@carrot/shared/types'
 import { matchesTagFilters } from '@carrot/shared/utils/tagFilters'
+import { unionAllergens } from '@carrot/shared/utils/unionAllergens'
 
 export interface IngredientMatch {
   recipe: RecipeOut
@@ -15,7 +16,7 @@ export const getActiveAllergens = (
   activeHousehold: HouseholdOut | null,
   preferences: UserPreferences | null
 ): string[] =>
-  activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
+  unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens)
 
 export const applyFavouriteOverrides = (
   recipes: RecipeOut[],

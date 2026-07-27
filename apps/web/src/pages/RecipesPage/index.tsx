@@ -41,6 +41,7 @@ interface RecipesPageProps {
   onRetryImportJob: (jobId: string) => Promise<unknown>
   onDismissImportJob: (jobId: string) => Promise<unknown>
   onContinueImportManually: (sourceUrl: string | null) => void
+  onAddRecipe: () => void
 }
 
 const RecipesPage = ({
@@ -54,6 +55,7 @@ const RecipesPage = ({
   onRetryImportJob,
   onDismissImportJob,
   onContinueImportManually,
+  onAddRecipe,
 }: RecipesPageProps) => {
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const { t } = useTranslation()
@@ -220,7 +222,7 @@ const RecipesPage = ({
         {loading ? (
           <RecipesLoadingSkeleton />
         ) : displayed.length === 0 && recipes.length === 0 ? (
-          <NoRecipesEmptyState />
+          <NoRecipesEmptyState onAddRecipe={onAddRecipe} />
         ) : displayed.length === 0 ? (
           <NoMatchingRecipesEmptyState
             filterFavourites={filterFavourites}

@@ -21,8 +21,8 @@ import {
 import type { ImportJob, RecipeOut } from '@carrot/shared/types'
 import {
   enqueueImportJob,
-  listPersonalRecipes,
-  linkRecipeToHousehold,
+  listMyRecipes,
+  setRecipeHouseholds,
 } from '../../api/client'
 import { useHousehold } from '../../context/HouseholdContext'
 import { proxyUrl } from '../../utils/imageUtils'
@@ -63,7 +63,7 @@ const AddRecipeModal = ({
   const importImageInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [personalRecipes, setPersonalRecipes] = useState<RecipeOut[]>([])
+  const [myRecipes, setMyRecipes] = useState<RecipeOut[]>([])
   const [librarySearch, setLibrarySearch] = useState('')
   const [linking, setLinking] = useState(false)
 
@@ -72,12 +72,12 @@ const AddRecipeModal = ({
   }, [initialImportMode, isOpen])
 
   useEffect(() => {
-    if (isOpen && activeHouseholdId) {
-      listPersonalRecipes()
-        .then(setPersonalRecipes)
+    if (isOpen) {
+      listMyRecipes()
+        .then(setMyRecipes)
         .catch(() => {})
     }
-  }, [isOpen, activeHouseholdId])
+  }, [isOpen])
 
   const reset = () => {
     setImportMode('url')
@@ -89,11 +89,15 @@ const AddRecipeModal = ({
     setLibrarySearch('')
   }
 
-  async function handleLink(id: string) {
+  async function handleLink(recipe: RecipeOut) {
+    if (!activeHouseholdId) return
     setLinking(true)
     setError(null)
     try {
-      await linkRecipeToHousehold(id)
+      const householdIds = Array.from(
+        new Set([...recipe.household_ids, activeHouseholdId])
+      )
+      await setRecipeHouseholds(recipe.id, householdIds)
       toast.success(t('addRecipe.recipeAddedToHousehold'), { timeout: 3000 })
       onSaved?.()
       reset()
@@ -175,7 +179,10 @@ const AddRecipeModal = ({
 
   const modalTitle = t('addRecipe.importRecipe')
 
-  const filteredPersonalRecipes = personalRecipes.filter((r) =>
+  const unlinkedRecipes = myRecipes.filter(
+    (r) => !activeHouseholdId || !r.household_ids.includes(activeHouseholdId)
+  )
+  const filteredPersonalRecipes = unlinkedRecipes.filter((r) =>
     r.title.toLowerCase().includes(librarySearch.toLowerCase())
   )
 
@@ -194,7 +201,7 @@ const AddRecipeModal = ({
           <ModalDialog className="relative max-h-[calc(100dvh-2rem)] sm:max-h-[700px]">
             <ModalHeader>{modalTitle}</ModalHeader>
             <ModalBody>
-              {activeHouseholdId && personalRecipes.length > 0 && (
+              {unlinkedRecipes.length > 0 && (
                 <div className="flex flex-col gap-2">
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                     {t('addRecipe.fromPersonalLibrary')}
@@ -215,7 +222,7 @@ const AddRecipeModal = ({
                         <button
                           type="button"
                           disabled={linking}
-                          onClick={() => handleLink(r.id)}
+                          onClick={() => handleLink(r)}
                           className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50"
                         >
                           <div className="flex items-center gap-2 min-w-0">

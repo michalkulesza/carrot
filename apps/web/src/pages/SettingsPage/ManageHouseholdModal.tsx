@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
@@ -11,13 +11,16 @@ import {
   ModalHeader,
   toast,
 } from '@heroui/react'
+import { Copy, RefreshCw } from 'react-feather'
 import type { HouseholdOut, MemberOut } from '@carrot/shared/types'
+import { useMembers } from '@carrot/shared/hooks/useMembers'
 import {
   inviteUser,
   leaveHousehold,
-  listMembers,
+  rotateInviteCode,
   updateHousehold,
 } from '../../api/client'
+import { useAuth } from '../../context/AuthContext'
 import { buildColorSwatchStyle, PRESET_COLORS } from './helpers'
 
 interface ManageHouseholdModalProps {
@@ -27,13 +30,25 @@ interface ManageHouseholdModalProps {
   onChanged: () => void
 }
 
+interface MembersListProps {
+  loading: boolean
+  members: MemberOut[]
+  isAdmin: boolean
+  currentUserId: string | undefined
+  busyUserId: string | null
+  onRemove: (userId: string) => void
+  onPromote: (userId: string) => void
+}
+
 const MembersList = ({
   loading,
   members,
-}: {
-  loading: boolean
-  members: MemberOut[]
-}) => {
+  isAdmin,
+  currentUserId,
+  busyUserId,
+  onRemove,
+  onPromote,
+}: MembersListProps) => {
   const { t } = useTranslation()
 
   if (loading) {
@@ -47,10 +62,37 @@ const MembersList = ({
           key={m.user_id.toString()}
           className="text-sm flex items-center gap-2"
         >
-          <span className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold uppercase">
+          <span className="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center text-xs font-semibold uppercase shrink-0">
             {(m.nickname || m.email)[0]}
           </span>
           <span className="truncate">{m.nickname || m.email}</span>
+          {m.role === 'admin' && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 rounded-full px-2 py-0.5 shrink-0">
+              {t('settings.admin')}
+            </span>
+          )}
+          {isAdmin && m.user_id !== currentUserId && (
+            <div className="ml-auto flex items-center gap-1 shrink-0">
+              {m.role !== 'admin' && (
+                <Button
+                  size="sm"
+                  variant="tertiary"
+                  isDisabled={busyUserId === m.user_id}
+                  onPress={() => onPromote(m.user_id)}
+                >
+                  {t('settings.makeAdmin')}
+                </Button>
+              )}
+              <Button
+                size="sm"
+                variant="danger-soft"
+                isDisabled={busyUserId === m.user_id}
+                onPress={() => onRemove(m.user_id)}
+              >
+                {t('common.remove')}
+              </Button>
+            </div>
+          )}
         </li>
       ))}
     </ul>
@@ -64,44 +106,40 @@ const ManageHouseholdModal = ({
   onChanged,
 }: ManageHouseholdModalProps) => {
   const { t } = useTranslation()
-  const [members, setMembers] = useState<MemberOut[]>([])
-  const [membersLoading, setMembersLoading] = useState(false)
+  const { user } = useAuth()
+  const { members, isLoading: membersLoading, remove, promote } = useMembers(
+    isOpen ? household.id : null
+  )
   const [name, setName] = useState(household.name)
   const [color, setColor] = useState(household.color)
+  const [inviteCode, setInviteCode] = useState(household.invite_code)
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviting, setInviting] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [rotating, setRotating] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [busyUserId, setBusyUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const loadMembers = useCallback(async () => {
-    setMembersLoading(true)
-    try {
-      const m = await listMembers(household.id)
-      setMembers(m)
-    } catch {
-      // members list is non-critical; leave it empty on failure
-    } finally {
-      setMembersLoading(false)
-    }
-  }, [household.id])
+  const currentMember = members.find((m) => m.user_id === user?.id)
+  const isAdmin = currentMember?.role === 'admin'
 
-  const handleOpen = useCallback(() => {
+  useEffect(() => {
+    if (!isOpen) return
     setName(household.name)
     setColor(household.color)
+    setInviteCode(household.invite_code)
     setInviteEmail('')
     setError(null)
     setConfirmLeave(false)
-    loadMembers()
-  }, [household.name, household.color, loadMembers])
+  }, [isOpen, household.name, household.color, household.invite_code])
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) onClose()
-      if (open) handleOpen()
     },
-    [onClose, handleOpen]
+    [onClose]
   )
 
   const handleSave = useCallback(async () => {
@@ -135,6 +173,57 @@ const ManageHouseholdModal = ({
       setInviting(false)
     }
   }, [household.id, inviteEmail, t])
+
+  const handleCopyCode = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(inviteCode)
+      toast.success(t('settings.codeCopied'), { timeout: 2000 })
+    } catch {
+      /* clipboard permission denied */
+    }
+  }, [inviteCode, t])
+
+  const handleRotateCode = useCallback(async () => {
+    setRotating(true)
+    setError(null)
+    try {
+      const updated = await rotateInviteCode(household.id)
+      setInviteCode(updated.invite_code)
+      onChanged()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('settings.failedToSave'))
+    } finally {
+      setRotating(false)
+    }
+  }, [household.id, onChanged, t])
+
+  const handleRemoveMember = useCallback(
+    async (userId: string) => {
+      setBusyUserId(userId)
+      try {
+        await remove.mutateAsync(userId)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t('settings.failedToSave'))
+      } finally {
+        setBusyUserId(null)
+      }
+    },
+    [remove, t]
+  )
+
+  const handlePromoteMember = useCallback(
+    async (userId: string) => {
+      setBusyUserId(userId)
+      try {
+        await promote.mutateAsync(userId)
+      } catch (e) {
+        setError(e instanceof Error ? e.message : t('settings.failedToSave'))
+      } finally {
+        setBusyUserId(null)
+      }
+    },
+    [promote, t]
+  )
 
   const handleLeave = useCallback(async () => {
     setLeaving(true)
@@ -196,9 +285,41 @@ const ManageHouseholdModal = ({
 
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                  {t('settings.inviteCode')}
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg tracking-widest px-3 py-1.5 rounded-lg bg-zinc-100 flex-1 text-center">
+                    {inviteCode}
+                  </span>
+                  <Button size="sm" variant="secondary" onPress={handleCopyCode}>
+                    <Copy size={14} />
+                  </Button>
+                  {isAdmin && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      isDisabled={rotating}
+                      onPress={handleRotateCode}
+                    >
+                      <RefreshCw size={14} />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                   {t('settings.members')}
                 </p>
-                <MembersList loading={membersLoading} members={members} />
+                <MembersList
+                  loading={membersLoading}
+                  members={members}
+                  isAdmin={isAdmin}
+                  currentUserId={user?.id}
+                  busyUserId={busyUserId}
+                  onRemove={handleRemoveMember}
+                  onPromote={handlePromoteMember}
+                />
               </div>
 
               <div className="flex flex-col gap-2">
