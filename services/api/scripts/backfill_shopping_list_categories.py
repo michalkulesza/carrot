@@ -3,6 +3,7 @@ import asyncio
 
 from sqlalchemy import select
 
+from api import users
 from api.database import async_session_maker
 from api.models import Recipe, ShoppingCategory, ShoppingListItem
 from api.services.gemini import recommend_shopping_list_categories
