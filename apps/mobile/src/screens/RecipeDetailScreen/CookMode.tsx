@@ -4,6 +4,7 @@ import {
   BackHandler,
   DynamicColorIOS,
   Easing,
+  type LayoutChangeEvent,
   Platform,
   Pressable,
   ScrollView,
@@ -183,6 +184,7 @@ const CookMode = ({
   const [, setTimerTick] = useState(0);
   const stepContentOpacity = useRef(new Animated.Value(0)).current;
   const swipeStart = useRef<number | null>(null);
+  const instructionAreaHeightRef = useRef(0);
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers();
   const step = steps[index];
   const durations = useMemo(
@@ -234,6 +236,15 @@ const CookMode = ({
     void AsyncStorage.getItem(RAIL_VISIBLE_STORAGE_KEY).then((value) => {
       if (value !== null) setRailVisible(value === "1");
     });
+  }, []);
+
+  const handleInstructionAreaLayout = useCallback((event: LayoutChangeEvent) => {
+    const height = event.nativeEvent.layout.height;
+    if (height === instructionAreaHeightRef.current) return;
+
+    instructionAreaHeightRef.current = height;
+    setInstructionAreaHeight(height);
+    setInstructionReady(false);
   }, []);
 
   const handleToggleRail = useCallback(() => {
@@ -374,10 +385,7 @@ const CookMode = ({
             swipeStart.current = null;
           }}
         >
-          <View
-            style={styles.instructionArea}
-            onLayout={(event) => setInstructionAreaHeight(event.nativeEvent.layout.height)}
-          >
+          <View style={styles.instructionArea} onLayout={handleInstructionAreaLayout}>
             <Animated.Text
               style={[styles.stepLabel, { color: muted, opacity: stepContentOpacity }]}
               onLayout={(event) => setLabelHeight(event.nativeEvent.layout.height)}
