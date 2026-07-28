@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 13,
     paddingHorizontal: 16,
-    backgroundColor: colors.secondaryBackground,
+    backgroundColor: colors.background,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.separator,
     minHeight: 52,
@@ -127,11 +127,13 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  addPlusIcon: {
-    fontSize: 22,
-    lineHeight: 24,
-    fontWeight: '300',
-    color: colors.blue,
+  addIconCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: colors.blue,
+    borderStyle: 'dashed',
   },
   addInput: {
     flex: 1,

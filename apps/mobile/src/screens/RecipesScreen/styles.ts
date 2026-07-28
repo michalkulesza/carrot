@@ -172,7 +172,7 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addRecipeButton: {
-    backgroundColor: colors.brand,
+    backgroundColor: colors.orange,
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 24,

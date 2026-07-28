@@ -7,12 +7,10 @@ import {
   ListRenderItemInfo,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native'
-import GlassViewSafe from '../../components/GlassViewSafe'
 import { useTranslation } from 'react-i18next'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -262,7 +260,6 @@ const MealPlanScreen = () => {
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="clear" tintColor={colors.orangeGlass} />
         <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
       </Pressable>
 

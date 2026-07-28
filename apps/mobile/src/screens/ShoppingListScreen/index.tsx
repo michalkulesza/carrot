@@ -34,12 +34,22 @@ import { KEEP_AWAKE_SHOPPING_STORAGE_KEY } from '../SettingsScreen/helpers'
 import {
   buildShoppingListRows,
   categoryOrdersFromRows,
+  normalizeShoppingListRows,
   type ShoppingListRow,
   visibleShoppingCategories,
 } from './helpers'
 
 const KEEP_AWAKE_SHOPPING_TAG = 'shopping-list'
 const COMPLETED_GRACE_MS = 10_000
+
+const shoppingListRowKey = (row: ShoppingListRow) =>
+  row.kind === 'section' || row.kind === 'add'
+    ? `${row.kind}-${row.category}`
+    : `${row.kind}-${row.item.id}`
+
+const hasSameRowOrder = (first: ShoppingListRow[], second: ShoppingListRow[]) =>
+  first.length === second.length &&
+  first.every((row, index) => shoppingListRowKey(row) === shoppingListRowKey(second[index]))
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
@@ -54,7 +64,9 @@ const ShoppingListScreen = () => {
   const [editingText, setEditingText] = useState('')
   const [collapsedCategories, setCollapsedCategories] = useState<Partial<Record<ShoppingCategory, boolean>>>({})
   const [recentCompletedIds, setRecentCompletedIds] = useState<Set<string>>(new Set())
+  const [dragRows, setDragRows] = useState<ShoppingListRow[] | null>(null)
   const completedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const dragCorrectionFrameRef = useRef<number | null>(null)
   const collapseStorageKey = activeHouseholdId
     ? `shopping-list-collapsed-categories:${activeHouseholdId}`
     : null
@@ -88,6 +100,11 @@ const ShoppingListScreen = () => {
     }),
     [items, categories, collapsedCategories, preferences?.show_completed_shopping_items, recentCompletedIds]
   )
+  const displayedRows = dragRows ?? rows
+
+  useEffect(() => {
+    setDragRows((current) => current && !hasSameRowOrder(current, rows) ? current : null)
+  }, [rows])
 
   useEffect(() => {
     if (!isFocused) {
@@ -122,6 +139,9 @@ const ShoppingListScreen = () => {
 
   useEffect(() => () => {
     Object.values(completedTimersRef.current).forEach(clearTimeout)
+    if (dragCorrectionFrameRef.current !== null) {
+      cancelAnimationFrame(dragCorrectionFrameRef.current)
+    }
   }, [])
 
   const toggleCategory = useCallback((category: ShoppingCategory) => {
@@ -323,16 +343,27 @@ const ShoppingListScreen = () => {
   ])
 
   const handleDragEnd = useCallback(({ data }: { data: ShoppingListRow[] }) => {
-    const categoryOrders = categoryOrdersFromRows(data)
-    for (const item of incompleteItems) {
-      const included = Object.values(categoryOrders).some((ids) => ids?.includes(item.id))
-      if (!included) {
-        const order = categoryOrders[item.category] ?? []
-        order.push(item.id)
-        categoryOrders[item.category] = order
-      }
+    const normalizedRows = normalizeShoppingListRows(data)
+    setDragRows(data)
+
+    if (dragCorrectionFrameRef.current !== null) {
+      cancelAnimationFrame(dragCorrectionFrameRef.current)
     }
-    reorder.mutate(categoryOrders)
+    dragCorrectionFrameRef.current = requestAnimationFrame(() => {
+      dragCorrectionFrameRef.current = null
+      setDragRows(normalizedRows)
+
+      const categoryOrders = categoryOrdersFromRows(normalizedRows)
+      for (const item of incompleteItems) {
+        const included = Object.values(categoryOrders).some((ids) => ids?.includes(item.id))
+        if (!included) {
+          const order = categoryOrders[item.category] ?? []
+          order.push(item.id)
+          categoryOrders[item.category] = order
+        }
+      }
+      reorder.mutate(categoryOrders, { onError: () => setDragRows(null) })
+    })
   }, [incompleteItems, reorder])
 
   if (busy) {
@@ -342,14 +373,12 @@ const ShoppingListScreen = () => {
   return (
     <View style={styles.screen}>
       <DraggableFlatList
-        data={rows}
-        keyExtractor={(item) => item.kind === 'section' || item.kind === 'add'
-          ? `${item.kind}-${item.category}`
-          : `${item.kind}-${item.item.id}`}
+        data={displayedRows}
+        keyExtractor={shoppingListRowKey}
         renderItem={renderItem}
         onDragEnd={handleDragEnd}
         containerStyle={styles.listContainer}
-        itemLayoutAnimation={reduceMotion ? undefined : LinearTransition.duration(220)}
+        itemLayoutAnimation={reduceMotion || dragRows ? undefined : LinearTransition.duration(220)}
         ListHeaderComponent={
           <View>
             <PresenceBar users={presence} />

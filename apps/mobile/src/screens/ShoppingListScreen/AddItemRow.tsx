@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { Pressable, Text, TextInput, View } from 'react-native'
+import { Pressable, TextInput, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { colors } from '../../theme/colors'
@@ -38,7 +38,7 @@ const AddItemRow = ({
   return (
     <Pressable style={styles.addRow} onPress={() => inputRef.current?.focus()}>
       <View style={styles.addIconWrap}>
-        <Text style={styles.addPlusIcon}>+</Text>
+        <View style={styles.addIconCircle} />
       </View>
       <TextInput
         ref={inputRef}

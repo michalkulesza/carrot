@@ -118,10 +118,10 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: PlatformColor('systemBlue') as unknown as string,
+    backgroundColor: colors.orange,
   },
   plainTextAddButtonDisabled: { opacity: 0.45 },
-  plainTextAddButtonText: { fontSize: 16, color: PlatformColor('systemBackground') as unknown as string },
+  plainTextAddButtonText: { fontSize: 16, color: '#ffffff' },
   pickerSearchContainer: {
     marginHorizontal: 12,
     marginTop: 8,
@@ -184,7 +184,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,
-    overflow: 'hidden',
+    backgroundColor: colors.orange,
   },
-  todayBtnText: { color: colors.brandText, fontSize: 16, fontWeight: '600' },
+  todayBtnText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
 })

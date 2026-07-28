@@ -52,6 +52,39 @@ export const buildShoppingListRows = ({
   return rows
 }
 
+export const normalizeShoppingListRows = (rows: ShoppingListRow[]): ShoppingListRow[] => {
+  const normalizedRows: ShoppingListRow[] = []
+  let categoryRows: ShoppingListRow[] = []
+
+  const appendCategoryRows = () => {
+    const addRow = categoryRows.find((row) => row.kind === 'add')
+    if (!addRow) {
+      normalizedRows.push(...categoryRows)
+      categoryRows = []
+      return
+    }
+
+    normalizedRows.push(
+      ...categoryRows.filter((row) => row.kind === 'item'),
+      addRow,
+      ...categoryRows.filter((row) => row.kind !== 'item' && row.kind !== 'add'),
+    )
+    categoryRows = []
+  }
+
+  for (const row of rows) {
+    if (row.kind === 'section') {
+      appendCategoryRows()
+      normalizedRows.push(row)
+      continue
+    }
+    categoryRows.push(row)
+  }
+  appendCategoryRows()
+
+  return normalizedRows
+}
+
 export const categoryOrdersFromRows = (rows: ShoppingListRow[]): ShoppingCategoryOrders => {
   const orders: ShoppingCategoryOrders = {}
   let destinationCategory: ShoppingCategory | null = null
@@ -59,6 +92,10 @@ export const categoryOrdersFromRows = (rows: ShoppingListRow[]): ShoppingCategor
   for (const row of rows) {
     if (row.kind === 'section') {
       destinationCategory = row.collapsed ? null : row.category
+      continue
+    }
+    if (row.kind === 'add') {
+      destinationCategory = null
       continue
     }
     if (row.kind !== 'item' || destinationCategory === null) continue

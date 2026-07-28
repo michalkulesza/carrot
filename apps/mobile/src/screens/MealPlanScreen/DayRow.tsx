@@ -18,7 +18,7 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   const { t, i18n } = useTranslation()
   const weekday = formatWeekdayShort(date, i18n.language)
   const dayLabel = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(date)
-  const monthLabel = dayLabel.replace(/^\d+\s*/, '')
+  const monthLabel = new Intl.DateTimeFormat(i18n.language, { month: 'short' }).format(date)
   const entryTitle = entry?.recipe?.title ?? entry?.text
   const thumbUri = entry?.recipe ? proxyThumbnailUrl(entry.recipe.thumbnail_url) : null
   const accessibilityLabel = `${dayLabel}${entryTitle ? ': ' + entryTitle : ''}`
