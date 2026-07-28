@@ -104,6 +104,27 @@ def test_metric_weight_conversion_is_not_replaced_with_the_source_measurement() 
     assert gemini._preserve_discrete_ingredient_measurements(source, metric) == metric
 
 
+@pytest.mark.asyncio
+async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_ungrounded_lines(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"step_ingredient_line": [0, 1]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_step_ingredient_lines(
+        ["Sauté the onion.", "Top with chicken."],
+        ["1 tsp cayenne pepper", "5 chicken thighs", "1 small onion"],
+    )
+
+    assert lines == [None, 1]
+    call = generate_content.call_args
+    assert call.kwargs["model"] == "gemini-2.5-flash"
+    assert json.loads(call.kwargs["contents"])["ingredients"] == [
+        {"index": 0, "text": "1 tsp cayenne pepper"},
+        {"index": 1, "text": "5 chicken thighs"},
+        {"index": 2, "text": "1 small onion"},
+    ]
+
+
 def test_metric_ingredients_require_a_metric_measurement() -> None:
     enrichment = _matching_enrichment()
     enrichment.components[0].metric_ingredients = ["4 cup coleslaw* (4 cup)"]

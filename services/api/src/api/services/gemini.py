@@ -181,6 +181,8 @@ keep the can count as stated.
 
 _STEP_INGREDIENT_LINE_INSTRUCTION = """\
 step_ingredient_line: exactly one entry per step in this component, in order.
+The standalone matcher provides ingredients as objects with authoritative 0-based
+`index` values. Return those exact indexes; never count array positions yourself.
 For each step, identify every ingredient that step references — by full name,
 inflected or declined form (e.g. "kurczakiem" for "kurczak", "Zwiebeln" for
 "Zwiebel"), key noun ("chicken" for "chicken thighs, skin on"), plural, or
@@ -420,6 +422,8 @@ def _repair_step_ingredient_line(
     ingredient_count: int,
     component_index: int,
     repairs: list[str],
+    steps: list[str] | None = None,
+    ingredients: list[str] | None = None,
 ) -> list[int | None]:
     if len(values) != step_count:
         repairs.append(
@@ -428,15 +432,44 @@ def _repair_step_ingredient_line(
         )
     padded = (values + [None] * step_count)[:step_count]
     repaired: list[int | None] = []
-    for line in padded:
+    for step_index, line in enumerate(padded):
         if line is not None and not (0 <= line < ingredient_count):
             repairs.append(
                 f"component {component_index} step_ingredient_line value {line} out of range"
             )
             repaired.append(None)
+        elif (
+            line is not None
+            and steps is not None
+            and ingredients is not None
+            and not _step_mentions_ingredient(steps[step_index], ingredients[line])
+        ):
+            repairs.append(
+                f"component {component_index} step_ingredient_line[{step_index}] does not match its step text"
+            )
+            repaired.append(None)
         else:
             repaired.append(line)
     return repaired
+
+
+_STEP_INGREDIENT_STOP_WORDS = {
+    "and", "can", "cup", "for", "from", "into", "of", "or", "the", "then", "with",
+    "tbsp", "tsp", "oz", "ml", "g", "kg", "lb", "lbs", "clove", "pinch",
+}
+
+
+def _step_mentions_ingredient(step: str, ingredient: str) -> bool:
+    step_words = {
+        word for word in re.findall(r"\w+", step.casefold())
+        if len(word) > 2 and word not in _STEP_INGREDIENT_STOP_WORDS
+    }
+    ingredient_words = {
+        word for word in re.findall(r"\w+", ingredient.casefold())
+        if len(word) > 2 and word not in _STEP_INGREDIENT_STOP_WORDS
+    }
+
+    return bool(step_words & ingredient_words)
 
 
 def _repair_enrichment_alignment(
@@ -505,6 +538,8 @@ def _repair_enrichment_alignment(
                 len(ingredient_fallback),
                 index,
                 repairs,
+                step_fallback,
+                ingredient_fallback,
             ),
         }))
 
@@ -817,14 +852,20 @@ class _StepIngredientLineResult(BaseModel):
 async def match_step_ingredient_lines(
     steps: list[str],
     ingredient_names: list[str],
-    model: str = _DEFAULT_MECHANICAL_MODEL,
+    model: str = _TRANSCRIPTION_MODEL,
 ) -> list[int | None]:
     """Standalone driver for the step_ingredient_line matching prompt, for backfill."""
     if not steps:
         return []
 
     client = _build_client()
-    prompt = json.dumps({"steps": steps, "ingredients": ingredient_names}, ensure_ascii=False)
+    prompt = json.dumps({
+        "steps": steps,
+        "ingredients": [
+            {"index": index, "text": ingredient}
+            for index, ingredient in enumerate(ingredient_names)
+        ],
+    }, ensure_ascii=False)
     response = await _with_retry(lambda: client.models.generate_content(
         model=model,
         contents=prompt,
@@ -838,7 +879,13 @@ async def match_step_ingredient_lines(
     result = _StepIngredientLineResult.model_validate(json.loads(response.text))
     repairs: list[str] = []
     lines = _repair_step_ingredient_line(
-        result.step_ingredient_line, len(steps), len(ingredient_names), 0, repairs,
+        result.step_ingredient_line,
+        len(steps),
+        len(ingredient_names),
+        0,
+        repairs,
+        steps,
+        ingredient_names,
     )
     if repairs:
         log.warning("Repaired standalone step_ingredient_line match: %s", "; ".join(repairs))
