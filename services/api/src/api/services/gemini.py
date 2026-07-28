@@ -179,6 +179,23 @@ parentheses, for example "1 can black beans, drained and rinsed" becomes
 keep the can count as stated.
 """
 
+_STEP_INGREDIENT_LINE_INSTRUCTION = """\
+step_ingredient_line: exactly one entry per step in this component, in order.
+For each step, identify every ingredient that step references — by full name,
+inflected or declined form (e.g. "kurczakiem" for "kurczak", "Zwiebeln" for
+"Zwiebel"), key noun ("chicken" for "chicken thighs, skin on"), plural, or
+abbreviation — then return the 0-based index of the MIDDLE one of those
+ingredients in this component's ingredients list. With an even number of
+matches, return the lower middle. Return null when the step references no
+ingredient at all. Match across all languages; for inflected languages
+(Polish, Russian, Czech, German) recognise every grammatical case and number
+variant of the ingredient name.
+
+Example — ingredients ["flour", "bread", "chicken", "oil", "potatoes"] and the
+step "Fry the chicken in the oil with potatoes" references indexes 2, 3 and 4,
+so the middle one is 3.
+"""
+
 _ENRICHMENT_SYSTEM = """\
 You enrich an already-faithful recipe extraction with derived data. The input's
 title, servings, components, ingredient quantities, units, names, and steps are
@@ -218,7 +235,8 @@ grams). If no recipe content is present at all, use 0.
 
 tags: if a list of available tags is provided, assign only those that clearly apply
 to this recipe. Use only tags from the provided list — never invent new ones.
-"""
+
+""" + _STEP_INGREDIENT_LINE_INSTRUCTION
 
 _ALLERGEN_SYSTEM = """\
 You are an allergen detection assistant. Given a numbered list of ingredients and
@@ -396,6 +414,31 @@ def _repair_shopping_list_categories(
     return categories
 
 
+def _repair_step_ingredient_line(
+    values: list[int | None],
+    step_count: int,
+    ingredient_count: int,
+    component_index: int,
+    repairs: list[str],
+) -> list[int | None]:
+    if len(values) != step_count:
+        repairs.append(
+            f"component {component_index} step_ingredient_line has {len(values)} entries, "
+            f"expected {step_count}"
+        )
+    padded = (values + [None] * step_count)[:step_count]
+    repaired: list[int | None] = []
+    for line in padded:
+        if line is not None and not (0 <= line < ingredient_count):
+            repairs.append(
+                f"component {component_index} step_ingredient_line value {line} out of range"
+            )
+            repaired.append(None)
+        else:
+            repaired.append(line)
+    return repaired
+
+
 def _repair_enrichment_alignment(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
@@ -456,6 +499,13 @@ def _repair_enrichment_alignment(
             ),
             "metric_steps": aligned_or_fallback("metric_steps", component.metric_steps, step_fallback),
             "imperial_steps": aligned_or_fallback("imperial_steps", component.imperial_steps, step_fallback),
+            "step_ingredient_line": _repair_step_ingredient_line(
+                component.step_ingredient_line,
+                len(step_fallback),
+                len(ingredient_fallback),
+                index,
+                repairs,
+            ),
         }))
 
     if repairs:
@@ -609,6 +659,7 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
             metric_steps=enriched.metric_steps,
             imperial_steps=enriched.imperial_steps,
             shopping_list_categories=shopping_categories,
+            step_ingredient_line=enriched.step_ingredient_line,
         ))
 
     return RecipeExtraction(
@@ -757,6 +808,41 @@ async def estimate_unit_variants(
         })
 
     return variants.model_copy(update={"components": repaired_components})
+
+
+class _StepIngredientLineResult(BaseModel):
+    step_ingredient_line: list[int | None]
+
+
+async def match_step_ingredient_lines(
+    steps: list[str],
+    ingredient_names: list[str],
+    model: str = _DEFAULT_MECHANICAL_MODEL,
+) -> list[int | None]:
+    """Standalone driver for the step_ingredient_line matching prompt, for backfill."""
+    if not steps:
+        return []
+
+    client = _build_client()
+    prompt = json.dumps({"steps": steps, "ingredients": ingredient_names}, ensure_ascii=False)
+    response = await _with_retry(lambda: client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=_STEP_INGREDIENT_LINE_INSTRUCTION,
+            temperature=0,
+            response_mime_type="application/json",
+            response_schema=_StepIngredientLineResult,
+        ),
+    ))
+    result = _StepIngredientLineResult.model_validate(json.loads(response.text))
+    repairs: list[str] = []
+    lines = _repair_step_ingredient_line(
+        result.step_ingredient_line, len(steps), len(ingredient_names), 0, repairs,
+    )
+    if repairs:
+        log.warning("Repaired standalone step_ingredient_line match: %s", "; ".join(repairs))
+    return lines
 
 
 class _IngredientFlag(BaseModel):

@@ -50,6 +50,7 @@
     "decreaseTextSize": "Réduire la taille du texte du mode cuisine",
     "increaseTextSize": "Augmenter la taille du texte du mode cuisine",
     "ingredients": "Ingrédients",
+    "toggleIngredientRail": "Afficher ou masquer les ingrédients",
     "close": "Fermer le mode cuisine",
     "readyToStart": "Prêt à démarrer",
     "tapToPause": "Touchez pour mettre en pause",

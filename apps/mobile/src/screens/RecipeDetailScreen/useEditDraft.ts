@@ -240,6 +240,7 @@ export const useEditDraft = ({
           ),
           steps: c.steps.filter(Boolean),
           ingredient_flags: [],
+          step_ingredient_line: c.step_ingredient_line,
         })),
         tag_ids: recipe.tags.map((tag) => tag.id),
       })

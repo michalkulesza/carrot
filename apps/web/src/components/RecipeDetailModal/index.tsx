@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
-import { usePreferences, useRecipeServingPreference } from '@carrot/shared/hooks/usePreferences'
+import {
+  usePreferences,
+  useRecipeServingPreference,
+} from '@carrot/shared/hooks/usePreferences'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import {
   Modal,
@@ -13,7 +16,12 @@ import {
   ModalFooter,
   toast,
 } from '@heroui/react'
-import type { RecipeOut, SaveComponent, ShoppingListItemInput, Tag } from '@carrot/shared/types'
+import type {
+  RecipeOut,
+  SaveComponent,
+  ShoppingListItemInput,
+  Tag,
+} from '@carrot/shared/types'
 import {
   addTagToRecipe,
   deleteRecipe,
@@ -99,7 +107,7 @@ const RecipeDetailModal = ({
   const originalServings = recipe?.servings ?? null
   const { selectedServings, setServings } = useRecipeServingPreference(
     recipe?.id,
-    originalServings,
+    originalServings
   )
 
   useEffect(() => {
@@ -158,11 +166,18 @@ const RecipeDetailModal = ({
 
   if (!recipe || !draft) return null
   const r = recipe
-  if (cookModeOpen) {
-    return <CookMode recipe={r} onClose={() => setCookModeOpen(false)} />
-  }
   const servingScale =
     r.servings && selectedServings ? selectedServings / r.servings : 1
+  if (cookModeOpen) {
+    return (
+      <CookMode
+        recipe={r}
+        onClose={() => setCookModeOpen(false)}
+        unitSystem={preferences?.unit_system ?? 'metric'}
+        servingScale={servingScale}
+      />
+    )
+  }
 
   const components =
     mode === 'editing' ? draft.components : (r.components as SaveComponent[])
@@ -355,11 +370,13 @@ const RecipeDetailModal = ({
   }
 
   const handleDecreaseServings = () => {
-    if (selectedServings !== null) setServings(Math.max(1, selectedServings - 1))
+    if (selectedServings !== null)
+      setServings(Math.max(1, selectedServings - 1))
   }
 
   const handleIncreaseServings = () => {
-    if (selectedServings !== null) setServings(Math.min(99, selectedServings + 1))
+    if (selectedServings !== null)
+      setServings(Math.min(99, selectedServings + 1))
   }
 
   const handleAddIngredient = (ci: number, ii: number) => {
@@ -392,7 +409,10 @@ const RecipeDetailModal = ({
           preferences?.unit_system ?? 'metric',
           servingScale
         )
-        items.push({ text, category: comp.shopping_list_categories?.[ii] ?? 'other' })
+        items.push({
+          text,
+          category: comp.shopping_list_categories?.[ii] ?? 'other',
+        })
       }
     })
     if (items.length === 0) return

@@ -378,6 +378,8 @@ const RecipeDetailScreen = () => {
         colorScheme={colorScheme}
         initialComponentIndex={initialComponentIndex}
         initialStepIndex={initialStepIndex}
+        selectedServings={selectedServings}
+        unitSystem={preferences?.unit_system ?? "metric"}
       />
     </>
   );

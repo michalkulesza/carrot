@@ -50,6 +50,7 @@
     "decreaseTextSize": "Zmniejsz tekst w trybie gotowania",
     "increaseTextSize": "Zwiększ tekst w trybie gotowania",
     "ingredients": "Składniki",
+    "toggleIngredientRail": "Pokaż lub ukryj składniki",
     "close": "Zamknij tryb gotowania",
     "readyToStart": "Gotowy do uruchomienia",
     "tapToPause": "Dotknij, aby wstrzymać",

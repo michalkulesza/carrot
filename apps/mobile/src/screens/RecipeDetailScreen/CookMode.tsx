@@ -6,11 +6,12 @@ import {
   Easing,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, type BottomSheetBackdropProps } from "@gorhom/bottom-sheet";
+import * as Haptics from "expo-haptics";
 import * as KeepAwake from "expo-keep-awake";
 import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +20,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "expo-router";
 import type { RecipeOut } from "@carrot/shared/types";
-import { displayIngredient } from "@carrot/shared/utils/ingredientUtils";
 import { parseDurationMatches } from "@carrot/shared/utils/timerUtils";
 import {
   formatCountdown,
@@ -28,13 +28,15 @@ import {
   useTimers,
 } from "../../context/TimerContext";
 import { useIsAppActive } from "../../hooks/useIsAppActive";
-import CheckboxIcon from "../../components/CheckboxIcon";
+import IngredientRail from "./IngredientRail";
+import { buildIngredientRailRows, RAIL_VISIBLE_STORAGE_KEY, resolveRailTargets } from "./helpers";
 
 const KEEP_AWAKE_COOK_TAG = "cook-mode";
 const FONT_SCALE_STORAGE_KEY = "cook-mode-font-scale";
 const MIN_FONT_SCALE = 0.8;
 const MAX_FONT_SCALE = 1.35;
 const FONT_SCALES = [MIN_FONT_SCALE, 1, MAX_FONT_SCALE];
+const INSTRUCTION_HEIGHT_BUFFER = 24;
 
 const getFontScaleIndex = (fontScale: number) => {
   const closestScale = FONT_SCALES.reduce((closest, scale) =>
@@ -56,22 +58,26 @@ const CookModeToolbar = ({
   canIncreaseTextSize,
   onDecreaseTextSize,
   onIncreaseTextSize,
-  onOpenIngredients,
+  railVisible,
+  onToggleRail,
   onClose,
   muted,
   decreaseTextSizeLabel,
   increaseTextSizeLabel,
+  toggleRailLabel,
   closeLabel,
 }: {
   canDecreaseTextSize: boolean;
   canIncreaseTextSize: boolean;
   onDecreaseTextSize: () => void;
   onIncreaseTextSize: () => void;
-  onOpenIngredients: () => void;
+  railVisible: boolean;
+  onToggleRail: () => void;
   onClose: () => void;
   muted: string;
   decreaseTextSizeLabel: string;
   increaseTextSizeLabel: string;
+  toggleRailLabel: string;
   closeLabel: string;
 }) => (
   <View style={styles.toolbar}>
@@ -99,7 +105,13 @@ const CookModeToolbar = ({
     >
       <Text style={[styles.fontControlLarge, { color: muted }]}>aA</Text>
     </Pressable>
-    <Pressable onPress={onOpenIngredients} hitSlop={8} accessibilityLabel="Ingredients">
+    <Pressable
+      onPress={onToggleRail}
+      hitSlop={8}
+      accessibilityLabel={toggleRailLabel}
+      accessibilityState={{ selected: railVisible }}
+      style={!railVisible && styles.fontControlDisabled}
+    >
       <Ionicons name="list-outline" size={25} color={muted} />
     </Pressable>
     <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={closeLabel}>
@@ -121,6 +133,8 @@ const CookMode = ({
   colorScheme,
   initialComponentIndex,
   initialStepIndex,
+  selectedServings,
+  unitSystem,
 }: {
   recipe: RecipeOut;
   visible: boolean;
@@ -128,6 +142,8 @@ const CookMode = ({
   colorScheme: "light" | "dark";
   initialComponentIndex: number | null;
   initialStepIndex: number | null;
+  selectedServings: number | null;
+  unitSystem: string;
 }) => {
   const isAppActive = useIsAppActive();
   const { t } = useTranslation();
@@ -135,11 +151,11 @@ const CookMode = ({
   const navigation = useNavigation();
   const dark = colorScheme === "dark";
   const bg = cookColor("#f7f5f0", "#20211f", colorScheme);
+  const bgHex = dark ? "#20211f" : "#f7f5f0";
   const text = cookColor("#252421", "#f4f1eb", colorScheme);
   const muted = cookColor("#74716b", "#aaa9a3", colorScheme);
   const inactiveProgress = cookColor("#d5d1c9", "#545550", colorScheme);
   const secondaryButton = cookColor("#e9e5dd", "#30312e", colorScheme);
-  const sheetBackground = cookColor("#eeece7", "#2b2d2a", colorScheme);
   const steps = useMemo(
     () =>
       recipe.components.flatMap((component, componentIndex) =>
@@ -151,14 +167,20 @@ const CookMode = ({
       ),
     [recipe],
   );
+  const servingScale = recipe.servings && selectedServings ? selectedServings / recipe.servings : 1;
+  const railRows = useMemo(
+    () => buildIngredientRailRows(recipe.components, unitSystem, servingScale),
+    [recipe.components, unitSystem, servingScale],
+  );
+  const railTargets = useMemo(() => resolveRailTargets(recipe.components), [recipe.components]);
   const [index, setIndex] = useState(0);
-  const [checked, setChecked] = useState<Set<string>>(new Set());
   const [instructionFontSize, setInstructionFontSize] = useState(39);
   const [instructionReady, setInstructionReady] = useState(false);
   const [fontScale, setFontScale] = useState(1);
-  const [mainHeight, setMainHeight] = useState(0);
+  const [instructionAreaHeight, setInstructionAreaHeight] = useState(0);
+  const [labelHeight, setLabelHeight] = useState(0);
+  const [railVisible, setRailVisible] = useState(true);
   const [, setTimerTick] = useState(0);
-  const ingredientsSheetRef = useRef<BottomSheetModal>(null);
   const stepContentOpacity = useRef(new Animated.Value(0)).current;
   const swipeStart = useRef<number | null>(null);
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers();
@@ -202,15 +224,26 @@ const CookMode = ({
     void AsyncStorage.getItem(storageKey).then((value) => {
       if (!value) return;
       try {
-        const saved = JSON.parse(value) as {
-          index?: number;
-          checked?: string[];
-        };
+        const saved = JSON.parse(value) as { index?: number };
         setIndex(Math.min(saved.index ?? 0, Math.max(0, steps.length - 1)));
-        setChecked(new Set(saved.checked ?? []));
       } catch {}
     });
   }, [hasInitialStep, visible, storageKey, steps.length]);
+
+  useEffect(() => {
+    void AsyncStorage.getItem(RAIL_VISIBLE_STORAGE_KEY).then((value) => {
+      if (value !== null) setRailVisible(value === "1");
+    });
+  }, []);
+
+  const handleToggleRail = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setRailVisible((current) => {
+      const next = !current;
+      void AsyncStorage.setItem(RAIL_VISIBLE_STORAGE_KEY, next ? "1" : "0");
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (!visible || !isAppActive) {
@@ -234,11 +267,8 @@ const CookMode = ({
   }, []);
   useEffect(() => {
     if (visible)
-      void AsyncStorage.setItem(
-        storageKey,
-        JSON.stringify({ index, checked: [...checked] }),
-      );
-  }, [visible, storageKey, index, checked]);
+      void AsyncStorage.setItem(storageKey, JSON.stringify({ index }));
+  }, [visible, storageKey, index]);
   useEffect(() => {
     if (!visible || ![...timers.values()].some((timer) => timer.status === "running")) return;
     const timer = setInterval(() => setTimerTick((tick) => tick + 1), 1000);
@@ -278,30 +308,19 @@ const CookMode = ({
           canIncreaseTextSize={fontScale < MAX_FONT_SCALE}
           onDecreaseTextSize={() => adjustFontScale(-1)}
           onIncreaseTextSize={() => adjustFontScale(1)}
-          onOpenIngredients={() => ingredientsSheetRef.current?.present()}
+          railVisible={railVisible}
+          onToggleRail={handleToggleRail}
           onClose={onClose}
           muted={muted}
           decreaseTextSizeLabel={t("cookMode.decreaseTextSize")}
           increaseTextSizeLabel={t("cookMode.increaseTextSize")}
+          toggleRailLabel={t("cookMode.toggleIngredientRail")}
           closeLabel={t("cookMode.close")}
         />
       ),
     });
-  }, [adjustFontScale, fontScale, muted, navigation, onClose, t, visible]);
-  const renderIngredientsBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />
-    ),
-    [],
-  );
+  }, [adjustFontScale, fontScale, handleToggleRail, muted, navigation, onClose, railVisible, t, visible]);
   if (!visible || !step) return null;
-  const allIngredients = recipe.components.flatMap(
-    (component, componentIndex) =>
-      component.ingredients.map((ingredient, ingredientIndex) => ({
-        key: `${componentIndex}-${ingredientIndex}`,
-        text: displayIngredient(ingredient),
-      })),
-  );
   const go = (next: number) => {
     const target = Math.max(0, Math.min(steps.length - 1, next));
     if (target === index) return;
@@ -327,11 +346,6 @@ const CookMode = ({
           paddingBottom: Math.max(24, insets.bottom + 12),
         }}
       >
-        <View style={styles.header}>
-          <Text numberOfLines={1} style={[styles.recipeTitle, { color: text }]}>
-            {recipe.title}
-          </Text>
-        </View>
         <View style={styles.progress}>
           {steps.map((_, i) => (
             <View
@@ -348,7 +362,6 @@ const CookMode = ({
         </View>
         <View
           style={styles.main}
-          onLayout={(event) => setMainHeight(event.nativeEvent.layout.height)}
           onTouchStart={(event) => {
             swipeStart.current = event.nativeEvent.touches[0]?.pageX ?? null;
           }}
@@ -361,42 +374,54 @@ const CookMode = ({
             swipeStart.current = null;
           }}
         >
-          <Animated.Text
-            style={[styles.stepLabel, { color: muted, opacity: stepContentOpacity }]}
+          <View
+            style={styles.instructionArea}
+            onLayout={(event) => setInstructionAreaHeight(event.nativeEvent.layout.height)}
           >
-            STEP {index + 1}
-          </Animated.Text>
-          <Animated.Text
-            key={`${index}-${mainHeight}-${instructionFontSize}`}
-            style={[
-              styles.instruction,
-              {
-                color: text,
-                fontSize: instructionFontSize,
-                lineHeight: Math.round(instructionFontSize * 1.23),
-                opacity: stepContentOpacity,
-              },
-            ]}
-            maxFontSizeMultiplier={1}
-            onTextLayout={(event) => {
-              const instructionHeight =
-                event.nativeEvent.lines.length * Math.round(instructionFontSize * 1.23);
-              const reservedHeight = 62 + (durations.length > 0 ? 72 : 0);
-              if (
-                mainHeight > 0 &&
-                instructionHeight > mainHeight - reservedHeight &&
-                instructionFontSize > 22
-              ) {
-                setInstructionFontSize((size) => Math.max(22, size - 2));
-              } else if (mainHeight > 0) {
-                setInstructionReady(true);
-              }
-            }}
-          >
-            {step.text}
-          </Animated.Text>
+            <Animated.Text
+              style={[styles.stepLabel, { color: muted, opacity: stepContentOpacity }]}
+              onLayout={(event) => setLabelHeight(event.nativeEvent.layout.height)}
+            >
+              STEP {index + 1}
+            </Animated.Text>
+            <Animated.Text
+              key={`${index}-${instructionAreaHeight}-${instructionFontSize}`}
+              style={[
+                styles.instruction,
+                {
+                  color: text,
+                  fontSize: instructionFontSize,
+                  lineHeight: Math.round(instructionFontSize * 1.23),
+                  opacity: stepContentOpacity,
+                },
+              ]}
+              maxFontSizeMultiplier={1}
+              onTextLayout={(event) => {
+                const instructionHeight =
+                  event.nativeEvent.lines.length * Math.round(instructionFontSize * 1.23);
+                const availableHeight =
+                  instructionAreaHeight - labelHeight - styles.stepLabel.marginBottom - INSTRUCTION_HEIGHT_BUFFER;
+                if (
+                  instructionAreaHeight > 0 &&
+                  instructionHeight > availableHeight &&
+                  instructionFontSize > 17
+                ) {
+                  setInstructionFontSize((size) => Math.max(17, size - 2));
+                } else if (instructionAreaHeight > 0) {
+                  setInstructionReady(true);
+                }
+              }}
+            >
+              {step.text}
+            </Animated.Text>
+          </View>
           <Animated.View style={{ opacity: stepContentOpacity }}>
-            <View style={styles.timerGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.timerScroll}
+              contentContainerStyle={styles.timerGrid}
+            >
               {durations.map((duration, durationIndex) => {
               const id = `${recipe.id}-c${step.componentIndex}-s${step.stepIndex}-d${durationIndex}`;
               const timer = timers.get(id);
@@ -427,7 +452,7 @@ const CookMode = ({
                   <View style={styles.timerControl}>
                     <Ionicons
                       name={done ? "checkmark" : running ? "pause" : "play"}
-                      size={25}
+                      size={17}
                       color={text}
                     />
                   </View>
@@ -439,8 +464,18 @@ const CookMode = ({
                 </Pressable>
               );
               })}
-            </View>
+            </ScrollView>
           </Animated.View>
+          {railVisible && (
+            <IngredientRail
+              rows={railRows}
+              targetIndex={railTargets[index] ?? 0}
+              stepKey={index}
+              text={text}
+              muted={muted}
+              bg={bgHex}
+            />
+          )}
         </View>
         <View style={styles.footer}>
           <Pressable
@@ -476,57 +511,7 @@ const CookMode = ({
           </Pressable>
         </View>
       </View>
-        <BottomSheetModal
-          ref={ingredientsSheetRef}
-          snapPoints={["70%"]}
-          enableDynamicSizing={false}
-          enablePanDownToClose
-          backdropComponent={renderIngredientsBackdrop}
-          backgroundStyle={{ backgroundColor: sheetBackground }}
-          handleIndicatorStyle={styles.sheetHandle}
-        >
-          <View style={[styles.sheet, { paddingBottom: 22 + insets.bottom }]}> 
-            <View style={styles.sheetHeader}>
-              <Text style={[styles.sheetTitle, { color: text }]}>Ingredients</Text>
-            </View>
-            <BottomSheetScrollView style={styles.ingredientScroll}>
-                {allIngredients.map((ingredient) => (
-                  <Pressable
-                    key={ingredient.key}
-                    onPress={() =>
-                      setChecked((current) => {
-                        const next = new Set(current);
-                        next.has(ingredient.key)
-                          ? next.delete(ingredient.key)
-                          : next.add(ingredient.key);
-                        return next;
-                      })
-                    }
-                    style={styles.ingredientRow}
-                    accessibilityLabel={ingredient.text}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: checked.has(ingredient.key) }}
-                  >
-                    <CheckboxIcon checked={checked.has(ingredient.key)} />
-                    <Text
-                      style={[
-                        styles.ingredientText,
-                        {
-                          color: checked.has(ingredient.key) ? muted : text,
-                          textDecorationLine: checked.has(ingredient.key)
-                            ? "line-through"
-                            : "none",
-                        },
-                      ]}
-                    >
-                      {ingredient.text}
-                    </Text>
-                  </Pressable>
-                ))}
-            </BottomSheetScrollView>
-          </View>
-        </BottomSheetModal>
-      </View>
+    </View>
   );
 };
 
@@ -536,16 +521,15 @@ const styles = StyleSheet.create({
     zIndex: 100,
     elevation: 100,
   },
-  header: { flexDirection: "row", alignItems: "center" },
-  recipeTitle: { flex: 1, fontSize: 18, fontWeight: "700" },
   toolbar: { flexDirection: "row", alignItems: "center", gap: 12 },
   toolbarButton: { minWidth: 24, minHeight: 36, alignItems: "center", justifyContent: "center" },
   fontControlDisabled: { opacity: 0.3 },
   fontControlSmall: { fontSize: 13, fontWeight: "600" },
   fontControlLarge: { fontSize: 18, fontWeight: "600" },
-  progress: { flexDirection: "row", gap: 5, marginTop: 16 },
+  progress: { flexDirection: "row", gap: 5 },
   progressItem: { flex: 1, height: 4, borderRadius: 2 },
-  main: { flex: 1, justifyContent: "center", alignItems: "center" },
+  main: { flex: 1, alignItems: "center" },
+  instructionArea: { flex: 1, width: "100%", justifyContent: "center", alignItems: "center" },
   stepLabel: {
     fontSize: 12,
     letterSpacing: 2,
@@ -556,19 +540,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontFamily: "Georgia",
   },
-  timerGrid: { width: "100%", gap: 10, marginTop: 24 },
+  timerScroll: { flexGrow: 0, marginTop: 17 },
+  timerGrid: { flexDirection: "row", alignItems: "center", gap: 7 },
   timerRow: {
-    minHeight: 54,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 18,
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 13,
     backgroundColor: "#ea8e4e",
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
-  timerControl: { width: 36, alignItems: "center", justifyContent: "center" },
-  timerTime: { fontSize: 32, fontWeight: "700" },
+  timerControl: { alignItems: "center", justifyContent: "center" },
+  timerTime: { fontSize: 22, fontWeight: "700" },
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -582,57 +567,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   count: { fontSize: 19, fontWeight: "700" },
-  sheetBackdrop: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    backgroundColor: "#00000066",
-  },
-  backdropTapTarget: { flex: 1 },
-  ingredientsOverlay: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    zIndex: 10,
-  },
-  sheetAnimation: {
-    position: "absolute",
-    top: "30%",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  sheetBottomFill: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    left: 0,
-    height: 280,
-  },
-  sheet: {
-    flex: 1,
-    padding: 22,
-  },
-  sheetHandle: { backgroundColor: "#8e8e93" },
-  ingredientScroll: { flex: 1 },
-  sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  sheetTitle: { fontSize: 22, fontWeight: "700" },
-  ingredientRow: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  ingredientText: { flex: 1, fontSize: 17 },
 });
 
 export default CookMode;

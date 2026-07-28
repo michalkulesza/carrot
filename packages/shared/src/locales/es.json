@@ -50,6 +50,7 @@
     "decreaseTextSize": "Reducir el texto del modo cocina",
     "increaseTextSize": "Aumentar el texto del modo cocina",
     "ingredients": "Ingredientes",
+    "toggleIngredientRail": "Mostrar u ocultar ingredientes",
     "close": "Cerrar modo cocina",
     "readyToStart": "Listo para empezar",
     "tapToPause": "Toca para pausar",

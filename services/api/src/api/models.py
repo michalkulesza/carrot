@@ -305,6 +305,7 @@ class RecipeComponent(BaseModel):
     metric_steps: list[str] = []
     imperial_steps: list[str] = []
     shopping_list_categories: list[ShoppingCategory] = []
+    step_ingredient_line: list[int | None] = []
 
 
 class RecipeExtraction(BaseModel):
@@ -349,6 +350,7 @@ class UnitVariantComponent(BaseModel):
 class EnrichmentComponent(UnitVariantComponent):
     shopping_list_values: list[str] = []
     shopping_list_categories: list[str] = []
+    step_ingredient_line: list[int | None] = []
 
 
 class RecipeEnrichment(BaseModel):
@@ -430,6 +432,7 @@ class SaveComponent(BaseModel):
     metric_steps: list[str] | None = None
     imperial_steps: list[str] | None = None
     ingredient_flags: list[AllergenFlag] | None = None
+    step_ingredient_line: list[int | None] | None = None
 
 
 class RecipeSaveRequest(BaseModel):

@@ -82,6 +82,7 @@ export interface RecipeComponent {
   metric_steps: string[];
   imperial_steps: string[];
   shopping_list_categories?: ShoppingCategory[] | null;
+  step_ingredient_line?: (number | null)[] | null;
 }
 
 export type TagCategory = "protein" | "carb" | "cuisine" | "time";
@@ -195,6 +196,7 @@ export interface SaveComponent {
   metric_steps?: string[] | null;
   imperial_steps?: string[] | null;
   ingredient_flags?: AllergenFlag[];
+  step_ingredient_line?: (number | null)[] | null;
 }
 
 export interface RecipeSaveRequest {

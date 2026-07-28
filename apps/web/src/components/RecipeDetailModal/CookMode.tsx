@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Clock, List, Play, X } from 'react-feather'
+import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
-import { displayIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { parseDurationMatches } from '@carrot/shared/utils/timerUtils'
 import {
   getRemainingSeconds,
@@ -9,6 +9,11 @@ import {
   formatDurationLabel,
   useTimers,
 } from '../../context/TimerContext'
+import {
+  buildIngredientRailRows,
+  RAIL_VISIBLE_STORAGE_KEY,
+  resolveRailTargets,
+} from './helpers'
 
 interface CookStep {
   componentIndex: number
@@ -18,13 +23,22 @@ interface CookStep {
 
 const sessionKey = (recipeId: string) => `cook-mode:${recipeId}`
 
+const RAIL_ROW_H = 34
+const RAIL_VISIBLE_ROWS = 5
+const RAIL_HEIGHT = RAIL_ROW_H * RAIL_VISIBLE_ROWS
+
 const CookMode = ({
   recipe,
   onClose,
+  unitSystem,
+  servingScale,
 }: {
   recipe: RecipeOut
   onClose: () => void
+  unitSystem: string
+  servingScale: number
 }) => {
+  const { t } = useTranslation()
   const steps = useMemo<CookStep[]>(
     () =>
       recipe.components.flatMap((component, componentIndex) =>
@@ -36,11 +50,20 @@ const CookMode = ({
       ),
     [recipe]
   )
+  const railRows = useMemo(
+    () => buildIngredientRailRows(recipe.components, unitSystem, servingScale),
+    [recipe.components, unitSystem, servingScale]
+  )
+  const railTargets = useMemo(
+    () => resolveRailTargets(recipe.components),
+    [recipe.components]
+  )
+  const railRef = useRef<HTMLDivElement>(null)
   const initial = useMemo(() => {
     try {
       return JSON.parse(
         localStorage.getItem(sessionKey(recipe.id)) ?? '{}'
-      ) as { index?: number; checked?: string[] }
+      ) as { index?: number }
     } catch {
       return {}
     }
@@ -48,8 +71,9 @@ const CookMode = ({
   const [index, setIndex] = useState(() =>
     Math.min(initial.index ?? 0, Math.max(0, steps.length - 1))
   )
-  const [checked, setChecked] = useState(() => new Set(initial.checked ?? []))
-  const [ingredientsOpen, setIngredientsOpen] = useState(false)
+  const [railVisible, setRailVisible] = useState(
+    () => localStorage.getItem(RAIL_VISIBLE_STORAGE_KEY) !== '0'
+  )
   const touchStart = useRef<number | null>(null)
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers()
   const step = steps[index]
@@ -59,11 +83,18 @@ const CookMode = ({
   )
 
   useEffect(() => {
-    localStorage.setItem(
-      sessionKey(recipe.id),
-      JSON.stringify({ index, checked: [...checked] })
-    )
-  }, [recipe.id, index, checked])
+    localStorage.setItem(sessionKey(recipe.id), JSON.stringify({ index }))
+  }, [recipe.id, index])
+  useEffect(() => {
+    const target = railTargets[index] ?? 0
+    const container = railRef.current
+    if (!container || railRows.length === 0) return
+    const centeredTop = target * RAIL_ROW_H - RAIL_HEIGHT / 2 + RAIL_ROW_H / 2
+    container.scrollTo({
+      top: Math.max(0, centeredTop),
+      behavior: 'smooth',
+    })
+  }, [index, railTargets, railRows.length])
   useEffect(() => {
     const keydown = (event: KeyboardEvent) => {
       if (
@@ -77,6 +108,7 @@ const CookMode = ({
       if (event.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', keydown)
+
     return () => window.removeEventListener('keydown', keydown)
   }, [onClose, steps.length])
   useEffect(() => {
@@ -89,6 +121,7 @@ const CookMode = ({
         else sentinel = value
       })
       .catch(() => {})
+
     return () => {
       stale = true
       void sentinel?.release()
@@ -96,17 +129,18 @@ const CookMode = ({
   }, [])
 
   if (!step) return null
-  const allIngredients = recipe.components.flatMap(
-    (component, componentIndex) =>
-      component.ingredients.map((ingredient, ingredientIndex) => ({
-        key: `${componentIndex}-${ingredientIndex}`,
-        text: displayIngredient(ingredient),
-      }))
-  )
   const go = (next: number) =>
     setIndex(Math.max(0, Math.min(steps.length - 1, next)))
   const timerId = (durationIndex: number) =>
     `${recipe.id}-c${step.componentIndex}-s${step.stepIndex}-d${durationIndex}`
+  const toggleRail = () => {
+    setRailVisible((current) => {
+      const next = !current
+      localStorage.setItem(RAIL_VISIBLE_STORAGE_KEY, next ? '1' : '0')
+
+      return next
+    })
+  }
 
   return (
     <div
@@ -132,14 +166,13 @@ const CookMode = ({
           ) : (
             <div className="h-11 w-11 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
           )}
-          <p className="min-w-0 flex-1 truncate text-base font-semibold sm:text-lg">
-            {recipe.title}
-          </p>
+          <div className="min-w-0 flex-1" />
           <button
             type="button"
-            onClick={() => setIngredientsOpen(true)}
-            className="rounded-full p-3 text-zinc-500 hover:bg-black/5 dark:hover:bg-white/10"
-            aria-label="Ingredients"
+            onClick={toggleRail}
+            aria-pressed={railVisible}
+            className={`rounded-full p-3 hover:bg-black/5 dark:hover:bg-white/10 ${railVisible ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}
+            aria-label={t('cookMode.toggleIngredientRail')}
           >
             <List size={22} aria-hidden="true" />
           </button>
@@ -153,7 +186,7 @@ const CookMode = ({
           </button>
         </header>
         <div
-          className="mt-8 flex gap-1.5"
+          className="flex gap-1.5"
           aria-label={`Step ${index + 1} of ${steps.length}`}
         >
           {steps.map((_, i) => (
@@ -163,15 +196,17 @@ const CookMode = ({
             />
           ))}
         </div>
-        <main className="flex flex-1 flex-col items-center justify-center py-10 text-center">
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
-            Step {index + 1}
-          </p>
-          <p className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">
-            {step.text}
-          </p>
+        <main className="flex flex-1 flex-col items-center py-10 text-center">
+          <div className="flex flex-1 flex-col items-center justify-center">
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              Step {index + 1}
+            </p>
+            <p className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">
+              {step.text}
+            </p>
+          </div>
           {durations.length > 0 && (
-            <div className="mt-10 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
+            <div className="mt-7 flex w-full max-w-2xl items-start gap-2 overflow-x-auto">
               {durations.map((duration, durationIndex) => {
                 const id = timerId(durationIndex)
                 const timer = timers.get(id)
@@ -180,6 +215,7 @@ const CookMode = ({
                   : duration.seconds
                 const running = timer?.status === 'running'
                 const done = timer?.status === 'done' || remaining === 0
+
                 return (
                   <button
                     key={id}
@@ -197,10 +233,10 @@ const CookMode = ({
                           })
                         : !done && (running ? pauseTimer(id) : resumeTimer(id))
                     }
-                    className="rounded-3xl border border-zinc-200 bg-white/80 p-5 text-left shadow-sm transition hover:scale-[1.01] dark:border-zinc-700 dark:bg-zinc-800/80"
+                    className="flex-shrink-0 rounded-2xl border border-zinc-200 bg-white/80 p-3 text-left shadow-sm transition hover:scale-[1.01] dark:border-zinc-700 dark:bg-zinc-800/80"
                   >
-                    <span className="flex items-center gap-2 text-sm font-medium text-zinc-500">
-                      <Clock size={16} />{' '}
+                    <span className="flex items-center gap-1 text-xs font-medium text-zinc-500">
+                      <Clock size={11} />{' '}
                       {done
                         ? 'Done'
                         : timer
@@ -209,19 +245,52 @@ const CookMode = ({
                             : 'Tap to resume'
                           : 'Ready to start'}
                     </span>
-                    <span className="mt-2 block font-serif text-5xl tabular-nums">
+                    <span className="mt-1 block font-serif text-4xl tabular-nums">
                       {timer
                         ? formatCountdown(remaining)
                         : formatDurationLabel(duration.seconds)}
                     </span>
                     {!timer && (
-                      <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                        <Play size={15} /> Start timer
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                        <Play size={10} /> Start timer
                       </span>
                     )}
                   </button>
                 )
               })}
+            </div>
+          )}
+          {railVisible && railRows.length > 0 && (
+            <div
+              ref={railRef}
+              className="relative mt-6 mb-3 w-full max-w-md overflow-y-auto rounded-2xl border border-zinc-300/40 px-3.5 dark:border-zinc-600/40"
+              style={{
+                height: RAIL_HEIGHT,
+                maskImage:
+                  'linear-gradient(to bottom, transparent, black 26px, black calc(100% - 26px), transparent)',
+                WebkitMaskImage:
+                  'linear-gradient(to bottom, transparent, black 26px, black calc(100% - 26px), transparent)',
+              }}
+            >
+              {railRows.map((row) =>
+                row.kind === 'header' ? (
+                  <div
+                    key={row.key}
+                    className="flex items-center truncate text-xs font-semibold uppercase tracking-wide text-zinc-500"
+                    style={{ height: RAIL_ROW_H }}
+                  >
+                    {row.text}
+                  </div>
+                ) : (
+                  <div
+                    key={row.key}
+                    className="flex items-center truncate text-base text-zinc-800 dark:text-zinc-200"
+                    style={{ height: RAIL_ROW_H }}
+                  >
+                    {row.text}
+                  </div>
+                )
+              )}
             </div>
           )}
         </main>
@@ -247,61 +316,6 @@ const CookMode = ({
           </button>
         </footer>
       </div>
-      {ingredientsOpen && (
-        <div
-          className="fixed inset-0 z-10 flex items-end bg-black/40 sm:items-center sm:justify-center"
-          onClick={() => setIngredientsOpen(false)}
-        >
-          <section
-            className="max-h-[75vh] w-full overflow-y-auto rounded-t-3xl bg-white p-6 text-zinc-900 sm:max-w-lg sm:rounded-3xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-zinc-900">
-                Ingredients
-              </h2>
-              <button
-                type="button"
-                onClick={() => setIngredientsOpen(false)}
-                aria-label="Close ingredients"
-                className="rounded-full p-2 text-zinc-600 hover:bg-black/5"
-              >
-                <X />
-              </button>
-            </div>
-            {allIngredients.map((ingredient) => (
-              <label
-                key={ingredient.key}
-                className="flex cursor-pointer items-center gap-3 py-3 text-zinc-900"
-              >
-                <input
-                  type="checkbox"
-                  checked={checked.has(ingredient.key)}
-                  onChange={() =>
-                    setChecked((current) => {
-                      const next = new Set(current)
-                      next.has(ingredient.key)
-                        ? next.delete(ingredient.key)
-                        : next.add(ingredient.key)
-                      return next
-                    })
-                  }
-                  className="h-5 w-5 cursor-pointer rounded border-zinc-400 accent-primary"
-                />
-                <span
-                  className={
-                    checked.has(ingredient.key)
-                      ? 'text-zinc-400 line-through'
-                      : ''
-                  }
-                >
-                  {ingredient.text}
-                </span>
-              </label>
-            ))}
-          </section>
-        </div>
-      )}
     </div>
   )
 }

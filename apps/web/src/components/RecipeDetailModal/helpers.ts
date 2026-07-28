@@ -267,3 +267,81 @@ export const buildRecipeUpdateFromDraft = (
   components: draft.components,
   tag_ids: tagIds,
 })
+
+export const RAIL_VISIBLE_STORAGE_KEY = 'cook-mode-ingredient-rail'
+
+export interface RailRow {
+  key: string
+  kind: 'header' | 'ingredient'
+  text: string
+}
+
+export const showRailComponentHeaders = (
+  components: SaveComponent[]
+): boolean => components.length > 1
+
+export const buildIngredientRailRows = (
+  components: SaveComponent[],
+  unitSystem: string,
+  servingScale: number
+): RailRow[] => {
+  const showHeaders = showRailComponentHeaders(components)
+  const rows: RailRow[] = []
+  components.forEach((component, componentIndex) => {
+    if (showHeaders) {
+      rows.push({
+        key: `h${componentIndex}`,
+        kind: 'header',
+        text: component.name ?? '',
+      })
+    }
+    getScaledIngredientValues(component, unitSystem, servingScale).forEach(
+      (ingredient, ingredientIndex) => {
+        rows.push({
+          key: `${componentIndex}-${ingredientIndex}`,
+          kind: 'ingredient',
+          text: displayIngredient(ingredient),
+        })
+      }
+    )
+  })
+
+  return rows
+}
+
+export const railFlatIndex = (
+  components: SaveComponent[],
+  showHeaders: boolean,
+  componentIndex: number,
+  ingredientIndex: number
+): number => {
+  let rows = 0
+  for (let i = 0; i < componentIndex; i++) {
+    rows += (showHeaders ? 1 : 0) + components[i].ingredients.length
+  }
+
+  return rows + (showHeaders ? 1 : 0) + ingredientIndex
+}
+
+export const resolveRailTargets = (components: SaveComponent[]): number[] => {
+  const showHeaders = showRailComponentHeaders(components)
+  const targets: number[] = []
+  let lastTarget = 0
+  components.forEach((component, componentIndex) => {
+    const lines = component.step_ingredient_line ?? []
+    component.steps.forEach((_, stepIndex) => {
+      const line = lines[stepIndex]
+      if (line != null) {
+        lastTarget = railFlatIndex(
+          components,
+          showHeaders,
+          componentIndex,
+          line
+        )
+      }
+      targets.push(lastTarget)
+    })
+  })
+
+  return targets
+}

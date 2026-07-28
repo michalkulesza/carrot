@@ -27,6 +27,7 @@ from api.models import (
     RecipeOut,
     RelatedRecipeRequest,
     RecipeSaveRequest,
+    SaveComponent,
     Tag,
     recipe_households_table,
     recipe_related_recipes_table,
@@ -98,6 +99,27 @@ async def _link_recipe_to_household(session: AsyncSession, recipe_id: uuid.UUID,
         .values(recipe_id=recipe_id, household_id=household_id, added_at=datetime.utcnow())
         .on_conflict_do_nothing(index_elements=["recipe_id", "household_id"])
     )
+
+
+def _invalidate_stale_step_ingredient_lines(
+    stored_components: list[dict],
+    new_components: list[SaveComponent],
+) -> list[SaveComponent]:
+    """Null out step_ingredient_line where an edit changed the ingredient or step count it was matched against."""
+    result: list[SaveComponent] = []
+    for index, component in enumerate(new_components):
+        stored = stored_components[index] if index < len(stored_components) else None
+        stored_ingredient_count = len(stored.get("ingredients", [])) if stored else None
+        stored_step_count = len(stored.get("steps", [])) if stored else None
+        if (
+            stored is None
+            or len(component.ingredients) != stored_ingredient_count
+            or len(component.steps) != stored_step_count
+        ):
+            result.append(component.model_copy(update={"step_ingredient_line": None}))
+        else:
+            result.append(component)
+    return result
 
 
 def _build_recipe_out(
@@ -453,7 +475,8 @@ async def update_recipe(
     recipe.creator_handle = body.creator_handle
     recipe.source_url = body.source_url
     recipe.notes = body.notes
-    recipe.components = [c.model_dump() for c in body.components]
+    components = _invalidate_stale_step_ingredient_lines(recipe.components or [], body.components)
+    recipe.components = [c.model_dump() for c in components]
     await _set_tags(session, recipe, body.tag_ids, household_id)
 
     await session.flush()

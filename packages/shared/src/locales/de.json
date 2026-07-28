@@ -50,6 +50,7 @@
     "decreaseTextSize": "Textgröße im Kochmodus verkleinern",
     "increaseTextSize": "Textgröße im Kochmodus vergrößern",
     "ingredients": "Zutaten",
+    "toggleIngredientRail": "Zutaten ein- oder ausblenden",
     "close": "Kochmodus schließen",
     "readyToStart": "Bereit zum Starten",
     "tapToPause": "Zum Pausieren tippen",

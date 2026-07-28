@@ -146,6 +146,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
                 "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
                 "original_display": None,
             } for ingredient in component.ingredients],
+            "step_ingredient_line": component.step_ingredient_line,
         })
     metadata = result.metadata
     recipe = Recipe(
