@@ -9,6 +9,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Multiple meals per day** — Support breakfast, lunch, dinner, and leftovers instead of a single recipe for each date.
 - [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Cook from what I have / pantry** — Track pantry staples, rank recipes by missing ingredients, and subtract pantry items from the shopping list.
+- [ ] **Web recipe import source icons** — Add icons for supported sources beneath the import method buttons.
 -------------------------------------------------------------
 - [x] **When importing recipe send it to the background straight away** - inseatead of waiting at the skeleton screen, drop it in the bg, and show placeholder, redirect to recipe page
 - [x] **Ingredient scaling / adjust servings** — Released in 1.0.1 with serving-size steppers on web and iOS, live structured-ingredient recalculation, and scaled shopping-list additions.
@@ -26,12 +27,10 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Add related recipes** — Add reciprocal links between recipes, with a related-recipes section on web and mobile.
 - [x] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [x] **Custom tags** - Bring back custom tags
-- [ ] **Web recipe import source icons** — Add icons for supported sources beneath the import method buttons.
 
 ## Experience and product polish
 
 - [ ] **Web recipe details looks not great** !!!!!!!
-- [ ] **Anythign to do with top position px that is a hook that takes a while to reload ie jump when importing via share**
 - [ ] **Delightful empty and loading states** — Extend shimmers to recipe lists and meal plans; add friendly empty states, restrained Carrot mascot moments, import-stage animation, haptics, and completion feedback.
 
 - [ ] **Colours and themes** — Define and apply a cohesive theme system.
@@ -46,6 +45,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [x] **Simplify tags and allergens** — Removed all custom-tag/custom-allergen support (predefined-only now); the full predefined tag and allergen lists are always sent to Gemini during import, and matched allergens show as badges on the recipe, independent of the viewer's own allergen preferences.
 - [x] **Move add recipe to bottom drawer**
 - [x] **Haptics and native context menus** — Add meaningful haptic feedback and long-press recipe actions (favourite, plan, share, delete) with a peek preview.
+- [x] **Anythign to do with top position px that is a hook that takes a while to reload ie jump when importing via share**
 
 ## Quality, release, and growth
 

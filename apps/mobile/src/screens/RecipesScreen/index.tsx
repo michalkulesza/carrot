@@ -63,6 +63,8 @@ type RecipeListItem =
   | { type: 'recipe'; recipe: RecipeOut }
 
 const TAG_BAR_HEIGHT = 48
+const NEXT_MEAL_CARD_HEIGHT = 84
+const SEARCH_TRANSITION = { duration: 300, easing: Easing.out(Easing.cubic) }
 
 interface RecipeSearchFooterProps {
   filterFavourites: boolean
@@ -144,7 +146,8 @@ const RecipesScreen = () => {
   const insets = useSafeAreaInsets()
   const animatedHeaderHeight = useAnimatedHeaderHeight()
   const tagBarHeightSV = useSharedValue(TAG_BAR_HEIGHT)
-  const tagBarVisibleSV = useSharedValue(1)
+  const searchProgress = useSharedValue(0)
+  const headerChromeHeightSV = useSharedValue(TAG_BAR_HEIGHT + NEXT_MEAL_CARD_HEIGHT)
 
   useEffect(() => {
     if (openAddRecipe !== '1') return
@@ -347,15 +350,15 @@ const RecipesScreen = () => {
     // first delays the shared-value mutation reaching the UI thread, which reads as the
     // tag bar fading late instead of immediately on tap.
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    tagBarVisibleSV.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) })
+    searchProgress.value = withTiming(1, SEARCH_TRANSITION)
     setIsSearching(true)
-    setSelectedTagIds(new Set())
-    setFilterFavourites(false)
-  }, [tagBarVisibleSV])
+    if (selectedTagIds.size > 0) setSelectedTagIds(new Set())
+    if (filterFavourites) setFilterFavourites(false)
+  }, [filterFavourites, searchProgress, selectedTagIds])
   const handleSearchBlur = useCallback(() => {
-    tagBarVisibleSV.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) })
+    searchProgress.value = withTiming(0, SEARCH_TRANSITION)
     setIsSearching(false)
-  }, [tagBarVisibleSV])
+  }, [searchProgress])
 
   const recipesTitle = t('nav.recipes')
   const switchContextLabel = t('households.switchContext')
@@ -762,9 +765,17 @@ const RecipesScreen = () => {
 
   const groupedFilterTags = useMemo(() => groupTagsByCategory(tags), [tags])
 
-  const tagBarOpacityStyle = useAnimatedStyle(() => ({ opacity: tagBarVisibleSV.value }))
-  const tagBarSpacerStyle = useAnimatedStyle(() => ({
-    height: tagBarHeightSV.value * tagBarVisibleSV.value,
+  const headerChromeWindowStyle = useAnimatedStyle(() => ({
+    height: headerChromeHeightSV.value * (1 - searchProgress.value),
+  }))
+  const headerChromeContentStyle = useAnimatedStyle(() => ({
+    opacity: 1 - searchProgress.value,
+    transform: [{ translateY: -headerChromeHeightSV.value * searchProgress.value }],
+  }))
+  const tagBarRoomStyle = useAnimatedStyle(() => ({ height: tagBarHeightSV.value }))
+  const tagBarChromeStyle = useAnimatedStyle(() => ({
+    opacity: 1 - searchProgress.value,
+    transform: [{ translateY: -tagBarHeightSV.value * searchProgress.value }],
   }))
   const tagBarTransform = { transform: [{ translateY: animatedHeaderHeight }] }
   const handleTagBarLayout = useCallback(
@@ -772,6 +783,12 @@ const RecipesScreen = () => {
       tagBarHeightSV.value = event.nativeEvent.layout.height
     },
     [tagBarHeightSV],
+  )
+  const handleHeaderChromeLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      headerChromeHeightSV.value = event.nativeEvent.layout.height
+    },
+    [headerChromeHeightSV],
   )
 
   if (busy) {
@@ -804,16 +821,18 @@ const RecipesScreen = () => {
           }}
           renderItem={renderRecipeListItem}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 88 }}
+          contentContainerStyle={{ paddingBottom: 88 }}
           ListHeaderComponent={
-            <View>
-              <Reanimated.View style={tagBarSpacerStyle} />
-              {!isSearching && (
-                <Reanimated.View entering={FadeInDown.duration(250)} exiting={FadeOut.duration(250)}>
-                  <NextMealCard enabled={dataQueriesEnabled} />
-                </Reanimated.View>
-              )}
-            </View>
+            <Reanimated.View style={[styles.headerChromeWindow, headerChromeWindowStyle]}>
+              <Reanimated.View
+                style={headerChromeContentStyle}
+                onLayout={handleHeaderChromeLayout}
+                pointerEvents={isSearching ? 'none' : 'auto'}
+              >
+                <Reanimated.View style={tagBarRoomStyle} />
+                <NextMealCard enabled={dataQueriesEnabled} />
+              </Reanimated.View>
+            </Reanimated.View>
           }
           ListFooterComponent={
             <RecipeSearchFooter
@@ -833,7 +852,7 @@ const RecipesScreen = () => {
         onLayout={handleTagBarLayout}
         pointerEvents={isSearching ? 'none' : 'auto'}
       >
-        <Reanimated.View style={tagBarOpacityStyle}>
+        <Reanimated.View style={tagBarChromeStyle}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
