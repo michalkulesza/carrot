@@ -11,6 +11,7 @@ const PrimaryButton = ({
   loading,
   label,
   accessibilityLabel,
+  tintColor = colors.blue,
   style,
 }: {
   onPress: () => void
@@ -18,11 +19,13 @@ const PrimaryButton = ({
   loading?: boolean
   label: string
   accessibilityLabel: string
+  tintColor?: string
   style?: StyleProp<ViewStyle>
 }) => (
   <Pressable
     style={({ pressed }) => [
       styles.primaryBtn,
+      { backgroundColor: tintColor },
       style,
       disabled && styles.btnDisabled,
       pressed && !glassAvailable && { opacity: 0.7 },
@@ -37,7 +40,7 @@ const PrimaryButton = ({
     <GlassViewSafe
       style={StyleSheet.absoluteFill}
       glassEffectStyle="regular"
-      tintColor={colors.blue}
+      tintColor={tintColor}
       isInteractive
     />
     {loading ? (

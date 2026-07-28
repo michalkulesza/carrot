@@ -2,6 +2,7 @@ import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import PrimaryButton from '../PrimaryButton'
+import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
 const QuickUrlInputRow = ({
@@ -53,6 +54,7 @@ const QuickUrlInputRow = ({
         loading={loading}
         label={t('addRecipe.import')}
         accessibilityLabel={t('addRecipe.import')}
+        tintColor={colors.orange}
       />
     </View>
   )

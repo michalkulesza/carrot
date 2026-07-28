@@ -361,8 +361,8 @@ const AuthenticatedApp = () => {
 const RootLayout = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <ColorSchemeProvider>
+      <ColorSchemeProvider>
+        <BottomSheetModalProvider>
           <CookingModeProvider>
             <PersistQueryClientProvider
               client={queryClient}
@@ -383,8 +383,8 @@ const RootLayout = () => {
               </I18nextProvider>
             </PersistQueryClientProvider>
           </CookingModeProvider>
-        </ColorSchemeProvider>
-      </BottomSheetModalProvider>
+        </BottomSheetModalProvider>
+      </ColorSchemeProvider>
     </GestureHandlerRootView>
   )
 }

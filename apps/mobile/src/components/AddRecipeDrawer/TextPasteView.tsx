@@ -2,6 +2,7 @@ import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
 import PrimaryButton from '../PrimaryButton'
+import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
 const TextPasteView = ({
@@ -45,8 +46,9 @@ const TextPasteView = ({
         onPress={onExtract}
         disabled={!text.trim() || loading}
         loading={loading}
-        label={t('addRecipe.extractRecipe')}
-        accessibilityLabel={t('addRecipe.extractRecipe')}
+        label={t('addRecipe.import')}
+        accessibilityLabel={t('addRecipe.import')}
+        tintColor={colors.orange}
       />
     </View>
   )

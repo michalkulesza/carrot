@@ -496,6 +496,7 @@ const SettingsScreen = () => {
         </View>
       </View>
 
+      <SectionHeader label={t("settings.miscellaneous")} />
       <View style={styles.card}>
         <Pressable
           style={({ pressed }) => [

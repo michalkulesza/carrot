@@ -2,6 +2,7 @@ import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import PrimaryButton from '../../components/PrimaryButton'
+import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
 const ActionBar = ({
@@ -37,6 +38,7 @@ const ActionBar = ({
         loading={saving}
         label={t('common.save')}
         accessibilityLabel={t('common.save')}
+        tintColor={colors.orange}
       />
     </View>
   )
