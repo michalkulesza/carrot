@@ -1,5 +1,5 @@
 import type { StyleProp, ViewStyle } from 'react-native'
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native'
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import GlassViewSafe, { glassAvailable } from './GlassViewSafe'
 import { colors } from '../theme/colors'
@@ -12,6 +12,9 @@ const PrimaryButton = ({
   label,
   accessibilityLabel,
   tintColor = colors.blue,
+  disabledTintColor,
+  disabledTextColor,
+  disabledBorderColor,
   style,
 }: {
   onPress: () => void
@@ -20,36 +23,52 @@ const PrimaryButton = ({
   label: string
   accessibilityLabel: string
   tintColor?: string
+  disabledTintColor?: string
+  disabledTextColor?: string
+  disabledBorderColor?: string
   style?: StyleProp<ViewStyle>
-}) => (
-  <Pressable
-    style={({ pressed }) => [
-      styles.primaryBtn,
-      { backgroundColor: tintColor },
-      style,
-      disabled && styles.btnDisabled,
-      pressed && !glassAvailable && { opacity: 0.7 },
-    ]}
-    onPress={() => {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      onPress()
-    }}
-    disabled={disabled}
-    accessibilityLabel={accessibilityLabel}
-  >
-    <GlassViewSafe
-      style={StyleSheet.absoluteFill}
-      glassEffectStyle="regular"
-      tintColor={tintColor}
-      isInteractive
-    />
-    {loading ? (
-      <ActivityIndicator color={colors.background} size="small" />
-    ) : (
-      <Text style={styles.primaryBtnText}>{label}</Text>
-    )}
-  </Pressable>
-)
+}) => {
+  const buttonTintColor = disabled && disabledTintColor ? disabledTintColor : tintColor
+  const disabledButtonTextColor = disabled && disabledTextColor ? disabledTextColor : undefined
+  const shouldUseGlassEffect = !disabled || !disabledTintColor
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.primaryBtn,
+        { backgroundColor: buttonTintColor },
+        disabled && disabledBorderColor && { borderWidth: StyleSheet.hairlineWidth, borderColor: disabledBorderColor },
+        style,
+        disabled && !disabledTintColor && styles.btnDisabled,
+        pressed && !glassAvailable && { opacity: 0.7 },
+      ]}
+      onPress={() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        onPress()
+      }}
+      disabled={disabled}
+      accessibilityLabel={accessibilityLabel}
+    >
+      {shouldUseGlassEffect ? (
+        <GlassViewSafe
+          style={StyleSheet.absoluteFill}
+          glassEffectStyle="regular"
+          tintColor={buttonTintColor}
+          isInteractive
+        />
+      ) : (
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: buttonTintColor }]} />
+      )}
+      {loading ? (
+        <ActivityIndicator color={disabledButtonTextColor ?? '#ffffff'} size="small" />
+      ) : (
+        <Text style={[styles.primaryBtnText, disabledButtonTextColor && { color: disabledButtonTextColor }]}>
+          {label}
+        </Text>
+      )}
+    </Pressable>
+  )
+}
 
 export default PrimaryButton
 

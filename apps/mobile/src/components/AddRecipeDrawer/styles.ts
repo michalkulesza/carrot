@@ -113,6 +113,8 @@ export const styles = StyleSheet.create({
     color: PlatformColor('secondaryLabel') as unknown as string,
     fontWeight: '500',
   },
+  urlPasteButtonInvalid: { backgroundColor: colors.orange, borderColor: colors.orange },
+  urlPasteButtonInvalidText: { color: '#ffffff' },
 
   // Text paste input
   textInputGroup: { gap: 8 },

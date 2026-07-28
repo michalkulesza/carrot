@@ -40,12 +40,18 @@ const QuickUrlInputRow = ({
           textContentType="URL"
         />
         <Pressable
-          style={({ pressed }) => [styles.pasteIconBtn, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [
+            styles.pasteIconBtn,
+            !canImport && styles.urlPasteButtonInvalid,
+            pressed && { opacity: 0.7 },
+          ]}
           onPress={onPaste}
           accessibilityLabel={t('addRecipe.paste')}
           hitSlop={8}
         >
-          <Text style={styles.pasteIconBtnText}>{t('addRecipe.paste')}</Text>
+          <Text style={[styles.pasteIconBtnText, !canImport && styles.urlPasteButtonInvalidText]}>
+            {t('addRecipe.paste')}
+          </Text>
         </Pressable>
       </View>
       <PrimaryButton
@@ -55,6 +61,9 @@ const QuickUrlInputRow = ({
         label={t('addRecipe.import')}
         accessibilityLabel={t('addRecipe.import')}
         tintColor={colors.orange}
+        disabledTintColor={colors.secondaryBackground}
+        disabledTextColor={colors.secondaryLabel}
+        disabledBorderColor={colors.opaqueSeparator}
       />
     </View>
   )
