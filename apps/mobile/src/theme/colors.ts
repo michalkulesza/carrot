@@ -8,9 +8,14 @@ const brandText = (Platform.OS === 'ios'
   ? DynamicColorIOS({ light: '#141212', dark: '#F4E7E7' })
   : '#141212') as unknown as string
 
+const secondaryBackgroundTransparent = (Platform.OS === 'ios'
+  ? DynamicColorIOS({ light: 'rgba(242, 242, 247, 0)', dark: 'rgba(28, 28, 30, 0)' })
+  : 'rgba(242, 242, 247, 0)') as unknown as string
+
 export const colors = {
   background: ios('systemBackground', '#ffffff'),
   secondaryBackground: ios('secondarySystemBackground', '#f2f2f7'),
+  secondaryBackgroundTransparent,
   tertiaryBackground: ios('tertiarySystemBackground', '#ffffff'),
 
   label: ios('label', '#000000'),

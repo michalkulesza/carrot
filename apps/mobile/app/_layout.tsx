@@ -165,8 +165,10 @@ function RootLayoutNav() {
       headerTransparent: true,
       headerShadowVisible: false,
       headerTitleAlign: 'left' as const,
+      headerTitleStyle: { color: colorScheme === 'dark' ? '#ffffff' : '#000000' },
+      headerTintColor: colorScheme === 'dark' ? '#ffffff' : '#000000',
     }),
-    [t],
+    [colorScheme, t],
   )
   useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
 

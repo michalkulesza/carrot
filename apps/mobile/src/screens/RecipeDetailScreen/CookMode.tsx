@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
   BackHandler,
-  DynamicColorIOS,
-  Easing,
   type LayoutChangeEvent,
   Platform,
   Pressable,
@@ -31,6 +28,7 @@ import {
 import { useIsAppActive } from "../../hooks/useIsAppActive";
 import IngredientRail from "./IngredientRail";
 import { buildIngredientRailRows, RAIL_VISIBLE_STORAGE_KEY, resolveRailTargets } from "./helpers";
+import { colors } from "../../theme/colors";
 
 const KEEP_AWAKE_COOK_TAG = "cook-mode";
 const FONT_SCALE_STORAGE_KEY = "cook-mode-font-scale";
@@ -47,13 +45,6 @@ const getFontScaleIndex = (fontScale: number) => {
   return FONT_SCALES.indexOf(closestScale);
 };
 
-const cookColor = (light: string, dark: string, colorScheme: "light" | "dark") =>
-  (Platform.OS === "ios"
-    ? DynamicColorIOS({ light, dark })
-    : colorScheme === "dark"
-      ? dark
-      : light) as unknown as string;
-
 const CookModeToolbar = ({
   canDecreaseTextSize,
   canIncreaseTextSize,
@@ -62,7 +53,7 @@ const CookModeToolbar = ({
   railVisible,
   onToggleRail,
   onClose,
-  muted,
+  tintColor,
   decreaseTextSizeLabel,
   increaseTextSizeLabel,
   toggleRailLabel,
@@ -75,7 +66,7 @@ const CookModeToolbar = ({
   railVisible: boolean;
   onToggleRail: () => void;
   onClose: () => void;
-  muted: string;
+  tintColor: string;
   decreaseTextSizeLabel: string;
   increaseTextSizeLabel: string;
   toggleRailLabel: string;
@@ -92,7 +83,7 @@ const CookModeToolbar = ({
       ]}
       accessibilityLabel={decreaseTextSizeLabel}
     >
-      <Text style={[styles.fontControlSmall, { color: muted }]}>aA</Text>
+      <Text style={[styles.fontControlSmall, { color: tintColor }]}>aA</Text>
     </Pressable>
     <Pressable
       disabled={!canIncreaseTextSize}
@@ -104,7 +95,7 @@ const CookModeToolbar = ({
       ]}
       accessibilityLabel={increaseTextSizeLabel}
     >
-      <Text style={[styles.fontControlLarge, { color: muted }]}>aA</Text>
+      <Text style={[styles.fontControlLarge, { color: tintColor }]}>aA</Text>
     </Pressable>
     <Pressable
       onPress={onToggleRail}
@@ -113,17 +104,17 @@ const CookModeToolbar = ({
       accessibilityState={{ selected: railVisible }}
       style={!railVisible && styles.fontControlDisabled}
     >
-      <Ionicons name="list-outline" size={25} color={muted} />
+      <Ionicons name="list-outline" size={25} color={tintColor} />
     </Pressable>
     <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={closeLabel}>
-      <Ionicons name="close" size={29} color={muted} />
+      <Ionicons name="close" size={29} color={tintColor} />
     </Pressable>
   </View>
 );
 
-const CookModeBackButton = ({ onClose, muted, closeLabel }: { onClose: () => void; muted: string; closeLabel: string }) => (
+const CookModeBackButton = ({ onClose, tintColor, closeLabel }: { onClose: () => void; tintColor: string; closeLabel: string }) => (
   <Pressable onPress={onClose} hitSlop={8} accessibilityLabel={closeLabel}>
-    <Ionicons name="chevron-back" size={28} color={muted} />
+    <Ionicons name="chevron-back" size={28} color={tintColor} />
   </Pressable>
 )
 
@@ -151,12 +142,12 @@ const CookMode = ({
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const dark = colorScheme === "dark";
-  const bg = cookColor("#f7f5f0", "#20211f", colorScheme);
-  const bgHex = dark ? "#20211f" : "#f7f5f0";
-  const text = cookColor("#252421", "#f4f1eb", colorScheme);
-  const muted = cookColor("#74716b", "#aaa9a3", colorScheme);
-  const inactiveProgress = cookColor("#d5d1c9", "#545550", colorScheme);
-  const secondaryButton = cookColor("#e9e5dd", "#30312e", colorScheme);
+  const bg = colors.background;
+  const text = colors.label;
+  const muted = colors.secondaryLabel;
+  const inactiveProgress = colors.gray4;
+  const secondaryButton = colors.secondaryBackground;
+  const headerTintColor = dark ? "#ffffff" : "#000000";
   const steps = useMemo(
     () =>
       recipe.components.flatMap((component, componentIndex) =>
@@ -175,22 +166,25 @@ const CookMode = ({
   );
   const railTargets = useMemo(() => resolveRailTargets(recipe.components), [recipe.components]);
   const [index, setIndex] = useState(0);
-  const [instructionFontSize, setInstructionFontSize] = useState(39);
-  const [instructionReady, setInstructionReady] = useState(false);
   const [fontScale, setFontScale] = useState(1);
   const [instructionAreaHeight, setInstructionAreaHeight] = useState(0);
-  const [labelHeight, setLabelHeight] = useState(0);
   const [railVisible, setRailVisible] = useState(true);
   const [, setTimerTick] = useState(0);
-  const stepContentOpacity = useRef(new Animated.Value(0)).current;
   const swipeStart = useRef<number | null>(null);
   const instructionAreaHeightRef = useRef(0);
+  const fontScaleRef = useRef(1);
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers();
   const step = steps[index];
-  const durations = useMemo(
-    () => (step ? parseDurationMatches(step.text) : []),
-    [step],
-  );
+  const durations = useMemo(() => {
+    const uniqueDurations = new Set<number>();
+
+    return (step ? parseDurationMatches(step.text) : []).filter(({ seconds }) => {
+      if (uniqueDurations.has(seconds)) return false;
+
+      uniqueDurations.add(seconds);
+      return true;
+    });
+  }, [step]);
   const hasInitialStep = initialComponentIndex !== null && initialStepIndex !== null;
   useLayoutEffect(() => {
     if (!visible || !hasInitialStep) return;
@@ -203,22 +197,15 @@ const CookMode = ({
   const storageKey = `cook-mode:${recipe.id}`;
   const adjustFontScale = useCallback(
     (direction: -1 | 1) => {
-      const currentIndex = getFontScaleIndex(fontScale);
+      const currentIndex = getFontScaleIndex(fontScaleRef.current);
       const next = FONT_SCALES[currentIndex + direction];
-      if (next === undefined || next === fontScale) return;
+      if (next === undefined || next === fontScaleRef.current) return;
 
-      Animated.timing(stepContentOpacity, {
-        toValue: 0,
-        duration: 120,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (!finished) return;
-          setFontScale(next);
-          void AsyncStorage.setItem(FONT_SCALE_STORAGE_KEY, String(next));
-      });
+      fontScaleRef.current = next;
+      setFontScale(next);
+      void AsyncStorage.setItem(FONT_SCALE_STORAGE_KEY, String(next));
     },
-    [fontScale, stepContentOpacity],
+    [],
   );
 
   useEffect(() => {
@@ -244,7 +231,6 @@ const CookMode = ({
 
     instructionAreaHeightRef.current = height;
     setInstructionAreaHeight(height);
-    setInstructionReady(false);
   }, []);
 
   const handleToggleRail = useCallback(() => {
@@ -272,7 +258,9 @@ const CookMode = ({
     void AsyncStorage.getItem(FONT_SCALE_STORAGE_KEY).then((value) => {
       const savedScale = Number(value);
       if (savedScale >= MIN_FONT_SCALE && savedScale <= MAX_FONT_SCALE) {
-        setFontScale(FONT_SCALES[getFontScaleIndex(savedScale)]);
+        const nextScale = FONT_SCALES[getFontScaleIndex(savedScale)];
+        fontScaleRef.current = nextScale;
+        setFontScale(nextScale);
       }
     });
   }, []);
@@ -285,22 +273,6 @@ const CookMode = ({
     const timer = setInterval(() => setTimerTick((tick) => tick + 1), 1000);
     return () => clearInterval(timer);
   }, [visible, timers]);
-  useLayoutEffect(() => {
-    setInstructionFontSize(Math.round(39 * fontScale));
-    setInstructionReady(false);
-  }, [fontScale, index, step?.text]);
-  useEffect(() => {
-    if (!instructionReady) {
-      stepContentOpacity.setValue(0);
-      return;
-    }
-    Animated.timing(stepContentOpacity, {
-      toValue: 1,
-      duration: 180,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [instructionReady, stepContentOpacity]);
   useEffect(() => {
     if (!visible) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -312,7 +284,7 @@ const CookMode = ({
   useLayoutEffect(() => {
     if (!visible) return;
     navigation.setOptions({
-      headerLeft: () => <CookModeBackButton onClose={onClose} muted={muted} closeLabel={t("cookMode.close")} />,
+      headerLeft: () => <CookModeBackButton onClose={onClose} tintColor={headerTintColor} closeLabel={t("cookMode.close")} />,
       headerRight: () => (
         <CookModeToolbar
           canDecreaseTextSize={fontScale > MIN_FONT_SCALE}
@@ -322,7 +294,7 @@ const CookMode = ({
           railVisible={railVisible}
           onToggleRail={handleToggleRail}
           onClose={onClose}
-          muted={muted}
+          tintColor={headerTintColor}
           decreaseTextSizeLabel={t("cookMode.decreaseTextSize")}
           increaseTextSizeLabel={t("cookMode.increaseTextSize")}
           toggleRailLabel={t("cookMode.toggleIngredientRail")}
@@ -330,19 +302,19 @@ const CookMode = ({
         />
       ),
     });
-  }, [adjustFontScale, fontScale, handleToggleRail, muted, navigation, onClose, railVisible, t, visible]);
+  }, [adjustFontScale, fontScale, handleToggleRail, headerTintColor, navigation, onClose, railVisible, t, visible]);
   if (!visible || !step) return null;
-  const go = (next: number) => {
-    const target = Math.max(0, Math.min(steps.length - 1, next));
-    if (target === index) return;
-    Animated.timing(stepContentOpacity, {
-      toValue: 0,
-      duration: 120,
-      easing: Easing.in(Easing.cubic),
-      useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished) setIndex(target);
-    });
+  const instructionFontSize = Math.round(39 * fontScale);
+  const instructionMinimumFontScale = 17 / instructionFontSize;
+  const instructionConstraintsReady = instructionAreaHeight > 0;
+  const instructionMaxHeight = Math.max(
+    0,
+    instructionAreaHeight - INSTRUCTION_HEIGHT_BUFFER,
+  );
+  const instructionOpacity = instructionConstraintsReady ? 1 : 0;
+  const footerStepLabel = `${t("common.step").toUpperCase()} ${index + 1}`;
+  const goBy = (direction: -1 | 1) => {
+    setIndex((current) => Math.max(0, Math.min(steps.length - 1, current + direction)));
   };
   return (
     <View
@@ -357,20 +329,6 @@ const CookMode = ({
           paddingBottom: Math.max(24, insets.bottom + 12),
         }}
       >
-        <View style={styles.progress}>
-          {steps.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.progressItem,
-                {
-                  backgroundColor:
-                    i <= index ? text : inactiveProgress,
-                },
-              ]}
-            />
-          ))}
-        </View>
         <View
           style={styles.main}
           onTouchStart={(event) => {
@@ -381,56 +339,35 @@ const CookMode = ({
             const delta =
               (event.nativeEvent.changedTouches[0]?.pageX ?? swipeStart.current) -
               swipeStart.current;
-            if (Math.abs(delta) > 70) go(index + (delta < 0 ? 1 : -1));
+            if (Math.abs(delta) > 70) goBy(delta < 0 ? 1 : -1);
             swipeStart.current = null;
           }}
         >
           <View style={styles.instructionArea} onLayout={handleInstructionAreaLayout}>
-            <Animated.Text
-              style={[styles.stepLabel, { color: muted, opacity: stepContentOpacity }]}
-              onLayout={(event) => setLabelHeight(event.nativeEvent.layout.height)}
-            >
-              STEP {index + 1}
-            </Animated.Text>
-            <Animated.Text
-              key={`${index}-${instructionAreaHeight}-${instructionFontSize}`}
+            <Text
               style={[
                 styles.instruction,
                 {
                   color: text,
                   fontSize: instructionFontSize,
-                  lineHeight: Math.round(instructionFontSize * 1.23),
-                  opacity: stepContentOpacity,
+                  maxHeight: instructionMaxHeight,
+                  opacity: instructionOpacity,
                 },
               ]}
+              adjustsFontSizeToFit
+              minimumFontScale={instructionMinimumFontScale}
               maxFontSizeMultiplier={1}
-              onTextLayout={(event) => {
-                const instructionHeight =
-                  event.nativeEvent.lines.length * Math.round(instructionFontSize * 1.23);
-                const availableHeight =
-                  instructionAreaHeight - labelHeight - styles.stepLabel.marginBottom - INSTRUCTION_HEIGHT_BUFFER;
-                if (
-                  instructionAreaHeight > 0 &&
-                  instructionHeight > availableHeight &&
-                  instructionFontSize > 17
-                ) {
-                  setInstructionFontSize((size) => Math.max(17, size - 2));
-                } else if (instructionAreaHeight > 0) {
-                  setInstructionReady(true);
-                }
-              }}
             >
               {step.text}
-            </Animated.Text>
+            </Text>
           </View>
-          <Animated.View style={{ opacity: stepContentOpacity }}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.timerScroll}
-              contentContainerStyle={styles.timerGrid}
-            >
-              {durations.map((duration, durationIndex) => {
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.timerScroll}
+            contentContainerStyle={styles.timerGrid}
+          >
+            {durations.map((duration, durationIndex) => {
               const id = `${recipe.id}-c${step.componentIndex}-s${step.stepIndex}-d${durationIndex}`;
               const timer = timers.get(id);
               const remaining = timer
@@ -471,9 +408,8 @@ const CookMode = ({
                   </Text>
                 </Pressable>
               );
-              })}
-            </ScrollView>
-          </Animated.View>
+            })}
+          </ScrollView>
           {railVisible && (
             <IngredientRail
               rows={railRows}
@@ -481,14 +417,24 @@ const CookMode = ({
               stepKey={index}
               text={text}
               muted={muted}
-              bg={bgHex}
             />
           )}
+          <View style={styles.progress}>
+            {steps.map((_, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.progressItem,
+                  { backgroundColor: i <= index ? text : inactiveProgress },
+                ]}
+              />
+            ))}
+          </View>
         </View>
         <View style={styles.footer}>
           <Pressable
             disabled={index === 0}
-            onPress={() => go(index - 1)}
+            onPress={() => goBy(-1)}
             style={[
               styles.navButton,
               {
@@ -499,14 +445,12 @@ const CookMode = ({
           >
             <Ionicons name="chevron-back" size={28} color={text} />
           </Pressable>
-          <Animated.Text
-            style={[styles.count, { color: text, opacity: stepContentOpacity }]}
-          >
-            {index + 1} of {steps.length}
-          </Animated.Text>
+          <Text style={[styles.stepIndicator, { color: text }]}>
+            {footerStepLabel}
+          </Text>
           <Pressable
             disabled={index === steps.length - 1}
-            onPress={() => go(index + 1)}
+            onPress={() => goBy(1)}
             style={[
               styles.navButton,
               {
@@ -534,21 +478,16 @@ const styles = StyleSheet.create({
   fontControlDisabled: { opacity: 0.3 },
   fontControlSmall: { fontSize: 13, fontWeight: "600" },
   fontControlLarge: { fontSize: 18, fontWeight: "600" },
-  progress: { flexDirection: "row", gap: 5 },
+  progress: { flexDirection: "row", gap: 5, marginBottom: 16 },
   progressItem: { flex: 1, height: 4, borderRadius: 2 },
   main: { flex: 1, alignItems: "center" },
   instructionArea: { flex: 1, width: "100%", justifyContent: "center", alignItems: "center" },
-  stepLabel: {
-    fontSize: 12,
-    letterSpacing: 2,
-    fontWeight: "700",
-    marginBottom: 16,
-  },
   instruction: {
+    width: "100%",
     textAlign: "center",
     fontFamily: "Georgia",
   },
-  timerScroll: { flexGrow: 0, marginTop: 17 },
+  timerScroll: { flexGrow: 0, minHeight: 40, marginTop: 17 },
   timerGrid: { flexDirection: "row", alignItems: "center", gap: 7 },
   timerRow: {
     flexDirection: "row",
@@ -556,7 +495,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 13,
-    backgroundColor: "#ea8e4e",
+    backgroundColor: colors.brand,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
@@ -574,7 +513,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  count: { fontSize: 19, fontWeight: "700" },
+  stepIndicator: { fontSize: 13, lineHeight: 18, fontWeight: "700", letterSpacing: 1 },
 });
 
 export default CookMode;

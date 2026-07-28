@@ -1,15 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { FlatList, StyleSheet, Text, View } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { colors } from '../../theme/colors'
 import type { RailRow } from './helpers'
 
-export const RAIL_ROW_H = 34
-export const RAIL_VISIBLE_ROWS = 5
+export const RAIL_ROW_H = 28
+export const RAIL_VISIBLE_ROWS = 7
 export const RAIL_MARGIN_TOP = 24
 export const RAIL_MARGIN_BOTTOM = 14
 const ROW_H = RAIL_ROW_H
 const VISIBLE_ROWS = RAIL_VISIBLE_ROWS
-const FADE_H = 26
+const RAIL_HEIGHT = 196
+const FADE_H = 16
+const EDGE_PADDING = 8
 
 const IngredientRail = ({
   rows,
@@ -17,14 +20,12 @@ const IngredientRail = ({
   stepKey,
   text,
   muted,
-  bg,
 }: {
   rows: RailRow[]
   targetIndex: number
   stepKey: number
   text: string
   muted: string
-  bg: string
 }) => {
   const listRef = useRef<FlatList<RailRow>>(null)
 
@@ -43,7 +44,12 @@ const IngredientRail = ({
         ref={listRef}
         data={rows}
         keyExtractor={(row) => row.key}
-        getItemLayout={(_, index) => ({ length: ROW_H, offset: ROW_H * index, index })}
+        contentContainerStyle={styles.list}
+        getItemLayout={(_, index) => ({
+          length: ROW_H,
+          offset: EDGE_PADDING + ROW_H * index,
+          index,
+        })}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) =>
           item.kind === 'header' ? (
@@ -63,12 +69,12 @@ const IngredientRail = ({
       />
       <LinearGradient
         pointerEvents="none"
-        colors={[bg, `${bg}00`]}
+        colors={[colors.secondaryBackground, colors.secondaryBackgroundTransparent]}
         style={[styles.fade, styles.fadeTop]}
       />
       <LinearGradient
         pointerEvents="none"
-        colors={[`${bg}00`, bg]}
+        colors={[colors.secondaryBackgroundTransparent, colors.secondaryBackground]}
         style={[styles.fade, styles.fadeBottom]}
       />
     </View>
@@ -78,12 +84,11 @@ const IngredientRail = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: ROW_H * VISIBLE_ROWS,
+    height: RAIL_HEIGHT,
     marginTop: RAIL_MARGIN_TOP,
     marginBottom: RAIL_MARGIN_BOTTOM,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(128,130,120,0.25)',
+    backgroundColor: colors.secondaryBackground,
     paddingHorizontal: 14,
     overflow: 'hidden',
   },
@@ -91,6 +96,7 @@ const styles = StyleSheet.create({
     height: ROW_H,
     justifyContent: 'center',
   },
+  list: { paddingVertical: EDGE_PADDING },
   header: {
     fontSize: 13,
     lineHeight: 18,
