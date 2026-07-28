@@ -55,7 +55,7 @@ const TimerSpan = ({
         accessibilityRole="button"
         accessibilityLabel={t('timers.startTimer')}
       >
-        {`⏱ ${formatDurationLabel(seconds)}`}
+        {`⏱ ${formatDurationLabel(seconds)}`}
       </Text>
     )
   }
@@ -74,7 +74,7 @@ const TimerSpan = ({
       accessibilityRole="button"
       accessibilityLabel={isDone ? t('common.doneCheck') : isRunning ? t('common.pause') : t('common.resume')}
     >
-      {isDone ? t('common.doneCheck') : `⏱ ${formatCountdown(remaining)}`}
+      {isDone ? t('common.doneCheck') : `⏱ ${formatCountdown(remaining)}`}
     </Text>
   )
 }
