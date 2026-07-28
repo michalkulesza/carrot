@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
+  type LayoutChangeEvent,
   Linking,
   ListRenderItemInfo,
   Pressable,
@@ -26,7 +27,7 @@ import type { NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
-import { useHeaderHeight } from 'expo-router/react-navigation'
+import { useAnimatedHeaderHeight } from 'expo-router/build/react-navigation/native-stack'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes, useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
@@ -45,13 +46,7 @@ import { colors } from '../../theme/colors'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
-import {
-  SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY,
-  SORT_OPTIONS,
-  learnedSearchBarHeightDelta,
-  setLearnedSearchBarHeightDelta,
-  type SortMode,
-} from './helpers'
+import { SORT_OPTIONS, type SortMode } from './helpers'
 import { TOGGLE_HOUSEHOLD_PREFIX } from '../RecipeDetailScreen/useRecipeDetailHeader'
 import { styles } from './styles'
 import ThumbnailImage from './ThumbnailImage'
@@ -66,6 +61,8 @@ type RecipeListItem =
   | { type: 'import-job'; job: ImportJob }
   | { type: 'semantic-header' }
   | { type: 'recipe'; recipe: RecipeOut }
+
+const TAG_BAR_HEIGHT = 48
 
 interface RecipeSearchFooterProps {
   filterFavourites: boolean
@@ -145,25 +142,9 @@ const RecipesScreen = () => {
   const addRecipeSheetRef = useRef<AddRecipeDrawerHandle>(null)
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
-  const headerHeight = useHeaderHeight()
-  const headerHeightSV = useSharedValue(headerHeight)
-  const tagBarHeightSV = useSharedValue(0)
+  const animatedHeaderHeight = useAnimatedHeaderHeight()
+  const tagBarHeightSV = useSharedValue(TAG_BAR_HEIGHT)
   const tagBarVisibleSV = useSharedValue(1)
-  const collapsedHeaderHeightRef = useRef(headerHeight)
-  const searchBarHeightRef = useRef<number | null>(learnedSearchBarHeightDelta)
-  const isSearchActiveRef = useRef(false)
-
-  useEffect(() => {
-    if (searchBarHeightRef.current != null) return
-    AsyncStorage.getItem(SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY).then((val) => {
-      if (val == null || searchBarHeightRef.current != null) return
-      const parsed = Number(val)
-      if (Number.isFinite(parsed)) {
-        searchBarHeightRef.current = parsed
-        setLearnedSearchBarHeightDelta(parsed)
-      }
-    })
-  }, [])
 
   useEffect(() => {
     if (openAddRecipe !== '1') return
@@ -360,39 +341,6 @@ const RecipesScreen = () => {
     setQuery('')
   }, [])
 
-  // useHeaderHeight() only reports the search bar's expanded height once UIKit's own
-  // reveal animation has already finished, so animating off of it lags a full cycle
-  // behind the native motion. Instead, kick our animation off directly from onFocus/onBlur
-  // (which fire as the native animation starts) towards a learned expanded height, and use
-  // the headerHeight effect only to calibrate that height for next time.
-  useEffect(() => {
-    // All user-visible motion is driven by animateHeaderHeight() from onFocus/onBlur —
-    // this effect only calibrates/corrects, so it snaps instantly rather than running a
-    // second, separately-timed animation (which reads as a laggy "catch up").
-    if (isSearchActiveRef.current) {
-      const delta = headerHeight - collapsedHeaderHeightRef.current
-      if (delta !== searchBarHeightRef.current) {
-        searchBarHeightRef.current = delta
-        setLearnedSearchBarHeightDelta(delta)
-        void AsyncStorage.setItem(SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY, String(delta))
-      }
-    } else {
-      collapsedHeaderHeightRef.current = headerHeight
-    }
-    headerHeightSV.value = headerHeight
-  }, [headerHeight, headerHeightSV])
-
-  const animateHeaderHeight = useCallback(
-    (active: boolean) => {
-      isSearchActiveRef.current = active
-      if (active && searchBarHeightRef.current == null) return // unknown height yet — effect above will animate once the real value lands
-      const target = active
-        ? collapsedHeaderHeightRef.current + (searchBarHeightRef.current ?? 0)
-        : collapsedHeaderHeightRef.current
-      headerHeightSV.value = withTiming(target, { duration: 300, easing: Easing.out(Easing.cubic) })
-    },
-    [headerHeightSV],
-  )
   const handleSearchFocus = useCallback(() => {
     // Kick the animation off before any setState — clearing the tag/favourites filters
     // below triggers a re-render of the (possibly long) recipe list, and letting that run
@@ -400,16 +348,14 @@ const RecipesScreen = () => {
     // tag bar fading late instead of immediately on tap.
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     tagBarVisibleSV.value = withTiming(0, { duration: 300, easing: Easing.out(Easing.cubic) })
-    animateHeaderHeight(true)
     setIsSearching(true)
     setSelectedTagIds(new Set())
     setFilterFavourites(false)
-  }, [animateHeaderHeight, tagBarVisibleSV])
+  }, [tagBarVisibleSV])
   const handleSearchBlur = useCallback(() => {
     tagBarVisibleSV.value = withTiming(1, { duration: 300, easing: Easing.out(Easing.cubic) })
-    animateHeaderHeight(false)
     setIsSearching(false)
-  }, [animateHeaderHeight, tagBarVisibleSV])
+  }, [tagBarVisibleSV])
 
   const recipesTitle = t('nav.recipes')
   const switchContextLabel = t('households.switchContext')
@@ -453,6 +399,7 @@ const RecipesScreen = () => {
       onCancelButtonPress: handleSearchCancel,
       onFocus: handleSearchFocus,
       onBlur: handleSearchBlur,
+      hideWhenScrolling: false,
       autoCapitalize: 'none' as const,
     }),
     [handleSearchBlur, handleSearchCancel, handleSearchChangeText, handleSearchFocus, t],
@@ -815,13 +762,17 @@ const RecipesScreen = () => {
 
   const groupedFilterTags = useMemo(() => groupTagsByCategory(tags), [tags])
 
-  const tagBarPositionStyle = useAnimatedStyle(() => ({
-    top: headerHeightSV.value,
-    opacity: tagBarVisibleSV.value,
+  const tagBarOpacityStyle = useAnimatedStyle(() => ({ opacity: tagBarVisibleSV.value }))
+  const tagBarSpacerStyle = useAnimatedStyle(() => ({
+    height: tagBarHeightSV.value * tagBarVisibleSV.value,
   }))
-  const topSpacerStyle = useAnimatedStyle(() => ({
-    height: headerHeightSV.value + tagBarHeightSV.value * tagBarVisibleSV.value,
-  }))
+  const tagBarTransform = { transform: [{ translateY: animatedHeaderHeight }] }
+  const handleTagBarLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      tagBarHeightSV.value = event.nativeEvent.layout.height
+    },
+    [tagBarHeightSV],
+  )
 
   if (busy) {
     // Only draw our own spinner once auth is ready — during auth bootstrap the
@@ -852,12 +803,16 @@ const RecipesScreen = () => {
             return `import-job-${item.job.id}`
           }}
           renderItem={renderRecipeListItem}
-          contentInsetAdjustmentBehavior="never"
+          contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ paddingBottom: insets.bottom + 88 }}
           ListHeaderComponent={
             <View>
-              <Reanimated.View style={topSpacerStyle} />
-              {!isSearching && <NextMealCard enabled={dataQueriesEnabled} />}
+              <Reanimated.View style={tagBarSpacerStyle} />
+              {!isSearching && (
+                <Reanimated.View entering={FadeInDown.duration(250)} exiting={FadeOut.duration(250)}>
+                  <NextMealCard enabled={dataQueriesEnabled} />
+                </Reanimated.View>
+              )}
             </View>
           }
           ListFooterComponent={
@@ -873,30 +828,32 @@ const RecipesScreen = () => {
           }
         />
       </MarqueeSyncProvider>
-      <Reanimated.View
-        style={[styles.tagBar, tagBarPositionStyle]}
-        onLayout={(e) => { tagBarHeightSV.value = e.nativeEvent.layout.height }}
+      <Animated.View
+        style={[styles.tagBar, tagBarTransform]}
+        onLayout={handleTagBarLayout}
         pointerEvents={isSearching ? 'none' : 'auto'}
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tagListContent}
-        >
-          {favChip}
-          {TAG_CATEGORIES.map((category) => (
-            <CategoryFilterChip
-              key={category}
-              category={category}
-              tags={groupedFilterTags[category]}
-              selectedTagIds={selectedTagIds}
-              onToggle={toggleTagId}
-            />
-          ))}
-          {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
-          {groupedFilterTags.other.map(renderTag)}
-        </ScrollView>
-      </Reanimated.View>
+        <Reanimated.View style={tagBarOpacityStyle}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tagListContent}
+          >
+            {favChip}
+            {TAG_CATEGORIES.map((category) => (
+              <CategoryFilterChip
+                key={category}
+                category={category}
+                tags={groupedFilterTags[category]}
+                selectedTagIds={selectedTagIds}
+                onToggle={toggleTagId}
+              />
+            ))}
+            {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
+            {groupedFilterTags.other.map(renderTag)}
+          </ScrollView>
+        </Reanimated.View>
+      </Animated.View>
       <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} sheetRef={addRecipeSheetRef} />
       <AddRecipeDrawer ref={addRecipeSheetRef} />
     </View>

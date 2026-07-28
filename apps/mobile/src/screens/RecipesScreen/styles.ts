@@ -42,9 +42,9 @@ export const styles = StyleSheet.create({
   errorText: { color: colors.red, fontSize: 16, textAlign: 'center' },
   tagBar: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
-    paddingTop: 0,
     paddingBottom: 16,
   },
   tagBarDivider: {

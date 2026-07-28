@@ -1,13 +1,3 @@
-// The search bar's expanded header height can only be learned from a real focus event
-// (see comment near searchBarHeightRef in index.tsx) — it's a fixed native constant for this
-// screen's header configuration, so once measured on this device it's persisted to disk
-// and never needs to be (re-)learned again, only on the very first search tap ever.
-export const SEARCH_BAR_HEIGHT_DELTA_STORAGE_KEY = 'recipes-search-bar-height-delta'
-export let learnedSearchBarHeightDelta: number | null = null
-export const setLearnedSearchBarHeightDelta = (value: number) => {
-  learnedSearchBarHeightDelta = value
-}
-
 export type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'edited_newest' | 'edited_oldest'
 
 export const SORT_OPTIONS: { key: SortMode; labelKey: string }[] = [
