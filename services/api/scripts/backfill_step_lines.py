@@ -5,6 +5,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm.attributes import flag_modified
 
+from api import users
 from api.database import async_session_maker
 from api.models import Recipe
 from api.services.gemini import match_step_ingredient_lines
