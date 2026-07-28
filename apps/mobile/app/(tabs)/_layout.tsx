@@ -1,15 +1,18 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { NativeTabs } from 'expo-router/unstable-native-tabs'
 import { useTranslation } from 'react-i18next'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { useHousehold } from '../../src/context/HouseholdContext'
+import { useResolvedColorScheme } from '../../src/context/ColorSchemeContext'
 import { persistLanguage } from '../../src/i18n'
 
 export default function TabsLayout() {
   const { t, i18n } = useTranslation()
   const { preferences } = usePreferences()
   const { households, isLoadingHouseholds } = useHousehold()
+  const colorScheme = useResolvedColorScheme()
   const gated = !isLoadingHouseholds && households.length === 0
+  const nativeTabProps = useMemo(() => ({ colorScheme }), [colorScheme])
 
   useEffect(() => {
     const lang = preferences?.language
@@ -20,7 +23,7 @@ export default function TabsLayout() {
   }, [preferences?.language, i18n])
 
   return (
-    <NativeTabs>
+    <NativeTabs unstable_nativeProps={nativeTabProps}>
       {gated && (
         <NativeTabs.Trigger name="index">
           <NativeTabs.Trigger.Icon sf="sparkles" md="auto_awesome" />
@@ -53,7 +56,6 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
         <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
-
     </NativeTabs>
   )
 }

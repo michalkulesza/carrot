@@ -6,22 +6,30 @@ import BugReportButton from '../../../src/components/BugReportButton'
 import HeaderTitle from '../../../src/components/HeaderTitle'
 import ShoppingListScreen from '../../../src/screens/ShoppingListScreen'
 
-export default function ShoppingTab() {
+const ShoppingHeaderTitle = () => {
   const { t } = useTranslation()
 
+  return <HeaderTitle title={t('shoppingList.title')} />
+}
+
+const renderShoppingHeaderTitle = () => <ShoppingHeaderTitle />
+
+const ShoppingHeaderRight = () => (
+  <View style={styles.headerRight}>
+    <BugReportButton />
+    <BellMenu />
+  </View>
+)
+
+const shoppingHeaderOptions = {
+  headerTitle: renderShoppingHeaderTitle,
+  headerRight: ShoppingHeaderRight,
+}
+
+export default function ShoppingTab() {
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerTitle: () => <HeaderTitle title={t('shoppingList.title')} />,
-          headerRight: () => (
-            <View style={styles.headerRight}>
-              <BugReportButton />
-              <BellMenu />
-            </View>
-          ),
-        }}
-      />
+      <Stack.Screen options={shoppingHeaderOptions} />
       <ShoppingListScreen />
     </>
   )

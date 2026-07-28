@@ -411,52 +411,68 @@ const RecipesScreen = () => {
     setIsSearching(false)
   }, [animateHeaderHeight, tagBarVisibleSV])
 
-  useLayoutEffect(() => {
-    const headerSearchBarOptions = {
+  const recipesTitle = t('nav.recipes')
+  const switchContextLabel = t('households.switchContext')
+  const sortByLabel = t('recipes.sortBy')
+  const renderHeaderTitle = useCallback(
+    () => (
+      <HeaderTitle
+        title={recipesTitle}
+        householdMenuActions={householdMenuActions}
+        onHouseholdAction={handleHouseholdAction}
+        onHouseholdMenuOpen={handleHouseholdMenuOpen}
+        activeHousehold={activeHousehold}
+        switchContextLabel={switchContextLabel}
+        isLoadingHouseholds={isLoadingHouseholds}
+      />
+    ),
+    [
+      activeHousehold,
+      handleHouseholdAction,
+      handleHouseholdMenuOpen,
+      householdMenuActions,
+      isLoadingHouseholds,
+      recipesTitle,
+      switchContextLabel,
+    ],
+  )
+  const renderHeaderRight = useCallback(
+    () => (
+      <HeaderRight
+        sortByLabel={sortByLabel}
+        filterMenuActions={filterMenuActions}
+        onFilterAction={handleFilterAction}
+      />
+    ),
+    [filterMenuActions, handleFilterAction, sortByLabel],
+  )
+  const headerSearchBarOptions = useMemo(
+    () => ({
       placeholder: t('recipes.searchPlaceholder'),
       onChangeText: handleSearchChangeText,
       onCancelButtonPress: handleSearchCancel,
       onFocus: handleSearchFocus,
       onBlur: handleSearchBlur,
       autoCapitalize: 'none' as const,
-    }
-    navigation.setOptions({
-      title: t('nav.recipes'),
-      headerTitle: () => (
-        <HeaderTitle
-          title={t('nav.recipes')}
-          householdMenuActions={householdMenuActions}
-          onHouseholdAction={handleHouseholdAction}
-          onHouseholdMenuOpen={handleHouseholdMenuOpen}
-          activeHousehold={activeHousehold}
-          switchContextLabel={t('households.switchContext')}
-          isLoadingHouseholds={isLoadingHouseholds}
-        />
-      ),
+    }),
+    [handleSearchBlur, handleSearchCancel, handleSearchChangeText, handleSearchFocus, t],
+  )
+
+  useLayoutEffect(() => {
+    const headerOptions = {
+      title: recipesTitle,
+      headerTitle: renderHeaderTitle,
       headerSearchBarOptions,
-      headerRight: () => (
-        <HeaderRight
-          sortByLabel={t('recipes.sortBy')}
-          filterMenuActions={filterMenuActions}
-          onFilterAction={handleFilterAction}
-        />
-      ),
-    })
+      headerRight: renderHeaderRight,
+    }
+
+    navigation.setOptions(headerOptions)
   }, [
+    headerSearchBarOptions,
     navigation,
-    filterMenuActions,
-    handleFilterAction,
-    householdMenuActions,
-    handleHouseholdAction,
-    handleHouseholdMenuOpen,
-    activeHousehold,
-    isLoadingHouseholds,
-    user,
-    handleSearchChangeText,
-    handleSearchCancel,
-    handleSearchFocus,
-    handleSearchBlur,
-    t,
+    recipesTitle,
+    renderHeaderRight,
+    renderHeaderTitle,
   ])
 
   const recipesWithOverrides = useMemo(

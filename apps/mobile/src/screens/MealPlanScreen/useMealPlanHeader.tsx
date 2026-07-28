@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react'
+import { useCallback, useLayoutEffect } from 'react'
 import { Pressable, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
@@ -34,6 +34,14 @@ const MealPlanHeaderRight = ({ exporting, onExportPdf }: { exporting: boolean; o
   )
 }
 
+const MealPlanHeaderTitle = () => {
+  const { t } = useTranslation()
+
+  return <HeaderTitle title={t('nav.mealPlan')} />
+}
+
+const renderMealPlanHeaderTitle = () => <MealPlanHeaderTitle />
+
 export const useMealPlanHeader = ({
   navigation,
   exporting,
@@ -45,12 +53,17 @@ export const useMealPlanHeader = ({
   exporting: boolean
   onExportPdf: () => void
 }) => {
-  const { t } = useTranslation()
+  const renderHeaderRight = useCallback(
+    () => <MealPlanHeaderRight exporting={exporting} onExportPdf={onExportPdf} />,
+    [exporting, onExportPdf],
+  )
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: () => <HeaderTitle title={t('nav.mealPlan')} />,
-      headerRight: () => <MealPlanHeaderRight exporting={exporting} onExportPdf={onExportPdf} />,
-    })
-  }, [navigation, onExportPdf, exporting, t])
+    const headerOptions = {
+      headerTitle: renderMealPlanHeaderTitle,
+      headerRight: renderHeaderRight,
+    }
+
+    navigation.setOptions(headerOptions)
+  }, [navigation, renderHeaderRight])
 }

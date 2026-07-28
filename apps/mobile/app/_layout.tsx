@@ -64,6 +64,35 @@ const navigationThemeColors: Theme['colors'] = {
   notification: colors.red,
 }
 
+const BugReportHeaderRight = () => <BugReportButton />
+
+const NewRecipeHeaderTitle = () => {
+  const { t } = useTranslation()
+
+  return <HeaderTitle title={t('addRecipe.addRecipe')} />
+}
+
+const renderNewRecipeHeaderTitle = () => <NewRecipeHeaderTitle />
+
+const WebViewImportHeaderTitle = () => {
+  const { t } = useTranslation()
+
+  return <HeaderTitle title={t('addRecipe.webviewTitle')} />
+}
+
+const renderWebViewImportHeaderTitle = () => <WebViewImportHeaderTitle />
+
+const authScreenOptions = { headerShown: false }
+const tabsScreenOptions = { headerShown: false }
+const shareScreenOptions = { animation: 'none' as const, headerShown: false }
+const newRecipeScreenOptions = {
+  headerTitle: renderNewRecipeHeaderTitle,
+  headerRight: BugReportHeaderRight,
+}
+const webViewImportScreenOptions = { headerTitle: renderWebViewImportHeaderTitle }
+const detailScreenOptions = { title: '', headerRight: BugReportHeaderRight }
+const bugReportScreenOptions = { presentation: 'modal' as const }
+
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })
 // Bump when the cached query data shape changes in a way older persisted caches can't handle.
 const QUERY_CACHE_BUSTER = '1'
@@ -129,6 +158,15 @@ function RootLayoutNav() {
       fonts: DefaultTheme.fonts,
     }),
     [colorScheme],
+  )
+  const rootStackScreenOptions = useMemo(
+    () => ({
+      headerBackTitle: t('common.back'),
+      headerTransparent: true,
+      headerShadowVisible: false,
+      headerTitleAlign: 'left' as const,
+    }),
+    [t],
   )
   useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
 
@@ -265,30 +303,16 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={navigationTheme}>
       <Stack
-        screenOptions={{
-          headerBackTitle: t('common.back'),
-          headerTransparent: true,
-          headerShadowVisible: false,
-          headerTitleAlign: 'left',
-        }}
+        screenOptions={rootStackScreenOptions}
       >
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="share" options={{ animation: 'none', headerShown: false }} />
-        <Stack.Screen
-          name="new-recipe"
-          options={{
-            headerTitle: () => <HeaderTitle title={t('addRecipe.addRecipe')} />,
-            headerRight: () => <BugReportButton />,
-          }}
-        />
-        <Stack.Screen
-          name="webview-import"
-          options={{ headerTitle: () => <HeaderTitle title={t('addRecipe.webviewTitle')} /> }}
-        />
-        <Stack.Screen name="recipe/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
-        <Stack.Screen name="household/[id]" options={{ title: '', headerRight: () => <BugReportButton /> }} />
-        <Stack.Screen name="bug-report" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="(auth)" options={authScreenOptions} />
+        <Stack.Screen name="(tabs)" options={tabsScreenOptions} />
+        <Stack.Screen name="share" options={shareScreenOptions} />
+        <Stack.Screen name="new-recipe" options={newRecipeScreenOptions} />
+        <Stack.Screen name="webview-import" options={webViewImportScreenOptions} />
+        <Stack.Screen name="recipe/[id]" options={detailScreenOptions} />
+        <Stack.Screen name="household/[id]" options={detailScreenOptions} />
+        <Stack.Screen name="bug-report" options={bugReportScreenOptions} />
       </Stack>
       {loading && (
         <View style={styles.loadingOverlay}>

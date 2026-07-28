@@ -19,6 +19,19 @@ const GettingStartedHeaderRight = () => (
   </View>
 )
 
+const GettingStartedHeaderTitle = () => {
+  const { t } = useTranslation()
+
+  return <HeaderTitle title={t('nav.gettingStarted')} />
+}
+
+const renderGettingStartedHeaderTitle = () => <GettingStartedHeaderTitle />
+
+const gettingStartedHeaderOptions = {
+  headerTitle: renderGettingStartedHeaderTitle,
+  headerRight: GettingStartedHeaderRight,
+}
+
 const GettingStartedScreen = () => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
@@ -109,12 +122,7 @@ const GettingStartedScreen = () => {
       contentContainerStyle={[styles.content, { paddingBottom: 48 + insets.bottom }]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen
-        options={{
-          headerTitle: () => <HeaderTitle title={t('nav.gettingStarted')} />,
-          headerRight: () => <GettingStartedHeaderRight />,
-        }}
-      />
+      <Stack.Screen options={gettingStartedHeaderOptions} />
 
       <Image
         source={require('../../../assets/icon.png')}

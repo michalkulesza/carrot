@@ -51,6 +51,19 @@ const SettingsHeaderRight = () => (
   </View>
 );
 
+const SettingsHeaderTitle = () => {
+  const { t } = useTranslation();
+
+  return <HeaderTitle title={t("nav.settings")} />;
+};
+
+const renderSettingsHeaderTitle = () => <SettingsHeaderTitle />;
+
+const settingsHeaderOptions = {
+  headerTitle: renderSettingsHeaderTitle,
+  headerRight: SettingsHeaderRight,
+};
+
 const SettingsScreen = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
@@ -329,12 +342,7 @@ const SettingsScreen = () => {
       ]}
       contentInsetAdjustmentBehavior="automatic"
     >
-      <Stack.Screen
-        options={{
-          headerTitle: () => <HeaderTitle title={t("nav.settings")} />,
-          headerRight: () => <SettingsHeaderRight />,
-        }}
-      />
+      <Stack.Screen options={settingsHeaderOptions} />
 
       <SectionHeader label={t("settings.stats")} />
       <StatsSection />
