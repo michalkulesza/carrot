@@ -13,7 +13,7 @@ import {
   ModalFooter,
   toast,
 } from '@heroui/react'
-import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
+import type { RecipeOut, SaveComponent, ShoppingListItemInput, Tag } from '@carrot/shared/types'
 import {
   addTagToRecipe,
   deleteRecipe,
@@ -370,30 +370,33 @@ const RecipeDetailModal = ({
       preferences?.unit_system ?? 'metric',
       servingScale
     )
-    addShoppingListItems.mutate([text])
+    const item: ShoppingListItemInput = {
+      text,
+      category: comp.shopping_list_categories?.[ii] ?? 'other',
+    }
+    addShoppingListItems.mutate([item])
     setSessionAdded((prev) => new Set(prev).add(`${ci}-${ii}`))
   }
 
   const handleAddAllIngredients = (ci: number) => {
     const comp = (r.components as SaveComponent[])[ci]
     const keys: string[] = []
-    const texts: string[] = []
+    const items: ShoppingListItemInput[] = []
     comp.ingredients.forEach((_, ii) => {
       const key = `${ci}-${ii}`
       if (!sessionAdded.has(key)) {
         keys.push(key)
-        texts.push(
-          getShoppingListIngredient(
-            comp,
-            ii,
-            preferences?.unit_system ?? 'metric',
-            servingScale
-          )
+        const text = getShoppingListIngredient(
+          comp,
+          ii,
+          preferences?.unit_system ?? 'metric',
+          servingScale
         )
+        items.push({ text, category: comp.shopping_list_categories?.[ii] ?? 'other' })
       }
     })
-    if (texts.length === 0) return
-    addShoppingListItems.mutate(texts)
+    if (items.length === 0) return
+    addShoppingListItems.mutate(items)
     setSessionAdded((prev) => new Set([...prev, ...keys]))
   }
 

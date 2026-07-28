@@ -24,7 +24,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
-import type { ShoppingListItem, PresenceUser } from '@carrot/shared/types'
+import type { PresenceUser, ShoppingCategoryOrders, ShoppingListItem } from '@carrot/shared/types'
 import PageHeader from '../components/PageHeader'
 import { useAuth } from '../context/AuthContext'
 
@@ -475,7 +475,7 @@ const ShoppingListPage = () => {
   )
 
   const handleAdd = useCallback(
-    (text: string) => addItems.mutate([text]),
+    (text: string) => addItems.mutate([{ text, category: 'other' }]),
     [addItems]
   )
 
@@ -494,7 +494,13 @@ const ShoppingListPage = () => {
       if (oldIndex === -1 || newIndex === -1) return
 
       const reordered = arrayMove(incompleteItems, oldIndex, newIndex)
-      reorder.mutate(reordered.map((i) => i.id))
+      const categoryOrders = reordered.reduce<ShoppingCategoryOrders>((orders, item) => {
+        const order = orders[item.category] ?? []
+        order.push(item.id)
+        orders[item.category] = order
+        return orders
+      }, {})
+      reorder.mutate(categoryOrders)
     },
     [incompleteItems, reorder]
   )
