@@ -3,7 +3,6 @@ import {
   ActionSheetIOS,
   ActivityIndicator,
   Alert,
-  Animated,
   FlatList,
   type LayoutChangeEvent,
   Linking,
@@ -27,8 +26,6 @@ import type { NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
-import { useAnimatedHeaderHeight } from 'expo-router/build/react-navigation/native-stack'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes, useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import { useTags } from '@carrot/shared/hooks/useTags'
@@ -62,8 +59,6 @@ type RecipeListItem =
   | { type: 'semantic-header' }
   | { type: 'recipe'; recipe: RecipeOut }
 
-const TAG_BAR_HEIGHT = 48
-const NEXT_MEAL_CARD_HEIGHT = 84
 const SEARCH_TRANSITION = { duration: 300, easing: Easing.out(Easing.cubic) }
 
 interface RecipeSearchFooterProps {
@@ -143,11 +138,8 @@ const RecipesScreen = () => {
   const { openAddRecipe } = useLocalSearchParams<{ openAddRecipe?: string }>()
   const addRecipeSheetRef = useRef<AddRecipeDrawerHandle>(null)
   const { t } = useTranslation()
-  const insets = useSafeAreaInsets()
-  const animatedHeaderHeight = useAnimatedHeaderHeight()
-  const tagBarHeightSV = useSharedValue(TAG_BAR_HEIGHT)
   const searchProgress = useSharedValue(0)
-  const headerChromeHeightSV = useSharedValue(TAG_BAR_HEIGHT + NEXT_MEAL_CARD_HEIGHT)
+  const headerChromeHeightSV = useSharedValue(0)
 
   useEffect(() => {
     if (openAddRecipe !== '1') return
@@ -765,25 +757,10 @@ const RecipesScreen = () => {
 
   const groupedFilterTags = useMemo(() => groupTagsByCategory(tags), [tags])
 
-  const headerChromeWindowStyle = useAnimatedStyle(() => ({
-    height: headerChromeHeightSV.value * (1 - searchProgress.value),
-  }))
-  const headerChromeContentStyle = useAnimatedStyle(() => ({
+  const headerChromeStyle = useAnimatedStyle(() => ({
+    marginTop: -headerChromeHeightSV.value * searchProgress.value,
     opacity: 1 - searchProgress.value,
-    transform: [{ translateY: -headerChromeHeightSV.value * searchProgress.value }],
   }))
-  const tagBarRoomStyle = useAnimatedStyle(() => ({ height: tagBarHeightSV.value }))
-  const tagBarChromeStyle = useAnimatedStyle(() => ({
-    opacity: 1 - searchProgress.value,
-    transform: [{ translateY: -tagBarHeightSV.value * searchProgress.value }],
-  }))
-  const tagBarTransform = { transform: [{ translateY: animatedHeaderHeight }] }
-  const handleTagBarLayout = useCallback(
-    (event: LayoutChangeEvent) => {
-      tagBarHeightSV.value = event.nativeEvent.layout.height
-    },
-    [tagBarHeightSV],
-  )
   const handleHeaderChromeLayout = useCallback(
     (event: LayoutChangeEvent) => {
       headerChromeHeightSV.value = event.nativeEvent.layout.height
@@ -823,15 +800,32 @@ const RecipesScreen = () => {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={{ paddingBottom: 88 }}
           ListHeaderComponent={
-            <Reanimated.View style={[styles.headerChromeWindow, headerChromeWindowStyle]}>
-              <Reanimated.View
-                style={headerChromeContentStyle}
-                onLayout={handleHeaderChromeLayout}
-                pointerEvents={isSearching ? 'none' : 'auto'}
-              >
-                <Reanimated.View style={tagBarRoomStyle} />
-                <NextMealCard enabled={dataQueriesEnabled} />
-              </Reanimated.View>
+            <Reanimated.View
+              style={headerChromeStyle}
+              onLayout={handleHeaderChromeLayout}
+              pointerEvents={isSearching ? 'none' : 'auto'}
+            >
+              <View style={styles.tagBar}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.tagListContent}
+                >
+                  {favChip}
+                  {TAG_CATEGORIES.map((category) => (
+                    <CategoryFilterChip
+                      key={category}
+                      category={category}
+                      tags={groupedFilterTags[category]}
+                      selectedTagIds={selectedTagIds}
+                      onToggle={toggleTagId}
+                    />
+                  ))}
+                  {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
+                  {groupedFilterTags.other.map(renderTag)}
+                </ScrollView>
+              </View>
+              <NextMealCard enabled={dataQueriesEnabled} />
             </Reanimated.View>
           }
           ListFooterComponent={
@@ -847,32 +841,6 @@ const RecipesScreen = () => {
           }
         />
       </MarqueeSyncProvider>
-      <Animated.View
-        style={[styles.tagBar, tagBarTransform]}
-        onLayout={handleTagBarLayout}
-        pointerEvents={isSearching ? 'none' : 'auto'}
-      >
-        <Reanimated.View style={tagBarChromeStyle}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tagListContent}
-          >
-            {favChip}
-            {TAG_CATEGORIES.map((category) => (
-              <CategoryFilterChip
-                key={category}
-                category={category}
-                tags={groupedFilterTags[category]}
-                selectedTagIds={selectedTagIds}
-                onToggle={toggleTagId}
-              />
-            ))}
-            {groupedFilterTags.other.length > 0 && <View style={styles.tagBarDivider} />}
-            {groupedFilterTags.other.map(renderTag)}
-          </ScrollView>
-        </Reanimated.View>
-      </Animated.View>
       <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} sheetRef={addRecipeSheetRef} />
       <AddRecipeDrawer ref={addRecipeSheetRef} />
     </View>

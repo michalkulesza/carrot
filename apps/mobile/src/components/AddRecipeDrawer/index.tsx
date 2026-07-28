@@ -31,9 +31,8 @@ const SUBVIEW_TITLE_KEY: Record<Exclude<AddRecipeSubview, 'picker'>, string> = {
   'personal-library': 'addRecipe.fromPersonalLibrary',
 }
 
-// Fixed rather than dynamic so every subview renders at the same height instead of the
-// sheet resizing as the user switches between the picker, text-paste, and library views.
-const SNAP_POINTS = ['65%']
+// Fixed and sized for the tallest subview so every view renders at one height.
+const SNAP_POINTS = ['88%']
 
 const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const { t } = useTranslation()

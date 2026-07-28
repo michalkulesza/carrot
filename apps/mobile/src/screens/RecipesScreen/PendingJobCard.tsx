@@ -10,6 +10,7 @@ import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { PLACEHOLDER_URL } from '../../api/thumbnailUrl'
 import { clearImportImagePreview, getImportImagePreview } from '../../utils/importImagePreviews'
+import { resolveRecipePreview } from '../../utils/recipePreview'
 import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { useAuth } from '../../context/AuthContext'
 import { styles } from './styles'
@@ -36,7 +37,8 @@ const PendingJobCard = ({
   const isCurrentUserImport = job.created_by_user_id === user?.id
   const importingMemberName = job.created_by_name ?? t('importJobs.someone')
   const imagePreview = getImportImagePreview(job.id)
-  const imageUri = imagePreview ?? (job.kind === 'text' ? PLACEHOLDER_URL : null)
+  const [resolvedImagePreview, setResolvedImagePreview] = useState<string | null>(null)
+  const imageUri = imagePreview ?? resolvedImagePreview ?? (job.kind === 'text' ? PLACEHOLDER_URL : null)
   const title = job.status === 'failed'
     ? t(`importJobs.failure.${job.failure_code ?? 'unexpected'}`)
     : job.status === 'running'
@@ -140,6 +142,25 @@ const PendingJobCard = ({
       </View>
     </>
   )
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (!job.source_url || imagePreview) {
+      setResolvedImagePreview(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    void resolveRecipePreview(job.source_url).then((preview) => {
+      if (!cancelled) setResolvedImagePreview(preview)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [imagePreview, job.source_url])
 
   useEffect(() => () => clearImportImagePreview(job.id), [job.id])
 

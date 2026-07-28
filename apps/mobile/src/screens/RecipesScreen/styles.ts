@@ -40,12 +40,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.secondaryBackground,
   },
   errorText: { color: colors.red, fontSize: 16, textAlign: 'center' },
-  headerChromeWindow: { overflow: 'hidden' },
   tagBar: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
     paddingBottom: 16,
   },
   tagBarDivider: {
