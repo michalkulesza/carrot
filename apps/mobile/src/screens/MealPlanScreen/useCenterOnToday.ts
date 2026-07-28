@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, FlatList, LayoutChangeEvent } from 'react-native'
-import type { EdgeInsets } from 'react-native-safe-area-context'
+import { Animated, FlatList, type LayoutChangeEvent } from 'react-native'
+import type { EdgeInsets, Rect } from 'react-native-safe-area-context'
 import { DAY_ROW_HEIGHT } from './helpers'
 
 // scrollToIndex's viewPosition centers against the FlatList's raw frame height,
@@ -8,54 +8,67 @@ import { DAY_ROW_HEIGHT } from './helpers'
 // the tab bar floats over content too — equals the full window height, not the
 // space actually visible between them. Compute the target offset manually
 // against the visible strip [header bottom, tab bar top] instead, and apply it
-// with scrollToOffset. Header/tab bar content heights beyond the safe area are
-// standard iOS constants (no large title on this screen, standard tab bar)
-// since neither is measurable from this screen's own view tree.
-const HEADER_CONTENT_HEIGHT = 44
-const TAB_BAR_CONTENT_HEIGHT = 49
+// with scrollToOffset.
+//
+// The bottom of that strip cannot come from useSafeAreaInsets(): expo-router gives
+// every native tab its own SafeAreaProvider, which seeds from the parent window
+// provider and only swaps in the tab-scoped insets (the ones that include the tab
+// bar) a render later. On the first visit to this tab that first render is a guess,
+// so measure the insets natively through SafeAreaListener and keep the screen hidden
+// until the measurement lands.
+
+interface MeasuredScreen {
+  bottomInset: number
+  height: number
+}
 
 export const useCenterOnToday = ({
   offsets,
   todayIndex,
-  windowHeight,
-  insets,
+  headerHeight,
 }: {
   offsets: number[]
   todayIndex: number
-  windowHeight: number
-  insets: EdgeInsets
+  headerHeight: number
 }) => {
   const listRef = useRef<FlatList>(null)
   const hasUserScrolled = useRef(false)
+  const [screen, setScreen] = useState<MeasuredScreen | null>(null)
   const [isCentered, setIsCentered] = useState(false)
   const listOpacity = useRef(new Animated.Value(0)).current
 
+  const handleSafeAreaChange = useCallback(({ insets, frame }: { insets: EdgeInsets; frame: Rect }) => {
+    setScreen({ bottomInset: insets.bottom, height: frame.height })
+  }, [])
+
   const targetScrollOffset = useMemo(() => {
+    if (screen == null) return 0
+
     const todayOffset = offsets[todayIndex] ?? 0
-    const visibleTop = insets.top + HEADER_CONTENT_HEIGHT
-    const visibleBottom = windowHeight - insets.bottom - TAB_BAR_CONTENT_HEIGHT
-    const visibleCenter = (visibleTop + visibleBottom) / 2
+    const visibleCenter = (headerHeight + (screen.height - screen.bottomInset)) / 2
+
     return Math.max(0, todayOffset - visibleCenter + DAY_ROW_HEIGHT / 2)
-  }, [offsets, todayIndex, windowHeight, insets.top, insets.bottom])
+  }, [offsets, todayIndex, headerHeight, screen])
 
   const recenterOnToday = useCallback((animated: boolean) => {
     if (hasUserScrolled.current) return
     listRef.current?.scrollToOffset({ offset: targetScrollOffset, animated })
-    setIsCentered(true)
   }, [targetScrollOffset])
 
-  // Fire as soon as the ref exists, and again on every later layout change in
-  // case the first call landed before the FlatList was fully attached — a
-  // cheap no-op otherwise since recenterOnToday is idempotent.
   useEffect(() => {
+    if (screen == null) return
     recenterOnToday(false)
-  }, [recenterOnToday])
+    setIsCentered(true)
+  }, [screen, recenterOnToday])
 
+  // Re-apply on later layout changes in case the first call landed before the
+  // FlatList was fully attached — a cheap no-op otherwise.
   const handleListLayout = useCallback(
     (_e: LayoutChangeEvent) => {
+      if (screen == null) return
       recenterOnToday(false)
     },
-    [recenterOnToday],
+    [screen, recenterOnToday],
   )
 
   const handleScrollBeginDrag = useCallback(() => {
@@ -75,7 +88,9 @@ export const useCenterOnToday = ({
   return {
     listRef,
     listOpacity,
+    bottomInset: screen?.bottomInset ?? null,
     targetScrollOffset,
+    handleSafeAreaChange,
     handleListLayout,
     handleScrollBeginDrag,
     handleScrollToToday,

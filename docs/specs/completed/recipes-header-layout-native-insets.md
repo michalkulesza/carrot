@@ -1,6 +1,6 @@
 # Hand screen layout back to UIKit — Recipes, then Meal Plan
 
-Status: planned
+Status: complete
 
 | Part | Scope | What it fixes |
 |---|---|---|
@@ -487,54 +487,73 @@ list fades in at the wrong offset and the correction happens in full view.
 
 ### M1. `useCenterOnToday.ts` — measure the strip instead of guessing it
 
+The top comes from `useHeaderHeight()` (`expo-router/react-navigation`), which is exact from the
+first render on this screen. Delete `HEADER_CONTENT_HEIGHT` and `TAB_BAR_CONTENT_HEIGHT`; keep the
+part of the block comment that explains *why* `scrollToOffset` is used instead of `scrollToIndex`'s
+`viewPosition` — that reasoning is still correct and non-obvious.
+
+The bottom must **not** come from `useSafeAreaInsets()`, for the reason in cause 1. Measure it
+natively instead, with `SafeAreaListener` — a `RNCSafeAreaProvider` view that reports its own
+`safeAreaInsets` straight from UIKit. Its first callback is already the truth: the native side sets
+`_initialInsetsSent` and always emits once the view has a non-zero frame
+(`ios/Fabric/RNCSafeAreaProviderComponentView.mm:74-122`), so there is no "wait and hope" involved.
+It reports the measured `frame` too, which replaces `useWindowDimensions()` and makes rotation fall
+out for free.
+
 ```ts
-const headerHeight = useHeaderHeight()   // expo-router/react-navigation
+const [screen, setScreen] = useState<MeasuredScreen | null>(null)
+
+const handleSafeAreaChange = useCallback(({ insets, frame }: { insets: EdgeInsets; frame: Rect }) => {
+  setScreen({ bottomInset: insets.bottom, height: frame.height })
+}, [])
 
 const targetScrollOffset = useMemo(() => {
+  if (screen == null) return 0
+
   const todayOffset = offsets[todayIndex] ?? 0
-  const visibleCenter = (headerHeight + (windowHeight - insets.bottom)) / 2
+  const visibleCenter = (headerHeight + (screen.height - screen.bottomInset)) / 2
+
   return Math.max(0, todayOffset - visibleCenter + DAY_ROW_HEIGHT / 2)
-}, [offsets, todayIndex, windowHeight, headerHeight, insets.bottom])
+}, [offsets, todayIndex, headerHeight, screen])
 ```
 
-Delete `HEADER_CONTENT_HEIGHT`, `TAB_BAR_CONTENT_HEIGHT` and the block comment above them; the hook
-takes `headerHeight` instead of `insets.top`. Keep the part of the comment that explains *why*
-`scrollToOffset` is used instead of `scrollToIndex`'s `viewPosition` — that reasoning is still
-correct and non-obvious.
+The screen renders the probe as an absolute-fill, `pointerEvents="none"` sibling of the list, and the
+hook returns `bottomInset` for the *Today* button so both read the same measured value.
 
-### M2. `useCenterOnToday.ts` — fade in only once the applied offset is final
+### M2. `useCenterOnToday.ts` — centre and reveal off that one measurement
 
 ```ts
-const appliedOffset = useRef<number | null>(null)
-
-const recenterOnToday = useCallback((animated: boolean) => {
-  if (hasUserScrolled.current) return
-  listRef.current?.scrollToOffset({ offset: targetScrollOffset, animated })
-  appliedOffset.current = targetScrollOffset
-}, [targetScrollOffset])
-
-const handleListLayout = useCallback(() => {
+useEffect(() => {
+  if (screen == null) return
   recenterOnToday(false)
-  if (appliedOffset.current === targetScrollOffset) setIsCentered(true)
-}, [recenterOnToday, targetScrollOffset])
+  setIsCentered(true)
+}, [screen, recenterOnToday])
 ```
 
-The list stays at `opacity: 0` across the inset settle, so the second scroll — the one the user sees
-today — happens while nothing is on screen. Every correction stays `animated: false`; only the
-explicit *Today* button and the `focusToday` param animate.
+Nothing scrolls and nothing is revealed until the measurement exists, so there is no pre-settle pass
+to correct. `handleListLayout` keeps re-applying (cheap, idempotent) but must also bail while
+`screen == null`, and it no longer touches `isCentered`.
+
+> **Do not** gate the reveal on comparing an "applied offset" ref against the current target inside
+> `handleListLayout`. The first attempt did exactly that and it is a no-op: `recenterOnToday` writes
+> the ref immediately before the comparison reads it, so the condition is always true and the list
+> and button reveal on the first layout — before the insets settle — which is the original bug
+> unchanged. That is the trap this section exists to prevent.
 
 ### M3. `index.tsx` — stop double-counting the bottom inset
 
-`contentContainerStyle` becomes `paddingBottom: 16`. The tab bar and home indicator are already in
-the scroll view's adjusted content inset via `"automatic"`.
+`styles.listContent` becomes `paddingBottom: 16`. The tab bar and home indicator are already in the
+scroll view's adjusted content inset via `"automatic"`.
 
 ### M4. `index.tsx` — the Today button must not jump either
 
-It is chrome for the list, so gate it on the same signal: move the button inside the same
-`Animated.View` that carries `listOpacity`, or give it its own `style={{ opacity: listOpacity }}`.
-Two frames without a floating button is invisible; a button that jumps is not. Its
-`bottom: insets.bottom + 16` is then correct as written, since the settled tab-scoped inset already
-clears the tab bar.
+Two things, both needed:
+
+- Position it from the measured `bottomInset` returned by the hook — `bottom: (bottomInset ?? 0) + 16`
+  — never from `useSafeAreaInsets()`. After this the screen has no `useSafeAreaInsets()` call at all.
+- Keep it inside the `Animated.View` that carries `listOpacity`, so it appears only once the
+  measurement has landed. Two frames without a floating button is invisible; a button that jumps is
+  not.
 
 ## v1 follow-through on Recipes
 
@@ -546,9 +565,10 @@ check the last row clears the FAB on a device with and without a home indicator.
 
 ## Verification (Meal Plan)
 
+- **First switch into the tab from another tab** — this is the only case that reproduces, because the
+  tab's `SafeAreaProvider` mounts once and never remounts. Kill the app between attempts; a second
+  visit will look fine even when the bug is present.
 - **Cold load** — the list must appear already centred on today; no second scroll, no upward jump.
-  Log `targetScrollOffset` each render: it may change once (insets settling), but only one
-  `scrollToOffset` may be observable to the user, and the fade-in must come after it.
 - **Today row position** — measure it: the row's centre should sit midway between the header's
   bottom edge and the tab bar's top edge, not ~49pt above it.
 - **Today button** — it must be in its final position the moment it becomes visible.

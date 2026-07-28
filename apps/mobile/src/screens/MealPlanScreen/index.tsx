@@ -8,13 +8,13 @@ import {
   Modal,
   Pressable,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaListener } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useApiClient } from '@carrot/shared/api/context'
@@ -35,7 +35,6 @@ const MealPlanScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
   const { focusToday } = useLocalSearchParams<{ focusToday?: string }>()
-  const insets = useSafeAreaInsets()
   const [pickerDate, setPickerDate] = useState<Date | null>(null)
   const api = useApiClient()
   const qc = useQueryClient()
@@ -101,15 +100,17 @@ const MealPlanScreen = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
-  const { height: windowHeight } = useWindowDimensions()
+  const headerHeight = useHeaderHeight()
   const {
     listRef,
     listOpacity,
+    bottomInset,
     targetScrollOffset,
+    handleSafeAreaChange,
     handleListLayout,
     handleScrollBeginDrag,
     handleScrollToToday,
-  } = useCenterOnToday({ offsets, todayIndex, windowHeight, insets })
+  } = useCenterOnToday({ offsets, todayIndex, headerHeight })
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -217,10 +218,10 @@ const MealPlanScreen = () => {
   const getTodayBtnStyle = useCallback(
     ({ pressed }: { pressed: boolean }) => [
       styles.todayBtn,
-      { bottom: insets.bottom + 16 },
+      { bottom: (bottomInset ?? 0) + 16 },
       pressed && { opacity: 0.8 },
     ],
-    [insets.bottom],
+    [bottomInset],
   )
 
   const handleTodayPress = useCallback(async () => {
@@ -234,6 +235,7 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
+      <SafeAreaListener style={styles.safeAreaProbe} pointerEvents="none" onChange={handleSafeAreaChange} />
       <Animated.View style={[styles.list, { opacity: listOpacity }]}>
         <FlatList
           ref={listRef}
@@ -245,23 +247,23 @@ const MealPlanScreen = () => {
           onLayout={handleListLayout}
           onScrollBeginDrag={handleScrollBeginDrag}
           style={styles.list}
-          contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 16 }]}
+          contentContainerStyle={styles.listContent}
           contentInsetAdjustmentBehavior="automatic"
           showsVerticalScrollIndicator={false}
           windowSize={5}
           maxToRenderPerBatch={20}
           initialNumToRender={14}
         />
+        <Pressable
+          style={getTodayBtnStyle}
+          onPress={handleTodayPress}
+          accessibilityLabel={t('mealPlan.today')}
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
+        </Pressable>
       </Animated.View>
-      <Pressable
-        style={getTodayBtnStyle}
-        onPress={handleTodayPress}
-        accessibilityLabel={t('mealPlan.today')}
-        accessibilityRole="button"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
-      </Pressable>
 
       {showSpinner && (
         <View style={styles.loadingOverlay} pointerEvents="none">

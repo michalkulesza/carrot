@@ -9,7 +9,10 @@ export const styles = StyleSheet.create({
   exportBtn: { padding: 4 },
   exportOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center' },
   list: { flex: 1 },
-  listContent: {},
+  // The tab bar and home indicator are already in the scroll view's adjusted content
+  // inset via contentInsetAdjustmentBehavior="automatic".
+  listContent: { paddingBottom: 16 },
+  safeAreaProbe: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   monthRow: {
     height: MONTH_HEADER_HEIGHT,
     justifyContent: 'flex-end',
