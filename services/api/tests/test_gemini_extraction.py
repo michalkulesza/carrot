@@ -398,6 +398,27 @@ def test_enrichment_preserves_discrete_ingredients_in_both_unit_variants() -> No
     assert component.imperial_ingredients == ["1/2 sweet onion", "1 stalk celery"]
 
 
+def test_enrichment_estimates_metric_weight_for_canned_ingredients() -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{
+            "ingredients": [{"qty": "1", "unit": "can", "name": "black beans, drained and rinsed"}],
+        }],
+    })
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": ["240 g (1 can) black beans, drained and rinsed"],
+        "imperial_ingredients": ["1 can black beans, drained and rinsed"],
+        "metric_steps": [],
+        "imperial_steps": [],
+        "shopping_list_values": ["1 can black beans"],
+    }]))
+
+    repaired = gemini._repair_enrichment_alignment(source, enrichment)
+    component = repaired.components[0]
+
+    assert component.metric_ingredients == ["240 g (1 can) black beans, drained and rinsed"]
+    assert component.imperial_ingredients == ["1 can black beans, drained and rinsed"]
+
+
 def test_enrichment_repairs_shifted_step_ingredient_references() -> None:
     source = RecipeSourceExtraction.model_validate({
         "components": [{

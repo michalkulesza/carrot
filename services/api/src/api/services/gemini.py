@@ -162,7 +162,7 @@ fields. Never modify ingredients or steps.
 
 Never convert, estimate, remove, or replace a discrete-item quantity: whole or
 partial ingredients and count descriptors in the ingredient name such as onion,
-cube, stalk, clove, slice, can, bunch, sprig, handful, and pinch must remain
+cube, stalk, clove, slice, bunch, sprig, handful, and pinch must remain
 counts in BOTH variants. For example, "1/2 sweet onion" must remain "1/2 sweet
 onion", never "125 g sweet onion", and "1 stalk celery" must remain "1 stalk
 celery", never "30 g celery". When a count-based ingredient also contains a
@@ -172,6 +172,12 @@ parentheses after its metric equivalent (for example, "1 cube beef bouillon
 dissolved in 473 ml (2 cups) simmering water"); in imperial, retain just "1
 cube beef bouillon dissolved in 2 cups simmering water" and never add a metric
 equivalent.
+
+Cans are the exception: in metric_ingredients, estimate the typical drained
+weight for the named canned ingredient and retain the original can count in
+parentheses, for example "1 can black beans, drained and rinsed" becomes
+"240 g (1 can) black beans, drained and rinsed". In imperial_ingredients,
+keep the can count as stated.
 """
 
 _ENRICHMENT_SYSTEM = """\
@@ -292,6 +298,7 @@ _COUNT_UNIT_PATTERN = re.compile(
     r"\b(?:clove|cube|slice|stalk|can|bunch|pinch|sprig|handful)\b",
     re.IGNORECASE,
 )
+_CAN_UNIT_PATTERN = re.compile(r"\bcan\b", re.IGNORECASE)
 _INLINE_CONVERTIBLE_MEASUREMENT_PATTERN = re.compile(
     r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:ml|l|g|kg|cups?|lbs?|pounds?|oz|ounces?|in(?:ch(?:es)?)?)\b",
     re.IGNORECASE,
@@ -324,6 +331,7 @@ def _preserve_spoon_measurements(source_ingredients: list[str], variant_ingredie
 def _preserve_discrete_ingredient_measurements(
     source_ingredients: list[str],
     variant_ingredients: list[str],
+    allow_canned_conversion: bool = False,
 ) -> list[str]:
     """Keep count-based ingredients out of weight/volume conversions.
 
@@ -334,7 +342,8 @@ def _preserve_discrete_ingredient_measurements(
     return [
         source_ingredient
         if (
-            not _INLINE_CONVERTIBLE_MEASUREMENT_PATTERN.search(source_ingredient)
+            not (allow_canned_conversion and _CAN_UNIT_PATTERN.search(source_ingredient))
+            and not _INLINE_CONVERTIBLE_MEASUREMENT_PATTERN.search(source_ingredient)
             and (
                 not re.search(r"\b(?:ml|l|g|kg|cup)\b", source_ingredient, re.IGNORECASE)
                 or _COUNT_UNIT_PATTERN.search(source_ingredient)
@@ -527,6 +536,7 @@ def _repair_enrichment_alignment(
             "metric_ingredients": _preserve_discrete_ingredient_measurements(
                 ingredient_fallback,
                 _preserve_spoon_measurements(ingredient_fallback, metric_ingredients),
+                allow_canned_conversion=True,
             ),
             "imperial_ingredients": _preserve_discrete_ingredient_measurements(
                 ingredient_fallback,
@@ -843,6 +853,7 @@ async def estimate_unit_variants(
             "metric_ingredients": _preserve_discrete_ingredient_measurements(
                 source_ingredients,
                 _preserve_spoon_measurements(source_ingredients, variant_component.metric_ingredients),
+                allow_canned_conversion=True,
             ),
             "imperial_ingredients": _preserve_discrete_ingredient_measurements(
                 source_ingredients,
