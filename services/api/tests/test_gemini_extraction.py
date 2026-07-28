@@ -5,6 +5,7 @@ from unittest.mock import Mock
 import pytest
 
 from api.models import (
+    EnrichmentComponent,
     RecipeEnrichment,
     RecipeExtraction,
     RecipeSourceExtraction,
@@ -33,6 +34,27 @@ def _source_payload(**overrides) -> dict:
     payload = {"components": []}
     payload.update(overrides)
     return payload
+
+
+def _onion_step_match_payload() -> dict:
+    return {
+        "matches": [
+            {
+                "component_index": 0,
+                "step_index": step_index,
+                "references": [{"ingredient_index": 0, "evidence": "onion"}],
+            }
+            for step_index in range(2)
+        ],
+    }
+
+
+def _match(component_index: int, step_index: int, references: list[dict]) -> dict:
+    return {
+        "component_index": component_index,
+        "step_index": step_index,
+        "references": references,
+    }
 
 
 @pytest.mark.asyncio
@@ -72,6 +94,7 @@ async def test_query_one_uses_source_only_schema_and_query_two_is_enrichment_onl
     # Query-2 schema cannot express source-owned fields — combiner must supply them.
     assert "title" not in RecipeEnrichment.model_fields
     assert "servings" not in RecipeEnrichment.model_fields
+    assert "step_ingredient_line" not in EnrichmentComponent.model_fields
     # Query 2 receives the query-1 result as input.
     sent_prompt = json.loads(enrichment_call.kwargs["contents"])
     assert sent_prompt["source_recipe"]["components"] == _source_payload()["components"]
@@ -86,6 +109,7 @@ async def test_enrichment_falls_back_only_for_misaligned_field(monkeypatch) -> N
     generate_content = Mock(side_effect=[
         _response(source),
         _response(invalid_enrichment),
+        _response(_onion_step_match_payload()),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -94,7 +118,7 @@ async def test_enrichment_falls_back_only_for_misaligned_field(monkeypatch) -> N
 
     assert result.components[0].ingredients[0].shopping_list_value == "1 onion"
     assert result.components[0].metric_ingredients == ["1 onion"]
-    assert generate_content.call_count == 2
+    assert generate_content.call_count == 3
 
 
 def test_metric_weight_conversion_is_not_replaced_with_the_source_measurement() -> None:
@@ -106,7 +130,25 @@ def test_metric_weight_conversion_is_not_replaced_with_the_source_measurement() 
 
 @pytest.mark.asyncio
 async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_ungrounded_lines(monkeypatch) -> None:
-    generate_content = Mock(return_value=_response({"step_ingredient_line": [0, 1]}))
+    generate_content = Mock(side_effect=[
+        _response({"matches": [
+            {
+                "component_index": 0,
+                "step_index": 0,
+                "references": [{"ingredient_index": 0, "evidence": "onion"}],
+            },
+            {
+                "component_index": 0,
+                "step_index": 1,
+                "references": [{"ingredient_index": 1, "evidence": "chicken"}],
+            },
+        ]}),
+        _response({"matches": [{
+            "component_index": 0,
+            "step_index": 0,
+            "references": [{"ingredient_index": 2, "evidence": "onion"}],
+        }]}),
+    ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
@@ -115,14 +157,150 @@ async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_un
         ["1 tsp cayenne pepper", "5 chicken thighs", "1 small onion"],
     )
 
-    assert lines == [None, 1]
-    call = generate_content.call_args
+    assert lines == [2, 1]
+    call = generate_content.call_args_list[0]
     assert call.kwargs["model"] == "gemini-2.5-flash"
-    assert json.loads(call.kwargs["contents"])["ingredients"] == [
+    assert json.loads(call.kwargs["contents"])["components"][0]["ingredients"] == [
         {"index": 0, "text": "1 tsp cayenne pepper"},
         {"index": 1, "text": "5 chicken thighs"},
         {"index": 2, "text": "1 small onion"},
     ]
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_computes_lower_middle_from_grounded_references(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"matches": [_match(0, 0, [
+        {"ingredient_index": 2, "evidence": "chicken"},
+        {"ingredient_index": 3, "evidence": "oil"},
+        {"ingredient_index": 4, "evidence": "potatoes"},
+    ])]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_step_ingredient_lines(
+        ["Fry the chicken in the oil with potatoes."],
+        ["flour", "bread", "chicken", "oil", "potatoes"],
+    )
+
+    assert lines == [3]
+    assert generate_content.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_accepts_inflected_polish_and_german_evidence(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"matches": [
+        _match(0, 0, [{"ingredient_index": 0, "evidence": "kurczakiem"}]),
+        _match(0, 1, [{"ingredient_index": 1, "evidence": "Zwiebeln"}]),
+    ]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_step_ingredient_lines(
+        ["Wymieszaj z kurczakiem.", "Zwiebeln kurz anbraten."],
+        ["kurczak", "Zwiebel"],
+    )
+
+    assert lines == [0, 1]
+    assert generate_content.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_retries_only_missing_or_ungrounded_steps(monkeypatch) -> None:
+    generate_content = Mock(side_effect=[
+        _response({"matches": [
+            _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+        ]}),
+        _response({"matches": [
+            _match(0, 1, [{"ingredient_index": 1, "evidence": "chicken"}]),
+        ]}),
+    ])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_step_ingredient_lines(
+        ["Chop the onion.", "Top with chicken."],
+        ["onion", "chicken thighs"],
+    )
+
+    retry_prompt = json.loads(generate_content.call_args_list[1].kwargs["contents"])
+    assert lines == [0, 1]
+    assert retry_prompt["components"][0]["steps"] == [
+        {"index": 1, "text": "Top with chicken."},
+    ]
+    assert "retry_reason" in retry_prompt
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_returns_null_when_retry_is_still_invalid(monkeypatch) -> None:
+    duplicate_matches = {"matches": [
+        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+    ]}
+    generate_content = Mock(side_effect=[
+        _response(duplicate_matches),
+        _response(duplicate_matches),
+    ])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_step_ingredient_lines(
+        ["Chop the onion."],
+        ["1 onion"],
+    )
+
+    assert lines == [None]
+    assert generate_content.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_batches_all_recipe_components_in_one_request(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"matches": [
+        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+        _match(1, 0, [{"ingredient_index": 0, "evidence": "chicken"}]),
+    ]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    lines = await gemini.match_recipe_step_ingredient_lines([
+        {"steps": ["Chop the onion."], "ingredients": ["1 onion"]},
+        {"steps": ["Fry the chicken."], "ingredients": ["2 chicken thighs"]},
+    ])
+
+    prompt = json.loads(generate_content.call_args.kwargs["contents"])
+    assert lines == [[0], [0]]
+    assert generate_content.call_count == 1
+    assert [component["component_index"] for component in prompt["components"]] == [0, 1]
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_failure_does_not_fail_recipe_import(monkeypatch) -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{
+            "ingredients": [{"name": "onion"}],
+            "steps": ["Chop the onion."],
+        }],
+    })
+
+    async def fail_matcher(*args, **kwargs):
+        raise ValueError("invalid matcher response")
+
+    monkeypatch.setattr(gemini, "match_recipe_step_ingredient_lines", fail_matcher)
+
+    lines = await gemini._match_source_step_ingredient_lines_safely(
+        source,
+        generous=False,
+        usage=None,
+    )
+
+    assert lines == [[None]]
+
+
+def test_step_matcher_does_not_accept_numeric_quantity_as_grounding() -> None:
+    assert not gemini._reference_is_grounded(
+        "Bake for 15 minutes.",
+        "15 chicken thighs",
+        "15",
+    )
 
 
 def test_metric_ingredients_require_a_metric_measurement() -> None:
@@ -186,6 +364,11 @@ async def test_repeated_unconverted_metric_ingredient_does_not_fail_import(monke
     generate_content = Mock(side_effect=[
         _response(source.model_dump(mode="json")),
         *[_response(enrichment.model_dump(mode="json")) for _ in range(3)],
+        _response({"matches": [{
+            "component_index": 0,
+            "step_index": 0,
+            "references": [{"ingredient_index": 0, "evidence": "corn"}],
+        }]}),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -196,7 +379,7 @@ async def test_repeated_unconverted_metric_ingredient_does_not_fail_import(monke
     assert component.metric_ingredients == ["1 cup frozen corn kernels"]
     assert component.ingredients[0].shopping_list_value == "1 bag frozen corn kernels"
     assert component.ingredients[0].shopping_list_category == "frozen"
-    assert generate_content.call_count == 4
+    assert generate_content.call_count == 5
 
 
 @pytest.mark.parametrize(
@@ -234,6 +417,7 @@ async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> No
         _response(source),
         _response(missing_time),
         _response(complete),
+        _response(_onion_step_match_payload()),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -242,7 +426,7 @@ async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> No
 
     retry_prompt = json.loads(generate_content.call_args_list[2].kwargs["contents"])
     assert result.total_time_minutes == 565
-    assert generate_content.call_count == 3
+    assert generate_content.call_count == 4
     assert "total_time_minutes must be calculated" in retry_prompt["previous_validation_error"]
 
 
@@ -333,7 +517,7 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     source = _one_component_source()
     enrichment = _matching_enrichment(tags=["soup"])
 
-    assembled = gemini.assemble_recipe(source, enrichment)
+    assembled = gemini.assemble_recipe(source, enrichment, [[0, 0]])
 
     assert assembled.title == "Onion Soup"
     assert assembled.servings == 4
@@ -347,6 +531,7 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     assert assembled.tags == ["soup"]
     assert component.ingredients[0].shopping_list_category == "produce"
     assert component.shopping_list_categories == ["produce"]
+    assert component.step_ingredient_line == [0, 0]
 
 
 def test_enrichment_preserves_tsp_and_tbsp_in_both_unit_variants() -> None:
@@ -873,7 +1058,11 @@ def test_enrichment_repairs_only_invalid_shopping_categories() -> None:
 
 @pytest.mark.asyncio
 async def test_enrichment_prompt_contains_fixed_shopping_category_catalog(monkeypatch) -> None:
-    generate_content = Mock(side_effect=[_response(_one_component_source().model_dump(mode="json")), _response(_matching_enrichment().model_dump(mode="json"))])
+    generate_content = Mock(side_effect=[
+        _response(_one_component_source().model_dump(mode="json")),
+        _response(_matching_enrichment().model_dump(mode="json")),
+        _response(_onion_step_match_payload()),
+    ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 

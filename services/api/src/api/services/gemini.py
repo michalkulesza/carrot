@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 import re
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
 from google import genai
 from google.genai import types
@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 
 _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
 _TRANSCRIPTION_MODEL = "gemini-2.5-flash"
+_STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
 
@@ -179,23 +180,17 @@ parentheses, for example "1 can black beans, drained and rinsed" becomes
 keep the can count as stated.
 """
 
-_STEP_INGREDIENT_LINE_INSTRUCTION = """\
-step_ingredient_line: exactly one entry per step in this component, in order.
-The standalone matcher provides ingredients as objects with authoritative 0-based
-`index` values. Return those exact indexes; never count array positions yourself.
-For each step, identify every ingredient that step references — by full name,
-inflected or declined form (e.g. "kurczakiem" for "kurczak", "Zwiebeln" for
-"Zwiebel"), key noun ("chicken" for "chicken thighs, skin on"), plural, or
-abbreviation — then return the 0-based index of the MIDDLE one of those
-ingredients in this component's ingredients list. With an even number of
-matches, return the lower middle. Return null when the step references no
-ingredient at all. Match across all languages; for inflected languages
-(Polish, Russian, Czech, German) recognise every grammatical case and number
-variant of the ingredient name.
+_STEP_INGREDIENT_MATCH_INSTRUCTION = """\
+Match recipe steps to the ingredients they reference. Return exactly one match
+object for every provided step, identified by its authoritative component_index
+and step_index. For each reference, copy the authoritative ingredient_index and
+quote the shortest exact phrase from the step that identifies it as evidence.
 
-Example — ingredients ["flour", "bread", "chicken", "oil", "potatoes"] and the
-step "Fry the chicken in the oil with potatoes" references indexes 2, 3 and 4,
-so the middle one is 3.
+Recognise full names, key nouns, plurals, abbreviations, and grammatical case or
+number variants in every language. Include every referenced ingredient, not just
+one. Use an empty references list when a step references no ingredient. Never
+invent an index or evidence phrase. Do not calculate a middle index; the server
+does that after validating your references.
 """
 
 _ENRICHMENT_SYSTEM = """\
@@ -237,8 +232,7 @@ grams). If no recipe content is present at all, use 0.
 
 tags: if a list of available tags is provided, assign only those that clearly apply
 to this recipe. Use only tags from the provided list — never invent new ones.
-
-""" + _STEP_INGREDIENT_LINE_INSTRUCTION
+"""
 
 _ALLERGEN_SYSTEM = """\
 You are an allergen detection assistant. Given a numbered list of ingredients and
@@ -416,62 +410,6 @@ def _repair_shopping_list_categories(
     return categories
 
 
-def _repair_step_ingredient_line(
-    values: list[int | None],
-    step_count: int,
-    ingredient_count: int,
-    component_index: int,
-    repairs: list[str],
-    steps: list[str] | None = None,
-    ingredients: list[str] | None = None,
-) -> list[int | None]:
-    if len(values) != step_count:
-        repairs.append(
-            f"component {component_index} step_ingredient_line has {len(values)} entries, "
-            f"expected {step_count}"
-        )
-    padded = (values + [None] * step_count)[:step_count]
-    repaired: list[int | None] = []
-    for step_index, line in enumerate(padded):
-        if line is not None and not (0 <= line < ingredient_count):
-            repairs.append(
-                f"component {component_index} step_ingredient_line value {line} out of range"
-            )
-            repaired.append(None)
-        elif (
-            line is not None
-            and steps is not None
-            and ingredients is not None
-            and not _step_mentions_ingredient(steps[step_index], ingredients[line])
-        ):
-            repairs.append(
-                f"component {component_index} step_ingredient_line[{step_index}] does not match its step text"
-            )
-            repaired.append(None)
-        else:
-            repaired.append(line)
-    return repaired
-
-
-_STEP_INGREDIENT_STOP_WORDS = {
-    "and", "can", "cup", "for", "from", "into", "of", "or", "the", "then", "with",
-    "tbsp", "tsp", "oz", "ml", "g", "kg", "lb", "lbs", "clove", "pinch",
-}
-
-
-def _step_mentions_ingredient(step: str, ingredient: str) -> bool:
-    step_words = {
-        word for word in re.findall(r"\w+", step.casefold())
-        if len(word) > 2 and word not in _STEP_INGREDIENT_STOP_WORDS
-    }
-    ingredient_words = {
-        word for word in re.findall(r"\w+", ingredient.casefold())
-        if len(word) > 2 and word not in _STEP_INGREDIENT_STOP_WORDS
-    }
-
-    return bool(step_words & ingredient_words)
-
-
 def _repair_enrichment_alignment(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
@@ -532,15 +470,6 @@ def _repair_enrichment_alignment(
             ),
             "metric_steps": aligned_or_fallback("metric_steps", component.metric_steps, step_fallback),
             "imperial_steps": aligned_or_fallback("imperial_steps", component.imperial_steps, step_fallback),
-            "step_ingredient_line": _repair_step_ingredient_line(
-                component.step_ingredient_line,
-                len(step_fallback),
-                len(ingredient_fallback),
-                index,
-                repairs,
-                step_fallback,
-                ingredient_fallback,
-            ),
         }))
 
     if repairs:
@@ -623,10 +552,22 @@ async def _enrich_recipe(
     raise AssertionError("unreachable")
 
 
-def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment) -> RecipeExtraction:
+def assemble_recipe(
+    source: RecipeSourceExtraction,
+    enrichment: RecipeEnrichment,
+    step_ingredient_lines: list[list[int | None]] | None = None,
+) -> RecipeExtraction:
     if len(enrichment.components) != len(source.components):
         raise ValueError(
             f"Enrichment returned {len(enrichment.components)} components, "
+            f"expected {len(source.components)}"
+        )
+
+    if step_ingredient_lines is None:
+        step_ingredient_lines = [[None] * len(component.steps) for component in source.components]
+    if len(step_ingredient_lines) != len(source.components):
+        raise ValueError(
+            f"Step matching returned {len(step_ingredient_lines)} components, "
             f"expected {len(source.components)}"
         )
 
@@ -645,6 +586,13 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
                     f"Component {index}: {field_name} has {len(values)} entries, "
                     f"expected {ingredient_count}"
                 )
+
+        component_step_lines = step_ingredient_lines[index]
+        if len(component_step_lines) != step_count:
+            raise ValueError(
+                f"Component {index}: step_ingredient_line has {len(component_step_lines)} entries, "
+                f"expected {step_count}"
+            )
 
         for field_name, values in (
             ("metric_steps", enriched.metric_steps),
@@ -694,7 +642,7 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
             metric_steps=enriched.metric_steps,
             imperial_steps=enriched.imperial_steps,
             shopping_list_categories=shopping_categories,
-            step_ingredient_line=enriched.step_ingredient_line,
+            step_ingredient_line=component_step_lines,
         ))
 
     return RecipeExtraction(
@@ -745,8 +693,11 @@ async def extract_recipe(
     raw = response.text
     log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
     source = RecipeSourceExtraction.model_validate(json.loads(raw))
-    enrichment = await _enrich_recipe(source, available_tags, generous, usage)
-    return assemble_recipe(source, enrichment)
+    enrichment, step_ingredient_lines = await asyncio.gather(
+        _enrich_recipe(source, available_tags, generous, usage),
+        _match_source_step_ingredient_lines_safely(source, generous, usage),
+    )
+    return assemble_recipe(source, enrichment, step_ingredient_lines)
 
 
 async def extract_recipe_from_image(
@@ -791,8 +742,11 @@ async def extract_recipe_from_image(
     raw = response.text
     log.debug("Gemini image extraction raw: %s", raw[:500])
     source = RecipeSourceExtraction.model_validate(json.loads(raw))
-    enrichment = await _enrich_recipe(source, available_tags, generous, usage)
-    return assemble_recipe(source, enrichment)
+    enrichment, step_ingredient_lines = await asyncio.gather(
+        _enrich_recipe(source, available_tags, generous, usage),
+        _match_source_step_ingredient_lines_safely(source, generous, usage),
+    )
+    return assemble_recipe(source, enrichment, step_ingredient_lines)
 
 
 async def estimate_unit_variants(
@@ -845,51 +799,258 @@ async def estimate_unit_variants(
     return variants.model_copy(update={"components": repaired_components})
 
 
-class _StepIngredientLineResult(BaseModel):
-    step_ingredient_line: list[int | None]
+class _StepIngredientReference(BaseModel):
+    ingredient_index: int
+    evidence: str
+
+
+class _StepIngredientMatch(BaseModel):
+    component_index: int
+    step_index: int
+    references: list[_StepIngredientReference]
+
+
+class _StepIngredientMatchResult(BaseModel):
+    matches: list[_StepIngredientMatch]
+
+
+def _source_step_match_components(source: RecipeSourceExtraction) -> list[dict[str, Any]]:
+    return [
+        {
+            "steps": component.steps,
+            "ingredients": [_source_ingredient_display(ingredient) for ingredient in component.ingredients],
+        }
+        for component in source.components
+    ]
+
+
+async def _match_source_step_ingredient_lines_safely(
+    source: RecipeSourceExtraction,
+    generous: bool,
+    usage: UsageTracker | None,
+) -> list[list[int | None]]:
+    components = _source_step_match_components(source)
+    try:
+        return await match_recipe_step_ingredient_lines(components, generous=generous, usage=usage)
+    except Exception:
+        log.exception("Step ingredient matching failed; continuing without rail targets")
+        return [[None] * len(component.steps) for component in source.components]
+
+
+def _step_match_keys(components: list[dict[str, Any]]) -> set[tuple[int, int]]:
+    return {
+        (component_index, step_index)
+        for component_index, component in enumerate(components)
+        for step_index, _ in enumerate(component.get("steps") or [])
+    }
+
+
+def _step_match_prompt(
+    components: list[dict[str, Any]],
+    keys: set[tuple[int, int]],
+    retry_reason: str | None = None,
+) -> dict[str, Any]:
+    prompt_components = []
+    for component_index, component in enumerate(components):
+        steps = [
+            {"index": step_index, "text": step}
+            for step_index, step in enumerate(component.get("steps") or [])
+            if (component_index, step_index) in keys
+        ]
+        if not steps:
+            continue
+        ingredients = [
+            {"index": ingredient_index, "text": ingredient}
+            for ingredient_index, ingredient in enumerate(component.get("ingredients") or [])
+        ]
+        prompt_components.append({
+            "component_index": component_index,
+            "steps": steps,
+            "ingredients": ingredients,
+        })
+
+    prompt: dict[str, Any] = {"components": prompt_components}
+    if retry_reason:
+        prompt["retry_reason"] = retry_reason
+    return prompt
+
+
+_STEP_MATCH_STOP_WORDS = {
+    "and", "can", "cup", "for", "from", "into", "of", "or", "the", "then", "with",
+    "tbsp", "tsp", "oz", "ml", "g", "kg", "lb", "lbs", "clove", "pinch",
+}
+
+
+def _normalized_words(value: str) -> list[str]:
+    return [
+        word for word in re.findall(r"\w+", value.casefold())
+        if len(word) > 2 and not word.isnumeric() and word not in _STEP_MATCH_STOP_WORDS
+    ]
+
+
+def _words_are_related(left: str, right: str) -> bool:
+    if left == right:
+        return True
+    common_length = min(len(left), len(right))
+    return common_length >= 4 and left[:common_length] == right[:common_length]
+
+
+def _reference_is_grounded(step: str, ingredient: str, evidence: str) -> bool:
+    normalized_step = " ".join(_normalized_words(step))
+    normalized_evidence = " ".join(_normalized_words(evidence))
+    if not normalized_evidence or normalized_evidence not in normalized_step:
+        return False
+
+    evidence_words = _normalized_words(evidence)
+    ingredient_words = _normalized_words(ingredient)
+    return any(
+        _words_are_related(evidence_word, ingredient_word)
+        for evidence_word in evidence_words
+        for ingredient_word in ingredient_words
+    )
+
+
+def _has_grounded_candidate(step: str, ingredients: list[str]) -> bool:
+    return any(
+        any(
+            _words_are_related(step_word, ingredient_word)
+            for step_word in _normalized_words(step)
+            for ingredient_word in _normalized_words(ingredient)
+        )
+        for ingredient in ingredients
+    )
+
+
+def _validate_step_matches(
+    result: _StepIngredientMatchResult,
+    components: list[dict[str, Any]],
+    expected_keys: set[tuple[int, int]],
+) -> tuple[dict[tuple[int, int], int | None], set[tuple[int, int]]]:
+    matches_by_key: dict[tuple[int, int], _StepIngredientMatch] = {}
+    invalid_keys: set[tuple[int, int]] = set()
+    for match in result.matches:
+        key = (match.component_index, match.step_index)
+        if key not in expected_keys or key in matches_by_key:
+            if key in expected_keys:
+                invalid_keys.add(key)
+            continue
+        matches_by_key[key] = match
+
+    lines: dict[tuple[int, int], int | None] = {}
+    for key in expected_keys:
+        if key in invalid_keys:
+            continue
+
+        component_index, step_index = key
+        match = matches_by_key.get(key)
+        if match is None:
+            invalid_keys.add(key)
+            continue
+
+        component = components[component_index]
+        step = (component.get("steps") or [])[step_index]
+        ingredients = component.get("ingredients") or []
+        if not match.references:
+            lines[key] = None
+            if _has_grounded_candidate(step, ingredients):
+                invalid_keys.add(key)
+            continue
+
+        ingredient_indices = [reference.ingredient_index for reference in match.references]
+        references_valid = len(set(ingredient_indices)) == len(ingredient_indices)
+        for reference in match.references:
+            if not (0 <= reference.ingredient_index < len(ingredients)):
+                references_valid = False
+                break
+            ingredient = ingredients[reference.ingredient_index]
+            if not _reference_is_grounded(step, ingredient, reference.evidence):
+                references_valid = False
+                break
+        if not references_valid:
+            invalid_keys.add(key)
+            continue
+
+        sorted_indices = sorted(ingredient_indices)
+        lines[key] = sorted_indices[(len(sorted_indices) - 1) // 2]
+
+    return lines, invalid_keys
+
+
+async def _request_step_matches(
+    components: list[dict[str, Any]],
+    keys: set[tuple[int, int]],
+    model: str,
+    generous: bool,
+    usage: UsageTracker | None,
+    retry_reason: str | None = None,
+) -> _StepIngredientMatchResult:
+    client = _build_client()
+    prompt = _step_match_prompt(components, keys, retry_reason)
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=model,
+            contents=json.dumps(prompt, ensure_ascii=False),
+            config=types.GenerateContentConfig(
+                system_instruction=_STEP_INGREDIENT_MATCH_INSTRUCTION,
+                temperature=0,
+                response_mime_type="application/json",
+                response_schema=_StepIngredientMatchResult,
+            ),
+        ),
+        generous=generous,
+    )
+    if usage is not None:
+        usage.add(response)
+    return _StepIngredientMatchResult.model_validate(json.loads(response.text))
+
+
+async def match_recipe_step_ingredient_lines(
+    components: list[dict[str, Any]],
+    model: str = _STEP_INGREDIENT_MATCH_MODEL,
+    generous: bool = False,
+    usage: UsageTracker | None = None,
+) -> list[list[int | None]]:
+    keys = _step_match_keys(components)
+    lines_by_component = [
+        [None] * len(component.get("steps") or [])
+        for component in components
+    ]
+    if not keys:
+        return lines_by_component
+
+    result = await _request_step_matches(components, keys, model, generous, usage)
+    lines, invalid_keys = _validate_step_matches(result, components, keys)
+    if invalid_keys:
+        retry_result = await _request_step_matches(
+            components,
+            invalid_keys,
+            model,
+            generous,
+            usage,
+            "Some previous matches were missing, duplicated, or not grounded in exact step text. Re-evaluate them.",
+        )
+        retry_lines, still_invalid = _validate_step_matches(retry_result, components, invalid_keys)
+        lines.update(retry_lines)
+        if still_invalid:
+            for key in still_invalid:
+                lines[key] = None
+            log.warning("Step ingredient matching left these steps unmatched after retry: %s", sorted(still_invalid))
+
+    for (component_index, step_index), line in lines.items():
+        lines_by_component[component_index][step_index] = line
+    return lines_by_component
 
 
 async def match_step_ingredient_lines(
     steps: list[str],
     ingredient_names: list[str],
-    model: str = _TRANSCRIPTION_MODEL,
+    model: str = _STEP_INGREDIENT_MATCH_MODEL,
 ) -> list[int | None]:
-    """Standalone driver for the step_ingredient_line matching prompt, for backfill."""
-    if not steps:
-        return []
-
-    client = _build_client()
-    prompt = json.dumps({
-        "steps": steps,
-        "ingredients": [
-            {"index": index, "text": ingredient}
-            for index, ingredient in enumerate(ingredient_names)
-        ],
-    }, ensure_ascii=False)
-    response = await _with_retry(lambda: client.models.generate_content(
+    lines_by_component = await match_recipe_step_ingredient_lines(
+        [{"steps": steps, "ingredients": ingredient_names}],
         model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=_STEP_INGREDIENT_LINE_INSTRUCTION,
-            temperature=0,
-            response_mime_type="application/json",
-            response_schema=_StepIngredientLineResult,
-        ),
-    ))
-    result = _StepIngredientLineResult.model_validate(json.loads(response.text))
-    repairs: list[str] = []
-    lines = _repair_step_ingredient_line(
-        result.step_ingredient_line,
-        len(steps),
-        len(ingredient_names),
-        0,
-        repairs,
-        steps,
-        ingredient_names,
     )
-    if repairs:
-        log.warning("Repaired standalone step_ingredient_line match: %s", "; ".join(repairs))
-    return lines
+    return lines_by_component[0]
 
 
 class _IngredientFlag(BaseModel):

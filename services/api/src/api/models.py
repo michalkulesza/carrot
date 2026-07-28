@@ -350,7 +350,6 @@ class UnitVariantComponent(BaseModel):
 class EnrichmentComponent(UnitVariantComponent):
     shopping_list_values: list[str] = []
     shopping_list_categories: list[str] = []
-    step_ingredient_line: list[int | None] = []
 
 
 class RecipeEnrichment(BaseModel):

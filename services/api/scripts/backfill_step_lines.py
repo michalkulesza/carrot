@@ -8,7 +8,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from api import users
 from api.database import async_session_maker
 from api.models import Recipe
-from api.services.gemini import match_step_ingredient_lines
+from api.services.gemini import match_recipe_step_ingredient_lines
 from api.services.monitoring import init_sentry
 
 
@@ -27,8 +27,9 @@ async def _backfill_recipe(recipe_id: uuid.UUID, force: bool) -> tuple[bool, str
             return False, f"Skipped {recipe_id}: recipe no longer exists"
 
         components = recipe.components or []
+        components_to_update: set[int] = set()
         changed = False
-        for component in components:
+        for component_index, component in enumerate(components):
             steps = component.get("steps") or []
             ingredients = component.get("ingredients") or []
             if not steps or not ingredients:
@@ -39,7 +40,12 @@ async def _backfill_recipe(recipe_id: uuid.UUID, force: bool) -> tuple[bool, str
             if not _needs_backfill(component, force):
                 continue
 
-            component["step_ingredient_line"] = await match_step_ingredient_lines(steps, ingredients)
+            components_to_update.add(component_index)
+
+        if components_to_update:
+            lines_by_component = await match_recipe_step_ingredient_lines(components)
+            for component_index in components_to_update:
+                components[component_index]["step_ingredient_line"] = lines_by_component[component_index]
             changed = True
 
         if not changed:

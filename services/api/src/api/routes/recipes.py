@@ -105,16 +105,14 @@ def _invalidate_stale_step_ingredient_lines(
     stored_components: list[dict],
     new_components: list[SaveComponent],
 ) -> list[SaveComponent]:
-    """Null out step_ingredient_line where an edit changed the ingredient or step count it was matched against."""
+    """Null out step_ingredient_line when its source ingredients or steps changed."""
     result: list[SaveComponent] = []
     for index, component in enumerate(new_components):
         stored = stored_components[index] if index < len(stored_components) else None
-        stored_ingredient_count = len(stored.get("ingredients", [])) if stored else None
-        stored_step_count = len(stored.get("steps", [])) if stored else None
         if (
             stored is None
-            or len(component.ingredients) != stored_ingredient_count
-            or len(component.steps) != stored_step_count
+            or component.ingredients != stored.get("ingredients", [])
+            or component.steps != stored.get("steps", [])
         ):
             result.append(component.model_copy(update={"step_ingredient_line": None}))
         else:
