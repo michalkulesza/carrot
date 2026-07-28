@@ -1,5 +1,14 @@
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ListRenderItemInfo,
+} from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
@@ -99,6 +108,10 @@ const MyRecipeRow = ({ recipe, households, activeHouseholdId, onDeleted }: MyRec
   )
 }
 
+const RowSeparator = () => <View style={rowStyles.rowBorder} />
+
+const keyExtractor = (recipe: RecipeOut) => recipe.id
+
 const MyRecipesSection = ({
   households,
   activeHouseholdId,
@@ -117,9 +130,21 @@ const MyRecipesSection = ({
     [qc],
   )
 
+  const renderItem = useCallback(
+    ({ item }: ListRenderItemInfo<RecipeOut>) => (
+      <MyRecipeRow
+        recipe={item}
+        households={households}
+        activeHouseholdId={activeHouseholdId}
+        onDeleted={handleDeleted}
+      />
+    ),
+    [households, activeHouseholdId, handleDeleted],
+  )
+
   if (isLoading) {
     return (
-      <View style={[rowStyles.card, rowStyles.loading]}>
+      <View style={rowStyles.centered}>
         <ActivityIndicator accessibilityLabel={t('common.loading')} />
       </View>
     )
@@ -129,40 +154,39 @@ const MyRecipesSection = ({
 
   if (myRecipes.length === 0) {
     return (
-      <View style={rowStyles.emptyState}>
+      <View style={[rowStyles.centered, rowStyles.emptyState]}>
         <Text style={rowStyles.empty}>{t('settings.myRecipesEmpty')}</Text>
       </View>
     )
   }
 
   return (
-    <View style={rowStyles.card}>
-      {myRecipes.map((recipe: RecipeOut, index: number) => (
-        <View
-          key={recipe.id}
-          style={index < myRecipes.length - 1 ? rowStyles.rowBorder : undefined}
-        >
-          <MyRecipeRow
-            recipe={recipe}
-            households={households}
-            activeHouseholdId={activeHouseholdId}
-            onDeleted={handleDeleted}
-          />
-        </View>
-      ))}
-    </View>
+    <FlatList
+      data={myRecipes}
+      keyExtractor={keyExtractor}
+      renderItem={renderItem}
+      ItemSeparatorComponent={RowSeparator}
+      style={rowStyles.list}
+      contentContainerStyle={rowStyles.card}
+      contentInsetAdjustmentBehavior="automatic"
+      keyboardShouldPersistTaps="handled"
+    />
   )
 }
 
 const rowStyles = StyleSheet.create({
+  list: { flex: 1 },
+  // Margins keep the card inset while the scroll view itself stays full-bleed, so
+  // rows pass under the transparent header and the tab bar.
   card: {
     backgroundColor: colors.background,
     borderRadius: 10,
+    overflow: 'hidden',
     marginHorizontal: 16,
     marginTop: 12,
-    overflow: 'hidden',
+    marginBottom: 32,
   },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: colors.secondaryBackground },
+  rowBorder: { height: StyleSheet.hairlineWidth, backgroundColor: colors.secondaryBackground },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -174,13 +198,8 @@ const rowStyles = StyleSheet.create({
   title: { fontSize: 16, color: colors.label },
   badgeRow: { flexDirection: 'row', gap: 4, marginTop: 4 },
   badgeDot: { width: 8, height: 8, borderRadius: 4 },
-  loading: { padding: 24, alignItems: 'center' },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyState: { paddingHorizontal: 32 },
   empty: {
     fontSize: 16,
     lineHeight: 22,

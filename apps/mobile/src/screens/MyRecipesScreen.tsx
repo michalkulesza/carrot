@@ -1,23 +1,16 @@
 import { PlatformColor, StyleSheet, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HeaderTitle from '../components/HeaderTitle'
 import { useHousehold } from '../context/HouseholdContext'
 import MyRecipesSection from './SettingsScreen/MyRecipesSection'
 
 const MyRecipesScreen = () => {
   const { t } = useTranslation()
-  const insets = useSafeAreaInsets()
   const { households, activeHouseholdId } = useHousehold()
 
   return (
-    <View
-      style={[
-        styles.screen,
-        { paddingTop: insets.top + 56, paddingBottom: insets.bottom + 48 },
-      ]}
-    >
+    <View style={styles.screen}>
       <Stack.Screen
         options={{
           headerTitle: () => <HeaderTitle title={t('settings.myRecipes')} />,
