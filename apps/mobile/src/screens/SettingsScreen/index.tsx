@@ -42,7 +42,6 @@ import SectionHeader from "./SectionHeader";
 import StatsSection from "./StatsSection";
 import PreferencesSection from "./PreferencesSection";
 import HouseholdsSection from "./HouseholdsSection";
-import MyRecipesSection from "./MyRecipesSection";
 import AllergenSection from "./AllergenSection";
 
 const SettingsHeaderRight = () => (
@@ -361,6 +360,17 @@ const SettingsScreen = () => {
           </Text>
         </Pressable>
         <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push("/(tabs)/settings/my-recipes")}
+          accessibilityLabel={t("settings.myRecipes")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.myRecipes")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+        <Pressable
           style={({ pressed }) => [
             styles.logoutRow,
             pressed && { opacity: 0.7 },
@@ -381,8 +391,6 @@ const SettingsScreen = () => {
         onCreateHousehold={handleCreateHousehold}
         onJoinByCode={handleJoinByCode}
       />
-
-      <MyRecipesSection households={households} activeHouseholdId={activeHouseholdId} />
 
       <SectionHeader label={t("settings.preferences")} />
       <PreferencesSection

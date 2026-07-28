@@ -9,7 +9,6 @@ import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
 import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
 import Avatar from '../../components/Avatar'
 import { colors } from '../../theme/colors'
-import SectionHeader from './SectionHeader'
 
 interface MyRecipeRowProps {
   recipe: RecipeOut
@@ -107,8 +106,8 @@ const MyRecipesSection = ({
   households: HouseholdOut[]
   activeHouseholdId: string | null
 }) => {
+  const { data: myRecipes = [], isLoading, isError } = useMyRecipes()
   const { t } = useTranslation()
-  const { data: myRecipes = [] } = useMyRecipes()
   const qc = useQueryClient()
 
   const handleDeleted = useCallback(
@@ -118,27 +117,40 @@ const MyRecipesSection = ({
     [qc],
   )
 
-  if (myRecipes.length === 0) return null
+  if (isLoading) {
+    return (
+      <View style={[rowStyles.card, rowStyles.loading]}>
+        <ActivityIndicator accessibilityLabel={t('common.loading')} />
+      </View>
+    )
+  }
+
+  if (isError) return null
+
+  if (myRecipes.length === 0) {
+    return (
+      <View style={rowStyles.emptyState}>
+        <Text style={rowStyles.empty}>{t('settings.myRecipesEmpty')}</Text>
+      </View>
+    )
+  }
 
   return (
-    <>
-      <SectionHeader label={t('settings.myRecipes')} />
-      <View style={rowStyles.card}>
-        {myRecipes.map((recipe: RecipeOut, index: number) => (
-          <View
-            key={recipe.id}
-            style={index < myRecipes.length - 1 ? rowStyles.rowBorder : undefined}
-          >
-            <MyRecipeRow
-              recipe={recipe}
-              households={households}
-              activeHouseholdId={activeHouseholdId}
-              onDeleted={handleDeleted}
-            />
-          </View>
-        ))}
-      </View>
-    </>
+    <View style={rowStyles.card}>
+      {myRecipes.map((recipe: RecipeOut, index: number) => (
+        <View
+          key={recipe.id}
+          style={index < myRecipes.length - 1 ? rowStyles.rowBorder : undefined}
+        >
+          <MyRecipeRow
+            recipe={recipe}
+            households={households}
+            activeHouseholdId={activeHouseholdId}
+            onDeleted={handleDeleted}
+          />
+        </View>
+      ))}
+    </View>
   )
 }
 
@@ -162,6 +174,19 @@ const rowStyles = StyleSheet.create({
   title: { fontSize: 16, color: colors.label },
   badgeRow: { flexDirection: 'row', gap: 4, marginTop: 4 },
   badgeDot: { width: 8, height: 8, borderRadius: 4 },
+  loading: { padding: 24, alignItems: 'center' },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  empty: {
+    fontSize: 16,
+    lineHeight: 22,
+    color: colors.tertiaryLabel,
+    textAlign: 'center',
+  },
 })
 
 export default MyRecipesSection

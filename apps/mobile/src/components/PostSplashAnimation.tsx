@@ -34,6 +34,7 @@ const PostSplashAnimation = ({ onReady, onFinish }: PostSplashAnimationProps) =>
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFill,
+    backgroundColor: '#ff8a3d',
   },
   animation: {
     flex: 1,

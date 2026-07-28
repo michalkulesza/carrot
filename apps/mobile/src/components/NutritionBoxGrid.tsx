@@ -56,7 +56,7 @@ const NutritionBoxButton = ({ item, displayValue, onPress }: NutritionBoxButtonP
 
   return (
     <Pressable style={getPressableStyle} onPress={onPress} accessibilityLabel={item.accessibilityLabel}>
-      <Text style={[styles.number, item.valueFontSize && { fontSize: item.valueFontSize }]}>{shownValue}</Text>
+      <Text style={[styles.number, item.valueFontSize !== undefined && { fontSize: item.valueFontSize }]}>{shownValue}</Text>
       <Text style={styles.label}>{item.label}</Text>
     </Pressable>
   )
@@ -117,7 +117,7 @@ const NutritionBox = ({
     return (
       <View style={[styles.boxWrapper, wrapperStyle]}>
         <View style={styles.box}>
-          <Text style={[styles.number, item.valueFontSize && { fontSize: item.valueFontSize }]}>{displayValue}</Text>
+          <Text style={[styles.number, item.valueFontSize !== undefined && { fontSize: item.valueFontSize }]}>{displayValue}</Text>
           <Text style={styles.label}>{item.label}</Text>
         </View>
       </View>
