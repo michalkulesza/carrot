@@ -42,6 +42,10 @@ _SHOPPING_CATEGORY_MEANINGS = {
 _T = TypeVar("_T")
 
 
+class _MetricConversionValidationError(ValueError):
+    pass
+
+
 class UsageTracker:
     """Accumulates token usage across every Gemini call made during one import."""
 
@@ -144,6 +148,9 @@ variants in parallel arrays:
   Celsius where applicable. Preserve every tsp and tbsp measurement exactly as
   stated; do not convert either unit to grams or millilitres. Convert every cup
   measurement to an ingredient-specific whole gram value; never use a range.
+  A frozen ingredient is still divisible: convert its cup measurement by weight
+  while preserving the word "frozen" (for example, "1 cup frozen corn kernels"
+  becomes "165 g frozen corn kernels").
   Convert physical length descriptions used for ingredients to centimetres
   (for example, "2 inch knob of ginger" becomes "5 cm knob of ginger").
 - imperial_ingredients and imperial_steps: use cups/tbsp/tsp where practical and
@@ -344,10 +351,31 @@ def _validate_metric_ingredients(enrichment: RecipeEnrichment) -> None:
             needs_conversion = _METRIC_CONVERSION_REQUIRED_PATTERN.search(ingredient)
             has_metric_measurement = _METRIC_MEASUREMENT_PATTERN.search(ingredient)
             if needs_conversion and not has_metric_measurement:
-                raise ValueError(
+                raise _MetricConversionValidationError(
                     f"component {component_index}: metric_ingredients[{ingredient_index}] "
                     f"retains an unconverted measurement"
                 )
+
+
+def _repair_unconverted_metric_ingredients(
+    values: list[str],
+    fallback: list[str],
+    component_index: int,
+    repairs: list[str],
+) -> list[str]:
+    repaired: list[str] = []
+    for ingredient_index, (value, source_value) in enumerate(zip(values, fallback)):
+        needs_conversion = _METRIC_CONVERSION_REQUIRED_PATTERN.search(value)
+        has_metric_measurement = _METRIC_MEASUREMENT_PATTERN.search(value)
+        if needs_conversion and not has_metric_measurement:
+            repairs.append(
+                f"component {component_index} metric_ingredients[{ingredient_index}] "
+                "retains an unconverted measurement"
+            )
+            repaired.append(source_value)
+        else:
+            repaired.append(value)
+    return repaired
 
 
 def _repair_shopping_list_categories(
@@ -485,6 +513,12 @@ def _repair_enrichment_alignment(
         metric_ingredients = aligned_or_fallback(
             "metric_ingredients", component.metric_ingredients, ingredient_fallback,
         )
+        metric_ingredients = _repair_unconverted_metric_ingredients(
+            metric_ingredients,
+            ingredient_fallback,
+            index,
+            repairs,
+        )
         imperial_ingredients = aligned_or_fallback(
             "imperial_ingredients", component.imperial_ingredients, ingredient_fallback,
         )
@@ -568,6 +602,13 @@ async def _enrich_recipe(
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:
             validation_error = str(exc)
             if attempt == _MAX_ENRICHMENT_ATTEMPTS:
+                if isinstance(exc, _MetricConversionValidationError):
+                    log.warning(
+                        "Gemini enrichment still contains unconverted metric measurements; "
+                        "using source values for those ingredients: %s",
+                        validation_error,
+                    )
+                    return _repair_enrichment_alignment(source, enrichment)
                 raise
             log.warning(
                 "Gemini enrichment response failed validation (attempt %d/%d): %s",

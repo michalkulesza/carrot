@@ -55,6 +55,7 @@ async def test_text_extraction_uses_configured_model_and_deterministic_sampling(
     assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
     assert "total_time_minutes" in enrichment_call.kwargs["config"].system_instruction
     assert "exclude unattended resting" in enrichment_call.kwargs["config"].system_instruction
+    assert "1 cup frozen corn kernels" in enrichment_call.kwargs["config"].system_instruction
     assert result.total_time_minutes == 45
 
 
@@ -144,6 +145,67 @@ def test_metric_ingredient_length_is_converted_to_centimetres() -> None:
     ]
     with pytest.raises(ValueError, match="retains an unconverted measurement"):
         gemini._validate_metric_ingredients(repaired)
+
+
+@pytest.mark.asyncio
+async def test_repeated_unconverted_metric_ingredient_does_not_fail_import(monkeypatch) -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "title": "Mexican chicken and rice",
+        "components": [{
+            "ingredients": [
+                {"qty": "1", "unit": "cup", "name": "frozen corn kernels"},
+            ],
+            "steps": ["Add the corn."],
+        }],
+    })
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": ["1 cup frozen corn kernels"],
+        "imperial_ingredients": ["1 cup frozen corn kernels"],
+        "metric_steps": ["Add the corn."],
+        "imperial_steps": ["Add the corn."],
+        "shopping_list_values": ["1 bag frozen corn kernels"],
+        "shopping_list_categories": ["frozen"],
+    }]))
+    generate_content = Mock(side_effect=[
+        _response(source.model_dump(mode="json")),
+        *[_response(enrichment.model_dump(mode="json")) for _ in range(3)],
+    ])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    result = await gemini.extract_recipe("Ingredients: 1 cup frozen corn kernels")
+
+    component = result.components[0]
+    assert component.metric_ingredients == ["1 cup frozen corn kernels"]
+    assert component.ingredients[0].shopping_list_value == "1 bag frozen corn kernels"
+    assert component.ingredients[0].shopping_list_category == "frozen"
+    assert generate_content.call_count == 4
+
+
+@pytest.mark.parametrize(
+    ("source_value", "invalid_metric_value"),
+    [
+        ("1 cup frozen corn", "1 cup frozen corn"),
+        ("16 oz black beans", "16 oz black beans"),
+        ("2 inch knob of ginger", "2 inch knob of ginger"),
+    ],
+)
+def test_unconverted_metric_measurements_fall_back_individually(
+    source_value: str,
+    invalid_metric_value: str,
+) -> None:
+    source = RecipeSourceExtraction.model_validate({
+        "components": [{"ingredients": [{"name": source_value}]}],
+    })
+    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
+        "metric_ingredients": [invalid_metric_value],
+        "imperial_ingredients": [source_value],
+        "shopping_list_values": [source_value],
+    }]))
+
+    repaired = gemini._repair_enrichment_alignment(source, enrichment)
+
+    assert repaired.components[0].metric_ingredients == [source_value]
 
 
 @pytest.mark.asyncio
