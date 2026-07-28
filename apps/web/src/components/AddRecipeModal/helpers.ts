@@ -3,7 +3,6 @@ import type {
   ImportResult,
   RecipeComponent,
   StageEvent,
-  StepIngredientRef,
 } from '@carrot/shared/types'
 import { UNITS } from '../../api/client'
 
@@ -28,7 +27,6 @@ export interface EditableComponent {
   metric_steps: string[] | null
   imperial_steps: string[] | null
   ingredient_flags: (AllergenFlag | null)[]
-  step_ingredient_refs: StepIngredientRef[][] | null
 }
 
 export interface EditableRecipe {
@@ -119,71 +117,49 @@ export const toEditable = (
     source_url: metadata.source_url || null,
     stage,
     suggestedTagNames: recipe?.tags ?? [],
-    components: (recipe?.components ?? []).map((c: RecipeComponent) => {
-      const numSteps = c.steps.length
-      let step_ingredient_refs: StepIngredientRef[][] | null = null
-      if (c.step_refs && c.step_refs.length > 0) {
-        const arr: StepIngredientRef[][] = Array.from(
-          { length: numSteps },
-          () => []
-        )
-        for (const ref of c.step_refs) {
-          if (ref.step_index < numSteps - 1) {
-            arr[ref.step_index].push({
-              ingredient_index: ref.ingredient_index,
-              mention: ref.mention,
-              display: ref.display,
-            })
-          }
+    components: (recipe?.components ?? []).map((c: RecipeComponent) => ({
+      name: c.name ?? c.role,
+      yield_note: c.yield_note ?? '',
+      ingredients: c.ingredients.map((ing) => {
+        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
+        const nameToUse = useSub ? ing.substitute! : ing.name
+        // Gemini sometimes returns the full ingredient string in name with null qty/unit
+        if (!ing.qty) {
+          return parseIngredient(nameToUse)
         }
-        step_ingredient_refs = arr
-      }
 
-      return {
-        name: c.name ?? c.role,
-        yield_note: c.yield_note ?? '',
-        ingredients: c.ingredients.map((ing) => {
-          const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
-          const nameToUse = useSub ? ing.substitute! : ing.name
-          // Gemini sometimes returns the full ingredient string in name with null qty/unit
-          if (!ing.qty) {
-            return parseIngredient(nameToUse)
-          }
+        return {
+          qty: ing.qty ?? '',
+          unit: ing.unit ?? '',
+          name: nameToUse,
+        }
+      }),
+      shopping_list_ingredients: c.ingredients.map((ing) => {
+        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
+        const nameToUse = useSub ? ing.substitute! : ing.name
 
-          return {
+        return (
+          ing.shopping_list_value ||
+          serializeIngredient({
             qty: ing.qty ?? '',
             unit: ing.unit ?? '',
             name: nameToUse,
-          }
-        }),
-        shopping_list_ingredients: c.ingredients.map((ing) => {
-          const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
-          const nameToUse = useSub ? ing.substitute! : ing.name
-
-          return (
-            ing.shopping_list_value ||
-            serializeIngredient({
-              qty: ing.qty ?? '',
-              unit: ing.unit ?? '',
-              name: nameToUse,
-            })
-          )
-        }),
-        steps: c.steps,
-        metric_ingredients: c.metric_ingredients,
-        imperial_ingredients: c.imperial_ingredients,
-        metric_steps: c.metric_steps,
-        imperial_steps: c.imperial_steps,
-        ingredient_flags: c.ingredients.map((ing) => ({
-          allergen: ing.allergen ?? null,
-          substitute: ing.substitute ?? null,
-          substitute_applied:
-            autoSubstitute && !!ing.allergen && !!ing.substitute,
-          original_display: null,
-          ingredient_name: ing.name,
-        })),
-        step_ingredient_refs,
-      }
-    }),
+          })
+        )
+      }),
+      steps: c.steps,
+      metric_ingredients: c.metric_ingredients,
+      imperial_ingredients: c.imperial_ingredients,
+      metric_steps: c.metric_steps,
+      imperial_steps: c.imperial_steps,
+      ingredient_flags: c.ingredients.map((ing) => ({
+        allergen: ing.allergen ?? null,
+        substitute: ing.substitute ?? null,
+        substitute_applied:
+          autoSubstitute && !!ing.allergen && !!ing.substitute,
+        original_display: null,
+        ingredient_name: ing.name,
+      })),
+    })),
   }
 }

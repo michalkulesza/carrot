@@ -25,7 +25,6 @@ from api.models import (
     Recipe,
     RecipeEmbedding,
     EmbeddingStatus,
-    RecipeComponent,
     Tag,
     UserPreferences,
     ShoppingCategory,
@@ -104,22 +103,6 @@ def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
     return _normalize_ingredient_punctuation(value)
 
 
-def _step_ingredient_refs(component: RecipeComponent) -> list[list[dict]] | None:
-    if not component.step_refs:
-        return None
-    refs: list[list[dict]] = [[] for _ in component.steps]
-    for ref in component.step_refs:
-        if ref.step_index < len(refs) - 1:
-            serialized_ref = {
-                "ingredient_index": ref.ingredient_index,
-                "mention": ref.mention,
-            }
-            if ref.display:
-                serialized_ref["display"] = ref.display
-            refs[ref.step_index].append(serialized_ref)
-    return refs
-
-
 async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     recipe_data = result.recipe
     if recipe_data is None:
@@ -163,7 +146,6 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
                 "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
                 "original_display": None,
             } for ingredient in component.ingredients],
-            "step_ingredient_refs": _step_ingredient_refs(component),
         })
     metadata = result.metadata
     recipe = Recipe(

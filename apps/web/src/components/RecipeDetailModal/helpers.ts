@@ -2,7 +2,6 @@ import type {
   RecipeOut,
   RecipeSaveRequest,
   SaveComponent,
-  StepIngredientRef,
 } from '@carrot/shared/types'
 import {
   getImperialCupQty,
@@ -172,54 +171,6 @@ export const getShoppingListIngredient = (
     ? originalShoppingListValue
     : scaledIngredient
 }
-
-// Client-side fallback when the AI step/ingredient matcher wasn't run: does simple name matching,
-// trying the full ingredient name first, then individual words (handles cases like "soy" matching
-// "filiżanka tamari soy" where a non-English unit gets absorbed into the name).
-export const computeClientStepIngredientRefs = (
-  comp: SaveComponent
-): StepIngredientRef[][] =>
-  comp.steps.map((step, index) => {
-    if (index === comp.steps.length - 1) return []
-
-    const refs: StepIngredientRef[] = []
-    const stepLower = step.toLowerCase()
-    comp.ingredients.forEach((ingStr, ii) => {
-      const fullName = parseIngredient(ingStr)
-        .name.split(',')[0]
-        .trim()
-        .toLowerCase()
-      const candidates = [fullName]
-      for (const word of fullName.split(/\s+/)) {
-        if (word !== fullName && word.length >= 3 && !candidates.includes(word))
-          candidates.push(word)
-      }
-      for (const searchName of candidates) {
-        if (searchName.length < 3) continue
-        let matched = false
-        let idx = 0
-        while (true) {
-          const pos = stepLower.indexOf(searchName, idx)
-          if (pos === -1) break
-          const beforeOk = pos === 0 || !/\w/.test(stepLower[pos - 1])
-          const afterOk =
-            pos + searchName.length >= stepLower.length ||
-            !/\w/.test(stepLower[pos + searchName.length])
-          if (beforeOk && afterOk) {
-            refs.push({
-              ingredient_index: ii,
-              mention: step.slice(pos, pos + searchName.length),
-            })
-            matched = true
-          }
-          idx = pos + searchName.length
-        }
-        if (matched) break
-      }
-    })
-
-    return refs
-  })
 
 interface RecipeUpdateFromRecipeOverrides {
   components: SaveComponent[]

@@ -346,8 +346,6 @@
     "avgFat": "Lipides moy.",
     "avgCarbs": "Glucides moy.",
     "recipeDetail": "Détail de la recette",
-    "showIntelligentIngredients": "Afficher les ingrédients intelligents",
-    "showIntelligentIngredientsDesc": "Affiche automatiquement les quantités d'ingrédients sous l'étape correspondante",
     "screenAwake": "Garder l'écran allumé",
     "screenAwakeDesc": "L'écran reste actif lorsque les détails de la recette sont ouverts",
     "keepScreenOnDefault": "Garder l'écran allumé par défaut",

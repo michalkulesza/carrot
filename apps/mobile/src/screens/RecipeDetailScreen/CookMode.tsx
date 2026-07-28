@@ -19,11 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "expo-router";
 import type { RecipeOut } from "@carrot/shared/types";
-import {
-  buildClientStepRefs,
-  displayIngredient,
-  mergeStepIngredientRefs,
-} from "@carrot/shared/utils/ingredientUtils";
+import { displayIngredient } from "@carrot/shared/utils/ingredientUtils";
 import { parseDurationMatches } from "@carrot/shared/utils/timerUtils";
 import {
   formatCountdown,
@@ -146,26 +142,13 @@ const CookMode = ({
   const sheetBackground = cookColor("#eeece7", "#2b2d2a", colorScheme);
   const steps = useMemo(
     () =>
-      recipe.components.flatMap((component, componentIndex) => {
-        const componentStepRefs = mergeStepIngredientRefs(
-          component.step_ingredient_refs,
-          buildClientStepRefs(component.steps, component.ingredients),
-        );
-        return component.steps.map((text, stepIndex) => ({
+      recipe.components.flatMap((component, componentIndex) =>
+        component.steps.map((text, stepIndex) => ({
           componentIndex,
           stepIndex,
           text,
-          ingredients: [
-            ...new Set(
-              (componentStepRefs[stepIndex] ?? []).map((ref) =>
-                displayIngredient(
-                  ref.display ?? component.ingredients[ref.ingredient_index] ?? "",
-                ),
-              ),
-            ),
-          ],
-        }));
-      }),
+        })),
+      ),
     [recipe],
   );
   const [index, setIndex] = useState(0);
@@ -398,10 +381,7 @@ const CookMode = ({
             onTextLayout={(event) => {
               const instructionHeight =
                 event.nativeEvent.lines.length * Math.round(instructionFontSize * 1.23);
-              const reservedHeight =
-                62 +
-                (step.ingredients.length > 0 ? 42 : 0) +
-                (durations.length > 0 ? 72 : 0);
+              const reservedHeight = 62 + (durations.length > 0 ? 72 : 0);
               if (
                 mainHeight > 0 &&
                 instructionHeight > mainHeight - reservedHeight &&
@@ -415,16 +395,6 @@ const CookMode = ({
           >
             {step.text}
           </Animated.Text>
-          {step.ingredients.length > 0 && (
-            <Animated.Text
-              style={[
-                styles.stepIngredients,
-                { color: muted, opacity: stepContentOpacity },
-              ]}
-            >
-              {step.ingredients.join(" · ")}
-            </Animated.Text>
-          )}
           <Animated.View style={{ opacity: stepContentOpacity }}>
             <View style={styles.timerGrid}>
               {durations.map((duration, durationIndex) => {
@@ -585,12 +555,6 @@ const styles = StyleSheet.create({
   instruction: {
     textAlign: "center",
     fontFamily: "Georgia",
-  },
-  stepIngredients: {
-    textAlign: "center",
-    fontSize: 16,
-    marginTop: 22,
-    lineHeight: 22,
   },
   timerGrid: { width: "100%", gap: 10, marginTop: 24 },
   timerRow: {

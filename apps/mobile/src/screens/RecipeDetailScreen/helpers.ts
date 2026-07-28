@@ -1,9 +1,8 @@
-import type { RecipeOut, RecipeSaveRequest, ShoppingCategory, StepIngredientRef } from '@carrot/shared/types'
+import type { RecipeOut, RecipeSaveRequest, ShoppingCategory } from '@carrot/shared/types'
 import { parseIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { DurationMatch } from '../../context/TimerContext'
 
 export const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
-export const SHOW_STEP_QTY_STORAGE_KEY = 'recipe-show-step-qty'
 export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
 
 export const FONT_SIZES = [13, 16, 17, 20, 22] as const
@@ -92,50 +91,18 @@ export const buildRecipeSaveRequest = (
 
 export type Segment =
   | { type: 'text'; text: string }
-  | { type: 'mention'; text: string; ingredientIndex: number }
   | { type: 'timer'; seconds: number }
 
 export const buildSegments = (
   step: string,
-  stepRefs: StepIngredientRef[],
   durationMatch: DurationMatch | null,
 ): Segment[] => {
-  const spans: { start: number; end: number; seg: Segment }[] = []
+  if (!durationMatch) return [{ type: 'text', text: step }]
 
-  for (const ref of stepRefs) {
-    let idx = 0
-    while (true) {
-      const pos = step.indexOf(ref.mention, idx)
-      if (pos === -1) break
-      const beforeOk = pos === 0 || !/\w/.test(step[pos - 1])
-      const afterOk = pos + ref.mention.length >= step.length || !/\w/.test(step[pos + ref.mention.length])
-      if (beforeOk && afterOk) {
-        spans.push({ start: pos, end: pos + ref.mention.length, seg: { type: 'mention', text: ref.mention, ingredientIndex: ref.ingredient_index } })
-      }
-      idx = pos + ref.mention.length
-    }
-  }
+  const segments: Segment[] = []
+  if (durationMatch.start > 0) segments.push({ type: 'text', text: step.slice(0, durationMatch.start) })
+  segments.push({ type: 'timer', seconds: durationMatch.seconds })
+  if (durationMatch.end < step.length) segments.push({ type: 'text', text: step.slice(durationMatch.end) })
 
-  if (durationMatch) {
-    spans.push({ start: durationMatch.start, end: durationMatch.end, seg: { type: 'timer', seconds: durationMatch.seconds } })
-  }
-
-  spans.sort((a, b) => a.start - b.start)
-  const filtered: typeof spans = []
-  let cursor = 0
-  for (const span of spans) {
-    if (span.start >= cursor) {
-      filtered.push(span)
-      cursor = span.end
-    }
-  }
-  const result: Segment[] = []
-  let pos = 0
-  for (const span of filtered) {
-    if (pos < span.start) result.push({ type: 'text', text: step.slice(pos, span.start) })
-    result.push(span.seg)
-    pos = span.end
-  }
-  if (pos < step.length) result.push({ type: 'text', text: step.slice(pos) })
-  return result
+  return segments
 }

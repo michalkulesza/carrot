@@ -1,9 +1,6 @@
 import { useMemo } from 'react'
 import { Text, View } from 'react-native'
-import { useTranslation } from 'react-i18next'
-import type { RecipeOut, StepIngredientRef } from '@carrot/shared/types'
-import { displayIngredient } from '@carrot/shared/utils/ingredientUtils'
-import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
+import type { RecipeOut } from '@carrot/shared/types'
 import { parseDurationMatch } from '../../context/TimerContext'
 import { styles } from './styles'
 import StepText from './StepText'
@@ -13,10 +10,6 @@ const StepRow = ({
   index,
   recipe,
   componentIndex,
-  stepRefs,
-  rawIngredients,
-  servingScale,
-  showStepQty = true,
   fontSize = 17,
   lineHeight = 22,
 }: {
@@ -24,33 +17,11 @@ const StepRow = ({
   index: number
   recipe: RecipeOut
   componentIndex: number
-  stepRefs: StepIngredientRef[]
-  rawIngredients: string[]
-  servingScale: number
-  showStepQty?: boolean
   fontSize?: number
   lineHeight?: number
 }) => {
-  const { t } = useTranslation()
   const durationMatch = useMemo(() => parseDurationMatch(step), [step])
   const timerId = `${recipe.id}-c${componentIndex}-s${index}`
-
-  const stepIngredients = useMemo(() => {
-    const seen = new Set<number>()
-    return stepRefs.filter((ref) => {
-      if (seen.has(ref.ingredient_index)) return false
-      seen.add(ref.ingredient_index)
-      return true
-    })
-  }, [stepRefs])
-
-  const getStepIngredientDisplay = (ref: StepIngredientRef) => {
-    const fallback = rawIngredients[ref.ingredient_index] ?? ''
-    const value = ref.display
-      ? scaleIngredientQuantity(ref.display, servingScale)
-      : fallback
-    return displayIngredient(value)
-  }
 
   return (
     <View style={styles.stepRow}>
@@ -58,7 +29,6 @@ const StepRow = ({
       <View style={styles.stepBody}>
         <StepText
           step={step}
-          stepRefs={stepRefs}
           durationMatch={durationMatch}
           timerProps={
             durationMatch
@@ -68,18 +38,6 @@ const StepRow = ({
           fontSize={fontSize}
           lineHeight={lineHeight}
         />
-        {showStepQty && stepIngredients.length > 0 && (
-          <View style={styles.stepIngList}>
-            {stepIngredients.map((ref) => (
-              <View key={ref.ingredient_index} style={styles.stepIngRow}>
-                <View style={styles.stepIngDot} />
-                <Text style={styles.stepIngItem}>
-                  {getStepIngredientDisplay(ref)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
       </View>
     </View>
   )

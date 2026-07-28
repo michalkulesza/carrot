@@ -71,13 +71,6 @@ export interface Ingredient {
   substitute?: string | null;
 }
 
-export interface StepRef {
-  step_index: number;
-  ingredient_index: number;
-  mention: string;
-  display?: string | null;
-}
-
 export interface RecipeComponent {
   role: string;
   name: string | null;
@@ -88,7 +81,6 @@ export interface RecipeComponent {
   imperial_ingredients: string[];
   metric_steps: string[];
   imperial_steps: string[];
-  step_refs?: StepRef[];
   shopping_list_categories?: ShoppingCategory[] | null;
 }
 
@@ -191,12 +183,6 @@ export interface ImportJobEvent {
   job: ImportJob;
 }
 
-export interface StepIngredientRef {
-  ingredient_index: number;
-  mention: string;
-  display?: string | null;
-}
-
 export interface SaveComponent {
   name: string;
   yield_note: string;
@@ -209,7 +195,6 @@ export interface SaveComponent {
   metric_steps?: string[] | null;
   imperial_steps?: string[] | null;
   ingredient_flags?: AllergenFlag[];
-  step_ingredient_refs?: StepIngredientRef[][] | null;
 }
 
 export interface RecipeSaveRequest {

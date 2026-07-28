@@ -5,14 +5,11 @@ from unittest.mock import Mock
 import pytest
 
 from api.models import (
-    RecipeComponent,
     RecipeEnrichment,
     RecipeExtraction,
     RecipeSourceExtraction,
-    StepRef,
 )
 from api.services import gemini, import_worker, pipeline
-from api.services.import_worker import _step_ingredient_refs
 
 
 def _response(payload: dict) -> SimpleNamespace:
@@ -72,7 +69,6 @@ async def test_query_one_uses_source_only_schema_and_query_two_is_enrichment_onl
     assert enrichment_call.kwargs["config"].response_schema is RecipeEnrichment
     # Query-1 schema cannot express enrichment-only fields.
     assert "shopping_list_values" not in RecipeSourceExtraction.model_fields
-    assert "step_refs" not in RecipeSourceExtraction.model_fields
     # Query-2 schema cannot express source-owned fields — combiner must supply them.
     assert "title" not in RecipeEnrichment.model_fields
     assert "servings" not in RecipeEnrichment.model_fields
@@ -276,23 +272,6 @@ async def test_shopping_list_values_stay_on_flash_lite_by_default(monkeypatch) -
     assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
 
 
-def test_step_ingredient_refs_exclude_final_assembly_step() -> None:
-    component = RecipeComponent(
-        steps=["Chop the onion.", "Cook the onion.", "Assemble and serve."],
-        step_refs=[
-            StepRef(step_index=0, ingredient_index=0, mention="onion", display="1 onion"),
-            StepRef(step_index=1, ingredient_index=0, mention="onion"),
-            StepRef(step_index=2, ingredient_index=0, mention="onion"),
-        ],
-    )
-
-    assert _step_ingredient_refs(component) == [
-        [{"ingredient_index": 0, "mention": "onion", "display": "1 onion"}],
-        [{"ingredient_index": 0, "mention": "onion"}],
-        [],
-    ]
-
-
 def test_import_normalizes_malformed_parenthetical_ingredient_commas() -> None:
     assert import_worker._normalize_ingredient_punctuation(
         "1 clove garlic (, minced)"
@@ -324,7 +303,6 @@ def _matching_enrichment(**overrides) -> RecipeEnrichment:
         "imperial_steps": ["Chop the onion.", "Cook the onion."],
         "shopping_list_values": ["1 onion"],
         "shopping_list_categories": ["produce"],
-        "step_refs": [{"step_index": 0, "ingredient_index": 0, "mention": "onion"}],
     }])
     payload.update(overrides)
     return RecipeEnrichment.model_validate(payload)
@@ -419,55 +397,6 @@ def test_enrichment_estimates_metric_weight_for_canned_ingredients() -> None:
     assert component.imperial_ingredients == ["1 can black beans, drained and rinsed"]
 
 
-def test_enrichment_repairs_shifted_step_ingredient_references() -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{
-            "ingredients": [
-                {"name": "pork tenderloin"},
-                {"name": "kosher salt"},
-                {"name": "black pepper"},
-                {"name": "vegetable oil"},
-                {"name": "garlic, chopped"},
-                {"name": "ginger, finely chopped"},
-                {"name": "honey"},
-                {"name": "chili garlic sauce"},
-                {"name": "rice wine vinegar"},
-            ],
-            "steps": [
-                "Whisk together the honey, chili garlic sauce, and rice wine vinegar.",
-                "Heat the oil and cook the pork with salt and pepper.",
-            ],
-        }],
-    })
-    ingredient_values = [ingredient.name for ingredient in source.components[0].ingredients]
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ingredient_values,
-        "imperial_ingredients": ingredient_values,
-        "metric_steps": source.components[0].steps,
-        "imperial_steps": source.components[0].steps,
-        "shopping_list_values": ingredient_values,
-        "step_refs": [
-            {"step_index": 0, "ingredient_index": 5, "mention": "honey"},
-            {"step_index": 0, "ingredient_index": 6, "mention": "chili garlic sauce"},
-            {"step_index": 0, "ingredient_index": 7, "mention": "rice wine vinegar"},
-            {"step_index": 1, "ingredient_index": 4, "mention": "oil"},
-            {"step_index": 1, "ingredient_index": 0, "mention": "not in the step"},
-        ],
-    }]))
-
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-
-    assert [
-        (ref.step_index, ref.ingredient_index, ref.mention)
-        for ref in repaired.components[0].step_refs
-    ] == [
-        (0, 6, "honey"),
-        (0, 7, "chili garlic sauce"),
-        (0, 8, "rice wine vinegar"),
-        (1, 3, "oil"),
-    ]
-
-
 def test_assemble_recipe_rejects_mismatched_component_count() -> None:
     source = _one_component_source()
     enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[]))
@@ -487,14 +416,6 @@ def test_assemble_recipe_rejects_mismatched_step_count() -> None:
     source = _one_component_source()
     enrichment = _matching_enrichment()
     enrichment.components[0].metric_steps = []
-    with pytest.raises(ValueError):
-        gemini.assemble_recipe(source, enrichment)
-
-
-def test_assemble_recipe_rejects_out_of_range_step_ref() -> None:
-    source = _one_component_source()
-    enrichment = _matching_enrichment()
-    enrichment.components[0].step_refs = [StepRef(step_index=5, ingredient_index=0, mention="onion")]
     with pytest.raises(ValueError):
         gemini.assemble_recipe(source, enrichment)
 

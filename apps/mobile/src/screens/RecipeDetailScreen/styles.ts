@@ -230,28 +230,6 @@ export const styles = StyleSheet.create({
   stepBody: { flex: 1 },
   timerSpan: { color: "#d97706", fontWeight: "700" },
   stepText: { fontSize: 17, color: colors.label, lineHeight: 22 },
-  stepIngList: {
-    marginTop: 8,
-    gap: 5,
-  },
-  stepIngRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  stepIngDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.tertiaryLabel,
-    marginTop: 8,
-  },
-  stepIngItem: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 21,
-    color: colors.secondaryLabel,
-  },
   flex: { flex: 1 },
   headerBackBtn: { flexDirection: "row", alignItems: "center", marginLeft: -8 },
   headerBackText: { fontSize: 17, color: colors.label },

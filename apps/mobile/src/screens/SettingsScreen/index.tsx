@@ -31,7 +31,6 @@ import { useScreenLoading } from "../../hooks/useScreenLoading";
 import { useHousehold } from "../../context/HouseholdContext";
 import { persistLanguage } from "../../i18n";
 import HeaderTitle from "../../components/HeaderTitle";
-import { SHOW_STEP_QTY_STORAGE_KEY } from "../RecipeDetailScreen/helpers";
 import {
   KEEP_AWAKE_SHOPPING_STORAGE_KEY,
   LANGUAGES,
@@ -77,13 +76,9 @@ const SettingsScreen = () => {
   const api = useApiClient();
   const insets = useSafeAreaInsets();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } = useCookingMode();
-  const [showStepQty, setShowStepQty] = useState(true);
   const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem(SHOW_STEP_QTY_STORAGE_KEY).then((val) => {
-      if (val !== null) setShowStepQty(val === "1");
-    });
     AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
       setKeepScreenOnShopping(val === "1");
     });
@@ -95,11 +90,6 @@ const SettingsScreen = () => {
     },
     [setKeepScreenAwake],
   );
-
-  const handleShowStepQtyToggle = useCallback((val: boolean) => {
-    setShowStepQty(val);
-    void AsyncStorage.setItem(SHOW_STEP_QTY_STORAGE_KEY, val ? "1" : "0");
-  }, []);
 
   const handleKeepScreenShoppingToggle = useCallback((val: boolean) => {
     setKeepScreenOnShopping(val);
@@ -425,21 +415,6 @@ const SettingsScreen = () => {
             value={keepScreenAwake}
             onValueChange={handleCookingModeToggle}
             accessibilityLabel={t("settings.screenAwake")}
-          />
-        </View>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>
-              {t("settings.showIntelligentIngredients")}
-            </Text>
-            <Text style={styles.cardDesc}>
-              {t("settings.showIntelligentIngredientsDesc")}
-            </Text>
-          </View>
-          <Switch
-            value={showStepQty}
-            onValueChange={handleShowStepQtyToggle}
-            accessibilityLabel={t("settings.showIntelligentIngredients")}
           />
         </View>
       </View>

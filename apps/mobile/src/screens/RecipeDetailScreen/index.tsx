@@ -351,7 +351,6 @@ const RecipeDetailScreen = () => {
         }
         selectedServings={selectedServings}
         addMode={addMode}
-        showStepQty={displayPrefs.showStepQty}
         unitSystem={preferences?.unit_system ?? "metric"}
         sessionAdded={sessionAdded}
         fontSizeIndex={displayPrefs.fontSizeIndex}

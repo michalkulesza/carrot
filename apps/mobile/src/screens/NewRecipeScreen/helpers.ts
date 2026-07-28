@@ -1,4 +1,4 @@
-import type { AllergenFlag, RecipeSaveRequest, ShoppingCategory, StepIngredientRef, Tag } from '@carrot/shared/types'
+import type { AllergenFlag, RecipeSaveRequest, ShoppingCategory, Tag } from '@carrot/shared/types'
 import { serializeIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 
@@ -14,7 +14,6 @@ export interface EditableComponent {
   metric_steps: string[] | null
   imperial_steps: string[] | null
   ingredient_flags: (AllergenFlag | null)[]
-  step_ingredient_refs: StepIngredientRef[][] | null
 }
 export interface EditableRecipe {
   title: string
@@ -55,7 +54,6 @@ export const blankRecipe = (): EditableRecipe => ({
     metric_steps: null,
     imperial_steps: null,
     ingredient_flags: [null],
-    step_ingredient_refs: null,
   }],
 })
 
@@ -87,7 +85,6 @@ export const buildRecipeSavePayload = (
     ingredient_flags: c.ingredient_flags.map(
       (f) => f ?? { allergen: null, substitute: null, substitute_applied: false, original_display: null },
     ),
-    step_ingredient_refs: c.step_ingredient_refs,
   })),
   tag_ids: selectedTags.map((tag) => tag.id),
 })

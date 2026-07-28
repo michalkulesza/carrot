@@ -55,7 +55,6 @@ const ReadView = ({
   activeAllergens,
   selectedServings,
   addMode,
-  showStepQty,
   unitSystem,
   sessionAdded,
   fontSizeIndex,
@@ -80,7 +79,6 @@ const ReadView = ({
   activeAllergens: string[];
   selectedServings: number | null;
   addMode: boolean;
-  showStepQty: boolean;
   unitSystem: string;
   sessionAdded: Set<string>;
   fontSizeIndex: number;
@@ -331,7 +329,6 @@ const ReadView = ({
               index={i}
               recipe={recipe}
               addMode={addMode}
-              showStepQty={showStepQty}
               unitSystem={unitSystem}
               servingScale={servingScale}
               sessionAdded={sessionAdded}

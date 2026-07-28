@@ -14,7 +14,6 @@ interface CookStep {
   componentIndex: number
   stepIndex: number
   text: string
-  ingredients: string[]
 }
 
 const sessionKey = (recipeId: string) => `cook-mode:${recipeId}`
@@ -33,15 +32,6 @@ const CookMode = ({
           componentIndex,
           stepIndex,
           text,
-          ingredients: [
-            ...new Set(
-              (component.step_ingredient_refs?.[stepIndex] ?? []).map((ref) =>
-                displayIngredient(
-                  ref.display ?? component.ingredients[ref.ingredient_index] ?? ''
-                )
-              )
-            ),
-          ],
         }))
       ),
     [recipe]
@@ -180,11 +170,6 @@ const CookMode = ({
           <p className="max-w-3xl font-serif text-4xl leading-tight sm:text-6xl">
             {step.text}
           </p>
-          {step.ingredients.length > 0 && (
-            <p className="mt-7 max-w-xl text-base text-zinc-500">
-              {step.ingredients.join(' · ')}
-            </p>
-          )}
           {durations.length > 0 && (
             <div className="mt-10 grid w-full max-w-2xl gap-3 sm:grid-cols-2">
               {durations.map((duration, durationIndex) => {

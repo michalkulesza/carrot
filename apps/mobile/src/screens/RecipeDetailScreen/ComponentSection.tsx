@@ -2,8 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
-import type { RecipeOut, SaveComponent, ShoppingListItemInput, StepIngredientRef } from '@carrot/shared/types'
-import { buildClientStepRefs, mergeStepIngredientRefs } from '@carrot/shared/utils/ingredientUtils'
+import type { RecipeOut, SaveComponent, ShoppingListItemInput } from '@carrot/shared/types'
 import {
   getImperialCupQty,
   scaleIngredientQuantity,
@@ -19,7 +18,6 @@ const ComponentSection = ({
   index,
   recipe,
   addMode = false,
-  showStepQty = true,
   unitSystem,
   servingScale = 1,
   sessionAdded,
@@ -36,7 +34,6 @@ const ComponentSection = ({
   index: number
   recipe: RecipeOut
   addMode?: boolean
-  showStepQty?: boolean
   unitSystem: string
   servingScale?: number
   sessionAdded?: Set<string>
@@ -72,14 +69,6 @@ const ComponentSection = ({
       return qty ? ` (${qty} ${t('units.cup', { defaultValue: 'cup' })})` : ''
     },
     [component.imperial_ingredients, servingScale, t, unitSystem],
-  )
-
-  const stepRefs = useMemo<StepIngredientRef[][]>(
-    () => mergeStepIngredientRefs(
-      component.step_ingredient_refs,
-      buildClientStepRefs(steps, ingredients),
-    ),
-    [component.step_ingredient_refs, steps, ingredients],
   )
 
   const getShoppingListValue = useCallback(
@@ -190,10 +179,6 @@ const ComponentSection = ({
               index={i}
               recipe={recipe}
               componentIndex={index}
-              stepRefs={stepRefs[i] ?? []}
-              rawIngredients={ingredients}
-              servingScale={servingScale}
-              showStepQty={showStepQty}
               fontSize={fontSize}
               lineHeight={lineHeight}
             />

@@ -12,7 +12,6 @@ from api.models import (
     ImportResult,
     Ingredient,
     Recipe,
-    RecipeComponent,
     RecipeExtraction,
     ShoppingCategory,
     UserPreferences,
@@ -33,23 +32,6 @@ class ReimportFailure(Exception):
 def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
     name = ingredient.substitute if auto_substitute and ingredient.allergen and ingredient.substitute else ingredient.name
     return " ".join(part for part in (ingredient.qty, ingredient.unit.value if ingredient.unit else None, name) if part)
-
-
-def _step_ingredient_refs(component: RecipeComponent) -> list[list[dict]] | None:
-    if not component.step_refs:
-        return None
-
-    refs: list[list[dict]] = [[] for _ in component.steps]
-    for ref in component.step_refs:
-        if ref.step_index < len(refs) - 1:
-            serialized_ref = {
-                "ingredient_index": ref.ingredient_index,
-                "mention": ref.mention,
-            }
-            if ref.display:
-                serialized_ref["display"] = ref.display
-            refs[ref.step_index].append(serialized_ref)
-    return refs
 
 
 def _components(extraction: RecipeExtraction, auto_substitute: bool) -> list[dict]:
@@ -79,7 +61,6 @@ def _components(extraction: RecipeExtraction, auto_substitute: bool) -> list[dic
                 "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
                 "original_display": None,
             } for ingredient in component.ingredients],
-            "step_ingredient_refs": _step_ingredient_refs(component),
         })
     return components
 

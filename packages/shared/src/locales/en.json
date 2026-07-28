@@ -346,8 +346,6 @@
     "avgFat": "Avg fat",
     "avgCarbs": "Avg carbs",
     "recipeDetail": "Recipe Detail",
-    "showIntelligentIngredients": "Show intelligent ingredients",
-    "showIntelligentIngredientsDesc": "Automatically shows ingredient amounts under each matching step",
     "screenAwake": "Keep screen awake",
     "screenAwakeDesc": "Keeps your screen awake while recipe details are open",
     "keepScreenOnDefault": "Keep screen on by default",

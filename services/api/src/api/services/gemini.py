@@ -21,7 +21,6 @@ from api.models import (
     RecipeUnitVariants,
     ShoppingCategory,
     SourceComponent,
-    StepRef,
 )
 
 log = logging.getLogger(__name__)
@@ -219,20 +218,6 @@ grams). If no recipe content is present at all, use 0.
 
 tags: if a list of available tags is provided, assign only those that clearly apply
 to this recipe. Use only tags from the provided list — never invent new ones.
-
-step_refs: for every ingredient mentioned in a step — whether by full name,
-inflected/declined form (e.g. "kurczaki" or "kurczakiem" for ingredient
-"kurczak", "Zwiebeln" for "Zwiebel"), key noun ("chicken" for "chicken thighs,
-skin on"), plural, abbreviation, or any morphological variant — add one entry:
-  step_index: 0-based index of the step in this component's steps list
-  ingredient_index: 0-based index of the ingredient in this component's ingredients list
-  mention: the exact substring as it appears in the step text
-  display: a concise ingredient line for this step only. When the step uses a
-  portion of a divided ingredient, include exactly that portion and ingredient
-  name (for example, "1 tsp soy sauce"); otherwise return null.
-Match across all languages. For inflected languages (Polish, Russian, Czech,
-German, etc.) recognise all grammatical case and number variants of the
-ingredient name. Leave step_refs empty only if no ingredient is referenced.
 """
 
 _ALLERGEN_SYSTEM = """\
@@ -308,7 +293,6 @@ _METRIC_CONVERSION_REQUIRED_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _METRIC_MEASUREMENT_PATTERN = re.compile(r"\b(?:ml|l|g|kg|cm)\b", re.IGNORECASE)
-_MATCH_WORD_PATTERN = re.compile(r"\w+", re.UNICODE)
 _VARIABLE_FORMULATION_PATTERN = re.compile(
     r"\b(?:sauce|condiment|seasoning|stock|broth|bouillon|paste|mix|dressing|marinade)\b",
     re.IGNORECASE,
@@ -412,80 +396,6 @@ def _repair_shopping_list_categories(
     return categories
 
 
-def _normalized_match_text(value: str) -> str:
-    return " ".join(_MATCH_WORD_PATTERN.findall(value.casefold()))
-
-
-def _contains_normalized_phrase(value: str, phrase: str) -> bool:
-    return f" {phrase} " in f" {value} "
-
-
-def _ingredient_mention_score(mention: str, ingredient_name: str) -> tuple[int, int]:
-    normalized_mention = _normalized_match_text(mention)
-    normalized_name = _normalized_match_text(ingredient_name.split(",", 1)[0])
-    if not normalized_mention or not normalized_name:
-        return (0, 0)
-    if normalized_mention == normalized_name:
-        return (3, len(normalized_name))
-    if _contains_normalized_phrase(normalized_name, normalized_mention):
-        return (2, len(normalized_mention))
-    if _contains_normalized_phrase(normalized_mention, normalized_name):
-        return (1, len(normalized_name))
-    return (0, 0)
-
-
-def _repair_step_refs(
-    source_component: SourceComponent,
-    step_refs: list[StepRef],
-    component_index: int,
-    repairs: list[str],
-) -> list[StepRef]:
-    repaired: list[StepRef] = []
-    seen: set[tuple[int, int]] = set()
-
-    for ref in step_refs:
-        if not (0 <= ref.step_index < len(source_component.steps)):
-            repairs.append(f"component {component_index} contains an out-of-range step_ref")
-            continue
-        if not (0 <= ref.ingredient_index < len(source_component.ingredients)):
-            repairs.append(f"component {component_index} contains an out-of-range step_ref")
-            continue
-
-        normalized_step = _normalized_match_text(source_component.steps[ref.step_index])
-        normalized_mention = _normalized_match_text(ref.mention)
-        if not normalized_mention or not _contains_normalized_phrase(
-            normalized_step,
-            normalized_mention,
-        ):
-            repairs.append(
-                f"component {component_index} step_ref mention is absent from step {ref.step_index}"
-            )
-            continue
-
-        scores = [
-            _ingredient_mention_score(ref.mention, ingredient.name)
-            for ingredient in source_component.ingredients
-        ]
-        best_score = max(scores, default=(0, 0))
-        best_indexes = [index for index, score in enumerate(scores) if score == best_score]
-        current_score = scores[ref.ingredient_index]
-        ingredient_index = ref.ingredient_index
-        if best_score > current_score and len(best_indexes) == 1:
-            ingredient_index = best_indexes[0]
-            repairs.append(
-                f"component {component_index} remapped step_ref ingredient "
-                f"{ref.ingredient_index} to {ingredient_index}"
-            )
-
-        key = (ref.step_index, ingredient_index)
-        if key in seen:
-            continue
-        seen.add(key)
-        repaired.append(ref.model_copy(update={"ingredient_index": ingredient_index}))
-
-    return repaired
-
-
 def _repair_enrichment_alignment(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
@@ -511,13 +421,6 @@ def _repair_enrichment_alignment(
                 f"component {index} {field_name} has {len(values)} entries, expected {len(fallback)}"
             )
             return fallback
-
-        valid_step_refs = _repair_step_refs(
-            source_component,
-            component.step_refs,
-            index,
-            repairs,
-        )
 
         metric_ingredients = aligned_or_fallback(
             "metric_ingredients", component.metric_ingredients, ingredient_fallback,
@@ -553,7 +456,6 @@ def _repair_enrichment_alignment(
             ),
             "metric_steps": aligned_or_fallback("metric_steps", component.metric_steps, step_fallback),
             "imperial_steps": aligned_or_fallback("imperial_steps", component.imperial_steps, step_fallback),
-            "step_refs": valid_step_refs,
         }))
 
     if repairs:
@@ -669,12 +571,6 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
                     f"expected {step_count}"
                 )
 
-        for ref in enriched.step_refs:
-            if not (0 <= ref.step_index < step_count) or not (
-                0 <= ref.ingredient_index < ingredient_count
-            ):
-                raise ValueError(f"Component {index}: step_ref {ref} is out of range")
-
         category_repairs: list[str] = []
         shopping_categories = _repair_shopping_list_categories(
             enriched.shopping_list_categories,
@@ -713,7 +609,6 @@ def assemble_recipe(source: RecipeSourceExtraction, enrichment: RecipeEnrichment
             metric_steps=enriched.metric_steps,
             imperial_steps=enriched.imperial_steps,
             shopping_list_categories=shopping_categories,
-            step_refs=enriched.step_refs,
         ))
 
     return RecipeExtraction(

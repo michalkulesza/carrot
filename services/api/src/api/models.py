@@ -294,13 +294,6 @@ class Ingredient(BaseModel):
     substitute: str | None = None
 
 
-class StepRef(BaseModel):
-    step_index: int
-    ingredient_index: int
-    mention: str
-    display: str | None = None
-
-
 class RecipeComponent(BaseModel):
     role: str = "main"
     name: str | None = None
@@ -312,7 +305,6 @@ class RecipeComponent(BaseModel):
     metric_steps: list[str] = []
     imperial_steps: list[str] = []
     shopping_list_categories: list[ShoppingCategory] = []
-    step_refs: list[StepRef] = []
 
 
 class RecipeExtraction(BaseModel):
@@ -357,7 +349,6 @@ class UnitVariantComponent(BaseModel):
 class EnrichmentComponent(UnitVariantComponent):
     shopping_list_values: list[str] = []
     shopping_list_categories: list[str] = []
-    step_refs: list[StepRef] = []
 
 
 class RecipeEnrichment(BaseModel):
@@ -418,11 +409,6 @@ class TagCreate(BaseModel):
 
 # ── Recipe save / list ────────────────────────────────────────────────────────
 
-class StepIngredientRef(BaseModel):
-    ingredient_index: int
-    mention: str
-
-
 class SaveComponent(BaseModel):
     name: str
     yield_note: str
@@ -444,7 +430,6 @@ class SaveComponent(BaseModel):
     metric_steps: list[str] | None = None
     imperial_steps: list[str] | None = None
     ingredient_flags: list[AllergenFlag] | None = None
-    step_ingredient_refs: list[list[StepIngredientRef]] | None = None
 
 
 class RecipeSaveRequest(BaseModel):

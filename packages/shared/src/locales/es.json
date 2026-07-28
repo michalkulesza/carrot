@@ -345,8 +345,6 @@
     "avgFat": "Grasa prom.",
     "avgCarbs": "Carbos prom.",
     "recipeDetail": "Detalle de la receta",
-    "showIntelligentIngredients": "Mostrar ingredientes inteligentes",
-    "showIntelligentIngredientsDesc": "Muestra automáticamente las cantidades de ingredientes bajo el paso correspondiente",
     "screenAwake": "Mantener la pantalla encendida",
     "screenAwakeDesc": "La pantalla permanece activa mientras los detalles de la receta están abiertos",
     "keepScreenOnDefault": "Mantener la pantalla encendida de forma predeterminada",

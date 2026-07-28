@@ -352,8 +352,6 @@
     "avgFat": "Śr. tłuszcz",
     "avgCarbs": "Śr. węglow.",
     "recipeDetail": "Szczegóły przepisu",
-    "showIntelligentIngredients": "Pokaż inteligentne składniki",
-    "showIntelligentIngredientsDesc": "Automatycznie pokazuje ilości składników pod pasującym krokiem",
     "screenAwake": "Nie wygaszaj ekranu",
     "screenAwakeDesc": "Utrzymuje ekran włączony, gdy szczegóły przepisu są otwarte",
     "keepScreenOnDefault": "Domyślnie nie wygaszaj ekranu",
