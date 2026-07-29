@@ -177,13 +177,13 @@ const SettingsScreen = () => {
   const handleDeleteAccountEmailSubmit = useCallback(
     (input?: string) => {
       if (!input || input.trim().toLowerCase() !== user?.email?.toLowerCase()) {
-        Alert.alert(t("common.ok"), t("settings.deleteAccountEmailMismatch"));
+        Alert.alert(t("common.somethingWentWrong"), t("settings.deleteAccountEmailMismatch"));
         return;
       }
       setIsDeletingAccount(true);
       deleteAccount()
         .catch((e) => {
-          Alert.alert(t("common.ok"), e instanceof Error ? e.message : "Error");
+          Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : "Error");
         })
         .finally(() => setIsDeletingAccount(false));
     },
@@ -227,7 +227,7 @@ const SettingsScreen = () => {
     async (name?: string) => {
       const trimmed = name?.trim() ?? "";
       if (trimmed.length < 3) {
-        Alert.alert(t("common.ok"), t("settings.householdNameTooShort"));
+        Alert.alert(t("common.somethingWentWrong"), t("settings.householdNameTooShort"));
         return;
       }
       try {
@@ -237,7 +237,7 @@ const SettingsScreen = () => {
         await refreshUser();
         refetchHouseholds();
       } catch (e) {
-        Alert.alert(t("common.ok"), e instanceof Error ? e.message : "Error");
+        Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : "Error");
       }
     },
     [createHousehold, refetchHouseholds, refreshUser, t],
@@ -263,7 +263,7 @@ const SettingsScreen = () => {
         await refreshUser();
         refetchHouseholds();
       } catch (e) {
-        Alert.alert(t("common.ok"), e instanceof Error ? e.message : t("households.joinFailed"));
+        Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : t("households.joinFailed"));
       }
     },
     [joinByCode, refetchHouseholds, refreshUser, t],

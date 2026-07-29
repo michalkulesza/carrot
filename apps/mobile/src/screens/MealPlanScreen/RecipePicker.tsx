@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RecipeOut } from '@carrot/shared/types'
 import NetworkImage from '../../components/NetworkImage'
-import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
+import { PLACEHOLDER_URL, proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { styles } from './styles'
 
 interface RecipePickerProps {
@@ -105,7 +105,7 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<RecipeOut>) => {
-      const thumbUri = proxyThumbnailUrl(item.thumbnail_url)
+      const thumbUri = proxyThumbnailUrl(item.thumbnail_url) || PLACEHOLDER_URL || null
       const isActive = item.id === currentRecipeId
       const handlePress = () => {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)

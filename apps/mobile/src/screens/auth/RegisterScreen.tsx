@@ -3,8 +3,9 @@ import { StyleSheet, Text, TextInput, Pressable, View, KeyboardAvoidingView, Pla
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
-import { AntDesign } from '@expo/vector-icons'
+import { AntDesign, Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../context/AuthContext'
 import { colors } from '../../theme/colors'
 import { EMAIL_PATTERN } from '../../utils/validation'
@@ -19,6 +20,7 @@ interface RegisterFormValues {
 
 const RegisterScreen = () => {
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const { t } = useTranslation()
   const { requestSignupCode, loginWithGoogle } = useAuth()
   const [error, setError] = useState<string | null>(null)
@@ -82,6 +84,16 @@ const RegisterScreen = () => {
 
   return (
     <KeyboardAvoidingView style={styles.outer} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <Pressable
+        style={({ pressed }) => [styles.backButton, { top: insets.top + 12 }, pressed && { opacity: 0.5 }]}
+        onPress={() => router.back()}
+        hitSlop={8}
+        accessibilityLabel={t('common.back')}
+        accessibilityRole="button"
+      >
+        <Feather name="chevron-left" size={24} color={colors.label as unknown as string} style={styles.backButtonChevron} />
+        <Text style={styles.backButtonText}>{t('common.back')}</Text>
+      </Pressable>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.title}>{t('auth.createAccount')}</Text>
         <Text style={styles.subtitle}>{t('auth.signupEmailSubtitle')}</Text>
@@ -165,6 +177,17 @@ const RegisterScreen = () => {
 const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.background },
   container: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  backButton: {
+    position: 'absolute',
+    zIndex: 1,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+    paddingHorizontal: 4,
+  },
+  backButtonChevron: { marginLeft: -2 },
+  backButtonText: { color: colors.label, fontSize: 16 },
   title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 8, color: colors.label },
   subtitle: { fontSize: 16, textAlign: 'center', marginBottom: 32, color: colors.secondaryLabel },
   error: { color: colors.red, marginBottom: 12, textAlign: 'center' },
@@ -178,10 +201,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     backgroundColor: colors.background,
+    color: colors.label,
   },
   button: { borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  buttonPrimary: { backgroundColor: colors.blue },
-  buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
+  buttonPrimary: { backgroundColor: colors.brand },
+  buttonPrimaryText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   buttonOutlineText: { color: colors.secondaryLabel, fontSize: 16 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 16 },
   dividerLine: { flex: 1, height: 1, backgroundColor: colors.opaqueSeparator },

@@ -10,7 +10,7 @@ import {
 } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut, Tag } from '@carrot/shared/types'
-import { proxyUrl, PLACEHOLDER_URL } from '../../utils/imageUtils'
+import { proxyUrl } from '../../utils/imageUtils'
 import NetworkImage from '../NetworkImage'
 import TagRow from '../TagRow'
 import AllergenBadges from './AllergenBadges'
@@ -184,10 +184,6 @@ const RecipeHeroSection = ({
           src={proxied}
           alt={r.title}
           className="w-full h-64 object-cover"
-          onError={(e) => {
-            if (PLACEHOLDER_URL)
-              (e.target as HTMLImageElement).src = PLACEHOLDER_URL
-          }}
         />
       )}
 

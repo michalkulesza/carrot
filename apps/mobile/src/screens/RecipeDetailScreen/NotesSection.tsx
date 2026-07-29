@@ -28,7 +28,7 @@ const NotesSection = ({ recipe, fontSizeIndex }: { recipe: RecipeOut; fontSizeIn
       qc.setQueryData<RecipeOut[]>(['recipes'], (prev) => (prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev))
     } catch {
       setValue(recipe.notes ?? '')
-      Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+      Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
     }
   }, [value, recipe, api, qc, t])
 

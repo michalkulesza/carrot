@@ -144,7 +144,7 @@ const RecipeDetailScreen = () => {
     deletePendingRef.current = true
     void remove.mutateAsync(recipe.id)
       .then(() => navigation.goBack())
-      .catch(() => Alert.alert(t('common.ok'), t('recipes.failedToDelete')))
+      .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
       .finally(() => { deletePendingRef.current = false })
   }, [navigation, recipe, remove, t])
 
@@ -153,7 +153,7 @@ const RecipeDetailScreen = () => {
     deletePendingRef.current = true
     void removeFromHousehold.mutateAsync({ id: recipe.id, householdId: activeHouseholdId })
       .then(() => navigation.goBack())
-      .catch(() => Alert.alert(t('common.ok'), t('recipes.failedToDelete')))
+      .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
       .finally(() => { deletePendingRef.current = false })
   }, [navigation, recipe, activeHouseholdId, removeFromHousehold, t])
 
@@ -210,7 +210,7 @@ const RecipeDetailScreen = () => {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(t('common.ok'), error instanceof Error ? error.message : t('publicShare.createError'));
+      Alert.alert(t('common.somethingWentWrong'), error instanceof Error ? error.message : t('publicShare.createError'));
     } finally {
       publicSharePendingRef.current = false;
     }
@@ -233,7 +233,7 @@ const RecipeDetailScreen = () => {
         {
           onError: (err) =>
             Alert.alert(
-              t("common.ok"),
+              t("common.somethingWentWrong"),
               err instanceof Error ? err.message : t("addRecipe.failedToAdd"),
             ),
         },

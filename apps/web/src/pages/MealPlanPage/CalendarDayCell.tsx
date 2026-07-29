@@ -83,13 +83,11 @@ const CalendarDayCell = ({
           }}
           onDragEnd={onChipDragEnd}
         >
-          {thumb && (
-            <RecipeThumb
-              src={thumb}
-              alt={entryTitle ?? ''}
-              className="w-5 h-5 rounded shrink-0"
-            />
-          )}
+          <RecipeThumb
+            src={thumb}
+            alt={entryTitle ?? ''}
+            className="w-5 h-5 rounded shrink-0"
+          />
           <span className="text-xs font-medium text-primary truncate">
             {entryTitle}
           </span>

@@ -196,7 +196,7 @@ const BellMenu = () => {
             refetchHouseholds()
           } catch (e) {
             const errorMessage = e instanceof Error ? e.message : t('bell.acceptInvitationFailed')
-            Alert.alert(t('common.ok'), errorMessage)
+            Alert.alert(t('common.somethingWentWrong'), errorMessage)
           }
           break
         case 'inv-decline':

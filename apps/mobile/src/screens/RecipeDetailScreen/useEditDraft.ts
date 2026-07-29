@@ -206,7 +206,7 @@ export const useEditDraft = ({
       setDraft((prev) => prev && { ...prev, thumbnail_url: data.url })
       setThumbErrored(false)
     } catch {
-      Alert.alert(t('common.ok'), t('common.uploadFailed'))
+      Alert.alert(t('common.somethingWentWrong'), t('common.uploadFailed'))
     } finally {
       setUploadingThumb(false)
     }
@@ -250,7 +250,7 @@ export const useEditDraft = ({
       onSaveSuccess(updated)
       setEditing(false)
     } catch {
-      Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+      Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
     } finally {
       setSaving(false)
     }

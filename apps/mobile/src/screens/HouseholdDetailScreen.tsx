@@ -164,7 +164,7 @@ const HouseholdDetailScreen = () => {
       await update.mutateAsync({ id: householdId, data: { name: name.trim() || undefined, color } })
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch (e) {
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.failedToSave'))
     } finally {
       setSaving(false)
     }
@@ -192,9 +192,9 @@ const HouseholdDetailScreen = () => {
       await invite.mutateAsync({ householdId, email })
       setInviteEmail('')
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-      Alert.alert(t('common.ok'), t('settings.invitationSent'))
+      Alert.alert(t('settings.invitationSent'))
     } catch (e) {
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.invitationFailed'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.invitationFailed'))
     } finally {
       setInviting(false)
     }
@@ -213,7 +213,7 @@ const HouseholdDetailScreen = () => {
       await rotateCode.mutateAsync(householdId)
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     } catch (e) {
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.failedToSave'))
     } finally {
       setRotating(false)
     }
@@ -225,7 +225,7 @@ const HouseholdDetailScreen = () => {
       try {
         await remove.mutateAsync(userId)
       } catch (e) {
-        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.failedToSave'))
       } finally {
         setBusyUserId(null)
       }
@@ -239,7 +239,7 @@ const HouseholdDetailScreen = () => {
       try {
         await promote.mutateAsync(userId)
       } catch (e) {
-        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.failedToSave'))
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.failedToSave'))
       } finally {
         setBusyUserId(null)
       }
@@ -258,7 +258,7 @@ const HouseholdDetailScreen = () => {
       router.back()
     } catch (e) {
       setLeaving(false)
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('settings.leaveFailed'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.leaveFailed'))
     }
   }, [householdId, leave, user, refreshUser, router, t])
 

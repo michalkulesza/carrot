@@ -23,6 +23,10 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before 
 - Keep app content covered until the persisted appearance preference has loaded and the native colors have updated. Splash and post-splash surfaces must be opaque so an unthemed light frame cannot show through.
 - Preserve `userInterfaceStyle: 'automatic'` and the `expo-system-ui` dependency so automatic appearance works in native builds.
 
+## Navigation
+
+- Reuse the app's standard transparent back control: a `Feather` `chevron-left` (24px) with the localized “Back” label, as in `useNewRecipeHeader`. Do not introduce a bespoke floating, glass, or pill-shaped back button unless that pattern has been adopted app-wide.
+
 ## Share extension
 
 `expo-sharing` in `app.json` creates and embeds the iOS Share Extension

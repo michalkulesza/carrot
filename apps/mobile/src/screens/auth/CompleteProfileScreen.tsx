@@ -152,10 +152,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     backgroundColor: colors.background,
+    color: colors.label,
   },
   button: { borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginBottom: 10 },
-  buttonPrimary: { backgroundColor: colors.blue },
-  buttonPrimaryText: { color: colors.background, fontSize: 16, fontWeight: '600' },
+  buttonPrimary: { backgroundColor: colors.brand },
+  buttonPrimaryText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
 })
 
 export default CompleteProfileScreen

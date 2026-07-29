@@ -5,7 +5,7 @@ import { Feather } from '@expo/vector-icons'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { formatWeekdayShort } from '@carrot/shared/utils/dateUtils'
 import NetworkImage from '../../components/NetworkImage'
-import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
+import { PLACEHOLDER_URL, proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
@@ -28,7 +28,9 @@ const DayRow = memo(({ date, entry, isToday, onPress, isDraggingSource }: DayRow
   const monthLabel = new Intl.DateTimeFormat(i18n.language, { month: 'short' }).format(date)
   const visibleEntry = isDraggingSource ? undefined : entry
   const entryTitle = visibleEntry?.recipe?.title ?? visibleEntry?.text
-  const thumbUri = visibleEntry?.recipe ? proxyThumbnailUrl(visibleEntry.recipe.thumbnail_url) : null
+  const thumbUri = visibleEntry?.recipe
+    ? proxyThumbnailUrl(visibleEntry.recipe.thumbnail_url)
+    : PLACEHOLDER_URL || null
   const accessibilityHint = entry ? t('mealPlan.dragHint') : undefined
   const accessibilityLabel = `${dayLabel}${entryTitle ? ': ' + entryTitle : ''}`
 

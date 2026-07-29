@@ -68,17 +68,11 @@ const DayRow = ({
           onClick={onTap}
           className="flex-1 flex items-center gap-3 min-w-0 active:opacity-60 transition-opacity"
         >
-          {thumb ? (
-            <RecipeThumb
-              src={thumb}
-              alt={entryTitle ?? ''}
-              className="w-12 h-12 rounded-xl shrink-0"
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-xl bg-zinc-100 shrink-0 flex items-center justify-center text-xl">
-              🍽
-            </div>
-          )}
+          <RecipeThumb
+            src={thumb}
+            alt={entryTitle ?? ''}
+            className="w-12 h-12 rounded-xl shrink-0"
+          />
           <div className="min-w-0 flex-1 text-left">
             <p className="text-sm font-semibold line-clamp-2 text-zinc-800 leading-snug">
               {entryTitle}

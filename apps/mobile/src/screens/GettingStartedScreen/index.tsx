@@ -51,7 +51,7 @@ const GettingStartedScreen = () => {
         refetchInvitations()
         refetchHouseholds()
       } catch (e) {
-        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('bell.acceptInvitationFailed'))
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('bell.acceptInvitationFailed'))
       } finally {
         setBusyInvitationId(null)
       }
@@ -63,7 +63,7 @@ const GettingStartedScreen = () => {
     async (name?: string) => {
       const trimmed = name?.trim() ?? ''
       if (trimmed.length < 3) {
-        Alert.alert(t('common.ok'), t('settings.householdNameTooShort'))
+        Alert.alert(t('common.somethingWentWrong'), t('settings.householdNameTooShort'))
         return
       }
       setCreatingHousehold(true)
@@ -72,7 +72,7 @@ const GettingStartedScreen = () => {
         await refreshUser()
         refetchHouseholds()
       } catch (e) {
-        Alert.alert(t('common.ok'), e instanceof Error ? e.message : 'Error')
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : 'Error')
       } finally {
         setCreatingHousehold(false)
       }
@@ -99,7 +99,7 @@ const GettingStartedScreen = () => {
         await refreshUser()
         refetchHouseholds()
       } catch (e) {
-        Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('households.joinFailed'))
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('households.joinFailed'))
       }
     },
     [joinByCode, refetchHouseholds, refreshUser, t],

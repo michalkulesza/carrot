@@ -551,7 +551,7 @@ const RecipesScreen = () => {
         }
         await qc.invalidateQueries({ queryKey: ['recipes'] })
       } catch (err) {
-        Alert.alert(t('common.ok'), err instanceof Error ? err.message : t('addRecipe.failedToAdd'))
+        Alert.alert(t('common.somethingWentWrong'), err instanceof Error ? err.message : t('addRecipe.failedToAdd'))
       }
     },
     [api, qc, t],

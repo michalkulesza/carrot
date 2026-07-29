@@ -49,7 +49,7 @@ const MyRecipeRow = ({ recipe, households, activeHouseholdId, onDeleted }: MyRec
       await qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
       onDeleted(recipe.id)
     } catch (e) {
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('recipes.failedToDelete'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('recipes.failedToDelete'))
       setBusy(false)
     }
   }, [api, qc, recipe.id, activeHouseholdId, onDeleted, t])
@@ -61,7 +61,7 @@ const MyRecipeRow = ({ recipe, households, activeHouseholdId, onDeleted }: MyRec
       await qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
       onDeleted(recipe.id)
     } catch (e) {
-      Alert.alert(t('common.ok'), e instanceof Error ? e.message : t('recipes.failedToDelete'))
+      Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('recipes.failedToDelete'))
       setBusy(false)
     }
   }, [api, qc, recipe.id, onDeleted, t])

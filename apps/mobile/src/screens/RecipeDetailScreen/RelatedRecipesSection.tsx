@@ -118,7 +118,7 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
       setPendingRelatedRecipes(null)
       void queryClient.invalidateQueries({ queryKey: relatedQueryKey })
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-      Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+      Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
     } finally {
       if (requestId === saveRequestIdRef.current) {
         isSavingRef.current = false

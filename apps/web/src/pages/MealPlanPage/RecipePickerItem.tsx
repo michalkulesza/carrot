@@ -21,17 +21,11 @@ const RecipePickerItem = ({
       disabled={disabled}
       className="flex items-center gap-3 px-4 py-3 w-full text-left border-b border-zinc-200 last:border-0 active:bg-zinc-100 transition-colors disabled:opacity-50"
     >
-      {thumb ? (
-        <RecipeThumb
-          src={thumb}
-          alt={recipe.title}
-          className="w-12 h-12 rounded-xl shrink-0"
-        />
-      ) : (
-        <div className="w-12 h-12 rounded-xl bg-zinc-100 shrink-0 flex items-center justify-center text-xl">
-          🍽
-        </div>
-      )}
+      <RecipeThumb
+        src={thumb}
+        alt={recipe.title}
+        className="w-12 h-12 rounded-xl shrink-0"
+      />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold line-clamp-2 leading-snug">
           {recipe.title}

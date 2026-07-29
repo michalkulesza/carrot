@@ -60,7 +60,7 @@ const RecipeFormView = ({
       const data = await uploadThumbnailImage(tempRecipeIdRef.current, asset)
       onChange({ ...recipe, thumbnail_url: data.url })
     } catch {
-      Alert.alert(t('common.ok'), t('common.uploadFailed'))
+      Alert.alert(t('common.somethingWentWrong'), t('common.uploadFailed'))
     } finally {
       setUploadingThumb(false)
     }

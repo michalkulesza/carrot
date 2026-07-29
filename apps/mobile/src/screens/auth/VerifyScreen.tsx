@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
-    backgroundColor: colors.blue,
+    backgroundColor: colors.brand,
     borderRadius: 999,
     paddingVertical: 16,
     alignItems: 'center',

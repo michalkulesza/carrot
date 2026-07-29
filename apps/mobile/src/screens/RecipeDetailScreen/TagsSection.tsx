@@ -32,7 +32,7 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
         await addToRecipe.mutateAsync({ recipeId: recipe.id, tagId: tag.id })
       } catch {
         patchRecipeTags((tags) => tags.filter((t) => t.id !== tag.id))
-        Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+        Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
       }
     },
     [patchRecipeTags, addToRecipe, recipe.id, t],
@@ -46,7 +46,7 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
         await removeFromRecipe.mutateAsync({ recipeId: recipe.id, tagId })
       } catch {
         if (removedTag) patchRecipeTags((tags) => [...tags, removedTag])
-        Alert.alert(t('common.ok'), t('addRecipe.saveError'))
+        Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
       }
     },
     [patchRecipeTags, removeFromRecipe, recipe.id, recipe.tags, t],

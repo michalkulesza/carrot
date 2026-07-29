@@ -14,6 +14,8 @@ import {
   RAIL_VISIBLE_STORAGE_KEY,
   resolveRailTargets,
 } from './helpers'
+import NetworkImage from '../NetworkImage'
+import { proxyUrl } from '../../utils/imageUtils'
 
 interface CookStep {
   componentIndex: number
@@ -157,15 +159,7 @@ const CookMode = ({
     >
       <div className="mx-auto flex min-h-full max-w-4xl flex-col px-5 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
         <header className="flex items-center gap-3">
-          {recipe.thumbnail_url ? (
-            <img
-              src={recipe.thumbnail_url}
-              alt=""
-              className="h-11 w-11 rounded-xl object-cover"
-            />
-          ) : (
-            <div className="h-11 w-11 rounded-xl bg-zinc-200 dark:bg-zinc-700" />
-          )}
+          <NetworkImage src={proxyUrl(recipe.thumbnail_url)} alt={recipe.title} className="h-11 w-11 rounded-xl shrink-0" />
           <div className="min-w-0 flex-1" />
           <button
             type="button"

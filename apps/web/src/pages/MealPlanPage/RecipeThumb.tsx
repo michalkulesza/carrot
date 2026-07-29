@@ -1,7 +1,7 @@
 import NetworkImage from '../../components/NetworkImage'
 
 interface RecipeThumbProps {
-  src: string
+  src: string | null | undefined
   alt: string
   className?: string
 }
