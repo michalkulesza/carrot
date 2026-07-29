@@ -1,6 +1,6 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Redirect, Stack, useRouter, useSegments } from 'expo-router'
@@ -97,6 +97,22 @@ const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorag
 // Bump when the cached query data shape changes in a way older persisted caches can't handle.
 const QUERY_CACHE_BUSTER = '1'
 const PUSH_INSTALLATION_ID_KEY = 'push-installation-id'
+const RECIPE_WAIT_TIMEOUT_MS = 3_000
+
+// Everything the app can miss while backgrounded — notably recipes saved by the
+// Share Extension. Semantic search is excluded on purpose: its results are derived
+// from a query the user may have moved on from, and refetching re-runs an
+// embeddings search server-side.
+const FOREGROUND_REFRESH_DOMAINS = new Set([
+  'recipes',
+  'mealPlan',
+  'shopping-list',
+  'tags',
+  'households',
+  'invitations',
+  'preferences',
+  'importJobs',
+])
 
 const getTimerNotificationDestination = (data: Record<string, unknown>): string | null => {
   if (
@@ -119,16 +135,26 @@ const AppStartupGate = ({ children }: { children: React.ReactNode }) => {
   const api = useApiClient()
   const isRestoring = useIsRestoring()
   const hasRevealedRef = useRef(false)
+  const [recipeWaitElapsed, setRecipeWaitElapsed] = useState(false)
   const { isLoading: isLoadingRecipes } = useQuery({
     queryKey: ['recipes'],
     queryFn: api.listRecipes,
     enabled: isAppearanceReady && !isRestoring && !authLoading && user !== null,
+    retry: 1,
   })
+
+  // Waiting on recipes only avoids a flash of empty list; it must never be able to
+  // strand the user on the splash when the API is slow or unreachable.
+  useEffect(() => {
+    const timer = setTimeout(() => setRecipeWaitElapsed(true), RECIPE_WAIT_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  }, [])
+
   const isReady =
     isAppearanceReady &&
     !isRestoring &&
     !authLoading &&
-    (user === null || !isLoadingRecipes)
+    (user === null || !isLoadingRecipes || recipeWaitElapsed)
 
   useEffect(() => {
     if (!isReady || hasRevealedRef.current) return
@@ -268,12 +294,19 @@ function RootLayoutNav() {
     }
   }, [pushNotif, qc, router, t])
 
-  // Invalidate all cached queries when the app returns to the foreground so that data
-  // saved externally (e.g. via the Share Extension) appears without a manual pull-to-refresh.
+  // Refresh externally-changed data when the app returns to the foreground so it
+  // appears without a manual pull-to-refresh.
   useEffect(() => {
     if (loading || !user) return
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') qc.invalidateQueries()
+      if (state !== 'active') return
+      void qc.invalidateQueries({
+        predicate: (query) => {
+          const [domain, subKey] = query.queryKey as [string, string?]
+          if (domain === 'recipes' && subKey === 'semantic-search') return false
+          return FOREGROUND_REFRESH_DOMAINS.has(domain)
+        },
+      })
     })
     return () => subscription.remove()
   }, [loading, user, qc])

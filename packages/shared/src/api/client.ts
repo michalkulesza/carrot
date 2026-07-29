@@ -49,6 +49,16 @@ export interface ApiClientConfig {
 const GENERIC_NETWORK_ERROR =
   "Unable to connect to the server. Please check your connection and try again.";
 
+/** iOS's own default is 60s per attempt, which — multiplied by React Query's
+ * retries — leaves the app hanging for minutes on an unreachable API. */
+const REQUEST_TIMEOUT_MS = 20_000;
+/** A CSV of every recipe is parsed server-side before it responds. */
+const IMPORT_TIMEOUT_MS = 120_000;
+
+interface ApiFetchInit extends RequestInit {
+  timeoutMs?: number;
+}
+
 export const createApiClient = (config: ApiClientConfig) => {
   const {
     baseUrl,
@@ -66,31 +76,54 @@ export const createApiClient = (config: ApiClientConfig) => {
     url: string,
     init: RequestInit,
     context: string,
+    timeoutMs: number = REQUEST_TIMEOUT_MS,
   ): Promise<Response> => {
+    const controller = new AbortController();
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    // AbortSignal.any isn't available on every runtime this client targets, so
+    // chain the caller's signal onto ours by hand.
+    const abortFromCaller = () => controller.abort();
+    init.signal?.addEventListener("abort", abortFromCaller);
+
     try {
-      return await fetch(url, init);
+      return await fetch(url, { ...init, signal: controller.signal });
     } catch (err) {
+      // A caller cancelling (React Query superseding a query, a debounced search
+      // moving on) is not a failure: let the AbortError through untouched so it
+      // reads as a cancellation rather than a network error, and keep it out of
+      // the error reporter. A timeout is a real failure and falls through.
+      if (init.signal?.aborted && !timedOut) throw err;
+
       reportError?.(err, context);
       throw new Error(GENERIC_NETWORK_ERROR);
+    } finally {
+      clearTimeout(timer);
+      init.signal?.removeEventListener("abort", abortFromCaller);
     }
   };
 
   const apiFetch = async (
     path: string,
-    init: RequestInit = {},
+    init: ApiFetchInit = {},
   ): Promise<Response> => {
+    const { timeoutMs = REQUEST_TIMEOUT_MS, ...requestInit } = init;
     const authHeaders = getAuthHeaders();
     const response = await rawFetch(
       `${baseUrl}${path}`,
       {
         credentials,
-        ...init,
+        ...requestInit,
         headers: {
           ...authHeaders,
-          ...(init.headers as Record<string, string> | undefined),
+          ...(requestInit.headers as Record<string, string> | undefined),
         },
       },
       path,
+      timeoutMs,
     );
 
     if (response.status === 401) onUnauthorized?.();
@@ -287,6 +320,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     const res = await apiFetch("/api/recipes/import", {
       method: "POST",
       body: form,
+      timeoutMs: IMPORT_TIMEOUT_MS,
     });
     await throwOnError(res, "Import failed");
     return res.json() as Promise<{ imported: number }>;
