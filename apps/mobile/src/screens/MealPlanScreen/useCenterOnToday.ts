@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Animated, type LayoutChangeEvent } from 'react-native'
-import type { EdgeInsets, Rect } from 'react-native-safe-area-context'
+import {
+  useSafeAreaFrame,
+  useSafeAreaInsets,
+  type EdgeInsets,
+  type Rect,
+} from 'react-native-safe-area-context'
 import ReanimatedAnimated, { useAnimatedRef } from 'react-native-reanimated'
 import { DAY_ROW_HEIGHT, type ListItem } from './helpers'
 
@@ -17,6 +22,15 @@ import { DAY_ROW_HEIGHT, type ListItem } from './helpers'
 // bar) a render later. On the first visit to this tab that first render is a guess,
 // so measure the insets natively through SafeAreaListener and keep the screen hidden
 // until the measurement lands.
+//
+// That measurement is a single native callback that can legitimately never arrive —
+// SafeAreaProvider skips the emit while the view has a zero frame, and Fabric view
+// recycling can leave its already-sent flag reset with no further layout pass. Since
+// the list is hidden at opacity 0 over an opaque background, a missed callback used
+// to mean a permanent black screen. Fall back to the context values shortly after
+// mount so the screen always reveals; a late native measurement still corrects it.
+
+const MEASUREMENT_FALLBACK_MS = 250
 
 interface MeasuredScreen {
   bottomInset: number
@@ -38,8 +52,21 @@ export const useCenterOnToday = ({
   const [isCentered, setIsCentered] = useState(false)
   const listOpacity = useRef(new Animated.Value(0)).current
 
+  const contextInsets = useSafeAreaInsets()
+  const contextFrame = useSafeAreaFrame()
+  const fallbackScreen = useRef<MeasuredScreen>({ bottomInset: 0, height: 0 })
+  fallbackScreen.current = { bottomInset: contextInsets.bottom, height: contextFrame.height }
+
   const handleSafeAreaChange = useCallback(({ insets, frame }: { insets: EdgeInsets; frame: Rect }) => {
     setScreen({ bottomInset: insets.bottom, height: frame.height })
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setScreen((measured) => measured ?? fallbackScreen.current),
+      MEASUREMENT_FALLBACK_MS,
+    )
+    return () => clearTimeout(timer)
   }, [])
 
   const targetScrollOffset = useMemo(() => {
