@@ -22,12 +22,22 @@ import type {
   ShoppingCategoryOrders,
 } from "../types";
 
+export interface StreamFetchInit {
+  headers: Record<string, string>;
+  credentials?: RequestCredentials;
+  signal: AbortSignal;
+}
+
 export interface ApiClientConfig {
   baseUrl: string;
   getAuthHeaders: () => Record<string, string>;
   credentials?: RequestCredentials;
   loginEndpoint?: string;
   logoutEndpoint?: string;
+  /** Fetch used for SSE. React Native's global fetch is XHR-based: it never exposes
+   * `response.body` and only settles once the response ends, so an SSE stream silently
+   * delivers nothing. Mobile must pass `fetch` from `expo/fetch`. */
+  streamFetch?: (url: string, init: StreamFetchInit) => Promise<Response>;
   /** Called with the raw, unfiltered error when a request fails below the HTTP layer
    * (network/TLS/DNS failures) — wire this to Sentry or similar. The user only ever
    * sees the generic message thrown alongside it. */
@@ -46,6 +56,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     credentials = "include",
     loginEndpoint = "/api/auth/cookie/login",
     logoutEndpoint = "/api/auth/cookie/logout",
+    streamFetch = fetch,
     reportError,
     onUnauthorized,
     isAuthenticated,
@@ -81,6 +92,22 @@ export const createApiClient = (config: ApiClientConfig) => {
       },
       path,
     );
+
+    if (response.status === 401) onUnauthorized?.();
+
+    return response;
+  };
+
+  const apiStreamFetch = async (
+    path: string,
+    signal: AbortSignal,
+    headers: Record<string, string> = {},
+  ): Promise<Response> => {
+    const response = await streamFetch(`${baseUrl}${path}`, {
+      credentials,
+      headers: { ...getAuthHeaders(), ...headers },
+      signal,
+    });
 
     if (response.status === 401) onUnauthorized?.();
 
@@ -766,40 +793,80 @@ export const createApiClient = (config: ApiClientConfig) => {
     await throwOnError(res, "Failed to clear completed items");
   };
 
-  /** Subscribes to an SSE stream, dispatching each `data:` event to onEvent. Returns an unsubscribe fn. */
+  /**
+   * Subscribes to an SSE stream, dispatching each `data:` event to onEvent, and
+   * reconnects with exponential backoff whenever the stream ends. Returns an
+   * unsubscribe fn.
+   *
+   * `onResubscribe` fires after every reconnect: events published while the
+   * stream was down are gone for good, so streams that emit deltas rather than
+   * full snapshots must revalidate from scratch at that point.
+   */
   const subscribeStream = <TEvent extends { type: string }>(
     path: string,
     onEvent: (event: TEvent) => void,
     context: string,
+    onResubscribe?: () => void,
   ): (() => void) => {
-    let aborted = false;
-    const controller = new AbortController();
-    apiFetch(path, { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok || !res.body) return;
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        while (!aborted) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const chunks = buffer.split("\n\n");
-          buffer = chunks.pop() ?? "";
-          for (const chunk of chunks) {
-            const line = chunk.trim();
-            if (!line.startsWith("data: ")) continue;
-            try {
-              onEvent(JSON.parse(line.slice(6)) as TEvent);
-            } catch {
-              /* ignore malformed events */
+    let stopped = false;
+    let attempt = 0;
+    let controller = new AbortController();
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleReconnect = () => {
+      if (stopped) return;
+      const delay = Math.min(30_000, 1_000 * 2 ** attempt++);
+      reconnectTimer = setTimeout(connect, delay);
+    };
+
+    function connect(): void {
+      if (stopped) return;
+      controller = new AbortController();
+      apiStreamFetch(path, controller.signal)
+        .then(async (res) => {
+          // The session is gone; onUnauthorized has already fired and retrying
+          // would just spin against a login wall.
+          if (res.status === 401) {
+            stopped = true;
+            return;
+          }
+          if (!res.ok || !res.body) return;
+
+          const isReconnect = attempt > 0;
+          attempt = 0;
+          if (isReconnect) onResubscribe?.();
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          while (!stopped) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const chunks = buffer.split("\n\n");
+            buffer = chunks.pop() ?? "";
+            for (const chunk of chunks) {
+              const line = chunk.trim();
+              if (!line.startsWith("data: ")) continue;
+              try {
+                onEvent(JSON.parse(line.slice(6)) as TEvent);
+              } catch {
+                /* ignore malformed events */
+              }
             }
           }
-        }
-      })
-      .catch((err: unknown) => reportError?.(err, context));
+        })
+        .catch((err: unknown) => {
+          if (!stopped) reportError?.(err, context);
+        })
+        .finally(scheduleReconnect);
+    }
+
+    connect();
+
     return () => {
-      aborted = true;
+      stopped = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
       controller.abort();
     };
   };
@@ -819,6 +886,8 @@ export const createApiClient = (config: ApiClientConfig) => {
         else if (event.type === "presence" && event.users)
           onPresence(event.users);
       },
+      // No onResubscribe: the endpoint opens every connection with a full
+      // list_snapshot, so a reconnect already resyncs.
       "subscribeShoppingList",
     );
 
@@ -829,6 +898,7 @@ export const createApiClient = (config: ApiClientConfig) => {
         if (event.type === "meal_plan_changed") onChange();
       },
       "subscribeMealPlan",
+      onChange,
     );
 
   const subscribeRecipes = (onChange: () => void): (() => void) =>
@@ -838,6 +908,7 @@ export const createApiClient = (config: ApiClientConfig) => {
         if (event.type === "recipe_changed") onChange();
       },
       "subscribeRecipes",
+      onChange,
     );
 
   const postPresence = async (
@@ -919,10 +990,11 @@ export const createApiClient = (config: ApiClientConfig) => {
   ): (() => void) => {
     const controller = new AbortController();
     let stopped = false;
-    void apiFetch("/api/imports/jobs/events", {
-      signal: controller.signal,
-      headers: lastEventId ? { "Last-Event-ID": String(lastEventId) } : {},
-    })
+    void apiStreamFetch(
+      "/api/imports/jobs/events",
+      controller.signal,
+      lastEventId ? { "Last-Event-ID": String(lastEventId) } : {},
+    )
       .then(async (res) => {
         if (!res.ok || !res.body) return;
         const reader = res.body.getReader();

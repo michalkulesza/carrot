@@ -412,6 +412,9 @@ async def reorder_recipes(
             recipe.position = position
     await session.commit()
 
+    scope = get_scope_key("recipes", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "recipe_changed"})
+
 
 @router.post("/{recipe_id}/public-share", response_model=RecipePublicShareOut)
 async def create_public_share(
@@ -521,6 +524,9 @@ async def add_tag_to_recipe(
         await queue_recipe_embedding(session, recipe)
         await session.commit()
 
+        scope = get_scope_key("recipes", user.id, household_id)
+        await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
+
 
 @router.delete("/{recipe_id}/tags/{tag_id}", status_code=204)
 async def remove_tag_from_recipe(
@@ -541,6 +547,9 @@ async def remove_tag_from_recipe(
     await session.flush()
     await queue_recipe_embedding(session, recipe)
     await session.commit()
+
+    scope = get_scope_key("recipes", user.id, household_id)
+    await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
 
 
 async def _user_household_ids(session: AsyncSession, user_id: uuid.UUID) -> set[uuid.UUID]:
@@ -563,10 +572,11 @@ async def set_recipe_households(
 
     member_household_ids = await _user_household_ids(session, user.id)
     is_author = recipe.author_id == user.id
-    current_household_ids = await session.execute(
+    current_household_ids_result = await session.execute(
         select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe_id)
     )
-    is_linked_to_own_household = bool({row[0] for row in current_household_ids} & member_household_ids)
+    current_household_ids = {row[0] for row in current_household_ids_result}
+    is_linked_to_own_household = bool(current_household_ids & member_household_ids)
     if not is_author and not is_linked_to_own_household:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -580,6 +590,11 @@ async def set_recipe_households(
 
     await delete_orphan_recipes(session, [recipe_id])
     await session.commit()
+
+    # Households the recipe left need the removal too, not just the ones it joined.
+    for affected_household_id in current_household_ids | target_ids:
+        scope = get_scope_key("recipes", user.id, affected_household_id)
+        await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
 
     recipe = await session.get(Recipe, recipe_id)
     if recipe is None:

@@ -19,6 +19,7 @@ import { GestureDetector } from 'react-native-gesture-handler'
 import ReanimatedAnimated from 'react-native-reanimated'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useApiClient } from '@carrot/shared/api/context'
+import { useMealPlanStream } from '@carrot/shared/hooks/useMealPlanStream'
 import { useMoveMealPlanEntry } from '@carrot/shared/hooks/useMoveMealPlanEntry'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { toYYYYMM, toISODate } from '@carrot/shared/utils/dateUtils'
@@ -44,6 +45,8 @@ const MealPlanScreen = () => {
   const api = useApiClient()
   const qc = useQueryClient()
   const { recipes } = useRecipes()
+
+  useMealPlanStream()
 
   const today = useMemo(() => {
     const d = new Date()

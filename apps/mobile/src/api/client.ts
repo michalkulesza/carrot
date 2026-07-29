@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/react-native'
+import { fetch as expoFetch } from 'expo/fetch'
 import { createApiClient } from '@carrot/shared/api/client'
 import type { RecipePublicShare } from '@carrot/shared/types'
 
@@ -24,6 +25,7 @@ export const mobileClient = createApiClient({
   baseUrl,
   getAuthHeaders,
   credentials: 'omit',
+  streamFetch: expoFetch,
   loginEndpoint: '/api/auth/jwt/login',
   logoutEndpoint: '/api/auth/jwt/logout',
   reportError: (error, context) => {
