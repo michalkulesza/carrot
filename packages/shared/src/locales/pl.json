@@ -450,7 +450,11 @@
     "changeRecipe": "Zmień przepis",
     "removeFromPlan": "Usuń z planu",
     "nextMonth": "Następny miesiąc",
-    "prevMonth": "Poprzedni miesiąc"
+    "prevMonth": "Poprzedni miesiąc",
+    "moveToDay": "Przenieś na inny dzień",
+    "moveTo": "Przenieś do…",
+    "moveFailed": "Nie udało się przenieść dania. Spróbuj ponownie.",
+    "dragHint": "Naciśnij i przytrzymaj, a następnie przeciągnij, aby przenieść to danie na inny dzień."
   },
   "households": {
     "you": "Ty",

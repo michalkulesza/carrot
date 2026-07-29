@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { MealPlanEntry } from '../types'
 import { toISODate } from '../utils/dateUtils'
+import { useMoveMealPlanEntry } from './useMoveMealPlanEntry'
 
 export const useMealPlan = (month: string) => {
   const api = useApiClient()
@@ -38,11 +39,14 @@ export const useMealPlan = (month: string) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
+  const moveEntry = useMoveMealPlanEntry()
+
   return {
     entries: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
     setEntry,
     deleteEntry,
+    moveEntry,
   }
 }

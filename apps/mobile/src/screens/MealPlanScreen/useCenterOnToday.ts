@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Animated, FlatList, type LayoutChangeEvent } from 'react-native'
+import { Animated, type LayoutChangeEvent } from 'react-native'
 import type { EdgeInsets, Rect } from 'react-native-safe-area-context'
-import { DAY_ROW_HEIGHT } from './helpers'
+import ReanimatedAnimated, { useAnimatedRef } from 'react-native-reanimated'
+import { DAY_ROW_HEIGHT, type ListItem } from './helpers'
 
 // scrollToIndex's viewPosition centers against the FlatList's raw frame height,
 // which — because headerTransparent lets content render behind the header, and
@@ -31,7 +32,7 @@ export const useCenterOnToday = ({
   todayIndex: number
   headerHeight: number
 }) => {
-  const listRef = useRef<FlatList>(null)
+  const listRef = useAnimatedRef<ReanimatedAnimated.FlatList<ListItem>>()
   const hasUserScrolled = useRef(false)
   const [screen, setScreen] = useState<MeasuredScreen | null>(null)
   const [isCentered, setIsCentered] = useState(false)

@@ -2,6 +2,11 @@ import { PlatformColor, StyleSheet } from 'react-native'
 import { colors } from '../../theme/colors'
 import { DAY_ROW_HEIGHT, MONTH_HEADER_HEIGHT } from './helpers'
 
+// DragPreviewCard has no date column or divider, but its thumbnail + title must land
+// in the same spot on screen as they would inside the real row. Width of what it's
+// standing in for: dayRowLeft (52) + dayRowDivider's marginHorizontal*2 + width (29).
+const DAY_ROW_DATE_AND_DIVIDER_WIDTH = 52 + 29
+
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
@@ -70,7 +75,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.opaqueSeparator,
     marginHorizontal: 14,
   },
-  dayRowContent: { flex: 1 },
+  dayRowContent: { flex: 1, marginLeft: 12 },
   dayRowRecipe: {
     fontSize: 16,
     color: colors.label,
@@ -84,14 +89,19 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    marginLeft: 12,
   },
   dayRowThumbPlaceholder: {
     width: 44,
     height: 44,
     borderRadius: 8,
-    marginLeft: 12,
     backgroundColor: PlatformColor('systemGray5') as unknown as string,
+  },
+  dayRowDragHandle: {
+    marginLeft: 8,
+    width: 24,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
   sheetHandle: { backgroundColor: PlatformColor('systemGray3') as unknown as string },
@@ -181,6 +191,50 @@ export const styles = StyleSheet.create({
   pickerItemTextActive: { color: colors.brand, fontWeight: '600' },
   pickerEmpty: { flex: 1, padding: 40, alignItems: 'center' },
   pickerEmptyText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string, textAlign: 'center' },
+  dragPreviewCard: {
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    right: 16,
+    height: DAY_ROW_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingLeft: DAY_ROW_DATE_AND_DIVIDER_WIDTH,
+    borderRadius: 12,
+    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  dragPreviewTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.label,
+  },
+  dragPreviewThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  dragPreviewThumbPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    marginRight: 12,
+    backgroundColor: PlatformColor('systemGray5') as unknown as string,
+  },
+  dropTargetHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: DAY_ROW_HEIGHT,
+    backgroundColor: 'rgba(0, 122, 255, 0.08)',
+  },
   todayBtn: {
     position: 'absolute',
     right: 16,

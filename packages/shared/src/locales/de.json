@@ -444,7 +444,11 @@
     "changeRecipe": "Rezept ändern",
     "removeFromPlan": "Aus dem Plan entfernen",
     "nextMonth": "Nächster Monat",
-    "prevMonth": "Vorheriger Monat"
+    "prevMonth": "Vorheriger Monat",
+    "moveToDay": "Auf einen anderen Tag verschieben",
+    "moveTo": "Verschieben nach…",
+    "moveFailed": "Das Gericht konnte nicht verschoben werden. Bitte versuche es erneut.",
+    "dragHint": "Doppeltippen und halten, dann ziehen, um dieses Gericht auf einen anderen Tag zu verschieben."
   },
   "households": {
     "you": "Du",

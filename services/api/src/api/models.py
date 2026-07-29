@@ -558,6 +558,16 @@ class MealPlanSetRequest(BaseModel):
         return self
 
 
+class MealPlanMoveRequest(BaseModel):
+    to: str
+
+    @model_validator(mode="after")
+    def validate_to(self) -> "MealPlanMoveRequest":
+        if not self.to.strip():
+            raise ValueError("to must not be empty")
+        return self
+
+
 # ── User Preferences ──────────────────────────────────────────────────────────
 
 class UserPreferences(Base):

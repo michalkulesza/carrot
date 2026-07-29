@@ -1,26 +1,35 @@
 import { memo, useCallback } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
+import { Feather } from '@expo/vector-icons'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { formatWeekdayShort } from '@carrot/shared/utils/dateUtils'
 import NetworkImage from '../../components/NetworkImage'
 import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
+import { colors } from '../../theme/colors'
 import { styles } from './styles'
+
+// A no-op onPress claims the touch responder for taps landing on the handle, so they
+// never bubble up to the row's own Pressable and open the view/change/remove actions.
+const stopPress = () => {}
 
 interface DayRowProps {
   date: Date
   entry: MealPlanEntry | undefined
   isToday: boolean
   onPress: (date: Date) => void
+  isDraggingSource: boolean
 }
 
-const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
+const DayRow = memo(({ date, entry, isToday, onPress, isDraggingSource }: DayRowProps) => {
   const { t, i18n } = useTranslation()
   const weekday = formatWeekdayShort(date, i18n.language)
   const dayLabel = new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(date)
   const monthLabel = new Intl.DateTimeFormat(i18n.language, { month: 'short' }).format(date)
-  const entryTitle = entry?.recipe?.title ?? entry?.text
-  const thumbUri = entry?.recipe ? proxyThumbnailUrl(entry.recipe.thumbnail_url) : null
+  const visibleEntry = isDraggingSource ? undefined : entry
+  const entryTitle = visibleEntry?.recipe?.title ?? visibleEntry?.text
+  const thumbUri = visibleEntry?.recipe ? proxyThumbnailUrl(visibleEntry.recipe.thumbnail_url) : null
+  const accessibilityHint = entry ? t('mealPlan.dragHint') : undefined
   const accessibilityLabel = `${dayLabel}${entryTitle ? ': ' + entryTitle : ''}`
 
   const getDayRowStyle = useCallback(
@@ -35,6 +44,7 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
       style={getDayRowStyle}
       onPress={handlePress}
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       accessibilityRole="button"
     >
       <View style={styles.dayRowLeft}>
@@ -43,19 +53,30 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
         <Text style={[styles.dayRowMonth, isToday && styles.dayRowTextToday]}>{monthLabel}</Text>
       </View>
       <View style={styles.dayRowDivider} />
-      <View style={styles.dayRowContent}>
-        {entry ? (
-          <Text style={styles.dayRowRecipe} numberOfLines={2}>{entryTitle}</Text>
-        ) : (
-          <Text style={styles.dayRowEmpty}>{t('mealPlan.addDish')}</Text>
-        )}
-      </View>
-      {entry?.recipe && (
+      {visibleEntry && (
         thumbUri ? (
           <NetworkImage uri={thumbUri} style={styles.dayRowThumb} recyclingKey={thumbUri} />
         ) : (
           <View style={styles.dayRowThumbPlaceholder} />
         )
+      )}
+      <View style={styles.dayRowContent}>
+        {visibleEntry ? (
+          <Text style={styles.dayRowRecipe} numberOfLines={2}>{entryTitle}</Text>
+        ) : (
+          <Text style={styles.dayRowEmpty}>{t('mealPlan.addDish')}</Text>
+        )}
+      </View>
+      {visibleEntry && (
+        <Pressable
+          style={styles.dayRowDragHandle}
+          onPress={stopPress}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          <Feather name="menu" size={18} color={colors.tertiaryLabel} />
+        </Pressable>
       )}
     </Pressable>
   )
@@ -63,6 +84,7 @@ const DayRow = memo(({ date, entry, isToday, onPress }: DayRowProps) => {
   prev.isToday === next.isToday &&
   prev.onPress === next.onPress &&
   prev.date === next.date &&
+  prev.isDraggingSource === next.isDraggingSource &&
   prev.entry?.recipe?.id === next.entry?.recipe?.id &&
   prev.entry?.recipe?.thumbnail_url === next.entry?.recipe?.thumbnail_url &&
   prev.entry?.text === next.entry?.text

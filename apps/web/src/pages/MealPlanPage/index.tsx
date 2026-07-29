@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'react-feather'
 import { useTranslation } from 'react-i18next'
-import { Button, Spinner } from '@heroui/react'
+import { Button, Spinner, toast } from '@heroui/react'
 import { getLocalTimeZone, today } from '@internationalized/date'
 import type {
   MealPlanEntry,
@@ -58,8 +58,10 @@ const MealPlanPage = ({
     isLoading: loading,
     setEntry,
     deleteEntry,
+    moveEntry,
   } = useMealPlan(monthKey)
-  const busy = setEntry.isPending || deleteEntry.isPending
+  const busy =
+    setEntry.isPending || deleteEntry.isPending || moveEntry.isPending
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [targetDate, setTargetDate] = useState<string | null>(null)
@@ -174,6 +176,28 @@ const MealPlanPage = ({
     if (actionEntry) openPicker(actionEntry.date)
   }, [actionEntry, openPicker])
 
+  const handleMoveEntry = useCallback(
+    (from: string, to: string) => {
+      moveEntry.mutate(
+        { from, to },
+        {
+          onError: () =>
+            toast.danger(t('mealPlan.moveFailed'), { timeout: 3000 }),
+        }
+      )
+    },
+    [moveEntry, t]
+  )
+
+  const handleMoveActionEntry = useCallback(
+    (to: string) => {
+      if (!actionEntry) return
+      handleMoveEntry(actionEntry.date, to)
+      setActionEntry(null)
+    },
+    [actionEntry, handleMoveEntry]
+  )
+
   const handlePrint = useCallback(
     () => printMealPlan(entries, viewYear, viewMonth),
     [entries, viewYear, viewMonth]
@@ -225,6 +249,7 @@ const MealPlanPage = ({
           onNext={goToNextMonth}
           onToday={goToToday}
           onCellClick={handleCellClick}
+          onMoveEntry={handleMoveEntry}
         />
       </div>
 
@@ -316,6 +341,7 @@ const MealPlanPage = ({
         onViewRecipe={handleViewRecipe}
         onChangeRecipe={handleChangeRecipe}
         onRemove={handleRemove}
+        onMoveEntry={handleMoveActionEntry}
       />
 
       <RecipeDetailModal

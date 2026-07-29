@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from '@heroui/react'
@@ -23,6 +23,7 @@ interface DesktopCalendarProps {
   onNext: () => void
   onToday: () => void
   onCellClick: (dateStr: string, entry?: MealPlanEntry) => void
+  onMoveEntry: (from: string, to: string) => void
 }
 
 const DesktopCalendar = ({
@@ -37,8 +38,11 @@ const DesktopCalendar = ({
   onNext,
   onToday,
   onCellClick,
+  onMoveEntry,
 }: DesktopCalendarProps) => {
   const { t } = useTranslation()
+  const [dragSourceDate, setDragSourceDate] = useState<string | null>(null)
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null)
 
   const dayHeaders = useMemo(
     () =>
@@ -57,6 +61,34 @@ const DesktopCalendar = ({
     (dateStr: string, entry?: MealPlanEntry) => () =>
       onCellClick(dateStr, entry),
     [onCellClick]
+  )
+
+  const handleChipDragStart = useCallback((dateStr: string) => {
+    setDragSourceDate(dateStr)
+  }, [])
+
+  const handleChipDragEnd = useCallback(() => {
+    setDragSourceDate(null)
+    setDragOverDate(null)
+  }, [])
+
+  const handleCellDragOver = useCallback((dateStr: string) => {
+    setDragOverDate(dateStr)
+  }, [])
+
+  const handleCellDragLeave = useCallback((dateStr: string) => {
+    setDragOverDate((current) => (current === dateStr ? null : current))
+  }, [])
+
+  const handleCellDrop = useCallback(
+    (dateStr: string) => {
+      if (dragSourceDate && dragSourceDate !== dateStr) {
+        onMoveEntry(dragSourceDate, dateStr)
+      }
+      setDragSourceDate(null)
+      setDragOverDate(null)
+    },
+    [dragSourceDate, onMoveEntry]
   )
 
   return (
@@ -115,6 +147,13 @@ const DesktopCalendar = ({
                 cell.dateStr,
                 entriesByDate.get(cell.dateStr)
               )}
+              isDragging={dragSourceDate === cell.dateStr}
+              isDropTarget={dragOverDate === cell.dateStr}
+              onChipDragStart={() => handleChipDragStart(cell.dateStr)}
+              onChipDragEnd={handleChipDragEnd}
+              onCellDragOver={() => handleCellDragOver(cell.dateStr)}
+              onCellDragLeave={() => handleCellDragLeave(cell.dateStr)}
+              onCellDrop={() => handleCellDrop(cell.dateStr)}
             />
           ))
         )}

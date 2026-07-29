@@ -444,7 +444,11 @@
     "changeRecipe": "Change recipe",
     "removeFromPlan": "Remove from plan",
     "prevMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "moveToDay": "Move to another day",
+    "moveTo": "Move to…",
+    "moveFailed": "Couldn't move the dish. Please try again.",
+    "dragHint": "Double tap and hold, then drag to move this dish to another day."
   },
   "households": {
     "you": "You",

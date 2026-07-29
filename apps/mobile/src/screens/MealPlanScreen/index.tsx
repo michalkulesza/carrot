@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  FlatList,
   ListRenderItemInfo,
   Modal,
   Pressable,
@@ -16,8 +15,11 @@ import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SafeAreaListener } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
+import { GestureDetector } from 'react-native-gesture-handler'
+import ReanimatedAnimated from 'react-native-reanimated'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useApiClient } from '@carrot/shared/api/context'
+import { useMoveMealPlanEntry } from '@carrot/shared/hooks/useMoveMealPlanEntry'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { toYYYYMM, toISODate } from '@carrot/shared/utils/dateUtils'
 import { colors } from '../../theme/colors'
@@ -25,10 +27,13 @@ import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { buildListItems, DAY_ROW_HEIGHT, MONTH_HEADER_HEIGHT, type ListItem } from './helpers'
 import { styles } from './styles'
 import DayRow from './DayRow'
+import DragPreviewCard from './DragPreviewCard'
+import DropTargetHighlight from './DropTargetHighlight'
 import RecipePicker, { type RecipePickerHandle } from './RecipePicker'
 import { useExportMealPlanPdf } from './useExportMealPlanPdf'
 import { useMealPlanHeader } from './useMealPlanHeader'
 import { useCenterOnToday } from './useCenterOnToday'
+import { useDragToMove } from './useDragToMove'
 
 const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
@@ -52,7 +57,7 @@ const MealPlanScreen = () => {
   const { exporting, handleExportPdf } = useExportMealPlanPdf(currentMonth)
   useMealPlanHeader({ navigation, exporting, onExportPdf: handleExportPdf })
 
-  const { items, offsets, todayIndex, months } = useMemo(
+  const { items, offsets, todayIndex, months, contentHeight } = useMemo(
     () => buildListItems(today, todayIso, i18n.language),
     [today, todayIso, i18n.language],
   )
@@ -100,6 +105,8 @@ const MealPlanScreen = () => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
   })
 
+  const moveEntry = useMoveMealPlanEntry()
+
   const headerHeight = useHeaderHeight()
   const {
     listRef,
@@ -111,6 +118,28 @@ const MealPlanScreen = () => {
     handleScrollBeginDrag,
     handleScrollToToday,
   } = useCenterOnToday({ offsets, todayIndex, headerHeight })
+
+  const handleDrop = useCallback(
+    (from: string, to: string) => {
+      moveEntry.mutate(
+        { from, to },
+        {
+          onError: () => Alert.alert(t('mealPlan.moveFailed')),
+        },
+      )
+    },
+    [moveEntry, t],
+  )
+
+  const {
+    draggingIsoDate,
+    previewIsoDate,
+    gesture,
+    scrollHandler,
+    handleContainerLayout,
+    previewCardStyle,
+    highlightStyle,
+  } = useDragToMove({ listRef, items, offsets, contentHeight, entriesByDate, onDrop: handleDrop })
 
   const getItemLayout = useCallback(
     (_: unknown, index: number) => ({
@@ -209,10 +238,11 @@ const MealPlanScreen = () => {
           entry={entriesByDate.get(item.isoDate)}
           isToday={item.isoDate === todayIso}
           onPress={handleDayPress}
+          isDraggingSource={item.isoDate === draggingIsoDate}
         />
       )
     },
-    [entriesByDate, todayIso, handleDayPress],
+    [entriesByDate, todayIso, handleDayPress, draggingIsoDate],
   )
 
   const getTodayBtnStyle = useCallback(
@@ -233,27 +263,43 @@ const MealPlanScreen = () => {
     if (focusToday) handleScrollToToday()
   }, [focusToday, handleScrollToToday])
 
+  const draggingEntry = previewIsoDate ? entriesByDate.get(previewIsoDate) : undefined
+
+  const handleListContainerLayout = useCallback(
+    (e: Parameters<typeof handleListLayout>[0]) => {
+      handleListLayout(e)
+      handleContainerLayout(e)
+    },
+    [handleListLayout, handleContainerLayout],
+  )
+
   return (
     <View style={styles.container}>
       <SafeAreaListener style={styles.safeAreaProbe} pointerEvents="none" onChange={handleSafeAreaChange} />
       <Animated.View style={[styles.list, { opacity: listOpacity }]}>
-        <FlatList
-          ref={listRef}
-          data={items}
-          keyExtractor={(item) => item.key}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          contentOffset={{ x: 0, y: targetScrollOffset }}
-          onLayout={handleListLayout}
-          onScrollBeginDrag={handleScrollBeginDrag}
-          style={styles.list}
-          contentContainerStyle={styles.listContent}
-          contentInsetAdjustmentBehavior="automatic"
-          showsVerticalScrollIndicator={false}
-          windowSize={5}
-          maxToRenderPerBatch={20}
-          initialNumToRender={14}
-        />
+        <GestureDetector gesture={gesture}>
+          <View style={styles.list} onLayout={handleListContainerLayout}>
+            <ReanimatedAnimated.FlatList
+              ref={listRef}
+              data={items}
+              keyExtractor={(item: ListItem) => item.key}
+              renderItem={renderItem}
+              getItemLayout={getItemLayout}
+              contentOffset={{ x: 0, y: targetScrollOffset }}
+              onScroll={scrollHandler}
+              onScrollBeginDrag={handleScrollBeginDrag}
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              contentInsetAdjustmentBehavior="automatic"
+              showsVerticalScrollIndicator={false}
+              windowSize={5}
+              maxToRenderPerBatch={20}
+              initialNumToRender={14}
+            />
+            <DropTargetHighlight style={highlightStyle} />
+            <DragPreviewCard entry={draggingEntry} style={previewCardStyle} />
+          </View>
+        </GestureDetector>
         <Pressable
           style={getTodayBtnStyle}
           onPress={handleTodayPress}

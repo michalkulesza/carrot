@@ -443,7 +443,11 @@
     "changeRecipe": "Cambiar receta",
     "removeFromPlan": "Quitar del plan",
     "nextMonth": "Mes siguiente",
-    "prevMonth": "Mes anterior"
+    "prevMonth": "Mes anterior",
+    "moveToDay": "Mover a otro día",
+    "moveTo": "Mover a…",
+    "moveFailed": "No se pudo mover el plato. Inténtalo de nuevo.",
+    "dragHint": "Toca dos veces y mantén presionado, luego arrastra para mover este plato a otro día."
   },
   "households": {
     "you": "Tú",

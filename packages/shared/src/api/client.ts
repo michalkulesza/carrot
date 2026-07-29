@@ -356,6 +356,19 @@ export const createApiClient = (config: ApiClientConfig) => {
     if (!res.ok) throw new Error("Failed to delete meal plan entry");
   };
 
+  const moveMealPlanEntry = async (
+    from: string,
+    to: string,
+  ): Promise<MealPlanEntry[]> => {
+    const res = await apiFetch(`/api/meal-plan/${from}/move`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to }),
+    });
+    if (!res.ok) throw new Error("Failed to move meal plan entry");
+    return res.json() as Promise<MealPlanEntry[]>;
+  };
+
   // ── Preferences ────────────────────────────────────────────────────────────
 
   const getPreferences = async (): Promise<UserPreferences> => {
@@ -976,6 +989,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     getNextMealPlanEntry,
     setMealPlanEntry,
     deleteMealPlanEntry,
+    moveMealPlanEntry,
     subscribeMealPlan,
     getPreferences,
     updatePreferences,

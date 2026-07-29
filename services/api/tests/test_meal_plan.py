@@ -8,12 +8,13 @@ from fastapi import HTTPException
 from sqlalchemy.dialects import postgresql
 
 from api.routes.meal_plan import (
+    _apply_move,
     _next_entry_statement,
     _parse_date,
     get_next_meal_plan_entry,
     router,
 )
-from api.models import MealPlanSetRequest
+from api.models import MealPlanMoveRequest, MealPlanSetRequest
 
 
 @pytest.mark.parametrize(
@@ -77,3 +78,54 @@ async def test_next_entry_returns_null_when_no_upcoming_meal_exists() -> None:
 
     assert response is None
     session.execute.assert_awaited_once()
+
+
+def test_apply_move_to_empty_target_reassigns_date() -> None:
+    source = SimpleNamespace(date=date(2026, 7, 1), recipe_id=uuid.uuid4(), recipe="pasta", text=None)
+
+    result = _apply_move(source, None, date(2026, 7, 5))
+
+    assert result == [source]
+    assert source.date == date(2026, 7, 5)
+
+
+def test_apply_move_to_occupied_target_swaps_payload_not_dates() -> None:
+    recipe_id_a, recipe_id_b = uuid.uuid4(), uuid.uuid4()
+    source = SimpleNamespace(date=date(2026, 7, 1), recipe_id=recipe_id_a, recipe="pasta", text=None)
+    target = SimpleNamespace(date=date(2026, 7, 5), recipe_id=recipe_id_b, recipe="soup", text=None)
+
+    result = _apply_move(source, target, date(2026, 7, 5))
+
+    assert result == [source, target]
+    assert source.date == date(2026, 7, 1)
+    assert target.date == date(2026, 7, 5)
+    assert source.recipe_id == recipe_id_b
+    assert source.recipe == "soup"
+    assert target.recipe_id == recipe_id_a
+    assert target.recipe == "pasta"
+
+
+def test_apply_move_swapping_recipe_and_text_entries_clears_stale_field() -> None:
+    recipe_id = uuid.uuid4()
+    source = SimpleNamespace(date=date(2026, 7, 1), recipe_id=recipe_id, recipe="pasta", text=None)
+    target = SimpleNamespace(date=date(2026, 7, 5), recipe_id=None, recipe=None, text="Frozen pizza")
+
+    _apply_move(source, target, date(2026, 7, 5))
+
+    assert source.recipe_id is None
+    assert source.recipe is None
+    assert source.text == "Frozen pizza"
+    assert target.recipe_id == recipe_id
+    assert target.recipe == "pasta"
+    assert target.text is None
+
+
+def test_meal_plan_move_request_rejects_malformed_to() -> None:
+    with pytest.raises(ValueError):
+        MealPlanMoveRequest(to="   ")
+
+
+def test_move_route_exists_and_is_post() -> None:
+    route = next(route for route in router.routes if route.path == "/meal-plan/{date_str}/move")
+
+    assert route.methods == {"POST"}

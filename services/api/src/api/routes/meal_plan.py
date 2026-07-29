@@ -12,7 +12,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
 from api.database import get_async_session
-from api.models import MealPlanEntry, MealPlanEntryOut, MealPlanSetRequest, Recipe
+from api.models import (
+    MealPlanEntry,
+    MealPlanEntryOut,
+    MealPlanMoveRequest,
+    MealPlanSetRequest,
+    Recipe,
+)
 from api.routes.context import get_active_household_id, get_scope_key
 from api.routes.recipes import _recipe_filter
 from api.users import User, current_active_user
@@ -48,6 +54,19 @@ def _next_entry_statement(household_id: uuid.UUID, from_date: DateType):
         MealPlanEntry.date >= from_date,
     )
     return select(MealPlanEntry).where(where).order_by(MealPlanEntry.date.asc()).limit(1)
+
+
+def _apply_move(
+    source: MealPlanEntry, target: MealPlanEntry | None, to_date: DateType
+) -> list[MealPlanEntry]:
+    if target is None:
+        source.date = to_date
+        return [source]
+
+    source.recipe_id, target.recipe_id = target.recipe_id, source.recipe_id
+    source.recipe, target.recipe = target.recipe, source.recipe
+    source.text, target.text = target.text, source.text
+    return [source, target]
 
 
 @router.get("", response_model=list[MealPlanEntryOut])
@@ -187,3 +206,42 @@ async def delete_meal_plan_entry(
 
     scope = get_scope_key("meal-plan", user.id, household_id)
     await broadcaster.publish(scope, {"type": "meal_plan_changed", "date": date_str})
+
+
+@router.post("/{date_str}/move", response_model=list[MealPlanEntryOut])
+async def move_meal_plan_entry(
+    date_str: str,
+    body: MealPlanMoveRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> list[MealPlanEntryOut]:
+    from_date = _parse_date(date_str)
+    to_date = _parse_date(body.to)
+    if from_date == to_date:
+        raise HTTPException(status_code=400, detail="Source and target dates are the same")
+
+    result = await session.execute(
+        select(MealPlanEntry).where(_entry_filter(household_id, from_date))
+    )
+    source = result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    result = await session.execute(
+        select(MealPlanEntry).where(_entry_filter(household_id, to_date))
+    )
+    target = result.scalar_one_or_none()
+
+    affected = _apply_move(source, target, to_date)
+
+    await session.commit()
+    for entry in affected:
+        await session.refresh(entry)
+
+    scope = get_scope_key("meal-plan", user.id, household_id)
+    await broadcaster.publish(
+        scope, {"type": "meal_plan_changed", "date": date_str, "to": body.to}
+    )
+
+    return [MealPlanEntryOut.model_validate(entry) for entry in affected]

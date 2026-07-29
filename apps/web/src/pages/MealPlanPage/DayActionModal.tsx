@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
@@ -21,6 +22,7 @@ interface DayActionModalProps {
   onViewRecipe: () => void
   onChangeRecipe: () => void
   onRemove: () => void
+  onMoveEntry: (to: string) => void
 }
 
 const DayActionModal = ({
@@ -31,16 +33,37 @@ const DayActionModal = ({
   onViewRecipe,
   onChangeRecipe,
   onRemove,
+  onMoveEntry,
 }: DayActionModalProps) => {
   const { t } = useTranslation()
+  const [isMovePickerOpen, setIsMovePickerOpen] = useState(false)
+  const [moveToDate, setMoveToDate] = useState('')
+
   if (!entry) return null
 
   const entryTitle = entry.recipe?.title ?? entry.text ?? ''
   const thumb = entry.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
   const macroSummary = entry.recipe ? formatMacroSummary(entry.recipe) : null
 
+  const openMovePicker = () => {
+    setMoveToDate(entry.date)
+    setIsMovePickerOpen(true)
+  }
+
+  const confirmMove = () => {
+    if (!moveToDate || moveToDate === entry.date) return
+    onMoveEntry(moveToDate)
+    setIsMovePickerOpen(false)
+  }
+
+  const handleOpenChange = (open: boolean) => {
+    if (open) return
+    setIsMovePickerOpen(false)
+    onClose()
+  }
+
   return (
-    <Modal isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
       <ModalBackdrop isDismissable>
         <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
           <ModalDialog>
@@ -87,6 +110,36 @@ const DayActionModal = ({
                     ? t('mealPlan.changeRecipe')
                     : t('mealPlan.changeMeal')}
                 </Button>
+                {isMovePickerOpen ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      value={moveToDate}
+                      onChange={(e) => setMoveToDate(e.target.value)}
+                      aria-label={t('mealPlan.moveTo')}
+                      className="flex-1 min-w-0 rounded-lg border border-zinc-200 px-2 text-sm"
+                    />
+                    <Button
+                      variant="secondary"
+                      className="!rounded-lg"
+                      isDisabled={
+                        busy || !moveToDate || moveToDate === entry.date
+                      }
+                      onPress={confirmMove}
+                    >
+                      {t('mealPlan.moveTo')}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    className="!rounded-lg"
+                    onPress={openMovePicker}
+                  >
+                    {t('mealPlan.moveTo')}
+                  </Button>
+                )}
                 <Button
                   variant="danger-soft"
                   fullWidth
