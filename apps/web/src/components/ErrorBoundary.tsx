@@ -9,14 +9,13 @@ interface Props {
 
 interface State {
   hasError: boolean
-  error: Error | null
 }
 
 class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null }
+  state: State = { hasError: false }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -27,7 +26,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null })
+    window.location.reload()
   }
 
   render() {
@@ -44,8 +43,8 @@ class ErrorBoundary extends Component<Props, State> {
         <p className="text-lg font-semibold text-zinc-800">
           {i18n.t('common.somethingWentWrong')}
         </p>
-        <p className="text-sm text-zinc-500">{this.state.error?.message}</p>
         <button
+          type="button"
           className="px-4 py-2 rounded-lg bg-primary text-white text-sm"
           onClick={this.handleRetry}
         >
