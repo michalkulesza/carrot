@@ -78,7 +78,11 @@ async def _extract_mp3(video_path: Path, audio_path: Path) -> None:
         raise ValueError("audio exceeds Gemini inline upload limit")
 
 
-async def transcribe_video(video_url: str, usage: gemini.UsageTracker | None = None) -> str:
+async def transcribe_video(
+    video_url: str,
+    model: str = "gemini-2.5-flash-lite",
+    usage: gemini.UsageTracker | None = None,
+) -> str:
     """Downloads a scraper-supplied video URL and transcribes its spoken audio."""
     log.debug("Starting video transcription: url=%s", video_url)
     with tempfile.TemporaryDirectory(prefix="carrot-transcription-") as directory:
@@ -89,6 +93,6 @@ async def transcribe_video(video_url: str, usage: gemini.UsageTracker | None = N
         await _extract_mp3(video_path, audio_path)
         audio_data = audio_path.read_bytes()
         log.debug("Extracted audio for transcription: bytes=%d", len(audio_data))
-        transcript = await gemini.transcribe_audio(audio_data, usage=usage)
+        transcript = await gemini.transcribe_audio(audio_data, model=model, usage=usage)
         log.debug("Transcription result for %s:\n%s", video_url, transcript)
         return transcript

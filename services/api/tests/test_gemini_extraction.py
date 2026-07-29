@@ -159,7 +159,7 @@ async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_un
 
     assert lines == [2, 1]
     call = generate_content.call_args_list[0]
-    assert call.kwargs["model"] == "gemini-2.5-flash"
+    assert call.kwargs["model"] == "gemini-2.5-flash-lite"
     assert json.loads(call.kwargs["contents"])["components"][0]["ingredients"] == [
         {"index": 0, "text": "1 tsp cayenne pepper"},
         {"index": 1, "text": "5 chicken thighs"},
@@ -269,6 +269,7 @@ async def test_step_matcher_batches_all_recipe_components_in_one_request(monkeyp
     prompt = json.loads(generate_content.call_args.kwargs["contents"])
     assert lines == [[0], [0]]
     assert generate_content.call_count == 1
+    assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
     assert [component["component_index"] for component in prompt["components"]] == [0, 1]
 
 
@@ -445,7 +446,7 @@ async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None
 
 
 @pytest.mark.asyncio
-async def test_audio_transcription_uses_flash_and_faithful_prompt(monkeypatch) -> None:
+async def test_audio_transcription_uses_flash_lite_and_faithful_prompt(monkeypatch) -> None:
     response = SimpleNamespace(text="Dodaj dwie łyżki oliwy.")
     generate_content = Mock(return_value=response)
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
@@ -456,7 +457,7 @@ async def test_audio_transcription_uses_flash_and_faithful_prompt(monkeypatch) -
     call = generate_content.call_args
     audio_part, request = call.kwargs["contents"]
     assert transcript == "Dodaj dwie łyżki oliwy."
-    assert call.kwargs["model"] == "gemini-2.5-flash"
+    assert call.kwargs["model"] == "gemini-2.5-flash-lite"
     assert audio_part.inline_data.mime_type == "audio/mpeg"
     assert audio_part.inline_data.data == b"mp3-audio"
     assert request == "Transcribe the spoken audio in this file."
@@ -464,6 +465,17 @@ async def test_audio_transcription_uses_flash_and_faithful_prompt(monkeypatch) -
     assert "[inaudible]" in call.kwargs["config"].system_instruction
     assert "never translate" in call.kwargs["config"].system_instruction
     assert "do not add headings" in call.kwargs["config"].system_instruction
+
+
+@pytest.mark.asyncio
+async def test_audio_transcription_honours_model_override(monkeypatch) -> None:
+    generate_content = Mock(return_value=SimpleNamespace(text="Transcript"))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    await gemini.transcribe_audio(b"mp3-audio", model="gemini-2.5-flash-lite")
+
+    assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
 
 
 @pytest.mark.asyncio

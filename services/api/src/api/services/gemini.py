@@ -26,8 +26,7 @@ from api.models import (
 log = logging.getLogger(__name__)
 
 _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
-_TRANSCRIPTION_MODEL = "gemini-2.5-flash"
-_STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash"
+_STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash-lite"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
 
@@ -265,11 +264,15 @@ def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
-async def transcribe_audio(audio_data: bytes, usage: UsageTracker | None = None) -> str:
+async def transcribe_audio(
+    audio_data: bytes,
+    model: str = _DEFAULT_MECHANICAL_MODEL,
+    usage: UsageTracker | None = None,
+) -> str:
     client = _build_client()
     response = await _with_retry(
         lambda: client.models.generate_content(
-            model=_TRANSCRIPTION_MODEL,
+            model=model,
             contents=[
                 types.Part.from_bytes(data=audio_data, mime_type="audio/mpeg"),
                 "Transcribe the spoken audio in this file.",
