@@ -19,12 +19,20 @@ const AddItemRow = ({
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const inputRef = useRef<TextInput>(null)
+  const submittingRef = useRef(false)
 
   const submit = useCallback(() => {
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed || submittingRef.current) return
+
+    submittingRef.current = true
     onAdd(trimmed)
     setText('')
+
+    requestAnimationFrame(() => {
+      submittingRef.current = false
+    })
+
     // Keep the keyboard up for rapid entry of multiple items.
     setTimeout(() => inputRef.current?.focus(), 50)
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)

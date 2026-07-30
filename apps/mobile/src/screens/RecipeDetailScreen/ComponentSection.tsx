@@ -9,6 +9,7 @@ import {
 } from '@carrot/shared/utils/ingredientScaling'
 import { styles } from './styles'
 import { colors } from '../../theme/colors'
+import { createShoppingListItemInput } from '../../utils/uuid'
 import { capitalizeFirst } from './helpers'
 import IngredientRow from './IngredientRow'
 import StepRow from './StepRow'
@@ -92,10 +93,10 @@ const ComponentSection = ({
       const key = `${index}-${ingredientIndex}`
       if (!sessionAdded?.has(key)) {
         keys.push(key)
-        items.push({
-          text: getShoppingListValue(ingredient, ingredientIndex),
-          category: getShoppingCategory(ingredientIndex),
-        })
+        items.push(createShoppingListItemInput(
+          getShoppingListValue(ingredient, ingredientIndex),
+          getShoppingCategory(ingredientIndex),
+        ))
       }
     })
     if (items.length > 0) onAddAll?.(keys, items)
@@ -155,10 +156,10 @@ const ComponentSection = ({
               isAdded={sessionAdded?.has(`${index}-${i}`) ?? false}
               onAdd={() => onAdd?.(
                 `${index}-${i}`,
-                {
-                  text: getShoppingListValue(ingredient, i),
-                  category: getShoppingCategory(i),
-                },
+                createShoppingListItemInput(
+                  getShoppingListValue(ingredient, i),
+                  getShoppingCategory(i),
+                ),
               )}
               allergenFlag={component.ingredient_flags?.[i] ?? null}
               activeAllergens={activeAllergens}

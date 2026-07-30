@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useState } from 'react'
+import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import {
   KeyboardAvoidingView,
   Modal,
@@ -31,13 +31,17 @@ const AddIngredientToShoppingListSheet = forwardRef<
 >(({ onConfirm }, ref) => {
   const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
+  const [itemId, setItemId] = useState<string | null>(null)
   const [text, setText] = useState('')
   const [category, setCategory] = useState<ShoppingListItemInput['category']>('other')
+  const submittingRef = useRef(false)
 
   useImperativeHandle(ref, () => ({
     present: (item: ShoppingListItemInput) => {
       setText(item.text)
       setCategory(item.category)
+      setItemId(item.id)
+      submittingRef.current = false
       setVisible(true)
     },
     dismiss: () => setVisible(false),
@@ -51,11 +55,12 @@ const AddIngredientToShoppingListSheet = forwardRef<
   }, [])
 
   const handleAdd = useCallback(() => {
-    if (!trimmedText) return
-    onConfirm({ text: trimmedText, category })
+    if (!trimmedText || !itemId || submittingRef.current) return
+    submittingRef.current = true
+    onConfirm({ id: itemId, text: trimmedText, category })
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     setVisible(false)
-  }, [trimmedText, category, onConfirm])
+  }, [category, itemId, onConfirm, trimmedText])
 
   const getCancelButtonStyle = useCallback(
     ({ pressed }: PressableStateCallbackType) => [

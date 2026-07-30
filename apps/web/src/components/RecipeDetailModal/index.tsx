@@ -388,6 +388,7 @@ const RecipeDetailModal = ({
       servingScale
     )
     const item: ShoppingListItemInput = {
+      id: crypto.randomUUID(),
       text,
       category: comp.shopping_list_categories?.[ii] ?? 'other',
     }
@@ -410,6 +411,7 @@ const RecipeDetailModal = ({
           servingScale
         )
         items.push({
+          id: crypto.randomUUID(),
           text,
           category: comp.shopping_list_categories?.[ii] ?? 'other',
         })

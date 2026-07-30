@@ -4,16 +4,19 @@ import * as KeepAwake from 'expo-keep-awake'
 import {
   ActionSheetIOS,
   ActivityIndicator,
+  LayoutAnimation,
+  Platform,
   Pressable,
   Text,
   TextInput,
+  UIManager,
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInDown, FadeOut, LinearTransition, useReducedMotion } from 'react-native-reanimated'
+import { FadeOut, useReducedMotion } from 'react-native-reanimated'
 import { useIsFocused } from 'expo-router'
 import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist'
 import { Swipeable } from 'react-native-gesture-handler'
@@ -24,6 +27,7 @@ import { colors } from '../../theme/colors'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useIsAppActive } from '../../hooks/useIsAppActive'
 import { useHousehold } from '../../context/HouseholdContext'
+import { createShoppingListItemInput } from '../../utils/uuid'
 import { styles } from './styles'
 import CheckCircle from './CheckCircle'
 import PresenceBar from './PresenceBar'
@@ -34,22 +38,20 @@ import { KEEP_AWAKE_SHOPPING_STORAGE_KEY } from '../SettingsScreen/helpers'
 import {
   buildShoppingListRows,
   categoryOrdersFromRows,
+  hasSameShoppingListRowOrder,
   normalizeShoppingListRows,
+  shoppingListRowKey,
   type ShoppingListRow,
   visibleShoppingCategories,
 } from './helpers'
 
 const KEEP_AWAKE_SHOPPING_TAG = 'shopping-list'
 const COMPLETED_GRACE_MS = 10_000
-
-const shoppingListRowKey = (row: ShoppingListRow) =>
-  row.kind === 'section' || row.kind === 'add'
-    ? `${row.kind}-${row.category}`
-    : `${row.kind}-${row.item.id}`
-
-const hasSameRowOrder = (first: ShoppingListRow[], second: ShoppingListRow[]) =>
-  first.length === second.length &&
-  first.every((row, index) => shoppingListRowKey(row) === shoppingListRowKey(second[index]))
+const ROW_EXITING = FadeOut.duration(160)
+const ROW_REFLOW_CONFIG = {
+  duration: 180,
+  update: { type: LayoutAnimation.Types.easeInEaseOut },
+}
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
@@ -67,6 +69,8 @@ const ShoppingListScreen = () => {
   const [dragRows, setDragRows] = useState<ShoppingListRow[] | null>(null)
   const completedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const dragCorrectionFrameRef = useRef<number | null>(null)
+  const dragActiveRef = useRef(false)
+  const clearPendingRef = useRef(false)
   const collapseStorageKey = activeHouseholdId
     ? `shopping-list-collapsed-categories:${activeHouseholdId}`
     : null
@@ -103,8 +107,12 @@ const ShoppingListScreen = () => {
   const displayedRows = dragRows ?? rows
 
   useEffect(() => {
-    setDragRows((current) => current && !hasSameRowOrder(current, rows) ? current : null)
+    setDragRows((current) => current && !hasSameShoppingListRowOrder(current, rows) ? current : null)
   }, [rows])
+
+  useEffect(() => {
+    if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true)
+  }, [])
 
   useEffect(() => {
     if (!isFocused) {
@@ -144,13 +152,18 @@ const ShoppingListScreen = () => {
     }
   }, [])
 
+  const scheduleRowReflow = useCallback(() => {
+    if (!reduceMotion && !dragActiveRef.current) LayoutAnimation.configureNext(ROW_REFLOW_CONFIG)
+  }, [reduceMotion])
+
   const toggleCategory = useCallback((category: ShoppingCategory) => {
+    scheduleRowReflow()
     setCollapsedCategories((current) => {
       const next = { ...current, [category]: !current[category] }
       if (collapseStorageKey) void AsyncStorage.setItem(collapseStorageKey, JSON.stringify(next))
       return next
     })
-  }, [collapseStorageKey])
+  }, [collapseStorageKey, scheduleRowReflow])
 
   const lockedByOther = useCallback(
     (itemId: string): PresenceUser | undefined => presence.find((user) => user.item_id === itemId),
@@ -166,19 +179,27 @@ const ShoppingListScreen = () => {
       },
       (index) => {
         if (index === 0) {
+          if (clearPendingRef.current) return
+          clearPendingRef.current = true
+          scheduleRowReflow()
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-          clearCompleted.mutate()
+          clearCompleted.mutate(undefined, {
+            onError: scheduleRowReflow,
+            onSettled: () => { clearPendingRef.current = false },
+          })
         }
       }
     )
-  }, [clearCompleted, t])
+  }, [clearCompleted, scheduleRowReflow, t])
 
   const handleAdd = useCallback((text: string, category: ShoppingCategory) => {
-    addItems.mutate([{ text, category }])
-  }, [addItems])
+    scheduleRowReflow()
+    addItems.mutate([createShoppingListItemInput(text, category)], { onError: scheduleRowReflow })
+  }, [addItems, scheduleRowReflow])
 
   const handleToggle = useCallback((item: ShoppingListItem) => {
-    toggle.mutate({ id: item.id, completed: item.completed })
+    scheduleRowReflow()
+    toggle.mutate({ id: item.id, completed: item.completed }, { onError: scheduleRowReflow })
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
 
     if (item.completed) {
@@ -194,6 +215,7 @@ const ShoppingListScreen = () => {
 
     setRecentCompletedIds((current) => new Set(current).add(item.id))
     completedTimersRef.current[item.id] = setTimeout(() => {
+      scheduleRowReflow()
       setRecentCompletedIds((current) => {
         const next = new Set(current)
         next.delete(item.id)
@@ -201,7 +223,7 @@ const ShoppingListScreen = () => {
       })
       delete completedTimersRef.current[item.id]
     }, COMPLETED_GRACE_MS)
-  }, [toggle])
+  }, [scheduleRowReflow, toggle])
 
   const handleEditStart = useCallback((item: ShoppingListItem) => {
     setEditingId(item.id)
@@ -226,14 +248,15 @@ const ShoppingListScreen = () => {
       <Pressable
         style={styles.deleteAction}
         onPress={() => {
-          remove.mutate(itemId)
+          scheduleRowReflow()
+          remove.mutate(itemId, { onError: scheduleRowReflow })
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         }}
         accessibilityLabel={t('common.delete')}
       >
         <Feather name="trash-2" size={18} color="#fff" />
       </Pressable>
-    ), [remove, t])
+  ), [remove, scheduleRowReflow, t])
 
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<ShoppingListRow>) => {
     if (item.kind === 'section') {
@@ -261,12 +284,8 @@ const ShoppingListScreen = () => {
     const isEditing = editingId === shoppingItem.id
     const editor = lockedByOther(shoppingItem.id)
     const isLocked = !!editor && !isEditing
-    const entering = reduceMotion ? undefined : FadeInDown.duration(220)
-    const exiting = reduceMotion ? undefined : FadeOut.duration(200)
-
     return (
-      <Animated.View entering={entering} exiting={exiting}>
-        <ScaleDecorator>
+      <ScaleDecorator>
           <Swipeable renderRightActions={renderRightDelete(shoppingItem.id, isLocked)} overshootRight={false}>
             <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
               <CheckCircle
@@ -325,8 +344,7 @@ const ShoppingListScreen = () => {
               ))}
             </View>
           </Swipeable>
-        </ScaleDecorator>
-      </Animated.View>
+      </ScaleDecorator>
     )
   }, [
     editingId,
@@ -337,7 +355,6 @@ const ShoppingListScreen = () => {
     handleToggle,
     lockedByOther,
     renderRightDelete,
-    reduceMotion,
     t,
     toggleCategory,
   ])
@@ -363,6 +380,7 @@ const ShoppingListScreen = () => {
         }
       }
       reorder.mutate(categoryOrders, { onError: () => setDragRows(null) })
+      dragActiveRef.current = false
     })
   }, [incompleteItems, reorder])
 
@@ -378,7 +396,11 @@ const ShoppingListScreen = () => {
         renderItem={renderItem}
         onDragEnd={handleDragEnd}
         containerStyle={styles.listContainer}
-        itemLayoutAnimation={reduceMotion || dragRows ? undefined : LinearTransition.duration(220)}
+        itemExitingAnimation={reduceMotion ? undefined : ROW_EXITING}
+        onDragBegin={() => {
+          dragActiveRef.current = true
+          setDragRows(rows)
+        }}
         ListHeaderComponent={
           <View>
             <PresenceBar users={presence} />
@@ -386,6 +408,7 @@ const ShoppingListScreen = () => {
               <Pressable
                 style={sectionStyles.clearCompleted}
                 onPress={handleClearCompleted}
+                disabled={clearCompleted.isPending}
                 accessibilityLabel={t('shoppingList.clearCompleted')}
               >
                 <Text style={styles.clearBtn}>{t('shoppingList.clearCompleted')}</Text>

@@ -7,6 +7,7 @@ import {
   scaleIngredientQuantity,
 } from '@carrot/shared/utils/ingredientScaling'
 import { styles } from './styles'
+import { createShoppingListItemInput } from '../../utils/uuid'
 import IngredientRow from './IngredientRow'
 
 interface UnifiedIngredient {
@@ -95,11 +96,8 @@ const UnifiedIngredientsSection = ({
       ({ componentIndex, ingredientIndex }) =>
         `${componentIndex}-${ingredientIndex}`
     )
-    const items = unaddedIngredients.map(
-      ({ shoppingListValue, shoppingCategory }) => ({
-        text: shoppingListValue,
-        category: shoppingCategory,
-      })
+    const items = unaddedIngredients.map(({ shoppingListValue, shoppingCategory }) =>
+      createShoppingListItemInput(shoppingListValue, shoppingCategory)
     )
 
     if (items.length > 0) onAddAll(keys, items)
@@ -145,7 +143,7 @@ const UnifiedIngredientsSection = ({
               cupHint={cupHint}
               addMode={addMode}
               isAdded={sessionAdded.has(key)}
-              onAdd={() => onAdd(key, { text: shoppingListValue, category: shoppingCategory })}
+              onAdd={() => onAdd(key, createShoppingListItemInput(shoppingListValue, shoppingCategory))}
               allergenFlag={components[componentIndex].ingredient_flags?.[ingredientIndex] ?? null}
               activeAllergens={activeAllergens}
               fontSize={fontSize}

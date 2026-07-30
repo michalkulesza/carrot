@@ -22,6 +22,7 @@
     "expo-build-properties": "~56.0.21",
     "expo-clipboard": "~56.0.4",
     "expo-constants": "~56.0.18",
+    "expo-crypto": "~56.0.4",
     "expo-file-system": "~56.0.8",
     "expo-glass-effect": "^56.0.4",
     "expo-haptics": "~56.0.3",

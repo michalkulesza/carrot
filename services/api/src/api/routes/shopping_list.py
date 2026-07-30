@@ -121,6 +121,26 @@ async def add_items(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> list[ShoppingListItemOut]:
+    requested_ids = [item.id for item in body.items]
+    existing_result = await session.execute(
+        select(ShoppingListItem).where(ShoppingListItem.id.in_(requested_ids))
+    )
+    existing_by_id = {item.id: item for item in existing_result.scalars().all()}
+
+    for input_item in body.items:
+        existing_item = existing_by_id.get(input_item.id)
+        if existing_item is None:
+            continue
+
+        text = input_item.text.strip()
+        if (
+            existing_item.household_id != household_id
+            or existing_item.user_id != user.id
+            or existing_item.text != text
+            or existing_item.category != input_item.category
+        ):
+            raise HTTPException(status_code=409, detail="Shopping item ID conflicts with an existing item")
+
     active_positions_result = await session.execute(
         select(ShoppingListItem.category, ShoppingListItem.position)
         .where(_scope_filter(user.id, household_id))
@@ -132,14 +152,21 @@ async def add_items(
 
     next_positions = {category: position + 1 for category, position in max_positions.items()}
     new_items = []
+    returned_items = []
     for input_item in body.items:
         text = input_item.text.strip()
         if not text:
             continue
 
+        existing_item = existing_by_id.get(input_item.id)
+        if existing_item is not None:
+            returned_items.append(existing_item)
+            continue
+
         position = next_positions.get(input_item.category, 0)
         next_positions[input_item.category] = position + 1
         item = ShoppingListItem(
+            id=input_item.id,
             user_id=user.id,
             household_id=household_id,
             text=text,
@@ -149,6 +176,7 @@ async def add_items(
         )
         session.add(item)
         new_items.append(item)
+        returned_items.append(item)
 
     await session.commit()
     for item in new_items:
@@ -158,7 +186,7 @@ async def add_items(
     items_snap = await _snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
 
-    return [ShoppingListItemOut.model_validate(i) for i in new_items]
+    return [ShoppingListItemOut.model_validate(i) for i in returned_items]
 
 
 # NOTE: /presence must be defined before /{item_id}

@@ -13,15 +13,25 @@ from api.models import (
 
 
 def test_shopping_list_items_require_known_categories() -> None:
+    item_id = uuid.uuid4()
     request = ShoppingListItemsCreate.model_validate({
-        "items": [{"text": "Apples", "category": "produce"}],
+        "items": [{"id": str(item_id), "text": "Apples", "category": "produce"}],
     })
 
+    assert request.items[0].id == item_id
     assert request.items[0].category is ShoppingCategory.PRODUCE
 
     with pytest.raises(ValidationError):
         ShoppingListItemsCreate.model_validate({
-            "items": [{"text": "Apples", "category": "fruit"}],
+            "items": [{"id": str(item_id), "text": "Apples", "category": "fruit"}],
+        })
+
+    with pytest.raises(ValidationError, match="unique"):
+        ShoppingListItemsCreate.model_validate({
+            "items": [
+                {"id": str(item_id), "text": "Apples", "category": "produce"},
+                {"id": str(item_id), "text": "Pears", "category": "produce"},
+            ],
         })
 
 

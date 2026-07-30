@@ -1,10 +1,9 @@
-export const createUuid = (): string => {
-  const template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+import * as Crypto from 'expo-crypto'
+import type { ShoppingCategory, ShoppingListItemInput } from '@carrot/shared/types'
 
-  return template.replace(/[xy]/g, (character) => {
-    const value = Math.floor(Math.random() * 16)
-    const digit = character === 'x' ? value : (value & 0x3) | 0x8
+export const createUuid = (): string => Crypto.randomUUID()
 
-    return digit.toString(16)
-  })
-}
+export const createShoppingListItemInput = (
+  text: string,
+  category: ShoppingCategory,
+): ShoppingListItemInput => ({ id: createUuid(), text, category })

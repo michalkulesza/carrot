@@ -666,12 +666,19 @@ class ShoppingListItemOut(BaseModel):
 
 
 class ShoppingListItemCreate(BaseModel):
+    id: uuid.UUID
     text: str
     category: ShoppingCategory = ShoppingCategory.OTHER
 
 
 class ShoppingListItemsCreate(BaseModel):
     items: list[ShoppingListItemCreate]
+
+    @model_validator(mode="after")
+    def item_ids_are_unique(self) -> ShoppingListItemsCreate:
+        if len({item.id for item in self.items}) != len(self.items):
+            raise ValueError("Shopping item IDs must be unique per request")
+        return self
 
 
 class ShoppingListItemUpdate(BaseModel):

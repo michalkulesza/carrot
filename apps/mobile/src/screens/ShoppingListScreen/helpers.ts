@@ -11,6 +11,15 @@ export type ShoppingListRow =
   | { kind: 'add'; category: ShoppingCategory }
   | { kind: 'completed'; category: ShoppingCategory; item: ShoppingListItem }
 
+export const shoppingListRowKey = (row: ShoppingListRow) =>
+  row.kind === 'section' || row.kind === 'add'
+    ? `${row.kind}-${row.category}`
+    : `item-${row.item.id}`
+
+export const hasSameShoppingListRowOrder = (first: ShoppingListRow[], second: ShoppingListRow[]) =>
+  first.length === second.length &&
+  first.every((row, index) => shoppingListRowKey(row) === shoppingListRowKey(second[index]))
+
 export const visibleShoppingCategories = (categories: ShoppingCategory[] | null | undefined) => {
   const enabled = categories ?? DEFAULT_SHOPPING_CATEGORIES
   return DEFAULT_SHOPPING_CATEGORIES.filter((category) => enabled.includes(category))

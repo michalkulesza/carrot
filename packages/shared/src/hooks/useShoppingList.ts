@@ -12,10 +12,6 @@ import type {
 const QUERY_KEY = ['shopping-list'] as const
 const KEEPALIVE_INTERVAL_MS = 8_000
 
-let tempIdCounter = 0
-
-const isTemporaryItemId = (id: string) => id.startsWith('temp-')
-
 export const useShoppingList = () => {
   const api = useApiClient()
   const qc = useQueryClient()
@@ -25,10 +21,6 @@ export const useShoppingList = () => {
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingWriteCountRef = useRef(0)
   const latestActionIdRef = useRef(0)
-  const temporaryItemIdsRef = useRef<Record<string, string>>({})
-  const addContextsRef = useRef(
-    new WeakMap<ShoppingListItemInput[], { temporaryIds: string[] }>()
-  )
 
   const enqueueWrite = useCallback(
     <T,>(write: () => Promise<T>) => {
@@ -95,21 +87,8 @@ export const useShoppingList = () => {
     mutationFn: (items: ShoppingListItemInput[]) =>
       enqueueWrite(async () => {
         const addedItems = await api.addShoppingListItems(items)
-        const context = addContextsRef.current.get(items)
-        const temporaryIds = context?.temporaryIds ?? []
-        const replacements = addedItems.map((item, index) => [temporaryIds[index], item] as const)
-
-        for (const [temporaryId, item] of replacements) {
-          if (temporaryId) temporaryItemIdsRef.current[temporaryId] = item.id
-        }
-
         qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, (current = []) =>
-          current.map((item) => {
-            const replacement = replacements.find(([temporaryId]) => temporaryId === item.id)?.[1]
-            return replacement
-              ? { ...replacement, category: item.category, position: item.position }
-              : item
-          })
+          current.map((item) => addedItems.find((added) => added.id === item.id) ?? item)
         )
 
         return addedItems
@@ -136,7 +115,7 @@ export const useShoppingList = () => {
         nextPositionByCategory[input.category] = position + 1
 
         return {
-          id: `temp-${Date.now()}-${tempIdCounter++}`,
+          id: input.id,
           user_id: '',
           household_id: null,
           text: input.text,
@@ -147,16 +126,13 @@ export const useShoppingList = () => {
           updated_at: now,
         }
       })
-      const temporaryIds = optimisticItems.map((item) => item.id)
-
-      addContextsRef.current.set(items, { temporaryIds })
       qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, [...previousItems, ...optimisticItems])
-      return { actionId, temporaryIds }
+      return { actionId, itemIds: optimisticItems.map((item) => item.id) }
     },
     onError: (_error, _items, context) => {
       if (!context) return
       qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, (current = []) =>
-        current.filter((item) => !context.temporaryIds.includes(item.id))
+        current.filter((item) => !context.itemIds.includes(item.id))
       )
     },
   })
@@ -164,11 +140,7 @@ export const useShoppingList = () => {
   const toggle = useMutation({
     mutationFn: ({ id, completed }: { id: string; completed: boolean }) =>
       enqueueWrite(async () => {
-        const itemId = temporaryItemIdsRef.current[id] ?? id
-        if (isTemporaryItemId(itemId)) {
-          throw new Error('The item was not added')
-        }
-        return api.updateShoppingListItem(itemId, { completed: !completed })
+        return api.updateShoppingListItem(id, { completed: !completed })
       }),
     onMutate: async ({ id, completed }) => {
       pendingWriteCountRef.current += 1
@@ -209,17 +181,7 @@ export const useShoppingList = () => {
   const reorder = useMutation({
     mutationFn: (categoryOrders: ShoppingCategoryOrders) =>
       enqueueWrite(async () => {
-        const resolvedOrders: ShoppingCategoryOrders = {}
-        for (const [category, itemIds] of Object.entries(categoryOrders) as [
-          ShoppingCategory,
-          string[],
-        ][]) {
-          resolvedOrders[category] = itemIds.flatMap((id) => {
-            const resolvedId = temporaryItemIdsRef.current[id] ?? id
-            return isTemporaryItemId(resolvedId) ? [] : [resolvedId]
-          })
-        }
-        return api.reorderShoppingList(resolvedOrders)
+        return api.reorderShoppingList(categoryOrders)
       }),
     onMutate: async (categoryOrders) => {
       pendingWriteCountRef.current += 1

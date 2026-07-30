@@ -33,6 +33,7 @@ export const DEFAULT_SHOPPING_CATEGORIES: ShoppingCategory[] = [
 ];
 
 export interface ShoppingListItemInput {
+  id: string;
   text: string;
   category: ShoppingCategory;
 }

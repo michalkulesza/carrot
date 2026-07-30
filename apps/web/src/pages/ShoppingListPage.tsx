@@ -475,7 +475,7 @@ const ShoppingListPage = () => {
   )
 
   const handleAdd = useCallback(
-    (text: string) => addItems.mutate([{ text, category: 'other' }]),
+    (text: string) => addItems.mutate([{ id: crypto.randomUUID(), text, category: 'other' }]),
     [addItems]
   )
 
