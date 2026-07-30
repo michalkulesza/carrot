@@ -9,15 +9,14 @@ const DAY_ROW_DATE_AND_DIVIDER_WIDTH = 52 + 29
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  visibleFrame: { flex: 1 },
   loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   exportBtn: { padding: 4 },
   exportOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center' },
   list: { flex: 1 },
-  // The tab bar and home indicator are already in the scroll view's adjusted content
-  // inset via contentInsetAdjustmentBehavior="automatic".
   listContent: { paddingBottom: 16 },
-  safeAreaProbe: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   monthRow: {
     height: MONTH_HEADER_HEIGHT,
     justifyContent: 'flex-end',
@@ -238,6 +237,7 @@ export const styles = StyleSheet.create({
   todayBtn: {
     position: 'absolute',
     right: 16,
+    bottom: 16,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 20,

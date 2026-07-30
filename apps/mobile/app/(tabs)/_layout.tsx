@@ -39,7 +39,7 @@ export default function TabsLayout() {
       )}
 
       {!gated && (
-        <NativeTabs.Trigger name="meal-plan">
+        <NativeTabs.Trigger name="meal-plan" disableAutomaticContentInsets>
           <NativeTabs.Trigger.Icon sf="calendar" md="calendar_today" />
           <NativeTabs.Trigger.Label>{t('nav.mealPlan')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>

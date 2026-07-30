@@ -10,13 +10,13 @@ import {
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
-import { SafeAreaListener } from 'react-native-safe-area-context'
 import * as Haptics from 'expo-haptics'
 import { GestureDetector } from 'react-native-gesture-handler'
 import ReanimatedAnimated from 'react-native-reanimated'
+import { SafeAreaView } from 'react-native-screens/experimental'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useMealPlanStream } from '@carrot/shared/hooks/useMealPlanStream'
@@ -111,16 +111,14 @@ const MealPlanScreen = () => {
   const moveEntry = useMoveMealPlanEntry()
 
   const headerHeight = useHeaderHeight()
+  const isFocused = useIsFocused()
   const {
     listRef,
     listOpacity,
-    bottomInset,
-    targetScrollOffset,
-    handleSafeAreaChange,
     handleListLayout,
     handleScrollBeginDrag,
     handleScrollToToday,
-  } = useCenterOnToday({ offsets, todayIndex, headerHeight })
+  } = useCenterOnToday({ todayIndex, isFocused })
 
   const handleDrop = useCallback(
     (from: string, to: string) => {
@@ -249,12 +247,8 @@ const MealPlanScreen = () => {
   )
 
   const getTodayBtnStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [
-      styles.todayBtn,
-      { bottom: (bottomInset ?? 0) + 16 },
-      pressed && { opacity: 0.8 },
-    ],
-    [bottomInset],
+    ({ pressed }: { pressed: boolean }) => [styles.todayBtn, pressed && { opacity: 0.8 }],
+    [],
   )
 
   const handleTodayPress = useCallback(async () => {
@@ -267,6 +261,7 @@ const MealPlanScreen = () => {
   }, [focusToday, handleScrollToToday])
 
   const draggingEntry = previewIsoDate ? entriesByDate.get(previewIsoDate) : undefined
+  const visibleFrameStyle = useMemo(() => ({ paddingTop: headerHeight }), [headerHeight])
 
   const handleListContainerLayout = useCallback(
     (e: Parameters<typeof handleListLayout>[0]) => {
@@ -278,41 +273,44 @@ const MealPlanScreen = () => {
 
   return (
     <View style={styles.container}>
-      <SafeAreaListener style={styles.safeAreaProbe} pointerEvents="none" onChange={handleSafeAreaChange} />
-      <Animated.View style={[styles.list, { opacity: listOpacity }]}>
-        <GestureDetector gesture={gesture}>
-          <View style={styles.list} onLayout={handleListContainerLayout}>
-            <ReanimatedAnimated.FlatList
-              ref={listRef}
-              data={items}
-              keyExtractor={(item: ListItem) => item.key}
-              renderItem={renderItem}
-              getItemLayout={getItemLayout}
-              contentOffset={{ x: 0, y: targetScrollOffset }}
-              onScroll={scrollHandler}
-              onScrollBeginDrag={handleScrollBeginDrag}
-              style={styles.list}
-              contentContainerStyle={styles.listContent}
-              contentInsetAdjustmentBehavior="automatic"
-              showsVerticalScrollIndicator={false}
-              windowSize={5}
-              maxToRenderPerBatch={20}
-              initialNumToRender={14}
-            />
-            <DropTargetHighlight style={highlightStyle} />
-            <DragPreviewCard entry={draggingEntry} style={previewCardStyle} />
-          </View>
-        </GestureDetector>
-        <Pressable
-          style={getTodayBtnStyle}
-          onPress={handleTodayPress}
-          accessibilityLabel={t('mealPlan.today')}
-          accessibilityRole="button"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
-        </Pressable>
-      </Animated.View>
+      <SafeAreaView edges={{ bottom: true }} style={styles.safeArea}>
+        <View style={[styles.visibleFrame, visibleFrameStyle]}>
+          <Animated.View style={[styles.list, { opacity: listOpacity }]}>
+            <GestureDetector gesture={gesture}>
+              <View style={styles.list} onLayout={handleListContainerLayout}>
+                <ReanimatedAnimated.FlatList
+                  ref={listRef}
+                  data={items}
+                  keyExtractor={(item: ListItem) => item.key}
+                  renderItem={renderItem}
+                  getItemLayout={getItemLayout}
+                  initialScrollIndex={todayIndex}
+                  onScroll={scrollHandler}
+                  onScrollBeginDrag={handleScrollBeginDrag}
+                  style={styles.list}
+                  contentContainerStyle={styles.listContent}
+                  contentInsetAdjustmentBehavior="never"
+                  showsVerticalScrollIndicator={false}
+                  windowSize={5}
+                  maxToRenderPerBatch={20}
+                  initialNumToRender={14}
+                />
+                <DropTargetHighlight style={highlightStyle} />
+                <DragPreviewCard entry={draggingEntry} style={previewCardStyle} />
+              </View>
+            </GestureDetector>
+            <Pressable
+              style={getTodayBtnStyle}
+              onPress={handleTodayPress}
+              accessibilityLabel={t('mealPlan.today')}
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      </SafeAreaView>
 
       {showSpinner && (
         <View style={styles.loadingOverlay} pointerEvents="none">
