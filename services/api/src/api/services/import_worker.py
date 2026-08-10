@@ -33,6 +33,7 @@ from api.routes.imports import _event_for_job
 from api.routes.recipes import _link_recipe_to_household
 from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
+from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure
@@ -103,6 +104,27 @@ def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
     return _normalize_ingredient_punctuation(value)
 
 
+async def _archive_thumbnail(recipe: Recipe) -> None:
+    thumbnail_url = recipe.thumbnail_url
+    is_r2_url = bool(
+        settings.r2_public_url
+        and thumbnail_url
+        and thumbnail_url.startswith(settings.r2_public_url)
+    )
+    if not thumbnail_url or not settings.r2_configured or is_r2_url:
+        return
+
+    try:
+        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+            response = await client.get(thumbnail_url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+
+        archived_url = await asyncio.to_thread(r2_svc.upload_image, response.content, str(recipe.id))
+        recipe.thumbnail_url = archived_url
+    except Exception as error:
+        log.warning("Thumbnail R2 upload failed for recipe %s: %s", recipe.id, error)
+
+
 async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     recipe_data = result.recipe
     if recipe_data is None:
@@ -166,6 +188,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     )
     session.add(recipe)
     await session.flush()
+    await _archive_thumbnail(recipe)
     await _link_recipe_to_household(session, recipe.id, job.household_id)
     await queue_recipe_embedding(session, recipe)
     return recipe
