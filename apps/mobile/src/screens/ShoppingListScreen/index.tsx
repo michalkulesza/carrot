@@ -71,6 +71,7 @@ const ShoppingListScreen = () => {
   const dragCorrectionFrameRef = useRef<number | null>(null)
   const dragActiveRef = useRef(false)
   const clearPendingRef = useRef(false)
+  const swipeActionActiveRef = useRef(false)
   const collapseStorageKey = activeHouseholdId
     ? `shopping-list-collapsed-categories:${activeHouseholdId}`
     : null
@@ -226,11 +227,21 @@ const ShoppingListScreen = () => {
   }, [scheduleRowReflow, toggle])
 
   const handleEditStart = useCallback((item: ShoppingListItem) => {
+    if (swipeActionActiveRef.current) return
+
     setEditingId(item.id)
     setEditingText(item.text)
     setEditing(item.id)
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
   }, [setEditing])
+
+  const handleSwipeActionStart = useCallback(() => {
+    swipeActionActiveRef.current = true
+  }, [])
+
+  const handleSwipeActionClose = useCallback(() => {
+    swipeActionActiveRef.current = false
+  }, [])
 
   const handleEditSubmit = useCallback((item: ShoppingListItem) => {
     const text = editingText.trim()
@@ -248,6 +259,7 @@ const ShoppingListScreen = () => {
       <Pressable
         style={styles.deleteAction}
         onPress={() => {
+          swipeActionActiveRef.current = false
           scheduleRowReflow()
           remove.mutate(itemId, { onError: scheduleRowReflow })
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -286,7 +298,13 @@ const ShoppingListScreen = () => {
     const isLocked = !!editor && !isEditing
     return (
       <ScaleDecorator>
-          <Swipeable renderRightActions={renderRightDelete(shoppingItem.id, isLocked)} overshootRight={false}>
+          <Swipeable
+            renderRightActions={renderRightDelete(shoppingItem.id, isLocked)}
+            overshootRight={false}
+            onSwipeableOpenStartDrag={handleSwipeActionStart}
+            onSwipeableCloseStartDrag={handleSwipeActionStart}
+            onSwipeableClose={handleSwipeActionClose}
+          >
             <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
               <CheckCircle
                 checked={isCompleted}
@@ -352,6 +370,8 @@ const ShoppingListScreen = () => {
     handleAdd,
     handleEditStart,
     handleEditSubmit,
+    handleSwipeActionClose,
+    handleSwipeActionStart,
     handleToggle,
     lockedByOther,
     renderRightDelete,
