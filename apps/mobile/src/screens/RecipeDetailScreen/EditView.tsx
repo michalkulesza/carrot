@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { ActionSheetIOS, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import NetworkImage from '../../components/NetworkImage'
 import { useTranslation } from 'react-i18next'
@@ -44,12 +45,14 @@ const EditView = ({
   qtyUnitPickerTarget,
   currentQty,
   currentUnit,
+  onDeleteRecipe,
 }: {
   recipe: RecipeOut
   draft: EditDraft
   saving: boolean
   insets: EdgeInsets
   fontSizeIndex: number
+  onDeleteRecipe: () => void
 } & Pick<
   EditDraftState,
   | 'handlePickThumbnail'
@@ -75,6 +78,14 @@ const EditView = ({
   | 'currentUnit'
 >) => {
   const { t } = useTranslation()
+  const getDeleteRecipeButtonStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [
+      styles.deleteRecipeBtn,
+      saving && styles.btnDisabled,
+      pressed && { opacity: 0.7 },
+    ],
+    [saving],
+  )
 
   return (
     <KeyboardAvoidingView
@@ -183,6 +194,19 @@ const EditView = ({
               setQtyUnitPickerTarget={setQtyUnitPickerTarget}
             />
           ))}
+
+          <Pressable
+            style={getDeleteRecipeButtonStyle}
+            onPress={onDeleteRecipe}
+            disabled={saving}
+            accessibilityLabel={t('recipes.deleteRecipe')}
+            accessibilityRole="button"
+          >
+            <Feather name="trash-2" size={18} color={colors.red} />
+            <Text style={styles.deleteRecipeBtnText}>
+              {t('recipes.deleteRecipe')}
+            </Text>
+          </Pressable>
         </View>
       </ScrollView>
 

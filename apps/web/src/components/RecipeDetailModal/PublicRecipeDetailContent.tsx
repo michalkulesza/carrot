@@ -90,7 +90,6 @@ const PublicRecipeDetailContent = ({
         onOpenMealPlan={() => {}}
         onToggleFavourite={() => {}}
         onEdit={() => {}}
-        onDelete={() => {}}
         readOnly
       />
       <RecipeMetaBar

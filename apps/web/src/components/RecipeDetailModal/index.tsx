@@ -27,7 +27,6 @@ import {
   deleteRecipe,
   removeRecipeFromHousehold,
   removeTagFromRecipe,
-  setRecipeHouseholds,
   toggleFavourite,
   updateRecipe,
   uploadThumbnail,
@@ -109,6 +108,7 @@ const RecipeDetailModal = ({
   const [fontSizeIndex, setFontSizeIndex] = useState(2)
   const savedNotesRef = useRef(recipe?.notes ?? '')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const deletePendingRef = useRef(false)
   const originalServings = recipe?.servings ?? null
   const { selectedServings, setServings } = useRecipeServingPreference(
     recipe?.id,
@@ -323,6 +323,8 @@ const RecipeDetailModal = ({
     )
 
   const handleDeleteEverywhere = async () => {
+    if (deletePendingRef.current) return
+    deletePendingRef.current = true
     setBusy(true)
     setError(null)
     try {
@@ -332,14 +334,16 @@ const RecipeDetailModal = ({
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
-      setMode('view')
+      setMode('editing')
     } finally {
+      deletePendingRef.current = false
       setBusy(false)
     }
   }
 
   const handleRemoveFromHousehold = async () => {
-    if (!activeHouseholdId) return
+    if (!activeHouseholdId || deletePendingRef.current) return
+    deletePendingRef.current = true
     setBusy(true)
     setError(null)
     try {
@@ -349,21 +353,9 @@ const RecipeDetailModal = ({
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
-      setMode('view')
+      setMode('editing')
     } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleHouseholdsChange = async (householdIds: string[]) => {
-    setBusy(true)
-    setError(null)
-    try {
-      const updated = await setRecipeHouseholds(r.id, householdIds)
-      onUpdated?.(updated)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('recipes.failedToSave'))
-    } finally {
+      deletePendingRef.current = false
       setBusy(false)
     }
   }
@@ -452,6 +444,15 @@ const RecipeDetailModal = ({
     setError(null)
   }
 
+  const handleCancelDelete = () => {
+    setMode('editing')
+    setError(null)
+  }
+
+  const handleRequestDelete = () => {
+    setMode('confirming')
+  }
+
   const handleClose = () => {
     setMode('view')
     setError(null)
@@ -493,7 +494,6 @@ const RecipeDetailModal = ({
                   onOpenMealPlan={() => setMealPlanOpen(true)}
                   onToggleFavourite={handleToggleFavourite}
                   onEdit={() => setMode('editing')}
-                  onDelete={() => setMode('confirming')}
                 />
               </ModalHeader>
 
@@ -611,9 +611,10 @@ const RecipeDetailModal = ({
                   isAuthor={!!user && r.author_id === user.id}
                   households={households}
                   activeHouseholdId={activeHouseholdId}
-                  onHouseholdsChange={handleHouseholdsChange}
                   onCancel={cancelMode}
+                  onCancelDelete={handleCancelDelete}
                   onSave={handleSave}
+                  onRequestDelete={handleRequestDelete}
                   onRemoveFromHousehold={handleRemoveFromHousehold}
                   onDeleteEverywhere={handleDeleteEverywhere}
                   onClose={handleClose}

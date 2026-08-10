@@ -6,7 +6,6 @@ import {
   Share2,
   ShoppingCart,
   Star,
-  Trash2,
 } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut, Tag } from '@carrot/shared/types'
@@ -41,7 +40,6 @@ interface RecipeHeroSectionProps {
   onOpenMealPlan: () => void
   onToggleFavourite: () => void
   onEdit: () => void
-  onDelete: () => void
   readOnly?: boolean
 }
 
@@ -63,7 +61,6 @@ const RecipeHeroSection = ({
   onOpenMealPlan,
   onToggleFavourite,
   onEdit,
-  onDelete,
   readOnly = false,
 }: RecipeHeroSectionProps) => {
   const { t } = useTranslation()
@@ -87,10 +84,13 @@ const RecipeHeroSection = ({
       const share = await createPublicShare(r.id)
       setShareUrl(share.url)
       setShareExpiry(share.expires_at)
-      if (navigator.share) await navigator.share({ title: r.title, url: share.url })
+      if (navigator.share)
+        await navigator.share({ title: r.title, url: share.url })
       else await navigator.clipboard.writeText(share.url)
     } catch (error) {
-      setShareError(error instanceof Error ? error.message : t('publicShare.createError'))
+      setShareError(
+        error instanceof Error ? error.message : t('publicShare.createError')
+      )
     } finally {
       setSharing(false)
     }
@@ -158,14 +158,6 @@ const RecipeHeroSection = ({
       >
         <Edit2 className="w-4 h-4" />
       </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        aria-label={t('recipes.remove')}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-danger hover:bg-danger-50 shadow-sm transition-colors"
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
     </div>
   )
 
@@ -190,16 +182,61 @@ const RecipeHeroSection = ({
       {toolbar}
 
       {shareOpen && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-label={t('publicShare.title')}>
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('publicShare.title')}
+        >
           <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
             <h3 className="text-lg font-semibold">{t('publicShare.title')}</h3>
-            <p className="mt-2 text-sm text-zinc-600">{t('publicShare.description')}</p>
-            {shareError && <p className="mt-3 text-sm text-danger">{shareError}</p>}
-            {shareUrl && <input readOnly value={shareUrl} aria-label={t('publicShare.link')} className="mt-3 w-full rounded border p-2 text-xs" />}
-            {shareExpiry && <p className="mt-2 text-xs text-zinc-500">{t('publicShare.expires', { date: new Date(shareExpiry).toLocaleDateString() })}</p>}
+            <p className="mt-2 text-sm text-zinc-600">
+              {t('publicShare.description')}
+            </p>
+            {shareError && (
+              <p className="mt-3 text-sm text-danger">{shareError}</p>
+            )}
+            {shareUrl && (
+              <input
+                readOnly
+                value={shareUrl}
+                aria-label={t('publicShare.link')}
+                className="mt-3 w-full rounded border p-2 text-xs"
+              />
+            )}
+            {shareExpiry && (
+              <p className="mt-2 text-xs text-zinc-500">
+                {t('publicShare.expires', {
+                  date: new Date(shareExpiry).toLocaleDateString(),
+                })}
+              </p>
+            )}
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setShareOpen(false)} className="rounded px-3 py-2 text-sm">{t('common.close')}</button>
-              {shareUrl && !navigator.share ? <button type="button" onClick={handleCopyShare} className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground">{t('publicShare.copy')}</button> : <button type="button" disabled={sharing} onClick={handleCreateShare} className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-60">{sharing ? t('common.loading') : t('publicShare.share')}</button>}
+              <button
+                type="button"
+                onClick={() => setShareOpen(false)}
+                className="rounded px-3 py-2 text-sm"
+              >
+                {t('common.close')}
+              </button>
+              {shareUrl && !navigator.share ? (
+                <button
+                  type="button"
+                  onClick={handleCopyShare}
+                  className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
+                >
+                  {t('publicShare.copy')}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={sharing}
+                  onClick={handleCreateShare}
+                  className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-60"
+                >
+                  {sharing ? t('common.loading') : t('publicShare.share')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -216,7 +253,9 @@ const RecipeHeroSection = ({
         </button>
       )}
 
-      <div className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pb-1 ${proxied ? 'pt-5' : 'pt-14'}`}>
+      <div
+        className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pb-1 ${proxied ? 'pt-5' : 'pt-14'}`}
+      >
         <div className="flex items-start gap-2">
           {!readOnly && mode === 'view' && (
             <button

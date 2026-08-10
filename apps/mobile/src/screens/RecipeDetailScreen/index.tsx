@@ -85,6 +85,7 @@ const RecipeDetailScreen = () => {
   const pendingIngredientKeyRef = useRef<string | null>(null);
   const publicSharePendingRef = useRef(false);
   const deletePendingRef = useRef(false);
+  const deletePromptOpenRef = useRef(false);
 
   const displayPrefs = useDisplayPrefs();
   const initialComponentIndex = Number.isInteger(Number(componentIndexParam))
@@ -145,7 +146,10 @@ const RecipeDetailScreen = () => {
     void remove.mutateAsync(recipe.id)
       .then(() => navigation.goBack())
       .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
-      .finally(() => { deletePendingRef.current = false })
+      .finally(() => {
+        deletePendingRef.current = false
+        deletePromptOpenRef.current = false
+      })
   }, [navigation, recipe, remove, t])
 
   const handleRemoveFromHousehold = useCallback(() => {
@@ -154,17 +158,29 @@ const RecipeDetailScreen = () => {
     void removeFromHousehold.mutateAsync({ id: recipe.id, householdId: activeHouseholdId })
       .then(() => navigation.goBack())
       .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
-      .finally(() => { deletePendingRef.current = false })
+      .finally(() => {
+        deletePendingRef.current = false
+        deletePromptOpenRef.current = false
+      })
   }, [navigation, recipe, activeHouseholdId, removeFromHousehold, t])
 
+  const handleCloseDeletePrompt = useCallback(() => {
+    deletePromptOpenRef.current = false
+  }, [])
+
   const handleDeleteRecipe = useCallback(() => {
-    if (!recipe || deletePendingRef.current) return
+    if (!recipe || deletePendingRef.current || deletePromptOpenRef.current) return
+    deletePromptOpenRef.current = true
     const isAuthor = recipe.author_id === user?.id
     const linkedToActiveHousehold =
       !!activeHouseholdId && recipe.household_ids.includes(activeHouseholdId)
 
     const buttons: Parameters<typeof Alert.alert>[2] = [
-      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.cancel'),
+        style: 'cancel',
+        onPress: handleCloseDeletePrompt,
+      },
     ]
     if (linkedToActiveHousehold && activeHousehold) {
       buttons.push({
@@ -181,8 +197,13 @@ const RecipeDetailScreen = () => {
       })
     }
 
-    Alert.alert(t('recipes.deleteTitle'), t('recipes.deleteConfirm', { title: recipe.title }), buttons)
-  }, [recipe, user, activeHouseholdId, activeHousehold, handleRemoveFromHousehold, handleDeleteEverywhere, t])
+    Alert.alert(
+      t('recipes.deleteTitle'),
+      t('recipes.deleteConfirm', { title: recipe.title }),
+      buttons,
+      { onDismiss: handleCloseDeletePrompt },
+    )
+  }, [recipe, user, activeHouseholdId, activeHousehold, handleRemoveFromHousehold, handleDeleteEverywhere, handleCloseDeletePrompt, t])
 
   const handleOpenCookMode = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
@@ -338,6 +359,7 @@ const RecipeDetailScreen = () => {
         qtyUnitPickerTarget={editDraft.qtyUnitPickerTarget}
         currentQty={editDraft.currentQty}
         currentUnit={editDraft.currentUnit}
+        onDeleteRecipe={handleDeleteRecipe}
       />
     );
   }

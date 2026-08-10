@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@heroui/react'
 import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
 import type { Mode } from './helpers'
-import RecipeHouseholdsPicker from './RecipeHouseholdsPicker'
 
 interface RecipeModalFooterProps {
   recipe: RecipeOut
@@ -11,9 +10,10 @@ interface RecipeModalFooterProps {
   isAuthor: boolean
   households: HouseholdOut[]
   activeHouseholdId: string | null
-  onHouseholdsChange: (householdIds: string[]) => void
   onCancel: () => void
+  onCancelDelete: () => void
   onSave: () => void
+  onRequestDelete: () => void
   onRemoveFromHousehold: () => void
   onDeleteEverywhere: () => void
   onClose: () => void
@@ -26,9 +26,10 @@ const RecipeModalFooter = ({
   isAuthor,
   households,
   activeHouseholdId,
-  onHouseholdsChange,
   onCancel,
+  onCancelDelete,
   onSave,
+  onRequestDelete,
   onRemoveFromHousehold,
   onDeleteEverywhere,
   onClose,
@@ -37,20 +38,23 @@ const RecipeModalFooter = ({
   const linkedToActiveHousehold =
     !!activeHouseholdId && recipe.household_ids.includes(activeHouseholdId)
   const activeHousehold = households.find((h) => h.id === activeHouseholdId)
+  const canDelete = linkedToActiveHousehold || isAuthor
 
   return (
     <>
-      {mode !== 'confirming' && (
-        <RecipeHouseholdsPicker
-          households={households}
-          householdIds={recipe.household_ids}
-          busy={busy}
-          onChange={onHouseholdsChange}
-        />
-      )}
       <div className="flex justify-end gap-2">
         {mode === 'editing' && (
           <>
+            {canDelete && (
+              <Button
+                variant="danger-soft"
+                onPress={onRequestDelete}
+                isDisabled={busy}
+                className="mr-auto"
+              >
+                {t('recipes.deleteRecipe')}
+              </Button>
+            )}
             <Button variant="tertiary" onPress={onCancel} isDisabled={busy}>
               {t('common.cancel')}
             </Button>
@@ -61,7 +65,11 @@ const RecipeModalFooter = ({
         )}
         {mode === 'confirming' && (
           <>
-            <Button variant="tertiary" onPress={onCancel} isDisabled={busy}>
+            <Button
+              variant="tertiary"
+              onPress={onCancelDelete}
+              isDisabled={busy}
+            >
               {t('common.cancel')}
             </Button>
             {linkedToActiveHousehold && activeHousehold && (
