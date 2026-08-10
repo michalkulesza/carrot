@@ -10,12 +10,12 @@ import {
   ModalFooter,
   ModalHeader,
 } from '@heroui/react'
-import { useNavigate } from 'react-router-dom'
 import {
   useTimers,
   formatDurationLabel,
   type TimerEntry,
 } from '../context/TimerContext'
+import { useRouteNavigation } from '../routing/RouteNavigationContext'
 
 interface ExpiredTimerItemProps {
   timer: TimerEntry
@@ -63,7 +63,7 @@ const ExpiredTimerItem = ({ timer, onGoToStep }: ExpiredTimerItemProps) => {
 const ExpiredTimersModal = () => {
   const { expiredQueue, dismissExpired } = useTimers()
   const { t } = useTranslation()
-  const navigate = useNavigate()
+  const { openRecipe } = useRouteNavigation()
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -75,11 +75,14 @@ const ExpiredTimersModal = () => {
   const goToStep = useCallback(
     (timer: TimerEntry) => {
       dismissExpired()
-      navigate(
-        `/?recipe=${timer.recipeId}&step=${timer.componentIndex}-${timer.stepIndex}`
-      )
+      openRecipe(timer.recipeId, {
+        step: {
+          componentIndex: timer.componentIndex,
+          stepIndex: timer.stepIndex,
+        },
+      })
     },
-    [dismissExpired, navigate]
+    [dismissExpired, openRecipe]
   )
 
   if (expiredQueue.length === 0) return null

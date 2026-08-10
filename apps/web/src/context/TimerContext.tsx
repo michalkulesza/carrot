@@ -128,7 +128,7 @@ export const getRemainingSeconds = (t: TimerEntry): number => {
 const fireTimerDone = (t: TimerEntry) => {
   const truncatedStepText =
     t.stepText.length > 80 ? `${t.stepText.slice(0, 77)}…` : t.stepText
-  const url = `/?recipe=${t.recipeId}&step=${t.componentIndex}-${t.stepIndex}`
+  const url = `/recipe/${t.recipeId}?step=${t.componentIndex}-${t.stepIndex}`
   showNotif(`✓ Done — ${t.recipeTitle}`, truncatedStepText, `timer-${t.id}`, {
     renotify: true,
     data: { url },
@@ -150,7 +150,7 @@ const buildTimerDoneNotificationPayload = (
   type: 'timer_done',
   title: `✓ Done — ${t.recipeTitle}`,
   body: `Step ${t.stepIndex + 1} · ${formatDurationLabel(t.totalSeconds)}`,
-  url: `/?recipe=${t.recipeId}&step=${t.componentIndex}-${t.stepIndex}`,
+  url: `/recipe/${t.recipeId}?step=${t.componentIndex}-${t.stepIndex}`,
 })
 
 const saveToStorage = (timers: Map<string, TimerEntry>) => {

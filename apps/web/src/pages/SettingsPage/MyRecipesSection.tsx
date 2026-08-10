@@ -1,11 +1,10 @@
 import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
-import type { HouseholdOut, RecipeOut, Tag } from '@carrot/shared/types'
+import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
 import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
-import { useTags } from '@carrot/shared/hooks/useTags'
-import RecipeDetailModal from '../../components/RecipeDetailModal'
 import MyRecipeRow from './MyRecipeRow'
+import { useRouteNavigation } from '../../routing/RouteNavigationContext'
 
 interface MyRecipesSectionProps {
   households: HouseholdOut[]
@@ -21,8 +20,7 @@ const MyRecipesSection = ({
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { data: myRecipes = [] } = useMyRecipes()
-  const { tags: allTags } = useTags()
-  const [openRecipeId, setOpenRecipeId] = useState<string | null>(null)
+  const { openRecipe } = useRouteNavigation()
   const [expanded, setExpanded] = useState(false)
 
   const invalidateMyRecipes = useCallback(
@@ -30,15 +28,13 @@ const MyRecipesSection = ({
     [qc]
   )
 
-  const handleView = useCallback((id: string) => setOpenRecipeId(id), [])
-  const handleCloseDetail = useCallback(() => setOpenRecipeId(null), [])
+  const handleView = useCallback((id: string) => openRecipe(id), [openRecipe])
 
   const handleDeleted = useCallback(
     (id: string) => {
       qc.setQueryData<RecipeOut[]>(['recipes', 'mine'], (old = []) =>
         old.filter((r) => r.id !== id)
       )
-      setOpenRecipeId((current) => (current === id ? null : current))
       invalidateMyRecipes()
     },
     [qc, invalidateMyRecipes]
@@ -52,9 +48,6 @@ const MyRecipesSection = ({
     },
     [qc]
   )
-
-  const openRecipe: RecipeOut | null =
-    myRecipes.find((r) => r.id === openRecipeId) ?? null
 
   const handleToggleExpanded = useCallback(() => setExpanded((v) => !v), [])
   const hasMoreThanDefault = myRecipes.length > DEFAULT_VISIBLE_COUNT
@@ -99,14 +92,6 @@ const MyRecipesSection = ({
           )}
         </>
       )}
-
-      <RecipeDetailModal
-        recipe={openRecipe}
-        allTags={allTags as Tag[]}
-        onClose={handleCloseDetail}
-        onUpdated={handleUpdated}
-        onDeleted={handleDeleted}
-      />
     </section>
   )
 }

@@ -85,6 +85,7 @@
     "clearFilter": "Clear filter",
     "recipeDeleted": "Recipe deleted",
     "failedToDelete": "Failed to delete recipe",
+    "recipeUnavailable": "This recipe is unavailable.",
     "deleteTitle": "Delete recipe?",
     "deleteConfirm": "{{title}} will be permanently removed.",
     "filterFavourites": "Favourites",

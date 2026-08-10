@@ -254,6 +254,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<RecipeOut[]>;
   };
 
+  const fetchRecipe = async (id: string): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/recipes/${encodeURIComponent(id)}`);
+    await throwOnError(res, "Recipe unavailable");
+    return res.json() as Promise<RecipeOut>;
+  };
+
   const searchRecipes = async (
     query: string,
     signal?: AbortSignal,
@@ -1078,6 +1084,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     deleteRecipe,
     fetchStats,
     listRecipes,
+    fetchRecipe,
     searchRecipes,
     subscribeRecipes,
     listMyRecipes,

@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { Button, Spinner, toast } from '@heroui/react'
@@ -6,7 +7,6 @@ import { getLocalTimeZone, today } from '@internationalized/date'
 import type {
   MealPlanEntry,
   RecipeOut,
-  Tag,
   UserPreferences,
 } from '@carrot/shared/types'
 import {
@@ -15,43 +15,36 @@ import {
   formatMonthYear,
 } from '@carrot/shared/utils/dateUtils'
 import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
-import RecipeDetailModal from '../../components/RecipeDetailModal'
 import PageHeader from '../../components/PageHeader'
-import { useHousehold } from '../../context/HouseholdContext'
-import { exportMealPlan, getActiveAllergens, printMealPlan } from './helpers'
+import { exportMealPlan, printMealPlan } from './helpers'
 import { useScrollToToday } from './useScrollToToday'
 import DesktopCalendar from './DesktopCalendar'
 import DayRow from './DayRow'
 import RecipePickerModal from './RecipePickerModal'
 import DayActionModal from './DayActionModal'
+import { useRouteNavigation } from '../../routing/RouteNavigationContext'
+import { parseMonth, planPath } from '../../routing/routeState'
 
 interface MealPlanPageProps {
   recipes: RecipeOut[]
   preferences: UserPreferences | null
-  allTags: Tag[]
-  onRecipeUpdated?: (r: RecipeOut) => void
-  onRecipeDeleted?: (id: string) => void
 }
 
-const MealPlanPage = ({
-  recipes,
-  preferences,
-  allTags,
-  onRecipeUpdated,
-  onRecipeDeleted,
-}: MealPlanPageProps) => {
-  const { activeHousehold } = useHousehold()
+const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
   const { t, i18n } = useTranslation()
   const locale = i18n.language
-  const activeAllergens = getActiveAllergens(
-    activeHousehold?.allergens,
-    preferences?.personal_allergens
-  )
 
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { openRecipe } = useRouteNavigation()
   const todayDate = today(getLocalTimeZone())
-  const [viewYear, setViewYear] = useState(todayDate.year)
-  const [viewMonth, setViewMonth] = useState(todayDate.month)
-  const monthKey = ymToYYYYMM(viewYear, viewMonth)
+  const currentMonthKey = ymToYYYYMM(todayDate.year, todayDate.month)
+  const parsedMonth = parseMonth(
+    new URLSearchParams(location.search).get('month'),
+    currentMonthKey
+  )
+  const monthKey = parsedMonth ?? currentMonthKey
+  const [viewYear, viewMonth] = monthKey.split('-').map(Number)
 
   const {
     entries,
@@ -66,7 +59,6 @@ const MealPlanPage = ({
   const [pickerOpen, setPickerOpen] = useState(false)
   const [targetDate, setTargetDate] = useState<string | null>(null)
   const [actionEntry, setActionEntry] = useState<MealPlanEntry | null>(null)
-  const [viewRecipe, setViewRecipe] = useState<RecipeOut | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   const { stickyRef, setDayRef } = useScrollToToday(
@@ -93,28 +85,32 @@ const MealPlanPage = ({
       : recipes
   }, [recipes, searchQuery])
 
-  const goToPrevMonth = useCallback(() => {
-    if (viewMonth === 1) {
-      setViewYear((y) => y - 1)
-      setViewMonth(12)
-    } else {
-      setViewMonth((m) => m - 1)
-    }
-  }, [viewMonth])
-
-  const goToNextMonth = useCallback(() => {
-    if (viewMonth === 12) {
-      setViewYear((y) => y + 1)
-      setViewMonth(1)
-    } else {
-      setViewMonth((m) => m + 1)
-    }
-  }, [viewMonth])
+  const goToMonth = useCallback(
+    (year: number, month: number) => {
+      navigate(planPath(ymToYYYYMM(year, month), currentMonthKey))
+    },
+    [currentMonthKey, navigate]
+  )
+  const goToPrevMonth = useCallback(
+    () =>
+      goToMonth(
+        viewMonth === 1 ? viewYear - 1 : viewYear,
+        viewMonth === 1 ? 12 : viewMonth - 1
+      ),
+    [goToMonth, viewMonth, viewYear]
+  )
+  const goToNextMonth = useCallback(
+    () =>
+      goToMonth(
+        viewMonth === 12 ? viewYear + 1 : viewYear,
+        viewMonth === 12 ? 1 : viewMonth + 1
+      ),
+    [goToMonth, viewMonth, viewYear]
+  )
 
   const goToToday = useCallback(() => {
-    setViewYear(todayDate.year)
-    setViewMonth(todayDate.month)
-  }, [todayDate.year, todayDate.month])
+    navigate('/plan')
+  }, [navigate])
 
   const openPicker = useCallback((dateStr: string) => {
     setTargetDate(dateStr)
@@ -166,11 +162,9 @@ const MealPlanPage = ({
   }, [actionEntry, deleteEntry])
 
   const closeActionEntry = useCallback(() => setActionEntry(null), [])
-  const clearViewRecipe = useCallback(() => setViewRecipe(null), [])
-
   const handleViewRecipe = useCallback(() => {
-    if (actionEntry?.recipe) setViewRecipe(actionEntry.recipe)
-  }, [actionEntry])
+    if (actionEntry?.recipe) openRecipe(actionEntry.recipe.id)
+  }, [actionEntry, openRecipe])
 
   const handleChangeRecipe = useCallback(() => {
     if (actionEntry) openPicker(actionEntry.date)
@@ -208,7 +202,12 @@ const MealPlanPage = ({
   )
 
   const exportDisabled = loading || entries.length === 0
-  const isActionModalOpen = !!actionEntry && !viewRecipe
+  const isActionModalOpen = !!actionEntry
+
+  useEffect(() => {
+    if (parsedMonth !== null) return
+    navigate('/plan', { replace: true })
+  }, [navigate, parsedMonth])
 
   return (
     <div className="flex flex-col min-h-full">
@@ -342,15 +341,6 @@ const MealPlanPage = ({
         onChangeRecipe={handleChangeRecipe}
         onRemove={handleRemove}
         onMoveEntry={handleMoveActionEntry}
-      />
-
-      <RecipeDetailModal
-        recipe={viewRecipe}
-        allTags={allTags}
-        onClose={clearViewRecipe}
-        onUpdated={onRecipeUpdated}
-        onDeleted={onRecipeDeleted}
-        activeAllergens={activeAllergens}
       />
     </div>
   )

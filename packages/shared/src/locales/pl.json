@@ -81,6 +81,7 @@
     "clearFilter": "Wyczyść filtr",
     "recipeDeleted": "Przepis usunięty",
     "failedToDelete": "Nie udało się usunąć przepisu",
+    "recipeUnavailable": "Ten przepis jest niedostępny.",
     "deleteTitle": "Usunąć przepis?",
     "deleteConfirm": "{{title}} zostanie trwale usunięty.",
     "filterFavourites": "Ulubione",

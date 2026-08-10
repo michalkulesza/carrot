@@ -44,6 +44,7 @@ export const {
   deleteRecipe,
   fetchStats,
   listRecipes,
+  fetchRecipe,
   listMyRecipes,
   setRecipeHouseholds,
   removeRecipeFromHousehold,

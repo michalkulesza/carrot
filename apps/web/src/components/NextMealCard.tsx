@@ -6,6 +6,7 @@ import { useNextMealPlanEntry } from '@carrot/shared/hooks/useNextMealPlanEntry'
 import { formatNextMealDate } from '@carrot/shared/utils/dateUtils'
 import NetworkImage from './NetworkImage'
 import { proxyUrl } from '../utils/imageUtils'
+import { useRouteNavigation } from '../routing/RouteNavigationContext'
 
 interface NextMealCardProps {
   compact?: boolean
@@ -17,6 +18,7 @@ const NextMealCard = ({
   className = '',
 }: NextMealCardProps) => {
   const navigate = useNavigate()
+  const { openRecipe: openRecipeRoute } = useRouteNavigation()
   const { t, i18n } = useTranslation()
   const { entry, todayIso, isLoading, error, refetch } = useNextMealPlanEntry()
 
@@ -28,8 +30,8 @@ const NextMealCard = ({
       return
     }
 
-    navigate(`/?recipe=${encodeURIComponent(entry.recipe.id)}`)
-  }, [entry, navigate, openMealPlan])
+    openRecipeRoute(entry.recipe.id)
+  }, [entry, openMealPlan, openRecipeRoute])
   const handleRetry = useCallback(() => void refetch(), [refetch])
 
   if (compact) {

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 interface ProtectedRouteProps {
@@ -7,6 +7,7 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   if (loading) {
     return (
@@ -16,7 +17,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     )
   }
 
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) {
+    const next = `${location.pathname}${location.search}${location.hash}`
+
+    return (
+      <Navigate
+        to={`/login?${new URLSearchParams({ next }).toString()}`}
+        replace
+      />
+    )
+  }
 
   return <>{children}</>
 }

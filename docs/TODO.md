@@ -32,6 +32,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 ## Experience and product polish
 
 - [ ] **Web recipe details looks not great** !!!!!!!
+- [ ] **iOS Universal Links for recipe URLs** — Configure the Associated Domains entitlement and `apple-app-site-association` hosting so supported Carrot web recipe links can open the native app, with authenticated scope handling and browser fallback.
 - [ ] **Delightful empty and loading states** — Extend shimmers to recipe lists and meal plans; add friendly empty states, restrained Carrot mascot moments, import-stage animation, haptics, and completion feedback.
 
 - [ ] **Colours and themes** — Define and apply a cohesive theme system.

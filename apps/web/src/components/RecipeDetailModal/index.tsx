@@ -66,6 +66,9 @@ interface RecipeDetailModalProps {
   initialMode?: Mode
   activeAllergens?: string[]
   scrollToStep?: { componentIndex: number; stepIndex: number } | null
+  cookModeOpen?: boolean
+  onOpenCookMode?: () => void
+  onCloseCookMode?: () => void
 }
 
 const RecipeDetailModal = ({
@@ -78,6 +81,9 @@ const RecipeDetailModal = ({
   initialMode,
   activeAllergens = [],
   scrollToStep,
+  cookModeOpen = false,
+  onOpenCookMode,
+  onCloseCookMode,
 }: RecipeDetailModalProps) => {
   const { t } = useTranslation()
   const wakeLock = useScreenWakeLock(Boolean(recipe))
@@ -101,7 +107,6 @@ const RecipeDetailModal = ({
   const [localNotes, setLocalNotes] = useState(recipe?.notes ?? '')
   const [notesSaving, setNotesSaving] = useState(false)
   const [fontSizeIndex, setFontSizeIndex] = useState(2)
-  const [cookModeOpen, setCookModeOpen] = useState(false)
   const savedNotesRef = useRef(recipe?.notes ?? '')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const originalServings = recipe?.servings ?? null
@@ -122,7 +127,6 @@ const RecipeDetailModal = ({
       setSessionAdded(new Set())
       setCheckedIngredients(new Set())
       setError(null)
-      setCookModeOpen(false)
     }
   }, [recipe?.id, initialMode])
 
@@ -172,7 +176,7 @@ const RecipeDetailModal = ({
     return (
       <CookMode
         recipe={r}
-        onClose={() => setCookModeOpen(false)}
+        onClose={onCloseCookMode ?? onClose}
         unitSystem={preferences?.unit_system ?? 'metric'}
         servingScale={servingScale}
       />
@@ -505,7 +509,7 @@ const RecipeDetailModal = ({
                   selectedServings={selectedServings}
                   onDecreaseServings={handleDecreaseServings}
                   onIncreaseServings={handleIncreaseServings}
-                  onOpenCookMode={() => setCookModeOpen(true)}
+                  onOpenCookMode={onOpenCookMode ?? (() => {})}
                 />
 
                 <div className="px-10">

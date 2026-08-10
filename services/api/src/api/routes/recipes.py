@@ -416,6 +416,32 @@ async def reorder_recipes(
     await broadcaster.publish(scope, {"type": "recipe_changed"})
 
 
+@router.get("/{recipe_id}", response_model=RecipeOut)
+async def get_recipe(
+    recipe_id: str,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> RecipeOut:
+    try:
+        parsed_recipe_id = uuid.UUID(recipe_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Recipe unavailable")
+
+    recipe = await session.scalar(
+        select(Recipe).where(
+            Recipe.id == parsed_recipe_id,
+            or_(Recipe.author_id == user.id, _recipe_filter(household_id)),
+        )
+    )
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe unavailable")
+
+    favourite_ids = await _get_favourite_ids(session, user.id)
+    household_ids_map = await _get_household_ids_map(session, [recipe.id])
+    return _build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id))
+
+
 @router.post("/{recipe_id}/public-share", response_model=RecipePublicShareOut)
 async def create_public_share(
     recipe_id: uuid.UUID,

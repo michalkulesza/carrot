@@ -46,6 +46,7 @@ interface AddRecipeModalProps {
   onClose: () => void
   onSaved?: () => void
   onImportEnqueued: (job: ImportJob) => void
+  onImportModeChange?: (mode: 'url' | 'text' | 'image') => void
 }
 
 const AddRecipeModal = ({
@@ -54,6 +55,7 @@ const AddRecipeModal = ({
   onClose,
   onSaved,
   onImportEnqueued,
+  onImportModeChange,
 }: AddRecipeModalProps) => {
   const { t } = useTranslation()
   const { activeHouseholdId } = useHousehold()
@@ -263,7 +265,10 @@ const AddRecipeModal = ({
                     <button
                       key={key}
                       type="button"
-                      onClick={() => setImportMode(key)}
+                      onClick={() => {
+                        setImportMode(key)
+                        onImportModeChange?.(key)
+                      }}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                         importMode === key
                           ? 'bg-primary text-white'

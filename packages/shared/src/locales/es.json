@@ -79,6 +79,7 @@
     "clearFilter": "Quitar filtro",
     "recipeDeleted": "Receta eliminada",
     "failedToDelete": "Error al eliminar la receta",
+    "recipeUnavailable": "Esta receta no está disponible.",
     "deleteTitle": "¿Eliminar receta?",
     "deleteConfirm": "{{title}} se eliminará permanentemente.",
     "filterFavourites": "Favoritos",

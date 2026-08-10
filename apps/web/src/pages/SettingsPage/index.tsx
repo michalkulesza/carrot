@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { ChangeEvent } from 'react'
 import type {
@@ -28,6 +29,7 @@ import TimerSettingsSection from './TimerSettingsSection'
 import CreateHouseholdModal from './CreateHouseholdModal'
 import ManageHouseholdModal from './ManageHouseholdModal'
 import LogoutConfirmModal from './LogoutConfirmModal'
+import { settingsHashes } from '../../routing/routeState'
 
 interface SettingsPageProps {
   stats: RecipeStats | null
@@ -46,6 +48,8 @@ const SettingsPage = ({
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold()
   const { t } = useTranslation()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { enabled: wakeLockDefault, setEnabled: setWakeLockDefault } =
     useCookingMode()
   const [loggingOut, setLoggingOut] = useState(false)
@@ -139,62 +143,98 @@ const SettingsPage = ({
   const currentAllergens =
     activeHousehold?.allergens ?? preferences?.personal_allergens ?? []
 
+  useEffect(() => {
+    if (!location.hash) return
+    if (!settingsHashes.has(location.hash)) {
+      navigate('/settings', { replace: true })
+
+      return
+    }
+    const target = document.getElementById(location.hash.slice(1))
+    if (!target) return
+    target.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'auto'
+        : 'smooth',
+      block: 'start',
+    })
+    target.focus({ preventScroll: true })
+  }, [location.hash, navigate])
+
   return (
     <>
       <PageHeader title={t('settings.title')} />
       <div className="px-4 py-6 flex flex-col gap-6">
-        <ProfileSection
-          displayName={displayName}
-          nickname={user?.nickname}
-          email={user?.email}
-        />
+        <section id="profile" tabIndex={-1}>
+          <ProfileSection
+            displayName={displayName}
+            nickname={user?.nickname}
+            email={user?.email}
+          />
+        </section>
 
-        <StatsSection stats={stats} />
+        <section id="stats" tabIndex={-1}>
+          <StatsSection stats={stats} />
+        </section>
 
-        <HouseholdsSection
-          households={households}
-          activeHouseholdId={activeHouseholdId}
-          onCreateNew={handleCreateOpen}
-          onManage={setManagingHousehold}
-        />
+        <section id="households" tabIndex={-1}>
+          <HouseholdsSection
+            households={households}
+            activeHouseholdId={activeHouseholdId}
+            onCreateNew={handleCreateOpen}
+            onManage={setManagingHousehold}
+          />
+        </section>
 
-        <MyRecipesSection
-          households={households}
-          activeHouseholdId={activeHouseholdId}
-        />
+        <section id="my-recipes" tabIndex={-1}>
+          <MyRecipesSection
+            households={households}
+            activeHouseholdId={activeHouseholdId}
+          />
+        </section>
 
-        <AllergiesSection
-          remountKey={activeHouseholdId ?? 'personal'}
-          allergens={currentAllergens}
-          scopeLabel={allergenScopeLabel}
-          onSaveAllergens={handleSaveAllergens}
-          autoSubstitute={preferences?.auto_substitute ?? false}
-          onPreferencesChange={onPreferencesChange}
-        />
+        <section id="allergies" tabIndex={-1}>
+          <AllergiesSection
+            remountKey={activeHouseholdId ?? 'personal'}
+            allergens={currentAllergens}
+            scopeLabel={allergenScopeLabel}
+            onSaveAllergens={handleSaveAllergens}
+            autoSubstitute={preferences?.auto_substitute ?? false}
+            onPreferencesChange={onPreferencesChange}
+          />
+        </section>
 
-        <AccountSection
-          loggingOut={loggingOut}
-          onLogoutClick={handleLogoutClick}
-        />
+        <section id="account" tabIndex={-1}>
+          <AccountSection
+            loggingOut={loggingOut}
+            onLogoutClick={handleLogoutClick}
+          />
+        </section>
 
-        <PreferencesSection
-          preferences={preferences}
-          onPreferencesChange={onPreferencesChange}
-          wakeLockDefault={wakeLockDefault}
-          onWakeLockDefaultChange={setWakeLockDefault}
-        />
+        <section id="preferences" tabIndex={-1}>
+          <PreferencesSection
+            preferences={preferences}
+            onPreferencesChange={onPreferencesChange}
+            wakeLockDefault={wakeLockDefault}
+            onWakeLockDefaultChange={setWakeLockDefault}
+          />
+        </section>
 
-        <TimerSettingsSection />
+        <section id="timers" tabIndex={-1}>
+          <TimerSettingsSection />
+        </section>
 
-        <DataSection
-          exporting={exporting}
-          importing={importing}
-          importResult={importResult}
-          fileRef={fileRef}
-          onExport={handleExport}
-          onChooseFile={handleChooseFile}
-          onFileChange={handleFileChange}
-        />
+        <section id="data" tabIndex={-1}>
+          <DataSection
+            exporting={exporting}
+            importing={importing}
+            importResult={importResult}
+            fileRef={fileRef}
+            onExport={handleExport}
+            onChooseFile={handleChooseFile}
+            onFileChange={handleFileChange}
+          />
+        </section>
 
         {error && (
           <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm">

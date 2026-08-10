@@ -112,6 +112,16 @@ export const useRecipeStats = (enabled = true) => {
   return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats, enabled })
 }
 
+export const useRecipe = (id: string | null, scopeKey: string | null) => {
+  const api = useApiClient()
+  return useQuery({
+    queryKey: ['recipes', 'detail', scopeKey, id],
+    queryFn: () => api.fetchRecipe(id!),
+    enabled: Boolean(id && scopeKey),
+    retry: false,
+  })
+}
+
 export const useSemanticRecipeSearch = (query: string, scopeKey: string | null) => {
   const api = useApiClient()
   const normalizedQuery = query.trim().replace(/\s+/g, ' ').toLocaleLowerCase()

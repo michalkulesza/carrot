@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext'
 import BrandLogo from '../components/BrandLogo'
 import LanguageSwitcher from '../components/LanguageSwitcher'
 import GoogleSignInButton from '../components/GoogleSignInButton'
+import { isSafeReturnPath } from '../routing/routeState'
 
 interface GoogleSignInSectionProps {
   loading: boolean
@@ -34,9 +35,8 @@ const LoginPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const nextPath = searchParams.get('next')?.startsWith('/r/')
-    ? searchParams.get('next')!
-    : '/'
+  const nextCandidate = searchParams.get('next')
+  const nextPath = isSafeReturnPath(nextCandidate) ? nextCandidate : '/'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
