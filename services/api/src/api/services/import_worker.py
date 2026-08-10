@@ -140,7 +140,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     for component in recipe_data.components or []:
         flattened = [_flatten_ingredient(ingredient, auto_substitute) for ingredient in component.ingredients]
         components.append({
-            "name": component.name or component.role,
+            "name": component.name or "",
             "yield_note": component.yield_note or "",
             "ingredients": flattened,
             "shopping_list_ingredients": [

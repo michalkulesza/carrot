@@ -31,7 +31,6 @@ interface ViewComponentProps {
   collapsible?: boolean
   showIngredients?: boolean
   showGroupHeader?: boolean
-  readOnly?: boolean
 }
 
 const TEXT_SIZE_CLASSES = [
@@ -41,6 +40,18 @@ const TEXT_SIZE_CLASSES = [
   'text-xl',
   'text-2xl',
 ] as const
+
+const INTERNAL_COMPONENT_NAMES = new Set([
+  'main',
+  'ingredient_list',
+  'step_list',
+  'instruction_section',
+  'main_steps',
+  'main_dish',
+  'section',
+  'instructions',
+  'steps',
+])
 
 const ViewComponent = ({
   comp,
@@ -63,10 +74,10 @@ const ViewComponent = ({
   collapsible = false,
   showIngredients = true,
   showGroupHeader = true,
-  readOnly = false,
 }: ViewComponentProps) => {
   const { t } = useTranslation()
   const [ingredientsExpanded, setIngredientsExpanded] = useState(!collapsible)
+  const displayName = INTERNAL_COMPONENT_NAMES.has(comp.name) ? '' : comp.name
   const ingredients = useMemo(
     () => getScaledIngredientValues(comp, unitSystem, servingScale),
     [comp, servingScale, unitSystem]
@@ -91,13 +102,19 @@ const ViewComponent = ({
           aria-expanded={ingredientsExpanded}
           className="w-full min-h-11 flex items-center justify-between text-left text-sm font-semibold text-zinc-600"
         >
-          <span>{comp.name || t('recipes.sectionIngredients')}</span>
-          {ingredientsExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          <span>{displayName || t('recipes.sectionIngredients')}</span>
+          {ingredientsExpanded ? (
+            <ChevronUp size={20} />
+          ) : (
+            <ChevronDown size={20} />
+          )}
         </button>
       ) : (
-        showGroupHeader && !single && (
+        showGroupHeader &&
+        !single &&
+        displayName && (
           <h3 className="text-sm font-semibold text-zinc-600 mb-2">
-            {comp.name}
+            {displayName}
           </h3>
         )
       )}

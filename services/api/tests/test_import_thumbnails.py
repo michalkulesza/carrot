@@ -5,7 +5,7 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from api.models import ImportMetadata, ImportResult, ImportStage, RecipeExtraction
+from api.models import ImportMetadata, ImportResult, ImportStage, RecipeComponent, RecipeExtraction
 from api.services import import_worker
 
 
@@ -104,6 +104,7 @@ async def test_save_recipe_archives_thumbnail_before_returning(monkeypatch) -> N
             protein_per_serving=10,
             fat_per_serving=5,
             carbs_per_serving=12,
+            components=[RecipeComponent(role="step_list", steps=["Mix everything."])],
         ),
         metadata=ImportMetadata(thumbnail_url=thumbnail_url),
     )
@@ -118,6 +119,7 @@ async def test_save_recipe_archives_thumbnail_before_returning(monkeypatch) -> N
 
     assert recipe.id == recipe_id
     assert recipe.thumbnail_url == thumbnail_url
+    assert recipe.components[0]["name"] == ""
     archive_thumbnail.assert_awaited_once_with(recipe)
     link_recipe.assert_awaited_once_with(session, recipe_id, job.household_id)
     queue_embedding.assert_awaited_once_with(session, recipe)

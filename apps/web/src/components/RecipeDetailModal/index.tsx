@@ -186,6 +186,10 @@ const RecipeDetailModal = ({
   const components =
     mode === 'editing' ? draft.components : (r.components as SaveComponent[])
   const single = components.length === 1
+  const ingredientGroupCount = components.filter(
+    (component) => component.ingredients.length > 0
+  ).length
+  const hasMultipleIngredientGroups = ingredientGroupCount > 1
 
   const setIngredient = (ci: number, ii: number, val: string) => {
     setDraft((d) => {
@@ -588,8 +592,11 @@ const RecipeDetailModal = ({
                           }
                           fontSizeIndex={fontSizeIndex}
                           servingScale={servingScale}
-                          collapsible={components.length > 1 && ci > 0}
-                          showIngredients={components.length > 1}
+                          collapsible={
+                            hasMultipleIngredientGroups &&
+                            comp.ingredients.length > 0
+                          }
+                          showIngredients={hasMultipleIngredientGroups}
                           showGroupHeader={components.length > 1}
                         />
                       ))}
