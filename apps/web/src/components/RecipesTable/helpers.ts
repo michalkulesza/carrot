@@ -66,3 +66,6 @@ export const getTableColumns = (showAddedBy: boolean): string =>
   showAddedBy
     ? '32px 28px 56px minmax(135px,1fr) 72px 72px 72px 72px 72px 84px 120px 120px 100px 40px'
     : '32px 28px 56px minmax(135px,1fr) 72px 72px 72px 72px 72px 84px 120px 100px 40px'
+
+export const getTableMinWidth = (showAddedBy: boolean): number =>
+  showAddedBy ? 1195 : 1067

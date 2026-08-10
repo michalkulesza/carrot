@@ -114,7 +114,7 @@ const RecipesPage = ({
     (next: typeof filters) => {
       navigate(recipeFiltersPath(location, next), { replace: true })
     },
-    [filters, location, navigate]
+    [location, navigate]
   )
   const openView = useCallback(
     (recipe: RecipeOut) => openRecipe(recipe.id),
@@ -185,12 +185,12 @@ const RecipesPage = ({
   )
 
   return (
-    <>
+    <div className="md:flex md:h-[calc(100dvh-1rem)] md:min-h-0 md:min-w-0 md:flex-col md:overflow-hidden">
       <PageHeader title={t('nav.recipes')} searchSlot={searchInput} />
 
       <div className="md:hidden px-4 mt-3">{searchInput}</div>
 
-      <div>
+      <div className="md:flex md:min-h-0 md:min-w-0 md:flex-1 md:flex-col">
         <div className="md:hidden px-4 mt-3">
           <NextMealCard />
         </div>
@@ -238,7 +238,7 @@ const RecipesPage = ({
               ))}
             </div>
 
-            <div className="hidden md:block">
+            <div className="hidden md:min-h-0 md:min-w-0 md:flex-1 md:overflow-hidden md:flex">
               <RecipesTable
                 recipes={displayed}
                 showAddedBy={!!activeHouseholdId}
@@ -258,7 +258,7 @@ const RecipesPage = ({
         onCancel={() => setDeleteTarget(null)}
         onConfirm={confirmDelete}
       />
-    </>
+    </div>
   )
 }
 
