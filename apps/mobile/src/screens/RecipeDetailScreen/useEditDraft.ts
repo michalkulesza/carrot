@@ -8,7 +8,12 @@ import type { ApiClient } from '@carrot/shared/api/client'
 import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
 import { serializeIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { uploadThumbnailImage } from '../../api/uploadThumbnail'
-import { buildDraft, type EditComponent, type EditDraft } from './helpers'
+import {
+  buildDraft,
+  buildEditRecipeSaveRequest,
+  type EditComponent,
+  type EditDraft,
+} from './helpers'
 
 export const useEditDraft = ({
   recipe,
@@ -216,34 +221,8 @@ export const useEditDraft = ({
     if (!draft || !recipe) return
     setSaving(true)
     try {
-      const updated = await api.updateRecipe(recipeId, {
-        title: draft.title,
-        servings: draft.servings !== '' ? Number(draft.servings) : null,
-        total_time_minutes: draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
-        kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
-        protein_per_serving: draft.protein !== '' ? Number(draft.protein) : null,
-        fat_per_serving: draft.fat !== '' ? Number(draft.fat) : null,
-        carbs_per_serving: draft.carbs !== '' ? Number(draft.carbs) : null,
-        thumbnail_url: draft.thumbnail_url || null,
-        source_url: recipe.source_url ?? null,
-        notes: recipe.notes ?? null,
-        creator_handle: recipe.creator_handle ?? null,
-        components: draft.components.map((c) => ({
-          name: c.name ?? '',
-          yield_note: c.yield_note ?? '',
-          ingredients: c.ingredients.filter((ing) => ing.name).map(serializeIngredient),
-          shopping_list_ingredients: c.shopping_list_ingredients
-            ?.filter((_, index) => Boolean(c.ingredients[index]?.name))
-            ?? null,
-          shopping_list_categories: c.shopping_list_categories.filter(
-            (_, index) => Boolean(c.ingredients[index]?.name)
-          ),
-          steps: c.steps.filter(Boolean),
-          ingredient_flags: [],
-          step_ingredient_line: c.step_ingredient_line,
-        })),
-        tag_ids: recipe.tags.map((tag) => tag.id),
-      })
+      const payload = buildEditRecipeSaveRequest(recipe, draft)
+      const updated = await api.updateRecipe(recipeId, payload)
       qc.setQueryData<RecipeOut[]>(['recipes'], (prev) =>
         prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
       )

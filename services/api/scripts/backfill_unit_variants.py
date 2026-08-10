@@ -1,5 +1,7 @@
 import asyncio
 import re
+import sys
+import uuid
 
 from sqlalchemy import select
 
@@ -15,10 +17,19 @@ def _remove_piece_unit(value: str) -> str:
     return _PIECE_UNIT.sub(r"\1 ", value).strip()
 
 
-async def main() -> None:
+async def main(recipe_ids: list[uuid.UUID] | None = None) -> None:
     async with async_session_maker() as session:
-        result = await session.execute(select(Recipe))
+        query = select(Recipe)
+        if recipe_ids:
+            query = query.where(Recipe.id.in_(recipe_ids))
+
+        result = await session.execute(query)
         recipes = list(result.scalars())
+        found_ids = {recipe.id for recipe in recipes}
+        missing_ids = set(recipe_ids or []) - found_ids
+        if missing_ids:
+            missing = ", ".join(str(recipe_id) for recipe_id in sorted(missing_ids, key=str))
+            raise RuntimeError(f"Recipes not found: {missing}")
 
         for recipe in recipes:
             components = list(recipe.components or [])
@@ -74,4 +85,5 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    requested_ids = [uuid.UUID(value) for value in sys.argv[1:]]
+    asyncio.run(main(requested_ids or None))

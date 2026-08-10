@@ -112,12 +112,18 @@ export const useRecipeStats = (enabled = true) => {
   return useQuery({ queryKey: ['recipes', 'stats'], queryFn: api.fetchStats, enabled })
 }
 
-export const useRecipe = (id: string | null, scopeKey: string | null) => {
+export const useRecipe = (
+  id: string | null,
+  scopeKey: string | null,
+  initialRecipe?: RecipeOut
+) => {
   const api = useApiClient()
+
   return useQuery({
     queryKey: ['recipes', 'detail', scopeKey, id],
     queryFn: () => api.fetchRecipe(id!),
     enabled: Boolean(id && scopeKey),
+    initialData: initialRecipe,
     retry: false,
   })
 }

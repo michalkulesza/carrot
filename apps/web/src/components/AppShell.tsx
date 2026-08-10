@@ -89,12 +89,14 @@ const PublicRecipeOverlay = ({
 
 interface RecipeRouteOverlayProps {
   allTags: import('@carrot/shared/types').Tag[]
+  recipes: RecipeOut[]
   onUpdated: (recipe: RecipeOut) => void
   onDeleted: (id: string) => void
 }
 
 const RecipeRouteOverlay = ({
   allTags,
+  recipes,
   onUpdated,
   onDeleted,
 }: RecipeRouteOverlayProps) => {
@@ -106,12 +108,13 @@ const RecipeRouteOverlay = ({
     useRouteNavigation()
   const recipeId = location.pathname.split('/')[2] ?? null
   const validId = isRecipeId(recipeId) ? recipeId : null
+  const initialRecipe = recipes.find((recipe) => recipe.id === validId)
   const {
     data: recipe,
     isLoading,
     isError,
     refetch,
-  } = useRecipe(validId, activeHouseholdId ?? 'personal')
+  } = useRecipe(validId, activeHouseholdId ?? 'personal', initialRecipe)
   const step = parseStep(new URLSearchParams(location.search).get('step'))
   const initialMode = (location.state as { recipeMode?: 'editing' } | null)
     ?.recipeMode
@@ -314,7 +317,7 @@ const RoutedAppShell = ({
 
   return (
     <div className="min-h-screen bg-background md:bg-zinc-100">
-      <div className="md:max-w-7xl md:mx-auto md:flex md:min-h-screen">
+      <div className="md:max-w-screen-2xl md:mx-auto md:flex md:min-h-screen">
         <Sidebar hideNextMeal={location.pathname.startsWith('/r/')} />
         <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
           {location.pathname.startsWith('/r/') ? (
@@ -379,6 +382,7 @@ const RoutedAppShell = ({
       {isRecipeRoute && (
         <RecipeRouteOverlay
           allTags={allTags}
+          recipes={recipes}
           onUpdated={onRecipeUpdated}
           onDeleted={onRecipeDeleted}
         />

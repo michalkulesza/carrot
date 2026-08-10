@@ -1,5 +1,10 @@
 import type { RecipeOut, RecipeSaveRequest, SaveComponent, ShoppingCategory } from '@carrot/shared/types'
-import { displayIngredient, parseIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
+import {
+  displayIngredient,
+  parseIngredient,
+  serializeIngredient,
+  type StructuredIngredient,
+} from '@carrot/shared/utils/ingredientUtils'
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 import type { DurationMatch } from '../../context/TimerContext'
 
@@ -91,6 +96,52 @@ export const buildRecipeSaveRequest = (
   components: recipe.components,
   tag_ids: recipe.tags.map((tag) => tag.id),
   ...overrides,
+})
+
+export const buildEditRecipeSaveRequest = (
+  recipe: RecipeOut,
+  draft: EditDraft,
+): RecipeSaveRequest => ({
+  title: draft.title,
+  servings: draft.servings !== '' ? Number(draft.servings) : null,
+  total_time_minutes: draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
+  kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
+  protein_per_serving: draft.protein !== '' ? Number(draft.protein) : null,
+  fat_per_serving: draft.fat !== '' ? Number(draft.fat) : null,
+  carbs_per_serving: draft.carbs !== '' ? Number(draft.carbs) : null,
+  thumbnail_url: draft.thumbnail_url || null,
+  source_url: recipe.source_url ?? null,
+  notes: recipe.notes ?? null,
+  creator_handle: recipe.creator_handle ?? null,
+  components: draft.components.map((component, componentIndex) => {
+    const stored = recipe.components[componentIndex]
+    const shoppingListIngredients = component.shopping_list_ingredients
+    const retainedIngredientIndexes = component.ingredients.flatMap((ingredient, index) =>
+      ingredient.name ? [index] : [],
+    )
+
+    return {
+      name: component.name ?? '',
+      yield_note: component.yield_note ?? '',
+      ingredients: retainedIngredientIndexes.map((index) =>
+        serializeIngredient(component.ingredients[index]),
+      ),
+      shopping_list_ingredients: shoppingListIngredients
+        ? retainedIngredientIndexes.map((index) => shoppingListIngredients[index])
+        : null,
+      shopping_list_categories: retainedIngredientIndexes.map(
+        (index) => component.shopping_list_categories[index],
+      ),
+      steps: component.steps.filter(Boolean),
+      metric_ingredients: stored?.metric_ingredients ?? null,
+      imperial_ingredients: stored?.imperial_ingredients ?? null,
+      metric_steps: stored?.metric_steps ?? null,
+      imperial_steps: stored?.imperial_steps ?? null,
+      ingredient_flags: [],
+      step_ingredient_line: component.step_ingredient_line,
+    }
+  }),
+  tag_ids: recipe.tags.map((tag) => tag.id),
 })
 
 export interface RailRow {

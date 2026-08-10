@@ -101,22 +101,33 @@ async def _link_recipe_to_household(session: AsyncSession, recipe_id: uuid.UUID,
     )
 
 
-def _invalidate_stale_step_ingredient_lines(
+def _reconcile_component_derivatives(
     stored_components: list[dict],
     new_components: list[SaveComponent],
 ) -> list[SaveComponent]:
-    """Null out step_ingredient_line when its source ingredients or steps changed."""
     result: list[SaveComponent] = []
     for index, component in enumerate(new_components):
         stored = stored_components[index] if index < len(stored_components) else None
-        if (
-            stored is None
-            or component.ingredients != stored.get("ingredients", [])
-            or component.steps != stored.get("steps", [])
-        ):
+        if stored is None:
             result.append(component.model_copy(update={"step_ingredient_line": None}))
-        else:
-            result.append(component)
+            continue
+
+        ingredients_unchanged = component.ingredients == stored.get("ingredients", [])
+        steps_unchanged = component.steps == stored.get("steps", [])
+        updates: dict[str, object] = {}
+
+        for field in ("metric_ingredients", "imperial_ingredients"):
+            incoming = getattr(component, field)
+            updates[field] = (incoming or stored.get(field)) if ingredients_unchanged else None
+
+        for field in ("metric_steps", "imperial_steps"):
+            incoming = getattr(component, field)
+            updates[field] = (incoming or stored.get(field)) if steps_unchanged else None
+
+        if not ingredients_unchanged or not steps_unchanged:
+            updates["step_ingredient_line"] = None
+
+        result.append(component.model_copy(update=updates))
     return result
 
 
@@ -502,7 +513,7 @@ async def update_recipe(
     recipe.creator_handle = body.creator_handle
     recipe.source_url = body.source_url
     recipe.notes = body.notes
-    components = _invalidate_stale_step_ingredient_lines(recipe.components or [], body.components)
+    components = _reconcile_component_derivatives(recipe.components or [], body.components)
     recipe.components = [c.model_dump() for c in components]
     await _set_tags(session, recipe, body.tag_ids, household_id)
 
