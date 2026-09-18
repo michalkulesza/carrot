@@ -1,5 +1,16 @@
 @import '@heroui/react/styles';
 
+html {
+  overflow-y: scroll;
+}
+
+@supports (scrollbar-gutter: stable) {
+  html {
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+}
+
 /* Override HeroUI accent to meet WCAG AA contrast (4.5:1) */
 :root,
 .light,

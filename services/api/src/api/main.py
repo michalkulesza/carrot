@@ -89,10 +89,9 @@ async def _seed_default_tags() -> None:
         for name, category in _DEFAULT_TAGS:
             tag = existing_by_name.get(name)
             if tag is None:
-                session.add(Tag(name=name, is_default=True, user_id=None, category=category))
+                session.add(Tag(name=name, is_default=True, household_id=None, category=category))
             else:
                 tag.is_default = True
-                tag.user_id = None
                 tag.household_id = None
                 if tag.category != category:
                     tag.category = category
@@ -253,10 +252,28 @@ async def lifespan(app: FastAPI):
         ))
 
         await conn.execute(text("DELETE FROM meal_plan_entries WHERE household_id IS NULL"))
-        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_personal"))
-        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_household"))
         await conn.execute(text("ALTER TABLE meal_plan_entries ALTER COLUMN household_id SET NOT NULL"))
-        await conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_meal_plan_household ON meal_plan_entries (household_id, date)"))
+        # Previous releases used partial unique indexes for personal and household
+        # entries.  The current model uses a named unique constraint instead; its
+        # backing index is owned by PostgreSQL and must not be dropped directly.
+        await conn.execute(text(
+            "DO $$ BEGIN "
+            "IF EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'meal_plan_entries'::regclass "
+            "AND conname = 'uq_meal_plan_personal') THEN "
+            "ALTER TABLE meal_plan_entries DROP CONSTRAINT uq_meal_plan_personal; "
+            "END IF; "
+            "END $$;"
+        ))
+        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_personal"))
+        await conn.execute(text(
+            "DO $$ BEGIN "
+            "IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'meal_plan_entries'::regclass "
+            "AND conname = 'uq_meal_plan_household') THEN "
+            "DROP INDEX IF EXISTS uq_meal_plan_household; "
+            "ALTER TABLE meal_plan_entries ADD CONSTRAINT uq_meal_plan_household UNIQUE (household_id, date); "
+            "END IF; "
+            "END $$;"
+        ))
 
         await conn.execute(text("DELETE FROM shopping_list_items WHERE household_id IS NULL"))
         await conn.execute(text("ALTER TABLE shopping_list_items ALTER COLUMN household_id SET NOT NULL"))
