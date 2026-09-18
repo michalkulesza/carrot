@@ -8,7 +8,7 @@ const RecipesLoadingSkeleton = () => (
         <div key={i} className="h-20 rounded-xl bg-zinc-100 animate-pulse" />
       ))}
     </div>
-    <div className="hidden md:block px-4 mt-4">
+    <div className="hidden md:block px-6 mt-4">
       <div className="rounded-xl bg-white shadow-sm border border-zinc-100 overflow-hidden">
         {DESKTOP_SKELETON_ROWS.map((i) => (
           <div

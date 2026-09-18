@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { Tag, TagCategory } from '@carrot/shared/types'
@@ -22,17 +22,19 @@ const CategoryFilterDropdown = ({
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setOpen(false)
       }
     }
-    document.addEventListener('mousedown', handler)
 
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('mousedown', handlePointerDown)
+
+    return () => document.removeEventListener('mousedown', handlePointerDown)
   }, [])
-
-  const togglePanel = useCallback(() => setOpen((v) => !v), [])
 
   const selectedTags = tags.filter((tag) => selectedTagIds.has(tag.id))
   const isActive = selectedTags.length > 0
@@ -48,21 +50,27 @@ const CategoryFilterDropdown = ({
 
   return (
     <div className="relative flex-1 min-w-0" ref={containerRef}>
-      <button type="button" onClick={togglePanel} className={buttonClass}>
+      <button
+        type="button"
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        className={buttonClass}
+      >
         <span className="truncate">{label}</span>
         <ChevronDown size={12} aria-hidden={true} />
       </button>
       {open && (
-        <div className="absolute left-0 top-8 z-50 w-48 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden max-h-56 overflow-y-auto">
+        <div className="absolute left-0 top-8 z-50 w-48 max-h-56 overflow-y-auto overflow-hidden bg-white border border-zinc-200 rounded-xl shadow-xl">
           {tags.map((tag) => (
             <button
               key={tag.id}
               type="button"
               onClick={() => onToggleTag(tag.id)}
-              className="w-full flex items-center justify-between text-left px-3 py-2 text-sm hover:bg-zinc-100 transition-colors"
+              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100"
             >
               {tTag(tag.name, t)}
-              {selectedTagIds.has(tag.id) && <span className="text-primary">✓</span>}
+              {selectedTagIds.has(tag.id) && (
+                <span className="text-primary">✓</span>
+              )}
             </button>
           ))}
         </div>

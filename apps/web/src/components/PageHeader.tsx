@@ -37,7 +37,7 @@ const PageHeader = ({ title, action, searchSlot }: PageHeaderProps) => {
 
   return (
     <header className={headerClassName} style={headerStyle}>
-      <div className="flex items-center justify-between px-4 h-14 max-w-lg mx-auto md:max-w-none md:mx-0">
+      <div className="flex items-center justify-between px-4 md:px-6 h-14 max-w-lg mx-auto md:max-w-none md:mx-0">
         <button
           type="button"
           className="flex-1 min-w-0 text-left md:hidden"

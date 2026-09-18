@@ -164,7 +164,7 @@ const SettingsPage = ({
   return (
     <>
       <PageHeader title={t('settings.title')} />
-      <div className="px-4 py-6 flex flex-col gap-6">
+      <div className="px-4 md:px-6 py-6 flex flex-col gap-6">
         <section id="profile" tabIndex={-1}>
           <ProfileSection
             displayName={displayName}

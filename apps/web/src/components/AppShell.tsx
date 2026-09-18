@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import BottomNav from './BottomNav'
+import PageTransition from './PageTransition'
 import Sidebar from './Sidebar'
 import AddRecipeModal from './AddRecipeModal'
 import ResumeTimersModal from './ResumeTimersModal'
@@ -320,61 +321,65 @@ const RoutedAppShell = ({
       <div className="md:max-w-screen-2xl md:mx-auto md:flex md:min-h-screen">
         <Sidebar hideNextMeal={location.pathname.startsWith('/r/')} />
         <div className="flex-1 min-w-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0 md:bg-background md:my-2 md:mr-2 md:rounded-xl md:shadow-sm">
-          {location.pathname.startsWith('/r/') ? (
-            <>
-              <RecipesPage
-                recipes={recipes}
-                loading={recipesLoading}
-                allTags={allTags}
-                onRecipeUpdated={onRecipeUpdated}
-                onRecipeDeleted={onRecipeDeleted}
-                importJobs={importJobs}
-                onRetryImportJob={onRetryImportJob}
-                onDismissImportJob={onDismissImportJob}
-                onContinueImportManually={onContinueImportManually}
-                onAddRecipe={() => openAddRecipe()}
-              />
-              <PublicRecipeOverlay onAdded={onPublicRecipeAdded} />
-            </>
-          ) : (
-            <Routes location={contentLocation}>
-              <Route
-                path="/"
-                element={<HouseholdGate>{recipesPage}</HouseholdGate>}
-              />
-              <Route
-                path="/plan"
-                element={
-                  <HouseholdGate>
-                    <MealPlanPage recipes={recipes} preferences={preferences} />
-                  </HouseholdGate>
-                }
-              />
-              <Route
-                path="/shopping"
-                element={
-                  <HouseholdGate>
-                    <ShoppingListPage />
-                  </HouseholdGate>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <SettingsPage
-                    stats={stats}
-                    onStatsRefresh={onStatsRefresh}
-                    preferences={preferences}
-                    onPreferencesChange={onPreferencesChange}
+          <PageTransition location={contentLocation}>
+            {(displayLocation) =>
+              displayLocation.pathname.startsWith('/r/') ? (
+                <>
+                  <RecipesPage
+                    recipes={recipes}
+                    loading={recipesLoading}
+                    allTags={allTags}
+                    onRecipeUpdated={onRecipeUpdated}
+                    onRecipeDeleted={onRecipeDeleted}
+                    importJobs={importJobs}
+                    onRetryImportJob={onRetryImportJob}
+                    onDismissImportJob={onDismissImportJob}
+                    onContinueImportManually={onContinueImportManually}
+                    onAddRecipe={() => openAddRecipe()}
                   />
-                }
-              />
-              <Route
-                path="*"
-                element={<HouseholdGate>{recipesPage}</HouseholdGate>}
-              />
-            </Routes>
-          )}
+                  <PublicRecipeOverlay onAdded={onPublicRecipeAdded} />
+                </>
+              ) : (
+                <Routes location={displayLocation}>
+                  <Route
+                    path="/"
+                    element={<HouseholdGate>{recipesPage}</HouseholdGate>}
+                  />
+                  <Route
+                    path="/plan"
+                    element={
+                      <HouseholdGate>
+                        <MealPlanPage recipes={recipes} preferences={preferences} />
+                      </HouseholdGate>
+                    }
+                  />
+                  <Route
+                    path="/shopping"
+                    element={
+                      <HouseholdGate>
+                        <ShoppingListPage />
+                      </HouseholdGate>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <SettingsPage
+                        stats={stats}
+                        onStatsRefresh={onStatsRefresh}
+                        preferences={preferences}
+                        onPreferencesChange={onPreferencesChange}
+                      />
+                    }
+                  />
+                  <Route
+                    path="*"
+                    element={<HouseholdGate>{recipesPage}</HouseholdGate>}
+                  />
+                </Routes>
+              )
+            }
+          </PageTransition>
         </div>
       </div>
       <BottomNav onAddRecipe={() => openAddRecipe()} />

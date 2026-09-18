@@ -1,3 +1,5 @@
+Before doing any work, read and follow `general.md`.
+
 # Misc
 - Before committing, ask the user to confirm the change is fully complete and correct — do not commit on your own judgment that a task is "successful." Only commit after they confirm.
 - When implementing a plan from .md include that file in the commit

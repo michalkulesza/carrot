@@ -1,10 +1,12 @@
-import { useCallback, useMemo } from 'react'
 import { Star } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { Tag } from '@carrot/shared/types'
-import { tTag } from '@carrot/shared/utils/tagUtils'
-import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
+import {
+  groupTagsByCategory,
+  TAG_CATEGORIES,
+} from '@carrot/shared/utils/tagFilters'
 import CategoryFilterDropdown from './CategoryFilterDropdown'
+import FilterTagButton from './FilterTagButton'
 
 interface FilterBarProps {
   allTags: Tag[]
@@ -22,15 +24,14 @@ const FilterBar = ({
   onToggleTag,
 }: FilterBarProps) => {
   const { t } = useTranslation()
-
-  const groupedTags = useMemo(() => groupTagsByCategory(allTags), [allTags])
+  const groupedTags = groupTagsByCategory(allTags)
 
   const favouritesButtonClass = filterFavourites
     ? 'shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors bg-amber-400 text-white'
     : 'shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center gap-2 px-4 mt-3 pb-1">
+    <div className="flex flex-col gap-2 px-4 pb-1 mt-3 md:flex-row md:items-center md:px-6">
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -65,34 +66,6 @@ const FilterBar = ({
         </div>
       )}
     </div>
-  )
-}
-
-interface FilterTagButtonProps {
-  tag: Tag
-  active: boolean
-  onToggleTag: (tagId: string) => void
-}
-
-const FilterTagButton = ({
-  tag,
-  active,
-  onToggleTag,
-}: FilterTagButtonProps) => {
-  const { t } = useTranslation()
-
-  const handleClick = useCallback(() => {
-    onToggleTag(tag.id)
-  }, [tag, onToggleTag])
-
-  const buttonClass = active
-    ? 'shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-secondary text-white'
-    : 'shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-
-  return (
-    <button type="button" onClick={handleClick} className={buttonClass}>
-      {tTag(tag.name, t)}
-    </button>
   )
 }
 

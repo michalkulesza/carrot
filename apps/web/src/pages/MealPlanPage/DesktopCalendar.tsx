@@ -92,7 +92,7 @@ const DesktopCalendar = ({
   )
 
   return (
-    <div className="flex flex-col gap-4 p-4 pb-24">
+    <div className="flex flex-col gap-4 px-4 md:px-6 py-4 pb-24">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold">
           {formatMonthYear(new Date(viewYear, viewMonth - 1, 1), locale)}

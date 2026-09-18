@@ -1,0 +1,1 @@
+C:/Users/kules/Projects/resources/ml-guidelines/typescript-react-guidelines.md

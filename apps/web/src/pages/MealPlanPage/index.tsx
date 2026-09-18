@@ -257,7 +257,7 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
           ref={stickyRef}
           className="sticky top-14 z-20 bg-background/95 backdrop-blur-md border-b border-zinc-200"
         >
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 md:px-6 py-3">
             <h2 className="text-base font-semibold">
               {formatMonthYear(new Date(viewYear, viewMonth - 1, 1), locale)}
             </h2>

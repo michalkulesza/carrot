@@ -33,7 +33,7 @@ const RecipesTable = ({
   const tableContentStyle = { minWidth: getTableMinWidth(showAddedBy) }
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col px-4 pb-6 pt-4">
+    <div className="flex h-full min-h-0 min-w-0 w-full flex-1 flex-col px-4 md:px-6 pb-6 pt-4">
       <div className="min-h-0 min-w-0 w-full flex-1 overflow-hidden rounded-xl border border-zinc-100 bg-white shadow-sm">
         <div className="h-full min-w-0 w-full overflow-auto">
           <div style={tableContentStyle}>
