@@ -13,6 +13,9 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
 
 COPY packages/shared packages/shared
 COPY apps/web apps/web
+
+ARG VITE_R2_PUBLIC_URL
+ARG VITE_GOOGLE_CLIENT_ID
 RUN pnpm --filter web build
 
 FROM nginx:1.27-alpine AS runtime

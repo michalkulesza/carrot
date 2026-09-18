@@ -50,6 +50,9 @@ jobs:
         with:
           context: .
           file: apps/web/Dockerfile
+          build-args: |
+            VITE_R2_PUBLIC_URL=${{ vars.VITE_R2_PUBLIC_URL }}
+            VITE_GOOGLE_CLIENT_ID=${{ vars.VITE_GOOGLE_CLIENT_ID }}
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
