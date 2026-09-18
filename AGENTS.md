@@ -1,6 +1,7 @@
 Before doing any work, read and follow `general.md`.
 
 # Misc
+- Track product work in [docs/TODO.md](docs/TODO.md), the project backlog.
 - Before committing, ask the user to confirm the change is fully complete and correct — do not commit on your own judgment that a task is "successful." Only commit after they confirm.
 - When implementing a plan from .md include that file in the commit
 - Keep plans under `docs/specs/` while they are pending or in progress. Move a plan into `docs/specs/completed/` only after its implementation is fully complete.
