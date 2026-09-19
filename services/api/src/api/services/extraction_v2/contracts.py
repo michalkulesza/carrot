@@ -112,27 +112,60 @@ class EvidenceSource(BaseModel):
     author_verified: bool | None = None
 
 
+class EvidenceSpan(BaseModel):
+    """A half-open range in the exact content passed to an extractor."""
+
+    evidence_id: str
+    start: int = Field(ge=0)
+    end: int = Field(ge=0)
+
+
+class EvidenceReference(BaseModel):
+    """A resolvable quotation from an extractor input.
+
+    ``text`` locators use ``start:end`` character offsets. HTML locators use
+    ``node-path:start:end`` offsets into the rendered text of that node.
+    """
+
+    evidence_id: str
+    locator_kind: Literal["text", "html"]
+    locator: str
+    quote: str = Field(min_length=1)
+    document_hash: str | None = None
+
+
+class EvidenceLink(BaseModel):
+    text: str = Field(min_length=1)
+    url: str = Field(min_length=1)
+    references: list[EvidenceReference] = Field(min_length=1)
+
+
 class IngredientEvidence(BaseModel):
     text: str
     evidence_ids: list[str] = Field(min_length=1)
     locator: str | None = None
     link_url: str | None = None
+    references: list[EvidenceReference] = Field(default_factory=list)
+    links: list[EvidenceLink] = Field(default_factory=list)
 
 
 class StepEvidence(BaseModel):
     text: str
     evidence_ids: list[str] = Field(min_length=1)
     locator: str | None = None
+    references: list[EvidenceReference] = Field(default_factory=list)
 
 
 class RecipeComponentEvidence(BaseModel):
     name: str | None = None
+    name_references: list[EvidenceReference] = Field(default_factory=list)
     ingredients: list[IngredientEvidence] = Field(default_factory=list)
     steps: list[StepEvidence] = Field(default_factory=list)
 
 
 class ExtractedRecipe(BaseModel):
     title: str | None = None
+    title_references: list[EvidenceReference] = Field(default_factory=list)
     components: list[RecipeComponentEvidence] = Field(default_factory=list)
     failure_reason: FailureReason | None = None
 
@@ -143,6 +176,12 @@ class ExtractedRecipe(BaseModel):
             FailureReason.AMBIGUOUS_RECIPE,
             FailureReason.UNREADABLE_CONTENT,
         }
+        for component in self.components:
+            if component.name is not None and not component.name.strip():
+                raise ValueError("component names cannot be whitespace")
+            for fact in [*component.ingredients, *component.steps]:
+                if not fact.text.strip():
+                    raise ValueError("recipe facts cannot be whitespace")
         has_facts = any(component.ingredients or component.steps for component in self.components)
         if self.failure_reason and self.failure_reason not in model_reasons:
             raise ValueError("extractors may only return model-selectable content failure reasons")
@@ -157,10 +196,17 @@ def validate_extracted_recipe(value: object, allowed_evidence_ids: set[str] | No
     recipe = ExtractedRecipe.model_validate(value)
     if allowed_evidence_ids is None:
         return recipe
+    references = list(recipe.title_references)
     for component in recipe.components:
+        references.extend(component.name_references)
         for fact in [*component.ingredients, *component.steps]:
             if not set(fact.evidence_ids).issubset(allowed_evidence_ids):
                 raise ValueError("extractor referenced evidence outside its supplied input")
+            references.extend(fact.references)
+            if isinstance(fact, IngredientEvidence):
+                references.extend(reference for link in fact.links for reference in link.references)
+    if any(reference.evidence_id not in allowed_evidence_ids for reference in references):
+        raise ValueError("extractor reference is outside its supplied input")
     return recipe
 
 
@@ -169,6 +215,30 @@ class ExtractionInput(BaseModel):
 
     content: str
     evidence_ids: list[str] = Field(default_factory=list)
+    spans: list[EvidenceSpan] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_spans(self) -> ExtractionInput:
+        if len(set(self.evidence_ids)) != len(self.evidence_ids):
+            raise ValueError("evidence IDs must be unique")
+        if not self.evidence_ids and self.spans:
+            raise ValueError("spans require evidence IDs")
+        if len(self.evidence_ids) > 1 and not self.spans:
+            raise ValueError("multiple evidence IDs require spans")
+        if len(self.evidence_ids) == 1 and not self.spans:
+            self.spans = [EvidenceSpan(evidence_id=self.evidence_ids[0], start=0, end=len(self.content))]
+        previous_end = 0
+        for span in self.spans:
+            if span.evidence_id not in self.evidence_ids:
+                raise ValueError("span references an unknown evidence ID")
+            if span.end > len(self.content) or span.start >= span.end:
+                raise ValueError("span is outside content or empty")
+            if span.start < previous_end:
+                raise ValueError("spans must be ordered and non-overlapping")
+            previous_end = span.end
+        if len({span.evidence_id for span in self.spans}) != len(self.spans):
+            raise ValueError("each evidence ID may have one span")
+        return self
 
 
 class AudioExtractionInput(BaseModel):

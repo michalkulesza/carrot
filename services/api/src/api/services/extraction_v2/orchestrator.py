@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urljoin
 
 from pydantic import ValidationError
 
@@ -18,7 +19,7 @@ from api.services.extraction_v2.contracts import (
 from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES
 from api.services.extraction_v2.merge import has_ingredients, has_instructions, merge_recipes, recipes_can_merge
 from api.services.extraction_v2.sources import (
-    LinkedPageProvider, TranscriptionProvider, normalize_segments,
+    LinkedPageProvider, TranscriptionProvider, is_safe_http_url, normalize_segments,
     parse_social_metadata, text_segments, unique_safe_links, verified_creator_comments,
 )
 from api.services.html_cleaner import clean_html_body
@@ -75,6 +76,22 @@ class ExtractionOrchestrator:
         return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
                              reason=recipe.failure_reason or FailureReason.NO_RECIPE_CONTENT, failed_stage=ExtractionStage.TEXT)
 
+    @staticmethod
+    def _resolve_links(recipe: ExtractedRecipe, base_url: str) -> ExtractedRecipe:
+        """Expose only policy-approved absolute component links to callers."""
+
+        resolved = recipe.model_copy(deep=True)
+        for component in resolved.components:
+            for ingredient in component.ingredients:
+                safe_links = []
+                for link in ingredient.links:
+                    destination = urljoin(base_url, link.url)
+                    if is_safe_http_url(destination):
+                        safe_links.append(link.model_copy(update={"url": destination}))
+                ingredient.links = safe_links
+                ingredient.link_url = safe_links[0].url if safe_links else None
+        return resolved
+
     async def _extract_html_payload(self, payload: HtmlPayload) -> ExtractionOutcome:
         cleaned = clean_html_body(payload.html)
         language = self._dependencies.language_detector.detect(cleaned)
@@ -84,7 +101,9 @@ class ExtractionOrchestrator:
         if failure:
             return failure
         try:
-            recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_html(ExtractionInput(content=cleaned, evidence_ids=[source.id])), {source.id})
+            recipe = self._resolve_links(validate_extracted_recipe(
+                await self._dependencies.extractor.extract_html(ExtractionInput(content=cleaned, evidence_ids=[source.id])), {source.id},
+            ), str(payload.source_url))
         except TimeoutError:
             return FailedOutcome(outcome="failed", source_url=str(payload.source_url), evidence=evidence, trace=trace,
                                  reason=FailureReason.MODEL_TIMEOUT, failed_stage=ExtractionStage.TEXT)
@@ -119,7 +138,14 @@ class ExtractionOrchestrator:
         recipe = ExtractedRecipe()
         if text:
             try:
-                recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_text(ExtractionInput(content=text, evidence_ids=evidence_ids)), set(evidence_ids))
+                recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_text(
+                    ExtractionInput(
+                        content=text,
+                        evidence_ids=evidence_ids,
+                        spans=[{"evidence_id": evidence_id, "start": start, "end": end}
+                               for evidence_id, (start, end) in normalized.spans.items()],
+                    ),
+                ), set(evidence_ids))
             except TimeoutError:
                 last_operational_failure = (FailureReason.MODEL_TIMEOUT, ExtractionStage.TEXT)
                 trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="extract_timeout", evidence_ids=evidence_ids))
@@ -149,7 +175,9 @@ class ExtractionOrchestrator:
                 if failure:
                     return failure
                 try:
-                    linked_recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_html(ExtractionInput(content=cleaned, evidence_ids=[source.id])), {source.id})
+                    linked_recipe = self._resolve_links(validate_extracted_recipe(
+                        await self._dependencies.extractor.extract_html(ExtractionInput(content=cleaned, evidence_ids=[source.id])), {source.id},
+                    ), page.final_url)
                 except TimeoutError:
                     last_operational_failure = (FailureReason.MODEL_TIMEOUT, ExtractionStage.LINKED_PAGE)
                     trace.append(TraceEvent(stage=ExtractionStage.LINKED_PAGE, event="extract_timeout", evidence_ids=[source.id]))
