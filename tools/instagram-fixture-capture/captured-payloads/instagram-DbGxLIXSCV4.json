@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:45:29.018181+00:00",
+  "source_url": "https://www.instagram.com/reel/DbGxLIXSCV4/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "122K likes, 794 comments - casa.dabisa on July 22, 2026: \"🍊 Rosca de Laranja: daquelas que perfumam a casa e aquecem o coração. 🧡\n\nE para uma receita especial, eu escolho ingredientes que fazem a diferença. 💛 Hoje usei o Óleo de Soja Comigo, que ajuda a deixar a massa macia e saborosa, do jeitinho que eu gosto.\n\n✨ Salve essa receita para fazer depois e me conta aqui nos comentários: você prefere a rosca com açúcar granulado ou só com a caldinha de laranja? 👇\n\n🍊 Ingredientes\n• 1½ xícara de caldo de laranja coado\n• ½ xícara de Óleo Comigo\n• 4 colheres (sopa) de açúcar\n• 1 pacote de fermento biológico seco\n• 1 ovo\n• 1 pitada de sal\n• Cerca de 600 g de farinha de trigo\n\nMisture os ingredientes (menos a farinha), acrescente a farinha aos poucos até dar o ponto, sove por 15 minutos e deixe crescer por 50 minutos. Modele as roscas, deixe crescer novamente por mais 50 minutos e asse a 180°C por cerca de 45 minutos.\n\n🍊 Calda: 1 xícara de caldo de laranja + 1 xícara de açúcar. Leve ao fogo por aproximadamente 10 minutos e finalize com açúcar granulado.\n\nSe fizer essa receita, marque @casa.dabisa Vou amar ver! 🧡\n\n#ReceitasAfetivas #RoscaCaseira #CozinhaAfetiva #CafeDaTarde #oleocomigo\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Suelen Gomes | Receitas de Vó"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/754980056_18116580280914685_7092304210856282932_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=Va4PAtBKZ_oQ7kNvwFp4uPM&_nc_oc=AdplXjchZ6-jChaH1p_tvJTLqxuaSYCkI2dz55tnkpPeFIPr3J5uK_nAAkfqy2lvb0t96gfjQipY1TG6P_NjBA8j&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=9V7M4V_iGu9UtwouxulgHQ&_nc_ss=7b6a8&oh=00_AQIHqdqyZHmDwNCTiEOCUKAhkWPagXvuI7FW7Xpo9uOq0A&oe=6AB478ED",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMwrnJIfEGWct3yxZ5UgOsCrIT8XC7595blVkVuBOlU3orpzIBN6M19rDM7vafYCGTMyyrNR327ikgKLEWazCAkX-6isAA-qUREIP8.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=JrVlSbHbvqUQ7kNvwF2BbLD&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E4MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxMDQ0MzI4OTU4NTI1NzQwLCJhc3NldF9hZ2VfZGF5cyI6NTgsInZpX3VzZWNhc2VfaWQiOjEwODI3LCJkdXJhdGlvbl9zIjo2MCwiYml0cmF0ZSI6NTY2MTg3MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=xVTMOLUoErvDUDScWoH9qA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJrLJVpGmDFs3IRerwWJsxMnDIu2pDPUaM-x0imMAdRhg&oe=6AB48B10&bytestart=4239363&byteend=11976465"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMwrnJIfEGWct3yxZ5UgOsCrIT8XC7595blVkVuBOlU3orpzIBN6M19rDM7vafYCGTMyyrNR327ikgKLEWazCAkX-6isAA-qUREIP8.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=JrVlSbHbvqUQ7kNvwF2BbLD&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E4MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxMDQ0MzI4OTU4NTI1NzQwLCJhc3NldF9hZ2VfZGF5cyI6NTgsInZpX3VzZWNhc2VfaWQiOjEwODI3LCJkdXJhdGlvbl9zIjo2MCwiYml0cmF0ZSI6NTY2MTg3MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=xVTMOLUoErvDUDScWoH9qA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJrLJVpGmDFs3IRerwWJsxMnDIu2pDPUaM-x0imMAdRhg&oe=6AB48B10&bytestart=4239363&byteend=11976465",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Roscas de laranja daquelas que perfumam a casa e aquecem o coração. E tem receita que vai muito além do sabor. Ela traz lembrança, carinho e aquele cheirinho de casa de vó que a gente nunca esquece. E vamos começar colocando o caldo da laranja, o fermento, açúcar e um pouquinho de farinha de trigo para fazer uma pré-fermentação. E reserve por 10 minutinhos. Hoje eu usei o óleo comigo que ajuda a deixar a massa mais macia e saborosa, do jeitinho que eu gosto. Agora é só acrescentar o restante dos ingredientes. E é uma massa super fácil de fazer, vocês podem salvar tudo na mão. Coloquei um pouco mais de farinha de trigo e o sal. Agora nós vamos sovar por 15 minutinhos. Vamos deixar a massa descansar por 40 minutos. E eu gosto de colocar um pouquinho de óleo nas minhas mãos e na bancada que ajuda muito na hora de modelar. Vamos abrir uma cobrinha de 60 cm, enrolando dessa forma. Roscas modeladas, vamos deixar ela descansar por 40 minutos. E para calda é só juntar o suco da laranja, o açúcar e deixar por 10 minutos em fogo baixo. Assim forno pré-aquecido a 200 graus até que fiquem douradinhas. Por fim, finalizei com a caldinha e o açúcar.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

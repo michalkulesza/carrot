@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:58:17.106680+00:00",
+  "source_url": "https://www.instagram.com/reel/DYtwDP0RSQz/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "53K likes, 403 comments - fit_foodie_lulu on May 24, 2026: \"BEEF HO FUN NOODLES 🍜 Skip the greasy takeaway - this Beef Ho Fun is smoky, savoury and packed with flavour, but still fits into a healthy, balanced meal. The key is high heat, fast cooking, and building that deep char on both the beef and noodles for that signature wok flavour 👌 Fresh rice noodles are recommended!\n\nMacros (serves 4)\n• 518kcal\n• 36g P\n• 63.8g C\n• 12.8g F\n \nIngredients\nBeef Marinade\n• 500g lean flank steak thinly sliced\n• 2 tsp sesame oil\n• 1 tbsp oyster sauce\n• 1 tbsp light soy sauce\n• ½ tsp white pepper\n• 1 tbsp cornstarch\n• 1 tsp baking soda\n\nSauce\n• 1 tsp sesame oil\n• 2.5 tbsp oyster sauce\n• 1 tbsp light soy sauce\n• 2 tbsp dark soy sauce\n• 2 tsp coconut sugar\n• 1 tbsp Shaoxing wine (Chinese cooking wine)\n• 3 tbsp water\n\nStir Fry\n• 1 tbsp avocado oil \n• 1 tbsp ginger paste\n• 1 brown onion thinly sliced \n• 5 cloves garlic minced\n• 600g fresh rice noodles (or 220g dried rice noodles)\n• 4 cups Chinese broccoli, chopped (stems and leaves separated)\n• 1 cup bean sprouts\n• 1/2 cup spring onions, sliced\n\nOptional: Chili oil & chili flakes\n \nMethod\n1. Marinate beef for 15 minutes. Mix sauce ingredients in a bowl. Separate fresh noodles or prepare dried rice noodles according to instructions. \n\n2. Heat pan over high heat. Sear beef in batches for 2–3 minutes until browned and slightly charred, letting it sit undisturbed for 1 minute before flipping. Remove from pan.\n\n3. Reduce heat to medium high, then add oil, then onion, garlic and ginger. Stir-fry for 1–2 minutes until fragrant. Add Chinese broccoli stems and cook for 2 minutes, then add leaves and cook a further 1–2 minutes until wilted. Remove from pan.\n\n4. Increase pan heat, add noodles to the hot pan and let sit undisturbed for 30 seconds to lightly char. Toss gently, being careful not to break the noodles, then add sauce and cook for 1 minute until evenly coated.\n\n5. Return beef and vegetables to the pan and toss for 1–2 minutes until glossy and combined. Add bean sprouts and spring onions in the final 30 seconds. Serve immediately with chilli oil and chilli flakes if desired.\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Lulu Dowell"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/706850803_1575269624198386_4898757815565994221_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=107&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=AlB_7usAAMgQ7kNvwG_q0zQ&_nc_oc=Adr07G_DstG_nxBEUy1MBz-UXyQY_ptuNaW_bGWBAMba-OZwKrMKodopESaheLyVExF5Wcedo3PSHI6xXXFbxnmO&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=I2XDlFQAcYVhzE7Z3vygMA&_nc_ss=7b6a8&oh=00_AQIosNYwn-LcDrKk9QU1gVAHcJqiIpoDYeicNFm846cdIg&oe=6AB48798",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQMPd349FXNH52J5wwMP0L9MwLbpar_KzInjC-lL_1zOWoFCzWCWdKDgC4pLf-0FwQPHjV7AIPXJIpOjyrWcoaSndJQP1x8mCkIF0GY.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=uO38bI87FWYQ7kNvwEVF5wj&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo0MTkxMjM5OTA3ODAzNzg3LCJhc3NldF9hZ2VfZGF5cyI6MTE4LCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6MjksImJpdHJhdGUiOjMwMDkxNzcsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=tMpBu4JKbHFjvsW02okNDQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIkcFVuljFpuLJp037iXPKnmitsN7mw7a25mUY0IYZsBQ&oe=6AB08E4F&bytestart=996&byteend=1879618"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQMPd349FXNH52J5wwMP0L9MwLbpar_KzInjC-lL_1zOWoFCzWCWdKDgC4pLf-0FwQPHjV7AIPXJIpOjyrWcoaSndJQP1x8mCkIF0GY.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=uO38bI87FWYQ7kNvwEVF5wj&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo0MTkxMjM5OTA3ODAzNzg3LCJhc3NldF9hZ2VfZGF5cyI6MTE4LCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6MjksImJpdHJhdGUiOjMwMDkxNzcsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=tMpBu4JKbHFjvsW02okNDQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIkcFVuljFpuLJp037iXPKnmitsN7mw7a25mUY0IYZsBQ&oe=6AB08E4F&bytestart=996&byteend=1879618",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Skip the greasy takeaway. This deeply savory, smoky noodle dish fits perfectly into a healthy, balanced meal. After traveling six weeks through Malaysia in 2017, I fell in love with the food and flavors like this, and also the pristine beaches, nature, and people. The secret here is marinating and tenderizing the beef, then cooking everything over very high heat in batches to get that delicious char and smoky wok flavor. Yum.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

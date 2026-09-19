@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T16:08:30.442510+00:00",
+  "source_url": "https://www.instagram.com/reel/DavW9ARR9ch/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "411K likes, 575 comments - foodie.randy on July 13, 2026: \"EASY MEALS FOR  2, EP 11\nCrispy Pan-Fried Pork & Shrimp Dumplings\nMakes: About 30 dumplings\n\nIngredients\nFilling\n* 400 g ground pork\n* 160 g shiitake mushrooms, finely chopped\n* About 30 small shrimp, peeled\n* 2 green onions, finely chopped\n* 1 green onion, thinly sliced (for garnish)\n* 1 egg\n* 2 tbsp soy sauce\n* 1 tbsp oyster sauce\n* 1 tsp sesame oil\n* ¼ cup chicken stock\n* Salt, to taste (I used about ½ tsp)\n\nFor Cooking\n* Neutral oil\n* ¼ cup water (for steaming)\n\nTo Serve\n* Chili oil\n* Chili crisp\n* Sliced green onion\n\nInstructions\n1. Make the filling\nIn a large bowl, combine:\n* Ground pork\n* Chopped shiitake mushrooms\n* Chopped green onions\n* Egg\n* Soy sauce\n* Oyster sauce\n* Sesame oil\n* Chicken stock\n* Salt\nMix well until the filling becomes sticky and fully combined.\n\n2. Fill the dumplings\nPlace a spoonful of filling in the center of each dumpling wrapper. Clump it together like how I did in the video. \n3. Add the shrimp\nHeat a large non-stick skillet over medium heat and add a little oil.\nPlace one small shrimp on top of each dumpling, gently pressing it into the filling.\n4. Pan-fry and steam\nCook the dumplings for 1–2 minutes, until the bottoms begin to brown.\nPour in ¼ cup water, immediately cover the pan with a lid, and steam for 6–7 minutes.\nRemove the lid and continue cooking for 1–2 more minutes, allowing the remaining water to evaporate and the bottoms to become crispy.\n5. Serve\nGarnish with:\n* Sliced green onion\n* Chili oil\n* Chili crisp\nServe immediately while hot and crispy.\n\n#dumplings #cooking #dinnerideas #shrimpdumplings #cookinghacks\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Miranda"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/745341993_17952738258198558_107726761623102808_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=1e1jpWsFgB8Q7kNvwE4Mm3K&_nc_oc=AdqFGZ7U3L2Lz2oHQdXssle0jWZhTlYbgu1UHTEbmUjJA9bYFCpKNQNR1qHaca4-PtY7VASFUKd4QPS6Gv262Z4k&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=2FbzaXfdeCyGhA-Qy80TwA&_nc_ss=7b6a8&oh=00_AQKyx8ZXBRmSAdRbaJNZreAeB_l4keH2O7RkP5MHYFwlsA&oe=6AB48697",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM9oH75ngEvsQ5J3YGA9RKwuPpK91ncP16DJqUinInw8BZlvH2a3P9-Qnbc9QylmfhSXUeEta5HOaV_0ycbMOUTuGW4fmXXrBiEdBA.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=3QuguvVgv3sQ7kNvwEILq1Y&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MjEzODUwNTg0MDA0OTY2MywiYXNzZXRfYWdlX2RheXMiOjY3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTQsImJpdHJhdGUiOjUwMjQzNzIsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=wO9uB6Ip-DSlqZ2viCnJIg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIzNASeIpvTfAQ2dh_bRJR1tIiiQ4GFIJC1jhf5Q-dBmw&oe=6AB49956&bytestart=3374626&byteend=8939194"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM9oH75ngEvsQ5J3YGA9RKwuPpK91ncP16DJqUinInw8BZlvH2a3P9-Qnbc9QylmfhSXUeEta5HOaV_0ycbMOUTuGW4fmXXrBiEdBA.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=3QuguvVgv3sQ7kNvwEILq1Y&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MjEzODUwNTg0MDA0OTY2MywiYXNzZXRfYWdlX2RheXMiOjY3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTQsImJpdHJhdGUiOjUwMjQzNzIsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=wO9uB6Ip-DSlqZ2viCnJIg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIzNASeIpvTfAQ2dh_bRJR1tIiiQ4GFIJC1jhf5Q-dBmw&oe=6AB49956&bytestart=3374626&byteend=8939194",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Easy recipes too, episode 11. Today we're making crispy one-pan shrimp dumplings.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

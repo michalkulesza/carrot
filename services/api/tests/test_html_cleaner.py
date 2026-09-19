@@ -1,0 +1,69 @@
+from api.services.html_cleaner import clean_html_body
+
+
+def test_cleaner_preserves_recipe_structure_and_component_links() -> None:
+    cleaned = clean_html_body("""
+        <html><body>
+          <nav>Recipes</nav>
+          <article class="recipe-content">
+            <h1>Chicken with sauce</h1>
+            <h2>Main</h2><ul><li>1 chicken</li></ul>
+            <h2>Sauce</h2><ul><li><a href="/sauce">Tomato sauce</a></li></ul>
+            <h2>Instructions</h2><ol><li>Cook the chicken.</li></ol>
+          </article>
+          <footer>Copyright</footer>
+        </body></html>
+    """)
+
+    assert "<article" in cleaned
+    assert "<h1>Chicken with sauce</h1>" in cleaned
+    assert "<h2>Sauce</h2>" in cleaned
+    assert "<ul><li><a href=\"/sauce\">Tomato sauce</a></li></ul>" in cleaned
+    assert "<ol><li>Cook the chicken.</li></ol>" in cleaned
+    assert "Recipes" not in cleaned
+    assert "Copyright" not in cleaned
+
+
+def test_cleaner_removes_noise_without_dropping_structural_theme_containers() -> None:
+    cleaned = clean_html_body("""
+        <body class="content-sidebar">
+          <main class="content-sidebar-wrap"><article><h1>Beef stew</h1><p>2 carrots</p></article></main>
+          <div class="newsletter-popup">Subscribe</div>
+          <div id="cookie-banner">Accept cookies</div>
+          <script>alert('no')</script><style>.x { color: red; }</style>
+        </body>
+    """)
+
+    assert "Beef stew" in cleaned
+    assert "2 carrots" in cleaned
+    assert "Subscribe" not in cleaned
+    assert "Accept cookies" not in cleaned
+    assert "alert" not in cleaned
+
+
+def test_cleaner_handles_nested_noise_elements() -> None:
+    cleaned = clean_html_body("""
+        <body><main><h1>Soup</h1><aside><div class="newsletter-popup">Subscribe</div></aside></main></body>
+    """)
+
+    assert "Soup" in cleaned
+    assert "Subscribe" not in cleaned
+
+
+def test_cleaner_removes_unsafe_attributes_and_empty_elements() -> None:
+    cleaned = clean_html_body("""
+        <body><main><h1 data-testid="title">Soup</h1><p></p>
+        <a href="/recipe" onclick="evil()" data-id="1">Full recipe</a>
+        <img src="soup.jpg" alt="Soup" onerror="evil()"></main></body>
+    """)
+
+    assert "data-testid" not in cleaned
+    assert "onclick" not in cleaned
+    assert "onerror" not in cleaned
+    assert "<p></p>" not in cleaned
+    assert "<a href=\"/recipe\">Full recipe</a>" in cleaned
+    assert "<img alt=\"Soup\" src=\"soup.jpg\"/>" in cleaned
+
+
+def test_cleaner_returns_empty_html_for_empty_input() -> None:
+    assert clean_html_body("   ") == ""

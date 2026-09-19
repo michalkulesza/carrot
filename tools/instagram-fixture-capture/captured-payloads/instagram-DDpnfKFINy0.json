@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T16:07:51.093685+00:00",
+  "source_url": "https://www.instagram.com/reel/DDpnfKFINy0/?igsh=cWlpcXQ5ZDhsbWFs",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "148K likes, 615 comments - eatlikeanadult on December 16, 2024: \"It’s that time of year again! The Smoked Salmon Savoury Dutch Baby.\n\n4 eggs\n180g milk\n90g plain flour\n1/4 tsp salt\n40g butter\n20g parmesan cheese\n15g fresh parsley, dill & tarragon\n1 garlic clove\n\nTo serve\n\n200g smoked salmon\n50g crème fraîche\n2 tsp fresh dill\n1 tbsp lemon juice\n1 tsp lemon zest\n1/4 tsp salt\n\nPreheat your oven to 230°C (445°F) and place your cast iron pan on the middle shelf. Make sure there’s enough space above it for your Dutch Baby to expand.\nIn a stick blender jug add the eggs, flour, milk & salt. Blend until smooth and aerated. This can also be done in a stand up blender.\nLeave the mixture to stand whilst the oven comes up to temperature. The closer the mix is to room temp, the better rise you’ll get in the finished product.\nGrate the parmesan, chop the herbs fine and mince the garlic. Transfer to a bowl. I like to add a pinch of salt to this mixture also.\nWhen you’re ready to go, remove the pan from the oven and add the butter. Let it bubble and melt down completely. Then pour your batter mix into the pan.\nScatter the cheese and herb mix over the top and return to the oven for 15 to 20 minutes. Do not open the oven during this time.\nTo serve\n\nIn a bowl mix the crème fraîche, chopped dill, lemon juice, lemon zest and salt.\nArrange the smoked salmon in the bottom of the Dutch Baby and spoon over the dill crème fraîche.\n\nFor the printable recipe go to eatlikeanadult.com and search ‘Dutch baby’. Or just Google ‘eat like an adult smoked salmon Dutch baby’.\n\nA few notes:\n\n- Get the batter to room temperature before cooking to get a good rise.\n- That is an obscene amount of butter :) You don’t really *need* that much (the recipe on my site is correct) but it’s only Christmas once!\n- Yes, it’s one pan because I didn’t include the blender jug.\n- Isn’t this just a huge Yorkshire pudding? Call it whatever makes you happy. \n- What’s Dutch about it? Nothing. The name comes from an American misunderstanding of ‘Deutsche’ because it’s based on a German pancake.\n- The pan doesn’t have to be cast iron, just one that can go in the oven. That includes similar sized and shape cake tins.\n- How does it rise without yeast? Steam!\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Russell Clamp🍴Healthy Recipes"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.75761-15/470358731_18342806836180273_6558727490815716812_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=0M_orvhXCtYQ7kNvwEzjCGV&_nc_oc=AdrwYAS6yqhhIQ_VfbW5jeLLX71DtGbiqpXeTKX2rQcTO2c0viYOyLCb1OFDx1kUyFvMn-fy786PmAeaC9tOcKs1&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=Fe2yCh_vK5H0khKQxe2Plw&_nc_ss=7b6a8&oh=00_AQLHhB_lJqC_-LPm168tUtui9-IBnwXkyzD3yxe5DOesSw&oe=6AB494FA",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMDAAuiBlUid0zDV3BIhRi_DSaEQakU1u6IyrAMcriqQS5nIRXMp6prFu6E4VcRUES9Ow6ydsN_ERF_G1FvV9qzHB8jtyCefObGzk8.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=xHo8Kqo4hzgQ7kNvwET6WDD&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxNTQ0NjMzMjY2MTk4MTYyLCJhc3NldF9hZ2VfZGF5cyI6NjQxLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NDksImJpdHJhdGUiOjI1MTkxMTIsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=J7ZG0GSwxPSYoSxKFO6fjw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLf6_mOcZNKCEUPVxLYlvuxCZBZj2J7eEvTKWhu5UFjSg&oe=6AB4712D&bytestart=1511631&byteend=4184284"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMDAAuiBlUid0zDV3BIhRi_DSaEQakU1u6IyrAMcriqQS5nIRXMp6prFu6E4VcRUES9Ow6ydsN_ERF_G1FvV9qzHB8jtyCefObGzk8.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=xHo8Kqo4hzgQ7kNvwET6WDD&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxNTQ0NjMzMjY2MTk4MTYyLCJhc3NldF9hZ2VfZGF5cyI6NjQxLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NDksImJpdHJhdGUiOjI1MTkxMTIsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=J7ZG0GSwxPSYoSxKFO6fjw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLf6_mOcZNKCEUPVxLYlvuxCZBZj2J7eEvTKWhu5UFjSg&oe=6AB4712D&bytestart=1511631&byteend=4184284",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "This is your one pan Christmas day breakfast. It's simple, it's impressive, and it only takes 25 minutes start to finish. It's called a savory Dutch baby and it's like a cross between a pancake and Yorkshire pudding. It's one of the best things I've tasted all year. Here's how to make it. Cast iron pan in the oven to preheat. In a blender jug, flour, milk, eggs. Now we're going to blend those up. Up, don't forget the salt there, buddy. Quick wipe down and then on the board with some parsley, dill and tarragon. The full recipe is in the description for you by the way. Grate some parmesan, mint, some garlic, and a little bit of black pepper. Butter into your hot pan, let that sizzle and melt. In with the batter and then on top of that your cheese, garlic, herbs. Don't be tempted to take that out too early now. This is what you'll have when it comes out of the oven. I made some lemon dill crème fraîche to go with the smoked salmon, mold and salt and black pepper.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

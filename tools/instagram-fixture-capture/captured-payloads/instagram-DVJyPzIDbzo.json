@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T16:00:56.304466+00:00",
+  "source_url": "https://www.instagram.com/reel/DVJyPzIDbzo/?igsh=eXpuaGM0czZ3aTYw",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "14K likes, 146 comments - milosc_od_kuchni on February 24, 2026: \"O maaaamo ale siadł obiados dzisiaj! Szynka wieprzowa w sosie własnym to coś czego nam było trzeba dzisiaj! Kruchutkie, aromatyczny sos, po prostu sztos! Zapisujcie i korzystajcie ❤️\n*\nSKŁADNIKI:\n🤌800g szynki wieprzowej (kulka),\n🤌sól, pieprz,\n🤌papryka słodka w proszku,\n🤌łyżka max półtorej mąki pszennej,\n👉3 łyżki oleju,\n🤌łyżka masła,\n🤌posiekana cebula,\n🤌3-4 liście laurowe,\n🤌10 ziaren ziela angielskiego,\n🤌łyżeczka kminku,\n🤌pół łyżeczki oregano,\n🤌3-4 łyżki sosu sojowego,\n🤌1,2 litra wody,\n🤌ugotowane ziemniaki,\n🤌koperek,\n🤌ogórki konserwowe,\n*\nPRZYGOTOWANIE:\n👉szynkę kroimy w plastry i przyprawiamy solą, pieprzem i papryką słodką - obtaczamy w mące, odwracamy i robimy to samo,\n👉mięso smażymy na rozgrzanym oleju na brązowy kolor z obu stron i zdejmujemy z patelni,\n👉na patelnię wrzucamy masło, cebulę, ziele angielskie, liście laurowe i smażymy,\n👉na usmażoną cebule wrzucamy mięso, wlewamy wodę, dodajemy kminek, oregano, sos sojowy, zakrywamy i dusimy przez półtorej godziny,\n👉podajemy z ziemniakami, koperkiem i ogórkami konserwowymi,\n👉enjoy\n*\n#obiad #domoeyobiad #przepisy #pomysłnaobiad #facetwkuchni\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Miłość od Kuchni - przepisy"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/641226149_18564862873050925_2780219943710525680_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=tO-pDqxXeAEQ7kNvwHlk3rp&_nc_oc=Adpeb1M8shRtSo5OYveKUTDPuq8weZxePy65wdLZjWsIQpeoSIw83jnkAYSO96TxwqVe3Yq3JlLNibdOoqjjcHOw&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=mHPRzPhh8c4NbzN62gKkDg&_nc_ss=7b6a8&oh=00_AQKlEf6h99OPdCuBFIwhOg07i0sfThKgjJ0JBsFPbPLGXg&oe=6AB47F4E",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQO1KdnIx2ebwfQWWO8RQQ1jS7PFNDFHpAttXcbDrz7QSfrU2R0tV5RKp0VIv2geEhANp1kPkQuZpz4LsJLO0mxmt7pBGiBb840X7Es.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=s6Spm9cJmrAQ7kNvwHPsOV7&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODU2NDg2MjUzMTA1MDkyNSwiYXNzZXRfYWdlX2RheXMiOjIwNiwidmlfdXNlY2FzZV9pZCI6MTA4MjcsImR1cmF0aW9uX3MiOjM4LCJiaXRyYXRlIjoyNTI5NTIzLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=YYiO8rBV2tSjEa0l45fpGA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQK3m3sdqQuggF4JH8pJietvqNSM-OO_hoIGP-UcyJKWdw&oe=6AB0A50A&bytestart=4960268&byteend=8592811"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQO1KdnIx2ebwfQWWO8RQQ1jS7PFNDFHpAttXcbDrz7QSfrU2R0tV5RKp0VIv2geEhANp1kPkQuZpz4LsJLO0mxmt7pBGiBb840X7Es.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=s6Spm9cJmrAQ7kNvwHPsOV7&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODU2NDg2MjUzMTA1MDkyNSwiYXNzZXRfYWdlX2RheXMiOjIwNiwidmlfdXNlY2FzZV9pZCI6MTA4MjcsImR1cmF0aW9uX3MiOjM4LCJiaXRyYXRlIjoyNTI5NTIzLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=YYiO8rBV2tSjEa0l45fpGA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQK3m3sdqQuggF4JH8pJietvqNSM-OO_hoIGP-UcyJKWdw&oe=6AB0A50A&bytestart=4960268&byteend=8592811",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Jeśli szukasz idealnego przepisu na domową kruchą wieprzowinę w sosie własnym, to trafiłaś idealnie. Obiad jest strzał, a twój mąż ponownie się w tobie zakocha. Zaczynamy od pokrojenia szynki wieprzowej w plastry i przyprawienia jej solą, świeżo mielonym pieprzem oraz słodką papryką. Mięso posypujemy mąką, odwracamy i znowu przyprawiamy solą, pieprzem i papryką. Obtoczone mąką mięso smażymy na rozgrzanym tłuszczu na brązowy kolor z obu stron, a następnie zdejmujemy mięso z patelni. Wrzucamy masło, cebulę, zielę angielskie, liście laurowe i smażymy. Na usmażone składniki kładziemy usmażone mięso, zalewamy wodą, doprawiamy kminkiem, oregano, sosem sojowym i dusimy przez półtorej godziny. Bierzemy się za wykładanie ziemniaki, mięso, sos, ogórki konserwowe, koperek i mamy gotowe. A wy dajcie w komentarzu znać, czy lubicie takie obiady. Smacznego.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:53:59.212450+00:00",
+  "source_url": "https://www.instagram.com/reel/DbS3rzdta3C/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "5,546 likes, 2,169 comments - vinniecookclub on July 27, 2026: \"💬👨‍🍳 comment “30” and I’ll send you this & all my recipes for free! \n\nALL these 30 recipes will be saved in the special cookbook on my ReciMe profile too 🙌 link in bio\n\n30 recipes I want you to know before 30 episode 12: lamb and halloumi sausage roll twirls \n\nPerfect for this any occasion season: spread the love of good sausage rolls\n\nA perfect sausage roll should be like a warm hug: A gorgeous and gripping exterior with layers of flavours releasing your positive feelings inside\n\nThese will be sure to be a hit, serve with cranberry sauce and your favourite dipping sauces too \n\nIngredients:\nTwirls:\nFilling:\n500g lamb mince (or your mince of choice)\n1 bunch spring onions (white ends), finely diced\n1 bunch fresh parsley, finely chopped\n1 Tbsp each: cumin, coriander seeds, sesame seeds, salt, pepper\n1/2 block or 100g halloumi, grated\n\nCoating/serving:\n1 pack ready roll puff pastry \n2 eggs + (optional) 1 tsp paprika, turmeric \nButter for greasing\nExtra halloumi \nGlazing syrup of choice (honey or maple are good)\n\nSpecial dipping sauce:\n300g Greek yoghurt (5% if possible)\n2 Tbsp sesame oil\n1 bunch spring onions (green ends), finely diced\n2 cloves garlic, minced\n1/2 lemon juiced\n2 big pinches salt\nFresh cracked black pepper\n\nMethod:\n1. Preheat oven to 200c\n2. Toast your seeds on medium heat, grind together with all other ingredients\n3. Spread out puff pastry sheet and carefully press the mixture across the sheet \n4. Whisk together eggs, spices and drizzle inside and while rolling up lengthways the exterior of the pastry \n5. Cut log into 12 pieces\n6. Grease a cupcake tray with butter\n7. Carefully place pieces in or spread apart if on tray\n8. Brush with more egg and into oven for 15min\n9. Brush with glaze and add halloumi then highest heat oven goes for further 5min or until golden brown\n10. Remove from cake tins immediately to a drying rack to prevent them getting soggy\n11. Serve with your special dip and cranberry sauce if you have to make it festive x\n\n#sausageroll #lamb\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Vinnie Cesnik"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/757603122_1724804682060903_7017033870173063832_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=104&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=m03wMfjrGTwQ7kNvwHaOcI4&_nc_oc=Ado5PsOmvPsNoxlLNgTvYUJ3UumbO7-5M0QYZ09MDglVCYEcJbEGBqhLzr3_TxBJBd8M1G2z_961xXb5gP9CXfvS&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=tOouNkwWdrIsE4UKw_CK0w&_nc_ss=7b6a8&oh=00_AQLDDoluabsONkKo3gGkrChY3W7LE6Qeuz_uU1jRt2KDNA&oe=6AB47716",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM8NLwecf1Vjtzj4OFMjeV26asXSzoixIQqVwYMnUItKDgqQLHAntSmY3Z6ih1rRDMJdVlGUAkNK5j72r5wahmsrjDsZKdvCwYHoNk.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=qKWQR18mbtsQ7kNvwFnAv4u&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyODMwMjQ2NjMzNjExMTQ4NywiYXNzZXRfYWdlX2RheXMiOjAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNCwiYml0cmF0ZSI6MTkzNzg1MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=MzSes5T7hfevzDXKFbQOrg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLMHfKwv_FL8n8wS2Uv07DmqUpPupos6EYbRWm9tPwvXA&oe=6AB4841E&bytestart=3400256&byteend=5985138"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM8NLwecf1Vjtzj4OFMjeV26asXSzoixIQqVwYMnUItKDgqQLHAntSmY3Z6ih1rRDMJdVlGUAkNK5j72r5wahmsrjDsZKdvCwYHoNk.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=qKWQR18mbtsQ7kNvwFnAv4u&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyODMwMjQ2NjMzNjExMTQ4NywiYXNzZXRfYWdlX2RheXMiOjAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNCwiYml0cmF0ZSI6MTkzNzg1MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=MzSes5T7hfevzDXKFbQOrg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLMHfKwv_FL8n8wS2Uv07DmqUpPupos6EYbRWm9tPwvXA&oe=6AB4841E&bytestart=3400256&byteend=5985138",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "My biggest outs for 2026 are for people who make dry sausage rolls, especially when you can make these in 30 minutes. These are my spiced lamb and halloumi sausage rolls, but in a swirl instead. And I'll teach you my high protein, delicious dipping sauce at the end of the video. In my eyes, a perfect sausage roll should have the characteristics of a warm hug, a gorgeous and gripping exterior with layers of flavors inside, releasing those positive emotions. My favorite spices at the moment are cumin, coriander and sesame seeds in equal parts, then some halloumi and parsley, all bashed in together into the lamb. With the white ends of the spring onions because the green ends we'll use in our special dipping sauce. And now time to find an appropriate average size whisk. And I like adding turmeric and paprika into my eggs to give it a nice glossy glaze. Both on the inside and then on the outside helps it bind together and then also just gives it extra flavor too. Now, I had an idea of using a cake tin and it worked out pretty well. I would say that you would like to leave a bit of an edge on either side because the puff pastry does grow. I added a bit more halloumi in a syrup of choice before finishing off and then taking them out of the tray. And dipping sauce. The green parts of the spring onions, some garlic, some sesame oil, pepper, salt, lemon and basil. That's going to be a really good dipping sauce. Wow, a bit of homemade. Now, enjoy your sausage rolls, not dry. Make sure to share with your friends and family.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

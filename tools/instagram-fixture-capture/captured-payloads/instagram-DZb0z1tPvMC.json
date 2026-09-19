@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:55:02.538491+00:00",
+  "source_url": "https://www.instagram.com/reel/DZb0z1tPvMC/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "147K likes, 145 comments - wholesomebysarah on June 4, 2026: \"SLOW COOKER BEEF BRISKET PASTA 🤗\n\nServes: 4\nCook Time: 8 hours on low or 4 hours on high\n\nIngredients\n1.2 kg beef brisket\n½ tsp salt\n1 tsp black pepper\n2 tbsp extra virgin olive oil\n1 brown onion, finely chopped\n3 garlic cloves, chopped\n400g tin diced tomatoes\n3 tablespoons tomato paste\n⅓ cup red wine\n1 cup beef stock\n1 tablespoon dried Italian herbs\n350g pasta (any kind you like)\n\nTo serve: \nGrated Parmesan cheese\nFresh parsley\n\nMethod:\n1. Pat the beef brisket dry and season with salt and pepper. Heat olive oil in a frying pan over medium-high heat. Sear the brisket on all sides until well browned.\n2. Transfer the seared brisket to your slow cooker. Add onion, garlic, tinned tomatoes, tomato paste, red wine, beef stock, and dried Italian herbs.\n3. Cover and cook on low for 8 hours or high for 4 hours, until the brisket is fall-apart tender.\n4. Remove the brisket, shred it using two forks, then return it to the sauce in the slow cooker. Stir well to combine.\n5. Meanwhile, cook your pasta separately according to packet instructions. Drain and add it to the slow cooker. Stir through the brisket sauce until well coated.\n6. Dish it up with a generous sprinkle of grated Parmesan and fresh parsley. Season to taste.\n\n#slowcook #slowcooker #slowcookermeals #slowcookerrecipes #slowcooking\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Sarah Pound"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/716450055_987824960497901_6896701120219965024_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=Er1eLIb_pH0Q7kNvwFc5XqZ&_nc_oc=Adp72DhRlL7Q6STjj9_rbi3jsyEo7TMJIj36ojAgOSQZWVHs1o1b7cgdzPe_vbpUl6xwKaFAx8exGh1VyrngEBPv&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=Kw7tbc_-yN9c4U8iVljnlg&_nc_ss=7b6a8&oh=00_AQL7yXx-cSL7QcC_wZz0xEcHxkzdTncPGmNJjsOT53Gy-A&oe=6AB472EA",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMY12IweNijepbJn-vYRql-wLIKb0VvhX3gtERBWgcB0l5Gk7zM0IJAVPsOjh2cDcyQVaYXdSyoB8frZjfNGw0cVrFA5UPxRcM-3Tk.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=rtmzwZWf9zgQ7kNvwEoyyH5&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc0Mzg5Njc1Njk3MTYxOSwiYXNzZXRfYWdlX2RheXMiOjEwNiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjExLCJiaXRyYXRlIjozODU1NzU3LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=DBfuwS-Jx53q86txsV6hWw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJExC6e2pcZ0Mmvwe9-5_oADhrLUi8KyMIEQagwneDFTg&oe=6AB49A76&bytestart=2746576&byteend=5582814"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMY12IweNijepbJn-vYRql-wLIKb0VvhX3gtERBWgcB0l5Gk7zM0IJAVPsOjh2cDcyQVaYXdSyoB8frZjfNGw0cVrFA5UPxRcM-3Tk.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=rtmzwZWf9zgQ7kNvwEoyyH5&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc0Mzg5Njc1Njk3MTYxOSwiYXNzZXRfYWdlX2RheXMiOjEwNiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjExLCJiaXRyYXRlIjozODU1NzU3LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=DBfuwS-Jx53q86txsV6hWw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJExC6e2pcZ0Mmvwe9-5_oADhrLUi8KyMIEQagwneDFTg&oe=6AB49A76&bytestart=2746576&byteend=5582814",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "00:02 I'm going to show you how to make a delicious and easy chocolate cake.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

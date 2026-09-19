@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:57:17.522155+00:00",
+  "source_url": "https://www.instagram.com/reel/DburqMKhWme/?stkn=MXJuNmp1ZGw5MGVxMg==",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "38K likes, 180 comments - katcooksdaily on August 6, 2026: \"Soups that DON’T suck - Japanese mille feuille nabe 😌\n\nFollow @katcooksdaily for more easy recipes 👩🏻‍🍳\n\nWe’re back with another soup recipe for you to try at home!\n\nThis Japanese hotpot soup recipe looks impressive and is pretty healthy for you too 😎\n\nIngredients:\n250g thin beef slices (I use defrosted hotpot rolls)\nHalf a wombok/napa/chinese cabbage, whole leaves kept intact \n\nSukiyaki broth:\n1 cup dashi stock\n1/3 cup soy sauce\n1/3 cup mirin\n1/3 cup sake \n1.5 tbsp brown sugar \n\nMethod:\n1. Layer the beef slices and cabbage leaves into a stack, making sure you have cabbage leaves on both the bottom and top of the stack.\n2. Chop the stack to into 3 or 4 strips, depending on how high you want them to sit up in the pot.\n3. Tightly pack the strips into your pot, making sure they are tightly packed in.\n4. Mix together all the sukiyaki broth ingredients and then pour over the cabbage/beef.\n5. Cover the pot with a lid and simmer on low until the beef is cooked through and the cabbage is tender - serve with a side of rice or eat by itself!\n\n#soupseason #millefeuillenabe #souprecipe easy Japanese meals, mille feuille nabe, soup recipes\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Kat Cooks Daily 🍜"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/768860965_18070883768475571_7135694828245999099_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=zeRjGH-VBz0Q7kNvwGj6GyQ&_nc_oc=AdqNrScoANm10VPK0NvtdSY-1Hnw-K7M5nuJmxTjuzEb-2bQx4mAFfKeleOaBhHy__qkF00SkZODFqM94x2pgP9v&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=8IqSmGv8D4YkbmXlzM6kLg&_nc_ss=7b6a8&oh=00_AQLKq9qjXYIs1LqEtVUZx1QbIRHJSYfQEUCqbaPLIuFLdQ&oe=6AB49B9B",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOrXMZx-e574hg6kx6OrdiV7WNa8rG_dY_Ep-3JVmgjfl4CiZO7JrvVNzvoMeqoSUG0o63RzS8PlCTBA1ss10iClbGy7KNJn8gyZws.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=slq6Kj0DVDoQ7kNvwGp7Okb&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMDA2MTcxNTc2NzYxMzU3LCJhc3NldF9hZ2VfZGF5cyI6MiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjQwLCJiaXRyYXRlIjozMjM3ODk0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=J6U038W-T4YX7pno8LZokg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLzNRWryYxLpLL0debvrRRzyzYy_qSyYesYg9om1dYVDw&oe=6AB47848&bytestart=2239494&byteend=6290619"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOrXMZx-e574hg6kx6OrdiV7WNa8rG_dY_Ep-3JVmgjfl4CiZO7JrvVNzvoMeqoSUG0o63RzS8PlCTBA1ss10iClbGy7KNJn8gyZws.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=slq6Kj0DVDoQ7kNvwGp7Okb&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMDA2MTcxNTc2NzYxMzU3LCJhc3NldF9hZ2VfZGF5cyI6MiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjQwLCJiaXRyYXRlIjozMjM3ODk0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=J6U038W-T4YX7pno8LZokg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLzNRWryYxLpLL0debvrRRzyzYy_qSyYesYg9om1dYVDw&oe=6AB47848&bytestart=2239494&byteend=6290619",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "I'm going to show you how to make a really simple and delicious chocolate cake. It's perfect for beginners and it only takes about 30 minutes to prepare.\n\nFirst, preheat your oven to 350 degrees Fahrenheit or 175 degrees Celsius.\n\nNext, grease and flour a 9-inch round cake pan. You can use butter or cooking spray for this.\n\nIn a large bowl, whisk together 1 and 3/4 cups of all-purpose flour, 2 cups of granulated sugar, 3/4 cup of unsweetened cocoa powder, 1 and 1/2 teaspoons of baking soda, 1 and 1/2 teaspoons of baking powder, and 1 teaspoon of salt.\n\nIn a separate bowl, whisk together 2 large eggs, 1 cup of milk, 1/2 cup of vegetable oil, and 2 teaspoons of vanilla extract.\n\nNow, add the wet ingredients to the dry ingredients and mix until just combined. Be careful not to overmix.\n\nFinally, stir in 1 cup of boiling water. The batter will be thin, but that's okay.\n\nPour the batter into the prepared cake pan and bake for 30 to 35 minutes, or until a wooden skewer inserted into the center comes out clean.\n\nLet the cake cool in the pan for 10 minutes before inverting it onto a wire rack to cool completely.\n\nOnce cooled, you can frost it with your favorite chocolate frosting or simply dust it with powdered sugar. Enjoy!",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

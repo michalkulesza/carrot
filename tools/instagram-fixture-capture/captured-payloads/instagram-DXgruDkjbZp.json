@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T15:55:27.012475+00:00",
+  "source_url": "https://www.instagram.com/reel/DXgruDkjbZp/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "4,286 likes, 57 comments - michal_gotuje on April 24, 2026: \"Nocne Bagietki śniadaniowe bez wyrabiania! Bez cudowania! Mieszasz 2 minuty wieczorem a rano tylko pieczesz!\nSkładniki:\n500g mąki typ 650 albo 00\n365g wody w temp pokojowej\n8g soli\n3g świeżych drożdży lub 1g drożdży instant\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Michał Gotuje | Przepisy | Kuchnia | Humor"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/671781406_867588616343078_2549920937986555204_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=qFhTsKIOH24Q7kNvwFJKc3b&_nc_oc=AdrfI1MPAzKybjDUzh_-E54DL4SMQ09NaV9-Lns9g_KNAhetUqwpZYG6eYDyLqqSt530IScQASLll6fDHnYezsE0&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=jgJTIsf5b6VBH8lkaKnXRg&_nc_ss=7b6a8&oh=00_AQJSAXcJJ0s1iYXjR89lCpdcWF5_wixb7GMJjFQY7TsX2g&oe=6AB46C08",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPtxIa9rMKMOOcNxMmpcYtIPxRFSR81ke9So543dHiihXjE6TayCAt0sHJu4n_BEqHEcBxCssOl4uRnp-WDrAVDstuCv2BLBGOPqzpjqfIcfA.mp4?_nc_cat=108&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=6fVMT-sVoMIQ7kNvwFmOQwQ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTA4MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5NDE0OTc3OTUxODkwMzQsImFzc2V0X2FnZV9kYXlzIjoxNDgsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoxNTUsImJpdHJhdGUiOjIzMDAwMzksInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=OMvjAVrZpa_TUs5gvfYUYA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKBlX0Zp29YOQM97kjPifMgV8mTr7Fm-f_GFJW4En1XIg&oe=6AB47C10&bytestart=2289508&byteend=5242717"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPtxIa9rMKMOOcNxMmpcYtIPxRFSR81ke9So543dHiihXjE6TayCAt0sHJu4n_BEqHEcBxCssOl4uRnp-WDrAVDstuCv2BLBGOPqzpjqfIcfA.mp4?_nc_cat=108&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=6fVMT-sVoMIQ7kNvwFmOQwQ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTA4MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5NDE0OTc3OTUxODkwMzQsImFzc2V0X2FnZV9kYXlzIjoxNDgsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoxNTUsImJpdHJhdGUiOjIzMDAwMzksInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=OMvjAVrZpa_TUs5gvfYUYA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKBlX0Zp29YOQM97kjPifMgV8mTr7Fm-f_GFJW4En1XIg&oe=6AB47C10&bytestart=2289508&byteend=5242717",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Nie musisz wstawać rano do piekarni. Mieszasz ciasto łyżką wieczorem, rano wykładasz na blachę i tylko je pieczesz. Do miski wsypujecie 500 g mąki, typ 650 i 9 g soli. Wszystko razem mieszacie. Ja będę mieszał, a ty zaobserwuj, żeby nie przegapić nowych filmów. Następnie dolewacie 365 g zimnej wody z kranu i do tego sypiecie 1 g drożdży suchych. I to jest ten sekret tego przepisu. Tutaj ciasto wyrabiacie po prostu łyżką do połączenia się składników. Ciasto zacznie kleić wam się do łyżki i odrywać od miski. Mieszanie powinno trwać max dwie minuty. Zobaczcie, u mnie ciasto już się pięknie wyrobiło i jest gotowe do wyrastania i odstawiamy na 8 do 10 godzin. Dzień dobry moi mili. Mamy niedzielny poranek. Ciasto nam pięknie już wyrosło, jak widać. Zrobię wam tutaj przebitkę. Moje wyrastało około 9,5 godziny tak mniej więcej. Co robimy teraz? Wstawiacie piekarnik na 250 stopni. Bierzecie sobie blachę, obsypujecie ją mąką w tych miejscach, gdzie te bagietki będą leżały. Ej, gotowe. Obsypujecie sobie też dosyć obficie blat mąką. Ja używam do wszystkiego tej mąki krupczatki. Nie przejmujcie się, że to ciasto jest takie luźne. Zaraz zobaczycie, co zrobimy. Dobra, moi drodzy, bierzecie wasze ciasto. Będziemy je tak odrywać od tej miski, ale jednocześnie nie uderzając w nie, żeby nie zniszczyć jego struktury. Ciasto następnie z wierzchu obficie obsypujemy mąką. I teraz bierzecie tak trochę ze spodu i formujecie taki kształt kółka. Okej. Następnie ciasto dzielimy na dwie części. Troszkę je oddzielamy takim ruchem. Następnie bagietki łapiemy, odwracamy i przerzucamy na blachę. Dzięki temu, że je odwrócimy, uzyskamy taką fajną rustykalną skórkę. To samo tutaj. Odwracamy je tak i na blachę. I od razu do pieca. A ten i inne moje wiralowe przepisy na domowe pieczywo, obiady, ciasta i ciasteczka znajdziecie w moim ebooku, do którego link jest na moim profilu. Wpadnijcie tam, jeśli macie ochotę. A teraz pokażę wam jak upiec te bagietki. Bagietki do piekarnika, 250 stopni, góra dół. Na dół dajcie sobie drugą blachę, polejcie na nią troszkę wody i pieczemy około 20-25 minut. Jak piekarnik nie osiąga 250 stopni, no to troszkę dłużej. I gotowe, moi drodzy. Zobaczcie, jak one pięknie wyrosły, a jak grają pięknie. To jest muzyka dla moich uszu. Przekładamy je sobie na kratkę do ostygnięcia.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-19T16:00:34.345157+00:00",
+  "source_url": "https://www.instagram.com/reel/DagtZE9B24F/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "69K likes, 290 comments - ice.karimcooks on July 7, 2026: \"Easy 20-minute Crispy rice paper Chicken Nuggets 🤯 (recipe 👇🏽)\n\nMacros per serving ( makes x2 - 14 nuggets per serving): 419 calories | 49g P | 11g C | 21g F\n\nAnnouncements:\n✅ Want to lose weight without eating boring food? My digital cookbooks include 180+ high-protein recipes with calories and macros included! Grab yours on my site today! 😊\n✅ OR Comment “cookbook” and I’ll send you the link! (Macros and Calories Included) 💪🏽\n✅ I developed new seasonings for everyday cooking! @spicexseasoning OUT now! 👀\n\nIngredients:\n1 lb Ground chicken 🐓 \n2 teaspoon @SpiceXseasoning Daily Blend (SPG)\n1 teaspoon onion powder 🧅 \n1 egg 🥚 \n1/4 cup low fat mozzarella 🧀 \n1 teaspoon SpiceX Sweet Sriracha Blend\n5 Rice paper sheets 🍚 \n\nEnjoy! 😊\n\nIf you want weekly recipes and discounts straight to your email inbox every Sunday then comment “newsletter” 😌📧\n.\n.\n.\n.\n#icekarim #healthyrecipes #easyrecipes #mealprep #quickrecipes\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Karim Saad"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/735238244_1988980755182975_5971525226249730967_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=O5VZuCHXDe0Q7kNvwEX6dct&_nc_oc=AdqOa12pK7IeJ8GtRWj6w_oZjcEV_0knX9dX2oIxmyYHJWShEqs96FldFqahekP0s-BD9ejMFSoZuIxmuF3Y-Zei&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=5Bv4ALZbND9Qib3BftKIsA&_nc_ss=7b6a8&oh=00_AQI5lAPJCoOOdsVZslljx_q8wWJ7iqI0wxCMhmT8DLC2Yw&oe=6AB49C54",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMbNWu670MCaOOwrLT0k_sMs-ZCekbdXFv37YPpKHDTEgGH_DRtfFrHC8Tgw6E7XRRnCkR7cm7_JH6cdUGAVuV4vh5dF8QVGNSPgXTyqdnw9g.mp4?_nc_cat=108&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=Qgyn0ze2jJQQ7kNvwGHU74y&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTQ0MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTkwNzM2MzQ3OTk1OTY3MCwiYXNzZXRfYWdlX2RheXMiOjczLCJ2aV91c2VjYXNlX2lkIjoxMjM3NCwiZHVyYXRpb25fcyI6MjksImJpdHJhdGUiOjI2MjMzOTAsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=5IxMN9PargnVSFCtuh_fsQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLAAqFuLOkdLvPpCb-GaugW4UhReBNJfnyWNyFOnpZRdg&oe=6AB49348&bytestart=1724132&byteend=5352368"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMbNWu670MCaOOwrLT0k_sMs-ZCekbdXFv37YPpKHDTEgGH_DRtfFrHC8Tgw6E7XRRnCkR7cm7_JH6cdUGAVuV4vh5dF8QVGNSPgXTyqdnw9g.mp4?_nc_cat=108&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=Qgyn0ze2jJQQ7kNvwGHU74y&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTQ0MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTkwNzM2MzQ3OTk1OTY3MCwiYXNzZXRfYWdlX2RheXMiOjczLCJ2aV91c2VjYXNlX2lkIjoxMjM3NCwiZHVyYXRpb25fcyI6MjksImJpdHJhdGUiOjI2MjMzOTAsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=5IxMN9PargnVSFCtuh_fsQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLAAqFuLOkdLvPpCb-GaugW4UhReBNJfnyWNyFOnpZRdg&oe=6AB49348&bytestart=1724132&byteend=5352368",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Crispy rice paper chicken nuggets. It's fucking insane. And this only took me 20 minutes to make. Exquisite. Salt, black pepper, garlic and onion powder. And my secret ingredient is Spicex sweet sriracha blend. Now mix well with the chopsticks. For the rice paper, lightly wet it with some water, then lay it down flat quick because it will become malleable and soft. Place two dollops of filling in the middle, then roll it up into a sausage just like this. Then gently cut them up into bite-sized pieces with some scissors before spraying with some avocado oil. And now the only thing left to do is air fry it until they're golden brown and crispy with the settings to set on.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

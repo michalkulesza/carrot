@@ -35,6 +35,37 @@ class ReelMetadata:
     linked_urls: list[str] = field(default_factory=list)
 
 
+def parse_scrapecreators_reel_response(data: dict, url: str) -> ReelMetadata:
+    platform = "tiktok" if "tiktok.com" in url else "instagram"
+
+    if platform == "tiktok":
+        description = data.get("desc", "") or ""
+        thumbnail_url = data.get("cover", data.get("dynamicCover"))
+        creator_handle = (data.get("author") or {}).get("uniqueId")
+        video_url = data.get("video_url") or data.get("play") or (data.get("video") or {}).get("playAddr")
+        canonical_url = url
+    else:
+        media = (data.get("data") or {}).get("xdt_shortcode_media") or {}
+        edges = (media.get("edge_media_to_caption") or {}).get("edges") or []
+        description = edges[0]["node"]["text"] if edges else ""
+        thumbnail_url = media.get("thumbnail_src") or media.get("display_url")
+        creator_handle = (media.get("owner") or {}).get("username")
+        video_url = media.get("video_url") or data.get("video_url")
+        canonical_url = url
+
+    linked_urls = _URL_RE.findall(description)
+
+    return ReelMetadata(
+        source_url=url,
+        canonical_url=canonical_url,
+        description=description,
+        thumbnail_url=thumbnail_url,
+        creator_handle=creator_handle,
+        video_url=video_url if isinstance(video_url, str) else None,
+        linked_urls=linked_urls,
+    )
+
+
 class ScrapeCreatorsClient:
     def __init__(self) -> None:
         self._headers = {
@@ -65,32 +96,7 @@ class ScrapeCreatorsClient:
         import json as _json
         log.debug("ScrapeCreators raw response: %s", _json.dumps(data, indent=2)[:3000])
 
-        if platform == "tiktok":
-            description = data.get("desc", "") or ""
-            thumbnail_url = data.get("cover", data.get("dynamicCover"))
-            creator_handle = (data.get("author") or {}).get("uniqueId")
-            video_url = data.get("video_url") or data.get("play") or (data.get("video") or {}).get("playAddr")
-            canonical_url = url
-        else:
-            # Instagram response: data.data.xdt_shortcode_media
-            media = (data.get("data") or {}).get("xdt_shortcode_media") or {}
-            edges = (media.get("edge_media_to_caption") or {}).get("edges") or []
-            description = edges[0]["node"]["text"] if edges else ""
-            thumbnail_url = media.get("thumbnail_src") or media.get("display_url")
-            creator_handle = (media.get("owner") or {}).get("username")
-            video_url = media.get("video_url") or data.get("video_url")
-            canonical_url = url
-
-        linked_urls = _URL_RE.findall(description)
-        return ReelMetadata(
-            source_url=url,
-            canonical_url=canonical_url,
-            description=description,
-            thumbnail_url=thumbnail_url,
-            creator_handle=creator_handle,
-            video_url=video_url if isinstance(video_url, str) else None,
-            linked_urls=linked_urls,
-        )
+        return parse_scrapecreators_reel_response(data, url)
 
 
 scraper = ScrapeCreatorsClient()
