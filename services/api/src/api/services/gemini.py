@@ -22,12 +22,37 @@ from api.models import (
     ShoppingCategory,
     SourceComponent,
 )
+from api.services.extraction_v2.contracts import FailureReason
 
 log = logging.getLogger(__name__)
 
 _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
 _STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash-lite"
 _MAX_ENRICHMENT_ATTEMPTS = 3
+
+
+class AudioRecipeEvidenceComponent(BaseModel):
+    name: str | None = None
+    ingredients: list[str] = []
+    steps: list[str] = []
+
+
+class AudioRecipeEvidence(BaseModel):
+    title: str | None = None
+    components: list[AudioRecipeEvidenceComponent] = []
+    failure_reason: FailureReason | None = None
+
+
+_AUDIO_EVIDENCE_SYSTEM = """\
+Extract only recipe facts explicitly spoken in the supplied transcript. Preserve
+the transcript's original wording and language. Do not infer, repair, convert,
+or add quantities, ingredients, times, temperatures, or instructions. Return
+ingredients and steps in their spoken order. Retained evidence is context only:
+do not repeat it unless the transcript itself supports it. If the transcript
+contains no usable recipe facts, return empty components and one of only
+NO_RECIPE_CONTENT, AMBIGUOUS_RECIPE, or UNREADABLE_CONTENT as failure_reason.
+Otherwise leave failure_reason null.
+"""
 
 
 _SHOPPING_CATEGORY_MEANINGS = {
@@ -262,6 +287,32 @@ Return exactly as many entries as there are input ingredients, in the same order
 
 def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
+
+
+async def extract_audio_recipe_evidence(
+    transcript: str,
+    retained_recipe: dict[str, Any],
+    model: str | None = None,
+    usage: UsageTracker | None = None,
+) -> AudioRecipeEvidence:
+    """Run source-only transcript extraction before enrichment in the v2 flow."""
+
+    client = _build_client()
+    response = await _with_retry(
+        lambda: client.models.generate_content(
+            model=model or settings.gemini_extraction_model,
+            contents=json.dumps({"transcript": transcript, "retained_recipe": retained_recipe}),
+            config=types.GenerateContentConfig(
+                system_instruction=_AUDIO_EVIDENCE_SYSTEM,
+                temperature=0,
+                response_mime_type="application/json",
+                response_schema=AudioRecipeEvidence,
+            ),
+        ),
+    )
+    if usage is not None:
+        usage.add(response)
+    return AudioRecipeEvidence.model_validate(json.loads(response.text or "{}"))
 
 
 async def transcribe_audio(

@@ -24,6 +24,7 @@ dependencies = [
     "google-auth>=2.0",
     "sentry-sdk[fastapi]>=2.0",
     "curl-cffi>=0.15.0",
+    "lingua-language-detector>=2.2.0",
 ]
 
 [build-system]
