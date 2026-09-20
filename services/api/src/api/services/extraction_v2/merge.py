@@ -55,5 +55,14 @@ def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRec
     return ExtractedRecipe(
         title=left.title or right.title,
         components=components,
+        yield_text=left.yield_text or right.yield_text,
+        yield_servings=left.yield_servings or right.yield_servings,
+        yield_evidence_ids=left.yield_evidence_ids or right.yield_evidence_ids,
+        yield_references=left.yield_references or right.yield_references,
+        total_time_minutes=left.total_time_minutes or right.total_time_minutes,
+        total_time_text=left.total_time_text or right.total_time_text,
+        total_time_evidence_ids=left.total_time_evidence_ids or right.total_time_evidence_ids,
+        total_time_references=left.total_time_references or right.total_time_references,
+        nutrition=left.nutrition or right.nutrition,
         failure_reason=left.failure_reason or right.failure_reason,
     )

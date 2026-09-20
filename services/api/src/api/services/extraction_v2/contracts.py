@@ -163,10 +163,31 @@ class RecipeComponentEvidence(BaseModel):
     steps: list[StepEvidence] = Field(default_factory=list)
 
 
+class NutritionEvidence(BaseModel):
+    """Source-provided per-serving nutrition; values remain source wording."""
+
+    calories: str | None = None
+    protein: str | None = None
+    fat: str | None = None
+    carbohydrates: str | None = None
+    raw_text: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    references: list[EvidenceReference] = Field(default_factory=list)
+
+
 class ExtractedRecipe(BaseModel):
     title: str | None = None
     title_references: list[EvidenceReference] = Field(default_factory=list)
     components: list[RecipeComponentEvidence] = Field(default_factory=list)
+    yield_text: str | None = None
+    yield_servings: str | None = None
+    yield_evidence_ids: list[str] = Field(default_factory=list)
+    yield_references: list[EvidenceReference] = Field(default_factory=list)
+    total_time_minutes: int | None = None
+    total_time_text: str | None = None
+    total_time_evidence_ids: list[str] = Field(default_factory=list)
+    total_time_references: list[EvidenceReference] = Field(default_factory=list)
+    nutrition: NutritionEvidence | None = None
     failure_reason: FailureReason | None = None
 
     @model_validator(mode="after")
@@ -197,6 +218,12 @@ def validate_extracted_recipe(value: object, allowed_evidence_ids: set[str] | No
     if allowed_evidence_ids is None:
         return recipe
     references = list(recipe.title_references)
+    references.extend(recipe.yield_references)
+    references.extend(recipe.total_time_references)
+    if recipe.nutrition:
+        if not set(recipe.nutrition.evidence_ids).issubset(allowed_evidence_ids):
+            raise ValueError("nutrition referenced evidence outside its supplied input")
+        references.extend(recipe.nutrition.references)
     for component in recipe.components:
         references.extend(component.name_references)
         for fact in [*component.ingredients, *component.steps]:

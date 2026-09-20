@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup, Comment, Tag
 
 NOISE_TAGS = {
     "script", "style", "template", "nav", "header", "footer", "aside", "iframe", "noscript",
-    "svg", "form", "button", "dialog",
+    "svg", "form", "button", "dialog", "input", "label",
 }
 NOISE_ATTRIBUTE_TOKENS = {
     "advert", "banner", "comment", "cookie", "newsletter", "popup", "promo", "related", "share",
@@ -13,10 +13,13 @@ NOISE_ATTRIBUTE_TOKENS = {
 SAFE_ATTRIBUTES = {
     "a": {"href", "title"},
     "img": {"src", "alt"},
+    "span": {"class", "aria-label"},
+    "input": {"class", "value", "aria-label"},
+    "script": {"type"},
     "td": {"colspan", "rowspan", "scope"},
     "th": {"colspan", "rowspan", "scope"},
 }
-VOID_TAGS = {"br", "hr", "img", "source", "track", "wbr"}
+VOID_TAGS = {"br", "hr", "img", "input", "source", "track", "wbr"}
 
 
 def _is_structural_container(element: Tag) -> bool:
@@ -33,6 +36,21 @@ def _is_noise_element(element: Tag) -> bool:
     ]).lower()
 
     return any(token in attributes for token in NOISE_ATTRIBUTE_TOKENS)
+
+
+def _is_recipe_servings_control(element: Tag) -> bool:
+    if not element.attrs:
+        return False
+    classes = " ".join(element.get("class") or ()).casefold()
+    aria_label = (element.get("aria-label") or "").casefold()
+    return "recipe-servings" in classes or "adjust recipe servings" in aria_label
+
+
+def _is_recipe_header(element: Tag) -> bool:
+    if element.name != "header" or not element.attrs:
+        return False
+    attributes = " ".join([" ".join(element.get("class") or []), element.get("id") or ""]).casefold()
+    return element.name == "header" and "recipe" in attributes
 
 
 def _select_content_container(soup: BeautifulSoup) -> Tag:
@@ -63,9 +81,14 @@ def clean_html_body(raw_html: str) -> str:
         return ""
 
     soup = BeautifulSoup(raw_html, "html.parser")
+    structured_recipe_data = [element.string for element in soup.find_all("script", type="application/ld+json") if element.string]
     for comment in soup.find_all(string=lambda value: isinstance(value, Comment)):
         comment.extract()
     for element in soup.find_all(NOISE_TAGS):
+        if element.name is None:
+            continue
+        if (element.name == "input" and _is_recipe_servings_control(element)) or _is_recipe_header(element):
+            continue
         element.decompose()
     for element in list(soup.find_all(True)):
         if element.name is None or not element.attrs:
@@ -77,5 +100,9 @@ def clean_html_body(raw_html: str) -> str:
     for element in container.find_all(True):
         _keep_safe_attributes(element)
     _remove_empty_elements(container)
+    for payload in structured_recipe_data:
+        script = soup.new_tag("script", type="application/ld+json")
+        script.string = payload
+        container.append(script)
 
     return str(container).strip()

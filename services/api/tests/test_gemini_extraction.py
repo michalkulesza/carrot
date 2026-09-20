@@ -546,6 +546,20 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     assert component.step_ingredient_line == [0, 0]
 
 
+def test_stated_compact_total_time_overrides_enrichment_estimate() -> None:
+    source = _one_component_source().model_copy(update={"total_time_minutes": gemini.stated_total_time_minutes("Total time: 1h 5m")})
+    assembled = gemini.assemble_recipe(source, _matching_enrichment(total_time_minutes=110), [[0, 0]])
+
+    assert source.total_time_minutes == 65
+    assert assembled.total_time_minutes == 65
+
+
+def test_stated_total_time_stops_before_recipe_instruction_durations() -> None:
+    assert gemini.stated_total_time_minutes(
+        "Total time: 1 hour hour 5 minutes minutes Servings: 3 Marinate for 30 minutes."
+    ) == 65
+
+
 def test_enrichment_preserves_tsp_and_tbsp_in_both_unit_variants() -> None:
     source = RecipeSourceExtraction.model_validate({
         "components": [{

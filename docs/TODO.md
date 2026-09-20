@@ -4,6 +4,12 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 ## Most urgent
 
+- [ ] **Rendered HTML for URL imports** — Fetch recipe websites in production through a bounded headless-browser renderer so extraction receives the post-JavaScript DOM, including dynamically inserted recipe cards, nutrition, yields, and timings. Keep browser navigation isolated, block private-network destinations and unsafe redirects, enforce strict page/resource/time limits, and retain the final rendered HTML as source evidence. Implementation plan: [rendered HTML imports](specs/rendered-html-imports.md).
+
+- [ ] **Extraction critical-field monitoring** — Send a Sentry info event when a completed recipe extraction lacks source-provided total time, servings, calories, protein, fat, or carbohydrates. Include only safe diagnostic metadata such as missing field names, source kind, and sanitized source URL; never include recipe text or user-provided content.
+
+- [ ] **Manual orchestrator v2 review CLI** — Accept one or many captured JSON envelopes, run the real orchestrator/extractor, reuse saved transcripts without retranscription, and export Excel stage inputs/outputs, detected languages, completeness decisions, recipe evidence, and errors. Implementation plan: [manual extraction review](specs/manual-extraction-review.md).
+
 - [x] **HTML cleaner for extraction v2** — Accept raw HTML captured from a URL, conservatively remove scripts, styles, and obvious page chrome while retaining meaningful body structure, headings, lists, links, and recipe evidence. The `ExtractionOrchestrator` must invoke it before passing HTML to `ExtractorV2`.
 
 - [ ] **ExtractionOrchestrator for extraction v2** — Core implementation is in place; real-extractor integration and evaluation remain tracked in the [Extractor v2 plan](specs/extractor-v2.md). Accept a versioned social or raw-HTML source payload, select and sequence available evidence, verify creator authorship, invoke the HTML cleaner when applicable, call source-agnostic `ExtractorV2`, decide completeness, and run only eligible fallbacks/merges before enrichment. Keep source/platform concerns out of `ExtractorV2`. Implementation plan: [docs/specs/completed/extraction-orchestrator.md](specs/completed/extraction-orchestrator.md).

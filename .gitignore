@@ -16,3 +16,4 @@ apps/mobile/assets/react-logo*.png
 apps/mobile/assets/partial-react-logo.png
 *.tsbuildinfo
 instagram-fixtures/
+.local/

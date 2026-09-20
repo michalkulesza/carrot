@@ -337,6 +337,7 @@ class SourceComponent(BaseModel):
 class RecipeSourceExtraction(BaseModel):
     title: str | None = None
     servings: int | None = None
+    total_time_minutes: int | None = None
     components: list[SourceComponent] = []
 
 

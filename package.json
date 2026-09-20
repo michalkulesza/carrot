@@ -9,7 +9,8 @@
     "be:android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter mobile android\"",
     "web": "pnpm --filter web dev --host",
     "ios": "pnpm --filter mobile ios",
-    "android": "pnpm --filter mobile android"
+    "android": "pnpm --filter mobile android",
+    "test:extractionv2": "uv run --project services/api pytest services/api/tests/test_extraction_v2_captured_payloads.py -q"
   },
   "packageManager": "pnpm@10.26.2",
   "devDependencies": {

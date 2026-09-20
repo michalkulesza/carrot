@@ -7,7 +7,7 @@ From the repository root, run one Instagram URL:
 ```powershell
 & services/api/.venv/Scripts/python.exe tools/instagram-fixture-capture/capture_instagram_fixtures.py `
   "https://www.instagram.com/reel/SHORTCODE/" `
-  --output-dir extractor-v2-fixtures
+  --output-dir services/api/tests/captured-payloads
 ```
 
 The tool opens Chrome at Instagram login using its own local profile. Log in, return to PowerShell, and press Enter. It captures the post, comments, and video; extracts audio with FFmpeg; and sends it to Gemini for transcription.
@@ -17,7 +17,7 @@ For a JSON URL array, including `production-recipe-source-urls.json`:
 ```powershell
 & services/api/.venv/Scripts/python.exe tools/instagram-fixture-capture/capture_instagram_fixtures.py `
   --input-json production-recipe-source-urls.json `
-  --output-dir extractor-v2-fixtures
+  --output-dir services/api/tests/captured-payloads
 ```
 
 Instagram URLs are captured in a browser. Other HTTP(S) URLs, whether passed directly, in a newline file, or in JSON, are fetched as raw HTML payloads for the future HTML cleaner.

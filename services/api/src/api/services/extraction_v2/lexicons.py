@@ -28,7 +28,7 @@ def heading_kind(text: str) -> str | None:
         return "ingredients"
     if normalized in INSTRUCTION_HEADINGS:
         return "instructions"
-    if normalized in NON_RECIPE_HEADINGS:
+    if normalized in NON_RECIPE_HEADINGS or normalized.startswith("nutritional analysis"):
         return "stop"
     return None
 

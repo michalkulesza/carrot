@@ -1,6 +1,36 @@
 from api.services.html_cleaner import clean_html_body
 
 
+def test_cleaner_removes_recipe_checkbox_labels() -> None:
+    cleaned = clean_html_body("<main><label><input type='checkbox'/>▢</label><p>1 onion</p></main>")
+
+    assert "checkbox" not in cleaned
+    assert "▢" not in cleaned
+    assert "1 onion" in cleaned
+
+
+def test_cleaner_preserves_recipe_servings_controls() -> None:
+    cleaned = clean_html_body("""
+        <main><input type="text" class="wprm-recipe-servings wprm-recipe-servings-31673"
+        value="4" aria-label="Adjust recipe servings"><span class="wprm-recipe-servings">4</span></main>
+    """)
+
+    assert 'class="wprm-recipe-servings wprm-recipe-servings-31673"' in cleaned
+    assert 'value="4"' in cleaned
+    assert '<span class="wprm-recipe-servings">4</span>' in cleaned
+
+
+def test_cleaner_preserves_recipe_card_headers_and_recipe_jsonld() -> None:
+    cleaned = clean_html_body("""
+        <html><head><script type="application/ld+json">{"@type":"Recipe","nutrition":{"calories":"646"}}</script></head>
+        <body><header class="site-header">Navigation</header><main><header class="tasty-recipes-header">Total Time: 50 minutes</header></main></body></html>
+    """)
+
+    assert "Navigation" not in cleaned
+    assert "Total Time: 50 minutes" in cleaned
+    assert '"calories":"646"' in cleaned
+
+
 def test_cleaner_preserves_recipe_structure_and_component_links() -> None:
     cleaned = clean_html_body("""
         <html><body>

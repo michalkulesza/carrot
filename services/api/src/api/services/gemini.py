@@ -30,6 +30,44 @@ _DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
 _STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash-lite"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
+_TOTAL_TIME_LABEL = re.compile(
+    r"\b(?:total\s+time|czas\s+(?:całkowity|calkowity)|gesamt(?:zeit|dauer)|temps\s+total|tiempo\s+total)\b",
+    re.IGNORECASE,
+)
+_TIME_PART = re.compile(
+    r"(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|godzin(?:a|y|ę|e)?|stund(?:e|en)|heures?|horas?|"
+    r"minutes?|mins?|min|m|minut(?:[a-ząćęłńóśźż]+)?)\b",
+    re.IGNORECASE,
+)
+
+
+def stated_total_time_minutes(text: str) -> int | None:
+    """Read an explicitly labelled time before an enrichment model can estimate it."""
+
+    label = _TOTAL_TIME_LABEL.search(text)
+    if label is None:
+        return None
+    value = text[label.end():label.end() + 100]
+    iso = re.match(r"\s*[:–-]?\s*PT(?:(\d+)H)?(?:(\d+)M)?\b", value, re.IGNORECASE)
+    if iso:
+        return int(iso.group(1) or 0) * 60 + int(iso.group(2) or 0)
+    matches = list(_TIME_PART.finditer(value))
+    if not matches:
+        return None
+    selected = [matches[0]]
+    for match in matches[1:]:
+        separator = value[selected[-1].end():match.start()]
+        if not re.fullmatch(r"\s*(?:,|and|i|et|y)?\s*(?:[a-ząćęłńóśźż]+)?\s*", separator, re.IGNORECASE):
+            break
+        selected.append(match)
+
+    total = 0.0
+    for match in selected:
+        amount, unit = match.groups()
+        multiplier = 60 if unit.casefold().startswith(("h", "godzin", "stund", "heure", "hora")) else 1
+        total += float(amount.replace(",", ".")) * multiplier
+    return round(total) if total else None
+
 
 class AudioRecipeEvidenceComponent(BaseModel):
     name: str | None = None
@@ -133,8 +171,9 @@ Never add ingredients, change stated numbers, estimate values, convert units, ro
 infer missing steps, calculate nutrition, assign tags, detect allergens, or add references.
 
 Return JSON matching the provided schema. If there is no recipe, return null title and an
-empty components array. Create a component for each explicit section. Extract servings only
-when stated; otherwise return null. For a stated servings range, use its midpoint rounded to
+ empty components array. Create a component for each explicit section. Extract servings and total
+time only when stated; otherwise return null. Convert a stated total time to whole minutes, including
+compact values such as "1h 5m" (65 minutes). For a stated servings range, use its midpoint rounded to
 a whole number. Separate qty, unit, and name only when doing so preserves the source exactly.
 Use only these units: """ + _ALLOWED_UNITS + """. For unsupported units, preserve the entire
 ingredient text in name with null qty and unit. Leave enrichment fields empty.
@@ -702,7 +741,7 @@ def assemble_recipe(
     return RecipeExtraction(
         title=source.title,
         servings=source.servings,
-        total_time_minutes=enrichment.total_time_minutes,
+        total_time_minutes=source.total_time_minutes if source.total_time_minutes is not None else enrichment.total_time_minutes,
         kcal_per_serving=enrichment.kcal_per_serving,
         protein_per_serving=enrichment.protein_per_serving,
         fat_per_serving=enrichment.fat_per_serving,
@@ -747,6 +786,8 @@ async def extract_recipe(
     raw = response.text
     log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
     source = RecipeSourceExtraction.model_validate(json.loads(raw))
+    if stated_time := stated_total_time_minutes(text):
+        source = source.model_copy(update={"total_time_minutes": stated_time})
     enrichment, step_ingredient_lines = await asyncio.gather(
         _enrich_recipe(source, available_tags, generous, usage),
         _match_source_step_ingredient_lines_safely(source, generous, usage),
