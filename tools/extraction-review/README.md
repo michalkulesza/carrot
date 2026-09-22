@@ -14,7 +14,7 @@ Directories are searched non-recursively. Quoted globs are expanded by the runne
 
 Use `--offset` and `--limit` to process a stable slice of the sorted, deduplicated input list. For example, `--offset 10 --limit 5` reviews inputs 11 through 15.
 
-Saved transcripts are retained as source material. Offline runs mark an incomplete case with an available transcript as `AUDIO_MODEL_DISABLED`; they do not claim the transcript contains no recipe. Live and replay audio-model adapters remain pending work and the CLI rejects those modes instead of accidentally making a paid call.
+Saved transcripts are extracted with Gemini by default when earlier evidence is incomplete; the runner never downloads media or retranscribes. Use `--audio-model off` for an offline review; it marks an incomplete case with an available transcript as `AUDIO_MODEL_DISABLED` rather than claiming the transcript contains no recipe. Audio evidence has a 45-second review timeout and retries one transient provider failure; a final failure is recorded in the case artifacts.
 
 Instagram/social captures automatically use Gemini (configured credentials are required):
 
@@ -36,3 +36,6 @@ bound the number of reviewed inputs; `--max-model-calls` is currently rejected.
 Local review artifacts include the selected model, selection request/response,
 reported token usage, and fallback diagnostics. These artifacts contain source
 text and should be treated as private review data.
+
+Saved-transcript evidence uses `gemini-3.1-flash-lite` by default, configured
+separately through `GEMINI_AUDIO_EVIDENCE_MODEL`.

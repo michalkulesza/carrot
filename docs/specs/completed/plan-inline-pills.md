@@ -37,7 +37,7 @@ class SaveComponent(BaseModel):
 New function `match_step_ingredients`:
 - System prompt: identify which ingredient each step mentions by name/plural/synonym
 - Returns structured JSON: list of `{ step_index, ingredient_index, mention }`
-- Model: `gemini-2.5-flash-lite` (lightweight task)
+- Model: `gemini-3.1-flash-lite` (lightweight task)
 - Result mapped into `list[list[StepIngredientRef]]` (indexed by step)
 
 ### Route (`routes/recipes.py`)

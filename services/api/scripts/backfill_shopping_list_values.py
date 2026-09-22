@@ -38,7 +38,7 @@ async def main(apply: bool) -> None:
                     try:
                         normalized["shopping_list_ingredients"] = await recommend_shopping_list_values(
                             ingredients,
-                            model="gemini-2.5-flash-lite",
+                            model="gemini-3.1-flash-lite",
                         )
                     except Exception as exc:
                         print(f"Skipped {recipe.id}: {recipe.title} ({exc})")

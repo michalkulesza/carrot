@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:14:41.022752+00:00",
+  "source_url": "https://www.instagram.com/p/DHjkEisNMym/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "81K likes, 162 comments - eliliekitchen on March 23, 2025: \"Boulettes de poulet à la forestière 🍄‍🟫\n\nIngrédients :\n\t•\t2 escalopes de poulet\n\t•\t1 oignon\n\t•\t2 gousses d’ail\n\t•\tSel, poivre, paprika, piment, persil séché, chapelure\n\n\t•\t1 cuillère à soupe d’huile d’olive\n\t•\t200 g de champignons frais\n\t•\t1 bouillon de poulet\n\t•\t1 briquette de crème liquide\n\t•\tNoix de muscade, persil frais pour assaisonner\n\nÉtapes :\n\t1.\tMixer le poulet, l’oignon, l’ail et la chapelure et assaisonner avec le sel, poivre, paprika, piment et persil. Former des boulettes après avoir huilé les mains.\n\t2.\tFaire revenir les boulettes dans un peu d’huile d’olive jusqu’à ce qu’elles soient dorées. Réserver.\n\t3.\tDans la même poêle, faire revenir l’oignon et l’ail, puis ajouter les champignons. Laisser suer un peu.\n\t4.\tAjouter le bouillon de poulet et laisser mijoter. Ajouter les boulettes et laisser bien dorer.\n\t5.\tVerser la crème liquide, couvrir et laisser épaissir la sauce. Ajuster l’assaisonnement avec du poivre, paprika, noix de muscade et persil frais.\n\t6.\tServir avec de la purée ou des pâtes.\n\nBon appétit 😋 \n\n#recette #recettefacile #ideerecette #poulet #sauceforestiere #boulette #saucechampignon\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "eliliekitchen"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.75761-15/486395128_17842886157450692_3136936342145206404_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=110&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=_zkfk9H46cQQ7kNvwHTiRZ_&_nc_oc=AdofeLA4hqyt_lfSWn2TrpRm4VxR0Lk5ZXH27trgYg8oZmid5_5F6B3SdGxjc8ciCAG3QR7M65oRvOos6g8tHAhd&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=veb-W22znlU9FY1NyeSJ_w&_nc_ss=7b6a8&oh=00_AQLvXALnuN2CNY0MIxZMWgPcHFSTvOa19pAmVqI3vCSBjQ&oe=6AB89B25",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOSsSnYW96UjlIGhlVxN5TCiC9v093QMPGrIOLe0vjrJjpOTlog0uETYLSl1skxVXYPCDukVnqS7HuPx-KhIbiMCGFt_3jVNe9EZUY.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5AM9XBFUcccQ7kNvwEhyQWi&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3EyMCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxMTU1NzU4ODMyOTk3ODY5LCJhc3NldF9hZ2VfZGF5cyI6NTQ3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NjQsImJpdHJhdGUiOjIwNzUyNCwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=lTuqQTxEEsW1uwklbUuLyw&_nc_zt=28&_nc_ss=7a22e&oh=00_AQIK3JPa-nZY9R4q6DxXKZFPdOpODEDtZp6ipMi6nSrTQw&oe=6AB8B013&bytestart=108164&byteend=390617"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOSsSnYW96UjlIGhlVxN5TCiC9v093QMPGrIOLe0vjrJjpOTlog0uETYLSl1skxVXYPCDukVnqS7HuPx-KhIbiMCGFt_3jVNe9EZUY.mp4?_nc_cat=102&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5AM9XBFUcccQ7kNvwEhyQWi&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3EyMCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxMTU1NzU4ODMyOTk3ODY5LCJhc3NldF9hZ2VfZGF5cyI6NTQ3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NjQsImJpdHJhdGUiOjIwNzUyNCwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=lTuqQTxEEsW1uwklbUuLyw&_nc_zt=28&_nc_ss=7a22e&oh=00_AQIK3JPa-nZY9R4q6DxXKZFPdOpODEDtZp6ipMi6nSrTQw&oe=6AB8B013&bytestart=108164&byteend=390617",
+    "audio_url": null,
+    "audio_title": "SHYY BEATS•Beautiful",
+    "transcript": "Pour ce soir, j'ai eu envie de changer des boulettes à la viande hachée. Je te montre la version au poulet avec sa sauce aux champignons, c'est parti. Je commence par placer dans mon mixeur deux escalopes de poulet, j'ajoute un demi-oignon et deux gousses d'ail. Pour l'assaisonnement, j'ai mis du sel, du poivre, du paprika, du piment doux et du persil séché. J'ajoute également un petit peu de chapelure, ça va améliorer la tenue de tes boulettes. Je mixe le tout jusqu'à obtenir une texture homogène. Ensuite, je façonne mes boulettes en huilant bien mes mains, ça va éviter que ça colle. Et avec ces quantités, j'ai obtenu huit boulettes. On passe à la cuisson, dans un peu d'huile d'olive, je les fais revenir pendant quelques minutes jusqu'à qu'elles soient dorées de tous les côtés. Une fois qu'elles sont prêtes, je les mets de côté et je vais passer à la sauce. Dans la même poêle, je fais revenir mon oignon, mon ail et je viens ajouter mes champignons. Je les laisse suer un petit peu, puis j'ajoute un bouillon de poulet et je laisse le tout mijoter 5 minutes. Je remets ensuite mes boulettes de poulet dans la sauce, je mélange bien le tout et je couvre quelques instants. J'ajoute ensuite ma crème liquide, je couvre et je laisse épaissir. Une fois que ma sauce a épaissi, je rectifie l'assaisonnement. Je n'ai pas remis de sel car le bouillon était déjà très salé. J'ai mis du poivre, de la noix de muscade, du paprika et du persil. Je mélange bien le tout, je laisse encore mijoter quelques instants et voilà, c'est déjà prêt. J'ai servi avec de la purée maison, mais c'est tout aussi bon avec des pâtes. Je te souhaite un bon appétit et à demain pour une nouvelle recette.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

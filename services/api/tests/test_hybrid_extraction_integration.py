@@ -25,13 +25,7 @@ class CaptionSelector:
         return TextSelection.model_validate({
             "components": [{"ingredient_line_ids": ["line:2", "line:4"]}],
             "yield_line_ids": ["line:1"],
-            "nutrition": {
-                "line_ids": ["line:5", "line:6"],
-                "basis": "per_serving",
-                "basis_quote": {"line_id": "line:5", "quote": "Per serving"},
-                "calories": {"line_id": "line:6", "quote": "250 kcal"},
-                "protein": {"line_id": "line:6", "quote": "10 g"},
-            },
+            "nutrition": {"line_ids": ["line:5", "line:6"]},
         })
 
 

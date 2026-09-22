@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:13:38.643325+00:00",
+  "source_url": "https://www.instagram.com/p/DUYfC8XjMPA/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "14K likes, 107 comments - margaukitchen on February 5, 2026: \"Cabillaud au lait de coco 🐟\n\nMa façon préférée de cuisiner le cabillaud 😍\n\nIngrédients pour 2 personnes: \n- 200-300g de cabillaud\n- 1 CAC paprika, sel, poivre\n- 1/2 oignon\n- Piment\n- Ail\n- 1 cube de bouillon de légume\n- 1/2 CAC gingembre\n- 1 brique de lait de coco\n- Persil et chili oil pour le dressage\n\nEtapes: \n- Faire revenir le cabillaud dans une poêle après les avoir assaisonnés avec le paprika, sel et poivre\n- Faire fondre les oignons et piments dans la même poêle\n- Ajouter l’ail, le gingembre, le cube de bouillon\n- Ajouter le lait de coco, un peu d’eau\n- Laisser cuire à feu doux pendant 5 bonnes minutes\n- Ajouter le cabillaud\n- Laisser cuire encore 5 minutes à couvert\n- C’est prêt ! Je le sers avec du riz\n\n#recette #recetterapide #recettesimple #cuisine  #ideerepas ideerecette recettefacile\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "margaukitchen"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/629833946_17963124200993358_3859204152033371049_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=104&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=HAWRtv_zsQ0Q7kNvwHC_VyC&_nc_oc=Adq4bnmHoZVCGUmawewgjDJtcyaPJsLgRt5XhdTSSLfYgKfQqwmCGl5qes8aI_7hHlBSs5MG5rHWWzfjOAp21_pS&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=QsKLqavhLjcdtZV9QILxPg&_nc_ss=7b6a8&oh=00_AQLuxVnVHThKoG2XLrHLGWfgYPveoQw2rLC1VCxCSxzDiw&oe=6AB8AA33",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQO3KdtvybbWKtABrNudp59H-9H18zKNoO17SAUDBp8vBgHA0l7btWGjR4nE1gAB6AIxIxNFdCWUOTj7QUI4QuEzkt7y0yg-wgbL5Hk.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=tJMIg2ew4mYQ7kNvwHCdIW4&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5NjMxMjQxNjc5OTMzNTgsImFzc2V0X2FnZV9kYXlzIjoyMjksInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo0NCwiYml0cmF0ZSI6NTAwMjE5OSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=6VNbwWPHojnqqPI-erewYg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJviq7T1s4bjmcM8lYJu96QdURjajFBxev32gc-BHP3sA&oe=6AB89F3C&bytestart=974&byteend=3217855"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQO3KdtvybbWKtABrNudp59H-9H18zKNoO17SAUDBp8vBgHA0l7btWGjR4nE1gAB6AIxIxNFdCWUOTj7QUI4QuEzkt7y0yg-wgbL5Hk.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=tJMIg2ew4mYQ7kNvwHCdIW4&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5NjMxMjQxNjc5OTMzNTgsImFzc2V0X2FnZV9kYXlzIjoyMjksInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo0NCwiYml0cmF0ZSI6NTAwMjE5OSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=6VNbwWPHojnqqPI-erewYg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJviq7T1s4bjmcM8lYJu96QdURjajFBxev32gc-BHP3sA&oe=6AB89F3C&bytestart=974&byteend=3217855",
+    "audio_url": null,
+    "audio_title": "Diana Ross•Upside Down (Original CHIC Mix)",
+    "transcript": "Si vous savez pas trop comment cuisiner le poisson, cette recette elle est parfaite, c'est un cabillaud au lait de coco, c'est tout simple à faire et c'est juste une merveille. Honnêtement, je pense que même quelqu'un qui n'aime pas le poisson va aimer cette recette. Je commence par assaisonner le cabillaud, donc je vais mettre du paprika, du sel et du poivre. Je vais le faire revenir dans une poêle avec un peu d'huile, donc quelques minutes à peine, c'est juste pour le faire dorer. Je le retire du feu et dans la même poêle, je vais faire cuire oignon et piment. J'ajoute un peu de gingembre et de l'ail et quand ça a bien fondu, je vais ajouter mon lait de coco avec un cube de bouillon. J'ajoute aussi un petit peu d'eau et je vais laisser le tout cuire pendant cinq bonnes minutes à feu doux. Quand la sauce a bien épaissi, je vais ajouter le poisson et je laisse à couvert encore cinq bonnes minutes et puis c'est prêt. Donc comme vous voyez, cette recette demande très peu d'effort. Je sers avec du riz et je vous souhaite un bon appétit. Ah oui, et surtout abonnez-vous pour pas manquer les prochaines recettes.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

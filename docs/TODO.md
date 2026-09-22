@@ -16,6 +16,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 
 - [ ] **Extractor v2** — Core deterministic HTML/text extraction and evidence attribution are implemented locally; frozen baseline collection, broader review fixtures, and manual approval remain. The source-agnostic extractor has explicit cleaned-HTML and normalized-text entry points and does not know whether text originated in a social caption, comment, linked page, or transcript. Implementation plan: [docs/specs/extractor-v2.md](specs/extractor-v2.md). Production enrichment/persistence/UI integration remains a separate release dependency.
   - [ ] Add reviewed extraction-v2 regression fixtures for French, German, and Spanish recipes.
+  - [ ] Add reviewed TikTok and Facebook extraction-v2 fixtures: five recipes for each of English, Polish, German, French, and Spanish on each platform (50 fixtures total).
 
 - [x] **Local Instagram fixture capture tool for ExtractorV2** — A standalone, local-only authenticated browser tool: accept one or more Instagram post/reel URLs, let the user sign in interactively using a persistent local browser profile, and save repeatable fixtures containing the caption/description, post/creator metadata, creator-authored comments and replies with authorship evidence, and audio/video references or downloaded audio where available. Preserve the raw ScrapeCreators-shaped response and add a versioned normalized envelope so the `ExtractionOrchestrator` can replace ScrapeCreators with captured fixtures without adapter changes. Do not send browser credentials or session data to Carrot services; fixtures must clearly record unavailable fields and capture failures.
 
@@ -66,10 +67,20 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 6. Run the same examples through v2, have the user manually review the spreadsheet, fix identified problems, and retain corrected cases as regressions. Switch new imports to v2 only after the user's explicit approval; leave existing recipes unchanged. Move the plan to `docs/specs/completed/` only once implementation is fully complete.
 7. Then specify and implement unit/amount parser v2, evaluate it on its own 100 examples, and require a separate manual review and approval before replacing the current parser.
 
-- [x] **Gemini-assisted extraction v2 text selection** — Implemented source-line selection for ingredients, instructions, component headings, explicit yield, and nutrition using `gemini-3.1-flash-lite`, with validated evidence and deterministic fallback. Instagram/social captures use Gemini by default in the review runner; HTML remains deterministic. 209 offline checks pass; live model accuracy review and production rollout remain separate. Plan: [Gemini text selection](specs/completed/extraction-v2-gemini-selection.md).
+- [x] **Gemini-assisted extraction v2 text selection** — Implemented source-line selection for ingredients, instructions, component headings, explicit yield, and nutrition using `gemini-3.1-flash-lite`, with validated evidence and deterministic fallback. Gemini returns line IDs for yield and nutrition, while the server parses their actual values deterministically. Instagram/social captures use Gemini by default in the review runner; HTML remains deterministic. Live model accuracy review and production rollout remain separate. Plan: [Gemini text selection](specs/completed/extraction-v2-gemini-selection.md).
   - [x] Preserve redacted provider status, message, code, and structured details in extraction review artifacts when selection falls back.
-  - [x] Remove leading emoji/list markers from selected ingredients and steps, and store numeric-only per-serving nutrition values while preserving full source evidence.
+  - [x] Remove leading emoji/list markers from selected ingredients and steps, and deterministically parse numeric-only per-serving nutrition values from Gemini-selected source lines while preserving full source evidence.
+  - [x] Combine selected wrapped source lines into their preceding numbered instruction, retaining a reference for every source line.
+  - [x] Permit instruction-only selections when ingredient names and quantities appear only inside cooking directions.
+  - [x] Ignore unsupported or garbled secondary social-caption blocks when supported recipe evidence is available; retain a partial supported recipe when an unsupported transcript adds no usable evidence.
+  - [x] Defer an unsupported sparse social-caption language failure when an audio fallback is available; accept a separately detected supported transcript as the recipe source.
+  - [x] Reject product/appliance reviews and incidental serving suggestions as recipe evidence unless the source presents a genuine self-contained recipe.
+  - [x] Materialize comma- and bullet-separated ingredient-list items as individually grounded ingredients, while retaining preparation qualifiers such as "salt, to taste" as one item.
+  - [x] Ground Gemini audio-extraction wording back to an exact matching transcript span, repairing only matchable mojibake instead of accepting altered source text.
+  - [x] Reject an audio-only partial extraction when caption/comment evidence provides no recipe anchor, preventing unrelated spoken fragments from being saved as recipes.
   - [x] Select explicit yield/portion source lines and derive the numeric serving count server-side.
+  - [x] Replay reviewed Gemini line selections in captured regressions and recognize explicit serving/portion lines deterministically in all five supported languages.
+  - [x] Ignore optional yield selections that do not contain a deterministic serving count, so an overlapping ingredient line cannot invalidate the complete Gemini selection.
 
 ## Core product features
 
@@ -125,7 +136,7 @@ Items are grouped by purpose and ordered from highest to lowest importance withi
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
 -------------------------------------------------------------
-- [x] **Reduce extraction hallucinations (prompt/model tuning)** — Cheap first lever before a full validation pass: add an anti-fabrication clause to the extraction prompt, set `temperature=0`, and route the faithful-extraction call to `gemini-2.5-flash` (keeping shopping-list/unit-conversion on `flash-lite`). See `docs/specs/reduce-extraction-hallucinations.md`.
+- [x] **Reduce extraction hallucinations (prompt/model tuning)** — Cheap first lever before a full validation pass: add an anti-fabrication clause to the extraction prompt, set `temperature=0`, and route the faithful-extraction call to `gemini-3.1-flash-lite`. See `docs/specs/reduce-extraction-hallucinations.md`.
 - [x] **Public sharing** — Create shareable public recipe pages.
 
 ## Portfolio / showcase

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T17:35:14.463005+00:00",
+  "source_url": "https://www.instagram.com/p/Dbkorc2MtgT/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "79 likes, 21 comments - obiad.gotowy on July 31, 2026: \"Mam wrażenie, że latem mogłabym jeść lody codziennie. 😋\n\nJeśli też tak macie, to Tefal Dolci może szybko stać się jednym z najczęściej używanych sprzętów w Waszej kuchni. Przygotujecie w nim nie tylko klasyczne lody, ale też sorbety, mrożony jogurt, smoothie bowl, frappé czy slush. Najbardziej podoba mi się to, że sama decyduję o składnikach – mogę zrobić wersję wysokobiałkową, bez laktozy, z mniejszą ilością cukru albo całkowicie roślinną.\n\nPrzetestowałam już kilka przepisów i obsługa jest naprawdę prosta, urządzenie posiada aż 10 różnych programów. Wystarczy przygotować bazę, zamrozić ją w dołączonych pojemnikach, a Tefal Dolci w kilka minut zamieni ją w lodowy deser. Dużym plusem są trzy pojemniki – zwykle przygotowuję kilka różnych smaków na raz i trzymam je w zamrażarce, żeby lody były zawsze pod ręką.\n\nTrzeba tylko pamiętać, że bazę należy zamrozić około 24 godziny wcześniej. Dla mnie to nie problem, bo po prostu robię większy zapas. 😉\n\nPrzydatnym dodatkiem jest też e-book z 50 przepisami, który świetnie sprawdza się na początek. A później… można już eksperymentować do woli.\n\nJeśli lubicie mrożoną kawę, koniecznie spróbujcie frappé. Ja wykorzystałam 200 ml zamrożonej bazy do lodów, dodałam 100 ml espresso i 150 ml mleka, a całość przygotowałam na programie Frappe. Jeśli ilość kalorii nie gra roli, to na wierzch  bita śmietanka, sos czekoladowy lub karmelowy i gotowe! W wersji wege świetnie sprawdzą się napoje roślinne.\n\nPrzepisy na lody pistacjowe i mrożony jogurt z owocami znajdziecie w wyróżnionych relacjach „Tefal”. ❤️\n\nProdukt został mi udostępniony do testów przez Group SEB Polska Sp. z o.o. w ramach akcji #testujztefal\n.\n#lody #domowelody #tefaldolci #frappe\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "obiad.gotowy"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/762688557_18610215493041695_7035357420935433607_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=NvuZO-UVXmEQ7kNvwHQJFki&_nc_oc=AdqXqTMq5op6ua-svwHFHvI8vv9c0fOOpQ7FEyd7AshcfkuDep6fE98G6fBAnZ4Xmj42RzdnTMHe6lV5jUFgaHEu&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=hafLsiGBBQAChNJfDdi62g&_nc_ss=7b6a8&oh=00_AQIYDeHYi3cRlkIwpVTDVZwwD0eT7gJ3ShJxwZVl48Wiuw&oe=6AB88362",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMJMfr0UGToMnVn20dkvYTGHziKGeQYuWhNU_lN8FsiUbPMlMak-MbmZLVhsM4qgydeRLcLyRUUCMFfM0zbBoepMNydtit93ecQ4XJQ6VvlKQ.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=0h2XhXpQGIYQ7kNvwFqaR3b&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTQ0MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6NDAzNzc5NDUxNjUxNTIyNiwiYXNzZXRfYWdlX2RheXMiOjUzLCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6NjAsImJpdHJhdGUiOjIyNzI2MzQsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=GitGtyqido24TEQ3SJmWKQ&_nc_zt=28&_nc_ss=7a22e&oh=00_AQJH7r3TWAk_KgBjtbUqpKNjSHhODCHrz41dU765AhBDDQ&oe=6AB8847D&bytestart=1494801&byteend=4642394"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMJMfr0UGToMnVn20dkvYTGHziKGeQYuWhNU_lN8FsiUbPMlMak-MbmZLVhsM4qgydeRLcLyRUUCMFfM0zbBoepMNydtit93ecQ4XJQ6VvlKQ.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=0h2XhXpQGIYQ7kNvwFqaR3b&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjJfMTQ0MHAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6NDAzNzc5NDUxNjUxNTIyNiwiYXNzZXRfYWdlX2RheXMiOjUzLCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6NjAsImJpdHJhdGUiOjIyNzI2MzQsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=GitGtyqido24TEQ3SJmWKQ&_nc_zt=28&_nc_ss=7a22e&oh=00_AQJH7r3TWAk_KgBjtbUqpKNjSHhODCHrz41dU765AhBDDQ&oe=6AB8847D&bytestart=1494801&byteend=4642394",
+    "audio_url": null,
+    "audio_title": "Jack Richard Pierce•Summers In Italy",
+    "transcript": "Od pewnego czasu przestaliśmy kupować lody na mieście, ponieważ mamy je w domu, dosłownie na wyciągnięcie ręki i to w smakach, jakie najbardziej lubimy. Odkąd się pojawiła w naszym domu maszynka do lodów Dolce, jest najczęściej wykorzystywanym sprzętem w kuchni. Próbowaliśmy już wiele rodzajów lodów, od tradycyjnych kremowych, poprzez włoskie gelato, sorbety i mrożony jogurt. I w sumie miałabym problem, żeby powiedzieć, które z nich lubię najbardziej, ponieważ wszystkie smakują przepysznie. Dzień wcześniej przygotowuję bazę, którą wstawię do zamrażarki na 24 godziny, a mam trzy kubeczki, więc mogą być to trzy zupełnie różne smaki i kolejnego dnia miksuję albo lody, albo sorbet, kawę frappe, milkshake albo koktajl. W opisie przygotowałam pełną recenzję i moje wrażenia z testowania maszynki do lodów Tefal Dolce. Jestem ciekawa, jakie smaki lodów lubicie najbardziej. Dajcie znać w komentarzu.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

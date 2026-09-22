@@ -18,6 +18,20 @@ from api.services.extraction_v2.lexicons import heading_kind, looks_like_ingredi
 
 MAX_CONTENT_CHARS = 500_000
 MAX_BLOCKS = 5_000
+_YIELD_UNIT = (
+    r"(?:servings?|portions?|porcj(?:a|e|i|ę)|portion(?:en)?|porciones?|raciones?|"
+    r"person(?:s|en|as|nes)?|people|osob(?:a|y|ę|om)?|rolls?)"
+)
+_TEXT_YIELD_MARKER = re.compile(rf"\b(?:makes?|yield|{_YIELD_UNIT})\b", re.IGNORECASE)
+_PER_SERVING = re.compile(
+    r"\b(?:per\s+(?:serving|portion)|1\s+porcj(?:ę|e|i)|na\s+(?:1\s+)?porcj(?:ę|e|i)|"
+    r"pro\s+portion|par\s+portion|por\s+(?:porción|ración))\b",
+    re.IGNORECASE,
+)
+_CALORIE_LABEL = r"\b(?:calories?|kcal|kilocalories?|kalorii|kalorien|calorías?)\b"
+_PROTEIN_LABEL = r"\b(?:protein|białk\w*|eiwei(?:ß|ss)|protéines?|proteínas?)\b"
+_FAT_LABEL = r"\b(?:fat|tłuszcz\w*|fett|lipides?|grasas?)\b"
+_CARBOHYDRATE_LABEL = r"\b(?:carbs?|carbohydrates?|węglowodan\w*|kohlenhydrat\w*|glucides?|carbohidratos?)\b"
 
 
 @dataclass(frozen=True)
@@ -53,14 +67,20 @@ class RecipeEvidenceExtractor:
         blocks, title, title_reference = _html_blocks(source)
         yield_text, yield_references, total_time_minutes, total_time_text, total_time_references, nutrition = _html_metadata(source)
         return _extract(blocks, title, title_reference, allow_unheaded=False, yield_text=yield_text,
-                        yield_servings=_yield_servings(yield_text),
+                        yield_servings=parse_yield_servings(yield_text, allow_unlabelled=True),
                         yield_references=yield_references, total_time_minutes=total_time_minutes,
                         total_time_text=total_time_text, total_time_references=total_time_references, nutrition=nutrition)
 
     async def extract_text(self, source: ExtractionInput) -> ExtractedRecipe:
         self._validate_input(source)
         blocks = _text_blocks(source)
-        return _extract(blocks, None, [], allow_unheaded=True)
+        yield_text, yield_servings, yield_references = _text_yield(blocks)
+        nutrition = _text_nutrition(blocks)
+        return _extract(
+            blocks, None, [], allow_unheaded=True,
+            yield_text=yield_text, yield_servings=yield_servings, yield_references=yield_references,
+            nutrition=nutrition,
+        )
 
     @staticmethod
     def _validate_input(source: ExtractionInput) -> None:
@@ -356,6 +376,30 @@ def _text_blocks(source: ExtractionInput) -> list[Block]:
     return blocks
 
 
+def _text_yield(blocks: list[Block]) -> tuple[str | None, str | None, list[EvidenceReference]]:
+    """Read an explicitly labelled yield from normalized text without inference."""
+
+    for block in blocks:
+        if _TEXT_YIELD_MARKER.search(block.text) and (servings := parse_yield_servings(block.text)):
+            return block.text, servings, list(block.references)
+    return None, None, []
+
+
+def _text_nutrition(blocks: list[Block]) -> NutritionEvidence:
+    """Parse a compact explicitly per-serving nutrition panel from text blocks."""
+
+    for width in range(1, 4):
+        for start in range(len(blocks) - width + 1):
+            selected = blocks[start:start + width]
+            nutrition = parse_nutrition_text("\n".join(block.text for block in selected))
+            if any((nutrition.calories, nutrition.protein, nutrition.fat, nutrition.carbohydrates)):
+                references = [reference for block in selected for reference in block.references]
+                nutrition.evidence_ids = _reference_ids(references)
+                nutrition.references = references
+                return nutrition
+    return NutritionEvidence()
+
+
 def _text_block(source: ExtractionInput, text: str, kind: str, start: int, end: int) -> Block:
     reference = text_reference(source, start, end, text)
     return Block(normalize_evidence_text(text), kind, start=start, end=end, references=(reference,))
@@ -534,7 +578,7 @@ def _bbc_good_food_recipe(source: ExtractionInput) -> ExtractedRecipe | None:
         title_references=[reference] if isinstance(title, str) and title.strip() else [],
         components=components,
         yield_text=normalize_evidence_text(servings) if isinstance(servings, str) and servings.strip() else None,
-        yield_servings=_yield_servings(servings) if isinstance(servings, str) else None,
+        yield_servings=parse_yield_servings(servings, allow_unlabelled=True) if isinstance(servings, str) else None,
         yield_evidence_ids=[source.evidence_ids[0]] if isinstance(servings, str) and servings.strip() else [],
         yield_references=[reference] if isinstance(servings, str) and servings.strip() else [],
         total_time_minutes=round(total_seconds / 60) if isinstance(total_seconds, (int, float)) else None,
@@ -771,7 +815,7 @@ def _metadata_reference(source: ExtractionInput, tag: Tag, raw: str) -> Evidence
 
 
 def _nutrition_value(text: str, pattern: str, *, exclude: tuple[str, ...] = ()) -> str | None:
-    for value in re.split(r"[;,|]", text):
+    for value in re.split(r"[;|/]|,(?!\d)", text):
         for label in re.finditer(pattern, value, re.IGNORECASE):
             preceding_word = re.search(r"([a-z]+)\s*$", value[:label.start()], re.IGNORECASE)
             if preceding_word and preceding_word.group(1).casefold() in exclude:
@@ -785,7 +829,24 @@ def _nutrition_value(text: str, pattern: str, *, exclude: tuple[str, ...] = ()) 
     return None
 
 
-def _yield_servings(value: str | None) -> str | None:
+def parse_nutrition_text(value: str) -> NutritionEvidence:
+    """Extract numeric per-serving nutrition values from grounded source text."""
+
+    result = NutritionEvidence(raw_text=value or None)
+    if not value or not _PER_SERVING.search(value):
+        return result
+    result.calories = _nutrition_value(value, _CALORIE_LABEL)
+    result.protein = _nutrition_value(value, _PROTEIN_LABEL)
+    result.fat = _nutrition_value(
+        value,
+        _FAT_LABEL,
+        exclude=("from", "monounsaturated", "polyunsaturated", "saturated"),
+    )
+    result.carbohydrates = _nutrition_value(value, _CARBOHYDRATE_LABEL)
+    return result
+
+
+def parse_yield_servings(value: str | None, *, allow_unlabelled: bool = False) -> str | None:
     if not value:
         return None
     makes_count = re.match(r"\s*makes?\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
@@ -794,11 +855,17 @@ def _yield_servings(value: str | None) -> str | None:
     serves_count = re.match(r"\s*serv(?:es|ings?)\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
     if serves_count:
         return serves_count.group(1)
-    match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(?:[-–]\s*\d+(?:[.,]\d+)?)?\s+(?:servings?|rolls?)\b", value, re.IGNORECASE)
+    match = re.search(
+        rf"\b(\d+(?:[.,]\d+)?)\s*(?:[-–]\s*\d+(?:[.,]\d+)?)?\s+{_YIELD_UNIT}\b",
+        value,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1)
-    leading_count = re.match(r"\s*(\d+(?:[.,]\d+)?)\b", value)
-    return leading_count.group(1) if leading_count else None
+    if allow_unlabelled:
+        leading_count = re.match(r"\s*(\d+(?:[.,]\d+)?)\b", value)
+        return leading_count.group(1) if leading_count else None
+    return None
 
 
 def _reference_ids(references: list[EvidenceReference]) -> list[str]:

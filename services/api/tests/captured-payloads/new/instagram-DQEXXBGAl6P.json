@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:22:10.023848+00:00",
+  "source_url": "https://www.instagram.com/p/DQEXXBGAl6P/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "43K likes, 188 comments - giorgiasbakery_ on October 21, 2025: \"è tempo di piatti caldi e confortantiiii ✨🍂\n\nRisoni con zucca, guanciale e fonduta di pecorino ✨\n\ningredienti \n280 g zucca \n140 g risoni \n150 g guanciale \nfonduta di pecorino \npepe nero\nolio \nbrodo 500 ml (circa)\n\nper la fonduta \n100 g pecorino grattugiato \n70 ml latte \n15 g burro \n\n#recipe #recipeoftheday #autumn #food #lunch\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "giorgiasbakery_"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/568575724_789650173860930_330961539281985575_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=106&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=0n2AosfvcBoQ7kNvwG-1Rr2&_nc_oc=AdpBcs1jk3EssAmgwn9Ueu2_QIvikohmErw3vQapcDIMjiUVNmPQTyIb81ZQSI5I_ubrJFrL9rTtnx9pqOa9qH_A&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=c0FTp30KwTARmmBTDwFRYw&_nc_ss=7b6a8&oh=00_AQKL2oy6reXGyXSdxectwzGNLkefXM8pgkc3-O1ljLy83Q&oe=6AB8A49E",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNvBzei-U2Khlxg-T0gkZ7oe1_SQtiz4tecrXoiq01tCRmmjtLiwO14XnTWn2MyWnp2WhPuKsxPOwQ0jEUNlS4TSrxCT21Sb5ep5Lk.mp4?_nc_cat=104&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=kFrNmdSIcZ8Q7kNvwGP5nMB&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo3OTE4NDE0MzM3NDc2OTMsImFzc2V0X2FnZV9kYXlzIjozMzYsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo1OCwiYml0cmF0ZSI6MjkyOTk2MSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=f7PnUUOsTfLMf8QZBhu5_w&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJnwxBLT8Cmc9ExCVNYhpee2Qjj4WECyy5fc9XATpVlTg&oe=6AB89DE9&bytestart=1936800&byteend=6087564"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNvBzei-U2Khlxg-T0gkZ7oe1_SQtiz4tecrXoiq01tCRmmjtLiwO14XnTWn2MyWnp2WhPuKsxPOwQ0jEUNlS4TSrxCT21Sb5ep5Lk.mp4?_nc_cat=104&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=kFrNmdSIcZ8Q7kNvwGP5nMB&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo3OTE4NDE0MzM3NDc2OTMsImFzc2V0X2FnZV9kYXlzIjozMzYsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo1OCwiYml0cmF0ZSI6MjkyOTk2MSwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=f7PnUUOsTfLMf8QZBhu5_w&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJnwxBLT8Cmc9ExCVNYhpee2Qjj4WECyy5fc9XATpVlTg&oe=6AB89DE9&bytestart=1936800&byteend=6087564",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Vi scommetto che non appena assaggerete questo piatto, ve ne innamorerete. Caldo, cremoso e avvolgente. Questo rientra in assoluto nella top five dei miei risoni preferiti. Cominciamo subito dal guanciale, lo facciamo rosolare nel padellino e quando sarà ben croccante lo mettiamo da parte. Passiamo adesso alla zucca, la sbucciamo e la tagliamo a dadini piccoli. La uniamo nel padellino dove abbiamo cotto il guanciale insieme alla cipolla, copriamo con brodo, lasciamo cuocere e poi la frulliamo. Qui adesso aggiungiamo i risoni e cuociamo la pasta come se fosse un risotto, mescolando e aggiungendo brodo poco per volta. E noi nel frattempo ci dedichiamo alla preparazione della fonduta di pecorino. Quando sarà pronta la mettiamo da parte e riprendiamo la nostra pasta che ormai sarà cotta. Aggiungiamo il guanciale alla fonduta e voilà, possiamo impiattare. Impiattiamo con tanto sentimento, completiamo con pepe nero, un filo d'olio ed eccolo qui. Il nostro piatto è pronto. Questo è in assoluto un piatto da comfort food e sono certa che tutti direte: \"Mamma mia, che bontà!\"",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

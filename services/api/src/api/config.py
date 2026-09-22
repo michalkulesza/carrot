@@ -6,7 +6,8 @@ class Settings(BaseSettings):
 
     scrapecreators_api_key: str = ""
     gemini_api_key: str = ""
-    gemini_extraction_model: str = "gemini-2.5-flash"
+    gemini_extraction_model: str = "gemini-3.1-flash-lite"
+    gemini_audio_evidence_model: str = "gemini-3.1-flash-lite"
     gemini_text_selection_model: str = "gemini-3.1-flash-lite"
     semantic_search_enabled: bool = True
     gemini_embedding_model: str = "gemini-embedding-2"

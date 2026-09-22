@@ -25,9 +25,9 @@ Two distinct failure modes with different fixes:
 
 Additional contributing factors:
 
-- The actual model is `gemini-2.5-flash-lite`, set by the per-import setting default
+- The actual model is `gemini-3.1-flash-lite`, set by the per-import setting default
   (`models.py:550`, `models.py:568`) and the pipeline defaults (`pipeline.py:134`, `:214`,
-  `:377`). The `_DEFAULT_MODEL = "gemini-2.5-flash"` in `gemini.py` is always overridden and
+  `:377`). The retired predecessor default in `gemini.py` was always overridden and
   is therefore misleading.
 - No `temperature` is set on any `GenerateContentConfig`, so extraction runs at the API
   default sampling temperature, which increases fabrication.
@@ -39,7 +39,7 @@ Additional contributing factors:
 | First lever | Prompt + sampling changes, not a blanket model upgrade. |
 | Anti-hallucination clause | Add an explicit "only extract what is present; never add ingredients; never change stated numbers; estimation permitted only for nutrition/servings" instruction to `_SYSTEM`. |
 | Temperature | Set `temperature=0` on the faithful-extraction calls (`extract_recipe`, `extract_recipe_from_image`). |
-| Extraction model | Route the extraction call to `gemini-2.5-flash`, independent of the user-selected import model. Keep `flash-lite` for shopping-list and unit-conversion calls. |
+| Extraction model | Route the extraction call to `gemini-3.1-flash-lite`, independent of the user-selected import model. |
 | Model config | Introduce a dedicated extraction-model setting so the extraction model is not coupled to the DB per-import `model` field. |
 | Split (optional, later) | Consider separating faithful extraction from estimation/conversion into distinct focused calls if defects persist after the above. Not required for the first pass. |
 | Evaluation | Hallucination is stochastic; judge changes against a fixed set of hand-verified recipes, not one-off imports. |
@@ -67,7 +67,7 @@ drift.
 ### 3. Dedicated extraction model
 
 - Add an extraction-model setting (e.g. `settings.gemini_extraction_model`, default
-  `gemini-2.5-flash`) so faithful extraction is decoupled from the user-selected import
+  `gemini-3.1-flash-lite`) so faithful extraction is decoupled from the user-selected import
   `model`.
 - Wire the pipeline's extraction entry points to pass the extraction model to
   `extract_recipe` / `extract_recipe_from_image`, while the shopping-list and unit-variant
@@ -90,7 +90,7 @@ pattern.
 - Diff extraction output against the ground truth before and after the change; measure the
   rate of extra ingredients and altered quantities rather than judging from a single
   import.
-- Confirm extraction runs on `gemini-2.5-flash` while shopping-list and unit-conversion
+- Confirm extraction runs on `gemini-3.1-flash-lite` for all Gemini-backed extraction and helper calls.
   calls remain on `flash-lite`.
 - Run the API test suite; ensure tests do not require live import credentials.
 

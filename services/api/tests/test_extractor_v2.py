@@ -54,6 +54,28 @@ async def test_supported_language_headings_extract_without_translation(ingredien
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("heading", [
+    "Ingredients for 2 servings:",
+    "Składniki na 2 porcje:",
+    "Zutaten für 2 Portionen:",
+    "Ingrédients pour 2 portions:",
+    "Ingredientes para 2 porciones:",
+])
+async def test_text_extractor_reads_grounded_yield_in_supported_languages(heading: str) -> None:
+    content = f"{heading}\n- 1 onion\nInstructions:\n1. Cook."
+    recipe = await RecipeEvidenceExtractor().extract_text(ExtractionInput(
+        content=content,
+        evidence_ids=["source"],
+    ))
+
+    assert recipe.yield_text == heading.rstrip(":")
+    assert recipe.yield_servings == "2"
+    assert recipe.yield_evidence_ids == ["source"]
+    assert len(recipe.yield_references) == 1
+    assert reference_matches(recipe.yield_references[0], content)
+
+
+@pytest.mark.asyncio
 async def test_html_extractor_keeps_title_links_and_ignores_nutrition() -> None:
     html = """
     <main><h1>Chicken with sauce</h1><h2>Ingredients</h2><h3>Sauce</h3>

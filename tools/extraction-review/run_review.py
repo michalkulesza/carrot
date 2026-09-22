@@ -226,6 +226,7 @@ class SelectionRecorder:
 
     def __init__(self, provider: Any, calls: list[dict[str, Any]], model: str, usage: Any) -> None:
         self.provider, self.calls, self.model, self.usage = provider, calls, model, usage
+        self.last_selection: dict[str, Any] | None = None
 
     async def select(self, source):
         started = time.monotonic()
@@ -236,8 +237,49 @@ class SelectionRecorder:
         }
         try:
             selection = await self.provider.select(source)
+            self.last_selection = selection.model_dump(mode="json")
             event.update(status="ok", response_preview=selection.model_dump_json())
             return selection
+        except Exception as error:
+            event.update(status="error", error=exception_diagnostic(error))
+            raise
+        finally:
+            event["latency_ms"] = round((time.monotonic() - started) * 1000)
+            event["usage"] = {
+                "input_tokens": self.usage.input_tokens - before[0],
+                "output_tokens": self.usage.output_tokens - before[1],
+                "responses_with_usage": self.usage.calls - before[2],
+            }
+            self.calls.append(event)
+
+
+class AudioRecorder:
+    """Run and record saved-transcript evidence extraction without retranscribing."""
+
+    def __init__(self, calls: list[dict[str, Any]], model: str, usage: Any, timeout_seconds: float = 45) -> None:
+        from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
+
+        if timeout_seconds <= 0:
+            raise ValueError("audio evidence timeout must be positive")
+        self.calls, self.model, self.usage = calls, model, usage
+        self.extractor = GeminiAudioEvidenceExtractor(model=model, usage=usage)
+        self.timeout_seconds = timeout_seconds
+
+    async def extract_audio(self, source):
+        started = time.monotonic()
+        before = (self.usage.input_tokens, self.usage.output_tokens, self.usage.calls)
+        event = {
+            "model": self.model,
+            "request_preview": json.dumps({
+                "transcript": source.transcript,
+                "retained_recipe": source.retained_recipe.model_dump(mode="json"),
+            }, ensure_ascii=False),
+        }
+        try:
+            async with asyncio.timeout(self.timeout_seconds):
+                result = await self.extractor.extract_audio(source)
+            event.update(status="ok", response_preview=result.model_dump_json())
+            return result
         except Exception as error:
             event.update(status="error", error=exception_diagnostic(error))
             raise
@@ -286,13 +328,16 @@ def testable_expectation(result: dict[str, Any]) -> dict[str, Any]:
 
     recipe = result.get("report_recipe")
     if recipe is None:
-        return {
+        expectation = {
             "capture_errors": ", ".join(result.get("capture_errors", [])),
             "detected_languages": result.get("detected_languages", ""),
             "recipe": None,
         }
+        if result.get("text_selection") is not None:
+            expectation["text_selection"] = result["text_selection"]
+        return expectation
     nutrition = recipe.get("nutrition") or {}
-    return {
+    expectation = {
         "capture_errors": ", ".join(result.get("capture_errors", [])),
         "detected_languages": result.get("detected_languages", ""),
         "recipe": {
@@ -308,6 +353,9 @@ def testable_expectation(result: dict[str, Any]) -> dict[str, Any]:
             "components": review_components(recipe),
         },
     }
+    if result.get("text_selection") is not None:
+        expectation["text_selection"] = result["text_selection"]
+    return expectation
 
 
 def display_yield(recipe: dict[str, Any] | None) -> str:
@@ -338,7 +386,7 @@ def readable_recipe_item(item: dict[str, Any], wording_key: str) -> dict[str, An
     }
 
 
-async def review(path: Path, pages: dict[str, LinkedPage], run: Path, hybrid: bool = True) -> dict[str, Any]:
+async def review(path: Path, pages: dict[str, LinkedPage], run: Path, hybrid: bool = True, audio_enabled: bool = True) -> dict[str, Any]:
     result: dict[str, Any] = {"case_id": identifier(path), "input_file": str(path), "stages": [], "model_calls": []}
     if not path.exists(): return {**result, "review_status": "runner_error", "runner_error": "INPUT_NOT_FOUND"}
     raw = path.read_bytes(); result["input_sha256"] = sha(raw)
@@ -347,19 +395,29 @@ async def review(path: Path, pages: dict[str, LinkedPage], run: Path, hybrid: bo
     artifact = f"cases/{sha(raw)[:16]}-input.json"; (run / artifact).parent.mkdir(parents=True, exist_ok=True); (run / artifact).write_bytes(raw)
     calls: list[dict[str, Any]] = []
     extractor = Recorder(calls)
+    selection_recorder: SelectionRecorder | None = None
     if hybrid and payload.kind.value == "social":
         # HTML and explicitly offline reviews never need Gemini configuration.
         from api.services.extraction_v2.gemini_selection import GeminiTextSelectionProvider, HybridTextExtractor
         from api.config import settings
         from api.services.gemini import UsageTracker
         usage = UsageTracker()
-        provider = SelectionRecorder(
+        selection_recorder = SelectionRecorder(
             GeminiTextSelectionProvider(usage=usage), result["model_calls"], settings.gemini_text_selection_model, usage,
         )
-        selected_extractor = HybridRecorder(HybridTextExtractor(extractor, provider), calls)
+        selected_extractor = HybridRecorder(HybridTextExtractor(extractor, selection_recorder), calls)
     else:
         selected_extractor = extractor
-    outcome = await ExtractionOrchestrator(ExtractionDependencies(selected_extractor, LinguaLanguageDetector(), Pages(pages, calls), transcription_provider=None)).extract(envelope)
+    audio_extractor = None
+    if audio_enabled and payload.kind.value == "social":
+        from api.config import settings
+        from api.services.gemini import UsageTracker
+
+        audio_extractor = AudioRecorder(result["model_calls"], settings.gemini_audio_evidence_model, UsageTracker())
+    outcome = await ExtractionOrchestrator(ExtractionDependencies(
+        selected_extractor, LinguaLanguageDetector(), Pages(pages, calls),
+        transcription_provider=None, audio_evidence_extractor=audio_extractor,
+    )).extract(envelope)
     data = outcome.model_dump(mode="json"); recipe = data.get("recipe")
     candidate_recipe = next((call.get("candidate") for call in reversed(calls) if call.get("candidate")), None)
     report_recipe = recipe or candidate_recipe
@@ -367,7 +425,7 @@ async def review(path: Path, pages: dict[str, LinkedPage], run: Path, hybrid: bo
     limitations = ["LINKED_SNAPSHOT_MISSING"] if any(call.get("failure_code") == "LINKED_SNAPSHOT_MISSING" for call in calls) else []
     limitations.extend(call["detail"] for call in calls if call.get("stage") == "hybrid_text" and call.get("status") == "fallback")
     transcript = getattr(getattr(payload, "audio", None), "transcript", None)
-    if transcript and outcome.outcome != "complete": limitations.append("AUDIO_MODEL_DISABLED")
+    if transcript and outcome.outcome != "complete" and not audio_enabled: limitations.append("AUDIO_MODEL_DISABLED")
     languages = data.get("evidence", []); trace = data.get("trace", [])
     nutrition = (report_recipe or {}).get("nutrition") or {}
     result.update({
@@ -390,6 +448,11 @@ async def review(path: Path, pages: dict[str, LinkedPage], run: Path, hybrid: bo
         "carbohydrates": nutrition.get("carbohydrates", ""), "ingredient_groups": groups,
         "ingredients": ingredients, "instructions": instructions, "recipe_items": items,
         "components": review_components(report_recipe),
+        "text_selection": (
+            selection_recorder.last_selection
+            if selection_recorder is not None and selected_extractor.last_diagnostic is None
+            else None
+        ),
         "report_recipe": report_recipe,
         "artifact_path": artifact, "duration_ms": 0, "outcome_data": data,
     })
@@ -436,6 +499,7 @@ def report(results: list[dict[str, Any]], run: Path, previous: dict[tuple[str, s
     }
     components_by_case = {result["case_id"]: result.get("components", []) for result in results}
     model_calls_by_case = {result["case_id"]: result.get("model_calls", []) for result in results}
+    selections_by_case = {result["case_id"]: result.get("text_selection") for result in results}
     cases = []
     for summary in tables["Summary"]:
         case_id = summary["case_id"]
@@ -450,6 +514,7 @@ def report(results: list[dict[str, Any]], run: Path, previous: dict[tuple[str, s
                 readable_recipe_item(item, "step") for item in items if item["type"] == "step"
             ],
             "components": components_by_case.get(case_id, []),
+            "text_selection": selections_by_case.get(case_id),
             "evidence": [item for item in tables["Evidence"] if item["case_id"] == case_id],
             "stages": [item for item in tables["Stages"] if item["case_id"] == case_id],
             # Keep structured provider diagnostics in JSON; the spreadsheet cell is a
@@ -474,11 +539,11 @@ def report(results: list[dict[str, Any]], run: Path, previous: dict[tuple[str, s
 
 
 async def main() -> int:
-    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument("inputs",nargs="*"); parser.add_argument("--manifest",type=Path); parser.add_argument("--output",type=Path); parser.add_argument("--linked-fixtures",type=Path); parser.add_argument("--resume-from",type=Path); parser.add_argument("--csv",action="store_true"); parser.add_argument("--offset",type=int,default=0,help="skip this many deterministically sorted inputs"); parser.add_argument("--limit",type=int,help="process at most this many inputs after --offset"); parser.add_argument("--audio-model",choices=("off","replay","live"),default="off"); parser.add_argument("--text-selector",choices=("off","live"),default="live",help="Gemini social-text selection (default: live); off runs offline"); parser.add_argument("--recordings",type=Path); parser.add_argument("--allow-paid-models",action="store_true",help=argparse.SUPPRESS); parser.add_argument("--max-model-calls",type=int)
+    parser=argparse.ArgumentParser(description=__doc__); parser.add_argument("inputs",nargs="*"); parser.add_argument("--manifest",type=Path); parser.add_argument("--output",type=Path); parser.add_argument("--linked-fixtures",type=Path); parser.add_argument("--resume-from",type=Path); parser.add_argument("--csv",action="store_true"); parser.add_argument("--offset",type=int,default=0,help="skip this many deterministically sorted inputs"); parser.add_argument("--limit",type=int,help="process at most this many inputs after --offset"); parser.add_argument("--audio-model",choices=("off","live"),default="live",help="saved-transcript extraction (default: live); off keeps the review offline"); parser.add_argument("--text-selector",choices=("off","live"),default="live",help="Gemini social-text selection (default: live); off runs offline"); parser.add_argument("--recordings",type=Path); parser.add_argument("--allow-paid-models",action="store_true",help=argparse.SUPPRESS); parser.add_argument("--max-model-calls",type=int)
     args=parser.parse_args()
     if bool(args.inputs)==bool(args.manifest): parser.error("provide either capture inputs or --manifest")
     if args.manifest: parser.error("legacy manifest mode is no longer supported; use capture envelopes")
-    if args.audio_model!="off": parser.error("audio replay/live adapters are not implemented; offline mode is the supported review mode")
+    if args.recordings: parser.error("--recordings is not implemented")
     if args.max_model_calls is not None: parser.error("--max-model-calls is not supported for bounded retrying selector calls")
     if args.offset < 0: parser.error("--offset must be zero or greater")
     if args.limit is not None and args.limit <= 0: parser.error("--limit must be positive")
@@ -494,11 +559,12 @@ async def main() -> int:
             if data.get("kind")=="html": pages[url_key(data["source_url"])]=LinkedPage(data["source_url"],data["source_url"],data["html"])
         except Exception: pass
     results=[]
-    for path in paths:
-        try: results.append(await review(path,pages,run,args.text_selector == "live"))
+    for index, path in enumerate(paths, 1):
+        print(f"Reviewing {index}/{len(paths)}: {path}", flush=True)
+        try: results.append(await review(path,pages,run,args.text_selector == "live",args.audio_model == "live"))
         except Exception as error: results.append({"case_id":identifier(path),"input_file":str(path),"review_status":"runner_error","runner_error":"UNEXPECTED_RUNNER_ERROR","exception_type":type(error).__name__,"exception_message":str(error),"stages":[],"model_calls":[]})
     workbook=report(results,run,notes(args.resume_from),args.csv)
-    (run/"run.json").write_text(json.dumps({"version":2,"created_at":datetime.now(UTC).isoformat(),"inputs":[str(path) for path in paths],"discovery_skips":skips,"audio_model":"off","text_selector":args.text_selector,"workbook":str(workbook)},indent=2),encoding="utf-8")
+    (run/"run.json").write_text(json.dumps({"version":2,"created_at":datetime.now(UTC).isoformat(),"inputs":[str(path) for path in paths],"discovery_skips":skips,"audio_model":args.audio_model,"text_selector":args.text_selector,"workbook":str(workbook)},indent=2),encoding="utf-8")
     print(f"Reviewed {len(results)} input(s): {workbook}")
     return 1 if any(item.get("review_status")!="finished" for item in results) else 0
 

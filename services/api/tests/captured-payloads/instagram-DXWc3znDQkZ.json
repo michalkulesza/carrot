@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:13:16.089104+00:00",
+  "source_url": "https://www.instagram.com/p/DXWc3znDQkZ/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "12K likes, 30 comments - ohsweetjoyy on April 20, 2026: \"Tasty Crousty maison \nPour 4 personnes ou bien 2 personnes qui mangent bien bien 🧍🏻‍♀️\n1 mesure de riz jasmin\n1 et demie d’eau pour la cuisson \nLa sauce: \n250 gr de yaourt grecque ou fromage blanc \n3 cuillère à soupe de mayonnaise \n2 cuillère à soupe de sauce chili \n2 cuillère à soupe de sauce soja sucre ou salé comme vous préférez \n1 cuillère à soupe à 2 cuillère de sauce sriracha selon votre préférence de piquant \n Sel \nPoivre\nPaprika \nPersil séchée\nPour le poulet: \n350 gr d’escalopes de poulet \n200 gr de farine \n1 œuf \n50 ml de lait \nSel \nPoivre \nPaprika \nChapelure ici la chapelure Panko \n#tastycrousty #cuisine #reels #recette #fastfood\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "ohsweetjoyy"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/671127941_1126829473838302_1930703503511104043_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=109&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=kYQWzs6rsecQ7kNvwGW4c9F&_nc_oc=Adp-qzuCtNXDkFPKOCnxruL6Iu0UG-i7tT66Dmr0LBN5tpbbaZ9RzMnk9wiF1h0279jOPwQzGJsWd21C-mM9g55K&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=mwvd6Watrg547XGiRiRcEw&_nc_ss=7b6a8&oh=00_AQLiGs3y7GC7iDpM_pcQqDFjsrWa2oZ2TTOolp1fCGhsVw&oe=6AB8C60E",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPbu30PH8k078Nr1pOpPq_LMKb4NwBsFZLbHyNZ2tr44Kvk3mTKYx-5np5W8suiX0UdkaXSiN8EGbzuejWHbFPkaMfrehaP5jdAk1c.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=QX9Mec2RzL4Q7kNvwFEwbzQ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjItaGZyXzEwODBwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3ODY3MTI5OTI1NjY4Mzc4LCJhc3NldF9hZ2VfZGF5cyI6MTU1LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6OTMsImJpdHJhdGUiOjMzMTEwNDgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=OMyt5-8ucnMztLqYXJxtHw&_nc_zt=28&_nc_ss=7a22e&oh=00_AQITZU3NLEUV7s3utCYQ30bYeSUka91il3AiIC9xPUOvYg&oe=6AB8BA32&bytestart=2154722&byteend=7117113"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPbu30PH8k078Nr1pOpPq_LMKb4NwBsFZLbHyNZ2tr44Kvk3mTKYx-5np5W8suiX0UdkaXSiN8EGbzuejWHbFPkaMfrehaP5jdAk1c.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=QX9Mec2RzL4Q7kNvwFEwbzQ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjItaGZyXzEwODBwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3ODY3MTI5OTI1NjY4Mzc4LCJhc3NldF9hZ2VfZGF5cyI6MTU1LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6OTMsImJpdHJhdGUiOjMzMTEwNDgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=OMyt5-8ucnMztLqYXJxtHw&_nc_zt=28&_nc_ss=7a22e&oh=00_AQITZU3NLEUV7s3utCYQ30bYeSUka91il3AiIC9xPUOvYg&oe=6AB8BA32&bytestart=2154722&byteend=7117113",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Le tasty crousti, c'est vraiment le fast-food le plus facile à reproduire à la maison. C'est simple, c'est rapide et c'est tout aussi bon. On commence par faire le riz et bon, tout le monde sait faire du riz, mais quand même je le dis. On vient le rincer plusieurs fois jusqu'à que l'eau soit bien claire comme sur la vidéo. On retire l'eau, puis on le rajoute dans une casserole et pour une mesure de riz, on rajoute une mesure et demie d'eau. On couvre et on laisse cuire 15 minutes. On passe à la sauce, je mets du yaourt grec ou du fromage blanc, normalement c'est de la crème fraîche, mais c'est tout pareil. 300 g, 3 cuillères à soupe de mayonnaise, 2 cuillères à soupe de sauce soja sucrée ou salée, 2 cuillères à soupe de sauce chili et une cuillère et demie à soupe de sauce sriracha. Pour les assaisonnements, c'est sel, poivre, paprika et persil séché. On mélange et c'est prêt, n'hésitez pas à ajuster, donc faut goûter. Et là, la dernière étape, c'est le poulet, on va passer à la panure, on va mélanger de la farine, de l'œuf et du lait au fur et à mesure jusqu'à obtenir une une consistance de pâte à crêpe épaisse. On assaisonne comme on aime, sel, poivre, paprika, puis on rajoute nos escalopes de poulet. On mélange bien, si vous voulez laisser mariner, vous pouvez, sinon directement on prend la chapelure et on va venir enrober chaque escalope généreusement de chapelure et on les cuit dans l'huile. Faut faire attention à ce que le feu ne soit pas trop fort, faut qu'il soit bien doré, mais on y va vraiment doucement, sinon ça va être cru à l'intérieur, c'est pas bon. On les retire, puis on va tout simplement venir les couper, vous voyez, en gros, je sais pas, en gros cubes, comme les tasty crousti classiques, et on passe à l'assemblage. D'abord le riz, ensuite on met de la sauce, vraiment généreusement, faut pas que ça soit sec, et beaucoup beaucoup de poulet. On termine avec des oignons frits, de la sauce sriracha et de la sauce chili, et enfin du persil séché pour la déco, et voilà, on se régale.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

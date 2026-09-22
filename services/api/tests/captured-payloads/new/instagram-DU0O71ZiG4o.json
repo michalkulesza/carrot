@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:21:48.235188+00:00",
+  "source_url": "https://www.instagram.com/p/DU0O71ZiG4o/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "107K likes, 257 comments - chefbosquet on February 16, 2026: \"GUARDA ESTA\nIDEA CON POLLO! \nFácil, saludable y brutal!\n•\n-1 Pechuga partida por la mitad\n-1/2 Cebolla picada\n-1 Puñado de champiñones laminados\n-1 Chorro de salsa de soja (opcional)\n-Sal y pimienta al gusto\n-1/2 Vaso de nata o de leche de coco\n-Especias y hierbas frescas al gusto para decorar\n1.Cocina la pechuga y reserva\n2.Cocina la cebolla y luego los champiñones \n3.Añade la soja, pimienta y nata y deja reducir unos minutos\n4.Añade unos instantes el pollo\n•\nDale al like si te ha gustado y cuéntame qué te parece!\nMil gracias!!\n•\n#recetafacil #videoreceta #pollo\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "chefbosquet"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/632169888_18560000287049162_6689672450736689165_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=111&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=BAQK8RqrDBQQ7kNvwGsvb_z&_nc_oc=AdrtSuN2pPL0JjYKInMjWMDQYbn4W6nR0saX1QJZzOtx2GZPCIWLmfEH244ECwBPUkE1vnkXf1KR0Lap54MpRhIi&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=nlk3hASdv7k93RrpL7AmSA&_nc_ss=7b6a8&oh=00_AQImJL8pgda6CsgAL9hd7szpa50iHD7E2GlqDJBlbZN2wg&oe=6AB8B5CF",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQOfbD00PQFlxuRaqRONa4-CrKK9ghlcfLHRWCSITGHDQFav6tQrYt05ao-QUnw9OITOp2DBNHI4L38l0SmPu7RvCW9JULNfFZNac_E.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=GXp3tS9sg40Q7kNvwEXdKJ-&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxNzk0MTYxMDA5MTExNTQ0MywiYXNzZXRfYWdlX2RheXMiOjIxOCwidmlfdXNlY2FzZV9pZCI6MTA4MjcsImR1cmF0aW9uX3MiOjEwLCJiaXRyYXRlIjoyOTY5MDkyLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=_krSqqke5B-N46eh0q-CJg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJtBj3K0Q4B8VuWt6u8k4BDiuXKs7tAG0LNwRy26NHO7w&oe=6AB4C070&bytestart=1922035&byteend=4070130"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m86/AQOfbD00PQFlxuRaqRONa4-CrKK9ghlcfLHRWCSITGHDQFav6tQrYt05ao-QUnw9OITOp2DBNHI4L38l0SmPu7RvCW9JULNfFZNac_E.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=GXp3tS9sg40Q7kNvwEXdKJ-&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfYmFzZWxpbmVfMV92MSIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxNzk0MTYxMDA5MTExNTQ0MywiYXNzZXRfYWdlX2RheXMiOjIxOCwidmlfdXNlY2FzZV9pZCI6MTA4MjcsImR1cmF0aW9uX3MiOjEwLCJiaXRyYXRlIjoyOTY5MDkyLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=_krSqqke5B-N46eh0q-CJg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJtBj3K0Q4B8VuWt6u8k4BDiuXKs7tAG0LNwRy26NHO7w&oe=6AB4C070&bytestart=1922035&byteend=4070130",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Si cocinas unas pechugas de pollo, las reservas, añades cebolla picada, champiñones laminados, un poco de soja, pimienta, nata o leche de coco. Dejas reducir y añades las pechugas, tendrás una idea con pollo fácil, saludable y brutal.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -1908,7 +1908,10 @@
                 "text": "30 g keczupu"
               },
               {
-                "text": "pieprz, sól"
+                "text": "pieprz"
+              },
+              {
+                "text": "sól"
               }
             ],
             "steps": [
@@ -1920,6 +1923,4602 @@
             ]
           }
         ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18"
+            ],
+            "instruction_line_ids": [
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:5"
+        ],
+        "nutrition": {
+          "line_ids": [
+            "line:27"
+          ]
+        }
+      }
+    },
+    "instagram-C8U1xukINWJ.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "500",
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "4 tbsp sriracha"
+              },
+              {
+                "text": "2 tbsp runny honey"
+              },
+              {
+                "text": "2 tbsp light soy sauce"
+              },
+              {
+                "text": "2 tbsp rice wine vinegar"
+              },
+              {
+                "text": "Tbsp groundnut oil or any neutral oil"
+              },
+              {
+                "text": "1 onion - thinly sliced"
+              },
+              {
+                "text": "450g of lean beef mince, I used 12%."
+              },
+              {
+                "text": "2 cloves of garlic - finely chopped"
+              },
+              {
+                "text": "10g of ginger - finely grates"
+              },
+              {
+                "text": "1 red chilli, deseeded and thinly sliced"
+              },
+              {
+                "text": "Sesame seeds, to garnish"
+              },
+              {
+                "text": "4 spring onions, to garnish"
+              },
+              {
+                "text": "600g of cooked rice, 150g per serving."
+              },
+              {
+                "text": "150g of tenderstem broccoli - sliced."
+              }
+            ],
+            "steps": [
+              "Mix together your firecracker sauce.",
+              "Saut3 your onion",
+              "adding your beef mince",
+              "cook until it's brown all over",
+              "add your garlic, ginger and that delicious firecracker sauce with a red chili",
+              "cook that beef mince on a high heat with the sauce until it begins to caramelize and turn super nice and crispy",
+              "Serve that with some charred broccoli on white rice",
+              "garnish"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": [
+            "line:3"
+          ]
+        }
+      }
+    },
+    "instagram-Da0st9IsJ9S.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "3 małe cukinie"
+              },
+              {
+                "text": "2 łyżki mąki ziemniaczanej"
+              },
+              {
+                "text": "1 łyżka słodkiej papryki"
+              },
+              {
+                "text": "3 łyżki bułki tartej"
+              },
+              {
+                "text": "sól"
+              },
+              {
+                "text": "olej do smażenia"
+              },
+              {
+                "text": "sok z cytryny do skropienia"
+              }
+            ],
+            "steps": [
+              "Cukinie umyj i pokrój w grubsze plastry. Z każdego plastra wydrąż środek, aby powstały krążki. Posól je i odstaw na około 10 minut, a następnie dokładnie osusz ręcznikiem papierowym.",
+              "Do krążków dodaj mąkę ziemniaczaną, słodką paprykę i bułkę tartą. Dokładnie wymieszaj, aby panierka pokryła cukinię z każdej strony.",
+              "Na patelni rozgrzej olej. Smaż krążki partiami z obu stron, aż będą rumiane i chrupiące. Po usmażeniu przełóż je na ręcznik papierowy, aby odsączyć nadmiar tłuszczu.",
+              "Przed podaniem chrupiące krążki skrop sokiem z cytryny. Podawaj od razu z przygotowanym sosem z cukinii."
+            ]
+          },
+          {
+            "name": "Sos z cukinii:",
+            "ingredients": [
+              {
+                "text": "wydrążone środki z cukinii"
+              },
+              {
+                "text": "3 łyżki jogurtu greckiego"
+              },
+              {
+                "text": "2 łyżeczki suszonego szczypiorku"
+              },
+              {
+                "text": "1 łyżeczka suszonego czosnku"
+              },
+              {
+                "text": "1 łyżeczka słodkiej papryki"
+              },
+              {
+                "text": "sól do smaku"
+              }
+            ],
+            "steps": [
+              "Wydrążone środki cukinii również usmaż do miękkości. Przełóż je do blendera, dodaj jogurt grecki, suszony szczypiorek, czosnek, słodką paprykę oraz sól. Zblenduj wszystko na gładki, kremowy sos."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12"
+            ],
+            "instruction_line_ids": [
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:25"
+            ]
+          },
+          {
+            "heading_id": "line:13",
+            "ingredient_line_ids": [
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19"
+            ],
+            "instruction_line_ids": [
+              "line:23"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Da2Tb9XISso.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "400 g twarogu półtłustego (polecam twaróg ze Strzałkowa)"
+              },
+              {
+                "text": "2 jajka"
+              },
+              {
+                "text": "1/2 płaskiej łyżeczki soli "
+              },
+              {
+                "text": "100 g mąki pszennej + do podsypania "
+              }
+            ],
+            "steps": [
+              "W misce rozgniatamy twaróg, dodajemy jajka, sól i mąkę. Wszystko razem łączymy i przenosimy na blat podsypany mąką. Wyrabiamy kulę i dzielimy ją na 4 równe części. Z każdej formujemy wałek, spłaszczamy nożem i kroimy skośnie na kawałki. W dużym garnku zagotowujemy wodę. Kluski wrzucamy (w dwóch porcjach) na wrzątek i gotujemy minutę od wypłynięcia. Wykładamy łyżką cedzakową na talerz. "
+            ]
+          },
+          {
+            "name": "Złocista bułka tarta: ",
+            "ingredients": [
+              {
+                "text": "60 g bułki tartej "
+              },
+              {
+                "text": "60 g masła "
+              }
+            ],
+            "steps": [
+              "Na suchej patelni podprażamy bułkę tartą, aż się zarumieni, około 5 minut. Dodajemy masło, roztapiamy i dokładnie mieszamy z bułką. Wyłączamy palnik, wrzucamy kluski i mieszamy podrzucając patelnią, żeby każda kluska pokryła się bułką. Przekładamy na talerze, nakładamy kleksy śmietany, posypujemy jagodami i cukrem. Smacznego!"
+            ]
+          },
+          {
+            "name": "Do podania:",
+            "ingredients": [
+              {
+                "text": "250 g kwaśnej śmietany 18% wymieszanej z 2 łyżeczkami cukru i 1 łyżeczką cukru wanilinowego "
+              },
+              {
+                "text": "250 g świeżych jagód "
+              },
+              {
+                "text": "cukier do posypania "
+              }
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7"
+            ],
+            "instruction_line_ids": [
+              "line:18"
+            ]
+          },
+          {
+            "heading_id": "line:9",
+            "ingredient_line_ids": [
+              "line:10",
+              "line:11"
+            ],
+            "instruction_line_ids": [
+              "line:20"
+            ]
+          },
+          {
+            "heading_id": "line:13",
+            "ingredient_line_ids": [
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Da3V8LooCXX.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Dough:",
+            "ingredients": [
+              {
+                "text": "260ml Lukewarm milk 38-40°C (310ml if you want to skip egg)"
+              },
+              {
+                "text": "7g instant yeast"
+              },
+              {
+                "text": "30g sugar "
+              },
+              {
+                "text": "1 egg"
+              },
+              {
+                "text": "500g Bread or AP flour (min 12% Protien) "
+              },
+              {
+                "text": "1 tsp salt "
+              },
+              {
+                "text": "100g softened butter "
+              }
+            ],
+            "steps": [
+              "Whisk milk & yeast, add sugar and egg and whisk again. Add the flour, salt & butter and mix well with a spatula until the flour is all combined you can absolutely use a floured hand for this if you find it easier or give it a knead for a few minutes. Fold the dough over itself turning the bowl after each fold. About 10-20 times (more if you’re in the groove) or until it looks like there is no lumps. You can also knead it if you’re comfortable doing so. Flip it over, fold in half & cover and rest for 30 min.",
+              "After 30 min take out the dough, flatten it slightly and pour over the chocolate chips. Completely fold over the dough until the chips are totally combined and evenly distributed.",
+              "Place back in bowl, cover and rest 30 min.",
+              "Line your loaf tin with some parchment paper.",
+              "Decompress the dough, take it out and cut in 3 equalish pieces. Roll them out into a rope about 1/3 longer than your dish. Plait it and tuck the ends in. Life into the tine and cover rest for 30 min.",
+              "Preheat oven to 170C. Brush with egg wash and bake at 170C for 12 min, turn the oven down to 160C and bake for another 13-15 min."
+            ]
+          },
+          {
+            "ingredients": [
+              {
+                "text": "200g - 250g choc chips "
+              }
+            ]
+          },
+          {
+            "ingredients": [
+              {
+                "text": "1 eggs yolk and splash milk "
+              }
+            ]
+          },
+          {
+            "name": "Syrup ",
+            "ingredients": [
+              {
+                "text": "40g water"
+              },
+              {
+                "text": "40g sugar "
+              }
+            ],
+            "steps": [
+              "Once you put in the oven bring you sugar water mix to a boil and wait for sugar to evaporate, about 1 min, mix and set aside. Brush generously over your loaf as soon as it comes out. Leave in the tin on a cooling rack for 10-15 min then take it out to cool on the rack."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:3",
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10"
+            ],
+            "instruction_line_ids": [
+              "line:20",
+              "line:22",
+              "line:24",
+              "line:26",
+              "line:28",
+              "line:30"
+            ]
+          },
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:12"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:14"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:16",
+            "ingredient_line_ids": [
+              "line:17",
+              "line:18"
+            ],
+            "instruction_line_ids": [
+              "line:32"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Da4Y2h4xCup.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "3 heaped tbsp (60g) self raising flour (or plain/all purpose + 1/2 tsp baking powder)"
+              },
+              {
+                "text": "2 tbsp (50g) cottage cheese "
+              },
+              {
+                "text": "1 tbsp chopped feta"
+              },
+              {
+                "text": "1 tbsp tomato"
+              },
+              {
+                "text": "1 tsp basil"
+              }
+            ],
+            "steps": [
+              "Mix everything in a bowl so it clumps together.",
+              "Use your hands to squeeze the dough into a boule shape. It should not be soft NOT sticky. Add more flour if it is. Score on top with a sharp knife.",
+              "Air fry on 180C for 20 minutes (air fry mode) or oven bake on 180C for 35 mins. If it’s not cooked in the middle, turn it over and cook for a further 3-5 mins without baking paper underneath."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:3",
+              "line:4",
+              "line:5"
+            ],
+            "instruction_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:2"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DaFw5h_ste-.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "✨ Składniki:",
+            "ingredients": [
+              {
+                "text": "600 g mąki (u mnie orkiszowa)"
+              },
+              {
+                "text": "500 ml wody"
+              },
+              {
+                "text": "1 łyżeczka soli"
+              },
+              {
+                "text": "7 g drożdży suchych "
+              }
+            ],
+            "steps": [
+              "Wszystko wymieszaj wieczorem, przykryj i zostaw na noc w lodówce około 8-12 godzin. Rano nakładaj od razu zimne ciasto z lodówki łyżką na blachę i piecz w 230°C przez ok. 25 minut "
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:4",
+            "ingredient_line_ids": [
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8"
+            ],
+            "instruction_line_ids": [
+              "line:10"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DagtZE9B24F.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "419",
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 lb Ground chicken 🐓 "
+              },
+              {
+                "text": "2 teaspoon @SpiceXseasoning Daily Blend (SPG)"
+              },
+              {
+                "text": "1 teaspoon onion powder 🧅 "
+              },
+              {
+                "text": "1 egg 🥚 "
+              },
+              {
+                "text": "1/4 cup low fat mozzarella 🧀 "
+              },
+              {
+                "text": "1 teaspoon SpiceX Sweet Sriracha Blend"
+              },
+              {
+                "text": "5 Rice paper sheets 🍚 "
+              }
+            ],
+            "steps": [
+              "mix well with the chopsticks",
+              "lightly wet it with some water",
+              "lay it down flat",
+              "Place two dollops of filling in the middle",
+              "roll it up into a sausage",
+              "gently cut them up into bite-sized pieces with some scissors",
+              "spraying with some avocado oil",
+              "air fry it until they're golden brown and crispy"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [
+          "line:3"
+        ],
+        "nutrition": {
+          "line_ids": [
+            "line:3"
+          ]
+        }
+      }
+    },
+    "instagram-DaOw3JijtPe.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": "3",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "454",
+          "protein": "42",
+          "fat": "14",
+          "carbohydrates": "38"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 lb chicken leg, whole (bone-in, skin on, raw)"
+              },
+              {
+                "text": "5 garlic cloves"
+              },
+              {
+                "text": "3 piece ginger, sliced"
+              },
+              {
+                "text": "1/2 medium onion"
+              },
+              {
+                "text": "5 green onion"
+              },
+              {
+                "text": "1/2 tsp peppercorn"
+              },
+              {
+                "text": "salt and pepper to taste"
+              },
+              {
+                "text": "enough water to cover the chicken"
+              }
+            ],
+            "steps": [
+              "Chop your green onions and onion.",
+              "In a pot on high heat, add garlic, ginger, onion, green onions, pepper corns, salt and pepper to taste, and enough water to fill it to the 3/4 of the pot and bring it to a boil.",
+              "Add in your chicken legs and boil for 30-50min or until the chicken is fully cooked through and tender.",
+              "Remove your chicken from the soup, place in a bowl, and shred with a fork.",
+              "Strain your soup from the pot, remove and excess impurities, and pour the clear soup into a bowl.",
+              "Place cooked rice into the soup, add your shredded chicken, and top with diced green onions. Enjoy your shredded chicken with your dipping sauce!"
+            ]
+          },
+          {
+            "name": "[Dipping Sauce]",
+            "ingredients": [
+              {
+                "text": "1 tbsp jalapenos"
+              },
+              {
+                "text": "5 tbsp soy sauce"
+              },
+              {
+                "text": "1 tbsp honey"
+              },
+              {
+                "text": "2 tbsp water"
+              }
+            ],
+            "steps": [
+              "In a small bowl, add diced jalapenos, soy sauce, honey, and water and mix well to make your sauce."
+            ]
+          },
+          {
+            "name": "[Rice]",
+            "ingredients": [
+              {
+                "text": "1.5 cup cooked rice"
+              }
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17"
+            ],
+            "instruction_line_ids": [
+              "line:29",
+              "line:30",
+              "line:31",
+              "line:32",
+              "line:33",
+              "line:34",
+              "line:35",
+              "line:36",
+              "line:37",
+              "line:40",
+              "line:41",
+              "line:42",
+              "line:43",
+              "line:44"
+            ]
+          },
+          {
+            "heading_id": "line:19",
+            "ingredient_line_ids": [
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23"
+            ],
+            "instruction_line_ids": [
+              "line:38",
+              "line:39"
+            ]
+          },
+          {
+            "heading_id": "line:25",
+            "ingredient_line_ids": [
+              "line:26"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [
+          "line:9"
+        ],
+        "nutrition": {
+          "line_ids": [
+            "line:3",
+            "line:4",
+            "line:5",
+            "line:6",
+            "line:7"
+          ]
+        }
+      }
+    },
+    "instagram-DasbgM6KAhG.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Naleśniki: ",
+            "ingredients": [
+              {
+                "text": "1 szklanka mąki pełnoziarnistej z plaskurki, samopszy, orkiszowej lub jasnej lub pół na pół z pełnoziarnistą (można użyć bezglutenowy miks)"
+              },
+              {
+                "text": "1 i ½ szklanki mleka"
+              },
+              {
+                "text": "¼ szklanki wody"
+              },
+              {
+                "text": "2 jajka"
+              },
+              {
+                "text": "3 łyżki oliwy "
+              },
+              {
+                "text": "1 lyżka cukru kokosowego lub innego słodzidła "
+              },
+              {
+                "text": "mała szczypta soli"
+              },
+              {
+                "text": "Masło klarowane lub oliwa do natłuszczenia. "
+              }
+            ],
+            "steps": [
+              "Składniki na ciasto na naleśniki wymieszać, odstawić na 20 minut. Smażyć na dobrze rozgrzanej lekko natłuszczonej patelni z obu stron. "
+            ]
+          },
+          {
+            "name": "Nadzienie serowe:",
+            "ingredients": [
+              {
+                "text": "220 g twarogu najlepiej mielonego"
+              },
+              {
+                "text": "2 łyżki mascarpone (opcjonalnie)"
+              },
+              {
+                "text": "50 ml śmietanki 30% lub innej słodkiej"
+              },
+              {
+                "text": "3 łyżki cukru eko trzcinowego lub innego słodzidła "
+              }
+            ],
+            "steps": [
+              "Składniki na masę serową wymieszać. Dosłodzić do smaku."
+            ]
+          },
+          {
+            "name": "Dodatkowo ",
+            "ingredients": [
+              {
+                "text": "Około 1,5 szklanki jagód "
+              },
+              {
+                "text": "1 łyżka skrobii ziemniaczanej lub innej "
+              }
+            ],
+            "steps": [
+              "Jagody umyć, osuszyć i wymieszać ze skrobią. ",
+              "Każdy naleśnik smarować 1 dużą łyżką masy serowej, posypać 2 łyżkami jagód i złożyć na pół a następnie na 3 w trójkąt. Układać w naczyniu żaroodpornym. Naleśniki można również zwinąć w rulon. Naleśniki ułożyć ciasno w naczyniu."
+            ]
+          },
+          {
+            "name": "Sos :",
+            "ingredients": [
+              {
+                "text": "200 ml śmietanki 30% lub 18%"
+              },
+              {
+                "text": "2 jajka"
+              },
+              {
+                "text": "3 łyżki syropu klonowego lub innego słodzidła "
+              },
+              {
+                "text": "1 łyżka ekstraktu waniliowego "
+              }
+            ],
+            "steps": [
+              "Śmietankę z jajkami, słodziłem i ekstraktem wymieszać i zalać naleśniki. ",
+              "Wstawić całość do piakernika nagrzanego do 170 stopni termoobieg i zapiekać około 45-50 minut aż sos się zetnie.",
+              "Podawać z fruzeliną i ewentualnie kleksem jogurtu, śmietanki. "
+            ]
+          },
+          {
+            "name": "Frużelina jagodowa: ",
+            "ingredients": [
+              {
+                "text": "Szklanka jagód "
+              },
+              {
+                "text": "1 łyżka eko cukru trzcinowego "
+              },
+              {
+                "text": "1 łyżeczka skrobii ziemniaczanej +50 ml wody "
+              }
+            ],
+            "steps": [
+              "Jagody wrzucić do rondelka z cukrem, zagotować, gdy puszczą lekko sok dodać wymieszaną skrobię z wodą i zagotować aż sos się zagęści.\"."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:2",
+            "ingredient_line_ids": [
+              "line:3",
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10"
+            ],
+            "instruction_line_ids": [
+              "line:38"
+            ]
+          },
+          {
+            "heading_id": "line:12",
+            "ingredient_line_ids": [
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": [
+              "line:39"
+            ]
+          },
+          {
+            "heading_id": "line:18",
+            "ingredient_line_ids": [
+              "line:19",
+              "line:20"
+            ],
+            "instruction_line_ids": [
+              "line:40",
+              "line:41"
+            ]
+          },
+          {
+            "heading_id": "line:22",
+            "ingredient_line_ids": [
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26"
+            ],
+            "instruction_line_ids": [
+              "line:42",
+              "line:43",
+              "line:44"
+            ]
+          },
+          {
+            "heading_id": "line:32",
+            "ingredient_line_ids": [
+              "line:33",
+              "line:34",
+              "line:35"
+            ],
+            "instruction_line_ids": [
+              "line:47"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Dau-YOgok1O.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "Chicken Breast "
+              },
+              {
+                "text": "2x egg"
+              },
+              {
+                "text": "Cornflakes"
+              },
+              {
+                "text": "1tbsp Paprika"
+              },
+              {
+                "text": "1tbsp Chilli Powder"
+              },
+              {
+                "text": "1tbsp Garlic Powder"
+              },
+              {
+                "text": "1tbsp Ground Ginger"
+              }
+            ],
+            "steps": [
+              "Cut your chicken breast into bite size pieces",
+              "Coat your chicken in the seasonings listed above",
+              "Now dip your chicken in the egg, then immediately coating in cornflakes.",
+              "Once done place in the air fryer for 16 mins, flipping half way."
+            ]
+          },
+          {
+            "name": "Sauce:",
+            "ingredients": [
+              {
+                "text": "1.5tbsp Gochujang "
+              },
+              {
+                "text": "2tbsp Soy Sauce"
+              },
+              {
+                "text": "1tsp rice wine vinegar "
+              },
+              {
+                "text": "2tsp mirin"
+              },
+              {
+                "text": "3tbsp honey"
+              }
+            ],
+            "steps": [
+              "Whilst cooking, combine all the sauce ingredients.",
+              "Once the chicken is done begin to heat and reduce the sauce slightly.",
+              "Add your chicken to the pan and coat in the sauce.",
+              "Garnish with sesame and spring onion.",
+              "Enjoy😋"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10"
+            ],
+            "instruction_line_ids": [
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24"
+            ]
+          },
+          {
+            "heading_id": "line:12",
+            "ingredient_line_ids": [
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17"
+            ],
+            "instruction_line_ids": [
+              "line:25",
+              "line:26",
+              "line:27",
+              "line:28",
+              "line:29"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:18"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DavQuNhRKjI.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Chicken Marinade",
+            "ingredients": [
+              {
+                "text": "700 g boneless, skinless chicken thighs, chicken breast, or a combination of both"
+              },
+              {
+                "text": "3/4 teaspoon salt change to 1 teaspoon "
+              },
+              {
+                "text": "½ teaspoon ground cumin"
+              },
+              {
+                "text": "1 teaspoon garlic powder"
+              },
+              {
+                "text": "1 teaspoon garam masala"
+              },
+              {
+                "text": "1 teaspoon curry powder"
+              },
+              {
+                "text": "½ teaspoon cayenne pepper, adjust to taste"
+              },
+              {
+                "text": "½ cup plain yogurt (110 g)"
+              },
+              {
+                "text": "1 tablespoon lemon juice, about ½ a lemon"
+              }
+            ]
+          },
+          {
+            "name": "For the Rice",
+            "ingredients": [
+              {
+                "text": "2 tablespoons butter (28 g)"
+              },
+              {
+                "text": "1 medium onion, finely diced (150 g)"
+              },
+              {
+                "text": "4 cloves garlic, minced (20 g)"
+              },
+              {
+                "text": "1 tablespoon grated ginger (15 g)"
+              },
+              {
+                "text": "2 tablespoons tomato paste (65 g)"
+              },
+              {
+                "text": "2 cups tomato puree or passata (480 g)"
+              },
+              {
+                "text": "1 teaspoon paprika"
+              },
+              {
+                "text": "1 teaspoon cayenne pepper, adjust to taste"
+              },
+              {
+                "text": "1 teaspoon curry powder"
+              },
+              {
+                "text": "1 teaspoon ground cumin"
+              },
+              {
+                "text": "1 teaspoon garam masala"
+              },
+              {
+                "text": "1 teaspoon chicken bouillon powder, or 1 cube, crumbled"
+              },
+              {
+                "text": "2 ½ teaspoons salt"
+              },
+              {
+                "text": "1 teaspoon sugar"
+              },
+              {
+                "text": "1 cup chicken stock (240 ml)"
+              },
+              {
+                "text": "1½ cups water (360 ml), add up to 2 cups if needed depending on your rice"
+              },
+              {
+                "text": "1 cup heavy cream or double cream (240 ml)"
+              },
+              {
+                "text": "4 cups washed long grain sella basmati rice (780g)"
+              }
+            ]
+          },
+          {
+            "name": "Garnish",
+            "ingredients": [
+              {
+                "text": "Chopped cilantro or parsley"
+              }
+            ]
+          },
+          {}
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:5",
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:16",
+            "ingredient_line_ids": [
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27",
+              "line:28",
+              "line:29",
+              "line:30",
+              "line:31",
+              "line:32",
+              "line:33",
+              "line:34",
+              "line:35"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:37",
+            "ingredient_line_ids": [
+              "line:38"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DaYeG7TNHg9.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "MARYNATA:",
+            "ingredients": [
+              {
+                "text": "500g mięsa z ud kurczaka,"
+              },
+              {
+                "text": "łyżeczka papryki wędzonej,"
+              },
+              {
+                "text": "łyżeczka chili,"
+              },
+              {
+                "text": "łyżka suszonej cebuli,"
+              },
+              {
+                "text": "łyżka czosnku granulowanego,"
+              },
+              {
+                "text": "plaska łyżeczka soli,"
+              },
+              {
+                "text": "łyżka majonezu,"
+              },
+              {
+                "text": "łyżka oliwy,"
+              },
+              {
+                "text": "2 łyżki sosu sojowego,"
+              }
+            ],
+            "steps": [
+              "mięso z ud kroimy na mniejsze kawałki,",
+              "składniki kanaryjskie mieszamy, marynujemy kurczaka i odstawiamy na 2 godziny,,",
+              "patyczku do szaszłyków namaczamy w wodzie (dzięki temu się nie spalą),",
+              "mięso nadziewamy na patyki i pieczemy 30 minut w 199 stopniach (w polowienpieczebianodwrscamy mięso),"
+            ]
+          },
+          {
+            "name": "GLAZURA:",
+            "ingredients": [
+              {
+                "text": "sok z połowy cytryny,"
+              },
+              {
+                "text": "łyżka miodu,"
+              },
+              {
+                "text": "łyżka ketchupu,"
+              },
+              {
+                "text": "łyżka oliwy,"
+              },
+              {
+                "text": "łyżka posiekanej pietruszki,"
+              }
+            ],
+            "steps": [
+              "składniki na glazurę mieszamy i smarujemy upieczone szaszłyki,",
+              "podajemy ze sosem śmietanowym",
+              "enjoy"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:4",
+            "ingredient_line_ids": [
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13"
+            ],
+            "instruction_line_ids": [
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25"
+            ]
+          },
+          {
+            "heading_id": "line:14",
+            "ingredient_line_ids": [
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19"
+            ],
+            "instruction_line_ids": [
+              "line:26",
+              "line:27",
+              "line:28"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DaZ9Vm1t120.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Farsz:",
+            "ingredients": [
+              {
+                "text": "500 g mięsa mielonego wołowo-wieprzowego albo wieprzowo-drobiowego"
+              },
+              {
+                "text": "zielona część pora"
+              },
+              {
+                "text": "1/2 cebuli"
+              },
+              {
+                "text": "zielona część z 1/2 kapusty pekińskiej, bez twardych części"
+              },
+              {
+                "text": "1 marchewka"
+              },
+              {
+                "text": "2 ząbki czosnku"
+              },
+              {
+                "text": "kawałek imbiru wielkości kciuka"
+              },
+              {
+                "text": "100 g makaronu vermicelli"
+              },
+              {
+                "text": "grzyby mun, wcześniej namoczone i posiekane"
+              },
+              {
+                "text": "2 łyżki sosu sojowego"
+              },
+              {
+                "text": "2 łyżki sosu rybnego"
+              },
+              {
+                "text": "1 łyżka keczupu"
+              },
+              {
+                "text": "1 płaska łyżeczka soli"
+              },
+              {
+                "text": "1 łyżeczka białego pieprzu"
+              }
+            ],
+            "steps": [
+              "Makaron vermicelli przygotuj według instrukcji na opakowaniu, potem odcedź i posiekaj. Grzyby mun namocz, odciśnij i również drobno posiekaj.",
+              "Por, cebulę, kapustę pekińską, marchewkę, czosnek i imbir drobno posiekaj. Warzywa razem z makaronem i grzybami podsmaż chwilę na patelni, żeby zmiękły, odparowały i nabrały smaku.",
+              "To ważne: mięsa jeszcze nie dodajemy.",
+              "Podsmażony farsz odstaw do ostygnięcia. Dopiero potem dodaj mięso mielone, sos sojowy, sos rybny, keczup, sól i biały pieprz. Wszystko dokładnie wymieszaj."
+            ]
+          },
+          {
+            "name": "Dodatkowo:",
+            "ingredients": [
+              {
+                "text": "papier ryżowy"
+              },
+              {
+                "text": "olej do smażenia"
+              }
+            ],
+            "steps": [
+              "Papier ryżowy krótko namocz w wodzie, nałóż farsz, zawiń ciasno sajgonki i smaż na rozgrzanym oleju na złoty kolor. Smaż na średnim ogniu, żeby sajgonki były chrupiące z zewnątrz, ale mięso zdążyło dojść w środku.",
+              "Najlepiej smakują z sosem słodko-kwaśnym albo sosem chili."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:7",
+            "ingredient_line_ids": [
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ],
+            "instruction_line_ids": [
+              "line:29",
+              "line:31",
+              "line:33",
+              "line:35"
+            ]
+          },
+          {
+            "heading_id": "line:23",
+            "ingredient_line_ids": [
+              "line:24",
+              "line:25"
+            ],
+            "instruction_line_ids": [
+              "line:37",
+              "line:39"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Db5tCVGMSLN.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": "6",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 x 500 g Filo- oder Yufkateig"
+              }
+            ]
+          },
+          {
+            "name": "Für die Füllung",
+            "ingredients": [
+              {
+                "text": "1 kg Käse (Schichtkäse oder junger Balkankäse, kein Frischkäse im Sinne von Philadelphia)"
+              },
+              {
+                "text": "5 Eier"
+              },
+              {
+                "text": "300 ml Milch"
+              },
+              {
+                "text": "150 ml Öl"
+              },
+              {
+                "text": "2 EL Salz"
+              },
+              {
+                "text": "Pfeffer nach Belieben"
+              }
+            ]
+          },
+          {
+            "name": "Zum Backen",
+            "ingredients": [
+              {
+                "text": "Butter"
+              },
+              {
+                "text": "50 ml Öl"
+              },
+              {
+                "text": "1 Ei"
+              },
+              {
+                "text": "Prise Salz"
+              },
+              {
+                "text": "Sesam nach Wunsch"
+              }
+            ],
+            "steps": [
+              "Im Ofen bei 200° Ober-/Unterhitze etwa 30 bis 40 Min backen.",
+              "Vor dem Backen den Teig mehrfach einstechen, sonst wölbt er sich beim Backen zu stark auf. Beim Schichten den Teig locker in die Form legen und nicht zu stark in die Flüssigkeit eintauchen, sonst wird er innen nicht mehr schön luftig. Backpulver habe ich mal getestet, brauch man meiner Meinung nach aber nicht. Man merkt es dann nämlich später beim Essen, ein leicht körniges Gefühl im Mund, das will keiner."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:5"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:8",
+            "ingredient_line_ids": [
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:16",
+            "ingredient_line_ids": [
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ],
+            "instruction_line_ids": [
+              "line:24",
+              "line:25"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:3"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Dbkorc2MtgT.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": null
+    },
+    "instagram-Dbpd8QsS5_U.json": {
+      "capture_errors": "",
+      "detected_languages": "en, yo",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "steps": [
+              "Add 2 tbsp cooking oil and potato starch (any starch works) to a pan and mix.",
+              "Add 500g chicken thighs, mix well, and spread them skin-side down.",
+              "Season the chicken with salt and pepper.",
+              "Place a steamer basket with 250g mung bean sprouts on top of the chicken, cover with a lid, and cook for 10 minutes.",
+              "Mix 50ml soy sauce, 50ml vinegar, 50ml agave syrup, 50ml water, a splash of lemon juice, 1 tbsp minced garlic, and sliced chili peppers to make the sauce.",
+              "Open the lid, remove the tender-crisp bean sprouts, and cook the chicken for 5 more minutes.",
+              "Flip and cook for 3 minutes, then flip again and sear over high heat for about 3 minutes until the skin turns crispy.",
+              "Place chicken, bean sprouts, and shredded green onions on top of rice, then pour the sauce over right before serving."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:12",
+              "line:13",
+              "line:14"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DVJyPzIDbzo.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "SKŁADNIKI:",
+            "ingredients": [
+              {
+                "text": "800g szynki wieprzowej (kulka),"
+              },
+              {
+                "text": "sól, pieprz,"
+              },
+              {
+                "text": "papryka słodka w proszku,"
+              },
+              {
+                "text": "łyżka max półtorej mąki pszennej,"
+              },
+              {
+                "text": "3 łyżki oleju,"
+              },
+              {
+                "text": "łyżka masła,"
+              },
+              {
+                "text": "posiekana cebula,"
+              },
+              {
+                "text": "3-4 liście laurowe,"
+              },
+              {
+                "text": "10 ziaren ziela angielskiego,"
+              },
+              {
+                "text": "łyżeczka kminku,"
+              },
+              {
+                "text": "pół łyżeczki oregano,"
+              },
+              {
+                "text": "3-4 łyżki sosu sojowego,"
+              },
+              {
+                "text": "1,2 litra wody,"
+              },
+              {
+                "text": "ugotowane ziemniaki,"
+              },
+              {
+                "text": "koperek,"
+              },
+              {
+                "text": "ogórki konserwowe,"
+              }
+            ]
+          },
+          {
+            "name": "PRZYGOTOWANIE:",
+            "steps": [
+              "szynkę kroimy w plastry i przyprawiamy solą, pieprzem i papryką słodką - obtaczamy w mące, odwracamy i robimy to samo,",
+              "mięso smażymy na rozgrzanym oleju na brązowy kolor z obu stron i zdejmujemy z patelni,",
+              "na patelnię wrzucamy masło, cebulę, ziele angielskie, liście laurowe i smażymy,",
+              "na usmażoną cebule wrzucamy mięso, wlewamy wodę, dodajemy kminek, oregano, sos sojowy, zakrywamy i dusimy przez półtorej godziny,",
+              "podajemy z ziemniakami, koperkiem i ogórkami konserwowymi,",
+              "enjoy"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:3",
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:21",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DWrlRmhDHJH.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "4 jajka"
+              },
+              {
+                "text": "60g słodzidła (ksylitol/ erytrytol/ opcjonalnie cukier)"
+              },
+              {
+                "text": "300g jogurtu greckiego odtłuszczonego (klasyczny grecki też jest ok ofkors)"
+              },
+              {
+                "text": "40g budyniu waniliowego bez cukru"
+              },
+              {
+                "text": "łyżeczka ekstraktu waniliowego"
+              },
+              {
+                "text": "szczypta soli"
+              }
+            ],
+            "steps": [
+              "Białka ubijamy ze szczyptą soli. Dodając stopniowo słodzidło miksujemy do momentu, aż piana będzie gęsta i sztywna.",
+              "W drugim naczyniu miksujemy żółtka, jogurt, proszek budyniowy i wanilię. Do masy dodajemy partiami pianę z białek i delikatnie mieszamy.",
+              "Powstałą masę przekładamy do formy - u mnie naczynie żaroodporne o średnicy 20cm wyłożone papierem. Do misy airfryera wlewamy gorącą wodę do wysokości 2-3cm i pieczemy: funkcja bake, 135 stopni, 40 minut. Następnie 20 minut w temperaturze 145 stopni. Studzimy 15 minut w zamkniętym urządzeniu, potem chwilę w uchylonym, a następnie kilka godzin w lodówce.",
+              "Dekorujemy świeżymi owocami i gotowe!"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10"
+            ],
+            "instruction_line_ids": [
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DXgruDkjbZp.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Składniki:",
+            "ingredients": [
+              {
+                "text": "500g mąki typ 650 albo 00"
+              },
+              {
+                "text": "365g wody w temp pokojowej"
+              },
+              {
+                "text": "8g soli"
+              },
+              {
+                "text": "3g świeżych drożdży lub 1g drożdży instant\"."
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Do miski wsypujecie 500 g mąki, typ 650 i 9 g soli.",
+              "Wszystko razem mieszacie.",
+              "dolewacie 365 g zimnej wody z kranu i do tego sypiecie 1 g drożdży suchych.",
+              "ciasto wyrabiacie po prostu łyżką do połączenia się składników.",
+              "odstawiamy na 8 do 10 godzin.",
+              "Wstawiacie piekarnik na 250 stopni.",
+              "Bierzecie sobie blachę, obsypujecie ją mąką",
+              "Obsypujecie sobie też dosyć obficie blat mąką.",
+              "bierzecie wasze ciasto.",
+              "Ciasto następnie z wierzchu obficie obsypujemy mąką.",
+              "bierzecie tak trochę ze spodu i formujecie taki kształt kółka.",
+              "ciasto dzielimy na dwie części.",
+              "bagietki łapiemy, odwracamy i przerzucamy na blachę.",
+              "Bagietki do piekarnika, 250 stopni, góra dół.",
+              "Na dół dajcie sobie drugą blachę, polejcie na nią troszkę wody i pieczemy około 20-25 minut.",
+              "Przekładamy je sobie na kratkę do ostygnięcia."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:2",
+            "ingredient_line_ids": [
+              "line:3",
+              "line:4",
+              "line:5",
+              "line:6"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DYkMap8I9ig.json": {
+      "capture_errors": "",
+      "detected_languages": "yo, es",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "yemas de los huevos"
+              },
+              {
+                "text": "yogur griego"
+              },
+              {
+                "text": "azúcar"
+              },
+              {
+                "text": "vainilla"
+              },
+              {
+                "text": "ralladura de limón"
+              },
+              {
+                "text": "maicena"
+              },
+              {
+                "text": "claras"
+              },
+              {
+                "text": "sal"
+              }
+            ],
+            "steps": [
+              "mezclamos las yemas de los huevos con yogur griego, azúcar, vainilla, ralladura de limón y maicena",
+              "monta las claras con limón y un poquito de sal",
+              "introduciendo en la mezcla anterior las claras montadas con movimientos envolventes",
+              "Lo pasas para tu molde forrado con papel de horno",
+              "lo horneas",
+              "Deja que se enfríe un poco",
+              "sácalo con cuidado"
+            ]
+          }
+        ]
+      }
+    },
+    "instagram-DZQagE6jLOU.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 młode kapusty"
+              },
+              {
+                "text": "700–800 g mięsa mielonego"
+              },
+              {
+                "text": "1 szklanka ryżu"
+              },
+              {
+                "text": "2 marchewki"
+              },
+              {
+                "text": " 4–5 małych cebul"
+              },
+              {
+                "text": "2 jajka"
+              },
+              {
+                "text": "duża garść natki pietruszki"
+              },
+              {
+                "text": "sól"
+              },
+              {
+                "text": "pieprz"
+              },
+              {
+                "text": "liść laurowy"
+              },
+              {
+                "text": "ziele angielskie"
+              }
+            ],
+            "steps": [
+              "Liście kapusty oddzielam i sparzam wrzątkiem, aby były miękkie i łatwo się zawijały.",
+              "Cebulę kroję w kostkę, marchew ścieram na grubych oczkach i podsmażam razem na odrobinie oleju. Większą część odkładam do farszu, a do reszty dodaję passatę, koncentrat i przyprawy.",
+              "Do miski przekładam mięso, podgotowany ryż, podsmażone warzywa, surową cebulę, natkę pietruszki oraz jajka. Doprawiam i dokładnie mieszam.",
+              "Farsz zawijam w liście kapusty. Na dnie garnka układam kilka liści, następnie gołąbki warstwami, przekładając je sosem.",
+              "Dodaję liście laurowe, ziele angielskie oraz szklankę wody. Duszę pod przykryciem około godziny, aż kapusta będzie mięciutka."
+            ]
+          },
+          {
+            "name": "Sos:",
+            "ingredients": [
+              {
+                "text": "700 ml passaty pomidorowej"
+              },
+              {
+                "text": "2–3 łyżki koncentratu pomidorowego (opcjonalnie)"
+              },
+              {
+                "text": "sól"
+              },
+              {
+                "text": "pieprz"
+              },
+              {
+                "text": "szczypta cukru"
+              }
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": [
+              "line:26",
+              "line:28",
+              "line:30",
+              "line:32",
+              "line:34"
+            ]
+          },
+          {
+            "heading_id": "line:18",
+            "ingredient_line_ids": [
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Cj3afxoIggL.json": {
+      "capture_errors": "Instagram post did not become ready within 45 seconds.",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Składniki:",
+            "ingredients": [
+              {
+                "text": "Gotowy spód do pizzy (mój był tym razem XXL)"
+              },
+              {
+                "text": "1 opakowanie dowolnego serka twarogowego/kanapkowego np z papryką "
+              },
+              {
+                "text": "Szynka"
+              },
+              {
+                "text": "Salami (parę plastrów)"
+              },
+              {
+                "text": "Tarty ser (około pół opakowania)"
+              },
+              {
+                "text": "Żółtka jaj: 2 sztuki"
+              },
+              {
+                "text": "Opcjonalnie: sól i pieprz "
+              }
+            ],
+            "steps": [
+              "Gotowy spód do pizzy rozwijam na blaszcze wyłożoną papierem do pieczenia i kroję ciasto na około 5centymetrowe plastry, mi wyszło akurat 7. Każdy płat przecinam w połowie tak aby z jednego paska wyszły 2 pizzerinki (zdjęcie Nr 2). Na każdym płacie rozsmarowuję po łyżeczce serka, nakładam poszarpaną w dłoniach szynkę, salami i posypuję serem. Ważne aby nie smarować całego płatu (odstęp ok 2cm, ponieważ ciężko się go będzie później sklejać. Następnie roluję każdy wyłożony płat i sklejam końcówki dociskając palcami. Ostatnim etapem jest wysmarowanie każdego pizzerinka żółtkiem (można troszkę doprawić). Używam do tego pędzęlka do pieczenia. ",
+              "Wkładam do nagrzanego piekarnika na 180°C z termoobiegiem i pieczę przez około 15 min . Gotowe ! Samo wykonanie trwa około 10 min na prawdę polecam to danie, ponieważ jest szybkie, tanie i za każdym razem można zrobić inaczej 😊. Pozdrawiam! "
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:5",
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11"
+            ],
+            "instruction_line_ids": [
+              "line:14",
+              "line:15"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DciRBQ_xl5p.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": " Ciasto:",
+            "ingredients": [
+              {
+                "text": "350 g mąki"
+              },
+              {
+                "text": "1 łyżeczka proszku do pieczenia"
+              },
+              {
+                "text": "50 g cukru pudru"
+              },
+              {
+                "text": "4 żółtka"
+              },
+              {
+                "text": "170 g miękkiego masła"
+              }
+            ]
+          },
+          {
+            "name": " Owoce:",
+            "ingredients": [
+              {
+                "text": "600 g śliwek (dodałam też kilka moreli)"
+              },
+              {
+                "text": "odrobina cukru"
+              },
+              {
+                "text": "cynamon"
+              }
+            ]
+          },
+          {
+            "name": " Beza:",
+            "ingredients": [
+              {
+                "text": "4 białka"
+              },
+              {
+                "text": "120 g cukru"
+              },
+              {
+                "text": "1 łyżeczka mąki ziemniaczanej"
+              },
+              {
+                "text": "1 łyżeczka octu winnego lub soku z cytryny"
+              }
+            ]
+          },
+          {
+            "name": "Przygotowanie:",
+            "steps": [
+              "Mąkę wymieszaj z proszkiem do pieczenia i cukrem pudrem. Dodaj żółtka oraz miękkie masło.",
+              "Wymieszaj składniki, aż powstanie gruba kruszonka. 1/3 odłóż, a resztę wysyp na blachę wyłożoną papierem do pieczenia o wymiarach 22 × 28 cm. Wstaw do lodówki.",
+              "Śliwki umyj, przekrój na pół i usuń pestki. Oprósz cynamonem i, jeśli lubisz słodsze ciasta, dodaj odrobinę cukru.",
+              "Białka ubij na sztywną pianę. Stopniowo dodawaj cukier i miksuj, aż powstanie gęsta, błyszcząca beza. Na koniec dodaj mąkę ziemniaczaną oraz ocet lub sok z cytryny.",
+              "Na cieście ułóż śliwki, wyłóż bezę, a na wierzchu rozsyp pozostawioną kruszonkę. Piecz około 45 minut w temperaturze 170°C."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:11",
+            "ingredient_line_ids": [
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:18",
+            "ingredient_line_ids": [
+              "line:19",
+              "line:20",
+              "line:21"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:23",
+            "ingredient_line_ids": [
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:29",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:31",
+              "line:33",
+              "line:35",
+              "line:37",
+              "line:39",
+              "line:40"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DdjvwP7Cj8q.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "makaron"
+              },
+              {
+                "text": "siedziun sosnowy"
+              },
+              {
+                "text": "cebulką"
+              },
+              {
+                "text": "tofu"
+              },
+              {
+                "text": "śmietanką Rama 31"
+              },
+              {
+                "text": "płatki drożdżowe"
+              },
+              {
+                "text": "woda"
+              }
+            ],
+            "steps": [
+              "podsmażyłam razem z cebulką",
+              "Ugotowany makaron",
+              "zalałam śmietanką Rama 31",
+              "Zmieliłam na gładki krem",
+              "wlałam do już usmażonych grzybów",
+              "dodałam dwie, trzy łyżki płatków drożdżowych",
+              "całość przelałam do ugotowanego makaronu",
+              "dodałam jeszcze odrobinę wody"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DdGVmJ-spRl.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Składniki:",
+            "ingredients": [
+              {
+                "text": "ziemniaki"
+              },
+              {
+                "text": "jajko"
+              },
+              {
+                "text": "mąka"
+              },
+              {
+                "text": "sól"
+              },
+              {
+                "text": "udka z kurczaka bez kości"
+              },
+              {
+                "text": "kurki"
+              },
+              {
+                "text": "cebula"
+              },
+              {
+                "text": "czosnek"
+              },
+              {
+                "text": "baby szpinak"
+              },
+              {
+                "text": "śmietanka 30%"
+              },
+              {
+                "text": "serek śmietankowy"
+              },
+              {
+                "text": "parmezan"
+              },
+              {
+                "text": "bulion"
+              },
+              {
+                "text": "sól i pieprz"
+              }
+            ],
+            "steps": [
+              "Ziemniaki przeciskam przez praskę, dodaję jajko, sól i mąkę, zagniatam i robię kopytka. Gotuję je, a następnie podsmażam na złoto.",
+              "Kurczaka kroję, doprawiam i rumienię na patelni. Zdejmuję, a na tej samej patelni podsmażam cebulę, czosnek i kurki. Dolewam bulion, dodaję serek, parmezan i śmietankę. Wraca kurczak, potem szpinak, a na koniec złote kopytka."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:7",
+            "ingredient_line_ids": [
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": [
+              "line:18",
+              "line:20"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DWN402oiPeK.json": {
+      "capture_errors": "Audio transcription failed: audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3':\r\n[out#0/mp3 @ 0000020e05192500] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3.\r\nError opening output files: Invalid argument | audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3':\r\n[out#0/mp3 @ 00000204341132c0] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3.\r\nError opening output files: Invalid argument | Error: Instagram did not expose an audio track to Chrome capture\n    at <anonymous>:18:42",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "jajka"
+              },
+              {
+                "text": "szynka"
+              },
+              {
+                "text": "pieczarki"
+              },
+              {
+                "text": "cheddar"
+              },
+              {
+                "text": "szczypiorek"
+              },
+              {
+                "text": "natka pietruszki"
+              },
+              {
+                "text": "musztarda francuska"
+              },
+              {
+                "text": "majonez"
+              },
+              {
+                "text": "sól"
+              },
+              {
+                "text": "pieprz"
+              },
+              {
+                "text": "chilli"
+              },
+              {
+                "text": "kiełki rzodkiewki"
+              },
+              {
+                "text": "jogurt naturalny"
+              },
+              {
+                "text": "majonez"
+              },
+              {
+                "text": "chrzan"
+              },
+              {
+                "text": "pieprz czarny"
+              }
+            ],
+            "steps": [
+              "Ugotowane jajka przekrój, wyjmij żółtka. ",
+              "Wymieszaj żółtka z szynką, pieczarkami, startym serem, ziołami, majonezem, musztardą i przyprawami. ",
+              "Nałóż farsz do białek. ",
+              "Wymieszaj sos: jogurt, majonez i chrzan z pieprzem.",
+              "Podawaj na sosie, udekoruj chilli, musztardą i kiełkami. "
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:9",
+              "line:12"
+            ],
+            "instruction_line_ids": [
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Dc8V8VOu77x.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "500g Hackfleisch (Rind oder Hähnchen)"
+              },
+              {
+                "text": "150g Keniabohnen"
+              },
+              {
+                "text": "20g Rawit Chili (nach Belieben anpassbar) "
+              },
+              {
+                "text": "7 Knoblauchzehen "
+              },
+              {
+                "text": "50g heiliges Basilikum "
+              },
+              {
+                "text": "2 Eier "
+              }
+            ]
+          },
+          {
+            "name": "Für die Würzung: ",
+            "ingredients": [
+              {
+                "text": "1 EL Austernsauce"
+              },
+              {
+                "text": "1 EL dunkle Sojasauce"
+              },
+              {
+                "text": "2 EL helle Soja Sauce "
+              },
+              {
+                "text": "2 tl weißer Pfeffer "
+              },
+              {
+                "text": "1 EL Palm/- oder brauner Zucker"
+              }
+            ]
+          },
+          {
+            "name": "Zubereitung: ",
+            "steps": [
+              "Knoblauch zusammen mit den Chilis im Mörser kleinstampfen oder mit einem Messer kleinhacken. 🌶️ ",
+              "⁠Chilis und Knoblauch in einer Pfanne scharf anbraten kurz und ",
+              "⁠nach 30sek. Hackfleisch hinzugeben und kurz vermengen. ",
+              "⁠kleingeschnittene Frühlingszwiebeln und Bohnen kommen in die Pfanne, für eine Minute vermengen. ",
+              "⁠Sauce fertig mixen und ebenfalls in die Pfanne geben, gefolgt von dem Thai Basilikum. Etwa 1min scharf anbraten das ganze. ",
+              "⁠Das Ei muss Chrunchy sein! Dazu geben wir es in eine heiße Pfanne mit überdurschnittlich viel Öl. Fertig wenn die Seiten Kruste bekommen. ",
+              "⁠Mit Reis, und Ei servieren - wichtig das alle drei beisammen sind!"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:11",
+            "ingredient_line_ids": [
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:18",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DdHK-DWsSHG.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": "4",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "250 g rote Linsen"
+              },
+              {
+                "text": "400 g Kartoffeln"
+              },
+              {
+                "text": "2 rote Paprika"
+              },
+              {
+                "text": "3 Karotten"
+              },
+              {
+                "text": "1 Zwiebel"
+              },
+              {
+                "text": "3 Knoblauchzehen"
+              },
+              {
+                "text": "ca. 1 cm frischer Ingwer"
+              },
+              {
+                "text": "1 EL Tomatenmark"
+              },
+              {
+                "text": "1 Pck. passierte/gehackte Tomaten (400 g)"
+              },
+              {
+                "text": "1 Dose Kokosmilch (400 ml)"
+              },
+              {
+                "text": "ca. 600 ml Gemüsebrühe"
+              },
+              {
+                "text": "2 EL Olivenöl oder Kokosöl"
+              },
+              {
+                "text": "1½ TL Garam Masala"
+              },
+              {
+                "text": "½ TL Kurkuma"
+              },
+              {
+                "text": "1 TL Paprikapulver"
+              },
+              {
+                "text": "edelsüß"
+              },
+              {
+                "text": "½ TL Kreuzkümmel"
+              },
+              {
+                "text": "Salz und Pfeffer"
+              },
+              {
+                "text": "Saft von ½ Zitrone"
+              },
+              {
+                "text": "2 Handvoll frischer Spinat"
+              },
+              {
+                "text": "optional 2 EL Hefeflocken"
+              },
+              {
+                "text": "frische Petersilie oder Koriander"
+              }
+            ],
+            "steps": [
+              "Zwiebel, Knoblauch und Ingwer fein hacken. Kartoffeln, Karotten und Paprika klein würfeln. Die roten Linsen gründlich abspülen.",
+              "Das Öl in einem großen Topf erhitzen. Zwiebel, Knoblauch und Ingwer kurz anschwitzen. Tomatenmark und Gewürze dazugeben und kurz mitrösten.",
+              "Kartoffeln, Karotten, Paprika und Linsen hinzufügen und alles gut vermengen. Gehackte Tomaten, Kokosmilch und Gemüsebrühe dazugießen.",
+              "Einmal aufkochen und anschließend bei mittlerer Hitze etwa 20–25 Minuten köcheln lassen, bis die Kartoffeln und Linsen weich sind. Zwischendurch umrühren und bei Bedarf noch etwas Gemüsebrühe ergänzen.",
+              "Zum Schluss Spinat und nach Wunsch die Hefeflocken unterrühren. Mit Zitronensaft, Salz und Pfeffer abschmecken und mit Petersilie oder Koriander servieren. 🌿\"."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27",
+              "line:28",
+              "line:29"
+            ],
+            "instruction_line_ids": [
+              "line:33",
+              "line:35",
+              "line:37",
+              "line:39",
+              "line:41"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:5"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DQ4yKK3jL0Z.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": "3",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "500 g Hähnchenbrust"
+              },
+              {
+                "text": "Salz"
+              },
+              {
+                "text": "Pfeffer"
+              },
+              {
+                "text": "Paprika"
+              },
+              {
+                "text": "1 EL Dinkelmehl"
+              }
+            ]
+          },
+          {
+            "name": "Für die Glasur:",
+            "ingredients": [
+              {
+                "text": "2 EL Honig"
+              },
+              {
+                "text": "2 EL Sojasauce"
+              },
+              {
+                "text": "4 EL Ketchup Zero"
+              },
+              {
+                "text": "ganz viel Knoblauch "
+              },
+              {
+                "text": "Sesam"
+              }
+            ]
+          },
+          {
+            "name": "Zubereitung:",
+            "steps": [
+              "Hähnchen würfeln, mit Salz, Pfeffer, Paprika & Dinkelmehl vermengen",
+              "10 Minuten im Airfryer (Grillfunktion | 230 °C) garen",
+              "In der Zeit Sauce aus Sojasauce, Honig & Ketchup Zero bei mittlerer Hitze kurz köcheln lassen",
+              "Hähnchen aus dem Airfryer nehmen, mit der Sauce vermengen, Sesam drüber – fertig ✔️"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:10",
+            "ingredient_line_ids": [
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:17",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:5"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DXTqPgwDMWZ.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": "4",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Soße",
+            "ingredients": [
+              {
+                "text": "2 EL Ghee oder Öl"
+              },
+              {
+                "text": "1 große Zwiebel"
+              },
+              {
+                "text": "4 Knoblauchzehen"
+              },
+              {
+                "text": "15 g Ingwer"
+              },
+              {
+                "text": "400 ml passierte Tomaten"
+              },
+              {
+                "text": "150 ml Schlagsahne"
+              },
+              {
+                "text": "400 g Halloumi"
+              }
+            ]
+          },
+          {
+            "name": "Gewürze",
+            "ingredients": [
+              {
+                "text": "½ TL Kurkuma"
+              },
+              {
+                "text": "½ TL Garam Masala"
+              },
+              {
+                "text": "1 TL Koriander"
+              },
+              {
+                "text": "1–1½ TL Chili"
+              },
+              {
+                "text": "2 TL Paprikapulver"
+              },
+              {
+                "text": "1 TL Kreuzkümmel"
+              },
+              {
+                "text": "Salz"
+              }
+            ]
+          },
+          {
+            "name": "Naan",
+            "ingredients": [
+              {
+                "text": "500 g Mehl"
+              },
+              {
+                "text": "1 TL Salz"
+              },
+              {
+                "text": "130 ml lauwarmes Wasser"
+              },
+              {
+                "text": "2 TL Honig"
+              },
+              {
+                "text": "10 g Hefe"
+              },
+              {
+                "text": "250 ml Joghurt"
+              },
+              {
+                "text": "2 EL Öl"
+              }
+            ]
+          },
+          {
+            "name": "Zum Bestreichen",
+            "ingredients": [
+              {
+                "text": "120 g Butter"
+              },
+              {
+                "text": "1 Knoblauchzehe"
+              },
+              {
+                "text": "1 TL Salz"
+              },
+              {
+                "text": "frische Kräuter"
+              }
+            ]
+          },
+          {
+            "name": "Step by Step",
+            "steps": [
+              "Halloumi würfeln und in etwas Öl rundherum goldbraun anbraten. Beiseitestellen.",
+              "Zwiebel würfeln, Knoblauch und Ingwer fein hacken. In Ghee oder Öl glasig anbraten.",
+              "Gewürze zugeben und kurz anrösten. Passierte Tomaten einrühren und ca. 10–15 Minuten köcheln lassen.",
+              "Sahne unterrühren, Halloumi dazugeben und 3–5 Minuten ziehen lassen.",
+              "Hefe mit Wasser und Honig verrühren. Mit Mehl, Salz, Joghurt und Öl zu einem glatten Teig kneten und ca. 1 Stunde gehen lassen.",
+              "Teig in 6 Stücke teilen, oval ausrollen und in einer heißen Pfanne ohne Fett 1–2 Minuten pro Seite backen.",
+              "Butter schmelzen, Knoblauch fein reiben und mit Salz und Kräutern vermengen. Naan direkt nach dem Backen damit bestreichen.",
+              "Tikka Masala mit Naan servieren und nach Wunsch mit frischen Kräutern toppen."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:8",
+            "ingredient_line_ids": [
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:18",
+            "ingredient_line_ids": [
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:27",
+            "ingredient_line_ids": [
+              "line:29",
+              "line:30",
+              "line:31",
+              "line:32",
+              "line:33",
+              "line:34",
+              "line:35"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:37",
+            "ingredient_line_ids": [
+              "line:39",
+              "line:40",
+              "line:41",
+              "line:42"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:44",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:47",
+              "line:50",
+              "line:53",
+              "line:56",
+              "line:59",
+              "line:62",
+              "line:65",
+              "line:68"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:7"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DZ0FglhMjRr.json": {
+      "capture_errors": "",
+      "detected_languages": "de",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 Stange Lauch "
+              },
+              {
+                "text": "2 weiße Zwiebel"
+              },
+              {
+                "text": "2 Stangen Jungszwiebeln"
+              },
+              {
+                "text": "2 Knoblauchzehen "
+              },
+              {
+                "text": "1 Bund Schnittlauch"
+              },
+              {
+                "text": "1 Packung Natur Frischkäse"
+              },
+              {
+                "text": "1 kleine Packung Creme fraiche "
+              },
+              {
+                "text": "1 Packung körniger Frischkäse"
+              },
+              {
+                "text": "Röstzwiebel"
+              },
+              {
+                "text": "Honig"
+              },
+              {
+                "text": "Chili"
+              },
+              {
+                "text": "Salz"
+              },
+              {
+                "text": "Pfeffer"
+              },
+              {
+                "text": "Zitronensaft"
+              }
+            ],
+            "steps": [
+              "Lauch und Zwiebeln in Streifen schneiden und für ca 25 min in der Pfanne mit etwas Butter und Öl karamellisieren lassen. Geschnittenen Jungzwiebel und Knoblauch dazu und weiter 7 Minuten anbraten. Die Füllung komplett abkühlen lassen.",
+              "Frischkäse, Cremefraiche, körniger Frischkäse, halben Bund geschnittenen Schnittlauch, Salz Pfeffer, Zitronensaft und Chili Flocken vermengen und die Lauch Mischung drunter geben.",
+              "Mit Röstzwiebel, Chili Oil, Schnittlauch und Honig toppen und fertig ist der Dip. Jetzt koch für ca. 30 - 60 min. im Kühlschrank ziehen lassen und genießen✨"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12"
+            ],
+            "instruction_line_ids": [
+              "line:14",
+              "line:16",
+              "line:17"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DdEbPPEMxrS.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 portions de Udon"
+              },
+              {
+                "text": "2 œufs"
+              },
+              {
+                "text": "250g de bœuf "
+              },
+              {
+                "text": "40cl de lait de coco"
+              },
+              {
+                "text": "Petites légumes au choix (ici carottes/choux)"
+              },
+              {
+                "text": "Morceau de gingembre"
+              },
+              {
+                "text": "Morceau de citronnelle"
+              },
+              {
+                "text": "2 gousses d’ail"
+              },
+              {
+                "text": "6 c. à soupe de Sauce soja sucrée"
+              },
+              {
+                "text": "2 c. à café de tomate concentré "
+              },
+              {
+                "text": "À c. à soupe de Beurre de cacahuète "
+              },
+              {
+                "text": "Huile de sésame "
+              },
+              {
+                "text": "Huile neutre"
+              },
+              {
+                "text": "Un peu d’eau pour allonger le lait de coco "
+              },
+              {
+                "text": "Jus de citron vert"
+              },
+              {
+                "text": "Coriandre "
+              }
+            ],
+            "steps": [
+              "Dans un saladier, ajoute le bœuf, la sauce soja et la chapelure, puis mélange bien.",
+              "Dans une sauteuse, fais chauffer un peu d’huile neutre et d’huile de sésame. Ajoute l’ail, le gingembre et la citronnelle finement émincés, puis saisis le bœuf. Laisse-le bien caraméliser. Si ça accroche légèrement au fond, ce n’est pas grave : cela donnera encore plus de goût ! Réserve le bœuf.",
+              "Dans la même sauteuse, verse un peu d’eau pour décoller les sucs, puis fais revenir les petits légumes coupés en julienne pendant quelques minutes. Réserve-les.",
+              "Toujours dans la même sauteuse, ajoute à nouveau un peu d’huile neutre et d’huile de sésame, puis l’ail, le gingembre et la citronnelle émincés. Incorpore le concentré de tomate et le jus de citron, puis fais revenir le tout pendant 1 à 2 minutes.",
+              "Verse le lait de coco, le beurre de cacahuète, un peu d’eau puis mélange. Laisse frémir, puis ajoute les udon. Couvre et laisse cuire environ 5 minutes.",
+              "En parallèle, plonge un œuf dans une casserole d’eau frémissante et laisse-le cuire 6 minutes. Refroidis-le immédiatement dans de l’eau froide, puis écale-le délicatement.",
+              "Sers les udon dans une assiette creuse avec le bœuf caramélisé, les petits légumes et l’œuf mollet. Termine avec un peu de chapelure, de la coriandre fraîche, un filet de jus de citron et quelques gouttes d’huile pimentée.",
+              "Régale toi !\"."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19"
+            ],
+            "instruction_line_ids": [
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27",
+              "line:28",
+              "line:29"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:3"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DHjkEisNMym.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 escalopes de poulet"
+              },
+              {
+                "text": "1 oignon"
+              },
+              {
+                "text": "2 gousses d’ail"
+              },
+              {
+                "text": "Sel"
+              },
+              {
+                "text": "poivre"
+              },
+              {
+                "text": "paprika"
+              },
+              {
+                "text": "piment"
+              },
+              {
+                "text": "persil séché"
+              },
+              {
+                "text": "chapelure"
+              },
+              {
+                "text": "1 cuillère à soupe d’huile d’olive"
+              },
+              {
+                "text": "200 g de champignons frais"
+              },
+              {
+                "text": "1 bouillon de poulet"
+              },
+              {
+                "text": "1 briquette de crème liquide"
+              },
+              {
+                "text": "Noix de muscade"
+              },
+              {
+                "text": "persil frais pour assaisonner"
+              }
+            ],
+            "steps": [
+              "Mixer le poulet, l’oignon, l’ail et la chapelure et assaisonner avec le sel, poivre, paprika, piment et persil. Former des boulettes après avoir huilé les mains.",
+              "Faire revenir les boulettes dans un peu d’huile d’olive jusqu’à ce qu’elles soient dorées. Réserver.",
+              "Dans la même poêle, faire revenir l’oignon et l’ail, puis ajouter les champignons. Laisser suer un peu.",
+              "Ajouter le bouillon de poulet et laisser mijoter. Ajouter les boulettes et laisser bien dorer.",
+              "Verser la crème liquide, couvrir et laisser épaissir la sauce. Ajuster l’assaisonnement avec du poivre, paprika, noix de muscade et persil frais.",
+              "Servir avec de la purée ou des pâtes."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13"
+            ],
+            "instruction_line_ids": [
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DUYfC8XjMPA.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": "2",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "200-300g de cabillaud"
+              },
+              {
+                "text": "1 CAC paprika"
+              },
+              {
+                "text": "sel"
+              },
+              {
+                "text": "poivre"
+              },
+              {
+                "text": "1/2 oignon"
+              },
+              {
+                "text": "Piment"
+              },
+              {
+                "text": "Ail"
+              },
+              {
+                "text": "1 cube de bouillon de légume"
+              },
+              {
+                "text": "1/2 CAC gingembre"
+              },
+              {
+                "text": "1 brique de lait de coco"
+              },
+              {
+                "text": "Persil et chili oil pour le dressage"
+              }
+            ],
+            "steps": [
+              "Faire revenir le cabillaud dans une poêle après les avoir assaisonnés avec le paprika, sel et poivre",
+              "Faire fondre les oignons et piments dans la même poêle",
+              "Ajouter l’ail, le gingembre, le cube de bouillon",
+              "Ajouter le lait de coco, un peu d’eau",
+              "Laisser cuire à feu doux pendant 5 bonnes minutes",
+              "Ajouter le cabillaud",
+              "Laisser cuire encore 5 minutes à couvert",
+              "C’est prêt ! Je le sers avec du riz"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14"
+            ],
+            "instruction_line_ids": [
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:5"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DWjfBtwgl1O.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "RIZ : ",
+            "ingredients": [
+              {
+                "text": "1 verre de riz basmati → 1,5 verre d’eau"
+              },
+              {
+                "text": "Un bouillon cube "
+              }
+            ],
+            "steps": [
+              "En gros pour un volume de riz, tu mets 2 volumes d’eau ",
+              "Cuisson riz IMPORTANT : ",
+              "cuire sur feu très doux à découvert sans jamais mélanger pendant environ 30 minutes jusqu’à ce qu’il ai absorbé toute l’eau.",
+              "Après retirer du feu, couvrir pour maintenir au chaud, sans jamais mélanger encore."
+            ]
+          },
+          {
+            "name": "Sauce blanche : ",
+            "ingredients": [
+              {
+                "text": "Cinq cuillères à soupe de crème fraîche épaisse"
+              },
+              {
+                "text": "Une cuillère à soupe de sauce soja salée"
+              },
+              {
+                "text": "Deux cuillères à soupe de sauce douce"
+              },
+              {
+                "text": "Une cuillère à soupe de sauce sriracha "
+              },
+              {
+                "text": "Sel"
+              },
+              {
+                "text": "poivre"
+              },
+              {
+                "text": "Quelques gouttes d’arome Maggie"
+              },
+              {
+                "text": "Paprika ( facultatif) "
+              },
+              {
+                "text": "Arôme du Sud"
+              },
+              {
+                "text": "une cuillère à café"
+              },
+              {
+                "text": "Deux cuillères à soupe de mayonnaise"
+              }
+            ]
+          },
+          {
+            "name": "Panure : ",
+            "ingredients": [
+              {
+                "text": "Un filet de poulet"
+              },
+              {
+                "text": "Un Œuf battu avec du sel et du poivre"
+              },
+              {
+                "text": "Un bol de Corn Flakes natures "
+              },
+              {
+                "text": "Un bol de farine"
+              },
+              {
+                "text": "de la sauce aigre-douce pour le dessus"
+              }
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:5",
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7"
+            ],
+            "instruction_line_ids": [
+              "line:9",
+              "line:11",
+              "line:12",
+              "line:13"
+            ]
+          },
+          {
+            "heading_id": "line:15",
+            "ingredient_line_ids": [
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:26",
+            "ingredient_line_ids": [
+              "line:27",
+              "line:28",
+              "line:29",
+              "line:30",
+              "line:32"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [
+          "line:3"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DXU1Wb8iJzo.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Pour le gratin :",
+            "ingredients": [
+              {
+                "text": "50 g de beurre"
+              },
+              {
+                "text": "7 à 8 pommes de terre"
+              },
+              {
+                "text": "1 oignon"
+              },
+              {
+                "text": "3 gousses d’ail"
+              },
+              {
+                "text": "1 poivron rouge"
+              },
+              {
+                "text": "Blanc de poulet (en morceaux)"
+              },
+              {
+                "text": "Sel / poivre"
+              },
+              {
+                "text": "Paprika"
+              },
+              {
+                "text": "assaisonnement poulet "
+              }
+            ]
+          },
+          {
+            "name": "Pour la béchamel :",
+            "ingredients": [
+              {
+                "text": "2 cuillères à soupe de beurre"
+              },
+              {
+                "text": "3 cuillères à soupe de farine"
+              },
+              {
+                "text": "700 ml de lait"
+              },
+              {
+                "text": "1 cuillère à café d’épices pour poulet"
+              },
+              {
+                "text": "1,5 cuillère à café de fond de volaille"
+              },
+              {
+                "text": "1/2 cuillère à café de poivre"
+              },
+              {
+                "text": "1/2 cuillère à café de paprika"
+              },
+              {
+                "text": "Mozzarella râpée"
+              }
+            ],
+            "steps": [
+              "Enfourner à 180°C pendant 20 à 25 minutes",
+              "Le dessus doit être bien gratiné 🤤"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:5",
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:17",
+            "ingredient_line_ids": [
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23",
+              "line:24",
+              "line:25"
+            ],
+            "instruction_line_ids": [
+              "line:26",
+              "line:27"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DXWc3znDQkZ.json": {
+      "capture_errors": "",
+      "detected_languages": "fr",
+      "recipe": {
+        "title": null,
+        "yield": "4",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 mesure de riz jasmin"
+              },
+              {
+                "text": "1 et demie d’eau pour la cuisson "
+              }
+            ]
+          },
+          {
+            "name": "La sauce: ",
+            "ingredients": [
+              {
+                "text": "250 gr de yaourt grecque ou fromage blanc "
+              },
+              {
+                "text": "3 cuillère à soupe de mayonnaise "
+              },
+              {
+                "text": "2 cuillère à soupe de sauce chili "
+              },
+              {
+                "text": "2 cuillère à soupe de sauce soja sucre ou salé comme vous préférez "
+              },
+              {
+                "text": "1 cuillère à soupe à 2 cuillère de sauce sriracha selon votre préférence de piquant "
+              },
+              {
+                "text": " Sel "
+              },
+              {
+                "text": "Poivre"
+              },
+              {
+                "text": "Paprika "
+              },
+              {
+                "text": "Persil séchée"
+              }
+            ]
+          },
+          {
+            "name": "Pour le poulet: ",
+            "ingredients": [
+              {
+                "text": "350 gr d’escalopes de poulet "
+              },
+              {
+                "text": "200 gr de farine "
+              },
+              {
+                "text": "1 œuf "
+              },
+              {
+                "text": "50 ml de lait "
+              },
+              {
+                "text": "Sel "
+              },
+              {
+                "text": "Poivre "
+              },
+              {
+                "text": "Paprika "
+              },
+              {
+                "text": "Chapelure ici la chapelure Panko "
+              }
+            ]
+          },
+          {
+            "name": "riz",
+            "steps": [
+              "On vient le rincer plusieurs fois jusqu''&agrave; que l'eau soit bien claire",
+              "On retire l'eau",
+              "on le rajoute dans une casserole",
+              "On couvre",
+              "on laisse cuire 15 minutes"
+            ]
+          },
+          {
+            "name": "sauce",
+            "steps": [
+              "On m&eacute;lange",
+              "faut go&ucirc;ter"
+            ]
+          },
+          {
+            "name": "poulet",
+            "steps": [
+              "on va m&eacute;langer de la farine, de l'œuf et du lait au fur et &agrave; mesure jusqu'&agrave; obtenir une une consistance de p&acirc;te &agrave; cr&ecirc;pe &eacute;paisse",
+              "on rajoute nos escalopes de poulet",
+              "On m&eacute;lange bien",
+              "on va venir enrober chaque escalope g&eacute;n&eacute;reusement de chapelure",
+              "on les cuit dans l'huile",
+              "On les retire",
+              "on va tout simplement venir les couper"
+            ]
+          },
+          {
+            "name": "assemblage",
+            "steps": [
+              "on met de la sauce",
+              "on termine avec des oignons frits, de la sauce sriracha et de la sauce chili, et enfin du persil s&eacute;ch&eacute;"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:3",
+              "line:4"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:5",
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:15",
+            "ingredient_line_ids": [
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22",
+              "line:23"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [
+          "line:2"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-Dcg94qVxius.json": {
+      "capture_errors": "",
+      "detected_languages": "es",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "Carne: 2.4 kg de diezmillo (sazona con sal antes de sellarla)."
+              },
+              {
+                "text": "Chiles: 6 chiles guajillo, 5 chiles ancho y 3 chiles pasilla."
+              },
+              {
+                "text": "Verduras: 4 jitomates medianos, 1 cebolla blanca, 1 cabeza de ajo y 6 dientes de ajo."
+              },
+              {
+                "text": "Condimentos: 1½ cditas de orégano, 1 cdta de tomillo, 1 cdta de mejorana, 1 cdta de comino, 4 clavos de olor, 10 pimientas negras, 3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel."
+              },
+              {
+                "text": "Además: ¼ taza de vinagre blanco, 1½ taza de agua, sal de grano y aceite."
+              }
+            ],
+            "steps": [
+              "Cocción: 55 minutos en olla de presión o 3 horas a fuego bajo en olla convencional."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:5",
+              "line:7",
+              "line:9",
+              "line:11",
+              "line:13"
+            ],
+            "instruction_line_ids": [
+              "line:15"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+     "instagram-DQEXXBGAl6P.json": {
+      "capture_errors": "",
+      "detected_languages": "en, it",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "280 g zucca "
+              },
+              {
+                "text": "140 g risoni "
+              },
+              {
+                "text": "150 g guanciale "
+              },
+              {
+                "text": "fonduta di pecorino "
+              },
+              {
+                "text": "pepe nero"
+              },
+              {
+                "text": "olio "
+              },
+              {
+                "text": "brodo 500 ml (circa)"
+              }
+            ]
+          },
+          {
+            "name": "per la fonduta ",
+            "ingredients": [
+              {
+                "text": "100 g pecorino grattugiato "
+              },
+              {
+                "text": "70 ml latte "
+              },
+              {
+                "text": "15 g burro "
+              }
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:14",
+            "ingredient_line_ids": [
+              "line:15",
+              "line:16",
+              "line:17"
+            ],
+            "instruction_line_ids": []
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DU0O71ZiG4o.json": {
+      "capture_errors": "",
+      "detected_languages": "es",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 Pechuga partida por la mitad"
+              },
+              {
+                "text": "1/2 Cebolla picada"
+              },
+              {
+                "text": "1 Puñado de champiñones laminados"
+              },
+              {
+                "text": "1 Chorro de salsa de soja (opcional)"
+              },
+              {
+                "text": "Sal y pimienta al gusto"
+              },
+              {
+                "text": "1/2 Vaso de nata o de leche de coco"
+              },
+              {
+                "text": "Especias y hierbas frescas al gusto para decorar"
+              }
+            ],
+            "steps": [
+              "1.Cocina la pechuga y reserva",
+              "2.Cocina la cebolla y luego los champiñones ",
+              "3.Añade la soja, pimienta y nata y deja reducir unos minutos",
+              "4.Añade unos instantes el pollo"
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11"
+            ],
+            "instruction_line_ids": [
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DUoe17Dj3he.json": {
+      "capture_errors": "",
+      "detected_languages": "es",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 libras de lomo de cerdo"
+              },
+              {
+                "text": "Sal"
+              },
+              {
+                "text": "Pimienta"
+              },
+              {
+                "text": "Ajo en polvo"
+              },
+              {
+                "text": "Paprika"
+              },
+              {
+                "text": "Tomillo"
+              },
+              {
+                "text": "Romero"
+              }
+            ]
+          },
+          {
+            "name": "✨ Para la salsa",
+            "ingredients": [
+              {
+                "text": "3 dientes de ajo"
+              },
+              {
+                "text": "½ taza de cebolla perla"
+              },
+              {
+                "text": "½ taza de vino blanco o caldo de pollo"
+              },
+              {
+                "text": "1 taza de crema de leche"
+              },
+              {
+                "text": "2 cucharadas de mostaza"
+              },
+              {
+                "text": "Perejil fresco"
+              }
+            ]
+          },
+          {
+            "name": "👨‍🍳 Preparación",
+            "steps": [
+              "Sazona el lomo con sal, pimienta, ajo en polvo, paprika, tomillo y romero. Dóralo en una sartén a fuego medio durante 5 minutos por cada lado hasta sellarlo bien. Retira y reserva.",
+              "En la misma sartén prepara la salsa con el ajo, la cebolla, el vino blanco (o caldo), la crema de leche y la mostaza. Regresa el lomo y deja que termine de cocinarse junto a la salsa a fuego medio para que absorba todo el sabor."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:14",
+            "ingredient_line_ids": [
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:22",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:23",
+              "line:25"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DJ-TcVIt8g4.json": {
+      "capture_errors": "",
+      "detected_languages": "es",
+      "recipe": {
+        "title": null,
+        "yield": null,
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Ingredientes:",
+            "ingredients": [
+              {
+                "text": "2 pechugas de pollo"
+              },
+              {
+                "text": "2/3 papas medianas"
+              },
+              {
+                "text": "Pimentón"
+              },
+              {
+                "text": "pimienta"
+              },
+              {
+                "text": "sal"
+              },
+              {
+                "text": "Mix de hierbas (orégano, tomillo, romero)"
+              },
+              {
+                "text": "Aceite de oliva"
+              },
+              {
+                "text": "1 diente de ajo"
+              },
+              {
+                "text": "300 ml de crema de leche"
+              },
+              {
+                "text": "2 cucharadas de mostaza"
+              },
+              {
+                "text": "1 cucharadita de miel"
+              },
+              {
+                "text": "Cebolla de verdeo para terminar"
+              }
+            ]
+          },
+          {
+            "name": "Paso a paso:",
+            "steps": [
+              "1- Cortar las papas en cubos y hervir en agua con sal hasta que estén tiernas.",
+              "2- Condimentar las pechugas con pimentón, pimienta, sal, mix de hierbas y aceite de oliva.",
+              "3- Cocinar el pollo en plancha bien caliente hasta dorar.",
+              "4- En una sartén con aceite de oliva, rehogar el ajo picado. Agregar crema, mostaza, miel y pimienta. Cocinar hasta espesar.",
+              "5- Colar las papas y ponerlas en una fuente caliente. Llevar al horno fuerte hasta que estén doradas y crocantes.",
+              "6- Incorporar el pollo a la salsa, cocinar unos minutos más y agregar cebolla de verdeo picada.",
+              "7- Servir el pollo con las papas crocantes y bañar con la salsa."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": "line:3",
+            "ingredient_line_ids": [
+              "line:4",
+              "line:5",
+              "line:6",
+              "line:7",
+              "line:8",
+              "line:9",
+              "line:10",
+              "line:11",
+              "line:12",
+              "line:13"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:15",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21",
+              "line:22"
+            ]
+          }
+        ],
+        "yield_line_ids": [],
+        "nutrition": {
+          "line_ids": []
+        }
+      }
+    },
+    "instagram-DPtBAZaDBnk.json": {
+      "capture_errors": "",
+      "detected_languages": "es",
+      "recipe": {
+        "title": null,
+        "yield": "2",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 escalopes vegetales"
+              },
+              {
+                "text": "arroz blanco para acompañar"
+              }
+            ]
+          },
+          {
+            "name": "Para el curry:",
+            "ingredients": [
+              {
+                "text": "1 cebolla grande"
+              },
+              {
+                "text": "1 manzana rallada"
+              },
+              {
+                "text": "2 cdas aove"
+              },
+              {
+                "text": "1 cucharada harina de trigo"
+              },
+              {
+                "text": "450 ml caldo vegetal"
+              },
+              {
+                "text": "2 cdas ketchup"
+              },
+              {
+                "text": "2 cdas salsa de soja"
+              },
+              {
+                "text": "1 cda vinagre de arroz"
+              },
+              {
+                "text": "1 cdta mostaza Dijon"
+              },
+              {
+                "text": "1 cdta curry en polvo"
+              },
+              {
+                "text": "sal y pimienta negra al gusto"
+              }
+            ]
+          },
+          {
+            "name": "Preparación:",
+            "steps": [
+              "Empieza caramelizando la cebolla a fuego medio-alto en una olla. Añade un chorrito de agua cada vez que se pegue, hasta que esté bien dorada.",
+              "Incorpora la manzana rallada y cocina 2-3 minutos para que pierda humedad.",
+              "Agrega la harina y cocínala unos minutos. Incorpora el caldo vegetal.",
+              "Añade el ketchup, la salsa de soja, el vinagre, la mostaza Dijon y el curry en polvo. Cocina un par de minutos más, tritura y ajusta de sal y pimienta.",
+              "Sirve con arroz blanco, el escalope cortado por encima, y termina con cebollino fresco."
+            ]
+          }
+        ]
+      },
+      "text_selection": {
+        "components": [
+          {
+            "heading_id": null,
+            "ingredient_line_ids": [
+              "line:7",
+              "line:8"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:10",
+            "ingredient_line_ids": [
+              "line:11",
+              "line:12",
+              "line:13",
+              "line:14",
+              "line:15",
+              "line:16",
+              "line:17",
+              "line:18",
+              "line:19",
+              "line:20",
+              "line:21"
+            ],
+            "instruction_line_ids": []
+          },
+          {
+            "heading_id": "line:23",
+            "ingredient_line_ids": [],
+            "instruction_line_ids": [
+              "line:24",
+              "line:25",
+              "line:26",
+              "line:27",
+              "line:28"
+            ]
+          }
+        ],
+        "yield_line_ids": [
+          "line:5"
+        ],
+        "nutrition": {
+          "line_ids": []
+        }
       }
     }
   }

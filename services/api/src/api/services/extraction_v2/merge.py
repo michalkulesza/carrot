@@ -7,6 +7,13 @@ import re
 from api.services.extraction_v2.contracts import ExtractedRecipe, NutritionEvidence, RecipeComponentEvidence
 
 
+_INGREDIENT_NOISE = frozenset({
+    "tsp", "teaspoon", "teaspoons", "tbsp", "tablespoon", "tablespoons", "cup", "cups", "g", "kg", "ml", "l", "oz",
+    "clove", "cloves", "slice", "slices", "can", "cans", "bunch", "bunches", "pinch", "pinches", "sprig", "sprigs",
+    "handful", "handfuls", "of", "to", "taste", "and",
+})
+
+
 def _key(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip().casefold()
 
@@ -29,6 +36,22 @@ def _has_nutrition(nutrition: NutritionEvidence) -> bool:
     return any((nutrition.calories, nutrition.protein, nutrition.fat, nutrition.carbohydrates, nutrition.raw_text))
 
 
+def _ingredient_tokens(value: str) -> set[str]:
+    return {
+        token for token in re.findall(r"[a-z0-9]+", value.casefold())
+        if not token.isdigit() and token not in _INGREDIENT_NOISE
+    }
+
+
+def _transcript_ingredient_is_already_retained(incoming, existing) -> bool:
+    """Keep a quantified retained ingredient instead of an audio-only restatement."""
+
+    if set(incoming.evidence_ids) != {"transcript:0"}:
+        return False
+    incoming_tokens = _ingredient_tokens(incoming.text)
+    return bool(incoming_tokens) and any(incoming_tokens.issubset(_ingredient_tokens(item.text)) for item in existing)
+
+
 def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRecipe:
     """Merge complementary components and exact duplicates while retaining all evidence IDs."""
 
@@ -42,6 +65,8 @@ def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRec
             by_name[_key(incoming.name or "main")] = component
         existing_ingredients = {_key(item.text): item for item in component.ingredients}
         for ingredient in incoming.ingredients:
+            if _transcript_ingredient_is_already_retained(ingredient, component.ingredients):
+                continue
             current = existing_ingredients.get(_key(ingredient.text))
             if current is None:
                 component.ingredients.append(ingredient.model_copy(deep=True))

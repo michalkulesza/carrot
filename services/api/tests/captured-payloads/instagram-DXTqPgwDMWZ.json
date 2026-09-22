@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:01:42.230187+00:00",
+  "source_url": "https://www.instagram.com/p/DXTqPgwDMWZ/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "24K likes, 117 comments - piaundhalloumi on April 19, 2026: \"HALLOUMI TIKKA MASALA MIT NAAN 🇮🇳\n\n10 Tage – 10 Abendessen – Tag 7\n\nHeute Mal ein kleiner Repost 🫣 Bin gerade voll in den Vorbereitungen für ein Longform Format welches am Mittwoch erscheint. Vielleicht kennt der ein oder andere dieses Rezept auch noch nicht - es ist immerhin schon fast wieder ein Jahr alt.\n\nZutaten (für 4 Personen)\nSoße\n\n2 EL Ghee oder Öl\n1 große Zwiebel\n4 Knoblauchzehen\n15 g Ingwer\n400 ml passierte Tomaten\n150 ml Schlagsahne\n400 g Halloumi\n\nGewürze\n½ TL Kurkuma\n½ TL Garam Masala\n1 TL Koriander\n1–1½ TL Chili\n2 TL Paprikapulver\n1 TL Kreuzkümmel\nSalz\n\nNaan\n\n500 g Mehl\n1 TL Salz\n130 ml lauwarmes Wasser\n2 TL Honig\n10 g Hefe\n250 ml Joghurt\n2 EL Öl\n\nZum Bestreichen\n\n120 g Butter\n1 Knoblauchzehe\n1 TL Salz\nfrische Kräuter\n\nStep by Step\n\nHalloumi braten\nHalloumi würfeln und in etwas Öl rundherum goldbraun anbraten. Beiseitestellen.\n\nMasala ansetzen\nZwiebel würfeln, Knoblauch und Ingwer fein hacken. In Ghee oder Öl glasig anbraten.\n\nWürzen & köcheln\nGewürze zugeben und kurz anrösten. Passierte Tomaten einrühren und ca. 10–15 Minuten köcheln lassen.\n\nVerfeinern\nSahne unterrühren, Halloumi dazugeben und 3–5 Minuten ziehen lassen.\n\nNaan Teig\nHefe mit Wasser und Honig verrühren. Mit Mehl, Salz, Joghurt und Öl zu einem glatten Teig kneten und ca. 1 Stunde gehen lassen.\n\nNaan backen\nTeig in 6 Stücke teilen, oval ausrollen und in einer heißen Pfanne ohne Fett 1–2 Minuten pro Seite backen.\n\nBestreichen\nButter schmelzen, Knoblauch fein reiben und mit Salz und Kräutern vermengen. Naan direkt nach dem Backen damit bestreichen.\n\nServieren\nTikka Masala mit Naan servieren und nach Wunsch mit frischen Kräutern toppen.\n\n#10tage10abendessen #halloumi #tikkamasala #naan #abendessenidee\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "piaundhalloumi"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/670480448_937624609155400_3780751145174922570_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=111&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=dpKukRMy1uIQ7kNvwEAH8k8&_nc_oc=AdoWuM9adQWint22Hp7h4UcDuuo2fkL2rsLIH6c2EcWesMob2jYABwvbKBVWwo_Xch_Gl0aUZQUoF0-ih-OTbJY7&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=Ct_QEqBfeLdyVdUyKkdEMg&_nc_ss=7b6a8&oh=00_AQKvNr7cjjZSffozgk3K7EK6MAuX5JzlC02weuAn1-tOdQ&oe=6AB8BA2F",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQMZN5kcYn35rnOJF4UplVAUu3gfdGhICOm20qTesdG1Kh46XVZ0CCR2qu6dBfudgdBc-JhIAZ4UbUrH-nIdg-185AwbL7t47pI2o7g.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=KVKpBJ-ocvEQ7kNvwH9PGTT&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc4OTE4Njc3Mjc0NTc5MzMsImFzc2V0X2FnZV9kYXlzIjoxNTYsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo0OCwiYml0cmF0ZSI6NDc4NTA4NiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=mMd352qZNweh23I6zBy7UA&_nc_zt=28&_nc_ss=7a22e&oh=00_AQL_n0kKhv_-aqogVofq0vqosFgmzyO3JYvI2sY1g3IK-w&oe=6AB8B68A&bytestart=3357270&byteend=9369208"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQMZN5kcYn35rnOJF4UplVAUu3gfdGhICOm20qTesdG1Kh46XVZ0CCR2qu6dBfudgdBc-JhIAZ4UbUrH-nIdg-185AwbL7t47pI2o7g.mp4?_nc_cat=101&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=KVKpBJ-ocvEQ7kNvwH9PGTT&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc4OTE4Njc3Mjc0NTc5MzMsImFzc2V0X2FnZV9kYXlzIjoxNTYsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo0OCwiYml0cmF0ZSI6NDc4NTA4NiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=mMd352qZNweh23I6zBy7UA&_nc_zt=28&_nc_ss=7a22e&oh=00_AQL_n0kKhv_-aqogVofq0vqosFgmzyO3JYvI2sY1g3IK-w&oe=6AB8B68A&bytestart=3357270&byteend=9369208",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Ich zeig dir 10 Tage lang meine Lieblingsabendessen-Ideen. Heute an Tag 7 gibt es eine meiner allerliebsten Kombinationen, zwar Tikka Masala mit Halloumi-Käse. Dafür habe ich zuallererst eine Gewürzmischung hergestellt, dann Halloumi in große Würfel geschnitten und danach scharf angebraten, den regelmäßig wenden und dann aus der Pfanne nehmen. Dann habe ich eine Zwiebel in Würfel geschnitten und versucht nicht zu heulen. Zudem Ingwer und Knoblauch zu einer Paste püriert und diese dann zusammen mit den kleingeschnittenen Zwiebeln angebraten. Dazu kommt dann auch die Gewürzmischung und passierte Tomaten und alles wird etwas einköcheln gelassen. Habe ich den Teig für die Naan-Brote ausgerollt und in einer Pfanne ausgebacken. Als Topping darauf gab es dann eine Knoblauchbutter mit Koriander. Das genaue Rezept dafür und für alles steht übrigens in der Beschreibung. Bei Tomatensoße kommt dann noch etwas Sahne sowie frische Koriander und am Ende dann der Halloumi. Es wird dann noch mal kurz einköcheln gelassen und kann mit Basmati-Reis und den Naan-Broten serviert werden. Es war wirklich super lecker. Probiert es unbedingt aus und schaut gerne auf meinem Kanal vorbei, wenn ihr die restlichen Tage nicht verpassen wollt.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

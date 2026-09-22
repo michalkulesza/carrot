@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:13:59.983950+00:00",
+  "source_url": "https://www.instagram.com/p/DXU1Wb8iJzo/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "ideerecette13 on April 19, 2026: \"🥔 Gratin de poulet aux pommes de terre\n\n🛒 Ingrédients\n\nPour le gratin :\n\t•\t50 g de beurre\n\t•\t7 à 8 pommes de terre\n\t•\t1 oignon\n\t•\t3 gousses d’ail\n\t•\t\n\t•\t1 poivron rouge\n\t•\tBlanc de poulet (en morceaux)\n\t•\tSel / poivre\n\t•\tPaprika\n\t•\tassaisonnement poulet \n\nPour la béchamel :\n\t•\t2 cuillères à soupe de beurre\n\t•\t3 cuillères à soupe de farine\n\t•\t700 ml de lait\n\t•\t1 cuillère à café d’épices pour poulet\n\t•\t1,5 cuillère à café de fond de volaille\n\t•\t1/2 cuillère à café de poivre\n\t•\t1/2 cuillère à café de paprika\n\t•\tMozzarella râpée\n •\tEnfourner à 180°C pendant 20 à 25 minutes\n\t•\tLe dessus doit être bien gratiné 🤤\n\n#gratin #recettefacile #recette #recetterapife #ideerecette\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "Idee recette 13"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/672423374_1663245304897590_8104052281555515188_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=109&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=u7OnXFoZmycQ7kNvwEkUGGA&_nc_oc=AdrT8ATHmeRR9PHLBetK0ONvU2xKfXdJsmrkRNvW-uftXXxT6L82m6gN3iwJJOV8UMB4-Bw4skGh9P3DU1U28TCg&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=GzyFes92H5Z7QEDepcq3xw&_nc_ss=7b6a8&oh=00_AQLbBCXAudKPW1uMd9k4x705qnqhw1BXEnZFCq9lzma1QA&oe=6AB8A254",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNEMeBOIHSrnxlCkUYdVriS2LHjlHij9rVe7K6TI45j04DoSA9kO4Pys9H0iu874m2YCjjtGQ6Bx0Bo3S5DbvXGMxElxen_ugDpYI0.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=d--AlByC3roQ7kNvwF2XUQd&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODA2Mzc2NzczODY2Nzc3MiwiYXNzZXRfYWdlX2RheXMiOjE1NiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjY1LCJiaXRyYXRlIjozNzM0Mzg3LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=JoaXf95HuqeN03K1keNyaQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJ6bzoTBXiJtKq1J2HRefVf060fGq_n5C4YcBOYbMtziw&oe=6AB8C616&bytestart=6086314&byteend=11849471"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNEMeBOIHSrnxlCkUYdVriS2LHjlHij9rVe7K6TI45j04DoSA9kO4Pys9H0iu874m2YCjjtGQ6Bx0Bo3S5DbvXGMxElxen_ugDpYI0.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=d--AlByC3roQ7kNvwF2XUQd&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODA2Mzc2NzczODY2Nzc3MiwiYXNzZXRfYWdlX2RheXMiOjE1NiwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjY1LCJiaXRyYXRlIjozNzM0Mzg3LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=JoaXf95HuqeN03K1keNyaQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJ6bzoTBXiJtKq1J2HRefVf060fGq_n5C4YcBOYbMtziw&oe=6AB8C616&bytestart=6086314&byteend=11849471",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Add the oil to the pan. Add the onions. Add the garlic. Add the meat. Add the salt. Add the pepper. Add the water.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

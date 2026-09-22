@@ -335,21 +335,9 @@ class TextSelectionInput(BaseModel):
     lines: list[TextLine]
 
 
-class NutritionValueSelection(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    line_id: str
-    quote: str = Field(min_length=1)
-
-
 class NutritionSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     line_ids: list[str] = Field(default_factory=list)
-    calories: NutritionValueSelection | None = None
-    protein: NutritionValueSelection | None = None
-    fat: NutritionValueSelection | None = None
-    carbohydrates: NutritionValueSelection | None = None
-    basis: Literal["per_serving", "per_100g", "whole_recipe", "unspecified"] = "unspecified"
-    basis_quote: NutritionValueSelection | None = None
 
 
 class ComponentSelection(BaseModel):

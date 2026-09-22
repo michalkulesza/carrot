@@ -88,6 +88,9 @@ def test_testable_expectation_matches_the_regression_fixture_shape() -> None:
             "nutrition": {"calories": None, "protein": None, "fat": None, "carbohydrates": None},
             "components": [{"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]}],
         },
+        "text_selection": {
+            "components": [], "yield_line_ids": ["line:2"], "nutrition": {"line_ids": ["line:8"]},
+        },
     })
 
     assert expectation == {
@@ -96,6 +99,9 @@ def test_testable_expectation_matches_the_regression_fixture_shape() -> None:
             "title": "Burger", "yield": "1", "total_time_minutes": 20,
             "nutrition": {"calories": None, "protein": None, "fat": None, "carbohydrates": None},
             "components": [{"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]}],
+        },
+        "text_selection": {
+            "components": [], "yield_line_ids": ["line:2"], "nutrition": {"line_ids": ["line:8"]},
         },
     }
 

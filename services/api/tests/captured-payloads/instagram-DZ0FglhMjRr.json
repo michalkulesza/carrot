@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:02:03.111891+00:00",
+  "source_url": "https://www.instagram.com/p/DZ0FglhMjRr/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "2,972 likes, 19 comments - alinabstella on June 20, 2026: \"Vorsicht‼️Suchtgefahr🤤Rezept:\n(OG Rezept von @beatreaze ! Habe ihres bisschen abgewandelt und mein Style dazu gegeben ! ) \n\n1 Stange Lauch \n2 weiße Zwiebel\n2 Stangen Jungszwiebeln\n2 Knoblauchzehen \n1 Bund Schnittlauch\n1 Packung Natur Frischkäse\n1 kleine Packung Creme fraiche \n1 Packung körniger Frischkäse\nRöstzwiebel, Honig, Chili, Salz, Pfeffer, Zitronensaft\n\nLauch und Zwiebeln in Streifen schneiden und für ca 25 min in der Pfanne mit etwas Butter und Öl karamellisieren lassen. Geschnittenen Jungzwiebel und Knoblauch dazu und weiter 7 Minuten anbraten. Die Füllung komplett abkühlen lassen.\n\nFrischkäse, Cremefraiche, körniger Frischkäse, halben Bund geschnittenen Schnittlauch, Salz Pfeffer, Zitronensaft und Chili Flocken vermengen und die Lauch Mischung drunter geben.\nMit Röstzwiebel, Chili Oil, Schnittlauch und Honig toppen und fertig ist der Dip. Jetzt koch für ca. 30 - 60 min. im Kühlschrank ziehen lassen und genießen✨\n\n#dip #sauerteig #grillen #schnellerezepte #einfachkochen\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "alinabstella"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/726538792_18604076587033952_4648109143466455939_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=105&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=yRlot3A6v-YQ7kNvwHgZLm9&_nc_oc=Adq_P-oqxB3WBli7vVlvfZJ_Le4ZV5BWFl3nfQdPa4WTlrLMyIlYKa585MvgfF56FH_eKdxk_-E1QrNvWi54IU-A&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=CtWR4oY9fv77HPyqbWpYLA&_nc_ss=7b6a8&oh=00_AQKVBQkGW_vbmMPtKouYGy_Q2iNzkmTq20LzNA0jFdzHbQ&oe=6AB8B88A",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQO9hdWLQn_QI1KMUod1Wt2DSusqvpMNxzHemjhcAd1YxeLwlkyFoMhksiOhH3u8Ged3KQUSwEchkpUHvg1a0RosoAPrSF7hCsGsk3M.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=XC_z1S-99g0Q7kNvwGSGiJU&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo5ODQ4MzU2MDExMjQ1NzgsImFzc2V0X2FnZV9kYXlzIjo5NCwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjQzLCJiaXRyYXRlIjoyNzMzMTc2LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=xPLZ86sbU1TsxQb-5YmEcg&_nc_zt=28&_nc_ss=7a22e&oh=00_AQJ2XCRuLEiZ0vSczM66Yw60MicUc37vpzXLOtGFn5f-wA&oe=6AB89D37&bytestart=958&byteend=1901610"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQO9hdWLQn_QI1KMUod1Wt2DSusqvpMNxzHemjhcAd1YxeLwlkyFoMhksiOhH3u8Ged3KQUSwEchkpUHvg1a0RosoAPrSF7hCsGsk3M.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=XC_z1S-99g0Q7kNvwGSGiJU&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjo5ODQ4MzU2MDExMjQ1NzgsImFzc2V0X2FnZV9kYXlzIjo5NCwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjQzLCJiaXRyYXRlIjoyNzMzMTc2LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=xPLZ86sbU1TsxQb-5YmEcg&_nc_zt=28&_nc_ss=7a22e&oh=00_AQJ2XCRuLEiZ0vSczM66Yw60MicUc37vpzXLOtGFn5f-wA&oe=6AB89D37&bytestart=958&byteend=1901610",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Ich glaube, ich habe ein Instagram-Rezept noch nie so oft nachgemacht wie diesen insanen Zwiebel-Lauch-Dip. Also zuschauen und nachmachen auf eigene Gefahr. Wir starten mit einer Stange Lauch und zwei großen weißen Zwiebeln, die wir erstmal in feine Streifen schneiden und die kommen dann auch gleich in die Pfanne mit etwas Öl und Butter. Währenddessen habe ich zwei Jungzwiebelstangen und zwei Knoblauchzehen zusammengeschnitten und nach ca. 25 Minuten mit in die Pfanne dazu gegeben. Währenddessen habe ich schon mal die Base aus Frischkäse, Crème fraîche und Cottage Cheese sowie Zitronensaft, einem Bund gehackten Schnittlauch, Salz, Pfeffer und ein paar Chiliflocken vermengt. Wenn die Zwiebel-Lauch-Masse dann schön abgekühlt ist, kann man den ganz easy drunterheben und danach beliebig mit paar Röstzwiebeln, etwas Honig, dem restlichen Schnittlauch sowie crunchy Chiliöl toppen und fertig ist euer Lecker-Dip.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -1,1 +1,0 @@
-{"schema_version": 1, "kind": "social", "source_url": "https://www.instagram.com/reel/example/", "capture": {"status": "complete", "errors": []}, "scrapecreators_response": {"data": {"xdt_shortcode_media": {"edge_media_to_caption": {"edges": [{"node": {"text": "Ingredients:\n1 onion"}}]}, "owner": {"username": "cook"}}}}, "comments": [], "audio": {"status": "unavailable"}}

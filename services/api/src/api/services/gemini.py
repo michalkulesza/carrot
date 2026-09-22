@@ -26,8 +26,8 @@ from api.services.extraction_v2.contracts import FailureReason
 
 log = logging.getLogger(__name__)
 
-_DEFAULT_MECHANICAL_MODEL = "gemini-2.5-flash-lite"
-_STEP_INGREDIENT_MATCH_MODEL = "gemini-2.5-flash-lite"
+_DEFAULT_MECHANICAL_MODEL = "gemini-3.1-flash-lite"
+_STEP_INGREDIENT_MATCH_MODEL = "gemini-3.1-flash-lite"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
 _TOTAL_TIME_LABEL = re.compile(
@@ -85,11 +85,17 @@ _AUDIO_EVIDENCE_SYSTEM = """\
 Extract only recipe facts explicitly spoken in the supplied transcript. Preserve
 the transcript's original wording and language. Do not infer, repair, convert,
 or add quantities, ingredients, times, temperatures, or instructions. Return
-ingredients and steps in their spoken order. Retained evidence is context only:
-do not repeat it unless the transcript itself supports it. If the transcript
+ingredients and steps in their spoken order. Retained evidence is authoritative.
+If it contains any ingredient, return no ingredients at all; if it contains any
+step, return no steps at all. Supply only the category that is entirely absent
+from retained evidence. When supplying steps, include only cooking actions; never
+relabel an ingredient list, seasoning declaration, product claim, or ingredient
+description as a step. Never replace or restate retained facts. If the transcript
 contains no usable recipe facts, return empty components and one of only
 NO_RECIPE_CONTENT, AMBIGUOUS_RECIPE, or UNREADABLE_CONTENT as failure_reason.
-Otherwise leave failure_reason null.
+A product/appliance review, advertisement, testimonial, or lifestyle discussion
+is not a recipe merely because it mentions ingredients or gives an incidental
+serving suggestion. Otherwise leave failure_reason null.
 """
 
 
@@ -333,22 +339,39 @@ async def extract_audio_recipe_evidence(
     retained_recipe: dict[str, Any],
     model: str | None = None,
     usage: UsageTracker | None = None,
+    timeout_seconds: float = 45,
 ) -> AudioRecipeEvidence:
     """Run source-only transcript extraction before enrichment in the v2 flow."""
 
+    if timeout_seconds <= 0:
+        raise ValueError("audio evidence timeout must be positive")
     client = _build_client()
-    response = await _with_retry(
-        lambda: client.models.generate_content(
-            model=model or settings.gemini_extraction_model,
-            contents=json.dumps({"transcript": transcript, "retained_recipe": retained_recipe}),
-            config=types.GenerateContentConfig(
-                system_instruction=_AUDIO_EVIDENCE_SYSTEM,
-                temperature=0,
-                response_mime_type="application/json",
-                response_schema=AudioRecipeEvidence,
-            ),
-        ),
-    )
+    request_timeout_ms = max(1, int(min(timeout_seconds, 20) * 1000))
+    async with client.aio as aio, asyncio.timeout(timeout_seconds):
+        for attempt in range(2):
+            try:
+                response = await aio.models.generate_content(
+                    model=model or settings.gemini_extraction_model,
+                    contents=json.dumps({"transcript": transcript, "retained_recipe": retained_recipe}),
+                    config=types.GenerateContentConfig(
+                        system_instruction=_AUDIO_EVIDENCE_SYSTEM,
+                        temperature=0,
+                        response_mime_type="application/json",
+                        response_schema=AudioRecipeEvidence,
+                        http_options=types.HttpOptions(
+                            timeout=request_timeout_ms,
+                            retry_options=types.HttpRetryOptions(attempts=1),
+                        ),
+                    ),
+                )
+                break
+            except Exception as error:
+                transient = getattr(error, "code", None) in {429, 500, 503, 504} or any(
+                    code in str(error) for code in ("429", "500", "503", "504", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED")
+                )
+                if not transient or attempt:
+                    raise
+                await asyncio.sleep(1)
     if usage is not None:
         usage.add(response)
     return AudioRecipeEvidence.model_validate(json.loads(response.text or "{}"))

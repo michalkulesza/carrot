@@ -35,8 +35,8 @@ uv run --project services/api python tools/extraction-review/run_review.py servi
 # Batch; the CLI expands the glob on Windows.
 uv run --project services/api python tools/extraction-review/run_review.py "services/api/tests/captured-payloads/*.json" --output .local/extraction-review
 
-# Process saved transcripts with Gemini when earlier stages are insufficient.
-uv run --project services/api python tools/extraction-review/run_review.py services/api/tests/captured-payloads --audio-model live --allow-paid-models --max-model-calls 20
+# Saved transcripts are processed with Gemini by default when earlier stages are insufficient.
+uv run --project services/api python tools/extraction-review/run_review.py services/api/tests/captured-payloads
 
 # Replay previously recorded transcript extraction without network access.
 uv run --project services/api python tools/extraction-review/run_review.py services/api/tests/captured-payloads --audio-model replay --recordings .local/extraction-review/previous-run --resume-from .local/extraction-review/previous-run/review.xlsx
@@ -44,9 +44,8 @@ uv run --project services/api python tools/extraction-review/run_review.py servi
 
 Modes:
 
-- Default `--audio-model off`: deterministic extraction and language detection work offline. If the transcript fallback is needed, explicitly mark the review as limited by `AUDIO_MODEL_DISABLED`; do not present this as evidence that the transcript lacks a recipe.
-- `--audio-model live`: use the existing Gemini audio-evidence implementation on saved transcript text only. Require `--allow-paid-models` and a positive `--max-model-calls`. Validate credentials before processing; never transcribe or enable live page fetching. Record all actual requests, including retry attempts; the budget must bound attempts, not merely fixtures. Use bounded timeouts and sequential execution initially.
-- `--audio-model replay`: replay saved model responses only when the exact request fingerprint matches transcript, retained recipe, prompt, model, response schema, and relevant settings. A missing/mismatched recording is a visible `MODEL_REPLAY_MISS`, never a live call or silently invented output. Validate replayed data using the same path as live responses.
+- Default `--audio-model live`: use the existing Gemini audio-evidence implementation on saved transcript text only. Never transcribe or enable live page fetching. Record each request and response diagnostic; an individual audio-evidence call is limited to 45 seconds and retries one transient provider failure.
+- `--audio-model off`: deterministic extraction and language detection work offline. If the transcript fallback is needed, explicitly mark the review as limited by `AUDIO_MODEL_DISABLED`; do not present this as evidence that the transcript lacks a recipe.
 
 Linked pages use a fixture-backed `LinkedPageProvider`. Index HTML envelopes by exact source URL from the selected inputs and an optional `--linked-fixtures <directory>`. Strip fragments for matching but preserve query strings; any aliases must be explicit in a small optional mapping file. Never guess that two different URLs are equivalent or fetch a missing snapshot. Record `LINKED_SNAPSHOT_MISSING`, allow the orchestrator's normal fallback to continue, and show the limitation separately from its returned failure code. The provider preserves requested/final URL information where available; otherwise use the captured URL without inventing redirect history.
 

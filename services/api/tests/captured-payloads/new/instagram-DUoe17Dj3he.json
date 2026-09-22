@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:22:32.689458+00:00",
+  "source_url": "https://www.instagram.com/p/DUoe17Dj3he/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "32K likes, 139 comments - ensupunto.ec on February 11, 2026: \"✨ Lomo de cerdo en salsa de mostaza… una receta que conquista desde el primer bocado ❤️\n\nJugoso, aromático y con una salsa cremosa que simplemente lo tiene TODO. Perfecto para sorprender en casa o consentirte con un plato digno de restaurante.\n\n🛒 Ingredientes\n🥩 2 libras de lomo de cerdo\n🧂 Sal\n🌶 Pimienta\n🧄 Ajo en polvo\n🌿 Paprika\n🌿 Tomillo\n🌿 Romero\n\n✨ Para la salsa\n🧄 3 dientes de ajo\n🧅 ½ taza de cebolla perla\n🍷 ½ taza de vino blanco o caldo de pollo\n🥛 1 taza de crema de leche\n🥄 2 cucharadas de mostaza\n🌿 Perejil fresco\n\n👨‍🍳 Preparación\nSazona el lomo con sal, pimienta, ajo en polvo, paprika, tomillo y romero. Dóralo en una sartén a fuego medio durante 5 minutos por cada lado hasta sellarlo bien. Retira y reserva.\n\nEn la misma sartén prepara la salsa con el ajo, la cebolla, el vino blanco (o caldo), la crema de leche y la mostaza. Regresa el lomo y deja que termine de cocinarse junto a la salsa a fuego medio para que absorba todo el sabor.\n\n💡 El resultado: un lomo suave, jugoso y con una salsa irresistible.\n\n🔥 Una receta que tienes que preparar sí o sí… ¡te va a encantar!\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "ensupunto.ec"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/631964308_1210022957943752_7828580135366328746_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=110&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=XkvRNqdd0boQ7kNvwH18nce&_nc_oc=AdqIVuJmIZaJT3oYLF5I8SiHbZsv0AbuvUWm86YIMR5lfzBhWmHTBb9o2gEUfDm6KgT2gcj325ODkj_TUunL50oM&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=oMnpDrw0VYaRJ_xGw1Tn7g&_nc_ss=7b6a8&oh=00_AQIw80QQmPoGUKTc240CEWmGwvN3ir9LZXrEOVT7UMIREA&oe=6AB8B418",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNmDwAzwMzRdfrzGIwYmU8cIArgfaEaPSAEu8CyL6XZ_SPOY8RxarDwh9IxKnsmI-1WXgFq5vOUixs_qYOzJRPkhLc6eKEYlDjctW0.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=mM9g8-DXJ5kQ7kNvwGaF3xf&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjItaGZyXzEwODBwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3OTQ1MjYzMzkyMTAyMDA2LCJhc3NldF9hZ2VfZGF5cyI6MjIyLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTEyLCJiaXRyYXRlIjo2NDQxNTUzLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=dj5MZlizJjoVMK7WzzUn6w&_nc_zt=28&_nc_ss=7a22e&oh=00_AQLS5dNv5TQZ8UKDzJtWAEnJBVms61HET_489biDTA-atQ&oe=6AB8C817&bytestart=2949675&byteend=10958789"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNmDwAzwMzRdfrzGIwYmU8cIArgfaEaPSAEu8CyL6XZ_SPOY8RxarDwh9IxKnsmI-1WXgFq5vOUixs_qYOzJRPkhLc6eKEYlDjctW0.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=mM9g8-DXJ5kQ7kNvwGaF3xf&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfdnA5LWJhc2ljLWdlbjItaGZyXzEwODBwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3OTQ1MjYzMzkyMTAyMDA2LCJhc3NldF9hZ2VfZGF5cyI6MjIyLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTEyLCJiaXRyYXRlIjo2NDQxNTUzLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=dj5MZlizJjoVMK7WzzUn6w&_nc_zt=28&_nc_ss=7a22e&oh=00_AQLS5dNv5TQZ8UKDzJtWAEnJBVms61HET_489biDTA-atQ&oe=6AB8C817&bytestart=2949675&byteend=10958789",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Dicen que el amor entra por los ojos, pero yo estoy convencida de que entra por la barriga. Imagínate llegar a casa después de un día bastante cansado y que te esperen con este lomo de cerdo en salsa de mostaza. No, esto enamora a cualquiera, sí o sí. Bueno, pues aquí te enseño cómo yo lo preparo. Empezamos armando nuestro mise en place, picando la cebolla, el ajo. Bueno, pues aquí tengo el lomo de cerdo, que lo queremos es quitarle este cuerito que tiene. Ahora cortamos medallones de 2 cm, así tal cual están viendo. Ahora le colocamos un poquito de sal en grano, le vamos a poner pimienta, le agregaremos ajo en polvo, páprika para que tenga color, romero, también tomillo. Esto va a quedar espectacular. En un sartén, agregamos aceite, pero sí que esté bien caliente. Llevamos nuestro lomo de cerdo a que se selle por ambos lados, más o menos un tiempo de 5 minutos a fuego alto. Una vez que ustedes vean que ya se ha sellado y que está casi cocinado, lo vamos a retirar. En la misma sartén, aprovechando todo el sabor que nos quedó, colocaremos un pite de mantequilla, el ajo, la cebolla perla, sofreímos muy bien. Aquí vamos a desglasar con un poco de vino blanco o también puedes hacerlo con caldo de pollo. Vamos a ponerle sal, pimienta, mezclamos muy bien y una vez que este se haya reducido, colocaremos una taza de crema de leche y para elevar su sabor vamos a colocarle mostaza Dijon, exactamente dos cucharadas. Dejamos que nuestra salsa se espese un poquito, aproximadamente unos 3 minutos. Eso sí, a fuego medio para que no se nos llegue a cortar y vamos viendo constantemente. Luego colocamos nuevamente nuestros lomos de cerdo, vamos aquí a dejar que se impregnen de todo el sabor de nuestra salsa y vamos a dejar que se terminen de cocinar aproximadamente 4 minutos más. Finalizamos con un poco de perejil fresco y listo. Ya tenemos nuestro lomo de cerdo en salsa de mostaza en su punto. Una receta que tienes que hacer sí o sí, porque te aseguro que te va a encantar.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

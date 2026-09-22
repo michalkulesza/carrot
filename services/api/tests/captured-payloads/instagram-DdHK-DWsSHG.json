@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:02:18.993247+00:00",
+  "source_url": "https://www.instagram.com/p/DdHK-DWsSHG/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "3,998 likes, 166 comments - kathas_balanced_kitchen on September 10, 2026: \"Cremiges Linsen-Kartoffel-Curry mit viel Gemüse\n\nBei diesem grauen Wetter könnte ich wirklich jeden Tag Curry essen. Dieses hier ist schnell gemacht, mega cremig und sogar die Kinder mögen es. Falls ihr bisher noch nie selbst Curry gemacht habt: unbedingt ausprobieren und das Rezept abspeichern. 🤍\n\nFür etwa 4 Portionen\n\nZutaten:\n\n* 250 g rote Linsen\n* 400 g Kartoffeln\n* 2 rote Paprika\n* 3 Karotten\n* 1 Zwiebel\n* 3 Knoblauchzehen\n* ca. 1 cm frischer Ingwer\n* 1 EL Tomatenmark\n* 1 Pck. passierte/gehackte Tomaten (400 g)\n* 1 Dose Kokosmilch (400 ml)\n* ca. 600 ml Gemüsebrühe\n* 2 EL Olivenöl oder Kokosöl\n* 1½ TL Garam Masala\n* ½ TL Kurkuma\n* 1 TL Paprikapulver, edelsüß\n* ½ TL Kreuzkümmel\n* Salz und Pfeffer\n* Saft von ½ Zitrone\n* 2 Handvoll frischer Spinat\n* optional 2 EL Hefeflocken\n* frische Petersilie oder Koriander\n\nZubereitung:\n\nZwiebel, Knoblauch und Ingwer fein hacken. Kartoffeln, Karotten und Paprika klein würfeln. Die roten Linsen gründlich abspülen.\n\nDas Öl in einem großen Topf erhitzen. Zwiebel, Knoblauch und Ingwer kurz anschwitzen. Tomatenmark und Gewürze dazugeben und kurz mitrösten.\n\nKartoffeln, Karotten, Paprika und Linsen hinzufügen und alles gut vermengen. Gehackte Tomaten, Kokosmilch und Gemüsebrühe dazugießen.\n\nEinmal aufkochen und anschließend bei mittlerer Hitze etwa 20–25 Minuten köcheln lassen, bis die Kartoffeln und Linsen weich sind. Zwischendurch umrühren und bei Bedarf noch etwas Gemüsebrühe ergänzen.\n\nZum Schluss Spinat und nach Wunsch die Hefeflocken unterrühren. Mit Zitronensaft, Salz und Pfeffer abschmecken und mit Petersilie oder Koriander servieren. 🌿\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "kathas_balanced_kitchen"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/803825978_1749242192795483_6064150769555589207_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=7gNg80ZrVTkQ7kNvwG2KqJW&_nc_oc=Ado8xWJmCClAQvXLPbWaX9Y8dimm5h8bX4D1pjtiqRC3dWZPspzrgYFHPldNoUJVHLFyJJsJdMO8Jnxfm8o5nR3-&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=7MAxQkqOWuo6RhSMtDh-7Q&_nc_ss=7b6a8&oh=00_AQJvPBHILT-9dT5XAArh69k6VOC0j5oHSOr1yMQE7vdEZw&oe=6AB8BC31",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOKaYqAkrkTWKLoXEGlUSGQRAzI8AghdL3vtMl0ysFsfREIOeg0gK9UV6ImDdiTK9hzuiSs3U3nW1zsK8zVz5cFgez1FRI3qDMW0bs.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=RCyB366uRgkQ7kNvwHVG-j0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTM5NDczMTQyMjA4MjUxNSwiYXNzZXRfYWdlX2RheXMiOjEyLCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6MTYsImJpdHJhdGUiOjEwNDEzNTM0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=CZ3DCf8KOTBq33QiueWIPg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKT2BEhmMuqABuB9mZFr0GWVdq7lD8yfGmXbJxs6x7KJg&oe=6AB8A64A&bytestart=898&byteend=6479655"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOKaYqAkrkTWKLoXEGlUSGQRAzI8AghdL3vtMl0ysFsfREIOeg0gK9UV6ImDdiTK9hzuiSs3U3nW1zsK8zVz5cFgez1FRI3qDMW0bs.mp4?_nc_cat=109&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=RCyB366uRgkQ7kNvwHVG-j0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTM5NDczMTQyMjA4MjUxNSwiYXNzZXRfYWdlX2RheXMiOjEyLCJ2aV91c2VjYXNlX2lkIjoxMDgyNywiZHVyYXRpb25fcyI6MTYsImJpdHJhdGUiOjEwNDEzNTM0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=CZ3DCf8KOTBq33QiueWIPg&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKT2BEhmMuqABuB9mZFr0GWVdq7lD8yfGmXbJxs6x7KJg&oe=6AB8A64A&bytestart=898&byteend=6479655",
+    "audio_url": null,
+    "audio_title": "Morunas•Autumn Days",
+    "transcript": "Es gibt Gerichte, da könnte ich mich wirklich einfach nur reinlegen und dieses Curry gehört definitiv dazu. Es ist super schnell gemacht, voller Gemüse und selbst die Kinder essen es unheimlich gern und gerade bei diesem grauen Wetter würde ich es am liebsten jeden Tag essen. Falls ihr Curry noch nie probiert habt, müsst ihr das unbedingt nachholen.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

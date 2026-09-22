@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:34:54.727872+00:00",
+  "source_url": "https://www.instagram.com/p/DPtBAZaDBnk/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "23K likes, 83 comments - melonsinjamon on October 12, 2025: \"KATSU CURRY, TU IDEA DE CENA PARA HOY! 🍛✨\n\nEn mi lista de cenas fáciles y sabrosas no podía faltar este clásico japonés, con su salsa espesa, dulce y umami que lo hace irresistible. Guarda la receta que luego no sabes dónde la viste 🤗\n\nIngredientes (para 2 personas):\n\n2 escalopes vegetales\narroz blanco para acompañar\n\nPara el curry:\n1 cebolla grande\n1 manzana rallada\n2 cdas aove\n1 cucharada harina de trigo\n450 ml caldo vegetal\n2 cdas ketchup\n2 cdas salsa de soja\n1 cda vinagre de arroz\n1 cdta mostaza Dijon\n1 cdta curry en polvo\nsal y pimienta negra al gusto\n\nPreparación:\n1. Empieza caramelizando la cebolla a fuego medio-alto en una olla. Añade un chorrito de agua cada vez que se pegue, hasta que esté bien dorada.\n2. Incorpora la manzana rallada y cocina 2-3 minutos para que pierda humedad.\n3. Agrega la harina y cocínala unos minutos. Incorpora el caldo vegetal.\n4. Añade el ketchup, la salsa de soja, el vinagre, la mostaza Dijon y el curry en polvo. Cocina un par de minutos más, tritura y ajusta de sal y pimienta.\n5. Sirve con arroz blanco, el escalope cortado por encima, y termina con cebollino fresco.\n6. El último paso es seguirnos y enviarle esta receta a tu amiga, así no os perdéis la siguiente 😎\n\n#katsucurry #cena #recetasfaciles #recetascaseras #plantbased #recetasveganas #melonsinjamon\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "melonsinjamon"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/563760802_18126202354496219_7999489162101874169_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=107&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=edUmm6BGYFMQ7kNvwGl-2YK&_nc_oc=AdrR26FLniYwEC9a99cPsEDrASmXiqcyEo38osd5t3-dMe1QUoVqlYCQxjAl6muJKjm9vExPwac4ETkEDJfy4rJE&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=zuVZdVBVYEGJEzKCBMWJwQ&_nc_ss=7b6a8&oh=00_AQJwsdbCN3cfTxu01cgOLcONlGmE59aNrGNH1pZS0DNAYA&oe=6AB8C6B0",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOdG8InkL1jET2fLv7SA3yf4PBWG7PFWmbfVyXbM4JRaTn8fdqm8nOmCE9Wah673anInhWC3hlGAVAT-kdlyoP-ekS8_ydJDA3xf4Y.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5DGFXuKAs_sQ7kNvwF48uco&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMzE2NjYyOTc1NDQyMDgyLCJhc3NldF9hZ2VfZGF5cyI6MzQ1LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTQsImJpdHJhdGUiOjE5MDE3MTQsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=u2C7yvB2T0wdXFZ8S0sZNA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIUjUUaJzKUSY5SpNk3fOIZkJnbx39P788Igs-wS-tkaQ&oe=6AB8D4FE&bytestart=1145021&byteend=3521692"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOdG8InkL1jET2fLv7SA3yf4PBWG7PFWmbfVyXbM4JRaTn8fdqm8nOmCE9Wah673anInhWC3hlGAVAT-kdlyoP-ekS8_ydJDA3xf4Y.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5DGFXuKAs_sQ7kNvwF48uco&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMzE2NjYyOTc1NDQyMDgyLCJhc3NldF9hZ2VfZGF5cyI6MzQ1LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MTQsImJpdHJhdGUiOjE5MDE3MTQsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=u2C7yvB2T0wdXFZ8S0sZNA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIUjUUaJzKUSY5SpNk3fOIZkJnbx39P788Igs-wS-tkaQ&oe=6AB8D4FE&bytestart=1145021&byteend=3521692",
+    "audio_url": null,
+    "audio_title": "Justin Hurwitz•When I Wake",
+    "transcript": "Mira, mira, mira. Te presento tu nueva obsesión. Se llama katsucurry y hacerlo es tan fácil como caramelizar una cebolla y una manzana y triturarlas con otro puñado de ingredientes. Te dejo la receta en la descripción por si quieres hacerla o mucho mejor, enviársela a alguien y que te la haga.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -80,7 +80,7 @@ async def _extract_mp3(video_path: Path, audio_path: Path) -> None:
 
 async def transcribe_video(
     video_url: str,
-    model: str = "gemini-2.5-flash-lite",
+    model: str = "gemini-3.1-flash-lite",
     usage: gemini.UsageTracker | None = None,
 ) -> str:
     """Downloads a scraper-supplied video URL and transcribes its spoken audio."""

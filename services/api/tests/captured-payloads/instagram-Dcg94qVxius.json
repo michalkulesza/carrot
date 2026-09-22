@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:20:57.028722+00:00",
+  "source_url": "https://www.instagram.com/p/Dcg94qVxius/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "349K likes, 1,150 comments - bocamia.mx on August 26, 2026: \"Volvimos a la Birria de res😍 es que es una delicia comerla a cualquier hora del día si o no??🤠 Te enseño a hacerla✨\n\n🧾 Ingredientes:\n\n🥩Carne: 2.4 kg de diezmillo (sazona con sal antes de sellarla).\n\n🌶️Chiles: 6 chiles guajillo, 5 chiles ancho y 3 chiles pasilla.\n\n🍅Verduras: 4 jitomates medianos, 1 cebolla blanca, 1 cabeza de ajo y 6 dientes de ajo.\n\n🧂🌿Condimentos: 1½ cditas de orégano, 1 cdta de tomillo, 1 cdta de mejorana, 1 cdta de comino, 4 clavos de olor, 10 pimientas negras, 3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel.\n\n✨Además: ¼ taza de vinagre blanco, 1½ taza de agua, sal de grano y aceite.\n\n⏱️Cocción: 55 minutos en olla de presión o 3 horas a fuego bajo en olla convencional.\n\n#birria #quesabirria #receta #comida #food\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "bocamia.mx"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/786944560_18105216818585739_2301394467225086272_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=101&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=uadqV1EBmVoQ7kNvwHM1MMG&_nc_oc=AdpQi9xMltZ_0wFyKFMQMVHmGqjJBJHK-wM6gbtie2GXlO1cbVDQMARzXLcTgLYuBSoulMwyc1dy1Y6OZY2-7gke&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=QVN96NFRgtllfXQogRDvvg&_nc_ss=7b6a8&oh=00_AQIf3sHLxxd7PVMRB4m4vIjesA1D0C3Tmubmh8IMLdNrjA&oe=6AB8C4A2",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPwNQwQN49zJj2MnL2o0vHkKifmT1l6acNtKnKeiqjHx6o592MAxIcF2imYWMEjFSVBDLRZIcFAz8Ovn6e31IN8eek6D3AUMw3Wpos.mp4?_nc_cat=110&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=RksL_J9k2WgQ7kNvwHeUP2-&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTQxOTA0NDkwNjc1MTU4MCwiYXNzZXRfYWdlX2RheXMiOjI3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6ODgsImJpdHJhdGUiOjUzNjc0MjYsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=uPDjB3kksEauRkTCFIPGcw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIe9OSs9LZxTf03KfpOCqLKtm2HJumu8M-5mgC2P4F0OQ&oe=6AB8BCC3&bytestart=3459001&byteend=9202177"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPwNQwQN49zJj2MnL2o0vHkKifmT1l6acNtKnKeiqjHx6o592MAxIcF2imYWMEjFSVBDLRZIcFAz8Ovn6e31IN8eek6D3AUMw3Wpos.mp4?_nc_cat=110&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=RksL_J9k2WgQ7kNvwHeUP2-&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTQxOTA0NDkwNjc1MTU4MCwiYXNzZXRfYWdlX2RheXMiOjI3LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6ODgsImJpdHJhdGUiOjUzNjc0MjYsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=uPDjB3kksEauRkTCFIPGcw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIe9OSs9LZxTf03KfpOCqLKtm2HJumu8M-5mgC2P4F0OQ&oe=6AB8BCC3&bytestart=3459001&byteend=9202177",
+    "audio_url": null,
+    "audio_title": "Original audio",
+    "transcript": "Siempre que hago birria, todos me piden la receta y es que no te imaginas lo fácil que es hacerla. Así que te enseñé a preparar estas quesabirrias bien doraditas con su consomé que te juro las vas a amar. Lo primero que vas a hacer es sellar toda la carne por ambos lados hasta que quede bien doradita para darle más sabor al consomé. Yo utilicé 2 kg 400 de 10 mil. Ya lista, reservas tu carne en una olla y ahí mismo donde la sellamos, vamos a agregar seis dientes de ajo, media cebolla y seis jitomates partidos en cuatro o en seis. Dejamos que se doren muy bien y ya listos vamos a agregar los chiles secos. Yo utilicé seis de guajillo, cinco de ancho y tres de pasilla, todos previamente limpios y desvenados. Aquí dóralos ligeramente cuidando que no se quemen. Después vas a agregar todos los condimentos. Todos los ingredientes y cantidades te las dejo en la descripción. Agregas dos tazas de agua y dejas cocinar unos minutos para que los chiles se suavicen. Pasa toda la licuadora con un cuarto de taza de vinagre blanco, sal al gusto y una taza y media de agua. Después licúas muy bien y cuela el adobo. Si lo ves muy espeso, agrega un poco de agua para que se te haga más fácil. Ya listo, en la olla vas a agregar una cabeza de ajo, unas cinco hojitas de laurel, media cebolla y agregamos todo nuestro adobo. Cocina a presión por 55 minutos. Si usas una olla normal, déjalo unas 3 horas a fuego bajo hasta que la carne esté súper suavecito. Ya pasó ese tiempo, retira la carne y deshébrala. Aquí literal vas a ver que la carne se deshace de lo suave. Y ahora sí, para armar las quesabirrias, vamos a agarrar una tortilla de maíz, la sumergimos en el consomé y la pasamos a una plancha. Yo siempre utilizo queso Chihuahua, que es el que mejor le queda. Le ponemos su buena porción de birria y las dejamos ahí hasta que queden bien doraditas y crujientes. Ya lista la acompañamos con su consomé para chopearla y una buena salsa verde picante. Y ya saben, si las hacen me cuentan qué tal les pareció. Besitos, bye.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

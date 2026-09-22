@@ -68,7 +68,7 @@ async def test_text_extraction_uses_configured_model_and_deterministic_sampling(
 
     extraction_call, enrichment_call = generate_content.call_args_list
     assert extraction_call.kwargs["model"] == "configured-extraction-model"
-    assert enrichment_call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert enrichment_call.kwargs["model"] == "gemini-3.1-flash-lite"
     assert extraction_call.kwargs["config"].temperature == 0
     assert enrichment_call.kwargs["config"].temperature == 0
     assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
@@ -159,7 +159,7 @@ async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_un
 
     assert lines == [2, 1]
     call = generate_content.call_args_list[0]
-    assert call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert call.kwargs["model"] == "gemini-3.1-flash-lite"
     assert json.loads(call.kwargs["contents"])["components"][0]["ingredients"] == [
         {"index": 0, "text": "1 tsp cayenne pepper"},
         {"index": 1, "text": "5 chicken thighs"},
@@ -269,7 +269,7 @@ async def test_step_matcher_batches_all_recipe_components_in_one_request(monkeyp
     prompt = json.loads(generate_content.call_args.kwargs["contents"])
     assert lines == [[0], [0]]
     assert generate_content.call_count == 1
-    assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert generate_content.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
     assert [component["component_index"] for component in prompt["components"]] == [0, 1]
 
 
@@ -441,7 +441,7 @@ async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None
 
     extraction_call, enrichment_call = generate_content.call_args_list
     assert extraction_call.kwargs["model"] == "image-model"
-    assert enrichment_call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert enrichment_call.kwargs["model"] == "gemini-3.1-flash-lite"
     assert extraction_call.kwargs["config"].temperature == 0
 
 
@@ -457,7 +457,7 @@ async def test_audio_transcription_uses_flash_lite_and_faithful_prompt(monkeypat
     call = generate_content.call_args
     audio_part, request = call.kwargs["contents"]
     assert transcript == "Dodaj dwie łyżki oliwy."
-    assert call.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert call.kwargs["model"] == "gemini-3.1-flash-lite"
     assert audio_part.inline_data.mime_type == "audio/mpeg"
     assert audio_part.inline_data.data == b"mp3-audio"
     assert request == "Transcribe the spoken audio in this file."
@@ -473,9 +473,9 @@ async def test_audio_transcription_honours_model_override(monkeypatch) -> None:
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
-    await gemini.transcribe_audio(b"mp3-audio", model="gemini-2.5-flash-lite")
+    await gemini.transcribe_audio(b"mp3-audio", model="gemini-3.1-flash-lite")
 
-    assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert generate_content.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
 
 
 @pytest.mark.asyncio
@@ -486,7 +486,7 @@ async def test_shopping_list_values_stay_on_flash_lite_by_default(monkeypatch) -
 
     await gemini.recommend_shopping_list_values(["0.5 onion"])
 
-    assert generate_content.call_args.kwargs["model"] == "gemini-2.5-flash-lite"
+    assert generate_content.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
 
 
 def test_import_normalizes_malformed_parenthetical_ingredient_commas() -> None:

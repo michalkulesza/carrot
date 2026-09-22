@@ -1,4 +1,4 @@
-"""Offline regression cases for every captured extraction-v2 source envelope."""
+"""Regression cases for every captured extraction-v2 source envelope."""
 
 from __future__ import annotations
 
@@ -8,14 +8,24 @@ from typing import Any
 
 import pytest
 
-from api.services.extraction_v2.contracts import SOURCE_PAYLOAD_ADAPTER
+from api.services.extraction_v2.contracts import SOURCE_PAYLOAD_ADAPTER, TextSelection
+from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
 from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
+from api.services.extraction_v2.gemini_selection import HybridTextExtractor
 from api.services.extraction_v2.language import LinguaLanguageDetector
 from api.services.extraction_v2.orchestrator import ExtractionDependencies, ExtractionOrchestrator
 
 CAPTURE_DIR = Path(__file__).parent / "captured-payloads"
 EXPECTATIONS_PATH = Path(__file__).parent / "fixtures" / "extraction_v2" / "expectations.json"
 SKIPPED_CAPTURE_FILES = {"failed-urls.json"}
+
+
+class _ReviewedSelection:
+    def __init__(self, selection: dict[str, Any]) -> None:
+        self._selection = TextSelection.model_validate(selection)
+
+    async def select(self, source: object) -> TextSelection:
+        return self._selection
 
 
 def _captures() -> list[Path]:
@@ -76,6 +86,9 @@ def _assert_subset(expected: object, actual: object, path: str = "result") -> No
         for index, value in enumerate(expected):
             _assert_subset(value, actual[index], f"{path}[{index}]")
         return
+    if isinstance(expected, str) and isinstance(actual, str):
+        assert actual.strip() == expected.strip(), f"{path}: expected {expected!r}, got {actual!r}"
+        return
     assert actual == expected, f"{path}: expected {expected!r}, got {actual!r}"
 
 
@@ -86,19 +99,24 @@ async def test_captured_payload(capture_path: Path) -> None:
 
     payload = json.loads(capture_path.read_text(encoding="utf-8"))
     SOURCE_PAYLOAD_ADAPTER.validate_python(payload)
+    expected = _expectations().get(capture_path.name)
+    extractor = RecipeEvidenceExtractor()
+    if expected is not None and expected.get("text_selection") is not None:
+        extractor = HybridTextExtractor(extractor, _ReviewedSelection(expected["text_selection"]))
     outcome = await ExtractionOrchestrator(ExtractionDependencies(
-        RecipeEvidenceExtractor(), LinguaLanguageDetector(), transcription_provider=None,
+        extractor, LinguaLanguageDetector(), transcription_provider=None,
+        audio_evidence_extractor=GeminiAudioEvidenceExtractor(),
     )).extract(payload)
     actual = outcome.model_dump(mode="json")
 
     assert actual["outcome"] in {"complete", "incomplete", "failed"}
-    expected = _expectations().get(capture_path.name)
     if expected is not None:
         detected_languages = list(dict.fromkeys(
             evidence["language"].get("code") or "undetermined"
             for evidence in actual["evidence"]
         ))
-        _assert_subset(expected, {
+        expected_result = {key: value for key, value in expected.items() if key != "text_selection"}
+        _assert_subset(expected_result, {
             "outcome": actual["outcome"],
             "issue_codes": actual.get("issue_codes", []),
             "reason": actual.get("reason"),

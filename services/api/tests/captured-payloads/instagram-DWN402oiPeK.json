@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T17:47:04.943250+00:00",
+  "source_url": "https://www.instagram.com/p/DWN402oiPeK/",
+  "capture": {
+    "status": "partial",
+    "errors": [
+      "Audio transcription failed: audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3':\r\n[out#0/mp3 @ 0000020e05192500] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3.\r\nError opening output files: Invalid argument | audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3':\r\n[out#0/mp3 @ 00000204341132c0] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3.\r\nError opening output files: Invalid argument | Error: Instagram did not expose an audio track to Chrome capture\n    at <anonymous>:18:42"
+    ]
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "1,370 likes, 38 comments - mamo.co.dzisiaj.zjemy on March 22, 2026: \"🥚 Jajka z charakterem – wiosenny sztos na stół! \n\n 🐣 Kremowe, wyraziste i lekko pikantne – faszerowane jajka, które znikają za szybko🫣 \n\n🛒Potrzebujesz (bazowe): \njajka • szynka • pieczarki • cheddar\n\nDodatki (do smaku i dekoracji): \nszczypiorek • natka pietruszki • musztarda francuska • majonez • sól • pieprz • chilli • kiełki rzodkiewki \n\nSos: \njogurt naturalny • majonez • chrzan • pieprz czarny \n\n🔥Przygotowanie: \n1. Ugotowane jajka przekrój, wyjmij żółtka. \n2. Wymieszaj żółtka z szynką, pieczarkami, startym serem, ziołami, majonezem, musztardą i przyprawami. \n3. Nałóż farsz do białek. \n4. Wymieszaj sos: jogurt, majonez i chrzan z pieprzem.\n5. Podawaj na sosie, udekoruj chilli, musztardą i kiełkami. \n\n🌱 Proste, efektowne i idealne na wiosenny stół! \n\n👉 Zapisz i wypróbuj przy najbliższej okazji! \n\njajka faszerowane, przekąski, szybkie przepisy, wiosenne dania, imprezowe jedzenie \n\n#jajkafaszerowane #przekąski #wiosnatalerzu #domowesmaki #szybkieprzepisy\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "mamo.co.dzisiaj.zjemy"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/655902001_17889628650445328_1821754332250001630_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=cu-Ii736Cm4Q7kNvwGCqtRo&_nc_oc=AdrRy1dkKOrd_vJm3KkyVgiXfqAlNgpclM6jHaXOYKd2eP-G4zSsyaDgaMoHozKzk9fk25q0uh9Qx9yyHG4yCMPE&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=IBqY9mqZlO0z27bx3hV5UQ&_nc_ss=7b6a8&oh=00_AQJZtcDaX7LNiFFmw-p9l7jKUmt-CVTx-cso5hvsUwt_6g&oe=6AB878C3",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNASASAw7rwFZSDc7Ne6-MWZd9Vx6Av33SLr3JIg-8TlOhKdDznsnnfDqTGKwQp5YpL7ccjPxn9g6yUMfGEggUwnI43QPY3MKCZ1Hg.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=xmWOzXMzMzwQ7kNvwE5ck89&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNhcm91c2VsX2l0ZW0uYzItQzMuZGFzaF9iYXNlbGluZV8xX3YxIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3ODg5NjI4NjM4NDQ1MzI4LCJhc3NldF9hZ2VfZGF5cyI6MTgzLCJ2aV91c2VjYXNlX2lkIjoxMDE0NiwiZHVyYXRpb25fcyI6MjgsImJpdHJhdGUiOjE0MDQwNDgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=IH4LYgrWhpUlSDKQhfWSMA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL6XaTrKvEw79t6AOM7Z7hNJH5CpuvicoBM9r7u9XxEKQ&oe=6AB89CA6&bytestart=977614&byteend=2808576"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQNASASAw7rwFZSDc7Ne6-MWZd9Vx6Av33SLr3JIg-8TlOhKdDznsnnfDqTGKwQp5YpL7ccjPxn9g6yUMfGEggUwnI43QPY3MKCZ1Hg.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=xmWOzXMzMzwQ7kNvwE5ck89&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNhcm91c2VsX2l0ZW0uYzItQzMuZGFzaF9iYXNlbGluZV8xX3YxIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE3ODg5NjI4NjM4NDQ1MzI4LCJhc3NldF9hZ2VfZGF5cyI6MTgzLCJ2aV91c2VjYXNlX2lkIjoxMDE0NiwiZHVyYXRpb25fcyI6MjgsImJpdHJhdGUiOjE0MDQwNDgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=IH4LYgrWhpUlSDKQhfWSMA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL6XaTrKvEw79t6AOM7Z7hNJH5CpuvicoBM9r7u9XxEKQ&oe=6AB89CA6&bytestart=977614&byteend=2808576",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": null,
+    "status": "transcription_failed",
+    "transcription_error": "audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3':\r\n[out#0/mp3 @ 0000020e05192500] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-8c8cyusu\\audio.mp3.\r\nError opening output files: Invalid argument | audio extraction failed: kb/s, 30 fps, 30 tbr, 15360 tbn (default)\r\n    Metadata:\r\n      creation_time   : 2026-07-20T07:26:38.000000Z\r\n      handler_name    : VideoHandler\r\n      encoder         : AVC Coding\r\nOutput #0, mp3, to 'C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3':\r\n[out#0/mp3 @ 00000204341132c0] Output file does not contain any stream\r\nError opening output file C:\\Users\\kules\\AppData\\Local\\Temp\\carrot-transcription-xq_9tn69\\audio.mp3.\r\nError opening output files: Invalid argument | Error: Instagram did not expose an audio track to Chrome capture\n    at <anonymous>:18:42"
+  }
+}

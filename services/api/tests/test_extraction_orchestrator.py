@@ -16,6 +16,7 @@ from api.services.extraction_v2.contracts import (
     StepEvidence,
 )
 from api.services.extraction_v2.orchestrator import ExtractionDependencies, ExtractionOrchestrator
+from api.services.extraction_v2.adapters import _ground_transcript_wording
 from api.services.extraction_v2.sources import LinkedPage
 
 
@@ -93,6 +94,15 @@ def _social_payload(description: str, **overrides) -> dict:
     }
     payload.update(overrides)
     return payload
+
+
+def test_audio_wording_reuses_the_exact_transcript_for_mojibake_only() -> None:
+    transcript = "Następnie dolewacie 365 g zimnej wody i sypiecie 1 g drożdży suchych."
+
+    assert _ground_transcript_wording(
+        "dolewacie 365 g zimnej wody i sypiecie 1 g droŸdŸy suchych.", transcript,
+    ) == "dolewacie 365 g zimnej wody i sypiecie 1 g drożdży suchych."
+    assert _ground_transcript_wording("Dodaj cukier.", transcript) == "Dodaj cukier."
 
 
 @pytest.mark.asyncio
@@ -181,6 +191,84 @@ async def test_audio_merges_with_retained_partial_evidence() -> None:
 
 
 @pytest.mark.asyncio
+async def test_unanchored_partial_audio_does_not_create_an_unrelated_recipe() -> None:
+    extractor = FakeExtractor()
+    audio = FakeAudioExtractor(_recipe(ingredients=[_ingredient("one cup of sugar", "transcript:0")]))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, FakeLanguageDetector(), audio_evidence_extractor=audio))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "A video with no recipe details.",
+        audio={"status": "transcribed", "transcript": "Make one cup of sugar syrup."},
+    ))
+
+    assert outcome.outcome == "failed"
+    assert outcome.reason == FailureReason.NO_RECIPE_CONTENT
+    assert any(event.event == "unanchored_partial_audio_ignored" for event in outcome.trace)
+
+
+@pytest.mark.asyncio
+async def test_audio_does_not_add_ingredients_when_earlier_evidence_has_any() -> None:
+    extractor = FakeExtractor(text_result=_recipe(ingredients=[
+        _ingredient("1 teaspoon onion powder", "caption:0"),
+        _ingredient("5 rice paper sheets", "caption:0"),
+    ]))
+    audio = FakeAudioExtractor(_recipe(ingredients=[
+        _ingredient("onion powder", "transcript:0"),
+        _ingredient("rice paper", "transcript:0"),
+        _ingredient("avocado oil", "transcript:0"),
+    ], steps=[_step("Air fry until crisp.", "transcript:0")]))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, FakeLanguageDetector(), audio_evidence_extractor=audio))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "Ingredients: 1 teaspoon onion powder; 5 rice paper sheets",
+        audio={"status": "transcribed", "transcript": "Use onion powder, rice paper, and avocado oil. Air fry until crisp."},
+    ))
+
+    assert outcome.outcome == "complete"
+    assert [item.text for item in outcome.recipe.components[0].ingredients] == [
+        "1 teaspoon onion powder", "5 rice paper sheets",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_audio_adds_ingredients_but_not_steps_when_earlier_evidence_has_steps() -> None:
+    extractor = FakeExtractor(text_result=_recipe(steps=[_step("Cook the filling.", "caption:0")]))
+    audio = FakeAudioExtractor(_recipe(
+        ingredients=[_ingredient("1 avocado", "transcript:0")],
+        steps=[_step("Air fry until crisp.", "transcript:0")],
+    ))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, FakeLanguageDetector(), audio_evidence_extractor=audio))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "Instructions: Cook the filling.",
+        audio={"status": "transcribed", "transcript": "Use 1 avocado. Air fry until crisp."},
+    ))
+
+    assert outcome.outcome == "complete"
+    assert [item.text for item in outcome.recipe.components[0].ingredients] == ["1 avocado"]
+    assert [item.text for item in outcome.recipe.components[0].steps] == ["Cook the filling."]
+
+
+@pytest.mark.asyncio
+async def test_unsupported_transcript_does_not_discard_supported_partial_text() -> None:
+    extractor = FakeExtractor(text_result=_recipe(steps=[_step("Cook the onion.", "caption:0")]))
+    audio = FakeAudioExtractor(_recipe(ingredients=[_ingredient("1 onion", "transcript:0")]))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(
+        extractor, FakeLanguageDetector(), audio_evidence_extractor=audio,
+    ))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "Instructions: Cook the onion.",
+        audio={"status": "transcribed", "transcript": "CYRILLIC translation"},
+    ))
+
+    assert outcome.outcome == "incomplete"
+    assert outcome.issue_codes == ["MISSING_INGREDIENTS"]
+    assert audio.calls == []
+    assert any(event.event == "unsupported_secondary_ignored" for event in outcome.trace)
+
+
+@pytest.mark.asyncio
 async def test_unsupported_language_stops_before_extraction() -> None:
     extractor = FakeExtractor()
     orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, FakeLanguageDetector()))
@@ -190,6 +278,85 @@ async def test_unsupported_language_stops_before_extraction() -> None:
     assert outcome.outcome == "failed"
     assert outcome.reason == FailureReason.UNSUPPORTED_LANGUAGE
     assert extractor.text_inputs == []
+
+
+@pytest.mark.asyncio
+async def test_supported_spanish_transcript_supersedes_unsupported_sparse_caption() -> None:
+    class Detector:
+        def detect(self, text: str) -> LanguageResult:
+            if "CAPTION_IN_UNSUPPORTED_LANGUAGE" in text:
+                return LanguageResult(code="ru", confidence=0.99)
+            if "TRANSCRIPCION_EN_ESPANOL" in text:
+                return LanguageResult(code="es", confidence=0.99)
+            return LanguageResult()
+
+    extractor = FakeExtractor()
+    audio = FakeAudioExtractor(_recipe(
+        ingredients=[_ingredient("2 tomates", "transcript:0")],
+        steps=[_step("Corta los tomates.", "transcript:0")],
+    ))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(
+        extractor, Detector(), audio_evidence_extractor=audio,
+    ))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "CAPTION_IN_UNSUPPORTED_LANGUAGE",
+        audio={"status": "transcribed", "transcript": "TRANSCRIPCION_EN_ESPANOL"},
+    ))
+
+    assert outcome.outcome == "complete"
+    assert extractor.text_inputs == []
+    assert len(audio.calls) == 1
+    assert outcome.evidence[-1].language.code == "es"
+    assert any(event.event == "unsupported_language_deferred_for_audio" for event in outcome.trace)
+
+
+@pytest.mark.asyncio
+async def test_unsupported_transcript_does_not_supersede_deferred_caption_failure() -> None:
+    extractor = FakeExtractor()
+    audio = FakeAudioExtractor(_recipe(
+        ingredients=[_ingredient("1 tomato", "transcript:0")],
+        steps=[_step("Cook it.", "transcript:0")],
+    ))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(
+        extractor, FakeLanguageDetector(), audio_evidence_extractor=audio,
+    ))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "CYRILLIC caption",
+        audio={"status": "transcribed", "transcript": "CYRILLIC transcript"},
+    ))
+
+    assert outcome.outcome == "failed"
+    assert outcome.reason == FailureReason.UNSUPPORTED_LANGUAGE
+    assert extractor.text_inputs == []
+    assert audio.calls == []
+    assert {source.kind for source in outcome.evidence} == {EvidenceKind.CAPTION, EvidenceKind.TRANSCRIPT}
+
+
+@pytest.mark.asyncio
+async def test_supported_caption_ignores_a_later_unsupported_language_block() -> None:
+    class Detector:
+        def detect(self, text: str) -> LanguageResult:
+            if "SECONDARY_LANGUAGE" in text:
+                return LanguageResult(code="ru", confidence=0.99)
+            return LanguageResult(code="en", confidence=0.99)
+
+    extractor = FakeExtractor(text_result=_recipe(steps=[_step("Cook the onion.", "caption:0")]))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, Detector()))
+
+    outcome = await orchestrator.extract(_social_payload(
+        "Ingredients are mixed into these directions.\n1. Cook the onion.\n\n"
+        "SECONDARY_LANGUAGE translated copy that should be ignored.",
+    ))
+
+    assert outcome.outcome == "incomplete"
+    assert outcome.issue_codes == ["MISSING_INGREDIENTS"]
+    # Frozen review selections use physical source line IDs, so source layout is
+    # retained even though the secondary block is excluded from language gating.
+    assert "SECONDARY_LANGUAGE" in extractor.text_inputs[0].content
+    assert outcome.evidence[0].language.code == "en"
+    assert any(event.event == "unsupported_secondary_ignored" for event in outcome.trace)
 
 
 @pytest.mark.asyncio

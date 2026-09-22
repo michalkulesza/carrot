@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:14:24.454547+00:00",
+  "source_url": "https://www.instagram.com/p/DWjfBtwgl1O/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "64K likes, 130 comments - nonofoodies_ on March 31, 2026: \"RECETTE TASTY CROUSTI PRENIUM 🔥 🐓\n\nIngrédients pour un Tasty : \n\nRIZ : \n1 verre de riz basmati → 1,5 verre d’eau\nUn bouillon cube \n\nEn gros pour un volume de riz, tu mets 2 volumes d’eau \n\nCuisson riz IMPORTANT : \ncuire sur feu très doux à découvert sans jamais mélanger pendant environ 30 minutes jusqu’à ce qu’il ai absorbé toute l’eau.\nAprès retirer du feu, couvrir pour maintenir au chaud, sans jamais mélanger encore.\n\nSauce blanche : \nCinq cuillères à soupe de crème fraîche épaisse\nUne cuillère à soupe de sauce soja salée\nDeux cuillères à soupe de sauce douce\nUne cuillère à soupe de sauce sriracha \nSel, poivre\nQuelques gouttes d’arome Maggie\nPaprika ( facultatif) \nArôme du Sud, une cuillère à café\nDeux cuillères à soupe de mayonnaise\n\nPanure : \nUn filet de poulet\nUn Œuf battu avec du sel et du poivre\nUn bol de Corn Flakes natures \nUn bol de farine\n\nde la sauce aigre-douce pour le dessus\n\n#tastycrousti #repas\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "nonofoodies_"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/658869010_1610092736771659_1150039023273383926_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=110&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=DyIpiEewRFoQ7kNvwF9exSQ&_nc_oc=Adrs2r77P9VnRV_EfdD-1tYcJXTtQAAvIvKEXKt8AiqVKfGx1LaXn2zETLvT7M5A_IKSSLKBhekhTzJil2y4c3W2&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=5GeI_dEGvvngRuUCw4r_oQ&_nc_ss=7b6a8&oh=00_AQKgBp7rtFQjUl6_r57xAwnPvBaBCkFPpWdgj--tVLzZ1A&oe=6AB8CE11",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQMCJcw0x20VHnDJ9GluVN9obR3EvQsDpmeDzwfbEGCLjQgz0xyNvLT4jgQ_IqMCXkFit0333J8YYy4YObrIvgYlqyuxxZjNdm01vpE.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=M2Ibwt6lHGMQ7kNvwEmZaTZ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODM5MDY3Mzk1MTE1ODQ3NiwiYXNzZXRfYWdlX2RheXMiOjE3NSwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjgwLCJiaXRyYXRlIjozMzA2ODQ0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=GBPeMqzNPO82EniUTutzVw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQK6tyVCNRdy-iIGXbJzKQEv54th_IN3HxAN501SISQr1w&oe=6AB8B7C7&bytestart=6605283&byteend=10899294"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQMCJcw0x20VHnDJ9GluVN9obR3EvQsDpmeDzwfbEGCLjQgz0xyNvLT4jgQ_IqMCXkFit0333J8YYy4YObrIvgYlqyuxxZjNdm01vpE.mp4?_nc_cat=106&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=M2Ibwt6lHGMQ7kNvwEmZaTZ&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoxODM5MDY3Mzk1MTE1ODQ3NiwiYXNzZXRfYWdlX2RheXMiOjE3NSwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjgwLCJiaXRyYXRlIjozMzA2ODQ0LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=GBPeMqzNPO82EniUTutzVw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQK6tyVCNRdy-iIGXbJzKQEv54th_IN3HxAN501SISQr1w&oe=6AB8B7C7&bytestart=6605283&byteend=10899294",
+    "audio_url": null,
+    "audio_title": "Emil Rosé•Devam (Instrumental)",
+    "transcript": "Il y a une abonnée qui m'a dit \"Eh vas-y Nono, s'il te plaît, j'en peux plus, mes gosses ils me réclament du té croustillant toute la journée.\" Et vu que je suis votre salarié, bah j'étais obligé de m'exécuter. Eh, je t'ai fait une version premium, attention hein. Le poulet, il est pas sec, le riz, il est parfait. Je vais te donner toutes les astuces. Bon, pour la sauce blanche, je te cache pas, c'est un peu une potion magique. Tu vas me mélanger ensemble tous les ingrédients de la sauce et le petit secret, c'est ça là, le secret arôme du sud là. Mmm, ça c'est une petite merveille dans la sauce hein. Bref, tu vas me mélanger tout ça et quand elle est prête, hop, tu me la réserves de côté. Pour le riz, très important, moi je prends toujours le même. Et là, étape cruciale, tu vas me le rincer plusieurs fois à l'eau froide, tu vois, jusqu'à ce que l'eau, elle soit translucide. Ça va retirer l'amidon et de cette manière, tu auras pas un riz collant. Tu me verses ton riz rincé dans une casserole, tu cubes bouillon et de l'eau. Attention, encore une fois, le niveau d'eau, il est important, tu me mets pas de l'eau à l'arrache, mais t'inquiète, je t'écrirai tout en description. Et là, tu vas laisser cuire ton riz 30 minutes sur feu très doux à découvert. Voilà comment on obtient un riz parfait sans jamais le toucher. Après, tu le retires du feu, tu couvres et tu le laisses maintenir au chaud comme ça de côté. Pour le poulet, tu le piques avec une fourchette et puis tu ajoutes l'huile d'olive et les épices. Et la panure, mon astuce, c'est de mettre des cornflakes à la place de la panure dégueu là du supermarché avec un peu d'ail et de paprika. Et puis la panure, ça change pas, farine, puis œuf battu avec un peu de sel et de poivre et la panure. Tu me plonges ça dans une huile bien chaude ou au air fryer si tu es un peu en diète. Et là, je te jure, avec les cornflakes, tu obtiens une panure tellement croustillante. Là, tu vois le poulet, il est bien juteux. Pour le dressage, je te laisse en image, sur le dessus, tu mets aussi des oignons frits avec un peu d'herbe et c'est prêt.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

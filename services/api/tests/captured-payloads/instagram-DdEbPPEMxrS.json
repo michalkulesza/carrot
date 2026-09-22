@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:12:54.869001+00:00",
+  "source_url": "https://www.instagram.com/p/DdEbPPEMxrS/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "11K likes, 40 comments - m_arinesg on September 9, 2026: \"Udon coco thaï, bœuf caramélisé & oeuf mollet 🍜\n\nIngrédients pour 2 :\n2 portions de Udon\n2 œufs\n250g de bœuf \n40cl de lait de coco\nPetites légumes au choix (ici carottes/choux)\nMorceau de gingembre\nMorceau de citronnelle\n2 gousses d’ail\n6 c. à soupe de Sauce soja sucrée\n2 c. à café de tomate concentré \nÀ c. à soupe de Beurre de cacahuète \nHuile de sésame \nHuile neutre\nUn peu d’eau pour allonger le lait de coco \nJus de citron vert\nCoriandre \n\nRecette :\n- Dans un saladier, ajoute le bœuf, la sauce soja et la chapelure, puis mélange bien.\n- Dans une sauteuse, fais chauffer un peu d’huile neutre et d’huile de sésame. Ajoute l’ail, le gingembre et la citronnelle finement émincés, puis saisis le bœuf. Laisse-le bien caraméliser. Si ça accroche légèrement au fond, ce n’est pas grave : cela donnera encore plus de goût ! Réserve le bœuf.\n- Dans la même sauteuse, verse un peu d’eau pour décoller les sucs, puis fais revenir les petits légumes coupés en julienne pendant quelques minutes. Réserve-les.\n- Toujours dans la même sauteuse, ajoute à nouveau un peu d’huile neutre et d’huile de sésame, puis l’ail, le gingembre et la citronnelle émincés. Incorpore le concentré de tomate et le jus de citron, puis fais revenir le tout pendant 1 à 2 minutes.\n- Verse le lait de coco, le beurre de cacahuète, un peu d’eau puis mélange. Laisse frémir, puis ajoute les udon. Couvre et laisse cuire environ 5 minutes.\n- En parallèle, plonge un œuf dans une casserole d’eau frémissante et laisse-le cuire 6 minutes. Refroidis-le immédiatement dans de l’eau froide, puis écale-le délicatement.\n- Sers les udon dans une assiette creuse avec le bœuf caramélisé, les petits légumes et l’œuf mollet. Termine avec un peu de chapelure, de la coriandre fraîche, un filet de jus de citron et quelques gouttes d’huile pimentée.\n- Régale toi !\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "m_arinesg"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/801993699_18618125065036143_5631750587891250228_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=110&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=8LSoPGlR2WcQ7kNvwEnPy08&_nc_oc=Adr-H5iDqFQmManGG6Hgv5EJHALIae8I06D_vYGZf4hfj-k4NljYyY6Q4PxPkF3E_Xs_HtHL9dAhrud6cnpdT-KC&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=uyEdD0wJsISDUQRugiK57w&_nc_ss=7b6a8&oh=00_AQK3IsTW46BQgsl3Yn1NltAlUjX-Yr5_TeE89XK9mtqmRA&oe=6AB8AC21",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQN_bziJWTprxBxj3VX_J81DBRrVgFH32PHoZ_y21rPuG0GFKk0kQZitOlVU_CWa1byKrLj16ulHKgkOSzqVhW-w5aY2dLkbv-oDzho.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=fN5bnFCYmQUQ7kNvwFFm6Lp&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5MzgxNzY2MTgwODE3MywiYXNzZXRfYWdlX2RheXMiOjEzLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NjIsImJpdHJhdGUiOjQ5NjI2NjUsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=J1hmbDqa4K6N9OSbpXha7A&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIFVkqc7Mhu4vAREkYRPHd1iQuCzpxV5-zXaAyg3kuM8Q&oe=6AB8A0CC&bytestart=2239587&byteend=7912452"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQN_bziJWTprxBxj3VX_J81DBRrVgFH32PHoZ_y21rPuG0GFKk0kQZitOlVU_CWa1byKrLj16ulHKgkOSzqVhW-w5aY2dLkbv-oDzho.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=fN5bnFCYmQUQ7kNvwFFm6Lp&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTc5MzgxNzY2MTgwODE3MywiYXNzZXRfYWdlX2RheXMiOjEzLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6NjIsImJpdHJhdGUiOjQ5NjI2NjUsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=J1hmbDqa4K6N9OSbpXha7A&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIFVkqc7Mhu4vAREkYRPHd1iQuCzpxV5-zXaAyg3kuM8Q&oe=6AB8A0CC&bytestart=2239587&byteend=7912452",
+    "audio_url": null,
+    "audio_title": "Diana Ross•Upside Down (Original CHIC Mix)",
+    "transcript": "Pour aimer manger des udons tous les jours, mais la meilleure façon de les manger, c'est cette recette. C'est une folie avec ce petit supplément œuf mollet et bœuf caramélisé à la sauce soja sucrée. Ça me procure un pic de bonheur parce que oui, bien manger, ça me rend heureuse. Alors, je suis sympa, je te partage ma recette. Je prépare mon bœuf avec de la sauce soja sucrée et de la chapelure. Dans une sauteuse, je le fais revenir avec un peu d'ail, du gingembre, de la citronnelle et j'ai même rajouté encore de la sauce soja sucrée parce que je trouvais qu'il y en avait pas assez. Ne t'inquiète pas si ça colle, c'est pas grave, on va récupérer tous les sucres en versant un peu d'eau. Et on va venir faire cuire nos petits légumes quelques minutes. Dans la même sauteuse, tu vas rajouter de l'huile, de l'huile de sésame, gingembre, citronnelle, ail, concentré de tomate, sauce soja sucrée, jus de citron vert, du lait de coco, un peu d'eau et là, tu fais cuire tes udons environ 5 minutes à couvert. On va servir ça de façon généreuse parce qu'on n'est pas là pour enfiler des perles, on est là pour se faire plaisir et se régaler. Attention, la recette n'est pas terminée. Ce qui est important dans celle-ci, c'est de rajouter Tu vas me rajouter un œuf mollet, un peu de chapelure, de la coriandre, du jus de citron vert. Et pour les plus expérimentés, tu vas venir rajouter de l'huile pimentée et te régaler.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

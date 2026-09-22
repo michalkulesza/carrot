@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T17:36:49.933820+00:00",
+  "source_url": "https://www.instagram.com/p/Cj3afxoIggL/",
+  "capture": {
+    "status": "partial",
+    "errors": [
+      "Instagram post did not become ready within 45 seconds."
+    ]
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "41 likes, 2 comments - agata.gotuje on October 18, 2022: \"♡ Pizzerinki ♡ \n\nBył czas na placki, dzisiaj na pizzerinki ;). Miałam dwa napocznięte opakowania serka twarogowego, które i tak już nikt nie chciał jeść, gotowy spód do pizzy i tak wyczarowałam szybkie danie na obiad, kolację lub jako przekąskę przy niespodziewanych gościach ;). Za każdym razem nadziewam inaczej i za każdym razem są doskonałe (na zimno też 😉). Co potrzebujemy ? \n\nSkładniki:\n• Gotowy spód do pizzy (mój był tym razem XXL)\n• 1 opakowanie dowolnego serka twarogowego/kanapkowego np z papryką \n• Szynka, Salami (parę plastrów)\n• Tarty ser (około pół opakowania)\n• Żółtka jaj: 2 sztuki\nOpcjonalnie: sól i pieprz \n\nPRZYGOTOWANIE: \nGotowy spód do pizzy rozwijam na blaszcze wyłożoną papierem do pieczenia i kroję ciasto na około 5centymetrowe plastry, mi wyszło akurat 7. Każdy płat przecinam w połowie tak aby z jednego paska wyszły 2 pizzerinki (zdjęcie Nr 2). Na każdym płacie rozsmarowuję po łyżeczce serka, nakładam poszarpaną w dłoniach szynkę, salami i posypuję serem. Ważne aby nie smarować całego płatu (odstęp ok 2cm, ponieważ ciężko się go będzie później sklejać. Następnie roluję każdy wyłożony płat i sklejam końcówki dociskając palcami. Ostatnim etapem jest wysmarowanie każdego pizzerinka żółtkiem (można troszkę doprawić). Używam do tego pędzęlka do pieczenia. \nWkładam do nagrzanego piekarnika na 180°C z termoobiegiem i pieczę przez około 15 min . Gotowe ! Samo wykonanie trwa około 10 min na prawdę polecam to danie, ponieważ jest szybkie, tanie i za każdym razem można zrobić inaczej 😊. Pozdrawiam! \n\n#pizzerinki #pizza #szybkiedanie #pomysłnaobiad #przystawka #przekąska #obiad #kolacja #obiadokolacja #cheese #lubiegotować #taniobiad #ser #pyszne #obiaddlacałejrodziny #lovefood #pizzaröllchen #domoweinspiracje #szamkatime #smakuje #kochamgotować #gotujębolubię #dietabezdiety #foodinspiration #leckerkochen #einfacherezepte #schnellesessen #1eurorezept #instafood #smacznego\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "agata.gotuje"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/653848824_18097636688001074_1231073021253907992_n.webp?stp=c288.0.864.864a_dst-jpg_e35_s640x640_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0FST1VTRUxfSVRFTS5iZXN0X2ltYWdlX3VybGdlbi5DMyJ9&_nc_ohc=qqaoErGFqngQ7kNvwGMcC38&_nc_oc=AdrTPwekq-Pbt9PatcmoiZLmLIo1bIEDG3uY166DLEj_EhYc2U7EsBcQqbI4PbHyHD8cvwhzGuAS-NRELhdfynnW&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=h9L2gE3q786731qjuPHB6Q&_nc_ss=7b6a8&oh=00_AQKL4VGBnT7vesmG5RoclKTTTCyAb_t9slVCPLmFKcn8Sg&oe=6AB8AB38",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM7qVVStM_iXgziqnOBDJ3UorZacPx5cdGWA42ot11tbjByX7Hb7EpUiUqEK4Q9NG4a5-hZsJ499jDc2oDh7-fdk5qSBoAK8xolrxw.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=BrgDC-ar9JkQ7kNvwHYHVpH&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNhcm91c2VsX2l0ZW0uYzItQzMuZGFzaF9yMmV2ZXZwOS1yMWdlbjJ2cDlfcTgwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE4MDE4MTg5NjIzOTM3OTgzLCJhc3NldF9hZ2VfZGF5cyI6MCwidmlfdXNlY2FzZV9pZCI6MTAxNDYsImR1cmF0aW9uX3MiOjYsImJpdHJhdGUiOjI4MzMxMiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=_Ex9NZzgsQpEPocnNrKAPw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJUokr81rah_k1Z7jEbv0CkSfwzzmtvXHYeH6Ra-xtKzg&oe=6AB8799C&bytestart=0&byteend=817"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQM7qVVStM_iXgziqnOBDJ3UorZacPx5cdGWA42ot11tbjByX7Hb7EpUiUqEK4Q9NG4a5-hZsJ499jDc2oDh7-fdk5qSBoAK8xolrxw.mp4?_nc_cat=111&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=BrgDC-ar9JkQ7kNvwHYHVpH&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNhcm91c2VsX2l0ZW0uYzItQzMuZGFzaF9yMmV2ZXZwOS1yMWdlbjJ2cDlfcTgwIiwidmlkZW9faWQiOm51bGwsIm9pbF91cmxnZW5fYXBwX2lkIjo5MzY2MTk3NDMzOTI0NTksImNsaWVudF9uYW1lIjoiaWciLCJ4cHZfYXNzZXRfaWQiOjE4MDE4MTg5NjIzOTM3OTgzLCJhc3NldF9hZ2VfZGF5cyI6MCwidmlfdXNlY2FzZV9pZCI6MTAxNDYsImR1cmF0aW9uX3MiOjYsImJpdHJhdGUiOjI4MzMxMiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=_Ex9NZzgsQpEPocnNrKAPw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQJUokr81rah_k1Z7jEbv0CkSfwzzmtvXHYeH6Ra-xtKzg&oe=6AB8799C&bytestart=0&byteend=817",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "La la oh, wrap me in your golden glow, soft as autumn rivers flow, hum into the quiet air, every moment's warm and rare. La la oh, whistle with the falling leaves, autumn magic never leaves. Faded scarves and glowing light, stories shared in the fire alight. Windows fog, a breath of cold, hands held close, a love retold. Candles flicker, the fire sighs, a gentle hum beneath the skies. La la oh, wrap me in your golden glow, soft as autumn rivers flow, hum into the quiet air, every moment's warm and rare. La la oh, whistle with the falling leaves, autumn magic never leaves. Hear the seasons softly call.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

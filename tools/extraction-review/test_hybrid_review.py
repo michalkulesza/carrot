@@ -1,5 +1,6 @@
 """Hybrid review artifacts describe actual selections and visible fallback."""
 
+import asyncio
 import importlib.util
 import json
 from types import SimpleNamespace
@@ -8,7 +9,8 @@ import pytest
 from openpyxl import load_workbook
 
 from api.services.extraction_v2 import gemini_selection
-from api.services.extraction_v2.contracts import LanguageResult, TextSelection
+from api.services.extraction_v2.contracts import AudioExtractionInput, ExtractedRecipe, LanguageResult, TextSelection
+from api.services.gemini import UsageTracker
 
 
 def runner():
@@ -59,6 +61,7 @@ async def test_review_exports_actual_selection_model_and_fallback(tmp_path, monk
         assert "hybrid_selector_invalid_or_failed_fell_back" in result["fallback_reason"]
     else:
         assert result["report_recipe"]["components"] == []
+        assert result["text_selection"] == {"components": [], "yield_line_ids": [], "nutrition": {"line_ids": []}}
     assert result["model_calls"][0]["usage"]["input_tokens"] == 5
     workbook = module.report([result], tmp_path, {}, False)
     book = load_workbook(workbook, read_only=True)
@@ -66,25 +69,59 @@ async def test_review_exports_actual_selection_model_and_fallback(tmp_path, monk
     book.close()
     artifact = json.loads((tmp_path / "review.json").read_text(encoding="utf-8"))
     assert artifact["cases"][0]["model_calls"]
+    assert artifact["cases"][0]["text_selection"] == result["text_selection"]
+    testable = json.loads((tmp_path / "review-testable.json").read_text(encoding="utf-8"))
+    exported = testable["expectations"]["capture.json"]
+    if invalid:
+        assert "text_selection" not in exported
+    else:
+        assert exported["text_selection"] == result["text_selection"]
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("extra,enabled", [([], True), (["--text-selector", "off"], False)])
-async def test_cli_defaults_to_gemini_without_approval_flag(tmp_path, monkeypatch, extra, enabled):
+@pytest.mark.parametrize("extra,enabled,audio_enabled", [
+    ([], True, True),
+    (["--text-selector", "off"], False, True),
+    (["--audio-model", "off"], True, False),
+])
+async def test_cli_defaults_to_gemini_and_saved_transcript_extraction_without_approval_flag(tmp_path, monkeypatch, extra, enabled, audio_enabled):
     module = runner()
     capture = tmp_path / "capture.json"
     capture.write_text("{}", encoding="utf-8")
     seen = []
 
-    async def review(path, pages, run, hybrid):
-        seen.append(hybrid)
+    async def review(path, pages, run, hybrid, audio):
+        seen.append((hybrid, audio))
         return {"review_status": "finished"}
 
     monkeypatch.setattr(module, "review", review)
     monkeypatch.setattr(module, "report", lambda *args: tmp_path / "review.xlsx")
     monkeypatch.setattr("sys.argv", ["run_review.py", str(capture), "--output", str(tmp_path / "out"), *extra])
     assert await module.main() == 0
-    assert seen == [enabled]
+    assert seen == [(enabled, audio_enabled)]
+
+
+@pytest.mark.asyncio
+async def test_audio_review_request_times_out_and_records_the_failure(monkeypatch):
+    module = runner()
+
+    class BlockingAudioExtractor:
+        def __init__(self, **_kwargs):
+            pass
+
+        async def extract_audio(self, _source):
+            await asyncio.sleep(10)
+
+    from api.services.extraction_v2 import adapters
+    monkeypatch.setattr(adapters, "GeminiAudioEvidenceExtractor", BlockingAudioExtractor)
+    calls = []
+    recorder = module.AudioRecorder(calls, "gemini-test", UsageTracker(), timeout_seconds=0.01)
+
+    with pytest.raises(TimeoutError):
+        await recorder.extract_audio(AudioExtractionInput(transcript="Cook it.", retained_recipe=ExtractedRecipe()))
+
+    assert calls[0]["status"] == "error"
+    assert calls[0]["error"]["type"] == "TimeoutError"
 
 
 @pytest.mark.asyncio

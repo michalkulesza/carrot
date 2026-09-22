@@ -35,6 +35,7 @@ def response(payload):
 @pytest.mark.asyncio
 async def test_provider_uses_requested_model_schema_and_bounded_sdk_retry(monkeypatch):
     assert Settings.model_fields["gemini_text_selection_model"].default == "gemini-3.1-flash-lite"
+    assert Settings.model_fields["gemini_audio_evidence_model"].default == "gemini-3.1-flash-lite"
     monkeypatch.setattr(gemini.settings, "gemini_text_selection_model", "gemini-3.1-flash-lite")
     aio = client(monkeypatch, [response({"components": [{"ingredient_line_ids": ["line:1"]}]})])
     usage = gemini.UsageTracker()
@@ -45,6 +46,7 @@ async def test_provider_uses_requested_model_schema_and_bounded_sdk_retry(monkey
     args = aio.models.generate_content.call_args.kwargs
     assert args["model"] == "gemini-3.1-flash-lite"
     assert json.loads(args["contents"])["lines"] == [{"id": "line:1", "text": "salt to taste"}]
+    assert "product/appliance review" in args["config"].system_instruction
     assert "additionalProperties" not in json.dumps(args["config"].response_schema)
     assert args["config"].http_options.retry_options.attempts == 1
     assert args["config"].http_options.timeout == 20000
@@ -69,6 +71,35 @@ async def test_timeout_cancels_async_request_and_closes_client(monkeypatch):
     assert cancelled.is_set()
     aio.models.generate_content.assert_awaited_once()
     aio.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_audio_evidence_uses_an_async_bounded_request(monkeypatch):
+    aio = client(monkeypatch, [response({"components": []})])
+
+    result = await gemini.extract_audio_recipe_evidence(
+        "Cook the onion.", {"components": []}, model="gemini-test", timeout_seconds=0.01,
+    )
+
+    assert result.components == []
+    args = aio.models.generate_content.call_args.kwargs
+    assert args["model"] == "gemini-test"
+    assert json.loads(args["contents"])["transcript"] == "Cook the onion."
+    assert "product/appliance review" in args["config"].system_instruction
+    assert args["config"].http_options.retry_options.attempts == 1
+    assert args["config"].http_options.timeout == 10
+    aio.models.generate_content.assert_awaited_once()
+    aio.__aexit__.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_audio_evidence_retries_one_transient_provider_failure(monkeypatch):
+    aio = client(monkeypatch, [RuntimeError("504 DEADLINE_EXCEEDED"), response({"components": []})])
+
+    result = await gemini.extract_audio_recipe_evidence("Cook the onion.", {"components": []})
+
+    assert result.components == []
+    assert aio.models.generate_content.await_count == 2
 
 
 @pytest.mark.asyncio

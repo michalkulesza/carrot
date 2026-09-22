@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "kind": "social",
+  "captured_at": "2026-09-22T20:02:48.909549+00:00",
+  "source_url": "https://www.instagram.com/p/Dc8V8VOu77x/",
+  "capture": {
+    "status": "complete",
+    "errors": []
+  },
+  "scrapecreators_response": {
+    "data": {
+      "xdt_shortcode_media": {
+        "edge_media_to_caption": {
+          "edges": [
+            {
+              "node": {
+                "text": "13K likes, 107 comments - mo_deliciouss on September 6, 2026: \"Pad Kra Pao Rezept 👇🏼👇🏼🇹🇭🌶️ \n\nZutaten:\n\n500g Hackfleisch (Rind oder Hähnchen)\n150g Keniabohnen\n20g Rawit Chili (nach Belieben anpassbar) \n7 Knoblauchzehen \n50g heiliges Basilikum \n2 Eier \nFür die Würzung: \n1 EL Austernsauce\n1 EL dunkle Sojasauce\n2 EL helle Soja Sauce \n2 tl weißer Pfeffer \n1 EL Palm/- oder brauner Zucker\n\nZubereitung: \n\n1. Knoblauch zusammen mit den Chilis im Mörser kleinstampfen oder mit einem Messer kleinhacken. 🌶️ \n2. ⁠Chilis und Knoblauch in einer Pfanne scharf anbraten kurz und \n3. ⁠nach 30sek. Hackfleisch hinzugeben und kurz vermengen. \n4. ⁠kleingeschnittene Frühlingszwiebeln und Bohnen kommen in die Pfanne, für eine Minute vermengen. \n5. ⁠Sauce fertig mixen und ebenfalls in die Pfanne geben, gefolgt von dem Thai Basilikum. Etwa 1min scharf anbraten das ganze. \n6. ⁠Das Ei muss Chrunchy sein! Dazu geben wir es in eine heiße Pfanne mit überdurschnittlich viel Öl. Fertig wenn die Seiten Kruste bekommen. \n7. ⁠Mit Reis, und Ei servieren - wichtig das alle drei beisammen sind!\n\nProbiert es aus, wir lieben es ✔️😍\n\n#chilli #spicy #padkrapao #thailändisch #thailand\". "
+              }
+            }
+          ]
+        },
+        "owner": {
+          "username": "mo_deliciouss"
+        },
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/797939436_17913272748448834_1543673945724670731_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=100&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=4UwNYdmfOfQQ7kNvwEhKJDQ&_nc_oc=Adrd6iVc1z_JWadRAEPiI-6o_xdE1L9RkSYX1ztT--x5ZQXBKh6meZDVOW44dbzSK9erPoAdIkJh7HKZQ3cVLqbR&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=0Q3oiNXDBJXwApArs7AOXA&_nc_ss=7b6a8&oh=00_AQKS5E6z9wo9a8BmE7pw-F9JBoxZRTu234X99h4lHOcZaw&oe=6AB8B354",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMY0QguvnOmMX5nAoZRMPNCHN2aSdNWFez6SeGsaf1_hz9mGCRUcl_OZ_g5-2EvyyFcxlTkCPOfD4wd8zBoN85LTIyaTmBSZ-lJb2E.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=KEKInz5SdqcQ7kNvwGFWCqF&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMjE2MTMxMjM1ODMzNjQwLCJhc3NldF9hZ2VfZGF5cyI6MTYsInZpX3VzZWNhc2VfaWQiOjEwODI3LCJkdXJhdGlvbl9zIjoyMywiYml0cmF0ZSI6MjIzODUwMywidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=wAp2rkVrGQ2z7Oi_lbjOeA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKZHWqOTvyfv32W5wFQc7EQJWeBmq7UhFLdPdaYnB9kUg&oe=6AB8A529&bytestart=3874900&byteend=6696855"
+      }
+    }
+  },
+  "comments": [],
+  "audio": {
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQMY0QguvnOmMX5nAoZRMPNCHN2aSdNWFez6SeGsaf1_hz9mGCRUcl_OZ_g5-2EvyyFcxlTkCPOfD4wd8zBoN85LTIyaTmBSZ-lJb2E.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=KEKInz5SdqcQ7kNvwGFWCqF&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5X3E5MCIsInZpZGVvX2lkIjpudWxsLCJvaWxfdXJsZ2VuX2FwcF9pZCI6OTM2NjE5NzQzMzkyNDU5LCJjbGllbnRfbmFtZSI6ImlnIiwieHB2X2Fzc2V0X2lkIjoyMjE2MTMxMjM1ODMzNjQwLCJhc3NldF9hZ2VfZGF5cyI6MTYsInZpX3VzZWNhc2VfaWQiOjEwODI3LCJkdXJhdGlvbl9zIjoyMywiYml0cmF0ZSI6MjIzODUwMywidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=wAp2rkVrGQ2z7Oi_lbjOeA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKZHWqOTvyfv32W5wFQc7EQJWeBmq7UhFLdPdaYnB9kUg&oe=6AB8A529&bytestart=3874900&byteend=6696855",
+    "audio_url": null,
+    "audio_title": null,
+    "transcript": "Heute gibt es eines der besten thailändischen Gerichte überhaupt, Pad Krapau, mit einem knusprig frittierten Ei, genau wie es sich gehört. Ich muss euch außerdem warnen, dass dieses Gericht extrem Suchtpotenzial hat. Ich hatte es in Thailand eine Zeit lang jeden Tag und konnte einfach nicht genug davon kriegen. Zu meinem Glück ist dieses Gericht idiotensicher und kommt in wenigen Minuten zusammen. Ihr müsst dafür einfach alle Zutaten nacheinander in die Pfanne schmeißen und scharf anbraten. Alles Weitere in der Caption. Folgt gerne für mehr.",
+    "status": "transcribed",
+    "transcription_error": null
+  }
+}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urljoin
@@ -19,12 +20,49 @@ from api.services.extraction_v2.contracts import (
 from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES
 from api.services.extraction_v2.merge import has_ingredients, has_instructions, merge_recipes, recipes_can_merge
 from api.services.extraction_v2.sources import (
-    LinkedPageProvider, TranscriptionProvider, is_safe_http_url, normalize_segments,
+    LinkedPageProvider, TextSegment, TranscriptionProvider, is_safe_http_url, normalize_segments,
     parse_social_metadata, text_segments, unique_safe_links, verified_creator_comments,
 )
 from api.services.html_cleaner import clean_html_body
 
 MAX_LINKED_PAGES = 3
+
+
+def _supported_social_segments(
+    segments: list[TextSegment], language_detector: LanguageDetector,
+) -> tuple[list[TextSegment], dict[str, LanguageResult], list[str]]:
+    """Drop unsupported secondary caption paragraphs once supported text exists.
+
+    Social captions frequently repeat a recipe in another language, or contain
+    mojibake from a failed character decode. An unsupported appendix must not
+    reject an otherwise supported recipe. Keep the original source layout so
+    reviewed source line IDs remain stable, but use the supported paragraphs to
+    establish the source language. If no supported paragraph exists, return the
+    original segments so the normal closed language-failure policy still applies.
+    """
+
+    blocks_by_segment: list[tuple[TextSegment, list[tuple[str, LanguageResult]]]] = []
+    has_supported = False
+    for segment in segments:
+        blocks = [block.strip() for block in re.split(r"\n\s*\n", segment.text) if block.strip()]
+        detected = [(block, language_detector.detect(block)) for block in blocks]
+        has_supported |= any(result.code in SUPPORTED_LANGUAGE_CODES for _, result in detected)
+        blocks_by_segment.append((segment, detected))
+    if not has_supported:
+        return segments, {}, []
+
+    retained = []
+    language_overrides: dict[str, LanguageResult] = {}
+    ignored: list[str] = []
+    for segment, detected in blocks_by_segment:
+        supported_blocks = [block for block, result in detected if result.code in SUPPORTED_LANGUAGE_CODES]
+        ignored_count = sum(result.code not in {None, *SUPPORTED_LANGUAGE_CODES} for _, result in detected)
+        if ignored_count:
+            ignored.append(f"{segment.id}:unsupported_secondary:{ignored_count}")
+        if supported_blocks:
+            language_overrides[segment.id] = language_detector.detect("\n\n".join(supported_blocks))
+            retained.append(segment)
+    return retained, language_overrides, ignored
 
 
 @dataclass(frozen=True)
@@ -116,19 +154,44 @@ class ExtractionOrchestrator:
     async def _extract_social_payload(self, payload: SocialPayload) -> ExtractionOutcome:
         source_url, trace, evidence = str(payload.source_url), [], []
         last_operational_failure: tuple[FailureReason, ExtractionStage] | None = None
+        # A saved transcript (or a configured way to obtain one) is an independent
+        # source. Do not reject it based solely on a sparse social caption whose
+        # language disagrees with the spoken recipe.
+        audio_language_fallback_available = bool(
+            self._dependencies.audio_evidence_extractor
+            and (
+                payload.audio.transcript
+                or (payload.audio.video_url and self._dependencies.transcription_provider)
+            )
+        )
+        deferred_language_reason: FailureReason | None = None
         metadata = parse_social_metadata(payload.scrapecreators_response, source_url)
         verified, excluded = verified_creator_comments(payload.comments, metadata.creator_handle)
         trace.extend(TraceEvent(stage=ExtractionStage.INPUT, event="comment_excluded", detail=item) for item in excluded)
         segments = text_segments(metadata, verified)
+        segments, language_overrides, ignored_secondary = _supported_social_segments(
+            segments, self._dependencies.language_detector,
+        )
+        trace.extend(TraceEvent(stage=ExtractionStage.LANGUAGE, event="unsupported_secondary_ignored", detail=item)
+                     for item in ignored_secondary)
+        extraction_segments: list[TextSegment] = []
         for segment in segments:
-            language = self._dependencies.language_detector.detect(segment.text)
+            language = language_overrides.get(segment.id) or self._dependencies.language_detector.detect(segment.text)
             source = EvidenceSource(id=segment.id, kind=segment.kind, source_url=segment.source_url, text=segment.text,
                                     language=language, author_verified=segment.author_verified)
             evidence.append(source)
             failure = self._language_failure(language, source_url, evidence, trace, segment.id)
             if failure:
+                if audio_language_fallback_available:
+                    deferred_language_reason = deferred_language_reason or failure.reason
+                    trace.append(TraceEvent(
+                        stage=ExtractionStage.LANGUAGE, event="unsupported_language_deferred_for_audio",
+                        evidence_ids=[segment.id],
+                    ))
+                    continue
                 return failure
-        normalized = normalize_segments(segments)
+            extraction_segments.append(segment)
+        normalized = normalize_segments(extraction_segments)
         text, evidence_ids = normalized.content, normalized.evidence_ids
         evidence = [
             item.model_copy(update={"locator": f"normalized:{normalized.spans[item.id][0]}-{normalized.spans[item.id][1]}"})
@@ -211,17 +274,51 @@ class ExtractionOrchestrator:
             evidence.append(source)
             failure = self._language_failure(language, source_url, evidence, trace, source.id)
             if failure:
+                if has_ingredients(recipe) or has_instructions(recipe):
+                    trace.append(TraceEvent(
+                        stage=ExtractionStage.TRANSCRIPT, event="unsupported_secondary_ignored", evidence_ids=[source.id],
+                    ))
+                    return self._classify(source_url, recipe, evidence, trace)
                 return failure
             try:
                 audio_recipe = validate_extracted_recipe(await self._dependencies.audio_evidence_extractor.extract_audio(AudioExtractionInput(transcript=transcript, retained_recipe=recipe)), {source.id})
-                recipe = merge_recipes(recipe, audio_recipe)
-                trace.append(TraceEvent(stage=ExtractionStage.AUDIO_MODEL, event="audio_merged", evidence_ids=[source.id]))
+                has_retained_content = has_ingredients(recipe) or has_instructions(recipe)
+                ignored_unanchored_partial = not has_retained_content and not (
+                    has_ingredients(audio_recipe) and has_instructions(audio_recipe)
+                )
+                if ignored_unanchored_partial:
+                    trace.append(TraceEvent(
+                        stage=ExtractionStage.AUDIO_MODEL, event="unanchored_partial_audio_ignored", evidence_ids=[source.id],
+                    ))
+                else:
+                    if has_ingredients(recipe):
+                        for component in audio_recipe.components:
+                            component.ingredients = []
+                    if has_instructions(recipe):
+                        for component in audio_recipe.components:
+                            component.steps = []
+                    recipe = merge_recipes(recipe, audio_recipe)
+                    trace.append(TraceEvent(stage=ExtractionStage.AUDIO_MODEL, event="audio_merged", evidence_ids=[source.id]))
             except TimeoutError:
                 last_operational_failure = (FailureReason.MODEL_TIMEOUT, ExtractionStage.AUDIO_MODEL)
                 trace.append(TraceEvent(stage=ExtractionStage.AUDIO_MODEL, event="audio_model_timeout"))
             except Exception as error:
                 last_operational_failure = (FailureReason.INVALID_MODEL_RESPONSE, ExtractionStage.AUDIO_MODEL)
                 trace.append(TraceEvent(stage=ExtractionStage.AUDIO_MODEL, event="audio_model_failed", detail=type(error).__name__))
+        if deferred_language_reason:
+            # A successfully language-gated transcript supersedes the
+            # unsupported/ambiguous caption. Preserve the original closed failure
+            # if audio could not be acquired or could not establish a supported
+            # source language.
+            transcript_is_supported = any(
+                item.kind == EvidenceKind.TRANSCRIPT and item.language.code in SUPPORTED_LANGUAGE_CODES
+                for item in evidence
+            )
+            if not transcript_is_supported:
+                return FailedOutcome(
+                    outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
+                    reason=deferred_language_reason, failed_stage=ExtractionStage.LANGUAGE,
+                )
         outcome = self._classify(source_url, recipe, evidence, trace)
         if outcome.outcome == "failed" and last_operational_failure:
             reason, failed_stage = last_operational_failure
