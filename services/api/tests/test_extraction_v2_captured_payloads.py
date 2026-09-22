@@ -28,11 +28,17 @@ def _expectations() -> dict[str, dict[str, Any]]:
     return document["expectations"]
 
 
+def _reviewed_captures() -> list[Path]:
+    expectations = _expectations()
+    return [path for path in _captures() if path.name in expectations]
+
+
 def _recipe_projection(recipe: dict[str, Any] | None) -> dict[str, Any] | None:
     if recipe is None:
         return None
     return {
         "title": recipe.get("title"),
+        "yield": recipe.get("yield_servings"),
         "yield_servings": recipe.get("yield_servings"),
         "total_time_minutes": recipe.get("total_time_minutes"),
         "nutrition": recipe.get("nutrition"),
@@ -64,13 +70,19 @@ def _assert_subset(expected: object, actual: object, path: str = "result") -> No
             assert key in actual, f"{path}.{key} is missing"
             _assert_subset(value, actual[key], f"{path}.{key}")
         return
+    if isinstance(expected, list):
+        assert isinstance(actual, list), f"{path} must be an array"
+        assert len(actual) == len(expected), f"{path}: expected {len(expected)} items, got {len(actual)}"
+        for index, value in enumerate(expected):
+            _assert_subset(value, actual[index], f"{path}[{index}]")
+        return
     assert actual == expected, f"{path}: expected {expected!r}, got {actual!r}"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("capture_path", _captures(), ids=lambda path: path.stem)
+@pytest.mark.parametrize("capture_path", _reviewed_captures(), ids=lambda path: path.stem)
 async def test_captured_payload(capture_path: Path) -> None:
-    """Every envelope must remain executable; approved fields become exact regressions."""
+    """Each manually approved capture remains an exact regression."""
 
     payload = json.loads(capture_path.read_text(encoding="utf-8"))
     SOURCE_PAYLOAD_ADAPTER.validate_python(payload)
@@ -82,10 +94,16 @@ async def test_captured_payload(capture_path: Path) -> None:
     assert actual["outcome"] in {"complete", "incomplete", "failed"}
     expected = _expectations().get(capture_path.name)
     if expected is not None:
+        detected_languages = list(dict.fromkeys(
+            evidence["language"].get("code") or "undetermined"
+            for evidence in actual["evidence"]
+        ))
         _assert_subset(expected, {
             "outcome": actual["outcome"],
             "issue_codes": actual.get("issue_codes", []),
             "reason": actual.get("reason"),
+            "capture_errors": ", ".join(payload["capture"]["errors"]),
+            "detected_languages": ", ".join(detected_languages),
             "recipe": _recipe_projection(actual.get("recipe")),
         })
 

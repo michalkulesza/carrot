@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "social",
-  "captured_at": "2026-09-19T16:06:40.270458+00:00",
+  "captured_at": "2026-09-21T12:56:51.449216+00:00",
   "source_url": "https://www.instagram.com/reel/DasbgM6KAhG/",
   "capture": {
     "status": "complete",
@@ -20,16 +20,16 @@
           ]
         },
         "owner": {
-          "username": "Marlena Cichocka"
+          "username": "marlenagotuje"
         },
-        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/745320532_1557791019066775_7281156102775436704_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=109&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=sRZrKf7mDF8Q7kNvwFpgThv&_nc_oc=Ado1OXwHaN2dku-I9UOIEd_nuLFU8sQFM9sv7kXqVCx6rbj8oK-SOk_FRyuhXKZz-pAQLL2KMNF9oY3zN2oikwJd&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=4aK5Cn7r3gSlWAsnuRr6dQ&_nc_ss=7b6a8&oh=00_AQJmZ7RNTZa0pUFjI3VFg_PjIUju6aef9h76OAQNmk7NgA&oe=6AB483AA",
-        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPqBU6jCFABVMbb-cF6XZUw78qjrxaXpbeiGx7bwCyYYQO7xmwy_zyVux0XMpDa6k9mzB20ZU103jIntmW7LRt8HJTSNWszJcL3G24.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=eVtdH4r6O6YQ7kNvwHFhAJ0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTAwMTM3MzEzOTM4MTM1MiwiYXNzZXRfYWdlX2RheXMiOjY5LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MzgsImJpdHJhdGUiOjU0MjkyNTgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=16Juq50VaOblVKMD4COgxQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL7BAOpbRx_-92Y8b9ki5CtSMwUD7234iFcmmdd4jKxNA&oe=6AB4706A&bytestart=946&byteend=3564778"
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.71878-15/745320532_1557791019066775_7281156102775436704_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=109&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=ubEDVtpRYacQ7kNvwHm8_0y&_nc_oc=Adox_rHZtbi-8ra6DXQwTmfYWXt__upTSMDDvcv2HiikOBtqsPUnVshjpri5oELXjVN1qQbbaNDNHe_LKliha8R7&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=JALrpwwvKAGoe6QiWzanng&_nc_ss=7b6a8&oh=00_AQIooQBSAcJj00OCeddUNFa8jWzkkyzE4rnNAC5ZFjQgAQ&oe=6AB6EE6A",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPqBU6jCFABVMbb-cF6XZUw78qjrxaXpbeiGx7bwCyYYQO7xmwy_zyVux0XMpDa6k9mzB20ZU103jIntmW7LRt8HJTSNWszJcL3G24.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=eVtdH4r6O6YQ7kNvwHFhAJ0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTAwMTM3MzEzOTM4MTM1MiwiYXNzZXRfYWdlX2RheXMiOjcwLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MzgsImJpdHJhdGUiOjU0MjkyNTgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=0wVi7ThswvaZVUhuM3rgJQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLVgaiyZJKuhJMr1Ynkl8QeWUPPA-gEHCqfq-UwmKIZOw&oe=6AB7136A&bytestart=3564779&byteend=10701730"
       }
     }
   },
   "comments": [],
   "audio": {
-    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPqBU6jCFABVMbb-cF6XZUw78qjrxaXpbeiGx7bwCyYYQO7xmwy_zyVux0XMpDa6k9mzB20ZU103jIntmW7LRt8HJTSNWszJcL3G24.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=eVtdH4r6O6YQ7kNvwHFhAJ0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTAwMTM3MzEzOTM4MTM1MiwiYXNzZXRfYWdlX2RheXMiOjY5LCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MzgsImJpdHJhdGUiOjU0MjkyNTgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=16Juq50VaOblVKMD4COgxQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL7BAOpbRx_-92Y8b9ki5CtSMwUD7234iFcmmdd4jKxNA&oe=6AB4706A&bytestart=946&byteend=3564778",
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPqBU6jCFABVMbb-cF6XZUw78qjrxaXpbeiGx7bwCyYYQO7xmwy_zyVux0XMpDa6k9mzB20ZU103jIntmW7LRt8HJTSNWszJcL3G24.mp4?_nc_cat=105&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=eVtdH4r6O6YQ7kNvwHFhAJ0&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTAwMTM3MzEzOTM4MTM1MiwiYXNzZXRfYWdlX2RheXMiOjcwLCJ2aV91c2VjYXNlX2lkIjoxMDA5OSwiZHVyYXRpb25fcyI6MzgsImJpdHJhdGUiOjU0MjkyNTgsInVybGdlbl9zb3VyY2UiOiJ3d3cifQ%3D%3D&ccb=17-1&_nc_gid=0wVi7ThswvaZVUhuM3rgJQ&_nc_ss=7a22e&_nc_zt=28&oh=00_AQLVgaiyZJKuhJMr1Ynkl8QeWUPPA-gEHCqfq-UwmKIZOw&oe=6AB7136A&bytestart=3564779&byteend=10701730",
     "audio_url": null,
     "audio_title": null,
     "transcript": "A dziś zapiekane naleśniki z jagodami i serem na ten letni jagodowy sezon. Same naleśniki robię pełnoziarniste, dziś z mąki, ale może być też inna mąka. Jeśli się da, to zawsze staram się dawać mąkę pełnoziarnistą. Oczywiście możecie zrobić też wersję bezglutenową. A do środka farsy serowy i świeże jagody. Całość zalewam jajeczno-śmietanowym sosem, który osłodziłam syropem klonowym. I naleśniki do piekarnika. Na górę dałam jeszcze trochę jagodowej frużeliny. Cudownie pyszne. Ostatnio robiłam dwa dni z rzędu, tak nam smakowało.",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from api.services.extraction_v2.contracts import ExtractedRecipe, RecipeComponentEvidence
+from api.services.extraction_v2.contracts import ExtractedRecipe, NutritionEvidence, RecipeComponentEvidence
 
 
 def _key(value: str) -> str:
@@ -23,6 +23,10 @@ def recipes_can_merge(left: ExtractedRecipe, right: ExtractedRecipe) -> bool:
     if not left.title or not right.title:
         return True
     return _key(left.title) == _key(right.title)
+
+
+def _has_nutrition(nutrition: NutritionEvidence) -> bool:
+    return any((nutrition.calories, nutrition.protein, nutrition.fat, nutrition.carbohydrates, nutrition.raw_text))
 
 
 def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRecipe:
@@ -63,6 +67,6 @@ def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRec
         total_time_text=left.total_time_text or right.total_time_text,
         total_time_evidence_ids=left.total_time_evidence_ids or right.total_time_evidence_ids,
         total_time_references=left.total_time_references or right.total_time_references,
-        nutrition=left.nutrition or right.nutrition,
+        nutrition=left.nutrition if _has_nutrition(left.nutrition) else right.nutrition,
         failure_reason=left.failure_reason or right.failure_reason,
     )

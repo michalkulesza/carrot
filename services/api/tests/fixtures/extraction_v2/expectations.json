@@ -1,4 +1,1926 @@
 {
   "version": 1,
-  "expectations": {}
+  "expectations": {
+    "html-cooking-nytimes-com-recipes-4735-old-fashioned-beef-stew.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Beef Stew",
+        "yield": "4",
+        "total_time_minutes": 165,
+        "nutrition": {
+          "calories": "496",
+          "protein": "34",
+          "fat": "12",
+          "carbohydrates": "54"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {"text": "¼ cup all-purpose flour"},
+              {"text": "¼ teaspoon freshly ground pepper"},
+              {"text": "1 pound beef stewing meat, trimmed and cut into inch cubes"},
+              {"text": "5 teaspoons vegetable oil"},
+              {"text": "2 tablespoons red wine vinegar"},
+              {"text": "1 cup red wine"},
+              {"text": "3 ½ cups beef broth, homemade or low-sodium canned"},
+              {"text": "2 bay leaves"},
+              {"text": "1 medium onion, peeled and chopped"},
+              {"text": "5 medium carrots, peeled and cut into ¼-inch rounds"},
+              {"text": "2 large baking potatoes, peeled and cut into ¾-inch cubes"},
+              {"text": "2 teaspoons salt"}
+            ],
+            "steps": [
+              "Combine the flour and pepper in a bowl, add the beef and toss to coat well. Heat 3 teaspoons of the oil in a large pot. Add the beef a few pieces at a time; do not overcrowd. Cook, turning the pieces until beef is browned on all sides, about 5 minutes per batch; add more oil as needed between batches.",
+              "Remove the beef from the pot and add the vinegar and wine. Cook over medium-high heat, scraping the pan with a wooden spoon to loosen any browned bits. Add the beef, beef broth and bay leaves. Bring to a boil, then reduce to a slow simmer.",
+              "Cover and cook, skimming broth from time to time, until the beef is tender, about 1 ½ hours. Add the onions and carrots and simmer, covered, for 10 minutes. Add the potatoes and simmer until vegetables are tender, about 30 minutes more. Add broth or water if the stew is dry. Season with salt and pepper to taste. Ladle among 4 bowls and serve."
+            ]
+          }
+        ]
+      }
+    },
+    "html-daysofjay-com-easy-overnight-bread-rolls.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Easy Overnight Bread Rolls",
+        "yield": "8",
+        "total_time_minutes": 505,
+        "nutrition": {
+          "calories": "249",
+          "protein": "7",
+          "fat": "2",
+          "carbohydrates": "49"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {"text": "500 g all-purpose flour, bread flour or white spelt flour"},
+              {"text": "10 g white sugar"},
+              {"text": "10 g sea salt or kosher salt"},
+              {"text": "10 g fresh yeast, or 5g instant yeast"},
+              {"text": "350 ml cold water"},
+              {"text": "1 tablespoon vegetable oil"},
+              {"text": "fine semolina or extra flour for dusting"}
+            ],
+            "steps": [
+              "MIX DOUGH: Whisk the flour, sugar and salt together in a large mixing bowl. Stir the yeast into the water until dissolved, then pour into the flour mixture and stir until a shaggy dough forms. Scrape out onto the work surface, oil the bowl well, then return the dough to the bowl. Cover with clingfilm or plastic wrap and refrigerate for 8-10 hours.",
+              "PREPARE: The next morning, heat the oven with a baking tray in the bottom third to 250°C / 475° F / Gas 9. Place a rack in the bottom of the oven with a small metal baking dish or bowl for the steam. Place a sheet of baking parchment paper near the oven.",
+              "RELEASE DOUGH: Remove the cold dough from the fridge, generously flour or scatter semolina over the work surface and the top of the dough, then invert the bowl onto the floured surface and allow the dough to fall gently out. It will take a minute or two, but you want to keep as much air in the dough as possible, so be gentle if it needs any help releasing from the side of the bowl.",
+              "CUT AND SHAPE DOUGH: Use a bench scraper to cut the dough into 8 roughly equal portions. Lightly oil your fingers, then working one at a time, shape the rolls by picking up two diagonally opposite corners and crossing them over the dough, Repeat with the other two corners, then transfer the roll to the prepared baking paper. Repeat with each remaining piece of dough.",
+              "BAKE: When the oven is hot, prepare 50ml of warm water in a small glass. Wearing thick oven gloves, remove the baking tray, slide the baking paper with the rolls quickly and carefully onto the hot tray then return it to the oven. Pour the water into the heated metal dish or bowl to create a gush of steam, then quickly close the oven door. Bake rolls for 20 minutes until risen and golden brown then cool on a wire rack."
+            ]
+          }
+        ]
+      }
+    },
+    "html-downshiftology-com-recipes-best-oatmeal-recipe.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Easy Oatmeal Recipe (with Healthy Toppings)",
+        "yield": "1",
+        "total_time_minutes": 7,
+        "nutrition": {
+          "calories": "260",
+          "protein": "12",
+          "fat": "7",
+          "carbohydrates": "36"
+        },
+        "components": [
+          {
+            "ingredients": [
+                {"text": "½ cup rolled oats"},
+                {"text": "1 cup water, milk, or non-dairy milk"},
+                {"text": "¼ teaspoon kosher salt"}
+              ]
+            },
+            {
+              "steps": [
+                "In a small saucepan, bring the water or milk and salt to a boil over medium-high heat. Once boiling, stir in the oats and reduce the heat to medium-low. Let the oatmeal simmer for 5 minutes or until it reaches your desired consistency. Make sure to stir occasionally.",
+                "Remove the pan from the heat, cover with a lid, then let it rest for a few minutes. This will give the oats time to absorb the liquid. If they look too dry, stir in a splash more liquid.",
+                "Top your oatmeal with your favorite ingredients then serve!"
+            ]
+          }
+        ]
+      }
+    },
+    "html-fitwafflekitchen-com-sweet-chilli-chicken-and-halloumi-burger.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Copycat Nando's Chicken and Halloumi Burger",
+        "yield": "1",
+        "total_time_minutes": 20,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+                  {"text": "1 chicken breast"},
+                  {"text": "2-3 slices Halloumi cheese"},
+                  {"text": "1 bun/roll of your choice"},
+                  {"text": "1 medium tomato sliced and salted"},
+                  {"text": "Baby gem lettuce"},
+                  {"text": "Mayo or sauce of choice"}
+                ]
+              },
+              {
+                "name": "Seasoning:",
+                "ingredients": [
+                  {"text": "1-2 tsp Paprika"},
+                  {"text": "1/2 tsp Cayenne pepper"},
+                  {"text": "1/2 tsp Salt"},
+                  {"text": "1/4 tsp Pepper"}
+                ]
+              },
+              {
+                "name": "For the sauce:",
+                "ingredients": [
+                  {"text": "2 tbsp sweet chilli sauce"},
+                  {"text": "1 tsp honey"},
+                  {"text": "Dash of hot sauce to taste"}
+              ]
+            },
+            {
+              "steps": [
+                "Prepare the Chicken — Start by flattening the chicken breast with a meat mallet or rolling pin until it’s an even thickness. This ensures the chicken cooks evenly and stays juicy.\n\nSeason both sides generously with paprika, cayenne, salt, and pepper.",
+                "Make the Sauce — In a small bowl, mix together the sweet chili sauce, honey, and a dash of hot sauce. Adjust the heat level to your preference by adding more or less hot sauce.\n\nIf you prefer a classic Nando’s vibe, you can swap this sauce for peri peri sauce instead.",
+                "Coat the Chicken and Halloumi — Brush the chicken breast with the prepared sweet chili sauce, ensuring it’s well coated. Do the same with the halloumi slices for an extra burst of flavor.",
+                "Cook in the Air Fryer — Place the chicken breast in the air fryer basket and cook at 200°C (400°F) for 10 minutes.\n\nAfter 10 minutes, add the halloumi slices to the air fryer and cook for an additional 5 minutes, or until the halloumi is golden and crispy and the chicken is cooked through to 165F/75C.",
+                "Cook in a Regular Oven (Optional) — If you don’t have an air fryer, preheat your oven to 200°C (400°F) or 180°C (350°F fan). Bake the chicken on a lined tray for 18–20 minutes, adding the halloumi slices for the last 5 minutes of cooking.",
+                "Assemble the Burger — Spread mayo or your sauce of choice on both sides of the bun. Start by layering the cooked chicken breast on the bottom half.\n\nNext, add the halloumi slices, followed by the salted tomato slices and baby gem lettuce. Top with the remaining half of the bun and serve immediately."
+            ]
+          }
+        ]
+      }
+    },
+    "html-ifoodreal-com-fish-tacos-recipe.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Easy Fish Tacos Recipe",
+        "yield": "9",
+        "total_time_minutes": 25,
+        "nutrition": {
+          "calories": "221",
+          "protein": "14",
+          "fat": "13",
+          "carbohydrates": "15"
+        },
+        "components": [
+          {
+            "name": "For the Fish Tacos:",
+            "ingredients": [
+              {
+                "text": "1 pound firm white fish like cod, halibut, bass, cut into 1\" cubes"
+              },
+              {
+                "text": "1/2 cup any flour, I used almond flour"
+              },
+              {
+                "text": "2 teaspoons taco seasoning"
+              },
+              {
+                "text": "1 teaspoon garlic powder"
+              },
+              {
+                "text": "1 teaspoon cornstarch"
+              },
+              {
+                "text": "1/4 teaspoon salt"
+              },
+              {
+                "text": "1/4 teaspoon ground black pepper"
+              },
+              {
+                "text": "2 tablespoons avocado oil, for frying"
+              },
+              {
+                "text": "9 corn or flour tortillas"
+              }
+            ]
+          },
+          {
+            "name": "For the Fish Taco Sauce:",
+            "ingredients": [
+              {
+                "text": "1/2 cup plain yogurt, 2%+ fat"
+              },
+              {
+                "text": "1/4 cup mayo, I use avocado oil mayonnaise"
+              },
+              {
+                "text": "1 lime, juice of"
+              },
+              {
+                "text": "1/2 teaspoon taco seasoning"
+              },
+              {
+                "text": "1/4 teaspoon salt"
+              },
+              {
+                "text": "Pinch cayenne pepper"
+              },
+              {
+                "text": "1/4 teaspoon ground black pepper"
+              }
+            ]
+          },
+          {
+            "name": "For the Toppings:",
+            "ingredients": [
+              {
+                "text": "Red or green cabbage, tomato, avocado, red onion, cilantro, lime"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Dredging for fish: In a medium bowl, add flour, taco seasoning, garlic powder, cornstarch, salt and pepper. Stir and set aside.",
+              "Fish taco sauce: In a small bowl, add yogurt, mayo, lime juice, taco seasoning, cayenne and black pepper. Stir and set aside.",
+              "Toppings: Chop and prepare the toppings.",
+              "To cook fish: Preheat large ceramic non-stick skillet on medium-high heat and swirl 1 tablespoon of oil. In batches, dredge pieces of fish in flour mixture and fry for 2-3 minutes per side or until crispy and brown. Fish cooks fast, so don't over cook. Do not overcrowd the skillet – helps to keep fish crispy. Remove onto a plate.",
+              "To assemble tacos: Warm tortillas in a cast iron skillet on high heat for 10 seconds per side and pressing on with spatula. Fill each tortilla with 3-4 pieces of fish, add toppings and drizzle with sauce. Serve immediately with your favorite toppings (please see suggestions in notes)."
+            ]
+          }
+        ]
+      }
+    },
+    "html-cooking-nytimes-com-recipes-1024135-pork-bulgogi-with-spring-vegetables.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Pork Bulgogi With Spring Vegetables",
+        "yield": "4",
+        "total_time_minutes": 60,
+        "nutrition": {
+          "calories": "518",
+          "protein": "32",
+          "fat": "26",
+          "carbohydrates": "40"
+        },
+        "components": [
+          {
+            "name": "FOR THE MARINADE AND SAUCE",
+            "ingredients": [
+              {"text": "½ cup soy sauce"},
+              {"text": "¼ cup gochujang"},
+              {"text": "¼ cup light brown sugar"},
+              {"text": "1 tablespoon plus 1 teaspoon white sesame seeds, plus more for serving"},
+              {"text": "2 tablespoons neutral oil, such as grapeseed, avocado or sunflower"},
+              {"text": "1 teaspoon toasted sesame oil"},
+              {"text": "2 cloves garlic, finely grated or minced"},
+              {"text": "1 (2-inch) piece ginger, finely grated or minced"},
+              {"text": "2 scallions, thinly sliced"}
+            ]
+          },
+          {
+            "name": "FOR THE PORK AND VEGETABLES",
+            "ingredients": [
+              {"text": "1 pound boneless pork chops, tenderloin or loin, thinly sliced"},
+              {"text": "1 tablespoon neutral oil, such as grapeseed, avocado or sunflower"},
+              {"text": "4 ounces shiitake mushrooms, sliced (about 1 ½ cups)"},
+              {"text": "½ cup thinly sliced radishes (about 5)"},
+              {"text": "8 ounces snow peas, strings removed and halved crosswise (about 2 ½ cups)"},
+              {"text": "6 scallions, white and green parts thinly sliced"},
+              {"text": "Cooked rice or lettuce leaves, for serving"}
+            ]
+          },
+          {
+            "steps": [
+              "Make the marinade: Add marinade ingredients to a medium bowl and whisk until combined. In a small bowl, reserve half the marinade at room temperature for serving.",
+              "Add pork to the marinade in the medium bowl and refrigerate for at least 30 minutes and up to 2 hours.",
+              "In a large skillet over medium-high heat, add neutral oil. Once the oil is hot, add mushrooms. Let sear, stirring once or twice, until just tender and caramelized, 4 to 7 minutes.",
+              "Raise heat to high. Add pork along with its marinade, radishes, snow peas and all but 2 tablespoons of the scallions (reserve for garnish) to pan. Let cook, stirring often, until the pork is just cooked through, about 3 to 5 minutes. (Take care not to overcook it; it won’t brown, and it may still look slightly pink inside).",
+              "Garnish with reserved scallions and sesame seeds, and serve hot over rice with reserved marinade for drizzling."
+            ]
+          }
+        ]
+      }
+    },
+    "html-khinskitchen-com-prawn-gyoza.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Prawn Gyoza ( Pan Fried Dumplings )",
+        "yield": "30",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "17",
+          "protein": "2",
+          "fat": "1",
+          "carbohydrates": "1"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "30-35 sheets Gyoza wrapper Or dumpling wrapper"
+              },
+              {
+                "text": "300 gram Prawn/shrimp"
+              },
+              {
+                "text": "100 gram Chives"
+              },
+              {
+                "text": "150 gram Cabbage"
+              },
+              {
+                "text": "2 tsp Garlic Grated garlic"
+              },
+              {
+                "text": "1 tsp Ginger Grated ginger"
+              },
+              {
+                "text": "1-2 tbsp Oil"
+              },
+              {
+                "text": "6-8 tbsp Water Add each batch of frying"
+              }
+            ]
+          },
+          {
+            "name": "Seasonings",
+            "ingredients": [
+              {
+                "text": "1 tsp Soy sauce"
+              },
+              {
+                "text": "1 tsp Sesame oil"
+              },
+              {
+                "text": "1 tsp Mirin"
+              },
+              {
+                "text": "¼ tsp White pepper"
+              },
+              {
+                "text": "½ tsp Salt"
+              },
+              {
+                "text": "½ tsp corn starch"
+              }
+            ]
+          },
+          {
+            "name": "Dipping saucec",
+            "ingredients": [
+              {
+                "text": "1 tbsp Soy sauce Japanese soy sauce or light soy sauce"
+              },
+              {
+                "text": "1 tbsp Rice vinegar"
+              },
+              {
+                "text": "1 tsp Sugar"
+              },
+              {
+                "text": "1 tsp Chilli oil"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Prepare fillings — Pat dry the prawns with paper towel then finely chop with a knife or use a food processor. Finely chop the garlic chives. Place them in a large mixing bowl.",
+              "Finely chop the cabbage, then add in a bowl. Sprinkle some salt over it and mix it well. Let it sit for 10-15 minutes. Then squeeze the water out and add it to the prawn and chives.",
+              "Season with salt, soy sauce, sesame oil, mirin, garlic, and ginger. Also add a tablespoon of corn starch and combine everything well until it becomes a sticky paste.",
+              "Fold the gyoza — To wrap the prawn gyoza, place one gyoza pastry in the left palm, scoop in a tablespoon of fillings in the middle of wrapper. Dip the index finger in water and wet the edges of the wrapper. Fold the wrapper in half, over the filling. Pinch on the one edge, make a pleat an seal it, as shown in the video and photo instructions.",
+              "Repeat process to the rest of the wrappers until the filling run out. ( You can create approximately 30-35 gyoza with this filling. )",
+              "Pan frying — To pan-fry, heat the flat-bottom non-stick pan/skillet to medium heat. Drizzle a tablespoon of oil and place the gyoza pleat side upward. Fry for 1-2 minutes or until slightly brown. Then add the water, close lid and cook for 3-4 minutes or until the water dry out.",
+              "Make a dipping sauce — To make the dipping sauce, combine soy sauce, rice vinegar, sugar, and chilli oil in a small bowl. Whisk until sugar dissolved."
+            ]
+          }
+        ]
+      }
+    },
+    "html-letthebakingbegin-com-mongolian-beef.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Mongolian Beef Recipe",
+        "yield": "8",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "444",
+          "protein": "23",
+          "fat": "27",
+          "carbohydrates": "27"
+        },
+        "components": [
+          {
+            "name": "Mongolian Beef Ingredients",
+            "ingredients": [
+              {
+                "text": "2 lb beef stew tips, flank steak, New York strip steak (extra fat trimmed), cut against the grain into thin strips"
+              },
+              {
+                "text": "1/2 cup cornstarch"
+              },
+              {
+                "text": "1/2 cup neutral oil"
+              },
+              {
+                "text": "4 stalks green onion, green part only, cut into 2 inch pieces"
+              },
+              {
+                "text": "3 bell peppers, cut into strips"
+              },
+              {
+                "text": "1 large onion cut into 1/4 rings"
+              }
+            ]
+          },
+          {
+            "name": "Mongolian Beef Sauce Ingredients",
+            "ingredients": [
+              {
+                "text": "2 tsp ginger powder (or double the amount if using fresh grated ginger)"
+              },
+              {
+                "text": "4-5 garlic cloves, minced"
+              },
+              {
+                "text": "1/2 cup low sodium soy sauce"
+              },
+              {
+                "text": "1/2 cup water"
+              },
+              {
+                "text": "1/2 cup brown sugar"
+              },
+              {
+                "text": "1 tsp Sriracha sauce (add more or less for desired spiciness)"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "How to make Mongolian Beef — In a ziplock bag combine the 1/2 cup cornstarch and 2 lb of cut into strips, close it and shake for the beef strips to be fully and evenly coated in cornstarch.",
+              "Preheat a large skillet over high heat, then add enough oil to coat the bottom of the skillet. Next, add 3 cut up bell peppers and quickly cook them for about 3-4 minutes, stirring often. As soon as the bell peppers are browned slightly, remove them to a separate bowl. Do not overcook them, they should still have a bit of a bite to them.",
+              "Lastly, tilt the skillet to the side and remove the bell peppers to a separate bowl, leaving the oil behind.",
+              "Add the onions to the skillet and sear for about 3-4 minutes, just trying to char up the sides. Add more oil if needed. Tilt the skillet and remove the onion to the bowl with peppers, leaving the oil behind.",
+              "Next, add the rest of the oil and add the beef strips, shaking off the excess of cornstarch and cook in a single layer in batches for about 1 minute per side. Transfer the cooked beef to a separate bowl. Do not overcrowd the pan. Beef needs to be seared, not cooked in its own juices. Keep adding the oil as needed after cooking each batch.",
+              "Mongolian Beef Sauce — Drain off the remaining oil from the skillet leaving the stuck on beef bits.",
+              "Next add 1/2 cup of soy sauce, 1/2 cup water and 1/2 cup brown sugar, 2 tsp of ginger powder and the 4 cloves of minced garlic to the pan and let it come to a boil, scraping off the bits off the bottom of the skillet.",
+              "Boil for about 1-2 minutes to reduce the sauce. Then, add Sriracha sauce if desired.",
+              "Bring everything together — Add the beef back into the sauce and stir to coat it in the sauce. Allow to come to a boil, which should thicken the sauce. Next add the bell peppers, cooked onion, and the green onion stalks and stir to heat through."
+            ]
+          }
+        ]
+      }
+    },
+    "html-littlesunnykitchen-com-nashville-hot-chicken-sandwich.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Nashville-Style Hot Chicken Sandwich",
+        "yield": "4",
+        "total_time_minutes": 60,
+        "nutrition": {
+          "calories": "724",
+          "protein": "33",
+          "fat": "44",
+          "carbohydrates": "50"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 medium chicken breasts sliced into 4 cutlets"
+              },
+              {
+                "text": "oil for frying, like vegetable oil, peanut, or canola oil"
+              }
+            ]
+          },
+          {
+            "name": "Breading",
+            "ingredients": [
+              {
+                "text": "½ cup ( 120 ml ) buttermilk"
+              },
+              {
+                "text": "1 tablespoon ( 15 ml ) vinegar-based hot sauce"
+              },
+              {
+                "text": "1 cup ( 120 g ) all-purpose flour"
+              },
+              {
+                "text": "½ teaspoon ground black pepper"
+              },
+              {
+                "text": "1 ½ teaspoons salt"
+              }
+            ]
+          },
+          {
+            "name": "For the dipping oil",
+            "ingredients": [
+              {
+                "text": "½ cup ( 120 ml ) frying oil from above"
+              },
+              {
+                "text": "2 teaspoons light brown sugar"
+              },
+              {
+                "text": "2 teaspoons cayenne powder"
+              },
+              {
+                "text": "¼ teaspoon chili powder"
+              },
+              {
+                "text": "¼ teaspoon paprika"
+              },
+              {
+                "text": "½ teaspoon garlic powder"
+              }
+            ]
+          },
+          {
+            "name": "To make the sandwiches",
+            "ingredients": [
+              {
+                "text": "4 burger buns buttered and toasted"
+              },
+              {
+                "text": "bread and butter pickle chips"
+              },
+              {
+                "text": "coleslaw"
+              },
+              {
+                "text": "¼ cup ( 60 g ) mayonnaise"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Brine the chicken if time allows it. Slice the chicken into cutlets, and place in a glass bowl with a sprinkle of salt and pepper. Cover with plastic wrap and place in the fridge for 30 minutes to an hour.",
+              "Remove the chicken from the fridge and bread it. In a shallow bowl, mix the all-purpose flour with salt and pepper. And in a second bowl, whisk the buttermilk with hot sauce.",
+              "Take about a tablespoon of the buttermilk mixture and place it in the flour, then using your hands rub the flour to create little crumbles.",
+              "Dredge the chicken in flour and shake off any excess, then dip in buttermilk, and back into the flour. Shake off any excess flour.",
+              "Heat 1-2 inches of oil in a dutch oven to 350˚F (160°C). Add chicken, 2 pieces at a time and fry for 3-4 minutes on one side, then for 3 more minutes on the other side. The chicken is ready when the internal temperature reaches 160°F (74°C). Remove immediately and place on a cooling rack in the oven to keep it warm as you fry the rest.",
+              "To make the Nashville hot sauce, in a small bowl, combine the sauce ingredients, then as you’re frying the chicken, take about half a cup of the hot oil and cover the spices with it. Give it a quick mix, and baste the chicken with it. Make sure to do this while the chicken is still hot to avoid greasy chicken.",
+              "Build the crispy chicken sandwich by spreading mayo on your toasted buns, followed by the fried chicken, coleslaw, and pickle chips."
+            ]
+          }
+        ]
+      }
+    },
+    "html-mykoreankitchen-com-korean-style-popcorn-chicken.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Korean Style Popcorn Chicken",
+        "yield": "3",
+        "total_time_minutes": 65,
+        "nutrition": {
+          "calories": "758",
+          "protein": "33",
+          "fat": "31",
+          "carbohydrates": "86"
+        },
+        "components": [
+          {
+            "name": "MAIN",
+            "ingredients": [
+              {
+                "text": "500 g chicken thigh fillets (18 ounces), rinsed under cold water, cut into bite sized pieces, or breast fillets"
+              },
+              {
+                "text": "150 g fresh Korean rice cake (5.3 ounces), cut in half (If you're not using fresh rice cakes, separate and soak them in warm water for 10 minutes before cutting. Pat them dry with paper towels to remove any moisture.)"
+              },
+              {
+                "text": "1 Tbsp rice wine"
+              },
+              {
+                "text": "2 tsp ginger powder"
+              },
+              {
+                "text": "1/2 tsp fine sea salt"
+              },
+              {
+                "text": "1/4 tsp ground black pepper"
+              },
+              {
+                "text": "1 cup potato starch or corn starch"
+              },
+              {
+                "text": "Some cooking oil, I used rice bran oil"
+              }
+            ]
+          },
+          {
+            "name": "SAUCE (MIX THESE IN A BOWL)",
+            "ingredients": [
+              {
+                "text": "5 Tbsp tomato sauce (ketchup)"
+              },
+              {
+                "text": "1 1/2 Tbsp gochujang (Korean chilli paste)"
+              },
+              {
+                "text": "2 Tbsp honey"
+              },
+              {
+                "text": "2 Tbsp dark brown sugar"
+              },
+              {
+                "text": "1 Tbsp soy sauce"
+              },
+              {
+                "text": "2 tsp sesame oil"
+              },
+              {
+                "text": "1/2 tsp minced garlic"
+              }
+            ]
+          },
+          {
+            "name": "OPTIONAL – TO GARNISH",
+            "ingredients": [
+              {
+                "text": "crushed nuts or seeds (e.g. walnut, peanut, pistachio, sunflower seeds and sesame seeds, etc.)"
+              },
+              {
+                "text": "finely chopped green onion – if you want the nice colour contrast"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Place chicken pieces into a large mixing bowl. Add the rice wine, ginger powder, salt, and ground black pepper and mix them well. Cover the bowl with plastic wrap and marinate the chicken for 30 mins in the fridge.",
+              "Coat each chicken piece with the starch powder thoroughly. (It’s best doing this in 4 to 5 batches so that they are well covered with the starch powder.)",
+              "- Pour some cooking oil into a deep saucepan/wok and heat until it reaches 175 C/ 347 F (or boiling). - Deep fry the rice cakes in batches until the outer layer turns crispy. (Deep-frying for too long can lead to rice cake explosions, so cook for less than 10 seconds. Alternatively, you can lightly pan fry them until soft.) Take them out and set aside onto paper towel to absorb any excess oil. Repeat this with the remaining rice cakes. - Deep fry the battered chicken pieces in batches until golden and cooked through (2 to 3 mins). Take them out and set aside onto paper towel to absorb any excess oil. Repeat this with the remaining chicken. (Don’t put too much chicken in one go as it can lower the oil temperature down.) To make the chicken extra crunchy, double fry them one more time. Set aside.",
+              "Pour the sauce into a heated skillet. Bring it to boil on medium heat until the sauce thickens a little bit (1 to 2 mins). Stir constantly. Add the fried chicken and rice cakes then coat with the sauce quickly and thoroughly. Garnish with your choice of toppings (e.g. crushed nuts, seeds and green onion). Serve."
+            ]
+          }
+        ]
+      }
+    },
+    "html-pinchofyum-com-baked-salmon-with-amazing-lemon-sauce.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Baked Salmon with Amazing Lemon Sauce",
+        "yield": "3",
+        "total_time_minutes": 50,
+        "nutrition": {
+          "calories": "646",
+          "protein": "55.6",
+          "fat": "37.4",
+          "carbohydrates": "25.5"
+        },
+        "components": [
+          {
+            "name": "For the Sheet Pan",
+            "ingredients": [
+              {
+                "text": "1 lb. small gold potatoes, cut into bite-sized pieces"
+              },
+              {
+                "text": "2 tablespoons olive oil"
+              },
+              {
+                "text": "1/2 teaspoon each garlic powder and salt"
+              },
+              {
+                "text": "2 – 3 cups of broccoli florets (I’m using baby broccoli in the photos)"
+              },
+              {
+                "text": "1.5 – 2 lbs. salmon (cut into 2-4 filets)"
+              }
+            ]
+          },
+          {
+            "name": "Lemon Herb Sauce",
+            "ingredients": [
+              {
+                "text": "1 tablespoon salted butter"
+              },
+              {
+                "text": "2 cloves garlic, minced"
+              },
+              {
+                "text": "1 shallot, minced"
+              },
+              {
+                "text": "1/2 cup chicken broth"
+              },
+              {
+                "text": "3/4 cup heavy cream"
+              },
+              {
+                "text": "4 – 5 sprigs of fresh thyme"
+              },
+              {
+                "text": "2 teaspoons lemon zest and 1 tablespoon lemon juice"
+              },
+              {
+                "text": "extra thyme leaves for garnish"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Roast the Potatoes: Preheat the oven to 400 degrees. Line a baking sheet with parchment. Add the potatoes to the pan and toss with olive oil, garlic powder, and salt. Roast for 25 minutes until lightly browned and delicious.",
+              "Make the Lemon Cream Sauce: While the potatoes are roasting, make your sauce. Melt the butter over medium low heat. Add the garlic and shallot; sauté for 3-5 minutes until soft and fragrant. Add broth, cream, and thyme; bring to a low simmer. Let the sauce hang out over low heat until it starts to thicken. It will reduce by about half. Remove the thyme sprigs. Whisk in the lemon juice and zest. Give it a taste. Yes, you’re in heaven now.",
+              "Bake the Salmon and Broccoli: Add the broccoli and the salmon to the potato pan (keeping the potatoes on there). Toss or brush with a little more olive oil, garlic powder, and salt. Bake for another 10-15 minutes, until the salmon is done to your liking – I like it to be *just* past the point of translucent where it flakes apart very easily but isn’t dried out (about 10 minutes).",
+              "You’re Done: Serve salmon, potatoes, and broccoli with a big spoonful of sauce and some lemon wedges. This is living. ♡"
+            ]
+          }
+        ]
+      }
+    },
+    "html-therealfooddietitians-com-sheet-pan-chipotle-chicken-thighs.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Sheet Pan Chicken Thighs with Broccoli",
+        "yield": "4",
+        "total_time_minutes": 30,
+        "nutrition": {
+          "calories": "343",
+          "protein": "27",
+          "fat": "19",
+          "carbohydrates": "14"
+        },
+        "components": [
+          {
+            "name": "Main",
+            "ingredients": [
+              {
+                "text": "4 boneless, skinless chicken thighs (1 1/4 lbs), patted dry"
+              },
+              {
+                "text": "1 (12-ounce) bag raw broccoli florets (6-7 cups)"
+              },
+              {
+                "text": "½ medium red onion, sliced (1 cup)"
+              },
+              {
+                "text": "1 tablespoon + 1 teaspoon avocado oil or olive oil, divided"
+              },
+              {
+                "text": "2 teaspoons brown sugar"
+              },
+              {
+                "text": "½ teaspoon ground cumin"
+              },
+              {
+                "text": "½ teaspoon chili powder"
+              },
+              {
+                "text": "½ teaspoon paprika"
+              },
+              {
+                "text": "½ teaspoon onion powder"
+              },
+              {
+                "text": "½ teaspoon garlic powder"
+              },
+              {
+                "text": "½ teaspoon fine salt"
+              },
+              {
+                "text": "⅛ teaspoon black pepper"
+              },
+              {
+                "text": "⅛ teaspoon chipotle powder"
+              },
+              {
+                "text": "Nonstick cooking spray"
+              }
+            ]
+          },
+          {
+            "name": "Honey Mustard Sauce",
+            "ingredients": [
+              {
+                "text": "3 tablespoons mayonnaise (for egg-free use vegan mayo or plain Greek yogurt)"
+              },
+              {
+                "text": "2 tablespoons Dijon mustard"
+              },
+              {
+                "text": "1 tablespoon honey"
+              },
+              {
+                "text": "2 teaspoons coconut aminos (or 1 teaspoon low-sodium soy sauce)"
+              },
+              {
+                "text": "¼ teaspoon dried thyme"
+              },
+              {
+                "text": "¼ teaspoon garlic powder"
+              },
+              {
+                "text": "Pinch of fine salt and black pepper"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Place a large rimmed baking sheet in the oven and preheat the oven to 450℉ with the pan in the oven. Preheating the baking sheet helps the ingredients cook evenly.",
+              "While the oven preheats, place broccoli florets and onion in a medium bowl. Drizzle with 1 tablespoon of oil. Sprinkle with salt and pepper and toss to coat. Set aside.",
+              "Make the rub: In a small bowl, combine the brown sugar, cumin, chili powder, paprika, onion powder, garlic powder, salt, black pepper, and chipotle powder.",
+              "Rub the chicken thighs with the remaining 1 teaspoon of the oil. Sprinkle all over with the seasoning rub.",
+              "When the oven is preheated, use an oven mitt to carefully remove the hot sheet pan from the oven. Spray the sheet pan with cooking spray. Spread the vegetables in an even layer on the baking sheet, leaving spaces for the chicken thighs. Nestle the chicken thighs among the vegetables.",
+              "Return the baking sheet to the oven and bake for 15 minutes. Stir the vegetables and continue cooking until the chicken is cooked through and registers 165℉ on an instant read thermometer, about 5 minutes more.",
+              "While the chicken is cooking, prepare the Honey-Mustard Sauce by combining the mayonnaise, mustard, honey, coconut aminos, thyme, and garlic powder in a small bowl. Taste and season with salt and pepper as desired.",
+              "Serve Honey-Mustard Sauce with chicken and vegetables. Any leftover sauce may be stored in an airtight container in the refrigerator for up 4 days."            ]
+          }
+        ]
+      }
+    },
+    "html-whatsgabycooking-com-sticky-glazed-pork-rice-bowls.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Sticky Glazed Pork Rice Bowls",
+        "yield": "4",
+        "total_time_minutes": 25,
+        "nutrition": {
+          "calories": "391",
+          "protein": "36",
+          "fat": "9",
+          "carbohydrates": "40"
+        },
+        "components": [
+          {
+            "name": "Main",
+            "ingredients": [
+              {
+                "text": "1 ½ pounds boneless center cut pork tenderloin, cut into ¼-inch thick strips, about 3 inches long"
+              },
+              {
+                "text": "1 teaspoon kosher salt"
+              },
+              {
+                "text": "½ teaspoon Freshly cracked black pepper"
+              },
+              {
+                "text": "1 tablespoon vegetable oil"
+              },
+              {
+                "text": "6-8 cloves garlic, chopped"
+              },
+              {
+                "text": "2 inch knob of ginger, finely chopped"
+              },
+              {
+                "text": "½ cup honey"
+              },
+              {
+                "text": "4 tablespoons chili garlic sauce"
+              },
+              {
+                "text": "1 tablespoon rice wine vinegar"
+              }
+            ]
+          },
+          {
+            "name": "For Bowls",
+            "ingredients": [
+              {
+                "text": "white rice, cooked"
+              },
+              {
+                "text": "green onions"
+              },
+              {
+                "text": "sesame seeds"
+              },
+              {
+                "text": "thinly sliced cucumbers, tossed in rice wine vinegar"
+              },
+              {
+                "text": "cilantro and mint to garnish"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Whisk together the honey, chili garlic sauce, and rice wine vinegar. Set aside",
+              "Heat the oil into a cast iron skillet over medium high heat. Season the pork liberally with salt and black pepper and toss to combine. Carefully add the pork to the pan once the oil is hot. Depending on the size of your pan, you might need to do this in batches to avoid overcrowding. You just want an even layer of pork so all the strips are touching the cast iron on one side. Let the first side brown, flip the pieces with a pair of tongs, and brown the second side. Transfer the pork to a plate.",
+              "Once the pork has been cooked and all has been removed to a plate, add about tablespoon of oil if needed and add in the garlic and ginger. Sauté for 30 seconds. Once fragrant, pour in the sauce mixture and bring to a boil over high heat, stirring frequently so nothing sticks or burns. When the sauce is bubbly, add the pork back in and toss to coat everything. The sauce will reduce to a thick, sticky glaze and coat the pork. Serve immediately over rice bowls with all the assorted toppings."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-aheadofthyme-com-grilled-orange-chicken-skewers.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Grilled Orange Chicken Skewers",
+        "yield": "6",
+        "total_time_minutes": 86,
+        "nutrition": {
+          "calories": "203",
+          "protein": "32.1",
+          "fat": "5.9",
+          "carbohydrates": "3.7"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "3 chicken breasts, boneless and skinless, cut into 1.5 -inch thick cubes"
+              },
+              {
+                "text": "¼ cup Maggi sauce (or soy sauce)"
+              },
+              {
+                "text": "¼ cup orange juice, freshly squeezed"
+              },
+              {
+                "text": "1 tablespoon orange zest"
+              },
+              {
+                "text": "1 tablespoon vegetable oil"
+              },
+              {
+                "text": "1 tablespoon garlic, minced"
+              },
+              {
+                "text": "½ tablespoon white pepper (optional)"
+              },
+              {
+                "text": "1 teaspoon black pepper"
+              },
+              {
+                "text": "½ tablespoon cornstarch"
+              }
+            ],
+            "steps": [
+              "In a medium bowl, combine Maggi sauce (or soy sauce), orange juice, orange zest, vegetable oil, garlic, white pepper (optional), and black pepper. Stir well until combined. Add chicken breast and stir to coat. Cover the bowl with cling wrap and refrigerate for at least 1 hour (or overnight). You can also store the marinated chicken breasts in a sealable ziploc bag.",
+              "Remove the chicken from the marinade, and reserve the marinade. Thread the chicken onto skewers, adding about 6-7 pieces of cubed chicken breasts for each skewer. If you are using wooden skewers, soak them in water for 30 minutes before you thread the chicken on and grill to stop them from burning.",
+              "Lightly brush olive oil over grill or grill pan. Preheat the grill over medium high heat for 3 minutes until the oil starts sizzling and shimmering. Place the skewers spaced evenly apart on the grill and grill for 8-10 minutes on each side or until the internal temperature for the chicken reaches 165 F. Do not overlap the skewers at any time to ensure even cooking for all the skewers.",
+              "Place the reserved marinade into a small cooking pot and heat over medium heat for 2 minutes, until it starts to boil. Add cornstarch and stir continuously with a spoon to dissolve, until the sauce starts to thicken and forms a smooth and thick sauce. You don't need much sauce, a tablespoon is plenty for coating the chicken.",
+              "Transfer the skewers onto a plate and drizzle with the orange sauce."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-andy-cooks-com-blogs-recipes-chicken-teriyaki.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Chicken teriyaki",
+        "yield": "4",
+        "total_time_minutes": 25,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 spring onions, white and green parts separated"
+              },
+              {
+                "text": "6 chicken thighs, skin on"
+              },
+              {
+                "text": "2 tsp sesame oil"
+              },
+              {
+                "text": "thumb-sized piece of ginger, finely grated"
+              },
+              {
+                "text": "2 garlic cloves, finely grated"
+              },
+              {
+                "text": "1½ tbsp sake"
+              },
+              {
+                "text": "¼ cup (60ml) Tamari soy"
+              },
+              {
+                "text": "¼ cup (60ml) mirin"
+              },
+              {
+                "text": "1 tbsp honey"
+              },
+              {
+                "text": "1 bunch pak choy, washed, halved lengthwise"
+              },
+              {
+                "text": "steamed Jasmine rice, to serve"
+              },
+              {
+                "text": "toasted sesame seeds, to garnish"
+              }
+            ],
+            "steps": [
+              "Dice the white part of the spring onions, and finely slice the green parts. Set aside.",
+              "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.",
+              "When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.",
+              "When the skin side is golden brown, transfer chicken to a tray.",
+              "Heat sesame oil in the same pan on medium high.",
+              "Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.",
+              "Add sake and stir to deglaze pan.",
+              "Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.",
+              "Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.",
+              "Steam pak choy for 1-2 minutes, until just tender.",
+              "Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-bbcgoodfood-com-recipes-beetroot-soup-feta-radish-croutons.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Easy Beetroot soup",
+        "yield": "4",
+        "total_time_minutes": 75,
+        "nutrition": {
+          "calories": "403",
+          "protein": "15",
+          "fat": "13",
+          "carbohydrates": "52"
+        },
+        "components": [
+          {
+            "name": "Main",
+            "ingredients": [
+              {
+                "text": "2 tbsp olive oil"
+              },
+              {
+                "text": "1 large onion finely chopped"
+              },
+              {
+                "text": "2 garlic cloves crushed"
+              },
+              {
+                "text": "1kg fresh beetroot peeled and diced (wear rubber gloves to stop your hands turning pink)"
+              },
+              {
+                "text": "1 ½l vegetable stock"
+              }
+            ]
+          },
+          {
+            "name": "For the croutons",
+            "ingredients": [
+              {
+                "text": "½ small loaf sourdough bread diced into large croutons"
+              },
+              {
+                "text": "100g radishes finely sliced"
+              },
+              {
+                "text": "100g feta crumbled"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Heat 1 tbsp oil in a large saucepan and add the chopped onion, frying for 5 mins until slightly softened. Add the garlic, stirring to combine for 1 min, then toss in the beetroot and cook for 15 mins.",
+              "Pour in the stock and bring to the boil. Once boiling, reduce the heat and simmer uncovered for 30 mins or until the beetroot is tender. Season well and leave to cool a little before blending.",
+              "Meanwhile, to make the crouton topping, heat the grill to high and put the sourdough croutons on a baking sheet drizzled with the remaining 1 tbsp oil and toast until golden. Whizz the soup until smooth using a hand blender.",
+              "If serving the soup chilled, leave to cool completely and chill for a couple of hrs before serving. If serving hot, warm through in the pan for 2-3 mins. Serve in bowls or mugs with the croutons, radishes and crumbled feta scattered over. ￼￼￼"
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-bbcgoodfood-com-recipes-chicken-pasta-bake.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Chicken pasta bake",
+        "yield": "6",
+        "total_time_minutes": 75,
+        "nutrition": {
+          "calories": "575",
+          "protein": "33",
+          "fat": "30",
+          "carbohydrates": "41"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "4 tbsp olive oil"
+              },
+              {
+                "text": "1 onion finely chopped"
+              },
+              {
+                "text": "2 garlic cloves crushed"
+              },
+              {
+                "text": "¼ tsp chilli flakes"
+              },
+              {
+                "text": "2 x 400g cans chopped tomatoes"
+              },
+              {
+                "text": "1 tsp caster sugar"
+              },
+              {
+                "text": "6 tbsp mascarpone"
+              },
+              {
+                "text": "4 skinless chicken breasts, sliced into strips"
+              },
+              {
+                "text": "300g penne"
+              },
+              {
+                "text": "70g mature cheddar grated"
+              },
+              {
+                "text": "50g grated mozzarella"
+              },
+              {
+                "text": "½ small bunch of parsley finely chopped"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Heat 2 tbsp of the oil in a pan over a medium heat and fry the onion gently for 10-12 mins. Add the garlic and chilli flakes and cook for 1 min. Tip in the tomatoes and sugar and season to taste. Simmer uncovered for 20 mins or until thickened, then stir through the mascarpone.",
+              "Heat 1 tbsp of oil in a non-stick frying pan. Season the chicken and fry for 5-7 mins or until the chicken is cooked through.",
+              "Heat the oven to 220C/200C fan/gas 7. Cook the penne following pack instructions. Drain and toss with the remaining oil. Tip the pasta into a medium sized ovenproof dish. Stir in the chicken and pour over the sauce. Top with the cheddar, mozzarella and parsley. Bake for 20 mins or until golden brown and bubbling."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-cookingclassy-com-loaded-baked-potato-soup.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Loaded Baked Potato Soup",
+        "yield": "6",
+        "total_time_minutes": 105,
+        "nutrition": {
+          "calories": "684",
+          "protein": "26",
+          "fat": "40",
+          "carbohydrates": "58"
+        },
+        "components": [
+          {
+            "name": "Main",
+            "ingredients": [
+              {
+                "text": "3 1/4 lbs. russet potatoes (about 5 large, evenly in size for same bake time)"
+              },
+              {
+                "text": "9 oz bacon, chopped"
+              },
+              {
+                "text": "1/4 cup all-purpose flour"
+              },
+              {
+                "text": "1 large bunch* green onions, sliced, light and green portions kept separate"
+              },
+              {
+                "text": "1 Tbsp minced garlic (3 cloves)"
+              },
+              {
+                "text": "3 1/2 cups low-sodium chicken broth"
+              },
+              {
+                "text": "3 cups milk (2% or whole)"
+              },
+              {
+                "text": "Salt and black pepper"
+              },
+              {
+                "text": "1/2 cup sour cream"
+              },
+              {
+                "text": "1 to 2 cups shredded sharp cheddar (white or yellow), plus more for serving"
+              },
+              {
+                "text": "1/3 cup finely grated parmesan cheese"
+              }
+            ]
+          },
+          {
+            "name": "Optional Fried Potato Skins",
+            "ingredients": [
+              {
+                "text": "3 Tbsp olive oil"
+              },
+              {
+                "text": "Reserved baked potato skins, from about 4 potatoes"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Preheat oven to 400 degrees. Scrub and rinse potatoes well under cool running water (you want them very clean as peels will be used later for the soup). Pierce each potato several times with a fork.",
+              "Place potatoes in oven and bake until tender all the way through when pierced with a knife, about 1 hour to 1 hour 15 minutes. Remove from oven and let rest until cool enough to handle.",
+              "Meanwhile in a large pot cook bacon over medium heat until it's just crisp, remove bacon while leaving rendered fat in pot. Transfer bacon to a paper towel lined plate.",
+              "Return pot to low heat, add light portion of green onions and saute 1 minute. Add flour, cook and stir 30 seconds, add garlic and continue stirring 30 seconds longer.",
+              "While stirring slowly pour in chicken broth, then pour in milk. Scoop out as much potato flesh (white portion) as possible while leaving just potato skins, reserve skins and transfer potato flesh to soup.",
+              "Season soup with plenty of salt to taste and black pepper to taste. Bring soup to a light simmer over medium-high heat stirring frequently. Reduce heat to medium-low, cover and simmer soup about 5 minutes stirring occasionally.",
+              "Off heat use a potato masher to mash potatoes in soup into smaller chunks. Stir in sour cream, cheddar cheese, parmesan cheese. If desired stir in up to 1 cup more cheddar to boost cheesy flavor if desired.",
+              "While soup is cooking you can prepare the potato skins. Use about 7 or 8 halves of them. Dice those into small pieces (first rows then squares).",
+              "Heat the olive oil in a 12-inch skillet over medium-high heat. Add potato skins, season with salt and pepper and cook tossing occasionally, until golden brown and crisp, about 7 to 10 minutes.",
+              "To serve the soup ladle soup into individual bowls, top with more cheddar, cooked bacon, fried potato skins, and the green onion greens."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-cookingclassy-com-salmon-rice-bowl.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Salmon Rice Bowl",
+        "yield": "5",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "652",
+          "protein": "34",
+          "fat": "27",
+          "carbohydrates": "63"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 1/2 cups dry jasmine rice"
+              },
+              {
+                "text": "1/4 cup mayonnaise (can use regular or light)"
+              },
+              {
+                "text": "1 1/2 Tbsp sriracha"
+              },
+              {
+                "text": "4 cups (8 oz) coleslaw*"
+              },
+              {
+                "text": "2 green onions, sliced"
+              },
+              {
+                "text": "1 1/2 Tbsp rice vinegar"
+              },
+              {
+                "text": "2 Tbsp honey, divided"
+              },
+              {
+                "text": "3 Tbsp + 1 tsp soy sauce, divided"
+              },
+              {
+                "text": "1 1/2 tsp sesame oil, divided"
+              },
+              {
+                "text": "Salt and black pepper"
+              },
+              {
+                "text": "2 Tbsp mirin"
+              },
+              {
+                "text": "1 Tbsp fresh ginger, minced"
+              },
+              {
+                "text": "1 tsp minced fresh garlic"
+              },
+              {
+                "text": "3/4 tsp cornstarch"
+              },
+              {
+                "text": "2 tsp olive oil or vegetable oil"
+              },
+              {
+                "text": "1 1/2 lbs. skinless salmon fillet, chopped into 1-inch cubes"
+              },
+              {
+                "text": "1/2 English cucumber, thinly sliced"
+              },
+              {
+                "text": "1 avocado, diced"
+              },
+              {
+                "text": "1 1/2 tsp toasted sesame seeds"
+              }
+            ],
+            "steps": [
+              "Cook rice according to directions on package.",
+              "Mix sriracha mayo: Mix together mayonnaise and sriracha in a small bowl. Transfer to a small bag. Set aside.",
+              "Make the slaw: In a large mixing bowl toss together coleslaw mix, green onions, rice vinegar, 1 Tbsp honey, 1 tsp soy sauce and 1/2 tsp sesame oil. Season lightly with salt to taste. Set mixture aside.",
+              "Make the salmon sauce: In a small mixing bowl whisk together remaining 3 Tbsp soy sauce, 2 Tbsp mirin, 1 Tbsp honey, 1/2 tsp sesame oil, the ginger, garlic and cornstarch until mixture is well blended (cornstarch should be dissolved). Set aside.",
+              "Cook salmon: Dab salmon pieces dry with paper towels, season with pepper only. Preheat a 12-inch non-stick skillet over medium-high heat. Add olive oil.",
+              "Quickly spread salmon pieces out evenly in skillet. Let sear on one side only until salmon is nearly cooked, about 2 to 3 minutes.",
+              "Cook sauce: Whisk cornstarch mixture once more then pour over salmon. Cook, gently tossing for about 20 to 30 seconds until the mixture is thickened.",
+              "Assemble bowls: Layer cooked rice into serving bowls. In sections top with salmon, the cabbage slaw, avocado, and cucumber. Sprinkle over sesame seeds and cut corner from bag with sriracha mayo and drizzle over bowls."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-delish-com-cooking-a22691438-bbq-chicken-nachos-recipe.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "BBQ Chicken Nachos",
+        "yield": "4",
+        "total_time_minutes": 25,
+        "nutrition": {
+          "calories": "1422",
+          "protein": "50",
+          "fat": "85",
+          "carbohydrates": "106"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 cups shredded chicken"
+              },
+              {
+                "text": "3/4 cup barbecue sauce"
+              },
+              {
+                "text": "1 ( 18-oz. ) bag tortilla chips"
+              },
+              {
+                "text": "3 cups shredded cheddar"
+              },
+              {
+                "text": "1 cup crumbled Cotija"
+              },
+              {
+                "text": "1 cup pickled jalapeños"
+              },
+              {
+                "text": "1/2 small red onion, thinly sliced"
+              },
+              {
+                "text": "1 avocado, thinly sliced"
+              },
+              {
+                "text": "Freshly chopped cilantro, for garnish"
+              }
+            ],
+            "steps": [
+              "Preheat oven to 400° and line a large baking sheet with foil. In a large bowl, toss chicken with barbecue sauce.",
+              "Layer half the chips, cheddar, Cotija, chicken, pickled jalapeños, and onion. Repeat.",
+              "Bake until cheese is melty and nachos warmed through, 15 minutes.",
+              "Top with avocado and cilantro before serving."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-delish-com-cooking-recipe-ideas-a42676553-one-pan-coconut-lime-chicken-recipe.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "One-Pan Coconut-Lime Chicken",
+        "yield": "4",
+        "total_time_minutes": 30,
+        "nutrition": {
+          "calories": "802",
+          "protein": "95",
+          "fat": "40",
+          "carbohydrates": "11"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "6 chicken cutlets"
+              },
+              {
+                "text": "1 tsp. sweet paprika"
+              },
+              {
+                "text": "1/4 tsp. freshly ground black pepper"
+              },
+              {
+                "text": "1 1/2 tsp. kosher salt, divided"
+              },
+              {
+                "text": "2 Tbsp. coconut oil or vegetable oil, divided"
+              },
+              {
+                "text": "1 small yellow onion, finely chopped"
+              },
+              {
+                "text": "1 small jalapeño, stemmed, seeded, finely chopped"
+              },
+              {
+                "text": "3 garlic cloves, finely chopped"
+              },
+              {
+                "text": "4 tsp. finely chopped peeled ginger"
+              },
+              {
+                "text": "2 large, ripe beefsteak tomatoes, seeded, finely chopped (about 2 cups )"
+              },
+              {
+                "text": "1 Tbsp. tomato paste"
+              },
+              {
+                "text": "1 can unsweetened coconut milk"
+              },
+              {
+                "text": "1 Tbsp. light brown sugar"
+              },
+              {
+                "text": "1/4 cup fresh cilantro leaves, coarsely chopped"
+              },
+              {
+                "text": "1 Tbsp. fresh lime juice"
+              }
+            ],
+            "steps": [
+              "Season chicken all over with paprika, pepper, and 1 tsp. salt. In a large, high-sided skillet over medium-high heat, heat 1 Tbsp. oil. Working in batches, cook chicken, turning halfway through, until golden brown on both sides and just about cooked through, 1 to 2 minutes per side. Transfer to a plate.",
+              "In same skillet over medium-high heat, heat remaining 1 Tbsp. oil. Cook onion, stirring occasionally, until slightly tender and just turning golden, about 5 minutes. Add jalapeño, garlic, and ginger and cook, stirring, until fragrant and light golden, about 1 minute more. Add tomatoes and tomato paste and cook, stirring occasionally, until tomato is softened and paste is lightly toasted, about 2 minutes more.",
+              "Add milk, brown sugar, and 1/2 tsp. salt and bring to a boil, stirring until sugar is dissolved. Nestle chicken into skillet and return to a boil. Boil until chicken is cooked through, about 1 minute more; season with salt, if needed.",
+              "Remove from heat. Stir in cilantro and lime juice."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-dontgobaconmyheart-co-uk-shredded-buffalo-chicken-wraps.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Shredded Buffalo Chicken Wraps",
+        "yield": "4",
+        "total_time_minutes": 10,
+        "nutrition": {
+          "calories": "458",
+          "protein": "28.51",
+          "fat": "18.05",
+          "carbohydrates": "43.54"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "4x 10\" Flour Tortilla Wraps"
+              },
+              {
+                "text": "2 packed cups (~300g) Cooked Shredded Chicken (see notes)"
+              },
+              {
+                "text": "1/2 cup / 125ml Buffalo Sauce, or as needed (see notes)"
+              },
+              {
+                "text": "4 tbsp Blue Cheese Sauce (see notes)"
+              },
+              {
+                "text": "1 large Carrot, peeled, grated and squeezed with your hands to remove moisture"
+              },
+              {
+                "text": "1/4 whole Iceberg Lettuce, finely sliced"
+              },
+              {
+                "text": "1/4 whole Red Cabbage, finely sliced"
+              }
+            ],
+            "steps": [
+              "In a medium-sized bowl, combine 2 packed cups (~300g) shredded chicken with 1/2cup/125ml buffalo sauce.",
+              "Lay out your wraps and in the bottom centre stack in this order: blue cheese sauce, lettuce, carrot, cabbage, buffalo chicken.",
+              "Fold over the bottom of the wrap to cover the filling. Fold in the sides and tightly roll into a mini burrito/wrap. Enjoy!"
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-howsweeteats-com-2024-04-honey-mustard-chicken-bowls.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Honey Mustard Chicken Bowls with Asparagus",
+        "yield": "4",
+        "total_time_minutes": 30,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "1 pound asparagus spears, woody ends trimmed off"
+              },
+              {
+                "text": "2 tablespoons olive oil"
+              },
+              {
+                "text": "kosher salt and pepper"
+              },
+              {
+                "text": "garlic powder"
+              },
+              {
+                "text": "1 ½ pounds boneless, skinless chicken breasts, cut into chunks"
+              },
+              {
+                "text": "⅓ cup honey"
+              },
+              {
+                "text": "1 tablespoon dijon mustard"
+              },
+              {
+                "text": "1/4 cup water"
+              },
+              {
+                "text": "4 garlic cloves, minced"
+              },
+              {
+                "text": "3 green onions, thinly sliced"
+              },
+              {
+                "text": "jasmine rice, for serving"
+              }
+            ],
+            "steps": [
+              "Preheat the oven to 425 degrees F. Line a baking sheet with parchment paper.",
+              "Place the asparagus on the sheet. Toss with 1 tablespoon of the olive oil. Season all over with salt and pepper and garlic powder. Place in the oven to roast for 10 to 15 minutes (or even shorter, if you are using very thin asparagus).",
+              "Heat the remaining tablespoon of olive oil in a large cast iron skillet. Pat the chicken dry with a paper towel. Season all over with the salt, pepper and garlic powder.",
+              "Add the chicken to the skillet and brown on all sides, cooking for 3 to 4 minutes before flipping and cooking for 3 to 4 minutes more.",
+              "Whisk together the honey, mustard, water and garlic.",
+              "Once the chicken is browned, pour the honey mixture into the pan. Toss well. Let it bubble and simmer, toss the chicken often, cooking for 3 to 4 minutes - until the sauce has thickened and coats all the chicken. Top with the sliced green onions.",
+              "Serve the chicken over rice with the asparagus."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-jamieoliver-com-recipes-pork-sesame-ramen-with-caramelized-pork.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Sesame ramen with caramelized pork",
+        "yield": "2",
+        "total_time_minutes": 50,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "For the paste",
+            "ingredients": [
+              {
+                "text": "6 tablespoons tahini"
+              },
+              {
+                "text": "1 tablespoon Thai red curry paste"
+              },
+              {
+                "text": "½ tablespoon soft brown sugar"
+              },
+              {
+                "text": "2 tablespoons light soy sauce"
+              },
+              {
+                "text": "1 tablespoon grated ginger (approx. 6cm)"
+              }
+            ]
+          },
+          {
+            "name": "For the pork",
+            "ingredients": [
+              {
+                "text": "2 spring onions, finely sliced"
+              },
+              {
+                "text": "1 teaspoon grated ginger (approx. 2cm)"
+              },
+              {
+                "text": "1 clove of garlic, crushed"
+              },
+              {
+                "text": "1 red chilli, finely sliced"
+              },
+              {
+                "text": "200g pork mince, preferably 15–20% fat content"
+              },
+              {
+                "text": "2 ½ tablespoons honey"
+              },
+              {
+                "text": "1 1½ tablespoons fish sauce"
+              }
+            ]
+          },
+          {
+            "name": "For the noodles",
+            "ingredients": [
+              {
+                "text": "2 large eggs"
+              },
+              {
+                "text": "800ml chicken stock"
+              },
+              {
+                "text": "100g tenderstem broccoli, cut into 5cm pieces"
+              },
+              {
+                "text": "2 portions of ramen or medium egg or wheat noodles"
+              },
+              {
+                "text": "1 carrot, shredded with a julienne peeler or cut into matchsticks"
+              },
+              {
+                "text": "1 spring onion, finely sliced"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Whisk the paste ingredients together and divide between two serving bowls. Cook the noodles according to instructions then rinse well under cold water. Set aside.",
+              "Heat a large frying pan over a medium heat and add 1 tablespoon of oil. Add the spring onions, ginger, garlic and chilli, and stir-fry for 1 minute.",
+              "Add the pork, turn up to medium-high and fry for 4–5 minutes, breaking up the meat as you go, until browned and starting to dry out.",
+              "Mix in the honey and fish sauce and stir-fry for a further couple of minutes. Turn off the heat. Set aside.",
+              "Fill a small saucepan with boiling water and bring to the boil over a medium heat. Add the eggs and cook for 6 minutes, then immediately remove and run under cold water for a minute or so. Peel and cut in half.",
+              "Bring the stock to the boil in a large pan. Add the broccoli and cook for 2–3 minutes, until just done. Remove and set aside.",
+              "Add the cooked noodles and turn down the heat – you want them to reheat, not cook. Add a ladle of stock to each serving bowl and whisk to combine, then stir in the remaining stock.",
+              "Add the noodles, and top with the caramelized pork, the halved soft-boiled eggs, the broccoli and shredded carrot.",
+              "Garnish with spring onions. Nice with a drizzle of soy or chilli oil."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-jamieoliver-com-recipes-vegetables-leftover-squash-pancakes.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Leftover squash pancakes",
+        "yield": "12",
+        "total_time_minutes": 15,
+        "nutrition": {
+          "calories": "79",
+          "protein": "3.7",
+          "fat": "2.1",
+          "carbohydrates": "12.2"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "250g leftover roasted squash"
+              },
+              {
+                "text": "1 fresh red chilli"
+              },
+              {
+                "text": "2 sprigs of fresh rosemary"
+              },
+              {
+                "text": "30g Parmesan cheese, plus extra to serve"
+              },
+              {
+                "text": "1 large egg"
+              },
+              {
+                "text": "280ml semi-skimmed milk"
+              },
+              {
+                "text": "150g self-raising flour"
+              },
+              {
+                "text": "1 whole nutmeg, for grating"
+              },
+              {
+                "text": "olive oil"
+              },
+              {
+                "text": "rocket"
+              }
+            ],
+            "steps": [
+              "Remove the skin from the roasted squash, then deseed and finely chop the chilli. Pick and finely chop the rosemary leaves, discarding the stalks, and finely grate the Parmesan.",
+              "In a large bowl, mash the squash with a fork, then whisk in the egg, milk and flour. Add the chilli, rosemary, Parmesan and a grating of nutmeg.",
+              "Heat a little oil in a frying pan and, once hot, add half a ladle of mixture per pancake into the pan. Cook for 1 to 2 mins on each side, until golden and crisp.",
+              "Keep warm in a low oven until ready, then serve with and extra grating of Parmesan and some rocket."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-oliveandmango-com-herb-roasted-chicken-with-spring-veggies.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Herb Roasted Chicken With Spring Veggies",
+        "yield": "4",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": null,
+          "protein": null,
+          "fat": null,
+          "carbohydrates": null
+        },
+        "components": [
+          {
+            "name": "Main",
+            "ingredients": [
+              {
+                "text": "8 chicken thighs skin on bone in"
+              },
+              {
+                "text": "2 tablespoons olive oil"
+              },
+              {
+                "text": "1 lemon zested then sliced or cut into wedges"
+              },
+              {
+                "text": "4 shallots peeled and chopped coarsely"
+              },
+              {
+                "text": "4 rosemary sprigs stem removed and chopped"
+              },
+              {
+                "text": "2 teaspoons of fresh thyme leaves"
+              },
+              {
+                "text": "1 lb of asparagus spears trimmed and chopped"
+              },
+              {
+                "text": "2 zucchini trimmed and sliced in half lengthwise and then chopped"
+              },
+              {
+                "text": "1¼ cup of peas fresh or frozen"
+              }
+            ]
+          },
+          {
+            "name": "For Topping (finishing the dish)",
+            "ingredients": [
+              {
+                "text": "¼ cup of fresh mint torn"
+              },
+              {
+                "text": "½ cup of crumbled feta"
+              },
+              {
+                "text": "Juice of half a lemon or more to taste"
+              },
+              {
+                "text": "A drizzle of extra virgin olive oil"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Heat oven to 400°F.",
+              "Place chicken thighs in a large shallow roasting pan, season with salt and pepper and toss with the olive oil, lemon zest and slices/wedges, shallots, rosemary and thyme.",
+              "Arrange the chicken thighs, skin-side up, and roast for 40-50 mins until the skin is crisp and golden. Adjust cooking time to ensure chicken is fully cooked through (165 ºF).",
+              "Meanwhile, bring a large pot of water to the boil and blanch the asparagus for 2-3 mins, adding the zucchini and peas for the final minute. (You can also pan fry them in a bit of olive oil if you prefer them done that way. See blog post for further options)",
+              "Drain the vegetables and toss in with the chicken, toss in the mint, and lemon juice as well coating everything well with the cooking juices. Crumble over the feta cheese if using and serve with an extra drizzle of olive oil if desired."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-olivemagazine-com-recipes-vegetarian-carrot-halloumi-and-dill-balls.json": {
+      "capture_errors": "",
+      "detected_languages": "en",
+      "recipe": {
+        "title": "Carrot, halloumi and dill balls",
+        "yield": "16",
+        "total_time_minutes": 20,
+        "nutrition": {
+          "calories": "91",
+          "protein": "4.3",
+          "fat": "6",
+          "carbohydrates": "4.5"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "2 large carrots coarsely grated"
+              },
+              {
+                "text": "250g halloumi coarsely grated"
+              },
+              {
+                "text": "1 large egg"
+              },
+              {
+                "text": "a small bunch dill finely chopped"
+              },
+              {
+                "text": "4 tbsp plain flour"
+              },
+              {
+                "text": "2 tsp cumin seeds"
+              },
+              {
+                "text": "1 tsp paprika"
+              },
+              {
+                "text": "for deep-frying vegetable oil"
+              },
+              {
+                "text": "to serve salad leaves"
+              }
+            ]
+          },
+          {
+            "steps": [
+              "Put the grated carrot and halloumi, along with the remaining ingredients, except the oil and salad, into a mixing bowl and season well with black pepper and just a little salt.",
+              "Work the mixture with your hands to combine it well, then take roughly 1 tbsp of the mixture and roll it into a ball. Repeat with the remaining mixture.",
+              "Fill a pan no more than 1/3 full with oil and heat to 180C or until a cube of bread browns in 30 seconds. Line a plate with a double layer of kitchen paper.",
+              "Carefully lower the balls into the hot oil and fry, in batches, for 1–2 minutes or until deep golden brown. Remove with a slotted spoon and transfer to the paper-lined plate to drain.",
+              "Serve hot with salad leaves."
+            ]
+          }
+        ]
+      }
+    },
+    "instagram-C-7dpQTooUj.json": {
+      "capture_errors": "",
+      "detected_languages": "pl",
+      "recipe": {
+        "title": null,
+        "yield": "2",
+        "total_time_minutes": null,
+        "nutrition": {
+          "calories": "503",
+          "protein": "38",
+          "fat": "26",
+          "carbohydrates": "34"
+        },
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "260 g mięsa mielonego z piersi kurczaka / indyka"
+              },
+              {
+                "text": "10-15 g szczypiorku"
+              },
+              {
+                "text": "60 g sera żółtego (np. Gouda)"
+              },
+              {
+                "text": "5 g czosnku granulowanego"
+              },
+              {
+                "text": "20 g mąki pszennej zwykłej (lub pełnoziarnista też super)"
+              },
+              {
+                "text": "90 g jogurtu naturalnego"
+              },
+              {
+                "text": "2 pomidory czerwone"
+              },
+              {
+                "text": "100 g sałaty lodowej"
+              },
+              {
+                "text": "6 g koperku świeżego"
+              },
+              {
+                "text": "4-5 ziemniaków"
+              },
+              {
+                "text": "10 g oliwy"
+              },
+              {
+                "text": "30 g keczupu"
+              },
+              {
+                "text": "pieprz, sól"
+              }
+            ],
+            "steps": [
+              "Ser żółty zetrzyj lub pokrój w kostkę, szczypiorek posiekaj. Ziemniaki ugotuj do miękkości.",
+              "Mięso mielone umieść w misce, dodaj ser, szczypiorek, mąkę, sól, pieprz i czosnek. Zmieszaj za pomocą łyżki lub dłoni.",
+              "Na patelni rozgrzej oliwę, nakładaj po czubatej łyżce masy, delikatnie spłaszcz tworząc kotleciki. Usmaż kotleciki z obydwu stron do zarumienienia.",
+              "W międzyczasie przygotuj sałatkę: sałatę poszatkuj, a pomidora pokrój w kostkę. Zmieszaj z jogurtem, solą i pieprzem.",
+              "Kotleciki przełóż na talerz i podaj ketchupem, ziemniakami i sałatką. Ziemniaki posyp siekanym koperkiem."
+            ]
+          }
+        ]
+      }
+    }
+  }
 }

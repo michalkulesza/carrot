@@ -14,7 +14,8 @@ from api.services.extraction_v2.contracts import EvidenceReference, EvidenceSpan
 def normalize_evidence_text(value: str) -> str:
     """The sole normalisation used by extraction and reference validation."""
 
-    return re.sub(r"\s+", " ", html.unescape(value)).strip()
+    normalized = re.sub(r"\s+", " ", html.unescape(value)).strip()
+    return re.sub(r"\s+([,.;:!?])", r"\1", normalized)
 
 
 def document_hash(content: str) -> str:

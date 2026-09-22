@@ -20,7 +20,16 @@ For a JSON URL array, including `production-recipe-source-urls.json`:
   --output-dir services/api/tests/captured-payloads
 ```
 
-Instagram URLs are captured in a browser. Other HTTP(S) URLs, whether passed directly, in a newline file, or in JSON, are fetched as raw HTML payloads for the future HTML cleaner.
+To refresh only the non-Instagram HTML fixtures through Chrome, add `--html-only --overwrite`:
+
+```powershell
+& services/api/.venv/Scripts/python.exe tools/instagram-fixture-capture/capture_instagram_fixtures.py `
+  --input-json tools/instagram-fixture-capture/production-recipe-source-urls.json `
+  --html-only --overwrite `
+  --output-dir services/api/tests/captured-payloads
+```
+
+Instagram URLs and all other HTTP(S) URLs are captured in Chrome. The resulting HTML envelope contains Chrome's post-JavaScript DOM, so dynamically rendered recipe content is retained for offline extraction tests.
 
 For every batch, `failed-urls.json` is written in the output directory. It lists partial/failed captures and their errors while successful payloads remain in individual files.
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "kind": "social",
-  "captured_at": "2026-09-19T15:58:36.250262+00:00",
+  "captured_at": "2026-09-21T12:49:03.988070+00:00",
   "source_url": "https://www.instagram.com/reel/DWrlRmhDHJH/",
   "capture": {
     "status": "complete",
@@ -20,16 +20,16 @@
           ]
         },
         "owner": {
-          "username": "MrFit-Trener / Łukasz Gąsiński"
+          "username": "mrfit_trener"
         },
-        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/658804517_18580028794043322_8487876142383145582_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=U8Wi5q3nCnkQ7kNvwFT5-4B&_nc_oc=AdovrdP-h-YDz8i4EPDlLt0prn6t3pLEbn5DXx5LlRni88vsBZzq6ib7w1lxCY_TIT9Uofk5WILSHqb7I600azfA&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=0sr8AphgXeafZSY9BBHLRQ&_nc_ss=7b6a8&oh=00_AQLIw_Kq6iZkow4DqXuqShEkdc7I7BgnyM5qUtrQCLcpnA&oe=6AB4742A",
-        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQN5bXvANoKqbjakXFbtiqmZzNI0rCc1bkJhTx432PUodgxgSGhgM8Wpz_4UTdqfGblmKGgsnQvBPmXJ9JeMIiVZzvNAZ8IoASUCGvw.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5pxQaMglI-sQ7kNvwE6TCcR&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTg1ODAwMjgyMDMwNDMzMjIsImFzc2V0X2FnZV9kYXlzIjoxNjgsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNywiYml0cmF0ZSI6NTYwNzU4MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=HcaLabtD46uQsshYoSyTnA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKIS4tw6NIO-DDZ_QbR7AkpN1IzQOsodL2P5Nu5A8JYVw&oe=6AB48844&bytestart=922&byteend=3396419"
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/658804517_18580028794043322_8487876142383145582_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=102&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=fXrgvK3C4RMQ7kNvwGELSjo&_nc_oc=Adp6hr0WZj0I4CHoL6oM2HEA3LGJ0csTY7ZoZthRkqwPWMQgz-_Ug95gG-hBJT4L0_AZdYlxAwoLCGDtOHNnQkoB&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=2Wx0eyuBqnQdh4aNAHjjbA&_nc_ss=7b6a8&oh=00_AQLdnPxOhBRcpqekH3f9EnuWpYyIK8idQL1j49ZK9TDBcw&oe=6AB6DEEA",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQN5bXvANoKqbjakXFbtiqmZzNI0rCc1bkJhTx432PUodgxgSGhgM8Wpz_4UTdqfGblmKGgsnQvBPmXJ9JeMIiVZzvNAZ8IoASUCGvw.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=1nsvMUVIqgoQ7kNvwFETbap&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTg1ODAwMjgyMDMwNDMzMjIsImFzc2V0X2FnZV9kYXlzIjoxNzAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNywiYml0cmF0ZSI6NTYwNzU4MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=RI-oZUMjklp6kd7wn4ij4A&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL1a0eBIs4-BTb9C6rwgczjNq8_2RsUdGvVAta5piQ8Qg&oe=6AB6F304&bytestart=922&byteend=3396419"
       }
     }
   },
   "comments": [],
   "audio": {
-    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQN5bXvANoKqbjakXFbtiqmZzNI0rCc1bkJhTx432PUodgxgSGhgM8Wpz_4UTdqfGblmKGgsnQvBPmXJ9JeMIiVZzvNAZ8IoASUCGvw.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=5pxQaMglI-sQ7kNvwE6TCcR&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTg1ODAwMjgyMDMwNDMzMjIsImFzc2V0X2FnZV9kYXlzIjoxNjgsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNywiYml0cmF0ZSI6NTYwNzU4MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=HcaLabtD46uQsshYoSyTnA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQKIS4tw6NIO-DDZ_QbR7AkpN1IzQOsodL2P5Nu5A8JYVw&oe=6AB48844&bytestart=922&byteend=3396419",
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m366/AQN5bXvANoKqbjakXFbtiqmZzNI0rCc1bkJhTx432PUodgxgSGhgM8Wpz_4UTdqfGblmKGgsnQvBPmXJ9JeMIiVZzvNAZ8IoASUCGvw.mp4?_nc_cat=103&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=1nsvMUVIqgoQ7kNvwFETbap&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTg1ODAwMjgyMDMwNDMzMjIsImFzc2V0X2FnZV9kYXlzIjoxNzAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNywiYml0cmF0ZSI6NTYwNzU4MiwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=RI-oZUMjklp6kd7wn4ij4A&_nc_ss=7a22e&_nc_zt=28&oh=00_AQL1a0eBIs4-BTb9C6rwgczjNq8_2RsUdGvVAta5piQ8Qg&oe=6AB6F304&bytestart=922&byteend=3396419",
     "audio_url": null,
     "audio_title": null,
     "transcript": "W Airfryerze w kąpieli wodnej zrobiłem jeden z najbardziej puszystych serników, jakie jadłem. Tak i to bez grama mąki. Zaczynam od ubicia białek ze słodzidłem na taką sztywną pianę. W drugim naczyniu miksujemy pozostałe składniki, a następnie włączymy bardzo delikatnie z pianą. Masa leci do formy wyłożonej papierem, a następnie do Airfryera. No sernik jak wyszedł naprawdę mega puchaty. Po schłodzeniu wyciągamy go z papieru, lekka dekoracja, u mnie cukier puder i owoce. Szczerze, to ja widzę go nawet na stole wielkanocnym. Zobaczcie, jest mega mięciutki, bardzo puszysty i naprawdę bardzo fajnie smakuje.",
