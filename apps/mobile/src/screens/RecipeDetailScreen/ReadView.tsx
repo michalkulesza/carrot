@@ -16,7 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useHousehold } from "../../context/HouseholdContext";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import type { EdgeInsets } from "react-native-safe-area-context";
-import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
+import type { RecipeIssueCode, RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
 import AddToMealPlanSheet, {
   type AddToMealPlanSheetHandle,
 } from "../../components/AddToMealPlanSheet";
@@ -37,6 +37,7 @@ import RelatedRecipesSection from "./RelatedRecipesSection";
 import TagsSection from "./TagsSection";
 import ServingStepper from "./ServingStepper";
 import RecipeMemberRow from './RecipeMemberRow'
+import RecipeIssueBanner from './RecipeIssueBanner'
 
 const formatCookingTime = (
   minutes: number | null,
@@ -71,6 +72,7 @@ const ReadView = ({
   handleDecreaseServings,
   handleIncreaseServings,
   onOpenCookMode,
+  onDismissIssue,
   onDeleteRecipe,
   mealPlanSheetRef,
   addIngredientSheetRef,
@@ -95,6 +97,7 @@ const ReadView = ({
   handleDecreaseServings: () => void;
   handleIncreaseServings: () => void;
   onOpenCookMode: () => void;
+  onDismissIssue: (issueCode: RecipeIssueCode) => Promise<void>;
   onDeleteRecipe: () => void;
   mealPlanSheetRef: RefObject<AddToMealPlanSheetHandle | null>;
   addIngredientSheetRef: RefObject<AddIngredientToShoppingListSheetHandle | null>;
@@ -104,6 +107,11 @@ const ReadView = ({
   const heroThumbnailUrl = proxyThumbnailUrl(recipe.thumbnail_url);
   const hasImage = !!heroThumbnailUrl;
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0;
+  const hasSteps = recipe.components.some((component) => component.steps.length > 0);
+  const valueLabel = (label: string, status: string | undefined) => {
+    const marker = status === 'ai' ? 'recipes.valueAi' : status === 'source' ? 'recipes.valueSource' : status === 'user' ? 'recipes.valueUser' : 'recipes.valueUnknown';
+    return `${label} · ${t(marker)}`;
+  };
   const [titleIsSingleLine, setTitleIsSingleLine] = useState(true);
   const handleTitleTextLayout = useCallback(
     (e: NativeSyntheticEvent<TextLayoutEventData>) => {
@@ -197,12 +205,14 @@ const ReadView = ({
           </View>
 
           <TagsSection recipe={recipe} />
+          <RecipeIssueBanner issueCodes={recipe.issue_codes ?? []} sourceUrl={recipe.source_url} onDismiss={onDismissIssue} />
+          {recipe.allergen_status === 'uncertain' && <Text style={styles.uncertainAllergens}>{t('recipes.allergensUncertain')}</Text>}
 
           <NutritionBoxGrid
             editing={false}
             items={[
               {
-                label: t("recipes.totalTime"),
+                label: valueLabel(t("recipes.totalTime"), recipe.total_time_provenance?.status),
                 value: formatCookingTime(recipe.total_time_minutes, t),
                 accessibilityLabel: t("recipes.totalTime"),
                 showDisclaimer: false,
@@ -212,24 +222,24 @@ const ReadView = ({
                     : undefined,
               },
               {
-                label: t("recipes.colKcal"),
+                label: valueLabel(t("recipes.colKcal"), recipe.nutrition_provenance?.kcal_per_serving?.status),
                 value: recipe.kcal_per_serving?.toString() ?? "",
                 accessibilityLabel: t("recipes.kcalPerServing"),
               },
               {
-                label: t("recipes.protein"),
+                label: valueLabel(t("recipes.protein"), recipe.nutrition_provenance?.protein_per_serving?.status),
                 value: recipe.protein_per_serving?.toString() ?? "",
                 accessibilityLabel: t("recipes.proteinPerServing"),
                 unit: "g",
               },
               {
-                label: t("recipes.fat"),
+                label: valueLabel(t("recipes.fat"), recipe.nutrition_provenance?.fat_per_serving?.status),
                 value: recipe.fat_per_serving?.toString() ?? "",
                 accessibilityLabel: t("recipes.fatPerServing"),
                 unit: "g",
               },
               {
-                label: t("recipes.carbs"),
+                label: valueLabel(t("recipes.carbs"), recipe.nutrition_provenance?.carbs_per_serving?.status),
                 value: recipe.carbs_per_serving?.toString() ?? "",
                 accessibilityLabel: t("recipes.carbsPerServing"),
                 unit: "g",
@@ -292,7 +302,8 @@ const ReadView = ({
           </View>
 
           <Pressable
-            onPress={onOpenCookMode}
+            onPress={hasSteps ? onOpenCookMode : undefined}
+            disabled={!hasSteps}
             style={({ pressed }) => [
               styles.cookModeButton,
               pressed && { opacity: 0.8 },
@@ -303,6 +314,7 @@ const ReadView = ({
             <Ionicons name="play-circle-outline" size={20} color="#fff" />
             <Text style={styles.cookModeButtonText}>{t("cookMode.start")}</Text>
           </Pressable>
+          {!hasSteps && <Text style={styles.cookModeUnavailable}>{t('recipes.cookModeUnavailable')}</Text>}
 
           <RelatedRecipesSection recipeId={recipe.id} />
           <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />

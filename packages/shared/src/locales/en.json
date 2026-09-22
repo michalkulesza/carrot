@@ -156,7 +156,18 @@
     "inHouseholds": "In households",
     "addToHousehold": "Add to household",
     "deleteFromHousehold": "Delete from {{name}}",
-    "deleteEverywhere": "Delete from everywhere"
+    "deleteEverywhere": "Delete from everywhere",
+    "missingIngredientsIssue": "Ingredients are missing from this recipe.",
+    "missingInstructionsIssue": "Instructions are missing from this recipe.",
+    "dismissExtractionIssue": "Dismiss this notice",
+    "viewRecipeSource": "View source",
+    "cookModeUnavailable": "Cooking mode is unavailable because there are no instructions.",
+    "valueSource": "From source",
+    "valueAi": "AI estimate",
+    "valueUser": "Edited by you",
+    "valueUnknown": "Unknown",
+    "allergensUncertain": "Allergen information is incomplete because a linked component has unknown ingredients.",
+    "openLinkedRecipe": "Open linked recipe"
   },
   "nav": {
     "recipes": "Recipes",
@@ -560,7 +571,19 @@
       "invalid_input": "This import input isn't supported.",
       "household_access_changed": "You no longer have access to this household.",
       "retries_exhausted": "The import could not be completed after several attempts.",
-      "unexpected": "The import failed. Please try again."
+      "unexpected": "The import failed. Please try again.",
+      "unsupported_source": "This source is not supported yet.",
+      "unsupported_language": "This recipe language is not supported yet.",
+      "language_undetermined": "The recipe language could not be identified.",
+      "no_recipe_content": "No recipe ingredients or instructions were found.",
+      "ambiguous_recipe": "The recipe content could not be separated reliably.",
+      "unreadable_content": "The source content could not be read reliably.",
+      "source_fetch_failed": "The source could not be reached. Try again.",
+      "transcription_failed": "The video could not be transcribed. Try again.",
+      "model_timeout": "The model request timed out. Try again.",
+      "model_rate_limited": "The model is busy. Try again shortly.",
+      "invalid_model_response": "The extraction response was invalid.",
+      "unknown_error": "The import failed unexpectedly. Try again."
     }
   },
   "defaultTags": {

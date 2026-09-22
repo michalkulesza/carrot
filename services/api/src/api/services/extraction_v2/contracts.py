@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, model_v
 class SourceKind(StrEnum):
     HTML = "html"
     SOCIAL = "social"
+    TEXT = "text"
 
 
 class EvidenceKind(StrEnum):
@@ -19,6 +20,7 @@ class EvidenceKind(StrEnum):
     CREATOR_COMMENT = "creator_comment"
     LINKED_PAGE = "linked_page"
     TRANSCRIPT = "transcript"
+    PASTED_TEXT = "pasted_text"
 
 
 class ExtractionStage(StrEnum):
@@ -38,6 +40,7 @@ class IssueCode(StrEnum):
 
 class FailureReason(StrEnum):
     INVALID_INPUT = "INVALID_INPUT"
+    UNSUPPORTED_SOURCE = "UNSUPPORTED_SOURCE"
     UNSUPPORTED_LANGUAGE = "UNSUPPORTED_LANGUAGE"
     LANGUAGE_UNDETERMINED = "LANGUAGE_UNDETERMINED"
     NO_RECIPE_CONTENT = "NO_RECIPE_CONTENT"
@@ -93,7 +96,15 @@ class HtmlPayload(BaseModel):
     html: str
 
 
-SourcePayload = Annotated[SocialPayload | HtmlPayload, Field(discriminator="kind")]
+class TextPayload(BaseModel):
+    schema_version: Literal[1]
+    kind: Literal[SourceKind.TEXT]
+    source_url: str = ""
+    capture: Capture = Field(default_factory=lambda: Capture(status="complete"))
+    text: str = Field(min_length=1, max_length=20000)
+
+
+SourcePayload = Annotated[SocialPayload | HtmlPayload | TextPayload, Field(discriminator="kind")]
 SOURCE_PAYLOAD_ADAPTER = TypeAdapter(SourcePayload)
 
 

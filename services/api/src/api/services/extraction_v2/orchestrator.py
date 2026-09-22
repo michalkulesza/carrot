@@ -13,7 +13,7 @@ from api.services.extraction_v2.contracts import (
     AudioEvidenceExtractor, AudioExtractionInput, CompleteOutcome, EvidenceKind,
     EvidenceSource, ExtractedRecipe, ExtractionInput, ExtractionOutcome,
     ExtractionStage, ExtractorV2, FailedOutcome, FailureReason, HtmlPayload,
-    IncompleteOutcome, IssueCode, LanguageDetector, LanguageResult, SocialPayload,
+    IncompleteOutcome, IssueCode, LanguageDetector, LanguageResult, SocialPayload, TextPayload,
     SOURCE_PAYLOAD_ADAPTER, TraceEvent,
     validate_extracted_recipe,
 )
@@ -26,6 +26,7 @@ from api.services.extraction_v2.sources import (
 from api.services.html_cleaner import clean_html_body
 
 MAX_LINKED_PAGES = 3
+_URL_IN_TEXT = re.compile(r"https?://[^\s<>()]+", re.IGNORECASE)
 
 
 def _supported_social_segments(
@@ -88,7 +89,32 @@ class ExtractionOrchestrator:
             )
         if isinstance(payload, HtmlPayload):
             return await self._extract_html_payload(payload)
+        if isinstance(payload, TextPayload):
+            return await self._extract_text_payload(payload)
         return await self._extract_social_payload(payload)
+
+    async def _extract_text_payload(self, payload: TextPayload) -> ExtractionOutcome:
+        source_url = payload.source_url
+        language = self._dependencies.language_detector.detect(payload.text)
+        source = EvidenceSource(id="pasted_text:0", kind=EvidenceKind.PASTED_TEXT,
+                                source_url=source_url, text=payload.text, language=language)
+        evidence = [source]
+        trace = [TraceEvent(stage=ExtractionStage.INPUT, event="text_received", evidence_ids=[source.id])]
+        failure = self._language_failure(language, source_url, evidence, trace, source.id)
+        if failure:
+            return failure
+        try:
+            recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_text(
+                ExtractionInput(content=payload.text, evidence_ids=[source.id]),
+            ), {source.id})
+        except TimeoutError:
+            return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
+                                 reason=FailureReason.MODEL_TIMEOUT, failed_stage=ExtractionStage.TEXT)
+        except Exception:
+            return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
+                                 reason=FailureReason.INVALID_MODEL_RESPONSE, failed_stage=ExtractionStage.TEXT)
+        trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="pasted_text_extracted", evidence_ids=[source.id]))
+        return self._classify(source_url, recipe, evidence, trace)
 
     def _language_failure(
         self, result: LanguageResult, source_url: str, evidence: list[EvidenceSource], trace: list[TraceEvent], evidence_id: str,
@@ -166,7 +192,7 @@ class ExtractionOrchestrator:
         )
         deferred_language_reason: FailureReason | None = None
         metadata = parse_social_metadata(payload.scrapecreators_response, source_url)
-        verified, excluded = verified_creator_comments(payload.comments, metadata.creator_handle)
+        verified, excluded = verified_creator_comments(payload.comments, metadata.creator_handle, metadata.creator_id)
         trace.extend(TraceEvent(stage=ExtractionStage.INPUT, event="comment_excluded", detail=item) for item in excluded)
         segments = text_segments(metadata, verified)
         segments, language_overrides, ignored_secondary = _supported_social_segments(
@@ -223,7 +249,19 @@ class ExtractionOrchestrator:
             if has_ingredients(recipe) and has_instructions(recipe):
                 return self._classify(source_url, recipe, evidence, trace)
 
-        links, skipped = unique_safe_links(metadata.linked_urls, metadata.canonical_url, MAX_LINKED_PAGES)
+        # Caption links are already normalized by the scraper adapter. Also
+        # accept links explicitly posted by verified creators; viewer comments
+        # never reach this list.
+        creator_comment_links = [
+            match.group(0).rstrip(".,;:!?) ]}")
+            for comment in verified
+            for match in _URL_IN_TEXT.finditer(comment.text)
+        ]
+        links, skipped = unique_safe_links(
+            [*metadata.linked_urls, *creator_comment_links],
+            metadata.canonical_url,
+            MAX_LINKED_PAGES,
+        )
         trace.extend(TraceEvent(stage=ExtractionStage.LINKED_PAGE, event="link_skipped", detail=item) for item in skipped)
         if self._dependencies.linked_page_provider:
             for index, link in enumerate(links):

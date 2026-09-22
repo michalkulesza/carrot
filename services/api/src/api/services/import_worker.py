@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import httpx
+from pydantic import ValidationError
 from sqlalchemy import func, select, text, update
 
 from api.config import settings
@@ -20,9 +21,11 @@ from api.models import (
     ImportJobEvent,
     ImportJobKind,
     ImportJobStatus,
+    ImportMetadata,
     ImportResult,
     Ingredient,
     Recipe,
+    RecipeSourceEvidence,
     RecipeEmbedding,
     EmbeddingStatus,
     Tag,
@@ -37,7 +40,10 @@ from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure
-from api.services.pipeline import run_image_import_stream, run_import_stream, run_text_import_stream
+from api.services.pipeline import run_image_import_stream
+from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
+from api.services.extraction_v2.production import acquire_and_extract_url, extract_pasted_text
+from api.services import gemini as gemini_svc
 
 log = logging.getLogger(__name__)
 _POLL_INTERVAL_SECONDS = 2
@@ -46,9 +52,28 @@ _IMPORT_RETRY_DELAY_SECONDS = 30
 
 
 class ImportPipelineFailure(Exception):
-    def __init__(self, code: str) -> None:
+    def __init__(self, code: str, stage: str = "unknown") -> None:
         super().__init__(code)
         self.code = code
+        self.stage = stage
+
+
+async def _enrich_v2(extracted, tags: list[str], allergens: list[str], usage: gemini_svc.UsageTracker):
+    try:
+        return await gemini_svc.enrich_v2_recipe(extracted, tags, allergens or None, usage)
+    except TimeoutError:
+        raise ImportPipelineFailure(FailureReason.MODEL_TIMEOUT.value.lower(), "enrichment") from None
+    except ValidationError:
+        raise ImportPipelineFailure(FailureReason.INVALID_MODEL_RESPONSE.value.lower(), "enrichment") from None
+    except Exception as error:
+        message = str(error).lower()
+        if "429" in message or "resource_exhausted" in message or "rate limit" in message:
+            reason = FailureReason.MODEL_RATE_LIMITED.value.lower()
+        elif "503" in message or "unavailable" in message or "timeout" in message:
+            reason = FailureReason.UNKNOWN_ERROR.value.lower()
+        else:
+            reason = FailureReason.INVALID_MODEL_RESPONSE.value.lower()
+        raise ImportPipelineFailure(reason, "enrichment") from None
 
 
 def _normalize_ingredient_punctuation(value: str) -> str:
@@ -169,11 +194,16 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
                 "original_display": None,
             } for ingredient in component.ingredients],
             "step_ingredient_line": component.step_ingredient_line,
+            "ingredient_links": component.ingredient_links,
+            "ingredient_evidence": component.ingredient_evidence,
+            "step_evidence": component.step_evidence,
+            "name_evidence": component.name_evidence,
         })
     metadata = result.metadata
     recipe = Recipe(
         author_id=job.user_id,
         title=recipe_data.title or "Imported Recipe",
+        source_title=recipe_data.source_title or recipe_data.title,
         servings=recipe_data.servings,
         total_time_minutes=recipe_data.total_time_minutes,
         kcal_per_serving=recipe_data.kcal_per_serving,
@@ -184,10 +214,22 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         creator_handle=metadata.creator_handle,
         source_url=metadata.source_url,
         components=components,
+        issue_codes=result.issue_codes,
+        nutrition_provenance=recipe_data.nutrition_provenance,
+        nutrition_status=recipe_data.nutrition_status,
+        total_time_provenance=recipe_data.total_time_provenance,
+        allergen_status=recipe_data.allergen_status,
+        overview=recipe_data.overview,
+        title_evidence=recipe_data.title_evidence,
         tags=tags,
     )
     session.add(recipe)
     await session.flush()
+    if result.evidence:
+        session.add(RecipeSourceEvidence(
+            recipe_id=recipe.id, schema_version=1,
+            evidence=result.evidence[:12], trace=result.trace[:200], capture=result.source_capture,
+        ))
     await _archive_thumbnail(recipe)
     await _link_recipe_to_household(session, recipe.id, job.household_id)
     await queue_recipe_embedding(session, recipe)
@@ -221,9 +263,31 @@ async def _is_member(session, job: ImportJob) -> bool:
 async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: list[str]) -> ImportResult:
     result: ImportResult | None = None
     if job.kind == ImportJobKind.URL:
-        generator = run_import_stream(job.input["url"], model=job.model, available_tags=available_tags, allergens=allergens or None)
+        usage = gemini_svc.UsageTracker()
+        outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
+        if isinstance(outcome, FailedOutcome):
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+        recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
+        return ImportResult(
+            stage="transcript", recipe=recipe, metadata=metadata,
+            outcome=outcome.outcome, issue_codes=[code.value for code in outcome.issue_codes],
+            evidence=[item.model_dump(mode="json") for item in outcome.evidence],
+            trace=[item.model_dump(mode="json") for item in outcome.trace],
+            source_capture=source_capture,
+        )
     elif job.kind == ImportJobKind.TEXT:
-        generator = run_text_import_stream(job.input["text"], model=job.model, available_tags=available_tags, allergens=allergens or None)
+        usage = gemini_svc.UsageTracker()
+        outcome = await extract_pasted_text(job.input["text"], usage)
+        if isinstance(outcome, FailedOutcome):
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+        recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
+        return ImportResult(
+            stage="transcript", recipe=recipe, metadata=ImportMetadata(),
+            outcome=outcome.outcome, issue_codes=[code.value for code in outcome.issue_codes],
+            evidence=[item.model_dump(mode="json") for item in outcome.evidence],
+            trace=[item.model_dump(mode="json") for item in outcome.trace],
+            source_capture={"schema_version": 1, "kind": "text", "text": job.input["text"][:20000]},
+        )
     else:
         image_data = base64.b64decode(job.input["image_base64"])
         generator = run_image_import_stream(image_data, job.input.get("mime_type", "image/jpeg"), model=job.model, available_tags=available_tags, allergens=allergens or None)
@@ -236,6 +300,14 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
 
 
 def _is_transient(error: Exception) -> bool:
+    if isinstance(error, ImportPipelineFailure):
+        return error.code in {
+            FailureReason.SOURCE_FETCH_FAILED.value.lower(),
+            FailureReason.TRANSCRIPTION_FAILED.value.lower(),
+            FailureReason.MODEL_TIMEOUT.value.lower(),
+            FailureReason.MODEL_RATE_LIMITED.value.lower(),
+            FailureReason.UNKNOWN_ERROR.value.lower(),
+        }
     if isinstance(error, (httpx.NetworkError, httpx.TimeoutException, TimeoutError, ConnectionError)):
         return True
     if isinstance(error, httpx.HTTPStatusError):
@@ -255,15 +327,23 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             job.retry_count += 1
             job.next_attempt_at = now + timedelta(seconds=_IMPORT_RETRY_DELAY_SECONDS)
             job.diagnostic_error = str(error)[:500]
+            if isinstance(error, ImportPipelineFailure):
+                job.failure_code = error.code if error.code in ImportFailureCode._value2member_map_ else ImportFailureCode.UNKNOWN_ERROR
+                job.failure_stage = error.stage
+                job.outcome = "failed"
             job.updated_at = now
             await _event_for_job(session, job, "import_job.retry_scheduled")
         else:
             job.status = ImportJobStatus.FAILED
-            if isinstance(error, ImportPipelineFailure) and error.code == ImportFailureCode.USER_ACTION_REQUIRED.value:
+            if isinstance(error, ImportPipelineFailure) and error.code in ImportFailureCode._value2member_map_:
+                job.failure_code = error.code
+                job.failure_stage = error.stage
+                job.outcome = "failed"
+            elif isinstance(error, ImportPipelineFailure) and error.code == ImportFailureCode.USER_ACTION_REQUIRED.value:
                 job.failure_code = ImportFailureCode.USER_ACTION_REQUIRED
             else:
                 job.failure_code = ImportFailureCode.RETRIES_EXHAUSTED if _is_transient(error) else ImportFailureCode.EXTRACTION_FAILED
-            job.diagnostic_error = str(error)[:500]
+            job.diagnostic_error = str(error)[:500] if isinstance(error, ImportPipelineFailure) else type(error).__name__
             job.next_attempt_at = None
             job.updated_at = now
             await _event_for_job(session, job, "import_job.failed")
@@ -271,7 +351,7 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
                 input_kind=job.kind,
                 source_url=job.input.get("url") if job.kind == ImportJobKind.URL else None,
                 reason=job.failure_code,
-                error=error,
+                error=None if isinstance(error, ImportPipelineFailure) else error,
             )
         await session.commit()
 
@@ -296,6 +376,11 @@ async def _process_job(job_id: uuid.UUID) -> None:
             current = await session.scalar(select(ImportJob).where(ImportJob.id == job_id).with_for_update())
             if current is None or current.status == ImportJobStatus.CANCELLED:
                 return
+            if current.result_recipe_id is not None:
+                current.status = ImportJobStatus.SUCCEEDED
+                current.updated_at = datetime.utcnow()
+                await session.commit()
+                return
             if not await _is_member(session, current):
                 current.status = ImportJobStatus.FAILED
                 current.failure_code = ImportFailureCode.HOUSEHOLD_ACCESS_CHANGED
@@ -305,6 +390,9 @@ async def _process_job(job_id: uuid.UUID) -> None:
                 return
             recipe = await _save_recipe(session, current, result)
             current.status = ImportJobStatus.SUCCEEDED
+            current.outcome = result.outcome or "complete"
+            current.failure_code = None
+            current.failure_stage = None
             current.result_recipe_id = recipe.id
             current.input = {}
             current.next_attempt_at = None
@@ -312,7 +400,7 @@ async def _process_job(job_id: uuid.UUID) -> None:
             await _event_for_job(session, current, "import_job.succeeded")
             await session.commit()
     except Exception as error:
-        log.warning("Import job %s failed: %s", job_id, error)
+        log.warning("Import job %s failed (%s)", job_id, type(error).__name__)
         await _fail_or_retry(job_id, error)
 
 

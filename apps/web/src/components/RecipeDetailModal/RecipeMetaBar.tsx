@@ -80,10 +80,29 @@ const RecipeMetaBar = ({
   const headerBg = getHeaderBg(mode)
   const editing = mode === 'editing'
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0
+  const hasSteps = recipe.components.some(
+    (component) => component.steps.length > 0
+  )
+  const valueLabel = (label: string, status: string | undefined) => {
+    if (editing) return label
+    const marker =
+      status === 'ai'
+        ? 'recipes.valueAi'
+        : status === 'source'
+          ? 'recipes.valueSource'
+          : status === 'user'
+            ? 'recipes.valueUser'
+            : 'recipes.valueUnknown'
+
+    return `${label} · ${t(marker)}`
+  }
 
   const nutritionItems = [
     {
-      label: editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'),
+      label: valueLabel(
+        editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'),
+        r.total_time_provenance?.status
+      ),
       value: editing
         ? draft.totalTimeMinutes
         : formatCookingTime(r.total_time_minutes, t),
@@ -96,27 +115,49 @@ const RecipeMetaBar = ({
       accessibilityLabel: t('recipes.serves'),
     },
     {
-      label: t('recipes.colKcal'),
+      label: valueLabel(
+        t('recipes.colKcal'),
+        r.nutrition_provenance?.kcal_per_serving?.status
+      ),
       value: editing ? draft.kcal : (r.kcal_per_serving?.toString() ?? ''),
       accessibilityLabel: t('recipes.kcalPerServing'),
     },
     {
-      label: t('recipes.protein'),
+      label: valueLabel(
+        t('recipes.protein'),
+        r.nutrition_provenance?.protein_per_serving?.status
+      ),
       value: editing
         ? draft.protein
-        : (r.protein_per_serving === null ? '' : `${r.protein_per_serving}${readOnly ? 'g' : ''}`),
+        : r.protein_per_serving === null
+          ? ''
+          : `${r.protein_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.proteinPerServing'),
       blurred: readOnly,
     },
     {
-      label: t('recipes.fat'),
-      value: editing ? draft.fat : (r.fat_per_serving === null ? '' : `${r.fat_per_serving}${readOnly ? 'g' : ''}`),
+      label: valueLabel(
+        t('recipes.fat'),
+        r.nutrition_provenance?.fat_per_serving?.status
+      ),
+      value: editing
+        ? draft.fat
+        : r.fat_per_serving === null
+          ? ''
+          : `${r.fat_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.fatPerServing'),
       blurred: readOnly,
     },
     {
-      label: t('recipes.carbs'),
-      value: editing ? draft.carbs : (r.carbs_per_serving === null ? '' : `${r.carbs_per_serving}${readOnly ? 'g' : ''}`),
+      label: valueLabel(
+        t('recipes.carbs'),
+        r.nutrition_provenance?.carbs_per_serving?.status
+      ),
+      value: editing
+        ? draft.carbs
+        : r.carbs_per_serving === null
+          ? ''
+          : `${r.carbs_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.carbsPerServing'),
       blurred: readOnly,
     },
@@ -130,7 +171,9 @@ const RecipeMetaBar = ({
   }
 
   return (
-    <div className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}>
+    <div
+      className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}
+    >
       <NutritionBoxGrid
         editing={editing}
         items={visibleNutritionItems}
@@ -146,11 +189,17 @@ const RecipeMetaBar = ({
       )}
       {!readOnly && <HouseholdAvatarIndicators recipe={r} />}
 
-      {primaryActionContent ?? (primaryAction && mode === 'view' && (
-        <button type="button" onClick={primaryAction.onClick} disabled={primaryAction.disabled} className="my-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 disabled:cursor-default disabled:opacity-60">
-          {primaryAction.label}
-        </button>
-      ))}
+      {primaryActionContent ??
+        (primaryAction && mode === 'view' && (
+          <button
+            type="button"
+            onClick={primaryAction.onClick}
+            disabled={primaryAction.disabled}
+            className="my-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95 disabled:cursor-default disabled:opacity-60"
+          >
+            {primaryAction.label}
+          </button>
+        ))}
       {!readOnly && mode === 'view' && (
         <div className="border-y border-zinc-200 divide-y divide-zinc-200">
           {'wakeLock' in navigator && (
@@ -195,10 +244,16 @@ const RecipeMetaBar = ({
         <button
           type="button"
           onClick={onOpenCookMode}
+          disabled={!hasSteps}
           className="my-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:brightness-95"
         >
           <PlayCircle size={18} /> {t('cookMode.start')}
         </button>
+      )}
+      {!readOnly && mode === 'view' && !hasSteps && (
+        <p className="text-center text-sm text-zinc-500">
+          {t('recipes.cookModeUnavailable')}
+        </p>
       )}
       {mode === 'editing' && (
         <div className="flex items-center gap-2 pt-0.5">

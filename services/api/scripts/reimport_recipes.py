@@ -13,13 +13,16 @@ from api.models import (
     Ingredient,
     Recipe,
     RecipeExtraction,
+    RecipeSourceEvidence,
     ShoppingCategory,
     UserPreferences,
     recipe_households_table,
 )
 from api.services.import_worker import _get_tags_and_allergens
 from api.services.monitoring import init_sentry
-from api.services.pipeline import IMPORT_ERROR_CODE, run_import_stream
+from api.services import gemini
+from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
+from api.services.extraction_v2.production import acquire_and_extract_url
 from api.services.reimport_scheduler import QueuedRecipe, next_ready_recipe, next_retry_at, recipe_domain
 
 
@@ -61,6 +64,10 @@ def _components(extraction: RecipeExtraction, auto_substitute: bool) -> list[dic
                 "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
                 "original_display": None,
             } for ingredient in component.ingredients],
+            "ingredient_links": component.ingredient_links,
+            "ingredient_evidence": component.ingredient_evidence,
+            "step_evidence": component.step_evidence,
+            "name_evidence": component.name_evidence,
         })
     return components
 
@@ -71,12 +78,20 @@ def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: boo
         raise ValueError("re-import produced no recipe")
 
     recipe.title = extraction.title or recipe.title
+    recipe.source_title = extraction.source_title or extraction.title or recipe.source_title
     recipe.servings = extraction.servings
     recipe.total_time_minutes = extraction.total_time_minutes
     recipe.kcal_per_serving = extraction.kcal_per_serving
     recipe.protein_per_serving = extraction.protein_per_serving
     recipe.fat_per_serving = extraction.fat_per_serving
     recipe.carbs_per_serving = extraction.carbs_per_serving
+    recipe.issue_codes = result.issue_codes
+    recipe.nutrition_provenance = extraction.nutrition_provenance
+    recipe.nutrition_status = extraction.nutrition_status
+    recipe.total_time_provenance = extraction.total_time_provenance
+    recipe.allergen_status = extraction.allergen_status
+    recipe.overview = extraction.overview
+    recipe.title_evidence = extraction.title_evidence
     recipe.components = _components(extraction, auto_substitute)
 
     if result.metadata.thumbnail_url:
@@ -88,15 +103,22 @@ def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: boo
 
 
 async def _extract(url: str, available_tags: list[str], allergens: list[str]) -> ImportResult:
-    result: ImportResult | None = None
-    async for event in run_import_stream(url, available_tags=available_tags, allergens=allergens or None):
-        if event["type"] == "done":
-            result = ImportResult.model_validate(event["result"])
-
-    if result is None or result.recipe is None:
-        error = result.error if result else "re-import did not return a result"
-        raise ReimportFailure(error, retryable=error == IMPORT_ERROR_CODE)
-    return result
+    usage = gemini.UsageTracker()
+    outcome, metadata, source_capture = await acquire_and_extract_url(url, usage)
+    if isinstance(outcome, FailedOutcome):
+        retryable = outcome.reason in {
+            FailureReason.SOURCE_FETCH_FAILED, FailureReason.TRANSCRIPTION_FAILED,
+            FailureReason.MODEL_TIMEOUT, FailureReason.MODEL_RATE_LIMITED,
+            FailureReason.UNKNOWN_ERROR,
+        }
+        raise ReimportFailure(outcome.reason.value.lower(), retryable=retryable)
+    extraction = await gemini.enrich_v2_recipe(outcome.recipe, available_tags, allergens or None, usage)
+    return ImportResult(
+        stage="transcript", recipe=extraction, metadata=metadata, outcome=outcome.outcome,
+        issue_codes=[issue.value for issue in outcome.issue_codes],
+        evidence=[item.model_dump(mode="json") for item in outcome.evidence],
+        trace=[item.model_dump(mode="json") for item in outcome.trace], source_capture=source_capture,
+    )
 
 
 async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
@@ -122,6 +144,10 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
             result = await _extract(source_url, available_tags, allergens)
             preferences = await session.get(UserPreferences, recipe.author_id) if recipe.author_id else None
             _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+            await session.merge(RecipeSourceEvidence(
+                recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
+                trace=result.trace[:200], capture=result.source_capture,
+            ))
             await session.commit()
             return True, False, f"Re-imported {recipe_id}: {recipe.title}"
         except ReimportFailure as exc:

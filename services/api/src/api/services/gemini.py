@@ -598,8 +598,13 @@ async def _enrich_recipe(
     available_tags: list[str] | None,
     generous: bool,
     usage: UsageTracker | None,
+    *,
+    source_faithful: bool = False,
+    requested_estimates: set[str] | None = None,
 ) -> RecipeEnrichment:
     prompt = {"source_recipe": source.model_dump(mode="json")}
+    if source_faithful:
+        prompt["missing_fields"] = sorted(requested_estimates or set())
     if available_tags:
         prompt["available_tags"] = available_tags
 
@@ -614,19 +619,30 @@ async def _enrich_recipe(
                 "component, ingredient, and step counts."
             )
 
-        response = await _with_retry(
+        request = _with_retry(
             lambda: client.models.generate_content(
                 model=_DEFAULT_MECHANICAL_MODEL,
                 contents=json.dumps(attempt_prompt, ensure_ascii=False),
                 config=types.GenerateContentConfig(
-                    system_instruction=_ENRICHMENT_SYSTEM,
+                    system_instruction=(
+                        _ENRICHMENT_SYSTEM + "\n\n" +
+                        "For this source-faithful request, estimate only the exact fields listed in "
+                        "missing_fields. Source fields in source_recipe are read-only context. Return null "
+                        "for every unrequested numeric field. Estimate time only when requested and do not "
+                        "add times or temperatures to steps. Return null nutrition when ingredient amounts "
+                        "or unknown component composition make an estimate unreliable. The overview must "
+                        "summarize only provided steps, and must be null when there are no steps."
+                        if source_faithful else _ENRICHMENT_SYSTEM
+                    ),
                     temperature=0,
                     response_mime_type="application/json",
                     response_schema=RecipeEnrichment,
                 ),
             ),
             generous=generous,
+            max_attempts=3 if source_faithful else 200,
         )
+        response = await asyncio.wait_for(request, timeout=45) if source_faithful else await request
         if usage is not None:
             usage.add(response)
 
@@ -636,7 +652,7 @@ async def _enrich_recipe(
                 component.ingredients or component.steps
                 for component in source.components
             )
-            if has_recipe_content and enrichment.total_time_minutes is None:
+            if has_recipe_content and not source_faithful and enrichment.total_time_minutes is None:
                 raise ValueError(
                     "total_time_minutes must be calculated for a recipe with content"
                 )
@@ -663,6 +679,15 @@ async def _enrich_recipe(
         # Alignment errors are recoverable without another model call: retain
         # every well-formed derived field and use canonical source data only for
         # the malformed parallel fields.
+        if source_faithful:
+            permitted = requested_estimates or set()
+            updates = {
+                field: getattr(enrichment, field) if field in permitted else None
+                for field in ("total_time_minutes", "kcal_per_serving", "protein_per_serving", "fat_per_serving", "carbs_per_serving")
+            }
+            if not any(component.steps for component in source.components):
+                updates["overview"] = None
+            enrichment = enrichment.model_copy(update=updates)
         return _repair_enrichment_alignment(source, enrichment)
 
     raise AssertionError("unreachable")
@@ -769,9 +794,132 @@ def assemble_recipe(
         protein_per_serving=enrichment.protein_per_serving,
         fat_per_serving=enrichment.fat_per_serving,
         carbs_per_serving=enrichment.carbs_per_serving,
+        overview=enrichment.overview,
         tags=enrichment.tags,
         components=components,
     )
+
+
+def _source_number(value: str | None) -> int | None:
+    if not value:
+        return None
+    match = re.search(r"(?<!\w)(\d+(?:[.,]\d+)?)", value)
+    if match is None:
+        return None
+    try:
+        return round(float(match.group(1).replace(",", ".")))
+    except ValueError:
+        return None
+
+
+async def enrich_v2_recipe(
+    extracted,
+    available_tags: list[str] | None = None,
+    allergens: list[str] | None = None,
+    usage: UsageTracker | None = None,
+) -> RecipeExtraction:
+    """Enrich v2 evidence while keeping its canonical facts immutable."""
+    components = [
+        SourceComponent(
+            name=component.name,
+            ingredients=[{"qty": None, "unit": None, "name": item.text} for item in component.ingredients],
+            steps=[step.text for step in component.steps],
+        )
+        for component in extracted.components
+    ]
+    servings = _source_number(extracted.yield_servings)
+    nutrition = extracted.nutrition
+    source_values = {
+        "kcal_per_serving": _source_number(nutrition.calories),
+        "protein_per_serving": _source_number(nutrition.protein),
+        "fat_per_serving": _source_number(nutrition.fat),
+        "carbs_per_serving": _source_number(nutrition.carbohydrates),
+    }
+    source = RecipeSourceExtraction(
+        title=extracted.title,
+        servings=servings,
+        total_time_minutes=extracted.total_time_minutes,
+        **source_values,
+        composition_unknown=any(item.links for component in extracted.components for item in component.ingredients),
+        components=components,
+    )
+    missing_fields = {
+        field for field, value in {
+            "total_time_minutes": extracted.total_time_minutes,
+            **source_values,
+        }.items() if value is None
+    }
+    if source.composition_unknown:
+        missing_fields -= {"kcal_per_serving", "protein_per_serving", "fat_per_serving", "carbs_per_serving"}
+    enrichment, step_matches = await asyncio.gather(
+        _enrich_recipe(source, available_tags, False, usage,
+                       source_faithful=True, requested_estimates=missing_fields),
+        _match_source_step_ingredient_lines_safely(source, False, usage),
+    )
+    assembled = assemble_recipe(source, enrichment, step_matches)
+    assembled.title = extracted.title
+    assembled.source_title = extracted.title
+    assembled.total_time_minutes = extracted.total_time_minutes or enrichment.total_time_minutes
+    assembled.kcal_per_serving = source_values["kcal_per_serving"] if source_values["kcal_per_serving"] is not None else enrichment.kcal_per_serving
+    assembled.protein_per_serving = source_values["protein_per_serving"] if source_values["protein_per_serving"] is not None else enrichment.protein_per_serving
+    assembled.fat_per_serving = source_values["fat_per_serving"] if source_values["fat_per_serving"] is not None else enrichment.fat_per_serving
+    assembled.carbs_per_serving = source_values["carbs_per_serving"] if source_values["carbs_per_serving"] is not None else enrichment.carbs_per_serving
+    assembled.nutrition_provenance = {
+        field: ({"status": "source", "references": [ref.model_dump(mode="json") for ref in nutrition.references]}
+                if source_values[field] is not None else
+                {"status": "ai"} if getattr(enrichment, field) is not None else {"status": "unknown"})
+        for field in source_values
+    }
+    if source.composition_unknown:
+        for field in source_values:
+            if source_values[field] is None:
+                setattr(assembled, field, None)
+                assembled.nutrition_provenance[field] = {"status": "unknown"}
+    nutrition_values = [assembled.kcal_per_serving, assembled.protein_per_serving,
+                        assembled.fat_per_serving, assembled.carbs_per_serving]
+    assembled.nutrition_status = "complete" if all(value is not None for value in nutrition_values) else "incomplete" if any(value is not None for value in nutrition_values) else "unknown"
+    assembled.total_time_provenance = (
+        {"status": "source", "references": [ref.model_dump(mode="json") for ref in extracted.total_time_references]}
+        if extracted.total_time_minutes is not None else
+        {"status": "ai"} if enrichment.total_time_minutes is not None else {"status": "unknown"}
+    )
+    assembled.title_evidence = [ref.model_dump(mode="json") for ref in extracted.title_references]
+    if not any(component.steps for component in extracted.components):
+        assembled.overview = None
+    assembled.components = [
+        output.model_copy(update={
+            "ingredients": [Ingredient(qty=None, unit=None, name=item.text,
+                                        shopping_list_value=item.text,
+                                        shopping_list_category=derived.shopping_list_category)
+                            for item, derived in zip(source_component.ingredients, output.ingredients)],
+            "steps": [item.text for item in source_component.steps],
+            "ingredient_links": [item.link_url for item in source_component.ingredients],
+            "ingredient_evidence": [{
+                "references": [ref.model_dump(mode="json") for ref in item.references],
+                "links": [link.model_dump(mode="json") for link in item.links],
+            } for item in source_component.ingredients],
+            "step_evidence": [{"references": [ref.model_dump(mode="json") for ref in item.references]}
+                              for item in source_component.steps],
+            "name_evidence": [ref.model_dump(mode="json") for ref in source_component.name_references],
+        })
+        for output, source_component in zip(assembled.components, extracted.components)
+    ]
+    if allergens:
+        allergen_results = await asyncio.gather(*(
+            analyze_allergens([_ingredient_display(ingredient) for ingredient in component.ingredients], allergens, usage=usage)
+            for component in assembled.components
+        ))
+        assembled.components = [component.model_copy(update={
+            "ingredients": [ingredient.model_copy(update={
+                "allergen": flag.allergen, "substitute": flag.substitute,
+            }) for ingredient, flag in zip(component.ingredients, flags)],
+        }) for component, flags in zip(assembled.components, allergen_results)]
+        assembled.allergen_status = "uncertain" if any(
+            ingredient.links for component in extracted.components for ingredient in component.ingredients
+        ) else "analyzed"
+    elif any(ingredient.links for component in extracted.components for ingredient in component.ingredients):
+        assembled.allergen_status = "uncertain"
+    return assembled
 
 
 async def extract_recipe(

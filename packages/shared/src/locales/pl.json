@@ -158,7 +158,18 @@
     "inHouseholds": "W gospodarstwach",
     "addToHousehold": "Dodaj do gospodarstwa",
     "deleteFromHousehold": "Usuń z {{name}}",
-    "deleteEverywhere": "Usuń wszędzie"
+    "deleteEverywhere": "Usuń wszędzie",
+    "missingIngredientsIssue": "W przepisie brakuje sk?adnik?w.",
+    "missingInstructionsIssue": "W przepisie brakuje instrukcji.",
+    "dismissExtractionIssue": "Ukryj to powiadomienie",
+    "viewRecipeSource": "Zobacz ?r?d?o",
+    "cookModeUnavailable": "Tryb gotowania jest niedost?pny, poniewa? brakuje instrukcji.",
+    "valueSource": "Ze ?r?d?a",
+    "valueAi": "Szacunek AI",
+    "valueUser": "Edytowano przez Ciebie",
+    "valueUnknown": "Nieznane",
+    "allergensUncertain": "Informacje o alergenach s? niepe?ne, poniewa? sk?ad po??czonego sk?adnika jest nieznany.",
+    "openLinkedRecipe": "Otw?rz po??czony przepis"
   },
   "nav": {
     "recipes": "Przepisy",
@@ -592,7 +603,19 @@
       "invalid_input": "Ten format importu nie jest obsługiwany.",
       "household_access_changed": "Nie masz już dostępu do tego gospodarstwa.",
       "retries_exhausted": "Import nie zakończył się po kilku próbach.",
-      "unexpected": "Import nie powiódł się. Spróbuj ponownie."
+      "unexpected": "Import nie powiódł się. Spróbuj ponownie.",
+      "unsupported_source": "To ?r?d?o nie jest jeszcze obs?ugiwane.",
+      "unsupported_language": "J?zyk tego przepisu nie jest jeszcze obs?ugiwany.",
+      "language_undetermined": "Nie uda?o si? rozpozna? j?zyka przepisu.",
+      "no_recipe_content": "Nie znaleziono sk?adnik?w ani instrukcji przepisu.",
+      "ambiguous_recipe": "Nie uda?o si? wiarygodnie oddzieli? tre?ci przepisu.",
+      "unreadable_content": "Nie uda?o si? wiarygodnie odczyta? tre?ci ?r?d?a.",
+      "source_fetch_failed": "Nie uda?o si? otworzy? ?r?d?a. Spr?buj ponownie.",
+      "transcription_failed": "Nie uda?o si? transkrybowa? filmu. Spr?buj ponownie.",
+      "model_timeout": "Przekroczono limit czasu modelu. Spr?buj ponownie.",
+      "model_rate_limited": "Model jest zaj?ty. Spr?buj ponownie za chwil?.",
+      "invalid_model_response": "Odpowied? ekstrakcji by?a nieprawid?owa.",
+      "unknown_error": "Import nieoczekiwanie si? nie powi?d?. Spr?buj ponownie."
     }
   },
   "defaultTags": {

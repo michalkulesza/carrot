@@ -145,6 +145,7 @@ const UnifiedIngredientsSection = ({
               isAdded={sessionAdded.has(key)}
               onAdd={() => onAdd(key, createShoppingListItemInput(shoppingListValue, shoppingCategory))}
               allergenFlag={components[componentIndex].ingredient_flags?.[ingredientIndex] ?? null}
+              linkedRecipeUrl={components[componentIndex].ingredient_links?.[ingredientIndex] ?? null}
               activeAllergens={activeAllergens}
               fontSize={fontSize}
               lineHeight={lineHeight}

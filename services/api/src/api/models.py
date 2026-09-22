@@ -212,6 +212,7 @@ class Recipe(Base):
         PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     title: Mapped[str] = mapped_column(String, nullable=False)
+    source_title: Mapped[str | None] = mapped_column(String, nullable=True)
     servings: Mapped[int | None] = mapped_column(nullable=True)
     total_time_minutes: Mapped[int | None] = mapped_column(nullable=True)
     kcal_per_serving: Mapped[int | None] = mapped_column(nullable=True)
@@ -222,12 +223,32 @@ class Recipe(Base):
     creator_handle: Mapped[str | None] = mapped_column(String(50), nullable=True)
     source_url: Mapped[str | None] = mapped_column(String, nullable=True)
     components: Mapped[list[Any]] = mapped_column(JSON, default=list)
+    issue_codes: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    nutrition_provenance: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    nutrition_status: Mapped[str] = mapped_column(String(20), default="unknown", nullable=False)
+    total_time_provenance: Mapped[dict[str, Any]] = mapped_column(JSON, default=lambda: {"status": "unknown"}, nullable=False)
+    allergen_status: Mapped[str] = mapped_column(String(20), default="unknown", nullable=False)
+    overview: Mapped[str | None] = mapped_column(String, nullable=True)
+    title_evidence: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     position: Mapped[int | None] = mapped_column(Integer, nullable=True)
     tags: Mapped[list[Tag]] = relationship("Tag", secondary=recipe_tags_table, lazy="selectin")
     author: Mapped["User | None"] = relationship("User", foreign_keys="Recipe.author_id", lazy="selectin")  # type: ignore[name-defined]
+
+
+class RecipeSourceEvidence(Base):
+    __tablename__ = "recipe_source_evidence"
+
+    recipe_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True,
+    )
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    evidence: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
+    trace: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
+    capture: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class RecipePublicShare(Base):
@@ -306,16 +327,27 @@ class RecipeComponent(BaseModel):
     imperial_steps: list[str] = []
     shopping_list_categories: list[ShoppingCategory] = []
     step_ingredient_line: list[int | None] = []
+    ingredient_links: list[str | None] = []
+    ingredient_evidence: list[dict[str, Any]] = []
+    step_evidence: list[dict[str, Any]] = []
+    name_evidence: list[dict[str, Any]] = []
 
 
 class RecipeExtraction(BaseModel):
     title: str | None = None
+    source_title: str | None = None
     servings: int | None = None
     total_time_minutes: int | None = None
-    kcal_per_serving: int
-    protein_per_serving: int
-    fat_per_serving: int
-    carbs_per_serving: int
+    kcal_per_serving: int | None = None
+    protein_per_serving: int | None = None
+    fat_per_serving: int | None = None
+    carbs_per_serving: int | None = None
+    nutrition_provenance: dict[str, Any] = {}
+    nutrition_status: str = "unknown"
+    total_time_provenance: dict[str, Any] = {"status": "unknown"}
+    allergen_status: str = "unknown"
+    overview: str | None = None
+    title_evidence: list[dict[str, Any]] = []
     tags: list[str] = []
     components: list[RecipeComponent] = []
 
@@ -338,6 +370,11 @@ class RecipeSourceExtraction(BaseModel):
     title: str | None = None
     servings: int | None = None
     total_time_minutes: int | None = None
+    kcal_per_serving: int | None = None
+    protein_per_serving: int | None = None
+    fat_per_serving: int | None = None
+    carbs_per_serving: int | None = None
+    composition_unknown: bool = False
     components: list[SourceComponent] = []
 
 
@@ -355,10 +392,11 @@ class EnrichmentComponent(UnitVariantComponent):
 
 class RecipeEnrichment(BaseModel):
     total_time_minutes: int | None = None
-    kcal_per_serving: int
-    protein_per_serving: int
-    fat_per_serving: int
-    carbs_per_serving: int
+    kcal_per_serving: int | None = None
+    protein_per_serving: int | None = None
+    fat_per_serving: int | None = None
+    carbs_per_serving: int | None = None
+    overview: str | None = None
     tags: list[str] = []
     components: list[EnrichmentComponent] = []
 
@@ -391,6 +429,13 @@ class ImportResult(BaseModel):
     recipe: RecipeExtraction | None = None
     metadata: ImportMetadata
     error: str | None = None
+    outcome: str | None = None
+    issue_codes: list[str] = []
+    failure_reason: str | None = None
+    failed_stage: str | None = None
+    evidence: list[dict[str, Any]] = []
+    trace: list[dict[str, Any]] = []
+    source_capture: dict[str, Any] = {}
 
 
 # ── Tag API ───────────────────────────────────────────────────────────────────
@@ -433,6 +478,10 @@ class SaveComponent(BaseModel):
     imperial_steps: list[str] | None = None
     ingredient_flags: list[AllergenFlag] | None = None
     step_ingredient_line: list[int | None] | None = None
+    ingredient_links: list[str | None] = []
+    ingredient_evidence: list[dict[str, Any]] = []
+    step_evidence: list[dict[str, Any]] = []
+    name_evidence: list[dict[str, Any]] = []
 
 
 class RecipeSaveRequest(BaseModel):
@@ -446,6 +495,7 @@ class RecipeSaveRequest(BaseModel):
     thumbnail_url: str | None = None
     creator_handle: str | None = None
     source_url: str | None = None
+    overview: str | None = None
     notes: str | None = None
     components: list[SaveComponent]
     tag_ids: list[uuid.UUID] = []
@@ -456,6 +506,7 @@ class RecipeOut(BaseModel):
 
     id: uuid.UUID
     title: str
+    source_title: str | None = None
     servings: int | None
     total_time_minutes: int | None = None
     kcal_per_serving: int | None
@@ -466,6 +517,13 @@ class RecipeOut(BaseModel):
     creator_handle: str | None
     source_url: str | None
     notes: str | None = None
+    issue_codes: list[str] = []
+    nutrition_provenance: dict[str, Any] = {}
+    nutrition_status: str = "unknown"
+    total_time_provenance: dict[str, Any] = {"status": "unknown"}
+    allergen_status: str = "unknown"
+    overview: str | None = None
+    title_evidence: list[dict[str, Any]] = []
     components: list[Any]
     created_at: datetime
     updated_at: datetime
@@ -485,7 +543,15 @@ class PublicRecipeOut(BaseModel):
     title: str
     servings: int | None
     total_time_minutes: int | None = None
+    total_time_provenance: dict[str, Any] = {"status": "unknown"}
     kcal_per_serving: int | None
+    protein_per_serving: int | None = None
+    fat_per_serving: int | None = None
+    carbs_per_serving: int | None = None
+    nutrition_provenance: dict[str, Any] = {}
+    nutrition_status: str = "unknown"
+    allergen_status: str = "unknown"
+    overview: str | None = None
     thumbnail_url: str | None
     source_url: str | None
     components: list[Any]
@@ -708,6 +774,18 @@ class ImportFailureCode(StrEnum):
     HOUSEHOLD_ACCESS_CHANGED = "household_access_changed"
     RETRIES_EXHAUSTED = "retries_exhausted"
     UNEXPECTED = "unexpected"
+    UNSUPPORTED_SOURCE = "unsupported_source"
+    UNSUPPORTED_LANGUAGE = "unsupported_language"
+    LANGUAGE_UNDETERMINED = "language_undetermined"
+    NO_RECIPE_CONTENT = "no_recipe_content"
+    AMBIGUOUS_RECIPE = "ambiguous_recipe"
+    UNREADABLE_CONTENT = "unreadable_content"
+    SOURCE_FETCH_FAILED = "source_fetch_failed"
+    TRANSCRIPTION_FAILED = "transcription_failed"
+    MODEL_TIMEOUT = "model_timeout"
+    MODEL_RATE_LIMITED = "model_rate_limited"
+    INVALID_MODEL_RESPONSE = "invalid_model_response"
+    UNKNOWN_ERROR = "unknown_error"
 
 
 class ImportJobKind(StrEnum):
@@ -741,6 +819,8 @@ class ImportJob(Base):
         PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
     )
     failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    failure_stage: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)
     diagnostic_error: Mapped[str | None] = mapped_column(String, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -767,7 +847,9 @@ class ImportJobOut(BaseModel):
     created_by_user_id: uuid.UUID
     created_by_name: str | None = None
     result_recipe_id: uuid.UUID | None = None
-    failure_code: ImportFailureCode | None = None
+    failure_code: str | None = None
+    failure_stage: str | None = None
+    outcome: str | None = None
     retry_count: int
     next_attempt_at: datetime | None = None
     created_at: datetime

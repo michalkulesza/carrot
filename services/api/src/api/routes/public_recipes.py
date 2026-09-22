@@ -49,7 +49,15 @@ async def get_public_recipe(token: str, session: AsyncSession = Depends(get_asyn
     public_tags = [PublicTagOut(name=tag.name, category=tag.category) for tag in recipe.tags]
     return PublicRecipeOut(
         title=recipe.title, servings=recipe.servings, total_time_minutes=recipe.total_time_minutes,
-        kcal_per_serving=recipe.kcal_per_serving, thumbnail_url=recipe.thumbnail_url,
+        total_time_provenance=recipe.total_time_provenance or {"status": "unknown"},
+        kcal_per_serving=recipe.kcal_per_serving,
+        protein_per_serving=recipe.protein_per_serving,
+        fat_per_serving=recipe.fat_per_serving,
+        carbs_per_serving=recipe.carbs_per_serving,
+        nutrition_provenance=recipe.nutrition_provenance or {},
+        nutrition_status=recipe.nutrition_status or "unknown",
+        allergen_status=recipe.allergen_status or "unknown", overview=recipe.overview,
+        thumbnail_url=recipe.thumbnail_url,
         source_url=recipe.source_url, components=recipe.components, tags=public_tags,
     )
 
@@ -84,6 +92,11 @@ async def add_public_recipe_to_library(
         servings=source.servings, total_time_minutes=source.total_time_minutes,
         kcal_per_serving=source.kcal_per_serving, protein_per_serving=source.protein_per_serving,
         fat_per_serving=source.fat_per_serving, carbs_per_serving=source.carbs_per_serving,
+        nutrition_provenance=copy.deepcopy(source.nutrition_provenance),
+        nutrition_status=source.nutrition_status,
+        total_time_provenance=copy.deepcopy(source.total_time_provenance),
+        allergen_status=source.allergen_status,
+        overview=source.overview,
         thumbnail_url=source.thumbnail_url, creator_handle=None, source_url=source.source_url,
         notes=None, components=copy.deepcopy(source.components),
     )

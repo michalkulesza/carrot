@@ -156,7 +156,18 @@
     "inHouseholds": "Dans les foyers",
     "addToHousehold": "Ajouter au foyer",
     "deleteFromHousehold": "Supprimer de {{name}}",
-    "deleteEverywhere": "Supprimer partout"
+    "deleteEverywhere": "Supprimer partout",
+    "missingIngredientsIssue": "Il manque des ingr?dients dans cette recette.",
+    "missingInstructionsIssue": "Il manque des instructions dans cette recette.",
+    "dismissExtractionIssue": "Masquer cet avis",
+    "viewRecipeSource": "Voir la source",
+    "cookModeUnavailable": "Le mode cuisine est indisponible car aucune instruction n'est disponible.",
+    "valueSource": "D'apr?s la source",
+    "valueAi": "Estimation IA",
+    "valueUser": "Modifi? par vous",
+    "valueUnknown": "Inconnu",
+    "allergensUncertain": "Les informations sur les allerg?nes sont incompl?tes car la composition d'un ingr?dient li? est inconnue.",
+    "openLinkedRecipe": "Ouvrir la recette li?e"
   },
   "nav": {
     "recipes": "Recettes",
@@ -586,7 +597,19 @@
       "invalid_input": "Cette entrée d’importation n’est pas prise en charge.",
       "household_access_changed": "Vous n’avez plus accès à ce foyer.",
       "retries_exhausted": "L’importation n’a pas pu être terminée après plusieurs tentatives.",
-      "unexpected": "L’importation a échoué. Réessayez."
+      "unexpected": "L’importation a échoué. Réessayez.",
+      "unsupported_source": "Cette source n'est pas encore prise en charge.",
+      "unsupported_language": "La langue de cette recette n'est pas encore prise en charge.",
+      "language_undetermined": "La langue de la recette n'a pas pu ?tre identifi?e.",
+      "no_recipe_content": "Aucun ingr?dient ni aucune instruction n'a ?t? trouv?.",
+      "ambiguous_recipe": "Le contenu de la recette n'a pas pu ?tre isol? de mani?re fiable.",
+      "unreadable_content": "Le contenu de la source n'a pas pu ?tre lu de mani?re fiable.",
+      "source_fetch_failed": "La source est inaccessible. R?essayez.",
+      "transcription_failed": "La vid?o n'a pas pu ?tre transcrite. R?essayez.",
+      "model_timeout": "La requ?te du mod?le a expir?. R?essayez.",
+      "model_rate_limited": "Le mod?le est occup?. R?essayez bient?t.",
+      "invalid_model_response": "La r?ponse d'extraction ?tait invalide.",
+      "unknown_error": "L'importation a ?chou? de mani?re inattendue. R?essayez."
     }
   },
   "defaultTags": {

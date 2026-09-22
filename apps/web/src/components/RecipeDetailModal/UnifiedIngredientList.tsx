@@ -133,6 +133,18 @@ const UnifiedIngredientList = ({
                     t
                   )}
                 </span>
+                {component.ingredient_links?.[ingredientIndex] && (
+                  <a
+                    href={
+                      component.ingredient_links[ingredientIndex] ?? undefined
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 text-xs font-medium text-primary underline"
+                  >
+                    {t('recipes.openLinkedRecipe')}
+                  </a>
+                )}
                 {!readOnly && flag && (
                   <AllergenPopover
                     flag={flag}

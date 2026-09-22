@@ -17,6 +17,7 @@ import type {
   ShoppingListItem,
   PresenceUser,
   PublicRecipeOut,
+  RecipeSourceEvidence,
   RecipePublicShare,
   ShoppingListItemInput,
   ShoppingCategoryOrders,
@@ -180,6 +181,18 @@ export const createApiClient = (config: ApiClientConfig) => {
     });
     await throwOnError(res, "Failed to update recipe");
     return res.json() as Promise<RecipeOut>;
+  };
+
+  const dismissRecipeIssue = async (id: string, issueCode: string): Promise<RecipeOut> => {
+    const res = await apiFetch(`/api/recipes/${id}/issues/${encodeURIComponent(issueCode)}`, { method: "DELETE" });
+    await throwOnError(res, "Failed to dismiss recipe issue");
+    return res.json() as Promise<RecipeOut>;
+  };
+
+  const fetchRecipeSourceEvidence = async (id: string): Promise<RecipeSourceEvidence> => {
+    const res = await apiFetch(`/api/recipes/${id}/source`);
+    await throwOnError(res, "Failed to fetch recipe source evidence");
+    return res.json() as Promise<RecipeSourceEvidence>;
   };
 
   const createPublicShare = async (id: string): Promise<RecipePublicShare> => {
@@ -1076,6 +1089,8 @@ export const createApiClient = (config: ApiClientConfig) => {
   return {
     saveRecipe,
     updateRecipe,
+    dismissRecipeIssue,
+    fetchRecipeSourceEvidence,
     createPublicShare,
     fetchPublicRecipe,
     addPublicRecipeToLibrary,

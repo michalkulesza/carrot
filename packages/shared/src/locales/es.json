@@ -156,7 +156,18 @@
     "inHouseholds": "En hogares",
     "addToHousehold": "Añadir al hogar",
     "deleteFromHousehold": "Eliminar de {{name}}",
-    "deleteEverywhere": "Eliminar en todas partes"
+    "deleteEverywhere": "Eliminar en todas partes",
+    "missingIngredientsIssue": "Faltan ingredientes en esta receta.",
+    "missingInstructionsIssue": "Faltan instrucciones en esta receta.",
+    "dismissExtractionIssue": "Ocultar este aviso",
+    "viewRecipeSource": "Ver fuente",
+    "cookModeUnavailable": "El modo de cocina no est? disponible porque faltan instrucciones.",
+    "valueSource": "De la fuente",
+    "valueAi": "Estimaci?n de IA",
+    "valueUser": "Editado por ti",
+    "valueUnknown": "Desconocido",
+    "allergensUncertain": "La informaci?n sobre al?rgenos est? incompleta porque se desconoce la composici?n de un componente vinculado.",
+    "openLinkedRecipe": "Abrir receta vinculada"
   },
   "nav": {
     "recipes": "Recetas",
@@ -585,7 +596,19 @@
       "invalid_input": "Esta entrada de importación no es compatible.",
       "household_access_changed": "Ya no tienes acceso a este hogar.",
       "retries_exhausted": "No se pudo completar la importación tras varios intentos.",
-      "unexpected": "La importación falló. Inténtalo de nuevo."
+      "unexpected": "La importación falló. Inténtalo de nuevo.",
+      "unsupported_source": "Esta fuente a?n no es compatible.",
+      "unsupported_language": "El idioma de esta receta a?n no es compatible.",
+      "language_undetermined": "No se pudo identificar el idioma de la receta.",
+      "no_recipe_content": "No se encontraron ingredientes ni instrucciones.",
+      "ambiguous_recipe": "No se pudo separar el contenido de la receta con fiabilidad.",
+      "unreadable_content": "No se pudo leer el contenido de la fuente con fiabilidad.",
+      "source_fetch_failed": "No se pudo acceder a la fuente. Int?ntalo de nuevo.",
+      "transcription_failed": "No se pudo transcribir el v?deo. Int?ntalo de nuevo.",
+      "model_timeout": "La solicitud del modelo agot? el tiempo. Int?ntalo de nuevo.",
+      "model_rate_limited": "El modelo est? ocupado. Int?ntalo pronto.",
+      "invalid_model_response": "La respuesta de extracci?n no era v?lida.",
+      "unknown_error": "La importaci?n fall? inesperadamente. Int?ntalo de nuevo."
     }
   },
   "defaultTags": {

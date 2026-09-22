@@ -156,7 +156,18 @@
     "inHouseholds": "In Haushalten",
     "addToHousehold": "Zu Haushalt hinzufügen",
     "deleteFromHousehold": "Aus {{name}} entfernen",
-    "deleteEverywhere": "Überall löschen"
+    "deleteEverywhere": "Überall löschen",
+    "missingIngredientsIssue": "In diesem Rezept fehlen Zutaten.",
+    "missingInstructionsIssue": "In diesem Rezept fehlen Anweisungen.",
+    "dismissExtractionIssue": "Hinweis ausblenden",
+    "viewRecipeSource": "Quelle ansehen",
+    "cookModeUnavailable": "Der Kochmodus ist nicht verf?gbar, weil keine Anweisungen vorhanden sind.",
+    "valueSource": "Aus der Quelle",
+    "valueAi": "KI-Sch?tzung",
+    "valueUser": "Von dir bearbeitet",
+    "valueUnknown": "Unbekannt",
+    "allergensUncertain": "Die Allergeninformationen sind unvollst?ndig, weil die Zutaten einer verkn?pften Komponente unbekannt sind.",
+    "openLinkedRecipe": "Verkn?pftes Rezept ?ffnen"
   },
   "nav": {
     "recipes": "Rezepte",
@@ -586,7 +597,19 @@
       "invalid_input": "Diese Import-Eingabe wird nicht unterstützt.",
       "household_access_changed": "Du hast keinen Zugriff mehr auf diesen Haushalt.",
       "retries_exhausted": "Der Import konnte nach mehreren Versuchen nicht abgeschlossen werden.",
-      "unexpected": "Der Import ist fehlgeschlagen. Bitte versuche es erneut."
+      "unexpected": "Der Import ist fehlgeschlagen. Bitte versuche es erneut.",
+      "unsupported_source": "Diese Quelle wird noch nicht unterst?tzt.",
+      "unsupported_language": "Die Sprache dieses Rezepts wird noch nicht unterst?tzt.",
+      "language_undetermined": "Die Sprache des Rezepts konnte nicht erkannt werden.",
+      "no_recipe_content": "Es wurden keine Zutaten oder Anweisungen gefunden.",
+      "ambiguous_recipe": "Der Rezeptinhalt lie? sich nicht zuverl?ssig abgrenzen.",
+      "unreadable_content": "Der Quellinhalt lie? sich nicht zuverl?ssig lesen.",
+      "source_fetch_failed": "Die Quelle ist nicht erreichbar. Versuche es erneut.",
+      "transcription_failed": "Das Video konnte nicht transkribiert werden. Versuche es erneut.",
+      "model_timeout": "Die Modellanfrage dauerte zu lange. Versuche es erneut.",
+      "model_rate_limited": "Das Modell ist besch?ftigt. Versuche es gleich erneut.",
+      "invalid_model_response": "Die Extraktionsantwort war ung?ltig.",
+      "unknown_error": "Der Import ist unerwartet fehlgeschlagen. Versuche es erneut."
     }
   },
   "defaultTags": {

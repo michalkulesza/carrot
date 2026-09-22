@@ -19,6 +19,7 @@ from api.database import get_async_session
 from api.models import (
     HouseholdMember,
     Recipe,
+    RecipeSourceEvidence,
     RecipeHouseholdsRequest,
     RecipePublicShare,
     RecipePublicShareOut,
@@ -501,6 +502,15 @@ async def update_recipe(
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     old_thumbnail_url = recipe.thumbnail_url
+    provenance = dict(recipe.nutrition_provenance or {})
+    nutrition_fields = ("kcal_per_serving", "protein_per_serving", "fat_per_serving", "carbs_per_serving")
+    for field in nutrition_fields:
+        incoming = getattr(body, field)
+        if incoming != getattr(recipe, field):
+            provenance[field] = {"status": "user" if incoming is not None else "unknown"}
+    if body.total_time_minutes != recipe.total_time_minutes:
+        recipe.total_time_provenance = {"status": "user" if body.total_time_minutes is not None else "unknown"}
+    recipe.nutrition_provenance = provenance
 
     recipe.title = body.title
     recipe.servings = body.servings
@@ -509,12 +519,42 @@ async def update_recipe(
     recipe.protein_per_serving = body.protein_per_serving
     recipe.fat_per_serving = body.fat_per_serving
     recipe.carbs_per_serving = body.carbs_per_serving
+    recipe.nutrition_status = "complete" if all(getattr(recipe, field) is not None for field in nutrition_fields) else "incomplete" if any(getattr(recipe, field) is not None for field in nutrition_fields) else "unknown"
     recipe.thumbnail_url = body.thumbnail_url
     recipe.creator_handle = body.creator_handle
     recipe.source_url = body.source_url
     recipe.notes = body.notes
     components = _reconcile_component_derivatives(recipe.components or [], body.components)
-    recipe.components = [c.model_dump() for c in components]
+    stored_components = recipe.components or []
+    serialized_components = []
+    all_steps_unchanged = True
+    has_steps = False
+    has_ingredients = False
+    for index, component in enumerate(components):
+        value = component.model_dump()
+        stored = stored_components[index] if index < len(stored_components) else {}
+        ingredients_unchanged = component.ingredients == stored.get("ingredients", [])
+        steps_unchanged = component.steps == stored.get("steps", [])
+        all_steps_unchanged = all_steps_unchanged and steps_unchanged
+        if ingredients_unchanged:
+            for field in ("ingredient_links", "ingredient_evidence"):
+                if not value.get(field):
+                    value[field] = stored.get(field, [])
+        if steps_unchanged and not value.get("step_evidence"):
+            value["step_evidence"] = stored.get("step_evidence", [])
+        if component.name == stored.get("name") and not value.get("name_evidence"):
+            value["name_evidence"] = stored.get("name_evidence", [])
+        has_ingredients = has_ingredients or bool(component.ingredients)
+        has_steps = has_steps or bool(component.steps)
+        serialized_components.append(value)
+    recipe.components = serialized_components
+    if not has_steps or not all_steps_unchanged:
+        recipe.overview = None
+    recipe.issue_codes = [
+        issue for issue in (recipe.issue_codes or [])
+        if not ((issue == "MISSING_INGREDIENTS" and has_ingredients)
+                or (issue == "MISSING_INSTRUCTIONS" and has_steps))
+    ]
     await _set_tags(session, recipe, body.tag_ids, household_id)
 
     await session.flush()
@@ -531,6 +571,42 @@ async def update_recipe(
 
     household_ids_map = await _get_household_ids_map(session, [recipe.id])
     return _build_recipe_out(recipe, household_ids=household_ids_map.get(recipe.id))
+
+
+@router.get("/{recipe_id}/source")
+async def get_recipe_source_evidence(
+    recipe_id: uuid.UUID,
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> dict:
+    recipe = await session.scalar(select(Recipe.id).where(_recipe_filter(household_id), Recipe.id == recipe_id))
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    evidence = await session.get(RecipeSourceEvidence, recipe_id)
+    if evidence is None:
+        return {"schema_version": 1, "evidence": [], "trace": []}
+    return {"schema_version": evidence.schema_version, "evidence": evidence.evidence, "trace": evidence.trace}
+
+
+@router.delete("/{recipe_id}/issues/{issue_code}", response_model=RecipeOut)
+async def dismiss_recipe_issue(
+    recipe_id: uuid.UUID,
+    issue_code: str,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> RecipeOut:
+    allowed = {"MISSING_INGREDIENTS", "MISSING_INSTRUCTIONS"}
+    if issue_code not in allowed:
+        raise HTTPException(status_code=422, detail="invalid_issue_code")
+    recipe = await session.scalar(select(Recipe).where(_recipe_write_filter(household_id, recipe_id)).with_for_update())
+    if recipe is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    recipe.issue_codes = [issue for issue in (recipe.issue_codes or []) if issue != issue_code]
+    await session.commit()
+    await session.refresh(recipe)
+    await broadcaster.publish(get_scope_key("recipes", user.id, household_id), {"type": "recipe_changed", "id": str(recipe.id)})
+    return _build_recipe_out(recipe)
 
 
 @router.post("/{recipe_id}/tags/{tag_id}", status_code=204)

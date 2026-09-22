@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
+import { useDismissRecipeIssue } from '@carrot/shared/hooks/useRecipes'
 import {
   usePreferences,
   useRecipeServingPreference,
@@ -54,6 +55,7 @@ import ViewComponent from './ViewComponent'
 import UnifiedIngredientList from './UnifiedIngredientList'
 import EditComponent from './EditComponent'
 import CookMode from './CookMode'
+import RecipeIssueBanner from './RecipeIssueBanner'
 
 interface RecipeDetailModalProps {
   recipe: RecipeOut | null
@@ -91,6 +93,7 @@ const RecipeDetailModal = ({
   const { user } = useAuth()
   const { households, activeHouseholdId } = useHousehold()
   const { create: createTagMutation } = useTags()
+  const dismissIssue = useDismissRecipeIssue()
   const [mode, setMode] = useState<Mode>('view')
   const [addMode, setAddMode] = useState(false)
   const [mealPlanOpen, setMealPlanOpen] = useState(false)
@@ -172,7 +175,10 @@ const RecipeDetailModal = ({
   const r = recipe
   const servingScale =
     r.servings && selectedServings ? selectedServings / r.servings : 1
-  if (cookModeOpen) {
+  if (
+    cookModeOpen &&
+    r.components.some((component) => component.steps.length > 0)
+  ) {
     return (
       <CookMode
         recipe={r}
@@ -517,6 +523,21 @@ const RecipeDetailModal = ({
                 />
 
                 <div className="px-10">
+                  <RecipeIssueBanner
+                    key={r.id}
+                    issueCodes={r.issue_codes ?? []}
+                    sourceUrl={r.source_url}
+                    onDismiss={(issueCode) =>
+                      dismissIssue
+                        .mutateAsync({ id: r.id, issueCode })
+                        .then(() => undefined)
+                    }
+                  />
+                  {r.allergen_status === 'uncertain' && (
+                    <p className="mb-3 rounded-lg bg-warning/10 p-3 text-sm text-zinc-600">
+                      {t('recipes.allergensUncertain')}
+                    </p>
+                  )}
                   {error && (
                     <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mb-3">
                       {error}

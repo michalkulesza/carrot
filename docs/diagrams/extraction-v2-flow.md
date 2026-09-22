@@ -1,14 +1,14 @@
 # Extraction V2 flow
 
-This diagram shows the planned source-aware boundary for recipe extraction v2.
+This diagram shows the production source-aware boundary for recipe extraction v2.
 `ExtractionOrchestrator` owns platform-specific retrieval and evidence selection;
-`ExtractorV2` receives only source-agnostic, normalized evidence. The dashed
-path is the current legacy import flow, which remains in place while v2 is
-evaluated.
+`ExtractorV2` receives only source-agnostic, normalized evidence. URL and
+pasted-text imports use this path; image imports retain Gemini vision for source
+reading and use the shared enrichment and persistence contracts.
 
 ```mermaid
 flowchart TD
-    input[Recipe URL or captured fixture]
+    input[Recipe URL, pasted text, or captured fixture]
 
     subgraph sources[Source acquisition]
         social[Instagram or TikTok URL]
@@ -53,12 +53,6 @@ flowchart TD
     completeness -->|complete or usable partial| enrich[Enrichment and persistence]
     completeness -->|needs eligible fallback| merge --> evidence
     completeness -->|no usable evidence remains| failure[Structured extraction failure]
-
-    legacy[Current legacy pipeline] -. calls directly .-> scrape
-    scrape -. ReelMetadata: caption, links, video .-> legacyGemini[Gemini extraction<br/>caption, then links, then transcript]
-
-    classDef legacy fill:#f5f5f5,stroke:#757575,color:#424242,stroke-dasharray: 5 5;
-    class legacy,legacyGemini legacy;
     style orchestrator fill:#fff5e8,stroke:#e67e22,color:#3d2b1f
     style extractor fill:#edf7ed,stroke:#2e7d32,color:#163d1b
 ```

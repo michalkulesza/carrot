@@ -54,7 +54,15 @@ const ImportJobCards = ({
           const actionPending = actionJobId === job.id
           const requiresUserAction =
             job.status === 'failed' &&
-            job.failure_code === 'user_action_required'
+            (job.failure_code === 'user_action_required' ||
+              [
+                'unsupported_source',
+                'unsupported_language',
+                'language_undetermined',
+                'no_recipe_content',
+                'ambiguous_recipe',
+                'unreadable_content',
+              ].includes(job.failure_code ?? ''))
           const retryScheduled = job.status === 'pending' && job.retry_count > 0
           const message =
             job.status === 'running'
@@ -64,6 +72,7 @@ const ImportJobCards = ({
                 : retryScheduled
                   ? t('importJobs.takingLonger')
                   : t('importJobs.pending')
+
           return (
             <div
               key={job.id}

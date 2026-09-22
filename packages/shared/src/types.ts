@@ -84,6 +84,11 @@ export interface RecipeComponent {
   imperial_steps: string[];
   shopping_list_categories?: ShoppingCategory[] | null;
   step_ingredient_line?: (number | null)[] | null;
+  ingredient_links?: (string | null)[];
+  ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
+  step_evidence?: { references?: unknown[] }[];
+  name_evidence?: unknown[];
+  title_evidence?: unknown[];
 }
 
 export type TagCategory = "protein" | "carb" | "cuisine" | "time";
@@ -141,7 +146,26 @@ export type ImportFailureCode =
   | "invalid_input"
   | "household_access_changed"
   | "retries_exhausted"
-  | "unexpected";
+  | "unexpected"
+  | "unsupported_source"
+  | "unsupported_language"
+  | "language_undetermined"
+  | "no_recipe_content"
+  | "ambiguous_recipe"
+  | "unreadable_content"
+  | "source_fetch_failed"
+  | "transcription_failed"
+  | "model_timeout"
+  | "model_rate_limited"
+  | "invalid_model_response"
+  | "unknown_error";
+
+export type RecipeIssueCode = "MISSING_INGREDIENTS" | "MISSING_INSTRUCTIONS";
+export type ValueProvenanceStatus = "source" | "ai" | "user" | "unknown";
+export interface ValueProvenance {
+  status: ValueProvenanceStatus;
+  references?: unknown[];
+}
 
 export interface ImportJobEnqueue {
   kind: ImportJobKind;
@@ -160,6 +184,8 @@ export interface ImportJob {
   created_by_name: string | null;
   result_recipe_id: string | null;
   failure_code: ImportFailureCode | null;
+  failure_stage: string | null;
+  outcome: "complete" | "incomplete" | "failed" | null;
   retry_count: number;
   next_attempt_at: string | null;
   created_at: string;
@@ -198,6 +224,10 @@ export interface SaveComponent {
   imperial_steps?: string[] | null;
   ingredient_flags?: AllergenFlag[];
   step_ingredient_line?: (number | null)[] | null;
+  ingredient_links?: (string | null)[];
+  ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
+  step_evidence?: { references?: unknown[] }[];
+  name_evidence?: unknown[];
 }
 
 export interface RecipeSaveRequest {
@@ -219,6 +249,7 @@ export interface RecipeSaveRequest {
 export interface RecipeOut {
   id: string;
   title: string;
+  source_title: string | null;
   servings: number | null;
   total_time_minutes: number | null;
   kcal_per_serving: number | null;
@@ -229,6 +260,13 @@ export interface RecipeOut {
   creator_handle: string | null;
   source_url: string | null;
   notes: string | null;
+  issue_codes: RecipeIssueCode[];
+  nutrition_provenance: Partial<Record<"kcal_per_serving" | "protein_per_serving" | "fat_per_serving" | "carbs_per_serving", ValueProvenance>>;
+  nutrition_status: "complete" | "incomplete" | "unknown";
+  total_time_provenance: ValueProvenance;
+  allergen_status: "analyzed" | "uncertain" | "unknown";
+  overview: string | null;
+  title_evidence: unknown[];
   components: SaveComponent[];
   created_at: string;
   updated_at: string;
@@ -237,6 +275,12 @@ export interface RecipeOut {
   author_id: string | null;
   added_by: string | null;
   is_favourite: boolean;
+}
+
+export interface RecipeSourceEvidence {
+  schema_version: number;
+  evidence: { id: string; kind: string; source_url: string; text: string; language: { code: string | null; confidence: number | null }; author_verified?: boolean | null }[];
+  trace: { stage: string; event: string; detail?: string | null; evidence_ids: string[] }[];
 }
 
 export interface PublicRecipeTag {
@@ -248,7 +292,15 @@ export interface PublicRecipeOut {
   title: string;
   servings: number | null;
   total_time_minutes: number | null;
+  total_time_provenance: ValueProvenance;
   kcal_per_serving: number | null;
+  protein_per_serving: number | null;
+  fat_per_serving: number | null;
+  carbs_per_serving: number | null;
+  nutrition_provenance: RecipeOut['nutrition_provenance'];
+  nutrition_status: RecipeOut['nutrition_status'];
+  allergen_status: RecipeOut['allergen_status'];
+  overview: string | null;
   thumbnail_url: string | null;
   source_url: string | null;
   components: SaveComponent[];

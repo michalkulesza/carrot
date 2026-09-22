@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import ipaddress
+import socket
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -57,7 +59,7 @@ class HttpLinkedPageProvider:
         timeout = httpx.Timeout(connect=10, read=20, write=10, pool=10)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
             for _ in range(self._MAX_REDIRECTS + 1):
-                if not is_safe_http_url(current_url):
+                if not await is_safe_public_destination(current_url):
                     raise ValueError("linked page URL is not a safe HTTP(S) destination")
                 async with client.stream("GET", current_url) as response:
                     if response.is_redirect:
@@ -127,6 +129,8 @@ def verified_creator_comments(
         handle_matches = bool(
             normalized_creator_handle
             and normalize_handle(comment.author_handle) == normalized_creator_handle
+            and comment.is_creator_authored is True
+            and comment.authorship_evidence
         )
         if has_conflicting_ids or not (id_matches or handle_matches):
             excluded.append(f"comment:{index}:author_not_verified")
@@ -179,6 +183,28 @@ def is_safe_http_url(url: str) -> bool:
     except ValueError:
         return True
     return not (address.is_private or address.is_loopback or address.is_link_local or address.is_reserved)
+
+
+async def is_safe_public_destination(url: str) -> bool:
+    """Reject unsafe literals and hostnames resolving to any non-public address."""
+    if not is_safe_http_url(url):
+        return False
+    hostname = urlsplit(url).hostname
+    if hostname is None:
+        return False
+    try:
+        addresses = await asyncio.to_thread(
+            socket.getaddrinfo, hostname, None, type=socket.SOCK_STREAM,
+        )
+    except OSError:
+        return False
+    if not addresses:
+        return False
+    for address in {entry[4][0] for entry in addresses}:
+        parsed = ipaddress.ip_address(address)
+        if not parsed.is_global or parsed.is_private or parsed.is_loopback or parsed.is_link_local or parsed.is_reserved:
+            return False
+    return True
 
 
 def unique_safe_links(urls: Iterable[str], base_url: str, limit: int) -> tuple[list[str], list[str]]:

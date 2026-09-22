@@ -63,7 +63,10 @@ const PendingJobCard = ({
   const handleRetry = () => void handleAction(onRetry)
   const handleCancel = () => void handleAction(onCancel)
   const handleDismiss = () => void handleAction(onDismiss)
-  const requiresUserAction = job.status === 'failed' && job.failure_code === 'user_action_required'
+  const requiresUserAction = job.status === 'failed' && (job.failure_code === 'user_action_required' || [
+    'unsupported_source', 'unsupported_language', 'language_undetermined',
+    'no_recipe_content', 'ambiguous_recipe', 'unreadable_content',
+  ].includes(job.failure_code ?? ''))
   const canOpenSourceUrl = Boolean(job.source_url)
   const handleUserAction = () => {
     Alert.alert(t('importJobs.userActionRequired.title'), t('importJobs.userActionRequired.body'), [

@@ -43,6 +43,8 @@ def _job_out(job: ImportJob, creator_name: str | None) -> ImportJobOut:
         created_by_name=creator_name,
         result_recipe_id=job.result_recipe_id,
         failure_code=job.failure_code,
+        failure_stage=job.failure_stage,
+        outcome=job.outcome,
         retry_count=job.retry_count,
         next_attempt_at=job.next_attempt_at,
         created_at=job.created_at,

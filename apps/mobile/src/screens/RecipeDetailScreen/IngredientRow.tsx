@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Linking, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import type { AllergenFlag } from '@carrot/shared/types'
@@ -20,6 +20,7 @@ const IngredientRow = ({
   activeAllergens = [],
   fontSize = 17,
   lineHeight = 22,
+  linkedRecipeUrl,
 }: {
   ingredient: string
   cupHint?: string
@@ -30,6 +31,7 @@ const IngredientRow = ({
   activeAllergens?: string[]
   fontSize?: number
   lineHeight?: number
+  linkedRecipeUrl?: string | null
 }) => {
   const { t } = useTranslation()
   const [isAllergenTooltipOpen, setIsAllergenTooltipOpen] = useState(false)
@@ -53,6 +55,11 @@ const IngredientRow = ({
         {displayValue}
         {cupHint}
       </Text>
+      {linkedRecipeUrl && (
+        <Pressable onPress={() => void Linking.openURL(linkedRecipeUrl)} accessibilityRole="link" accessibilityLabel={t('recipes.openLinkedRecipe')}>
+          <Text style={styles.linkedRecipeText}>{t('recipes.openLinkedRecipe')}</Text>
+        </Pressable>
+      )}
       {addMode && (
         <Pressable
           onPress={isAdded ? undefined : onAdd}

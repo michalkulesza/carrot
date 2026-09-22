@@ -67,6 +67,15 @@ export const useRecipes = (enabled = true) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
   })
 
+  const dismissIssue = useMutation({
+    mutationFn: ({ id, issueCode }: { id: string; issueCode: string }) =>
+      api.dismissRecipeIssue(id, issueCode),
+    onSuccess: (updated) => {
+      qc.setQueryData<RecipeOut[]>(['recipes'], (old) => old?.map((recipe) => recipe.id === updated.id ? updated : recipe) ?? [])
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+    },
+  })
+
   const importCsv = useMutation({
     mutationFn: api.importRecipes,
     onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
@@ -101,10 +110,23 @@ export const useRecipes = (enabled = true) => {
     remove,
     reorder,
     toggleFavourite,
+    dismissIssue,
     importCsv,
     setHouseholds,
     removeFromHousehold,
   }
+}
+
+export const useDismissRecipeIssue = () => {
+  const api = useApiClient()
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, issueCode }: { id: string; issueCode: string }) => api.dismissRecipeIssue(id, issueCode),
+    onSuccess: (updated) => {
+      qc.setQueryData<RecipeOut[]>(['recipes'], (old) => old?.map((recipe) => recipe.id === updated.id ? updated : recipe) ?? [])
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+    },
+  })
 }
 
 export const useRecipeStats = (enabled = true) => {

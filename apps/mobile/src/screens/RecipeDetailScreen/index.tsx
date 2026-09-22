@@ -65,6 +65,7 @@ const RecipeDetailScreen = () => {
     isLoading,
     error,
     toggleFavourite,
+    dismissIssue,
     remove,
     setHouseholds,
     removeFromHousehold,
@@ -95,14 +96,14 @@ const RecipeDetailScreen = () => {
     ? Number(stepIndexParam)
     : null
 
-  useEffect(() => {
-    if (cookModeParam === '1') setCookModeOpen(true)
-  }, [cookModeParam])
-
   const recipe: RecipeOut | undefined = useMemo(
     () => recipes.find((r) => r.id === recipeId),
     [recipes, recipeId],
   );
+  useEffect(() => {
+    if (cookModeParam === '1' && recipe?.components.some((component) => component.steps.length > 0)) setCookModeOpen(true)
+    else if (cookModeParam === '1') setCookModeOpen(false)
+  }, [cookModeParam, recipe])
   useEffect(() => {
     if (!isLoading && !error && !recipe) router.replace('/(tabs)/recipes')
   }, [error, isLoading, recipe, router])
@@ -206,9 +207,10 @@ const RecipeDetailScreen = () => {
   }, [recipe, user, activeHouseholdId, activeHousehold, handleRemoveFromHousehold, handleDeleteEverywhere, handleCloseDeletePrompt, t])
 
   const handleOpenCookMode = useCallback(() => {
+    if (!recipe?.components.some((component) => component.steps.length > 0)) return
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     setCookModeOpen(true)
-  }, [])
+  }, [recipe])
 
   const handleDecreaseServings = useCallback(() => {
     if (selectedServings !== null) setServings(Math.max(1, selectedServings - 1));
@@ -389,13 +391,14 @@ const RecipeDetailScreen = () => {
         handleDecreaseServings={handleDecreaseServings}
         handleIncreaseServings={handleIncreaseServings}
         onOpenCookMode={handleOpenCookMode}
+        onDismissIssue={(issueCode) => dismissIssue.mutateAsync({ id: recipe.id, issueCode }).then(() => undefined)}
         onDeleteRecipe={handleDeleteRecipe}
         mealPlanSheetRef={mealPlanSheetRef}
         addIngredientSheetRef={addIngredientSheetRef}
       />
       <CookMode
         recipe={recipe}
-        visible={cookModeOpen}
+        visible={cookModeOpen && recipe.components.some((component) => component.steps.length > 0)}
         onClose={() => setCookModeOpen(false)}
         colorScheme={colorScheme}
         initialComponentIndex={initialComponentIndex}
