@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "url": "",
+  "expectations": {
+    "capture.json": {
+      "capture_errors": "",
+      "detected_languages": "",
+      "recipe": null
+    }
+  }
+}

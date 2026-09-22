@@ -1,0 +1,68 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "case_id": "case-1",
+      "summary": {
+        "case_id": "case-1",
+        "input_file": "capture.json",
+        "input_sha256": "hash",
+        "source_url": "",
+        "kind": "",
+        "capture_status": "",
+        "capture_errors": "",
+        "review_status": "",
+        "review_limitations": "",
+        "outcome": "",
+        "issue_codes": "",
+        "failure_reason": "",
+        "failed_stage": "",
+        "detected_languages": "",
+        "language_details": "",
+        "completed_at_stage": "",
+        "decision_reason": "",
+        "transcript_available": "",
+        "transcript_used": "",
+        "transcript_status": "",
+        "fallback_reason": "",
+        "title": "",
+        "yield": "",
+        "yield_source_text": "",
+        "total_time_minutes": "",
+        "total_time_source_text": "",
+        "calories": "",
+        "protein": "",
+        "fat": "",
+        "carbohydrates": "",
+        "ingredient_groups": "",
+        "ingredients": "",
+        "instructions": "",
+        "duration_ms": "",
+        "artifact_path": "",
+        "review_verdict": "",
+        "error_category": "",
+        "reviewer_notes": "",
+        "expected_correction": ""
+      },
+      "ingredients": [],
+      "steps": [],
+      "components": [],
+      "evidence": [],
+      "stages": [],
+      "model_calls": [
+        {
+          "status": "error",
+          "model": "gemini-test",
+          "error": {
+            "type": "ClientError",
+            "message": "quota exceeded",
+            "status": 429,
+            "details": {
+              "reason": "quota"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
