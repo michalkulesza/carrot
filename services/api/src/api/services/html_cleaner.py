@@ -12,6 +12,7 @@ NOISE_ATTRIBUTE_TOKENS = {
 }
 SAFE_ATTRIBUTES = {
     "a": {"href", "title"},
+    "div": {"class"},
     "img": {"src", "alt"},
     "span": {"class", "aria-label"},
     "input": {"class", "value", "aria-label"},
@@ -23,7 +24,14 @@ VOID_TAGS = {"br", "hr", "img", "input", "source", "track", "wbr"}
 
 
 def _is_structural_container(element: Tag) -> bool:
-    return element.name in {"html", "body", "main", "article"} or element.find(["article", "main"]) is not None
+    classes = set(element.get("class") or ())
+    itemtype = element.get("itemtype") or ""
+    return (
+        element.name in {"html", "body", "main", "article"}
+        or "node-przepis" in classes
+        or "Recipe" in itemtype
+        or element.find(["article", "main"]) is not None
+    )
 
 
 def _is_noise_element(element: Tag) -> bool:
@@ -56,6 +64,8 @@ def _is_recipe_header(element: Tag) -> bool:
 def _select_content_container(soup: BeautifulSoup) -> Tag:
     return (
         soup.find(class_="wprm-recipe-container")
+        or soup.find(class_="node-przepis")
+        or soup.select_one('[itemtype*="Recipe"]')
         or soup.find("article")
         or soup.find("main")
         or soup.body
@@ -81,7 +91,17 @@ def clean_html_body(raw_html: str) -> str:
         return ""
 
     soup = BeautifulSoup(raw_html, "html.parser")
-    structured_recipe_data = [element.string for element in soup.find_all("script", type="application/ld+json") if element.string]
+    structured_recipe_data = [
+        (element.get("type"), element.get("id"), element.string)
+        for element in soup.find_all("script")
+        if element.string and (
+            element.get("type") == "application/ld+json"
+            or (
+                element.get("id") == "__POST_CONTENT__"
+                and any(f'"client":"{client}"' in element.string for client in ("bbcgoodfood", "olivemagazine"))
+            )
+        )
+    ]
     for comment in soup.find_all(string=lambda value: isinstance(value, Comment)):
         comment.extract()
     for element in soup.find_all(NOISE_TAGS):
@@ -100,8 +120,10 @@ def clean_html_body(raw_html: str) -> str:
     for element in container.find_all(True):
         _keep_safe_attributes(element)
     _remove_empty_elements(container)
-    for payload in structured_recipe_data:
-        script = soup.new_tag("script", type="application/ld+json")
+    for script_type, script_id, payload in structured_recipe_data:
+        script = soup.new_tag("script", type=script_type)
+        if script_id:
+            script["id"] = script_id
         script.string = payload
         container.append(script)
 

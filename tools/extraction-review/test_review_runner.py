@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 
 
@@ -55,6 +56,50 @@ def test_summary_yield_uses_source_text_when_no_servings_count() -> None:
     assert module.display_yield({"yield_text": "8 rolls", "yield_servings": "8"}) == "8"
 
 
+def test_review_components_preserves_recipe_grouping() -> None:
+    spec = importlib.util.spec_from_file_location("review_runner", "tools/extraction-review/run_review.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    components = module.review_components({"components": [
+        {"ingredients": [{"text": "1 chicken breast"}]},
+        {"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]},
+        {"steps": [{"text": "Cook the chicken."}]},
+    ]})
+
+    assert components == [
+        {"ingredients": [{"text": "1 chicken breast"}]},
+        {"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]},
+        {"steps": ["Cook the chicken."]},
+    ]
+
+
+def test_testable_expectation_matches_the_regression_fixture_shape() -> None:
+    spec = importlib.util.spec_from_file_location("review_runner", "tools/extraction-review/run_review.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    expectation = module.testable_expectation({
+        "capture_errors": [], "detected_languages": "en",
+        "report_recipe": {
+            "title": "Burger", "yield_servings": "1", "total_time_minutes": 20,
+            "nutrition": {"calories": None, "protein": None, "fat": None, "carbohydrates": None},
+            "components": [{"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]}],
+        },
+    })
+
+    assert expectation == {
+        "capture_errors": "", "detected_languages": "en",
+        "recipe": {
+            "title": "Burger", "yield": "1", "total_time_minutes": 20,
+            "nutrition": {"calories": None, "protein": None, "fat": None, "carbohydrates": None},
+            "components": [{"name": "Seasoning:", "ingredients": [{"text": "1 tsp paprika"}]}],
+        },
+    }
+
+
 def test_readable_recipe_item_keeps_ingredient_links_as_objects() -> None:
     spec = importlib.util.spec_from_file_location("review_runner", "tools/extraction-review/run_review.py")
     assert spec and spec.loader
@@ -70,3 +115,43 @@ def test_readable_recipe_item_keeps_ingredient_links_as_objects() -> None:
     assert item["ingredient"] == "1 Tbsp rice wine"
     assert item["link_url"] == "https://example.com/rice-wine"
     assert item["links"] == [{"text": "rice wine", "url": "https://example.com/rice-wine", "references": []}]
+
+
+def test_exception_diagnostic_records_provider_details_and_redacts_secrets() -> None:
+    spec = importlib.util.spec_from_file_location("review_runner", "tools/extraction-review/run_review.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    class ClientError(Exception):
+        status = 429
+        code = "RESOURCE_EXHAUSTED"
+        details = {"reason": "quota", "api_key": "AIza-secret-value"}
+
+    diagnostic = module.exception_diagnostic(ClientError("Bearer super-secret"))
+
+    assert diagnostic["type"] == "ClientError"
+    assert diagnostic["status"] == 429
+    assert diagnostic["code"] == "RESOURCE_EXHAUSTED"
+    assert "super-secret" not in diagnostic["message"]
+    assert diagnostic["details"]["api_key"] == "[REDACTED]"
+
+
+def test_report_keeps_structured_model_error_in_review_json(tmp_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location("review_runner", "tools/extraction-review/run_review.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    module.report([{
+        "case_id": "case-1", "input_file": "capture.json", "input_sha256": "hash",
+        "model_calls": [{
+            "status": "error", "model": "gemini-test", "error": {
+                "type": "ClientError", "message": "quota exceeded", "status": 429,
+                "details": {"reason": "quota"},
+            },
+        }],
+    }], tmp_path, {}, False)
+
+    artifact = json.loads((tmp_path / "review.json").read_text(encoding="utf-8"))
+    assert artifact["cases"][0]["model_calls"][0]["error"]["status"] == 429

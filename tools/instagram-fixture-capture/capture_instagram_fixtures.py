@@ -21,7 +21,6 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
 from websockets.sync.client import connect
 
 from fixture_payload import (
@@ -47,6 +46,11 @@ BLOB_DOWNLOAD_CHUNK_BYTES = 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
 MAX_AUDIO_BYTES = 20 * 1024 * 1024
 FULL_REEL_WAIT_SECONDS = 30
+HTML_RENDER_SETTLE_SECONDS = 2
+# Chrome DevTools rejects WebSocket frames larger than 1 MiB. Keep rendered DOM
+# chunks comfortably below that limit even when every character needs four UTF-8
+# bytes in the protocol response.
+HTML_DOWNLOAD_CHUNK_CHARACTERS = 128 * 1024
 
 
 class CdpPage:
@@ -167,7 +171,11 @@ def _read_json_urls(input_json: Path | None) -> tuple[list[str], list[str]]:
     )
 
 
-def _start_chrome(chrome_path: Path, profile_dir: Path, port: int) -> subprocess.Popen[bytes]:
+def _selected_urls(instagram_urls: list[str], html_urls: list[str], *, html_only: bool) -> tuple[list[str], list[str]]:
+    return ([], html_urls) if html_only else (instagram_urls, html_urls)
+
+
+def _start_chrome(chrome_path: Path, profile_dir: Path, port: int, initial_url: str) -> subprocess.Popen[bytes]:
     if not chrome_path.is_file():
         raise FileNotFoundError(f"Chrome was not found at {chrome_path}")
     profile_dir.mkdir(parents=True, exist_ok=True)
@@ -178,8 +186,20 @@ def _start_chrome(chrome_path: Path, profile_dir: Path, port: int) -> subprocess
         "--remote-allow-origins=http://localhost",
         f"--user-data-dir={profile_dir}",
         "--no-first-run",
-        "https://www.instagram.com/accounts/login/",
+        initial_url,
     ])
+
+
+def _wait_for_chrome(port: int, timeout_seconds: int = 10) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version", timeout=1) as response:
+                if response.status == 200:
+                    return
+        except OSError:
+            time.sleep(0.1)
+    raise TimeoutError(f"Chrome DevTools did not start within {timeout_seconds} seconds")
 
 
 def _new_page(port: int, url: str) -> CdpPage:
@@ -514,16 +534,63 @@ def capture_url(
         page.close()
 
 
-def capture_html_url(source_url: str) -> dict[str, Any]:
-    with httpx.Client(
-        follow_redirects=True,
-        timeout=30,
-        headers={"User-Agent": "Carrot fixture capture/1.0"},
-    ) as client:
-        response = client.get(source_url)
-        response.raise_for_status()
+def _wait_for_html_document(page: CdpPage, timeout_seconds: int) -> None:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        ready = page.evaluate("(() => document.readyState === 'complete' && Boolean(document.documentElement))()")
+        if ready:
+            time.sleep(HTML_RENDER_SETTLE_SECONDS)
+            return
+        time.sleep(PAGE_LOAD_POLL_SECONDS)
+    raise TimeoutError(f"Page did not finish loading within {timeout_seconds} seconds")
 
-    return build_html_fixture(str(response.url), response.text, errors=[])
+
+def capture_html_url(port: int, source_url: str, timeout_seconds: int) -> dict[str, Any]:
+    """Capture the post-JavaScript DOM from Chrome as an HTML source envelope."""
+
+    page = _new_page(port, source_url)
+    try:
+        _wait_for_html_document(page, timeout_seconds)
+        rendered = page.evaluate("""
+            (() => {
+              window.__carrotRenderedHtml = Array.from(document.documentElement.outerHTML);
+              return {
+                source_url: window.location.href,
+                html_length: window.__carrotRenderedHtml.length,
+              };
+            })()
+        """)
+        if (
+            not isinstance(rendered, dict)
+            or not isinstance(rendered.get("source_url"), str)
+            or not isinstance(rendered.get("html_length"), int)
+        ):
+            raise RuntimeError("Chrome did not return a rendered HTML document")
+        if rendered["html_length"] <= 0:
+            raise RuntimeError("Chrome returned an empty rendered HTML document")
+
+        chunks: list[str] = []
+        for start in range(0, rendered["html_length"], HTML_DOWNLOAD_CHUNK_CHARACTERS):
+            end = min(start + HTML_DOWNLOAD_CHUNK_CHARACTERS, rendered["html_length"])
+            chunk = page.evaluate(
+                f"window.__carrotRenderedHtml.slice({start}, {end}).join('')"
+            )
+            if not isinstance(chunk, str) or len(chunk) == 0:
+                raise RuntimeError("Chrome did not return a rendered HTML chunk")
+            chunks.append(chunk)
+
+        html = "".join(chunks)
+        if not html.strip():
+            raise RuntimeError("Chrome returned an empty rendered HTML document")
+        return build_html_fixture(rendered["source_url"], html, errors=[])
+    finally:
+        # The page is about to be closed, but release the cached DOM first so
+        # repeated captures do not keep a large document alive unnecessarily.
+        try:
+            page.evaluate("delete window.__carrotRenderedHtml")
+        except Exception:
+            pass
+        page.close()
 
 
 def parse_args() -> argparse.Namespace:
@@ -531,13 +598,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("urls", nargs="*", help="Instagram post or Reel URLs")
     parser.add_argument("--input-file", type=Path, help="Newline-delimited URL file")
     parser.add_argument("--input-json", type=Path, help="JSON URL array, such as production-recipe-source-urls.json")
-    parser.add_argument("--html-url", dest="html_urls", action="append", default=[], help="Raw HTML URL to capture")
+    parser.add_argument("--html-url", dest="html_urls", action="append", default=[], help="HTML URL to render in Chrome and capture")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--profile-dir", type=Path, default=DEFAULT_PROFILE_DIR)
     parser.add_argument("--chrome-path", type=Path, default=DEFAULT_CHROME_PATH)
     parser.add_argument("--comment-load-limit", type=int, default=10)
     parser.add_argument("--page-load-timeout", type=int, default=PAGE_LOAD_TIMEOUT_SECONDS)
     parser.add_argument("--skip-transcription", action="store_true")
+    parser.add_argument("--html-only", action="store_true", help="Capture only non-Instagram HTML URLs from the supplied inputs")
     parser.add_argument("--overwrite", action="store_true")
     return parser.parse_args()
 
@@ -546,20 +614,28 @@ def main() -> None:
     args = parse_args()
     direct_instagram_urls, direct_html_urls = _read_source_urls(args)
     json_instagram_urls, json_html_urls = _read_json_urls(args.input_json)
-    urls = list(dict.fromkeys([*direct_instagram_urls, *json_instagram_urls]))
+    instagram_urls = list(dict.fromkeys([*direct_instagram_urls, *json_instagram_urls]))
     html_urls = list(dict.fromkeys([
         *direct_html_urls,
         *_read_html_urls(args),
         *json_html_urls,
     ]))
+    urls, html_urls = _selected_urls(instagram_urls, html_urls, html_only=args.html_only)
     if not urls and not html_urls:
         raise ValueError("Provide an Instagram URL, --input-file, or --html-url.")
     args.output_dir.mkdir(parents=True, exist_ok=True)
     failed_urls: list[dict[str, Any]] = []
     _write_failed_urls(args.output_dir, failed_urls)
     chrome = None
+    if urls or html_urls:
+        chrome = _start_chrome(
+            args.chrome_path,
+            args.profile_dir,
+            port=9222,
+            initial_url="https://www.instagram.com/accounts/login/" if urls else "about:blank",
+        )
+        _wait_for_chrome(9222)
     if urls:
-        chrome = _start_chrome(args.chrome_path, args.profile_dir, port=9222)
         print("Chrome is open at Instagram login. Log in if needed, then press Enter here to begin capture.")
         input()
 
@@ -606,7 +682,7 @@ def main() -> None:
                 continue
 
             try:
-                fixture = capture_html_url(source_url)
+                fixture = capture_html_url(9222, source_url, args.page_load_timeout)
             except Exception as exc:
                 fixture = build_html_fixture(source_url, "", errors=[str(exc)])
 

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from api.services.extraction_v2.contracts import ExtractionInput
+from api.services.extraction_v2.contracts import ExtractedRecipe, ExtractionInput, LanguageResult
 from api.services.extraction_v2.evidence import reference_matches
 from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
-from api.services.extraction_v2.contracts import LanguageResult
 from api.services.extraction_v2.orchestrator import ExtractionDependencies, ExtractionOrchestrator
 
 
@@ -138,6 +137,21 @@ async def test_html_extractor_reads_inline_serves_and_nutrition() -> None:
 
 
 @pytest.mark.asyncio
+async def test_html_extractor_reads_dense_nutrition_facts() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3><ol><li>Cook.</li></ol>
+    <h3>Nutrition Facts</h3><div>Calories 444 Calories from Fat 243 % Daily Value* Fat 27g 42% Saturated Fat 7g 44% Carbohydrates 27g 9% Sugar 16g 18% Protein 23g 46%</div>
+    </main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.nutrition.calories == "444"
+    assert recipe.nutrition.fat == "27"
+    assert recipe.nutrition.carbohydrates == "27"
+    assert recipe.nutrition.protein == "23"
+
+
+@pytest.mark.asyncio
 async def test_html_extractor_stops_serves_at_time_metadata() -> None:
     html = """
     <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3><ol><li>Cook.</li></ol>
@@ -203,6 +217,109 @@ async def test_html_extractor_reads_recipe_card_metadata_and_component_labels() 
 
 
 @pytest.mark.asyncio
+async def test_html_extractor_uses_standalone_strong_labels_as_ingredient_groups() -> None:
+    html = """
+    <main><h3>Ingredients</h3><strong>For the Sheet Pan:</strong><ul><li>1 potato</li></ul>
+    <strong>Lemon Herb Sauce:</strong><ul><li>1 lemon</li></ul>
+    <h3>Instructions</h3><ol><li>Cook.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [component.name for component in recipe.components if component.ingredients] == [
+        "For the Sheet Pan", "Lemon Herb Sauce",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_names_an_unnamed_first_ingredient_group_main() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 chicken breast</li></ul>
+    <strong>Sauce:</strong><ul><li>1 lemon</li></ul>
+    <h3>Instructions</h3><ol><li>Cook.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [component.name for component in recipe.components] == ["Main", "Sauce", None]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_reads_bbc_good_food_embedded_recipe_payload() -> None:
+    html = '''<script id="__POST_CONTENT__" type="application/json">{"client":"bbcgoodfood","title":"Soup","servings":"Serves 4","cookAndPrepTime":{"total":4500},"ingredients":[{"ingredients":[{"quantityText":"1","ingredientText":"beetroot","note":"diced"}]},{"heading":"For the topping","ingredients":[{"quantityText":"100g","ingredientText":"feta"}]}],"methodSteps":[{"content":[{"data":{"value":"<p>Cook the beetroot.</p>"}}]}],"nutritions":[{"label":"kcal","value":403},{"label":"fat","value":13},{"label":"carbs","value":52},{"label":"protein","value":15}]}</script>'''
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.yield_servings == "4"
+    assert recipe.total_time_minutes == 75
+    assert [component.name for component in recipe.components] == ["Main", "For the topping", None]
+    assert [item.text for item in recipe.components[0].ingredients] == ["1 beetroot diced"]
+    assert [step.text for step in recipe.components[2].steps] == ["Cook the beetroot."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_prefers_jsonld_nutrition_and_reads_makes_yield() -> None:
+    html = '''
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3><ol><li>Cook.</li></ol>
+    <h3>Nutrition per serving</h3><p>Calories 4% Fat 3% Protein 7% Carbohydrates 5%</p>
+    <script type="application/ld+json">{"@type":"Recipe","recipeYield":"Makes 12","nutrition":{"calories":"78.6 calories","proteinContent":"3.7 g","fatContent":"2.1 g","carbohydrateContent":"12.2 g"}}</script>
+    </main>'''
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.yield_servings == "12"
+    assert recipe.nutrition.calories == "79"
+    assert recipe.nutrition.protein == "3.7"
+    assert recipe.nutrition.fat == "2.1"
+    assert recipe.nutrition.carbohydrates == "12.2"
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_skips_recommendations_between_ingredients_and_directions() -> None:
+    html = """
+    <main><h2>Ingredients</h2><ul><li>1 onion</li></ul><h2>You'll Also Love:</h2>
+    <h3>Other soup</h3><h2>Directions</h2><ol><li>Cook the onion.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [item.text for item in recipe.components[0].ingredients] == ["1 onion"]
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the onion."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_ignores_shopping_card_lines_in_directions() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Directions</h3>
+    <ol><li>Cook the onion.</li><li>BUY NOW Pan, $30; amazon.com</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the onion."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_removes_leading_step_numbers_from_instruction_text() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Directions</h3>
+    <ol><li>Step 1 Preheat the oven.</li><li>Step 2 : Cook the onion.</li><li>Step 3: Serve.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Preheat the oven.", "Cook the onion.", "Serve."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_groups_duplicate_for_the_labels_and_ignores_top_tip_and_tags() -> None:
+    html = """
+    <main><h3>Ingredients</h3><p>For the paste</p><p>For the paste</p><ul><li>1 tbsp tahini</li></ul>
+    <p>For the pork</p><p>For the pork</p><ul><li>200g pork mince</li></ul>
+    <h5>Top Tip</h5><p>This is editorial advice.</p><h3>Method</h3><ol><li>Cook the pork.</li></ol><p>Tags</p></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [component.name for component in recipe.components] == ["For the paste", "For the pork", None]
+    assert [item.text for item in recipe.components[0].ingredients] == ["1 tbsp tahini"]
+    assert [item.text for item in recipe.components[1].ingredients] == ["200g pork mince"]
+    assert [step.text for step in recipe.components[2].steps] == ["Cook the pork."]
+
+
+@pytest.mark.asyncio
 async def test_html_extractor_uses_leading_yield_count_when_the_unit_is_named() -> None:
     html = """
     <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3><ol><li>Cook.</li></ol>
@@ -237,8 +354,56 @@ async def test_html_extractor_combines_nested_step_heading_with_its_instruction(
     recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
 
     assert len(recipe.components[0].steps) == 2
+    assert recipe.components[0].steps[0].text.startswith("Prepare the Chicken")
     assert "Season it with salt." in recipe.components[0].steps[0].text
     assert len(recipe.components[0].steps[0].references) == 3
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_combines_a_nested_instruction_title_with_its_first_step() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 chicken breast</li></ul><h3>Instructions</h3>
+    <h4>Prepare the chicken</h4><p>Flatten the chicken until even.</p><p>Season it with salt.</p></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert len(recipe.components[0].steps) == 2
+    assert recipe.components[0].steps[0].text.startswith("Prepare the chicken")
+    assert recipe.components[0].steps[0].text.endswith("Flatten the chicken until even.")
+    assert recipe.components[0].steps[1].text == "Season it with salt."
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_stops_before_a_trailing_nutrition_table() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3>
+    <p>Cook the onion.</p><div>Calories</div><div>400</div><div>Fat</div><div>20%</div></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the onion."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_ignores_recipe_card_last_step_label() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3>
+    <p>Cook the onion.</p><p>Last step!</p></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the onion."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_ignores_recipe_card_review_prompt() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 onion</li></ul><h3>Instructions</h3>
+    <p>Cook the onion.</p><p>Last Step! Please leave a review and rating letting us know how you liked it.</p></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the onion."]
 
 
 @pytest.mark.asyncio
@@ -270,6 +435,15 @@ async def test_text_extractor_accepts_unicode_bullets() -> None:
     ))
 
     assert recipe.components[0].ingredients[0].text == "1 onion"
+
+
+@pytest.mark.asyncio
+async def test_text_extractor_skips_standalone_list_markers() -> None:
+    recipe = await RecipeEvidenceExtractor().extract_text(ExtractionInput(
+        content="Ingredients:\n\u2022\n- 1 onion\nInstructions:\nCook.", evidence_ids=["source"],
+    ))
+
+    assert [item.text for item in recipe.components[0].ingredients] == ["1 onion"]
 
 
 @pytest.mark.asyncio
@@ -313,3 +487,86 @@ async def test_orchestrator_resolves_relative_component_links_and_drops_unsafe_o
     assert ingredients[0].link_url == "https://example.com/sauce"
     assert ingredients[1].links == []
     assert ingredients[1].link_url is None
+@pytest.mark.asyncio
+async def test_html_extractor_reads_properly_encoded_polish_recipe_sections_and_yield() -> None:
+    html = """
+    <h1>Confirm our vendors</h1><main><h1>Danie jednogarnkowe z mielonym mięsem, papryką i ryżem</h1>
+    <h3>Składniki</h3><p>4 porcje</p><ul><li>2 łyżki oliwy</li></ul>
+    <h3>Przygotowanie</h3><ol><li>Podsmaż mięso.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.title == "Danie jednogarnkowe z mielonym mięsem, papryką i ryżem"
+    assert recipe.yield_servings == "4"
+    assert [item.text for item in recipe.components[0].ingredients] == ["2 łyżki oliwy"]
+    assert [step.text for step in recipe.components[0].steps] == ["Podsmaż mięso."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_ignores_recipe_title_repeated_as_an_image_caption() -> None:
+    html = """
+    <main><h1>Tomato soup</h1><h3>Ingredients</h3><ul><li>1 tomato</li></ul>
+    <h3>Instructions</h3><ol><li>Cook the tomato.</li></ol><p>Tomato soup</p></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [step.text for step in recipe.components[0].steps] == ["Cook the tomato."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_reads_polish_yield_ranges_and_highlighted_groups() -> None:
+    html = """
+    <main><h3>Składniki</h3><p>2 - 3 porcje</p><ul><li>1 kg żeberek</li></ul>
+    <div class="wyroznione">Do podania np.</div><ul><li>100 g ryżu</li></ul>
+    <div class="wyroznione">Sos koreański</div><ul><li>2 łyżki sosu sojowego</li></ul>
+    <h3>Przygotowanie</h3><ol><li>Upiecz żeberka.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.yield_servings == "2"
+    assert [component.name for component in recipe.components] == ["Main", "Do podania np.", "Sos koreański", None]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_groups_duplicated_for_topping_label() -> None:
+    html = """
+    <main><h3>Ingredients</h3><ul><li>1 chicken thigh</li></ul>
+    <p>For Topping (finishing the dish)</p><p>For Topping (finishing the dish)</p><ul><li>¼ cup mint</li></ul>
+    <h3>Instructions</h3><ol><li>Roast the chicken.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [component.name for component in recipe.components] == ["Main", "For Topping (finishing the dish)", None]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_skips_equipment_between_ingredients_and_german_preparation() -> None:
+    html = """
+    <main><h3>Zutaten</h3><ul><li>700 g Hähnchen</li></ul><h3>Zubehör</h3><ul><li>Holzspieße</li></ul>
+    <h3>Zubereitung</h3><ol><li>Das Hähnchen schneiden.</li></ol></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert [item.text for item in recipe.components[0].ingredients] == ["700 g Hähnchen"]
+    assert [step.text for step in recipe.components[0].steps] == ["Das Hähnchen schneiden."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_reads_ploetzblog_ingredient_overview() -> None:
+    html = """
+    <main><h1>Fladenbrot</h1><div><h4>Zutatenübersicht</h4>Ursprungsrezept für 3 Stück
+    <table><tr><td>413 g</td><td>Weizenmehl 550</td><td>100 %</td></tr><tr><td>186 g</td><td>Wasser</td><td>45 %</td></tr><tr><td></td><td>schwarzer Sesam</td></tr></table></div></main>
+    """
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+
+    assert recipe.yield_servings == "3"
+    assert [item.text for item in recipe.components[0].ingredients] == ["413 g Weizenmehl 550", "186 g Wasser", "schwarzer Sesam"]
+
+
+def test_extracted_recipe_defaults_to_empty_nutrition() -> None:
+    nutrition = ExtractedRecipe().nutrition
+
+    assert nutrition.calories is None
+    assert nutrition.protein is None
+    assert nutrition.fat is None
+    assert nutrition.carbohydrates is None

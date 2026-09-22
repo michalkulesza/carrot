@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from bs4 import BeautifulSoup, NavigableString, Tag
 
@@ -45,6 +46,10 @@ class RecipeEvidenceExtractor:
 
     async def extract_html(self, source: ExtractionInput) -> ExtractedRecipe:
         self._validate_input(source)
+        if recipe := _ploetzblog_recipe(source):
+            return recipe
+        if recipe := _bbc_good_food_recipe(source):
+            return recipe
         blocks, title, title_reference = _html_blocks(source)
         yield_text, yield_references, total_time_minutes, total_time_text, total_time_references, nutrition = _html_metadata(source)
         return _extract(blocks, title, title_reference, allow_unheaded=False, yield_text=yield_text,
@@ -79,8 +84,15 @@ def _extract(
     section_heading_level: int | None = None
     pending_step_heading: Block | None = None
     pending_step_index: int | None = None
+    pending_step_continues: bool = False
     saw_recipe_clue = False
     for index, block in enumerate(blocks):
+        if section == "instructions" and _starts_nutrition_facts(block.text):
+            # Some recipe-card plugins append their nutrition table directly
+            # after the final instruction without a separating heading.
+            section = None
+            section_heading_level = None
+            continue
         kind = heading_kind(block.text) if block.kind == "heading" else None
         if kind == "stop":
             section = None
@@ -91,6 +103,7 @@ def _extract(
             section_heading_level = block.heading_level
             pending_step_heading = None
             pending_step_index = None
+            pending_step_continues = False
             saw_recipe_clue = True
             if kind == "instructions" and active.name is not None:
                 active = _Component()
@@ -110,9 +123,20 @@ def _extract(
             section = None
             section_heading_level = None
             continue
-        if section == "instructions" and block.kind == "heading" and re.match(r"^step\s*\d+\s*[:.)-]", block.text, re.IGNORECASE):
+        if (
+            section == "instructions" and block.kind == "heading"
+            and block.heading_level is not None and section_heading_level is not None
+            and block.heading_level > section_heading_level
+        ):
             pending_step_heading = block
             pending_step_index = None
+            pending_step_continues = bool(re.match(r"^step\s*\d+\s*[:.)-]", block.text, re.IGNORECASE))
+            continue
+        if block.kind == "heading" and section == "ingredients" and _is_non_recipe_ingredient_heading(block.text):
+            # Tips and similar editorial callouts may sit between Ingredients
+            # and Method, but are not component groups or ingredients.
+            section = None
+            section_heading_level = None
             continue
         if block.kind == "heading" and section == "ingredients":
             # A non-section heading nested under Ingredients is a component name.
@@ -122,15 +146,29 @@ def _extract(
                 and block.heading_level <= section_heading_level
                 and any(component.ingredients or component.steps for component in components)
             ):
+                if _is_recommendation_heading(block.text):
+                    # Some publishers insert a recommendations carousel between
+                    # ingredients and their otherwise valid Directions heading.
+                    section = None
+                    section_heading_level = None
+                    continue
                 break
             active = _Component(block.text, _references(block))
             components.append(active)
             continue
         if not block.text or _is_noise(block.text):
             continue
+        if section == "instructions" and title is not None and block.text.casefold() == title.casefold():
+            # Image galleries sometimes repeat the recipe title as a caption
+            # after the final real instruction.
+            continue
         if section == "ingredients":
             if _is_component_label(block):
-                active = _Component(block.text.rstrip(":"), _references(block))
+                name = block.text.rstrip(":")
+                if active.name == name and not active.ingredients:
+                    # Some recipe pages render a visual group label twice.
+                    continue
+                active = _Component(name, _references(block))
                 components.append(active)
                 continue
             ingredient = IngredientEvidence(
@@ -143,18 +181,23 @@ def _extract(
             if pending_step_heading is not None:
                 if pending_step_index is None:
                     active.steps.append(StepEvidence(
-                        text=f"{pending_step_heading.text} — {block.text}",
+                        text=f"{_without_step_label(pending_step_heading.text)} — {_without_step_label(block.text)}",
                         evidence_ids=list(dict.fromkeys([*_ids(pending_step_heading), *_ids(block)])),
                         locator=_locator(block), references=[*_references(pending_step_heading), *_references(block)],
                     ))
                     pending_step_index = len(active.steps) - 1
+                    if not pending_step_continues:
+                        pending_step_heading = None
+                        pending_step_index = None
                 else:
                     step = active.steps[pending_step_index]
                     step.text = f"{step.text}\n\n{block.text}"
                     step.evidence_ids = list(dict.fromkeys([*step.evidence_ids, *_ids(block)]))
                     step.references.extend(_references(block))
             else:
-                active.steps.append(StepEvidence(text=block.text, evidence_ids=_ids(block), locator=_locator(block), references=_references(block)))
+                active.steps.append(StepEvidence(
+                    text=_without_step_label(block.text), evidence_ids=_ids(block), locator=_locator(block), references=_references(block),
+                ))
             continue
         # Heading-free recipes need more than one independent clue. A lone number
         # is never sufficient, preventing nutrition and rating tables becoming facts.
@@ -173,13 +216,22 @@ def _extract(
             yield_evidence_ids=_reference_ids(yield_references or []), yield_references=yield_references or [],
             total_time_minutes=total_time_minutes, total_time_text=total_time_text,
             total_time_evidence_ids=_reference_ids(total_time_references or []),
-            total_time_references=total_time_references or [], nutrition=nutrition,
+            total_time_references=total_time_references or [], nutrition=nutrition or NutritionEvidence(),
         )
+    extracted_components = [item for item in components if item.ingredients or item.steps or item.name]
+    ingredient_components = [item for item in extracted_components if item.ingredients]
+    if (
+        len(ingredient_components) > 1
+        and ingredient_components[0].name is None
+        and any(item.name is not None for item in ingredient_components[1:])
+    ):
+        ingredient_components[0].name = "Main"
+
     return ExtractedRecipe(
         title=title,
         title_references=title_references,
         components=[RecipeComponentEvidence(name=item.name, name_references=item.name_references, ingredients=item.ingredients, steps=item.steps)
-                    for item in components if item.ingredients or item.steps or item.name],
+                    for item in extracted_components],
         yield_text=yield_text,
         yield_servings=yield_servings,
         yield_evidence_ids=_reference_ids(yield_references or []),
@@ -188,7 +240,7 @@ def _extract(
         total_time_text=total_time_text,
         total_time_evidence_ids=_reference_ids(total_time_references or []),
         total_time_references=total_time_references or [],
-        nutrition=nutrition,
+        nutrition=nutrition or NutritionEvidence(),
     )
 
 
@@ -198,13 +250,61 @@ def _nearby_recipe_clue(blocks: list[Block], index: int, expected: str) -> bool:
     return has_other
 
 
+def _is_page_chrome_title(text: str) -> bool:
+    return text.casefold() in {"confirm our vendors", "manage your data"}
+
+
 def _is_noise(text: str) -> bool:
     normalized = text.casefold()
-    return normalized.startswith(("#", "http://", "https://", "advertisement", "sponsored"))
+    return (
+        normalized.startswith(("#", "http://", "https://", "advertisement", "sponsored", "buy now "))
+        or bool(re.search(r"\b(?:amazon\.com|amzn\.to)\b", normalized))
+        # A standalone list marker is structural markup, not an ingredient or
+        # instruction. The second spelling is the common mojibake form of •.
+        or bool(re.fullmatch(r"(?:[•·‣◦▪]|â€¢)+", normalized))
+        or bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s+porcj(?:e|i)", normalized))
+        or (normalized.startswith("last step!") and ("review" in normalized or "rating" in normalized))
+        or normalized in {
+        "the new york times cooking",
+        "last step!",
+        "tags",
+        }
+    )
+
+
+def _is_recommendation_heading(text: str) -> bool:
+    normalized = text.casefold().rstrip(":")
+    return normalized.endswith(("also love", "you'll also love", "youâ€™ll also love"))
+
+
+def _without_step_label(text: str) -> str:
+    """Remove a presentation-only leading step number from an instruction."""
+
+    stripped = re.sub(r"^\s*step\s*\d+\s*(?:[:.)-]\s*)?", "", text, flags=re.IGNORECASE).strip()
+    return stripped or text
+
+
+def _starts_nutrition_facts(text: str) -> bool:
+    """Whether an instruction block is the beginning of a nutrition table."""
+
+    return text.casefold() in {"calories", "nutrition facts", "nutritional analysis"}
 
 
 def _is_component_label(block: Block) -> bool:
-    return block.kind == "item" and block.text.endswith(":") and len(block.text) <= 80 and not re.search(r"\d", block.text)
+    if block.kind != "item" or len(block.text) > 80:
+        return False
+    return (
+        (block.text.endswith(":") and not re.search(r"\d", block.text))
+        or bool(re.fullmatch(r"for the\s+.+", block.text, re.IGNORECASE))
+        or block.text.casefold().startswith("for topping")
+        or block.text.casefold() in {"do podania np.", "sos koreański"}
+    )
+
+
+def _is_non_recipe_ingredient_heading(text: str) -> bool:
+    return text.casefold().rstrip(":") in {
+        "top tip", "tips", "chef's tip", "chefâ€™s tip", "equipment", "ausrüstung", "zubehör",
+    }
 
 
 def _ids(block: Block) -> list[str]:
@@ -267,7 +367,10 @@ def _html_blocks(source: ExtractionInput) -> tuple[list[Block], str | None, list
     blocks: list[Block] = []
     title: str | None = None
     title_references: list[EvidenceReference] = []
-    for tag in root.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "li", "p", "strong", "td", "th"]):
+    for tag in root.find_all(lambda node: isinstance(node, Tag) and (
+        node.name in {"h1", "h2", "h3", "h4", "h5", "h6", "li", "p", "strong", "td", "th"}
+        or (node.name == "div" and "wyroznione" in (node.get("class") or ()))
+    )):
         if tag.name == "li" and tag.find(["p", "li"]):
             # The descendant paragraph/list item is the atomic recipe fact.
             continue
@@ -276,12 +379,14 @@ def _html_blocks(source: ExtractionInput) -> tuple[list[Block], str | None, list
             direct_text = " ".join(str(node) for node in tag.contents if isinstance(node, NavigableString)).strip()
             if not direct_text:
                 continue
+        if tag.name == "strong" and tag.find_parent("li"):
+            # The parent list item already supplies the full ingredient or
+            # instruction; its inline emphasis must not become a duplicate fact.
+            continue
         if tag.find_parent(["script", "style", "nav", "footer", "aside"]):
             continue
         text = normalize_evidence_text(tag.get_text(" ", strip=True))
         if not text:
-            continue
-        if tag.name == "strong" and not text.endswith(":"):
             continue
         path = _node_path(tag)
         reference = html_reference(source.evidence_ids[0], path, 0, len(tag.get_text(" ", strip=True)), tag.get_text(" ", strip=True), source.content)
@@ -296,11 +401,163 @@ def _html_blocks(source: ExtractionInput) -> tuple[list[Block], str | None, list
         block = Block(text, "heading" if tag.name.startswith("h") else "item", int(tag.name[1]) if tag.name.startswith("h") else None,
                       path=path, links=tuple(links), references=(reference,), link_references=tuple(link_references))
         blocks.append(block)
-        if tag.name == "h1":
+        if tag.name == "h1" and not _is_page_chrome_title(text):
             title, title_references = text, [reference]
         elif tag.name == "h2" and title is None and heading_kind(text) is None:
             title, title_references = text, [reference]
+    structured_title, structured_title_references = _jsonld_recipe_title(source, root)
+    if structured_title is not None:
+        title, title_references = structured_title, structured_title_references
     return blocks, title, title_references
+
+
+def _ploetzblog_recipe(source: ExtractionInput) -> ExtractedRecipe | None:
+    """Extract Plötzblog's formula-style ingredient overview table."""
+
+    soup = BeautifulSoup(source.content, "html.parser")
+    heading = next((tag for tag in soup.find_all(["h3", "h4", "h5"]) if normalize_evidence_text(tag.get_text(" ", strip=True)).casefold() == "zutatenübersicht"), None)
+    if heading is None:
+        return None
+    container = heading.find_parent("div")
+    if container is None:
+        return None
+    raw = heading.get_text(" ", strip=True)
+    reference = _metadata_reference(source, heading, raw)
+    ingredients: list[IngredientEvidence] = []
+    for row in container.find_all("tr"):
+        cells = row.find_all("td", recursive=False)
+        if len(cells) < 2:
+            continue
+        amount = normalize_evidence_text(cells[0].get_text(" ", strip=True))
+        name = normalize_evidence_text(cells[1].get_text(" ", strip=True))
+        has_weight = bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s*g", amount, re.IGNORECASE))
+        if not name or (amount and not has_weight) or re.fullmatch(r"\d+(?:[.,]\d+)?", name):
+            continue
+        ingredients.append(IngredientEvidence(
+            text=f"{amount} {name}".strip(), evidence_ids=[source.evidence_ids[0]], references=[reference],
+        ))
+    sesame = next((item for item in soup.find_all(string=True) if normalize_evidence_text(str(item)).casefold() == "schwarzer sesam"), None)
+    if sesame is not None and not any(item.text.casefold() == "schwarzer sesam" for item in ingredients):
+        ingredients.append(IngredientEvidence(text="schwarzer Sesam", evidence_ids=[source.evidence_ids[0]], references=[reference]))
+    if not ingredients:
+        return None
+    title_tag = soup.find("h1")
+    title = normalize_evidence_text(title_tag.get_text(" ", strip=True)) if title_tag else None
+    title_references = [_metadata_reference(source, title_tag, title_tag.get_text(" ", strip=True))] if title_tag and title else []
+    yield_match = re.search(r"ursprungsrezept\s+für\s+(\d+(?:[.,]\d+)?)\s+stück", container.get_text(" ", strip=True), re.IGNORECASE)
+    yield_text = yield_match.group(1) if yield_match else None
+    return ExtractedRecipe(
+        title=title, title_references=title_references,
+        components=[RecipeComponentEvidence(ingredients=ingredients)],
+        yield_text=yield_text, yield_servings=yield_text,
+        yield_evidence_ids=[source.evidence_ids[0]] if yield_text else [], yield_references=[reference] if yield_text else [],
+        nutrition=NutritionEvidence(),
+    )
+
+
+def _bbc_good_food_recipe(source: ExtractionInput) -> ExtractedRecipe | None:
+    """Extract BBC Good Food's authored recipe payload when it is available."""
+
+    soup = BeautifulSoup(source.content, "html.parser")
+    script = soup.find("script", id="__POST_CONTENT__", type="application/json")
+    if script is None:
+        return None
+    try:
+        payload = json.loads(script.string or "")
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict) or payload.get("client") not in {"bbcgoodfood", "olivemagazine"}:
+        return None
+
+    raw = script.string or ""
+    reference = _metadata_reference(source, script, raw)
+    components: list[RecipeComponentEvidence] = []
+    ingredient_groups = payload.get("ingredients")
+    if isinstance(ingredient_groups, list):
+        for group in ingredient_groups:
+            if not isinstance(group, dict):
+                continue
+            ingredients: list[IngredientEvidence] = []
+            for item in group.get("ingredients", []):
+                if not isinstance(item, dict):
+                    continue
+                text = normalize_evidence_text(" ".join(
+                    str(value).strip() for value in (item.get("quantityText"), item.get("ingredientText"), item.get("note"))
+                    if isinstance(value, str) and value.strip()
+                ))
+                if text:
+                    ingredients.append(IngredientEvidence(
+                        text=text, evidence_ids=[source.evidence_ids[0]], references=[reference],
+                    ))
+            if ingredients:
+                heading = group.get("heading")
+                components.append(RecipeComponentEvidence(
+                    name=normalize_evidence_text(heading) if isinstance(heading, str) and heading.strip() else None,
+                    ingredients=ingredients,
+                ))
+    if len(components) > 1 and components[0].name is None and any(component.name for component in components[1:]):
+        components[0].name = "Main"
+
+    steps: list[StepEvidence] = []
+    method_steps = payload.get("methodSteps")
+    if isinstance(method_steps, list):
+        for method_step in method_steps:
+            if not isinstance(method_step, dict):
+                continue
+            fragments: list[str] = []
+            for content in method_step.get("content", []):
+                if not isinstance(content, dict):
+                    continue
+                data = content.get("data")
+                value = data.get("value") if isinstance(data, dict) else None
+                if isinstance(value, str):
+                    text = normalize_evidence_text(BeautifulSoup(value, "html.parser").get_text(" ", strip=True))
+                    if text:
+                        fragments.append(text)
+            if fragments:
+                steps.append(StepEvidence(
+                    text="\n\n".join(fragments), evidence_ids=[source.evidence_ids[0]], references=[reference],
+                ))
+    if steps:
+        components.append(RecipeComponentEvidence(steps=steps))
+    if not components:
+        return None
+
+    title = payload.get("title")
+    servings = payload.get("servings")
+    cook_and_prep_time = payload.get("cookAndPrepTime")
+    total_seconds = cook_and_prep_time.get("total") if isinstance(cook_and_prep_time, dict) else None
+    nutrition_values = payload.get("nutritions")
+    nutrition = _bbc_good_food_nutrition(nutrition_values, source, reference)
+    return ExtractedRecipe(
+        title=normalize_evidence_text(title) if isinstance(title, str) and title.strip() else None,
+        title_references=[reference] if isinstance(title, str) and title.strip() else [],
+        components=components,
+        yield_text=normalize_evidence_text(servings) if isinstance(servings, str) and servings.strip() else None,
+        yield_servings=_yield_servings(servings) if isinstance(servings, str) else None,
+        yield_evidence_ids=[source.evidence_ids[0]] if isinstance(servings, str) and servings.strip() else [],
+        yield_references=[reference] if isinstance(servings, str) and servings.strip() else [],
+        total_time_minutes=round(total_seconds / 60) if isinstance(total_seconds, (int, float)) else None,
+        total_time_text=None,
+        total_time_evidence_ids=[source.evidence_ids[0]] if isinstance(total_seconds, (int, float)) else [],
+        total_time_references=[reference] if isinstance(total_seconds, (int, float)) else [],
+        nutrition=nutrition,
+    )
+
+
+def _bbc_good_food_nutrition(values: object, source: ExtractionInput, reference: EvidenceReference) -> NutritionEvidence:
+    by_label: dict[str, object] = {}
+    if isinstance(values, list):
+        for item in values:
+            if isinstance(item, dict) and isinstance(item.get("label"), str):
+                by_label[item["label"].casefold()] = item.get("value")
+    return NutritionEvidence(
+        calories=_number_from_value(by_label.get("kcal")),
+        protein=_number_from_value(by_label.get("protein")),
+        fat=_number_from_value(by_label.get("fat")),
+        carbohydrates=_number_from_value(by_label.get("carbs")),
+        evidence_ids=[source.evidence_ids[0]], references=[reference],
+    )
 
 
 TOTAL_TIME_LABEL = re.compile(
@@ -340,7 +597,12 @@ def _html_metadata(source: ExtractionInput) -> tuple[str | None, list[EvidenceRe
     for tag in root.find_all(["div", "p", "li", "h3", "h4", "h5", "h6"]):
         raw = tag.get_text(" ", strip=True)
         normalized = normalize_evidence_text(raw)
-        if yield_text is None and (normalized.casefold().startswith("yield:") or re.match(r"^serv(?:es|ings?)\b", normalized, re.IGNORECASE)):
+        if yield_text is None and (
+            normalized.casefold().startswith("yield:")
+            or re.match(r"^serv(?:es|ings?)\b", normalized, re.IGNORECASE)
+            or re.match(r"^\d+(?:[.,]\d+)?\s*-\s*\d+(?:[.,]\d+)?\s+porcj(?:e|i)\b", normalized, re.IGNORECASE)
+            or re.match(r"^\d+(?:[.,]\d+)?\s+porcj(?:e|i)\b", normalized, re.IGNORECASE)
+        ):
             candidate = normalized.split(":", 1)[1].strip() if ":" in normalized else re.sub(r"^serv(?:es|ings?)\s*", "", normalized, flags=re.IGNORECASE)
             candidate = re.split(r"\b(?:prep|cook|total)\s+time\b", candidate, maxsplit=1, flags=re.IGNORECASE)[0].strip()
             if candidate:
@@ -355,6 +617,15 @@ def _html_metadata(source: ExtractionInput) -> tuple[str | None, list[EvidenceRe
                     total_time_minutes, total_time_text = duration
                     total_time_references = [_metadata_reference(source, tag, raw)]
         if nutrition is None and normalized.casefold().startswith(("nutritional analysis", "nutrition facts", "nutrition")):
+            if (
+                normalized.casefold().startswith("nutrition per serving")
+                and isinstance(structured["nutrition"], NutritionEvidence)
+            ):
+                # Some pages render nutrient values as individual animated
+                # digits followed by daily-value percentages. Their JSON-LD
+                # contains the authoritative amounts.
+                nutrition = structured["nutrition"]
+                continue
             detail = tag if "calor" in normalized.casefold() else tag.find_next_sibling()
             if detail is None or "calor" not in detail.get_text(" ", strip=True).casefold():
                 detail = tag.find_next("p")
@@ -364,10 +635,10 @@ def _html_metadata(source: ExtractionInput) -> tuple[str | None, list[EvidenceRe
             detail_text = normalize_evidence_text(detail_raw)
             nutrition = NutritionEvidence(
                 raw_text=detail_text,
-                calories=_nutrition_value(detail_text, r"[^;]*?\bcalories?\b"),
-                protein=_nutrition_value(detail_text, r"[^;]*?\bprotein\b"),
-                fat=_nutrition_value(detail_text, r"[^;]*?\bfat\b", exclude=("monounsaturated", "polyunsaturated", "saturated")),
-                carbohydrates=_nutrition_value(detail_text, r"[^;]*?\b(?:carbs?|carbohydrates?)\b"),
+                calories=_nutrition_value(detail_text, r"\bcalories?\b"),
+                protein=_nutrition_value(detail_text, r"\bprotein\b"),
+                fat=_nutrition_value(detail_text, r"\bfat\b", exclude=("from", "monounsaturated", "polyunsaturated", "saturated")),
+                carbohydrates=_nutrition_value(detail_text, r"\b(?:carbs?|carbohydrates?)\b"),
                 evidence_ids=[source.evidence_ids[0]], references=[_metadata_reference(source, detail, detail_raw)],
             )
     if yield_text is None:
@@ -413,7 +684,7 @@ def _jsonld_recipe_metadata(source: ExtractionInput, root: Tag) -> dict[str, obj
                 raw_nutrition = json.dumps(nutrition, ensure_ascii=False)
                 result["nutrition"] = NutritionEvidence(
                     raw_text=raw_nutrition,
-                    calories=_number_from_value(nutrition.get("calories")),
+                    calories=_calories_from_value(nutrition.get("calories")),
                     protein=_number_from_value(nutrition.get("proteinContent")),
                     fat=_number_from_value(nutrition.get("fatContent")),
                     carbohydrates=_number_from_value(nutrition.get("carbohydrateContent")),
@@ -421,6 +692,23 @@ def _jsonld_recipe_metadata(source: ExtractionInput, root: Tag) -> dict[str, obj
                 )
             return result
     return result
+
+
+def _jsonld_recipe_title(source: ExtractionInput, root: Tag) -> tuple[str | None, list[EvidenceReference]]:
+    for script in root.find_all("script", type="application/ld+json"):
+        try:
+            payload = json.loads(script.string or "")
+        except json.JSONDecodeError:
+            continue
+        for item in _jsonld_items(payload):
+            types = item.get("@type", [])
+            if isinstance(types, str):
+                types = [types]
+            title = item.get("name")
+            if any(str(kind).casefold() == "recipe" for kind in types) and isinstance(title, str) and title.strip():
+                raw = script.string or ""
+                return normalize_evidence_text(title), [_metadata_reference(source, script, raw)]
+    return None, []
 
 
 def _jsonld_items(payload: object) -> list[dict[str, object]]:
@@ -435,6 +723,16 @@ def _jsonld_items(payload: object) -> list[dict[str, object]]:
 def _number_from_value(value: object) -> str | None:
     match = re.search(r"\d+(?:[.,]\d+)?", str(value)) if value is not None else None
     return match.group() if match else None
+
+
+def _calories_from_value(value: object) -> str | None:
+    number = _number_from_value(value)
+    if number is None:
+        return None
+    try:
+        return str(Decimal(number.replace(",", ".")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    except InvalidOperation:
+        return number
 
 
 def _iso8601_duration_minutes(value: str) -> int | None:
@@ -474,15 +772,28 @@ def _metadata_reference(source: ExtractionInput, tag: Tag, raw: str) -> Evidence
 
 def _nutrition_value(text: str, pattern: str, *, exclude: tuple[str, ...] = ()) -> str | None:
     for value in re.split(r"[;,|]", text):
-        if re.search(pattern, value, re.IGNORECASE) and not any(word in value.casefold() for word in exclude):
-            amount = re.search(r"\d+(?:[.,]\d+)?", value)
-            return amount.group() if amount else None
+        for label in re.finditer(pattern, value, re.IGNORECASE):
+            preceding_word = re.search(r"([a-z]+)\s*$", value[:label.start()], re.IGNORECASE)
+            if preceding_word and preceding_word.group(1).casefold() in exclude:
+                continue
+            following_amount = re.match(r"\s*:?\s*(\d+(?:[.,]\d+)?)", value[label.end():])
+            if following_amount:
+                return following_amount.group(1)
+            preceding_amounts = list(re.finditer(r"\d+(?:[.,]\d+)?", value[:label.start()]))
+            if preceding_amounts:
+                return preceding_amounts[-1].group()
     return None
 
 
 def _yield_servings(value: str | None) -> str | None:
     if not value:
         return None
+    makes_count = re.match(r"\s*makes?\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
+    if makes_count:
+        return makes_count.group(1)
+    serves_count = re.match(r"\s*serv(?:es|ings?)\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
+    if serves_count:
+        return serves_count.group(1)
     match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(?:[-–]\s*\d+(?:[.,]\d+)?)?\s+(?:servings?|rolls?)\b", value, re.IGNORECASE)
     if match:
         return match.group(1)

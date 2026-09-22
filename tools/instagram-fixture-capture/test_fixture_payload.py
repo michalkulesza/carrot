@@ -4,7 +4,14 @@ from fixture_payload import (
     is_http_url,
     is_instagram_post_url,
 )
-from capture_instagram_fixtures import _full_video_url
+import re
+
+from capture_instagram_fixtures import (
+    HTML_DOWNLOAD_CHUNK_CHARACTERS,
+    _full_video_url,
+    _selected_urls,
+    capture_html_url,
+)
 from api.services.scraper import parse_scrapecreators_reel_response
 
 
@@ -90,6 +97,80 @@ def test_html_fixture_is_raw_orchestrator_input() -> None:
     assert fixture["kind"] == "html"
     assert fixture["capture"]["status"] == "complete"
     assert fixture["html"] == "<html><body><h1>Recipe</h1></body></html>"
+
+
+def test_html_capture_uses_chromes_rendered_document(monkeypatch) -> None:
+    class Page:
+        closed = False
+        html = "<html><body><h1>Rendered recipe</h1></body></html>"
+
+        def evaluate(self, expression: str):
+            if "document.readyState" in expression:
+                return True
+            if "html_length" in expression:
+                return {
+                    "source_url": "https://example.com/rendered-recipe",
+                    "html_length": len(self.html),
+                }
+            if "__carrotRenderedHtml.slice" in expression:
+                return self.html
+            return None
+
+        def close(self) -> None:
+            self.closed = True
+
+    page = Page()
+    monkeypatch.setattr("capture_instagram_fixtures._new_page", lambda port, url: page)
+    monkeypatch.setattr("capture_instagram_fixtures.time.sleep", lambda _: None)
+
+    fixture = capture_html_url(9222, "https://example.com/recipe", timeout_seconds=1)
+
+    assert fixture["source_url"] == "https://example.com/rendered-recipe"
+    assert fixture["html"] == "<html><body><h1>Rendered recipe</h1></body></html>"
+    assert page.closed is True
+
+
+def test_html_capture_downloads_large_documents_in_chunks(monkeypatch) -> None:
+    class Page:
+        closed = False
+        html = "x" * (HTML_DOWNLOAD_CHUNK_CHARACTERS + 1)
+        chunk_requests: list[str] = []
+
+        def evaluate(self, expression: str):
+            if "document.readyState" in expression:
+                return True
+            if "html_length" in expression:
+                return {"source_url": "https://example.com/recipe", "html_length": len(self.html)}
+            if "__carrotRenderedHtml.slice" in expression:
+                self.chunk_requests.append(expression)
+                match = re.search(r"slice\((\d+), (\d+)\)", expression)
+                assert match
+                return self.html[int(match.group(1)):int(match.group(2))]
+            return None
+
+        def close(self) -> None:
+            self.closed = True
+
+    page = Page()
+    monkeypatch.setattr("capture_instagram_fixtures._new_page", lambda port, url: page)
+    monkeypatch.setattr("capture_instagram_fixtures.time.sleep", lambda _: None)
+
+    fixture = capture_html_url(9222, "https://example.com/recipe", timeout_seconds=1)
+
+    assert fixture["html"] == page.html
+    assert len(page.chunk_requests) == 2
+    assert page.closed is True
+
+
+def test_html_only_capture_omits_instagram_urls() -> None:
+    instagram, html = _selected_urls(
+        ["https://www.instagram.com/reel/example/"],
+        ["https://example.com/recipe"],
+        html_only=True,
+    )
+
+    assert instagram == []
+    assert html == ["https://example.com/recipe"]
 
 
 def test_full_video_url_removes_browser_byte_range_parameters() -> None:

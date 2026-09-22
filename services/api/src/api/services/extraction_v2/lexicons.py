@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 INGREDIENT_HEADINGS = {
+    "składniki", "składniki na",
     "ingredients", "ingredient", "składniki", "składniki na", "zutaten", "ingrédients", "ingredientes",
 }
 INSTRUCTION_HEADINGS = {

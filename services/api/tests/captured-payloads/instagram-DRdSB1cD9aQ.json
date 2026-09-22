@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "kind": "social",
-  "captured_at": "2026-09-19T15:56:54.673338+00:00",
-  "source_url": "https://www.instagram.com/reel/DRdSB1cD9aQ/?igsh=YnZ1OW1jOWV6am5n",
+  "captured_at": "2026-09-21T12:55:38.055256+00:00",
+  "source_url": "https://www.instagram.com/reel/DRdSB1cD9aQ/",
   "capture": {
     "status": "complete",
     "errors": []
@@ -20,16 +20,16 @@
           ]
         },
         "owner": {
-          "username": "Gabriela"
+          "username": "hummingbird_homemade_"
         },
-        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/587583470_17901498405300274_3717974559601519034_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=ojnsOmH-4VMQ7kNvwETKnzd&_nc_oc=Adoyjlhw3f8aPZ9coUtZET5wLaGaRbd83IL39K_bP5COj8Wrgxv7VMXcwmfB3tlWiaA_4UJPST-zLgkcGAW5NUX7&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=muresni1KRq_uT_VjqeWZA&_nc_ss=7b6a8&oh=00_AQKwIg06ymH0e0Lk-0_raIjc9RPR41YdewFU1iOqXQKlsQ&oe=6AB474B9",
-        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOVozza42dOO8dg_JUgN-ULIW3AJ41qj0GfEmF23qcVlv_coKtaBTbH5BrUV_cOJbu87aAh34bMjm9A2LLqzBYmE1pfGapwrId1CN8.mp4?_nc_cat=1&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=DLoa-tWhss8Q7kNvwErzNCT&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmV4cGVyaW1lbnRhbC1DMy5kYXNoX3IyZXZldnA5LXIxZ2VuMnZwOV9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTA4MjA1NjE3NzUyNzAwMCwiYXNzZXRfYWdlX2RheXMiOjAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNCwiYml0cmF0ZSI6MTg5NjQ1NCwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=-VXzXv56pSssohqB_VS5Jw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIVR1kWpd7KnXX0E6JPNIajL2-lA3ZCAFeTDICHeFQOaw&oe=6AB481B4&bytestart=3325163&byteend=5857277"
+        "thumbnail_src": "https://scontent-ber1-1.cdninstagram.com/v/t51.82787-15/587583470_17901498405300274_3717974559601519034_n.jpg?stp=cmp1_dst-jpg_e35_s640x640_tt6&_nc_cat=108&ccb=7-5&_nc_sid=18de74&efg=eyJlZmdfdGFnIjoiQ0xJUFMuYmVzdF9pbWFnZV91cmxnZW4uQzMifQ%3D%3D&_nc_ohc=5XmEqRZELuMQ7kNvwFiArNt&_nc_oc=AdrZggoJxbcDUnFZESwoYNWVRublk85nqTKzDZLQMNetNBIX4Y1p7TOfrf64tL17fHjB9PdGOfAjDiMuzvJFSBsO&_nc_zt=23&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_gid=ruFmKfQzGedJYiaOqAQrNA&_nc_ss=7b6a8&oh=00_AQJyY5HmV_729PbhKU0g8CrhavgXTHsMwSg1YZksKris6w&oe=6AB717B9",
+        "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPc3UA2LCSVsDrT7wYCNhwqALLX4tyhFZmyF9ugZl0p79cIHK22A0ZlgAP4bMqczOOCbdsyxIf1hk9GUUyJuvWxNdD2BfFRws0iM5A.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=vAS-9UiiYuEQ7kNvwGXLxxV&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MjI1NDIwNTAyODM0MDUzOSwiYXNzZXRfYWdlX2RheXMiOjMwMCwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjIzLCJiaXRyYXRlIjo1MTczNTU5LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=j88s_9dzPiPw5HCPftO3JA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIloE5xnCn-JRHFzDl5Civs78NVE1vmaPAVIXDYYg2-8g&oe=6AB70291&bytestart=3808321&byteend=11078497"
       }
     }
   },
   "comments": [],
   "audio": {
-    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQOVozza42dOO8dg_JUgN-ULIW3AJ41qj0GfEmF23qcVlv_coKtaBTbH5BrUV_cOJbu87aAh34bMjm9A2LLqzBYmE1pfGapwrId1CN8.mp4?_nc_cat=1&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=DLoa-tWhss8Q7kNvwErzNCT&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmV4cGVyaW1lbnRhbC1DMy5kYXNoX3IyZXZldnA5LXIxZ2VuMnZwOV9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MTA4MjA1NjE3NzUyNzAwMCwiYXNzZXRfYWdlX2RheXMiOjAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjoyNCwiYml0cmF0ZSI6MTg5NjQ1NCwidXJsZ2VuX3NvdXJjZSI6Ind3dyJ9&ccb=17-1&_nc_gid=-VXzXv56pSssohqB_VS5Jw&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIVR1kWpd7KnXX0E6JPNIajL2-lA3ZCAFeTDICHeFQOaw&oe=6AB481B4&bytestart=3325163&byteend=5857277",
+    "video_url": "https://scontent-ber1-1.cdninstagram.com/o1/v/t2/f2/m367/AQPc3UA2LCSVsDrT7wYCNhwqALLX4tyhFZmyF9ugZl0p79cIHK22A0ZlgAP4bMqczOOCbdsyxIf1hk9GUUyJuvWxNdD2BfFRws0iM5A.mp4?_nc_cat=100&_nc_sid=9ca052&_nc_ht=scontent-ber1-1.cdninstagram.com&_nc_ohc=vAS-9UiiYuEQ7kNvwGXLxxV&efg=eyJ2ZW5jb2RlX3RhZyI6ImlnLXhwdmRzLmNsaXBzLmMyLUMzLmRhc2hfcjJldmV2cDktcjFnZW4ydnA5LWhmcl9xOTAiLCJ2aWRlb19pZCI6bnVsbCwib2lsX3VybGdlbl9hcHBfaWQiOjkzNjYxOTc0MzM5MjQ1OSwiY2xpZW50X25hbWUiOiJpZyIsInhwdl9hc3NldF9pZCI6MjI1NDIwNTAyODM0MDUzOSwiYXNzZXRfYWdlX2RheXMiOjMwMCwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjIzLCJiaXRyYXRlIjo1MTczNTU5LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&_nc_gid=j88s_9dzPiPw5HCPftO3JA&_nc_ss=7a22e&_nc_zt=28&oh=00_AQIloE5xnCn-JRHFzDl5Civs78NVE1vmaPAVIXDYYg2-8g&oe=6AB70291&bytestart=3808321&byteend=11078497",
     "audio_url": null,
     "audio_title": null,
     "transcript": "This is a recipe for a delicious and easy to make chicken and vegetable stir fry.\n\nFirst, you will need to prepare your ingredients. Chop one pound of boneless, skinless chicken breasts into bite-sized pieces. Then, chop one medium onion, two bell peppers of different colors, and one cup of broccoli florets. Mince two cloves of garlic and one inch of fresh ginger.\n\nNext, in a small bowl, whisk together the sauce ingredients: 1/4 cup soy sauce, 2 tablespoons honey, 1 tablespoon rice vinegar, 1 teaspoon sesame oil, and 1 teaspoon cornstarch. Set aside.\n\nNow, heat 1 tablespoon of vegetable oil in a large skillet or wok over medium-high heat. Add the chicken and stir-fry until browned and cooked through, about 5-7 minutes. Remove the chicken from the skillet and set aside.\n\nAdd another tablespoon of vegetable oil to the skillet. Add the chopped onion, bell peppers, and broccoli. Stir-fry for 3-5 minutes until the vegetables are tender-crisp. Add the minced garlic and ginger and stir-fry for another minute until fragrant.\n\nReturn the cooked chicken to the skillet. Pour the prepared sauce over the chicken and vegetables. Stir well to coat everything. Cook for 1-2 minutes, or until the sauce has thickened.\n\nServe the chicken and vegetable stir fry immediately over cooked rice or noodles. Enjoy!",

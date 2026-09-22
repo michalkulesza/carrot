@@ -154,6 +154,9 @@ class ExtractionOrchestrator:
                 trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="invalid_model_response", evidence_ids=evidence_ids))
             else:
                 trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="social_text_extracted", evidence_ids=evidence_ids))
+                diagnostic = getattr(self._dependencies.extractor, "last_diagnostic", None)
+                if diagnostic:
+                    trace.append(TraceEvent(stage=ExtractionStage.TEXT, event=diagnostic, evidence_ids=evidence_ids))
             if has_ingredients(recipe) and has_instructions(recipe):
                 return self._classify(source_url, recipe, evidence, trace)
 

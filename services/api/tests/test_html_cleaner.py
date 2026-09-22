@@ -31,6 +31,26 @@ def test_cleaner_preserves_recipe_card_headers_and_recipe_jsonld() -> None:
     assert '"calories":"646"' in cleaned
 
 
+def test_cleaner_preserves_bbc_good_food_recipe_payload() -> None:
+    cleaned = clean_html_body('''
+        <html><head><script id="__POST_CONTENT__" type="application/json">{"client":"bbcgoodfood","servings":"Serves 4"}</script></head>
+        <body><main><p>Recipe</p></main></body></html>
+    ''')
+
+    assert 'id="__POST_CONTENT__"' in cleaned
+    assert '"servings":"Serves 4"' in cleaned
+
+
+def test_cleaner_preserves_olive_magazine_recipe_payload() -> None:
+    cleaned = clean_html_body('''
+        <html><head><script id="__POST_CONTENT__" type="application/json">{"client":"olivemagazine","servings":"Makes 16"}</script></head>
+        <body><main><p>Recipe</p></main></body></html>
+    ''')
+
+    assert 'id="__POST_CONTENT__"' in cleaned
+    assert '"client":"olivemagazine"' in cleaned
+
+
 def test_cleaner_preserves_recipe_structure_and_component_links() -> None:
     cleaned = clean_html_body("""
         <html><body>

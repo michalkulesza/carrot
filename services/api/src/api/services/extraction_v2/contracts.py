@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Annotated, Literal, Protocol
 
-from pydantic import BaseModel, Field, HttpUrl, TypeAdapter, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, model_validator
 
 
 class SourceKind(StrEnum):
@@ -187,7 +187,7 @@ class ExtractedRecipe(BaseModel):
     total_time_text: str | None = None
     total_time_evidence_ids: list[str] = Field(default_factory=list)
     total_time_references: list[EvidenceReference] = Field(default_factory=list)
-    nutrition: NutritionEvidence | None = None
+    nutrition: NutritionEvidence = Field(default_factory=NutritionEvidence)
     failure_reason: FailureReason | None = None
 
     @model_validator(mode="after")
@@ -314,6 +314,58 @@ class ExtractorV2(Protocol):
     async def extract_html(self, source: ExtractionInput) -> ExtractedRecipe: ...
 
     async def extract_text(self, source: ExtractionInput) -> ExtractedRecipe: ...
+
+
+class TextSelectionProvider(Protocol):
+    async def select(self, source: "TextSelectionInput") -> "TextSelection": ...
+
+
+class TextLine(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str
+    text: str = Field(min_length=1)
+    start: int = Field(ge=0)
+    end: int = Field(gt=0)
+    evidence_id: str
+
+
+class TextSelectionInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    content: str
+    lines: list[TextLine]
+
+
+class NutritionValueSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    line_id: str
+    quote: str = Field(min_length=1)
+
+
+class NutritionSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    line_ids: list[str] = Field(default_factory=list)
+    calories: NutritionValueSelection | None = None
+    protein: NutritionValueSelection | None = None
+    fat: NutritionValueSelection | None = None
+    carbohydrates: NutritionValueSelection | None = None
+    basis: Literal["per_serving", "per_100g", "whole_recipe", "unspecified"] = "unspecified"
+    basis_quote: NutritionValueSelection | None = None
+
+
+class ComponentSelection(BaseModel):
+    """One explicit component, or the unnamed recipe-wide component."""
+
+    model_config = ConfigDict(extra="forbid")
+    heading_id: str | None = None
+    ingredient_line_ids: list[str] = Field(default_factory=list)
+    instruction_line_ids: list[str] = Field(default_factory=list)
+
+
+class TextSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    components: list[ComponentSelection] = Field(default_factory=list)
+    yield_line_ids: list[str] = Field(default_factory=list)
+    nutrition: NutritionSelection = Field(default_factory=NutritionSelection)
 
 
 class AudioEvidenceExtractor(Protocol):
