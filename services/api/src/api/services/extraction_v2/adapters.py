@@ -11,7 +11,7 @@ from api.services.extraction_v2.contracts import (
 )
 
 
-_WORD = re.compile(r"\w+", re.UNICODE)
+_WORD = re.compile(r"[\w\ufffd]+", re.UNICODE)
 
 
 def _comparison_word(value: str) -> str:
@@ -27,20 +27,51 @@ def _comparison_word(value: str) -> str:
     )
 
 
-def _ground_transcript_wording(value: str, transcript: str) -> str:
+def _transcript_word_matches(quoted_word: str, target_word: str, source_word: str) -> bool:
+    if source_word == target_word:
+        return True
+    if "\ufffd" not in quoted_word:
+        return False
+    prefix, suffix = target_word.split("\ufffd", 1)
+    return (
+        len(source_word) == len(target_word)
+        and (len(prefix) >= 3 or len(suffix) >= 3)
+        and source_word.startswith(prefix)
+        and source_word.endswith(suffix)
+    )
+
+
+def _ground_transcript_wording(value: str, transcript: str, *, include_sentence_leadin: bool = False) -> str:
     """Return the exact transcript substring for a word-for-word model quote."""
 
-    target = [_comparison_word(match.group()) for match in _WORD.finditer(value)]
+    target = [(match.group(), _comparison_word(match.group())) for match in _WORD.finditer(value)]
     source = [(_comparison_word(match.group()), match.start(), match.end()) for match in _WORD.finditer(transcript)]
     if not target or len(target) > len(source):
         return value
     for start in range(len(source) - len(target) + 1):
-        if [word for word, _, _ in source[start:start + len(target)]] == target:
+        matched_words = source[start:start + len(target)]
+        matches = all(
+            _transcript_word_matches(quoted_word, target_word, source_word)
+            for (quoted_word, target_word), (source_word, _, _) in zip(target, matched_words)
+        )
+        if matches:
             end = source[start + len(target) - 1][2]
             punctuation = value.rstrip()[-1:]
             if punctuation in {".", "!", "?"} and transcript[end:end + 1] == punctuation:
                 end += 1
-            return transcript[source[start][1]:end]
+            grounded_start = source[start][1]
+            # If Gemini quoted a clause beginning partway through its sentence,
+            # retain a short omitted lead-in such as “Do miski”. This is still
+            # an exact source substring and preserves the complete instruction.
+            sentence_prefix = max(transcript.rfind(mark, 0, grounded_start) for mark in ".!?\n") + 1
+            prefix_start = sentence_prefix
+            while prefix_start < grounded_start and transcript[prefix_start].isspace():
+                prefix_start += 1
+            if include_sentence_leadin and not value.rstrip().endswith((".", "!", "?")) and grounded_start - prefix_start <= 20:
+                grounded_start = prefix_start
+                if transcript[end:end + 1] in {".", "!", "?"}:
+                    end += 1
+            return transcript[grounded_start:end]
     return value
 
 
@@ -76,7 +107,7 @@ class GeminiAudioEvidenceExtractor:
                     ],
                     steps=[] if retained_has_steps else [
                         StepEvidence(
-                            text=_ground_transcript_wording(text, source.transcript), evidence_ids=["transcript:0"],
+                            text=_ground_transcript_wording(text, source.transcript, include_sentence_leadin=True), evidence_ids=["transcript:0"],
                         ) for text in component.steps
                     ],
                 )

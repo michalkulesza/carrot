@@ -1,0 +1,35 @@
+{
+  "source_capture": "instagram-DYkMap8I9ig.json",
+  "capture_sha256": "2841bf5e1111594c4834275b34ca0ab977790d7d0d23a86245f314a75c5b4205",
+  "model": "gemini-3.1-flash-lite",
+  "captured_date_utc": "2026-09-23",
+  "response": {
+    "title": "pastel nube de lim�n",
+    "components": [
+      {
+        "name": null,
+        "ingredients": [
+          "yemas de los huevos",
+          "yogur griego",
+          "az�car",
+          "vainilla",
+          "ralladura de lim�n",
+          "maicena",
+          "claras",
+          "lim�n",
+          "sal"
+        ],
+        "steps": [
+          "mezclamos las yemas de los huevos con yogur griego, az�car, vainilla, ralladura de lim�n y maicena",
+          "monta las claras con lim�n y un poquito de sal",
+          "vas introduciendo en la mezcla anterior las claras montadas con movimientos envolventes",
+          "Lo pasas para tu molde forrado con papel de horno",
+          "lo horneas",
+          "Deja que se enfr�e un poco",
+          "s�calo con cuidado"
+        ]
+      }
+    ],
+    "failure_reason": null
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "source_capture": "instagram-DavQuNhRKjI.json",
+  "capture_sha256": "fba602ce3883c89e61bbe00441e41c0e6e69b71c7288835ffde84fc73954142f",
+  "model": "gemini-3.1-flash-lite",
+  "captured_date_utc": "2026-09-23",
+  "response": {
+    "components": [
+      {
+        "name": "Chicken Marinade",
+        "steps": [
+          "Mix everything really well",
+          "cover and let it marinate in the fridge for a couple of minutes"
+        ]
+      },
+      {
+        "name": "For the Rice",
+        "steps": [
+          "heat up a large pot",
+          "add the chicken and sear until the chicken is nicely browned and fully cooked",
+          "take the chicken out",
+          "add butter to the pan",
+          "Add some chopped onions, minced garlic and ginger, then cook for about one to two minutes until the onions are softened",
+          "Add tomato paste, cook for a couple of minutes until it darkens slightly",
+          "Keep stirring",
+          "add the tomato puree",
+          "Give it a good mix",
+          "season with some paprika, cayenne pepper, curry powder, cumin, chicken bouillon cubes, garam masala, salt, and a little sugar",
+          "added some chicken stock and water",
+          "let this simmer for about 15 minutes",
+          "add heavy cream, then give it a very good mix until it's smooth and creamy",
+          "add the rice",
+          "rinsed the rice several times until the water ran clear",
+          "mix everything together, then cover and allow to cook on low heat for about 30 minutes until the rice is fully cooked",
+          "stir it very well to allow some of the steam escape",
+          "add the chicken back in",
+          "Give everything one final mix",
+          "finish with some chopped cilantro or parsley"
+        ]
+      }
+    ]
+  }
+}

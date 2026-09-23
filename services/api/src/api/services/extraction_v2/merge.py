@@ -55,9 +55,15 @@ def _transcript_ingredient_is_already_retained(incoming, existing) -> bool:
 def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRecipe:
     """Merge complementary components and exact duplicates while retaining all evidence IDs."""
 
-    components = [component.model_copy(deep=True) for component in left.components]
+    components = [
+        component.model_copy(deep=True)
+        for component in left.components
+        if component.ingredients or component.steps
+    ]
     by_name = {_key(component.name or "main"): component for component in components}
     for incoming in right.components:
+        if not incoming.ingredients and not incoming.steps:
+            continue
         component = by_name.get(_key(incoming.name or "main"))
         if component is None:
             component = RecipeComponentEvidence(name=incoming.name)

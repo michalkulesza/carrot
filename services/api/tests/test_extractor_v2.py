@@ -2,10 +2,26 @@ from __future__ import annotations
 
 import pytest
 
-from api.services.extraction_v2.contracts import ExtractedRecipe, ExtractionInput, LanguageResult
+from api.services.extraction_v2.contracts import (
+    ExtractedRecipe, ExtractionInput, LanguageResult, RecipeComponentEvidence, StepEvidence,
+)
 from api.services.extraction_v2.evidence import reference_matches
 from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
+from api.services.extraction_v2.merge import merge_recipes
 from api.services.extraction_v2.orchestrator import ExtractionDependencies, ExtractionOrchestrator
+
+
+def test_recipe_merge_drops_components_without_recipe_facts() -> None:
+    retained = ExtractedRecipe(components=[RecipeComponentEvidence(name="empty retained")])
+    incoming = ExtractedRecipe(components=[
+        RecipeComponentEvidence(name="empty audio"),
+        RecipeComponentEvidence(name="steps", steps=[StepEvidence(text="Cook.", evidence_ids=["transcript:0"])]),
+    ])
+
+    merged = merge_recipes(retained, incoming)
+
+    assert [component.name for component in merged.components] == ["steps"]
+    assert [step.text for step in merged.components[0].steps] == ["Cook."]
 
 
 @pytest.mark.asyncio

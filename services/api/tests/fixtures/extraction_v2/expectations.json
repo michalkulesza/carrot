@@ -3184,8 +3184,7 @@
                 "text": "Chopped cilantro or parsley"
               }
             ]
-          },
-          {}
+          }
         ]
       },
       "text_selection": {
@@ -3972,9 +3971,9 @@
               }
             ],
             "steps": [
-              "mezclamos las yemas de los huevos con yogur griego, azúcar, vainilla, ralladura de limón y maicena",
+              "Para prepararlo, mezclamos las yemas de los huevos con yogur griego, azúcar, vainilla, ralladura de limón y maicena.",
               "monta las claras con limón y un poquito de sal",
-              "introduciendo en la mezcla anterior las claras montadas con movimientos envolventes",
+              "Y ahora vas introduciendo en la mezcla anterior las claras montadas con movimientos envolventes",
               "Lo pasas para tu molde forrado con papel de horno",
               "lo horneas",
               "Deja que se enfríe un poco",
@@ -5875,9 +5874,9 @@
             ]
           },
           {
-            "name": "riz",
+            "name": "Riz",
             "steps": [
-              "On vient le rincer plusieurs fois jusqu''&agrave; que l'eau soit bien claire",
+              "On vient le rincer plusieurs fois jusqu'à que l'eau soit bien claire comme sur la vidéo.",
               "On retire l'eau",
               "on le rajoute dans une casserole",
               "On couvre",

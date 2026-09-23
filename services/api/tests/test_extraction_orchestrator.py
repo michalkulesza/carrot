@@ -105,6 +105,29 @@ def test_audio_wording_reuses_the_exact_transcript_for_mojibake_only() -> None:
     assert _ground_transcript_wording("Dodaj cukier.", transcript) == "Dodaj cukier."
 
 
+def test_audio_wording_repairs_replacement_char_and_keeps_short_sentence_leadin() -> None:
+    assert _ground_transcript_wording(
+        "Saut� your onion", "Sauté your onion before adding the beef."
+    ) == "Sauté your onion"
+    assert _ground_transcript_wording(
+        "wsypujecie 500 g mąki, typ 650 i 9 g soli",
+        "Do miski wsypujecie 500 g mąki, typ 650 i 9 g soli.",
+        include_sentence_leadin=True,
+    ) == "Do miski wsypujecie 500 g mąki, typ 650 i 9 g soli."
+    assert _ground_transcript_wording("az\ufffdcar", "mezclar el azúcar con limón") == "azúcar"
+    assert _ground_transcript_wording("Saut\ufffd", "Sauter") == "Saut\ufffd"
+    assert _ground_transcript_wording("1 onion", "Add 1 onion.") == "1 onion"
+
+
+def test_audio_wording_does_not_guess_ambiguous_or_unmatched_quotes() -> None:
+    assert _ground_transcript_wording("� rice", "onion rice") == "� rice"
+    assert _ground_transcript_wording("Saut� rice", "Sauté your onion") == "Saut� rice"
+    transcript = "A lengthy preamble that is not part of this instruction. " + (
+        "This clause has a sufficiently long lead-in before it starts here"
+    )
+    assert _ground_transcript_wording("starts here", transcript, include_sentence_leadin=True) == "starts here"
+
+
 @pytest.mark.asyncio
 async def test_html_is_cleaned_before_source_agnostic_extraction() -> None:
     extractor = FakeExtractor(html_result=_recipe(
@@ -144,8 +167,14 @@ async def test_only_verified_creator_comments_are_sent_to_text_extraction() -> N
     extractor = FakeExtractor(text_result=_recipe(ingredients=[_ingredient("1 onion", "caption:0")]))
     orchestrator = ExtractionOrchestrator(ExtractionDependencies(extractor, FakeLanguageDetector()))
     payload = _social_payload("Ingredients: 1 onion", comments=[
-        {"id": "creator", "author_handle": "@CarrotCook", "text": "Bake for 20 minutes", "is_creator_authored": False},
-        {"id": "viewer", "author_handle": "viewer", "text": "Use a lot of sugar", "is_creator_authored": True},
+        {
+            "id": "creator", "author_handle": "@CarrotCook", "text": "Bake for 20 minutes",
+            "is_creator_authored": True, "authorship_evidence": "provider_creator_flag",
+        },
+        {
+            "id": "viewer", "author_handle": "viewer", "text": "Use a lot of sugar",
+            "is_creator_authored": True, "authorship_evidence": "provider_creator_flag",
+        },
     ])
 
     outcome = await orchestrator.extract(payload)

@@ -1,0 +1,52 @@
+{
+  "source_capture": "instagram-DXWc3znDQkZ.json",
+  "capture_sha256": "e441884090a597d08e078fef23de363673de0f7bc573e0880e673c9fe9089350",
+  "model": "gemini-3.1-flash-lite",
+  "captured_date_utc": "2026-09-23",
+  "response": {
+    "components": [
+      {
+        "name": "Riz",
+        "ingredients": [],
+        "steps": [
+          "rincer plusieurs fois",
+          "retirer l'eau",
+          "rajouter dans une casserole",
+          "couvrir",
+          "laisser cuire 15 minutes"
+        ]
+      },
+      {
+        "name": "Sauce",
+        "ingredients": [],
+        "steps": [
+          "m�langer"
+        ]
+      },
+      {
+        "name": "Poulet",
+        "ingredients": [],
+        "steps": [
+          "m�langer de la farine, de l'�uf et du lait",
+          "assaisonner",
+          "rajouter nos escalopes de poulet",
+          "m�langer",
+          "enrober chaque escalope g�n�reusement de chapelure",
+          "les cuit dans l'huile",
+          "les retirer",
+          "les couper"
+        ]
+      },
+      {
+        "name": "Assemblage",
+        "ingredients": [],
+        "steps": [
+          "met le riz",
+          "met de la sauce",
+          "met beaucoup beaucoup de poulet",
+          "termine avec des oignons frits, de la sauce sriracha et de la sauce chili, et enfin du persil s�ch�"
+        ]
+      }
+    ]
+  }
+}
