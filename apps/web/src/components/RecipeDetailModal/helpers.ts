@@ -148,7 +148,8 @@ export const getMetricCupHint = (
 
   const qty = getImperialCupQty(
     component.imperial_ingredients?.[ingredientIndex],
-    servingScale
+    servingScale,
+    (component.metric_ingredients ?? component.ingredients)[ingredientIndex]
   )
 
   return qty ? ` (${qty} ${t('units.cup', { defaultValue: 'cup' })})` : ''

@@ -18,7 +18,6 @@ from api.models import (
     RecipeEnrichment,
     RecipeExtraction,
     RecipeSourceExtraction,
-    RecipeUnitVariants,
     ShoppingCategory,
     SourceComponent,
     SourceIngredient,
@@ -26,6 +25,7 @@ from api.models import (
 )
 from api.services.extraction_v2.contracts import FailureReason
 from api.services.ingredient_parser_v2 import parse_ingredient
+from api.services.unit_variants import build_variants
 
 log = logging.getLogger(__name__)
 
@@ -51,6 +51,11 @@ def _v2_parsed_ingredient(parsed, source_text: str, category) -> Ingredient:
         shopping_list_value=source_text,
         shopping_list_category=category,
     )
+
+
+def _v2_source_ingredient(parsed, source_text: str) -> SourceIngredient:
+    ingredient = _v2_parsed_ingredient(parsed, source_text, None)
+    return SourceIngredient(qty=ingredient.qty, unit=ingredient.unit, name=ingredient.name)
 
 class AudioRecipeEvidenceComponent(BaseModel):
     name: str | None = None
@@ -91,10 +96,6 @@ _SHOPPING_CATEGORY_MEANINGS = {
     "other": "anything not covered by the other categories",
 }
 _T = TypeVar("_T")
-
-
-class _MetricConversionValidationError(ValueError):
-    pass
 
 
 class UsageTracker:
@@ -177,46 +178,6 @@ the video title, caption, visual content, or general cooking knowledge to fill
 in anything that is not audible.
 """
 
-_UNIT_CONVERSION_SYSTEM = """\
-Convert recipe units into metric and imperial variants. Return the same number of
-components as the input, in the same order. For every component, return BOTH unit
-variants in parallel arrays:
-- metric_ingredients and metric_steps: use grams/kilograms/millilitres/litres and
-  Celsius where applicable. Preserve every tsp and tbsp measurement exactly as
-  stated; do not convert either unit to grams or millilitres. Convert every cup
-  measurement to an ingredient-specific whole gram value; never use a range.
-  A frozen ingredient is still divisible: convert its cup measurement by weight
-  while preserving the word "frozen" (for example, "1 cup frozen corn kernels"
-  becomes "165 g frozen corn kernels").
-  Convert physical length descriptions used for ingredients to centimetres
-  (for example, "2 inch knob of ginger" becomes "5 cm knob of ginger").
-- imperial_ingredients and imperial_steps: use cups/tbsp/tsp where practical and
-  Fahrenheit. Preserve every tsp and tbsp measurement exactly as stated.
-Each variant array must have the same number of entries and order as the
-component's source ingredients or steps. Preserve ingredient names and cooking
-instructions; change only units, amounts, and temperatures in the variant
-fields. Never modify ingredients or steps.
-
-Never convert, estimate, remove, or replace a discrete-item quantity: whole or
-partial ingredients and count descriptors in the ingredient name such as onion,
-cube, stalk, clove, slice, bunch, sprig, handful, and pinch must remain
-counts in BOTH variants. For example, "1/2 sweet onion" must remain "1/2 sweet
-onion", never "125 g sweet onion", and "1 stalk celery" must remain "1 stalk
-celery", never "30 g celery". When a count-based ingredient also contains a
-separate liquid measure in its descriptive text, preserve the count and convert
-only that liquid measure. In metric, retain the original cup quantity in
-parentheses after its metric equivalent (for example, "1 cube beef bouillon
-dissolved in 473 ml (2 cups) simmering water"); in imperial, retain just "1
-cube beef bouillon dissolved in 2 cups simmering water" and never add a metric
-equivalent.
-
-Cans are the exception: in metric_ingredients, estimate the typical drained
-weight for the named canned ingredient and retain the original can count in
-parentheses, for example "1 can black beans, drained and rinsed" becomes
-"240 g (1 can) black beans, drained and rinsed". In imperial_ingredients,
-keep the can count as stated.
-"""
-
 _STEP_INGREDIENT_MATCH_INSTRUCTION = """\
 Match recipe steps to the ingredients they reference. Return exactly one match
 object for every provided step, identified by its authoritative component_index
@@ -235,8 +196,6 @@ You enrich an already-faithful recipe extraction with derived data. The input's
 title, servings, components, ingredient quantities, units, names, and steps are
 authoritative: never add, remove, reorder, or alter them, and never return them —
 only return the fields below, one entry per source component, in the same order.
-
-""" + _UNIT_CONVERSION_SYSTEM + """
 
 For every ingredient, also return a shopping_list_value: the concise text that
 should be added to a shopping list. Preserve the ingredient and its needed
@@ -376,21 +335,6 @@ def _source_ingredient_display(ingredient) -> str:
     return " ".join(part for part in (ingredient.qty, ingredient.unit, ingredient.name) if part)
 
 
-_SPOON_UNIT_PATTERN = re.compile(r"\b(?:tsp|tbsp)\b", re.IGNORECASE)
-_COUNT_UNIT_PATTERN = re.compile(
-    r"\b(?:clove|cube|slice|stalk|can|bunch|pinch|sprig|handful)\b",
-    re.IGNORECASE,
-)
-_CAN_UNIT_PATTERN = re.compile(r"\bcan\b", re.IGNORECASE)
-_INLINE_CONVERTIBLE_MEASUREMENT_PATTERN = re.compile(
-    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:ml|l|g|kg|cups?|lbs?|pounds?|oz|ounces?|in(?:ch(?:es)?)?)\b",
-    re.IGNORECASE,
-)
-_METRIC_CONVERSION_REQUIRED_PATTERN = re.compile(
-    r"\b(?:\d+(?:[./]\d+)?|[½⅓⅔¼¾])\s*(?:cups?|lbs?|pounds?|oz|ounces?|in(?:ch(?:es)?)?)\b",
-    re.IGNORECASE,
-)
-_METRIC_MEASUREMENT_PATTERN = re.compile(r"\b(?:ml|l|g|kg|cm)\b", re.IGNORECASE)
 _VARIABLE_FORMULATION_PATTERN = re.compile(
     r"\b(?:sauce|condiment|seasoning|stock|broth|bouillon|paste|mix|dressing|marinade)\b",
     re.IGNORECASE,
@@ -401,72 +345,6 @@ _EXPLICIT_GLUTEN_SOURCE_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _GLUTEN_FREE_PATTERN = re.compile(r"\bgluten[-\s]?free\b", re.IGNORECASE)
-
-
-def _preserve_spoon_measurements(source_ingredients: list[str], variant_ingredients: list[str]) -> list[str]:
-    return [
-        source_ingredient if _SPOON_UNIT_PATTERN.search(source_ingredient) else variant_ingredient
-        for source_ingredient, variant_ingredient in zip(source_ingredients, variant_ingredients)
-    ]
-
-
-def _preserve_discrete_ingredient_measurements(
-    source_ingredients: list[str],
-    variant_ingredients: list[str],
-    allow_canned_conversion: bool = False,
-) -> list[str]:
-    """Keep count-based ingredients out of weight/volume conversions.
-
-    An inline convertible measurement is intentionally left to the model so it
-    can be converted while preserving the surrounding count-based ingredient
-    text.
-    """
-    return [
-        source_ingredient
-        if (
-            not (allow_canned_conversion and _CAN_UNIT_PATTERN.search(source_ingredient))
-            and not _INLINE_CONVERTIBLE_MEASUREMENT_PATTERN.search(source_ingredient)
-            and (
-                not re.search(r"\b(?:ml|l|g|kg|cup)\b", source_ingredient, re.IGNORECASE)
-                or _COUNT_UNIT_PATTERN.search(source_ingredient)
-            )
-        )
-        else variant_ingredient
-        for source_ingredient, variant_ingredient in zip(source_ingredients, variant_ingredients)
-    ]
-
-
-def _validate_metric_ingredients(enrichment: RecipeEnrichment) -> None:
-    for component_index, component in enumerate(enrichment.components):
-        for ingredient_index, ingredient in enumerate(component.metric_ingredients):
-            needs_conversion = _METRIC_CONVERSION_REQUIRED_PATTERN.search(ingredient)
-            has_metric_measurement = _METRIC_MEASUREMENT_PATTERN.search(ingredient)
-            if needs_conversion and not has_metric_measurement:
-                raise _MetricConversionValidationError(
-                    f"component {component_index}: metric_ingredients[{ingredient_index}] "
-                    f"retains an unconverted measurement"
-                )
-
-
-def _repair_unconverted_metric_ingredients(
-    values: list[str],
-    fallback: list[str],
-    component_index: int,
-    repairs: list[str],
-) -> list[str]:
-    repaired: list[str] = []
-    for ingredient_index, (value, source_value) in enumerate(zip(values, fallback)):
-        needs_conversion = _METRIC_CONVERSION_REQUIRED_PATTERN.search(value)
-        has_metric_measurement = _METRIC_MEASUREMENT_PATTERN.search(value)
-        if needs_conversion and not has_metric_measurement:
-            repairs.append(
-                f"component {component_index} metric_ingredients[{ingredient_index}] "
-                "retains an unconverted measurement"
-            )
-            repaired.append(source_value)
-        else:
-            repaired.append(value)
-    return repaired
 
 
 def _repair_shopping_list_categories(
@@ -510,8 +388,6 @@ def _repair_enrichment_alignment(
     for index, source_component in enumerate(source.components):
         component = enrichment.components[index] if index < len(enrichment.components) else EnrichmentComponent()
         ingredient_fallback = [_source_ingredient_display(ingredient) for ingredient in source_component.ingredients]
-        step_fallback = source_component.steps
-
         def aligned_or_fallback(field_name: str, values: list[str], fallback: list[str]) -> list[str]:
             if len(values) == len(fallback):
                 return values
@@ -520,29 +396,7 @@ def _repair_enrichment_alignment(
             )
             return fallback
 
-        metric_ingredients = aligned_or_fallback(
-            "metric_ingredients", component.metric_ingredients, ingredient_fallback,
-        )
-        metric_ingredients = _repair_unconverted_metric_ingredients(
-            metric_ingredients,
-            ingredient_fallback,
-            index,
-            repairs,
-        )
-        imperial_ingredients = aligned_or_fallback(
-            "imperial_ingredients", component.imperial_ingredients, ingredient_fallback,
-        )
-
         repaired_components.append(component.model_copy(update={
-            "metric_ingredients": _preserve_discrete_ingredient_measurements(
-                ingredient_fallback,
-                _preserve_spoon_measurements(ingredient_fallback, metric_ingredients),
-                allow_canned_conversion=True,
-            ),
-            "imperial_ingredients": _preserve_discrete_ingredient_measurements(
-                ingredient_fallback,
-                _preserve_spoon_measurements(ingredient_fallback, imperial_ingredients),
-            ),
             "shopping_list_values": aligned_or_fallback(
                 "shopping_list_values", component.shopping_list_values, ingredient_fallback,
             ),
@@ -552,8 +406,6 @@ def _repair_enrichment_alignment(
                 index,
                 repairs,
             ),
-            "metric_steps": aligned_or_fallback("metric_steps", component.metric_steps, step_fallback),
-            "imperial_steps": aligned_or_fallback("imperial_steps", component.imperial_steps, step_fallback),
         }))
 
     if repairs:
@@ -624,17 +476,9 @@ async def _enrich_recipe(
                 raise ValueError(
                     "total_time_minutes must be calculated for a recipe with content"
                 )
-            _validate_metric_ingredients(enrichment)
         except (json.JSONDecodeError, ValidationError, ValueError) as exc:
             validation_error = str(exc)
             if attempt == _MAX_ENRICHMENT_ATTEMPTS:
-                if isinstance(exc, _MetricConversionValidationError):
-                    log.warning(
-                        "Gemini enrichment still contains unconverted metric measurements; "
-                        "using source values for those ingredients: %s",
-                        validation_error,
-                    )
-                    return _repair_enrichment_alignment(source, enrichment)
                 raise
             log.warning(
                 "Gemini enrichment response failed validation (attempt %d/%d): %s",
@@ -685,16 +529,11 @@ def assemble_recipe(
         ingredient_count = len(source_component.ingredients)
         step_count = len(source_component.steps)
 
-        for field_name, values in (
-            ("metric_ingredients", enriched.metric_ingredients),
-            ("imperial_ingredients", enriched.imperial_ingredients),
-            ("shopping_list_values", enriched.shopping_list_values),
-        ):
-            if len(values) != ingredient_count:
-                raise ValueError(
-                    f"Component {index}: {field_name} has {len(values)} entries, "
-                    f"expected {ingredient_count}"
-                )
+        if len(enriched.shopping_list_values) != ingredient_count:
+            raise ValueError(
+                f"Component {index}: shopping_list_values has {len(enriched.shopping_list_values)} entries, "
+                f"expected {ingredient_count}"
+            )
 
         component_step_lines = step_ingredient_lines[index]
         if len(component_step_lines) != step_count:
@@ -702,16 +541,6 @@ def assemble_recipe(
                 f"Component {index}: step_ingredient_line has {len(component_step_lines)} entries, "
                 f"expected {step_count}"
             )
-
-        for field_name, values in (
-            ("metric_steps", enriched.metric_steps),
-            ("imperial_steps", enriched.imperial_steps),
-        ):
-            if len(values) != step_count:
-                raise ValueError(
-                    f"Component {index}: {field_name} has {len(values)} entries, "
-                    f"expected {step_count}"
-                )
 
         category_repairs: list[str] = []
         shopping_categories = _repair_shopping_list_categories(
@@ -746,10 +575,10 @@ def assemble_recipe(
             yield_note=source_component.yield_note,
             ingredients=ingredients,
             steps=source_component.steps,
-            metric_ingredients=enriched.metric_ingredients,
-            imperial_ingredients=enriched.imperial_ingredients,
-            metric_steps=enriched.metric_steps,
-            imperial_steps=enriched.imperial_steps,
+            **build_variants(
+                [_source_ingredient_display(value) for value in source_component.ingredients],
+                source_component.steps,
+            ),
             shopping_list_categories=shopping_categories,
             step_ingredient_line=component_step_lines,
         ))
@@ -795,11 +624,7 @@ async def enrich_v2_recipe(
         SourceComponent(
             name=component.name,
             ingredients=[
-                {
-                    "qty": parsed.qty,
-                    "unit": parsed.unit,
-                    "name": parsed.name or item.text,
-                }
+                _v2_source_ingredient(parsed, item.text)
                 for item, parsed in zip(component.ingredients, parsed_component)
             ],
             steps=[step.text for step in component.steps],
@@ -1004,56 +829,6 @@ async def extract_recipe_from_image(
         for component, raw_component in zip(assembled.components, raw_ingredients)
     ]
     return assembled
-
-
-async def estimate_unit_variants(
-    components: list[dict],
-    model: str = _DEFAULT_MECHANICAL_MODEL,
-    usage: UsageTracker | None = None,
-) -> RecipeUnitVariants:
-    prompt = json.dumps({"components": components}, ensure_ascii=False)
-    client = _build_client()
-    response = await _with_retry(
-        lambda: client.models.generate_content(
-            model=model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=_UNIT_CONVERSION_SYSTEM,
-                temperature=0,
-                response_mime_type="application/json",
-                response_schema=RecipeUnitVariants,
-            ),
-        )
-    )
-    if usage is not None:
-        usage.add(response)
-    variants = RecipeUnitVariants.model_validate(json.loads(response.text))
-    repaired_components = list(variants.components)
-    for index, source_component in enumerate(components):
-        if index >= len(variants.components):
-            break
-
-        variant_component = variants.components[index]
-        source_ingredients = source_component.get("ingredients", [])
-        if (
-            len(source_ingredients) != len(variant_component.metric_ingredients)
-            or len(source_ingredients) != len(variant_component.imperial_ingredients)
-        ):
-            continue
-
-        repaired_components[index] = variant_component.model_copy(update={
-            "metric_ingredients": _preserve_discrete_ingredient_measurements(
-                source_ingredients,
-                _preserve_spoon_measurements(source_ingredients, variant_component.metric_ingredients),
-                allow_canned_conversion=True,
-            ),
-            "imperial_ingredients": _preserve_discrete_ingredient_measurements(
-                source_ingredients,
-                _preserve_spoon_measurements(source_ingredients, variant_component.imperial_ingredients),
-            ),
-        })
-
-    return variants.model_copy(update={"components": repaired_components})
 
 
 class _StepIngredientReference(BaseModel):

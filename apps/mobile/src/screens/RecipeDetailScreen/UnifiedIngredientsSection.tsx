@@ -62,7 +62,8 @@ const UnifiedIngredientsSection = ({
               ? null
               : getImperialCupQty(
                   component.imperial_ingredients?.[ingredientIndex],
-                  servingScale
+                  servingScale,
+                  value
                 )
           const cupHint = cupQty
             ? ` (${cupQty} ${t('units.cup', { defaultValue: 'cup' })})`

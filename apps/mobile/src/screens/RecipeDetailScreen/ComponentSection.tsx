@@ -66,10 +66,11 @@ const ComponentSection = ({
       const qty = getImperialCupQty(
         component.imperial_ingredients?.[ingredientIndex],
         servingScale,
+        ingredientValues[ingredientIndex],
       )
       return qty ? ` (${qty} ${t('units.cup', { defaultValue: 'cup' })})` : ''
     },
-    [component.imperial_ingredients, servingScale, t, unitSystem],
+    [component.imperial_ingredients, ingredientValues, servingScale, t, unitSystem],
   )
 
   const getShoppingListValue = useCallback(

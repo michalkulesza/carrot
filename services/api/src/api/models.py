@@ -384,14 +384,7 @@ class RecipeSourceExtraction(BaseModel):
     components: list[SourceComponent] = []
 
 
-class UnitVariantComponent(BaseModel):
-    metric_ingredients: list[str] = []
-    imperial_ingredients: list[str] = []
-    metric_steps: list[str] = []
-    imperial_steps: list[str] = []
-
-
-class EnrichmentComponent(UnitVariantComponent):
+class EnrichmentComponent(BaseModel):
     shopping_list_values: list[str] = []
     shopping_list_categories: list[str] = []
 
@@ -405,10 +398,6 @@ class RecipeEnrichment(BaseModel):
     overview: str | None = None
     tags: list[str] = []
     components: list[EnrichmentComponent] = []
-
-
-class RecipeUnitVariants(BaseModel):
-    components: list[UnitVariantComponent] = []
 
 
 # ── API request / response ────────────────────────────────────────────────────

@@ -108,8 +108,11 @@ export const scaleIngredientQuantity = (ingredient: string, scale: number): stri
 export const getImperialCupQty = (
   imperialIngredient: string | undefined,
   servingScale: number,
+  metricIngredient?: string,
 ): string | null => {
-  if (!imperialIngredient) return null
+  if (!imperialIngredient || (metricIngredient && CUP_PATTERN.test(metricIngredient))) {
+    return null
+  }
 
   const scaled = scaleIngredientQuantity(imperialIngredient, servingScale)
   const match = scaled.match(CUP_PATTERN)

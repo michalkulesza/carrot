@@ -9,7 +9,11 @@ Open work only. When an item is completed, move it to the matching category in [
 - [ ] **Extraction critical-field monitoring** — Send a Sentry info event when a completed recipe extraction lacks source-provided total time, servings, calories, protein, fat, or carbohydrates. Include only safe diagnostic metadata such as missing field names, source kind, and sanitized source URL; never include recipe text or user-provided content.
 
 - [ ] **Extractor v2** — Core extraction and production integration are complete. Add 25 reviewed TikTok fixtures (five each in en, pl, de, fr, es); Facebook support is tracked separately under Core product features. The extractor stays source-agnostic, accepting cleaned HTML or normalized text. Plan: [Extractor v2](specs/extractor-v2.md).
+  - [ ] Preserve ingredient groups in social imports. The caption in [instagram-Dcg94qVxius.json](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) labels groups such as Carne, Chiles, Verduras, Condimentos, and Además, but the imported recipe does not keep those groups. Improve extraction and add this fixture as a regression case.
+  - [ ] Route image imports through extractor v2. Make one Gemini vision call to transcribe visible text faithfully, preserving headings, line breaks, reading order, and uncertainty. Pass that text to the existing v2 text pipeline and use its normal extraction, enrichment, unit conversion, failure handling, and persistence. Keep the image and transcription as source evidence, and compare cookbook pages, screenshots, and handwriting before rollout. The one-call limit applies to image transcription; v2's existing model calls remain as they are.
 
+- [ ] **Unit exchange???**
+  - [ ] Review serving quantity scaling in [ingredientScaling.ts](../packages/shared/src/utils/ingredientScaling.ts#L94), including how it handles quantities when switching between metric and US recipe variants.
 
 ## Core product features
 

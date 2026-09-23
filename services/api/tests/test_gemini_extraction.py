@@ -58,12 +58,12 @@ def _match(component_index: int, step_index: int, references: list[dict]) -> dic
     }
 
 
-def test_metric_weight_conversion_is_not_replaced_with_the_source_measurement() -> None:
-    source = ["1 1/2 lbs. skinless salmon fillet"]
-    metric = ["680 g skinless salmon fillet"]
+def test_deterministic_variants_convert_weight_without_changing_ingredient_text() -> None:
+    from api.services.unit_variants import build_variants
 
-    assert gemini._preserve_discrete_ingredient_measurements(source, metric) == metric
+    variants = build_variants(["about 1 1/2 lbs. skinless salmon fillet"], [])
 
+    assert variants["metric_ingredients"] == ["about 680.4 g skinless salmon fillet"]
 
 @pytest.mark.asyncio
 async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_ungrounded_lines(monkeypatch) -> None:
@@ -239,104 +239,6 @@ def test_step_matcher_does_not_accept_numeric_quantity_as_grounding() -> None:
         "15 chicken thighs",
         "15",
     )
-
-
-def test_metric_ingredients_require_a_metric_measurement() -> None:
-    enrichment = _matching_enrichment()
-    enrichment.components[0].metric_ingredients = ["4 cup coleslaw* (4 cup)"]
-
-    with pytest.raises(ValueError, match="retains an unconverted measurement"):
-        gemini._validate_metric_ingredients(enrichment)
-
-    enrichment.components[0].metric_ingredients = ["227 g coleslaw* (4 cup)"]
-    gemini._validate_metric_ingredients(enrichment)
-
-
-def test_metric_ingredient_length_is_converted_to_centimetres() -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{
-            "ingredients": [{"name": "2 inch knob of ginger, finely chopped"}],
-        }],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ["5 cm knob of ginger, finely chopped"],
-        "imperial_ingredients": ["2 inch knob of ginger, finely chopped"],
-        "metric_steps": [],
-        "imperial_steps": [],
-        "shopping_list_values": ["1 knob of ginger"],
-    }]))
-
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-
-    assert repaired.components[0].metric_ingredients == [
-        "5 cm knob of ginger, finely chopped"
-    ]
-    gemini._validate_metric_ingredients(repaired)
-
-    repaired.components[0].metric_ingredients = [
-        "2 inch knob of ginger, finely chopped"
-    ]
-    with pytest.raises(ValueError, match="retains an unconverted measurement"):
-        gemini._validate_metric_ingredients(repaired)
-
-
-@pytest.mark.asyncio
-async def test_repeated_unconverted_metric_ingredient_does_not_fail_import(monkeypatch) -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "title": "Mexican chicken and rice",
-        "components": [{
-            "ingredients": [
-                {"qty": "1", "unit": "cup", "name": "frozen corn kernels"},
-            ],
-            "steps": ["Add the corn."],
-        }],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ["1 cup frozen corn kernels"],
-        "imperial_ingredients": ["1 cup frozen corn kernels"],
-        "metric_steps": ["Add the corn."],
-        "imperial_steps": ["Add the corn."],
-        "shopping_list_values": ["1 bag frozen corn kernels"],
-        "shopping_list_categories": ["frozen"],
-    }]))
-    generate_content = Mock(side_effect=[_response(enrichment.model_dump(mode="json")) for _ in range(3)])
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-
-    enriched = await gemini._enrich_recipe(source, None, False, None)
-    result = gemini.assemble_recipe(source, enriched)
-
-    component = result.components[0]
-    assert component.metric_ingredients == ["1 cup frozen corn kernels"]
-    assert component.ingredients[0].shopping_list_value == "1 bag frozen corn kernels"
-    assert component.ingredients[0].shopping_list_category == "frozen"
-    assert generate_content.call_count == 3
-
-
-@pytest.mark.parametrize(
-    ("source_value", "invalid_metric_value"),
-    [
-        ("1 cup frozen corn", "1 cup frozen corn"),
-        ("16 oz black beans", "16 oz black beans"),
-        ("2 inch knob of ginger", "2 inch knob of ginger"),
-    ],
-)
-def test_unconverted_metric_measurements_fall_back_individually(
-    source_value: str,
-    invalid_metric_value: str,
-) -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{"ingredients": [{"name": source_value}]}],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": [invalid_metric_value],
-        "imperial_ingredients": [source_value],
-        "shopping_list_values": [source_value],
-    }]))
-
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-
-    assert repaired.components[0].metric_ingredients == [source_value]
 
 
 @pytest.mark.asyncio
@@ -523,74 +425,22 @@ def test_source_total_time_overrides_enrichment_estimate() -> None:
     assert assembled.total_time_minutes == 65
 
 
-def test_enrichment_preserves_tsp_and_tbsp_in_both_unit_variants() -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{
-            "ingredients": [
-                {"qty": "1", "unit": "tsp", "name": "vanilla extract"},
-                {"qty": "2", "unit": "tbsp", "name": "olive oil"},
-            ],
-        }],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ["5 ml vanilla extract", "30 ml olive oil"],
-        "imperial_ingredients": ["1 tsp vanilla extract", "2 tbsp olive oil"],
-        "metric_steps": [],
-        "imperial_steps": [],
-        "shopping_list_values": ["1 tsp vanilla extract", "2 tbsp olive oil"],
-    }]))
+def test_deterministic_variants_preserve_spoons_counts_and_cups() -> None:
+    from api.services.unit_variants import build_variants
 
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-    component = repaired.components[0]
+    variants = build_variants(["1 tsp vanilla extract", "2 tbsp olive oil", "1/2 sweet onion", "2 cups flour"], [])
 
-    assert component.metric_ingredients == ["1 tsp vanilla extract", "2 tbsp olive oil"]
-    assert component.imperial_ingredients == ["1 tsp vanilla extract", "2 tbsp olive oil"]
+    assert variants["metric_ingredients"] == ["1 tsp vanilla extract", "2 tbsp olive oil", "1/2 sweet onion", "2 cups flour"]
+    assert variants["imperial_ingredients"] == variants["metric_ingredients"]
 
 
-def test_enrichment_preserves_discrete_ingredients_in_both_unit_variants() -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{
-            "ingredients": [
-                {"qty": "1/2", "name": "sweet onion"},
-                {"qty": "1", "name": "stalk celery"},
-            ],
-        }],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ["125 g sweet onion", "30 g celery"],
-        "imperial_ingredients": ["1/2 cup sweet onion", "1/4 cup celery"],
-        "metric_steps": [],
-        "imperial_steps": [],
-        "shopping_list_values": ["1 sweet onion", "1 stalk celery"],
-    }]))
+def test_deterministic_variants_convert_length_measurements() -> None:
+    from api.services.unit_variants import build_variants
 
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-    component = repaired.components[0]
+    variants = build_variants(["2 inch knob of ginger, finely chopped"], [])
 
-    assert component.metric_ingredients == ["1/2 sweet onion", "1 stalk celery"]
-    assert component.imperial_ingredients == ["1/2 sweet onion", "1 stalk celery"]
-
-
-def test_enrichment_estimates_metric_weight_for_canned_ingredients() -> None:
-    source = RecipeSourceExtraction.model_validate({
-        "components": [{
-            "ingredients": [{"qty": "1", "unit": "can", "name": "black beans, drained and rinsed"}],
-        }],
-    })
-    enrichment = RecipeEnrichment.model_validate(_enrichment_payload(components=[{
-        "metric_ingredients": ["240 g (1 can) black beans, drained and rinsed"],
-        "imperial_ingredients": ["1 can black beans, drained and rinsed"],
-        "metric_steps": [],
-        "imperial_steps": [],
-        "shopping_list_values": ["1 can black beans"],
-    }]))
-
-    repaired = gemini._repair_enrichment_alignment(source, enrichment)
-    component = repaired.components[0]
-
-    assert component.metric_ingredients == ["240 g (1 can) black beans, drained and rinsed"]
-    assert component.imperial_ingredients == ["1 can black beans, drained and rinsed"]
-
+    assert variants["metric_ingredients"] == ["5.1 cm knob of ginger, finely chopped"]
+    assert variants["imperial_ingredients"] == ["2 inch knob of ginger, finely chopped"]
 
 def test_assemble_recipe_rejects_mismatched_component_count() -> None:
     source = _one_component_source()
@@ -602,15 +452,7 @@ def test_assemble_recipe_rejects_mismatched_component_count() -> None:
 def test_assemble_recipe_rejects_mismatched_ingredient_count() -> None:
     source = _one_component_source()
     enrichment = _matching_enrichment()
-    enrichment.components[0].metric_ingredients = []
-    with pytest.raises(ValueError):
-        gemini.assemble_recipe(source, enrichment)
-
-
-def test_assemble_recipe_rejects_mismatched_step_count() -> None:
-    source = _one_component_source()
-    enrichment = _matching_enrichment()
-    enrichment.components[0].metric_steps = []
+    enrichment.components[0].shopping_list_values = []
     with pytest.raises(ValueError):
         gemini.assemble_recipe(source, enrichment)
 
@@ -714,30 +556,6 @@ async def test_v2_enrichment_uses_parser_and_keeps_uncertain_source_text(monkeyp
     assert (ingredients[4].qty, ingredients[4].unit, ingredients[4].name) == (
         "260", "ml", "Lukewarm milk 38-40°C (310ml if you want to skip egg)",
     )
-
-
-@pytest.mark.asyncio
-async def test_estimate_unit_variants_uses_shared_conversion_contract(monkeypatch) -> None:
-    generate_content = Mock(return_value=_response({"components": [{
-        "metric_ingredients": ["5 ml vanilla"],
-        "imperial_ingredients": ["5 ml vanilla"],
-        "metric_steps": ["Chop."],
-        "imperial_steps": ["Chop."],
-    }]}))
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-
-    usage = gemini.UsageTracker()
-    result = await gemini.estimate_unit_variants(
-        [{"name": "main", "ingredients": ["1 tsp vanilla"], "steps": ["Chop."]}], usage=usage
-    )
-
-    call = generate_content.call_args
-    assert call.kwargs["config"].temperature == 0
-    assert call.kwargs["config"].system_instruction == gemini._UNIT_CONVERSION_SYSTEM
-    assert result.components[0].metric_ingredients == ["1 tsp vanilla"]
-    assert result.components[0].imperial_ingredients == ["1 tsp vanilla"]
-    assert usage.calls == 1
 
 
 @pytest.mark.asyncio
