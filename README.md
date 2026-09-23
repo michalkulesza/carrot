@@ -17,29 +17,29 @@ pnpm install
 cd services/api && uv sync && cd ../..
 ```
 
-### 2. Start everything
+### 2. Configure the local environment
+
+Copy `.env.example` to `.env` for Docker Compose, and `services/api/.env.example` to `services/api/.env` for the locally running API. Fill in the required values in both files.
+
+### 3. Start the web app and backend
 
 ```bash
-pnpm dev
+pnpm be:web
 ```
 
-This starts the database (Docker), API, and frontend in one command.
+This starts Docker Compose services (including the database and import worker), the local API, and the web frontend.
 
-Frontend: http://localhost:5173 — API: http://localhost:8000
+Frontend: http://localhost:5173 — local API: http://localhost:8088
 
 ## Environment variables
 
-Copy and edit the API env file:
-
-```bash
-cp services/api/.env.example services/api/.env
-```
+The root `.env` supplies Docker Compose; `services/api/.env` supplies the locally running API.
 
 | Variable | Default | Description |
 |---|---|---|
 | `ALLOWED_ORIGINS` | `http://localhost:5173` | CORS allowed origins |
 | `DATABASE_URL` | — | PostgreSQL connection string |
-| `SECRET_KEY` | — | Auth secret key |
+| `SECRET` | — | Auth secret |
 
 ## Semantic search rollout
 
