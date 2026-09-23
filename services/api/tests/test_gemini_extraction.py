@@ -11,6 +11,7 @@ from api.models import (
     RecipeSourceExtraction,
 )
 from api.services import gemini, import_worker, pipeline
+from api.services.extraction_v2.contracts import ExtractedRecipe
 
 
 def _response(payload: dict) -> SimpleNamespace:
@@ -652,159 +653,6 @@ def test_assemble_recipe_rejects_mismatched_step_count() -> None:
         gemini.assemble_recipe(source, enrichment)
 
 
-def test_strip_html_preserves_structural_container_with_noise_named_theme_class() -> None:
-    html = """
-    <html><body class="content-sidebar">
-      <nav class="recipe-navigation">Recipe index</nav>
-      <div class="content-sidebar-wrap">
-        <article><h1>Article introduction</h1></article>
-        <div class="wprm-recipe-container">
-          <h1>Beef Stroganoff</h1><p>Ingredients: beef, mushrooms</p>
-        </div>
-      </div>
-    </body></html>
-    """
-
-    text = pipeline._strip_html(html)
-
-    assert "Beef Stroganoff" in text
-    assert "Ingredients: beef, mushrooms" in text
-
-
-def test_find_jsonld_recipe_unwraps_graph() -> None:
-    html = """
-    <html><head><script type="application/ld+json">
-    {"@context": "https://schema.org", "@graph": [
-      {"@type": "WebPage", "name": "irrelevant"},
-      {"@type": "Recipe", "name": "Graph Recipe", "recipeIngredient": ["1 egg"]}
-    ]}
-    </script></head><body></body></html>
-    """
-
-    recipe = pipeline._find_jsonld_recipe(html)
-
-    assert recipe is not None
-    assert recipe["name"] == "Graph Recipe"
-
-
-def test_jsonld_recipe_steps_unpacks_how_to_sections_and_skips_abbreviated() -> None:
-    data = {
-        "recipeInstructions": [
-            {"@type": "HowToSection", "name": "Abbreviated recipe:", "itemListElement": [
-                {"@type": "HowToStep", "text": "Do the whole thing quickly."},
-            ]},
-            {"@type": "HowToSection", "name": "Prep", "itemListElement": [
-                {"@type": "HowToStep", "text": "Chop the onion."},
-                {"@type": "HowToStep", "text": "Boil the water."},
-            ]},
-        ]
-    }
-
-    steps = pipeline._jsonld_recipe_steps(data)
-
-    assert steps == ["Chop the onion.", "Boil the water."]
-
-
-def test_find_microdata_recipe_handles_wrapper_and_repeated_step_patterns() -> None:
-    wrapper_html = """
-    <div itemscope itemtype="https://schema.org/Recipe">
-      <h1 itemprop="name">Test Cake</h1>
-      <li itemprop="recipeIngredient">2 cups flour</li>
-      <div itemprop="recipeInstructions">
-        <ol><li itemprop="text">Mix dry ingredients.</li></ol>
-      </div>
-    </div>
-    """
-    repeated_html = """
-    <div itemscope itemtype="http://schema.org/Recipe">
-      <span itemprop="name">Test Soup</span>
-      <span itemprop="recipeIngredient">1 onion</span>
-      <p itemprop="recipeInstructions">Chop the onion.</p>
-      <p itemprop="recipeInstructions">Simmer for 20 minutes.</p>
-    </div>
-    """
-
-    wrapper = pipeline._find_microdata_recipe(wrapper_html)
-    repeated = pipeline._find_microdata_recipe(repeated_html)
-
-    assert wrapper == {
-        "name": "Test Cake",
-        "recipeYield": None,
-        "totalTime": None,
-        "recipeIngredient": ["2 cups flour"],
-        "recipeInstructions": ["Mix dry ingredients."],
-        "nutrition": None,
-    }
-    assert repeated["recipeInstructions"] == ["Chop the onion.", "Simmer for 20 minutes."]
-
-
-def test_find_microdata_recipe_requires_both_ingredients_and_instructions() -> None:
-    html = """
-    <div itemscope itemtype="https://schema.org/Recipe">
-      <span itemprop="name">Missing Instructions</span>
-      <span itemprop="recipeIngredient">1 onion</span>
-    </div>
-    """
-
-    assert pipeline._find_microdata_recipe(html) is None
-
-
-def test_find_domain_specific_recipe_parses_kwestiasmaku_field_groups() -> None:
-    html = """
-    <html><body>
-      <h1>Test Danie</h1>
-      <div class="group-skladniki">
-        <ul><li>1 kg mięsa</li><li>2 cebule</li></ul>
-      </div>
-      <div class="group-przepis">
-        <ul><li>Podsmażyć cebulę.</li><li>Dodać mięso i dusić 20 minut.</li></ul>
-      </div>
-    </body></html>
-    """
-
-    recipe = pipeline._find_domain_specific_recipe(
-        "https://www.kwestiasmaku.com/przepis/test-danie", html
-    )
-
-    assert recipe == {
-        "name": "Test Danie",
-        "recipeIngredient": ["1 kg mięsa", "2 cebule"],
-        "recipeInstructions": ["Podsmażyć cebulę.", "Dodać mięso i dusić 20 minut."],
-    }
-
-
-def test_find_domain_specific_recipe_parses_oliveandmango_directions_after_summary() -> None:
-    html = """
-    <html><body>
-      <div itemscope itemtype="https://schema.org/Recipe">
-        <span itemprop="name">Test Chicken</span>
-        <span itemprop="recipeIngredient">1 chicken</span>
-        <span itemprop="recipeIngredient">2 lemons</span>
-        <div itemprop="text">
-          <h2>How To Make This Dish</h2>
-          <ol><li>ROAST the chicken.</li><li>SERVE.</li></ol>
-          <h2>Directions</h2>
-          <ol><li>Heat oven to 400F.</li><li>Roast for 40 minutes.</li></ol>
-        </div>
-      </div>
-    </body></html>
-    """
-
-    recipe = pipeline._find_domain_specific_recipe(
-        "https://www.oliveandmango.com/test-chicken/", html
-    )
-
-    assert recipe == {
-        "name": "Test Chicken",
-        "recipeIngredient": ["1 chicken", "2 lemons"],
-        "recipeInstructions": ["Heat oven to 400F.", "Roast for 40 minutes."],
-    }
-
-
-def test_find_domain_specific_recipe_returns_none_for_unmapped_domain() -> None:
-    assert pipeline._find_domain_specific_recipe("https://example.com/recipe", "<html></html>") is None
-
-
 def test_is_complete_accepts_ingredients_and_steps_split_across_components() -> None:
     # A recipe with sub-headed ingredient sections ("For the paste", "For the
     # pork") and one shared instruction list: no single component carries
@@ -824,6 +672,43 @@ def test_is_complete_rejects_recipe_with_no_ingredients_anywhere() -> None:
     ]))
 
     assert pipeline._is_complete(recipe) is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("allergens, expected_allergen, expected_calls", [
+    (None, None, 1),
+    (["peanuts"], "peanuts", 2),
+])
+async def test_v2_enrichment_runs_allergen_analysis_only_when_configured(
+    monkeypatch, allergens, expected_allergen, expected_calls,
+) -> None:
+    ingredient = "1 tbsp peanut butter" if allergens else "1 onion"
+    source = ExtractedRecipe.model_validate({
+        "title": "Simple spread",
+        "components": [{"ingredients": [{"text": ingredient, "evidence_ids": ["pasted_text:0"]}]}],
+    })
+    enrichment = {"components": [{
+        "metric_ingredients": [ingredient],
+        "imperial_ingredients": [ingredient],
+        "metric_steps": [],
+        "imperial_steps": [],
+        "shopping_list_values": [ingredient],
+        "shopping_list_categories": ["pantry"],
+    }]}
+    responses = [_response(enrichment)]
+    if allergens:
+        responses.append(_response({"results": [{"allergen": "peanuts", "substitute": "tahini"}]}))
+    generate_content = Mock(side_effect=responses)
+    monkeypatch.setattr(gemini, "_build_client", lambda: SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)))
+
+    result = await gemini.enrich_v2_recipe(source, allergens=allergens)
+
+    assert generate_content.call_count == expected_calls
+    assert result.components[0].ingredients[0].name == ingredient
+    assert result.components[0].ingredients[0].allergen == expected_allergen
+    if allergens:
+        assert result.components[0].ingredients[0].substitute == "tahini"
+        assert result.allergen_status == "analyzed"
 
 
 @pytest.mark.asyncio
@@ -848,190 +733,6 @@ async def test_estimate_unit_variants_uses_shared_conversion_contract(monkeypatc
     assert result.components[0].metric_ingredients == ["1 tsp vanilla"]
     assert result.components[0].imperial_ingredients == ["1 tsp vanilla"]
     assert usage.calls == 1
-
-
-@pytest.mark.asyncio
-async def test_text_import_honours_supplied_model_override(monkeypatch) -> None:
-    captured_models = []
-    extraction = RecipeExtraction.model_validate(_enrichment_payload())
-
-    async def fake_extract_recipe(*args, **kwargs):
-        captured_models.append(kwargs["model"])
-        return extraction
-
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-    events = [
-        event async for event in pipeline.run_text_import_stream(
-            "Ingredients: 1 onion", model="explicit-override-model"
-        )
-    ]
-
-    assert captured_models == ["explicit-override-model"]
-    assert "debug" not in events[-1]["result"]["metadata"]
-
-
-@pytest.mark.asyncio
-async def test_text_import_uses_configured_model_when_none_supplied(monkeypatch) -> None:
-    captured_models = []
-    extraction = RecipeExtraction.model_validate(_enrichment_payload())
-
-    async def fake_extract_recipe(*args, **kwargs):
-        captured_models.append(kwargs["model"])
-        return extraction
-
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-    events = [
-        event async for event in pipeline.run_text_import_stream("Ingredients: 1 onion")
-    ]
-
-    assert captured_models == [None]
-    assert "debug" not in events[-1]["result"]["metadata"]
-
-
-@pytest.mark.asyncio
-async def test_incomplete_text_import_is_reported_to_sentry(monkeypatch) -> None:
-    extraction = RecipeExtraction.model_validate(_enrichment_payload())
-
-    async def fake_extract_recipe(*args, **kwargs):
-        return extraction
-
-    report_failure = Mock()
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-    monkeypatch.setattr(pipeline, "report_recipe_import_failure", report_failure)
-
-    events = [
-        event async for event in pipeline.run_text_import_stream("not a recipe")
-    ]
-
-    assert events[-1]["result"]["error"] == "Could not extract a recipe from this text."
-    assert report_failure.call_args.kwargs == {
-        "input_kind": "text",
-        "input_size": len("not a recipe"),
-        "reason": "no_complete_recipe_extracted",
-    }
-
-
-@pytest.mark.asyncio
-async def test_incomplete_url_import_requires_manual_completion(monkeypatch) -> None:
-    extraction = RecipeExtraction.model_validate(_enrichment_payload())
-
-    async def fake_fetch_html(*args, **kwargs):
-        return "<html><head><title>Ingredients only</title></head><body>1 onion</body></html>"
-
-    async def fake_extract_recipe(*args, **kwargs):
-        return extraction
-
-    monkeypatch.setattr(pipeline, "_fetch_html", fake_fetch_html)
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-
-    events = [
-        event async for event in pipeline.run_import_stream("https://example.com/ingredients-only")
-    ]
-
-    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
-
-
-@pytest.mark.asyncio
-async def test_incomplete_social_import_requires_manual_completion(monkeypatch) -> None:
-    metadata = pipeline.ReelMetadata(
-        source_url="https://www.instagram.com/p/ingredients-only",
-        canonical_url="https://www.instagram.com/p/ingredients-only",
-        thumbnail_url=None,
-        creator_handle="example",
-        description="Ingredients: 1 onion",
-        linked_urls=[],
-        video_url=None,
-    )
-    extraction = RecipeExtraction.model_validate(_enrichment_payload())
-
-    async def fake_fetch_reel(*args, **kwargs):
-        return metadata
-
-    async def fake_extract_recipe(*args, **kwargs):
-        return extraction
-
-    monkeypatch.setattr(pipeline.scraper, "fetch_reel", fake_fetch_reel)
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-
-    events = [
-        event async for event in pipeline.run_import_stream("https://www.instagram.com/p/ingredients-only")
-    ]
-
-    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
-
-
-@pytest.mark.asyncio
-async def test_unavailable_social_metadata_requires_manual_completion(monkeypatch) -> None:
-    async def fake_fetch_reel(*args, **kwargs):
-        raise RuntimeError("Scraper unavailable")
-
-    monkeypatch.setattr(pipeline.scraper, "fetch_reel", fake_fetch_reel)
-
-    events = [
-        event async for event in pipeline.run_import_stream("https://www.instagram.com/p/ingredients-only")
-    ]
-
-    assert events[-1]["result"]["error"] == pipeline.USER_ACTION_REQUIRED_ERROR_CODE
-
-
-@pytest.mark.asyncio
-async def test_import_without_allergens_makes_one_extraction_call_and_no_allergen_call(monkeypatch) -> None:
-    extraction = RecipeExtraction.model_validate(_enrichment_payload(components=[{
-        "role": "main",
-        "ingredients": [{"name": "onion", "qty": "1", "unit": None}],
-        "steps": ["Chop the onion."],
-    }]))
-    call_count = {"extract": 0}
-
-    async def fake_extract_recipe(*args, **kwargs):
-        call_count["extract"] += 1
-        return extraction
-
-    async def fail_analyze_allergens(*args, **kwargs):
-        raise AssertionError("allergen analysis must not run when no allergens are configured")
-
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-    monkeypatch.setattr(pipeline.gemini_svc, "analyze_allergens", fail_analyze_allergens)
-
-    events = [
-        event async for event in pipeline.run_text_import_stream("Ingredients: 1 onion", allergens=None)
-    ]
-
-    assert call_count["extract"] == 1
-    assert events[-1]["result"]["recipe"]["components"][0]["ingredients"][0]["allergen"] is None
-
-
-@pytest.mark.asyncio
-async def test_import_with_allergens_only_dedicated_call_supplies_allergen_results(monkeypatch) -> None:
-    extraction = RecipeExtraction.model_validate(_enrichment_payload(components=[{
-        "role": "main",
-        "ingredients": [{"name": "peanut butter", "qty": "1", "unit": None}],
-        "steps": ["Spread the peanut butter."],
-    }]))
-
-    async def fake_extract_recipe(*args, **kwargs):
-        assert "allergens" not in kwargs
-        return extraction
-
-    allergen_calls = {"count": 0}
-
-    async def fake_analyze_allergens(ingredients, allergens, **kwargs):
-        allergen_calls["count"] += 1
-        return [gemini._IngredientFlag(allergen="peanuts", substitute="tahini") for _ in ingredients]
-
-    monkeypatch.setattr(pipeline.gemini_svc, "extract_recipe", fake_extract_recipe)
-    monkeypatch.setattr(pipeline.gemini_svc, "analyze_allergens", fake_analyze_allergens)
-
-    events = [
-        event async for event in pipeline.run_text_import_stream(
-            "Ingredients: 1 tbsp peanut butter", allergens=["peanuts"]
-        )
-    ]
-
-    assert allergen_calls["count"] == 1
-    ingredient = events[-1]["result"]["recipe"]["components"][0]["ingredients"][0]
-    assert ingredient["allergen"] == "peanuts"
-    assert ingredient["substitute"] == "tahini"
 
 
 @pytest.mark.asyncio

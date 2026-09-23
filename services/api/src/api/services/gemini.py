@@ -906,7 +906,7 @@ async def enrich_v2_recipe(
     ]
     if allergens:
         allergen_results = await asyncio.gather(*(
-            analyze_allergens([_ingredient_display(ingredient) for ingredient in component.ingredients], allergens, usage=usage)
+            analyze_allergens([_source_ingredient_display(ingredient) for ingredient in component.ingredients], allergens, usage=usage)
             for component in assembled.components
         ))
         assembled.components = [component.model_copy(update={

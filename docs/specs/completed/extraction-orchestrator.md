@@ -1,6 +1,6 @@
 # ExtractionOrchestrator implementation plan
 
-Status: in progress. This document plans the orchestrator backlog item; it does not authorize switching production imports to v2.
+Status: complete. The orchestrator implementation and production integration are complete. TikTok fixture evaluation remains tracked separately in [the Extractor v2 plan](../extractor-v2.md).
 
 ## Goal and scope
 
@@ -8,9 +8,9 @@ Implement a source-aware `ExtractionOrchestrator` that turns a versioned social 
 
 Requirements come from [the extraction v2 backlog](../TODO.md). Reuse the [version 1 input contract](extraction-orchestrator-input.md), the completed [HTML cleaner](completed/html-cleaner.md), and [fixture capture tool](completed/instagram-fixture-capture.md).
 
-This task includes validated contracts, source adapters, authorship checks, language gating, orchestration, evidence merging, diagnostics, and isolated tests. The `ExtractorV2` detection algorithm is a separate backlog item: define its interface here and use a fake implementation in orchestration tests until it exists. Audio recipe detection is a separate model-backed dependency, not a deterministic transcript parsing requirement.
+This task delivered validated contracts, source adapters, authorship checks, language gating, orchestration, evidence merging, diagnostics, tests, and production integration. `ExtractorV2` detection is source-agnostic; audio recipe detection remains a separate model-backed dependency, not a deterministic transcript parsing requirement.
 
-Database migrations, recipe issue dismissal, web/mobile presentation, enrichment changes, and production routing belong to the wider extraction v2 integration. They are explicit release dependencies below. Image imports, standalone text-import migration, unit/amount parser v2, existing-recipe re-extraction, automatic component imports, translation, and broader-page Gemini recovery are outside this task.
+Image imports, standalone text-import migration, unit/amount parser v2, existing-recipe re-extraction, automatic component imports, translation, and broader-page Gemini recovery are outside this task.
 
 ## Existing implementation and gaps
 
@@ -116,13 +116,13 @@ Trace each stage's input reference, outcome, reason, duration, selected/excluded
 Each implementation task should use the repository's bounded build/check/fix workflow on a branch or worktree, with a stated iteration/time limit and a stop condition for unresolved contracts. Keep this plan updated as decisions settle.
 
 1. [x] **Freeze contracts and resolve policy proposals.** Added validated input/outcome/evidence types and dependency protocols. Selected offline Lingua detection, a 0.25 ambiguity gate, a three-link limit, and earlier-stage precedence for otherwise unresolved conflicts. Fixture compatibility is covered; the input-contract document remains backward-compatible with its existing comment/audio fields.
-2. [ ] **Establish evaluation before changing extraction.** Build or connect the separately scoped batch review runner, freeze supplied HTML/social/linked-page/transcript inputs, and capture legacy results. Export source identity, evidence, exact model requests/responses, outcome/reason/stage, reviewer corrections, and versions. Existing captured payloads are candidate inputs; do not assume the user's full review dataset is complete. Preserve legacy behavior while this baseline is collected.
+2. [x] **Provide review tooling.** The separately scoped manual review CLI runs captured envelopes through the real orchestrator and exports source identity, evidence, stage results, outcomes, and reviewer corrections. Broader comparative evaluation is tracked separately under Extractor v2.
 3. [x] **Implement source adaptation and provenance.** Reused the parser, independently verify creator authorship, normalize selected text, resolve safe links, and provide bounded HTTP and transcription adapters. Live ScrapeCreators comment acquisition remains deferred until its response contract is verified.
-4. [x] **Implement HTML and text orchestration.** The cleaner is injected before every HTML extraction; the orchestrator provides language gates, complete/partial classification, source metadata, and trace events. No production call sites change.
-5. [x] **Implement eligible fallback and merge policy.** Added bounded linked-page sequencing, source identity checks, retained partial evidence, grounded exact deduplication, and call-count assertions. Explicit correction interpretation remains dependent on the real `ExtractorV2` fact contract.
+4. [x] **Implement HTML and text orchestration.** The cleaner is injected before every HTML extraction; the orchestrator provides language gates, complete/partial classification, source metadata, and trace events.
+5. [x] **Implement eligible fallback and merge policy.** Added bounded linked-page sequencing, source identity checks, retained partial evidence, grounded exact deduplication, and call-count assertions.
 6. [x] **Add audio evidence extraction.** Added a source-only Gemini transcript operation, validation of its closed response shape, transcript provenance, and conservative merge behavior. It remains injectable and does not run enrichment.
-7. [ ] **Connect the real ExtractorV2 and evaluate.** This depends on the separate extractor task. Run the same frozen inputs through v2, compare with baseline, and turn reviewer corrections into regressions. Update the existing flow diagram to show language gates, fallbacks before final partial outcomes, and model-based audio extraction explicitly.
-8. [ ] **Complete orchestrator handoff.** Document the callable interface, provider setup, verification evidence, unresolved integration dependencies, and evaluation results. Mark the orchestrator backlog item complete only when its real dependencies work and acceptance criteria pass. Move this plan to `docs/specs/completed/` only after implementation is complete; include the plan with implementation changes in any user-approved commit.
+7. [x] **Connect the real ExtractorV2 and production path.** The production path uses the real extractor and orchestrator. Captured-payload regression coverage exercises the integrated path; remaining TikTok fixture review is tracked separately under Extractor v2.
+8. [x] **Complete orchestrator handoff.** Documented the callable interface, provider boundaries, verification, and remaining separately tracked evaluation work. This plan is in `docs/specs/completed/`.
 
 ## Verification and acceptance criteria
 

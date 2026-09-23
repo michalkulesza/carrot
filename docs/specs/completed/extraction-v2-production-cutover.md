@@ -1,6 +1,6 @@
 # Extraction v2 production cutover
 
-Status: implementation wired; acceptance verification remains. Static Python compilation, web production build, mobile TypeScript check, and diff checks pass. The frozen-capture integration cases and production-like smoke imports remain pending. This is a permanent replacement of the legacy URL/text extraction path, not a dual-run or feature-flag rollout. TikTok and Facebook review fixtures will be added separately after this work; their absence does not block implementation.
+Status: complete per the user's confirmation that live smoke imports and review are done. Production-path integration tests passed locally; the full API suite passed with 328 tests and 42 skips (40 unfrozen audio captures and two isolated-database tests that passed separately against disposable pgvector/Postgres). Static Python compilation, web production build, and mobile TypeScript check passed during earlier cutover verification and were not rerun for the test migration. This permanently replaces legacy URL/text extraction without a runtime fallback. TikTok and Facebook review fixtures remain separate follow-up work.
 
 ## Outcome and scope
 

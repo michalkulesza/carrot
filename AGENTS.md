@@ -1,7 +1,7 @@
 Before doing any work, read and follow `general.md`.
 
 # Misc
-- Track product work in [docs/TODO.md](docs/TODO.md), the project backlog.
+- Track open product work in [docs/TODO.md](docs/TODO.md). Whenever the user asks to mark a backlog item done, remove the completed item (or completed subtask) from TODO.md and move it under the matching category in [docs/TODO-COMPLETED.md](docs/TODO-COMPLETED.md). Keep any unfinished parent task or sibling subtasks in TODO.md; do not mark a parent complete until all of its work is done.
 - Before committing, ask the user to confirm the change is fully complete and correct — do not commit on your own judgment that a task is "successful." Only commit after they confirm.
 - When implementing a plan from .md include that file in the commit
 - Keep plans under `docs/specs/` while they are pending or in progress. Move a plan into `docs/specs/completed/` only after its implementation is fully complete.
