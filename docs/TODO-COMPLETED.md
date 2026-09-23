@@ -4,6 +4,8 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 
 ## Most urgent
 
+- [x] **Review serving quantity scaling** — Verified serving changes across metric and US ingredient variants; fixed quantity ranges, per-item measurements, and tiny nonzero amounts in [ingredientScaling.ts](../packages/shared/src/utils/ingredientScaling.ts).
+
 - [x] **Unit/amount parser v2** — Connected deterministic parsing to active recipe ingestion. Text and image imports preserve each full source ingredient line as `shopping_list_value`; the image extraction path no longer asks Gemini to split quantities or units. Reviewed benchmark: 200/200 diverse rows and 447/447 foreign-language rows agree exactly on `qty`, `unit`, and `name` (status excluded). Removed the unused legacy text extraction helper and Gemini splitting prompt. Completed: [unit/amount parser v2](specs/completed/unit-amount-parser-v2.md).
 
 - [x] **Manual orchestrator v2 review CLI** — Accept one or many captured JSON envelopes, run the real orchestrator/extractor, use saved transcripts without retranscription, and export Excel stage inputs/outputs, detected languages, completeness decisions, recipe evidence, and errors. Completed: [manual extraction review](specs/completed/manual-extraction-review.md).

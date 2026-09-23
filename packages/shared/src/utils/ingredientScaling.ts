@@ -14,13 +14,20 @@ const VULGAR_FRACTIONS: Record<string, number> = {
 
 const VULGAR_FRACTION_PATTERN = Object.keys(VULGAR_FRACTIONS).join('')
 const SIMPLE_QUANTITY_PATTERN = `(?:\\d+(?:[.,]\\d+)?(?:[${VULGAR_FRACTION_PATTERN}]|\\s+(?:\\d+[\\/⁄]\\d+|[${VULGAR_FRACTION_PATTERN}]))?|\\d+[\\/⁄]\\d+|[${VULGAR_FRACTION_PATTERN}])`
-const LEADING_QUANTITY_PATTERN = new RegExp(`^(\\s*)(${SIMPLE_QUANTITY_PATTERN})(?=\\s|$)`)
+const QUANTITY_RANGE_PATTERN = `(${SIMPLE_QUANTITY_PATTERN})(?:\\s*(?:-|–|—)\\s*|\\s+to\\s+)(${SIMPLE_QUANTITY_PATTERN})`
+const LEADING_QUANTITY_PATTERN = new RegExp(
+  `^(\\s*)(?:${QUANTITY_RANGE_PATTERN}|(${SIMPLE_QUANTITY_PATTERN}))(?=\\s|$|[x×])`,
+  'i',
+)
 const UNIT_PATTERN = UNITS.join('|')
 const EMBEDDED_QUANTITY_PATTERN = new RegExp(
-  `(${SIMPLE_QUANTITY_PATTERN})(\\s*)((?:${UNIT_PATTERN})(?:es|s)?)\\b`,
+  `(?:${QUANTITY_RANGE_PATTERN}|(${SIMPLE_QUANTITY_PATTERN}))(\\s*)((?:${UNIT_PATTERN})(?:es|s)?)\\b`,
   'gi',
 )
-const CUP_PATTERN = new RegExp(`(${SIMPLE_QUANTITY_PATTERN})\\s+cups?\\b`, 'i')
+const CUP_PATTERN = new RegExp(
+  `(?:${QUANTITY_RANGE_PATTERN}|(${SIMPLE_QUANTITY_PATTERN}))\\s+cups?\\b`,
+  'i',
+)
 
 const parseSlashFraction = (value: string): number | null => {
   const [numeratorText, denominatorText] = value.split(/[\/⁄]/)
@@ -64,6 +71,12 @@ const parseQuantity = (quantity: string): number | null => {
 }
 
 const formatQuantity = (value: number, decimalSeparator: '.' | ','): string => {
+  if (value > 0 && value < 0.005) {
+    const decimal = Number(value.toPrecision(6)).toString()
+
+    return decimalSeparator === ',' ? decimal.replace('.', ',') : decimal
+  }
+
   const whole = Math.floor(value)
   const remainder = value - whole
 
@@ -81,13 +94,28 @@ const formatQuantity = (value: number, decimalSeparator: '.' | ','): string => {
 }
 
 const scaleEmbeddedQuantities = (text: string, scale: number): string =>
-  text.replace(EMBEDDED_QUANTITY_PATTERN, (matchText, qtyText, spacing, unitText) => {
-    const quantity = parseQuantity(qtyText)
-    if (quantity === null) return matchText
+  text.replace(
+    EMBEDDED_QUANTITY_PATTERN,
+    (matchText, rangeStart, rangeEnd, single, spacing, unitText, offset) => {
+      if (/(?:\bx|×|\beach)\s*$/i.test(text.slice(0, offset))) return matchText
+      if (/^\s*(?:each\b|per\s+\w+\b)/i.test(text.slice(offset + matchText.length))) {
+        return matchText
+      }
 
-    const decimalSeparator = qtyText.includes(',') ? ',' : '.'
-    return `${formatQuantity(quantity * scale, decimalSeparator)}${spacing}${unitText}`
-  })
+      const format = (quantityText: string): string => {
+        const quantity = parseQuantity(quantityText)
+        if (quantity === null) return quantityText
+
+        return formatQuantity(quantity * scale, quantityText.includes(',') ? ',' : '.')
+      }
+
+      if (rangeStart && rangeEnd) {
+        return `${format(rangeStart)}-${format(rangeEnd)}${spacing}${unitText}`
+      }
+
+      return `${format(single)}${spacing}${unitText}`
+    },
+  )
 
 export const scaleIngredientQuantity = (ingredient: string, scale: number): string => {
   if (!Number.isFinite(scale) || scale <= 0 || scale === 1) return ingredient
@@ -95,11 +123,16 @@ export const scaleIngredientQuantity = (ingredient: string, scale: number): stri
   const match = ingredient.match(LEADING_QUANTITY_PATTERN)
   if (!match) return scaleEmbeddedQuantities(ingredient, scale)
 
-  const quantity = parseQuantity(match[2])
-  if (quantity === null) return scaleEmbeddedQuantities(ingredient, scale)
+  const format = (quantityText: string): string => {
+    const quantity = parseQuantity(quantityText)
+    if (quantity === null) return quantityText
 
-  const decimalSeparator = match[2].includes(',') ? ',' : '.'
-  const scaledQuantity = formatQuantity(quantity * scale, decimalSeparator)
+    return formatQuantity(quantity * scale, quantityText.includes(',') ? ',' : '.')
+  }
+  const scaledQuantity =
+    match[2] && match[3]
+      ? `${format(match[2])}-${format(match[3])}`
+      : format(match[4] ?? '')
   const rest = scaleEmbeddedQuantities(ingredient.slice(match[0].length), scale)
 
   return `${match[1]}${scaledQuantity}${rest}`
@@ -117,5 +150,7 @@ export const getImperialCupQty = (
   const scaled = scaleIngredientQuantity(imperialIngredient, servingScale)
   const match = scaled.match(CUP_PATTERN)
 
-  return match ? match[1] : null
+  if (!match) return null
+
+  return match[1] && match[2] ? `${match[1]}-${match[2]}` : (match[3] ?? null)
 }
