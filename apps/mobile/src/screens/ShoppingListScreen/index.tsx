@@ -23,6 +23,10 @@ import { Swipeable } from 'react-native-gesture-handler'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import type { PresenceUser, ShoppingCategory, ShoppingListItem } from '@carrot/shared/types'
+import {
+  displayIngredientWithLocalizedUnit,
+  getIngredientQuantityCount,
+} from '@carrot/shared/utils/ingredientUtils'
 import { colors } from '../../theme/colors'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useIsAppActive } from '../../hooks/useIsAppActive'
@@ -296,6 +300,12 @@ const ShoppingListScreen = () => {
     const isEditing = editingId === shoppingItem.id
     const editor = lockedByOther(shoppingItem.id)
     const isLocked = !!editor && !isEditing
+    const displayText = displayIngredientWithLocalizedUnit(shoppingItem.text, (unit, qty) =>
+      t(`units.${unit}`, {
+        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+        defaultValue: unit,
+      }),
+    )
     return (
       <ScaleDecorator>
           <Swipeable
@@ -309,7 +319,7 @@ const ShoppingListScreen = () => {
               <CheckCircle
                 checked={isCompleted}
                 onPress={() => handleToggle(shoppingItem)}
-                accessibilityLabel={shoppingItem.text}
+                accessibilityLabel={displayText}
               />
               <View style={styles.textArea}>
                 {isEditing ? (
@@ -330,9 +340,9 @@ const ShoppingListScreen = () => {
                     disabled={isLocked}
                     accessibilityLabel={isLocked
                       ? t('shoppingList.presenceEditing', { name: editor!.nickname })
-                      : shoppingItem.text}
+                      : displayText}
                   >
-                    <Text style={[styles.itemText, isCompleted && styles.completedText]}>{shoppingItem.text}</Text>
+                    <Text style={[styles.itemText, isCompleted && styles.completedText]}>{displayText}</Text>
                     {isLocked ? (
                       <View style={styles.lockBadge}>
                         <View style={[styles.lockDot, { backgroundColor: editor.color }]} />

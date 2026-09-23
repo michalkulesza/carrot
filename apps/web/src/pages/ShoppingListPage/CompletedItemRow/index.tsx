@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import { Trash2 } from 'react-feather'
 import type { ShoppingListItem } from '@carrot/shared/types'
+import {
+  displayIngredientWithLocalizedUnit,
+  getIngredientQuantityCount,
+} from '@carrot/shared/utils/ingredientUtils'
 import { CheckIcon } from '../Icons'
 
 interface CompletedItemRowProps {
@@ -11,19 +15,25 @@ interface CompletedItemRowProps {
 
 const CompletedItemRow = ({ item, onToggle, onDelete }: CompletedItemRowProps) => {
   const { t } = useTranslation()
+  const displayText = displayIngredientWithLocalizedUnit(item.text, (unit, qty) =>
+    t(`units.${unit}`, {
+      count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+      defaultValue: unit,
+    }),
+  )
 
   return (
     <div className="group flex items-center gap-3 px-4 md:px-6 py-2.5 border-b border-zinc-100">
       <button
         type="button"
         onClick={onToggle}
-        aria-label={item.text}
+        aria-label={displayText}
         className="shrink-0 w-5 h-5 rounded-full bg-zinc-300 flex items-center justify-center text-white"
       >
         <CheckIcon />
       </button>
       <span className="flex-1 min-w-0 truncate text-sm text-zinc-400 line-through">
-        {item.text}
+        {displayText}
       </span>
       <button
         type="button"

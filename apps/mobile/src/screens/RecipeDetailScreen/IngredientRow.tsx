@@ -3,7 +3,10 @@ import { Linking, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import type { AllergenFlag } from '@carrot/shared/types'
-import { displayIngredient } from '@carrot/shared/utils/ingredientUtils'
+import {
+  displayIngredientWithLocalizedUnit,
+  getIngredientQuantityCount,
+} from '@carrot/shared/utils/ingredientUtils'
 import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
 import { TooltipPopover } from '../../components/NutritionBoxGrid'
 import { colors } from '../../theme/colors'
@@ -35,7 +38,12 @@ const IngredientRow = ({
 }) => {
   const { t } = useTranslation()
   const [isAllergenTooltipOpen, setIsAllergenTooltipOpen] = useState(false)
-  const displayValue = displayIngredient(ingredient)
+  const displayValue = displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
+    t(`units.${unit}`, {
+      count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+      defaultValue: unit,
+    }),
+  )
   const hasMatchedAllergen = matchesActiveAllergen(
     allergenFlag?.allergen ?? null,
     activeAllergens,

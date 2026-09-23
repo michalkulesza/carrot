@@ -4,6 +4,10 @@ import { Trash2 } from 'react-feather'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import type { PresenceUser, ShoppingListItem } from '@carrot/shared/types'
+import {
+  displayIngredientWithLocalizedUnit,
+  getIngredientQuantityCount,
+} from '@carrot/shared/utils/ingredientUtils'
 import { GripIcon, LockIcon } from '../Icons'
 
 interface SortableItemRowProps {
@@ -28,6 +32,12 @@ const SortableItemRow = ({
   onDelete,
 }: SortableItemRowProps) => {
   const { t } = useTranslation()
+  const displayText = displayIngredientWithLocalizedUnit(item.text, (unit, qty) =>
+    t(`units.${unit}`, {
+      count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+      defaultValue: unit,
+    }),
+  )
   const [isEditing, setIsEditing] = useState(false)
   const [draft, setDraft] = useState(item.text)
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id })
@@ -64,7 +74,7 @@ const SortableItemRow = ({
       <button
         type="button"
         onClick={onToggle}
-        aria-label={item.text}
+        aria-label={displayText}
         className="shrink-0 w-5 h-5 rounded-full border-2 border-primary hover:bg-primary/10 transition-colors"
       />
 
@@ -86,7 +96,7 @@ const SortableItemRow = ({
             disabled={locked}
             className="text-left text-sm w-full truncate disabled:cursor-not-allowed"
           >
-            {item.text}
+            {displayText}
             {locked && editor && (
               <span className="flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: editor.color }} />

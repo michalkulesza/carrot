@@ -10,7 +10,6 @@ Open work only. When an item is completed, move it to the matching category in [
 
 - [ ] **Extractor v2** — Core extraction and production integration are complete. Add 25 reviewed TikTok fixtures (five each in en, pl, de, fr, es); Facebook support is tracked separately under Core product features. The extractor stays source-agnostic, accepting cleaned HTML or normalized text. Plan: [Extractor v2](specs/extractor-v2.md).
 
-- [ ] **Unit/amount parser v2** — Follow-up work after recipe extraction v2. Apply the same source-faithfulness and manual-review rules: preserve original amounts and units, do not invent missing values, and make uncertainty explicit. Evaluate separately on 100 examples with reviewable inputs and parser outputs, record manual corrections, and require the user's explicit approval before replacing the current parser. Detailed parser requirements remain to be specified in that phase.
 
 ## Core product features
 

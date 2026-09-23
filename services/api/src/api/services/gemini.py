@@ -21,8 +21,11 @@ from api.models import (
     RecipeUnitVariants,
     ShoppingCategory,
     SourceComponent,
+    SourceIngredient,
+    UnitEnum,
 )
 from api.services.extraction_v2.contracts import FailureReason
+from api.services.ingredient_parser_v2 import parse_ingredient
 
 log = logging.getLogger(__name__)
 
@@ -30,44 +33,24 @@ _DEFAULT_MECHANICAL_MODEL = "gemini-3.1-flash-lite"
 _STEP_INGREDIENT_MATCH_MODEL = "gemini-3.1-flash-lite"
 _MAX_ENRICHMENT_ATTEMPTS = 3
 
-_TOTAL_TIME_LABEL = re.compile(
-    r"\b(?:total\s+time|czas\s+(?:całkowity|calkowity)|gesamt(?:zeit|dauer)|temps\s+total|tiempo\s+total)\b",
-    re.IGNORECASE,
-)
-_TIME_PART = re.compile(
-    r"(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|godzin(?:a|y|ę|e)?|stund(?:e|en)|heures?|horas?|"
-    r"minutes?|mins?|min|m|minut(?:[a-ząćęłńóśźż]+)?)\b",
-    re.IGNORECASE,
-)
 
-
-def stated_total_time_minutes(text: str) -> int | None:
-    """Read an explicitly labelled time before an enrichment model can estimate it."""
-
-    label = _TOTAL_TIME_LABEL.search(text)
-    if label is None:
-        return None
-    value = text[label.end():label.end() + 100]
-    iso = re.match(r"\s*[:–-]?\s*PT(?:(\d+)H)?(?:(\d+)M)?\b", value, re.IGNORECASE)
-    if iso:
-        return int(iso.group(1) or 0) * 60 + int(iso.group(2) or 0)
-    matches = list(_TIME_PART.finditer(value))
-    if not matches:
-        return None
-    selected = [matches[0]]
-    for match in matches[1:]:
-        separator = value[selected[-1].end():match.start()]
-        if not re.fullmatch(r"\s*(?:,|and|i|et|y)?\s*(?:[a-ząćęłńóśźż]+)?\s*", separator, re.IGNORECASE):
-            break
-        selected.append(match)
-
-    total = 0.0
-    for match in selected:
-        amount, unit = match.groups()
-        multiplier = 60 if unit.casefold().startswith(("h", "godzin", "stund", "heure", "hora")) else 1
-        total += float(amount.replace(",", ".")) * multiplier
-    return round(total) if total else None
-
+def _v2_parsed_ingredient(parsed, source_text: str, category) -> Ingredient:
+    """Map a deterministic parse into the current ingredient schema safely."""
+    try:
+        unit = UnitEnum(parsed.unit) if parsed.unit else None
+    except ValueError:
+        # Keep unfamiliar units visible until the application schema supports them.
+        qty, unit, name = None, None, source_text
+    else:
+        qty = parsed.qty
+        name = parsed.name or source_text
+    return Ingredient(
+        qty=qty,
+        unit=unit,
+        name=name,
+        shopping_list_value=source_text,
+        shopping_list_category=category,
+    )
 
 class AudioRecipeEvidenceComponent(BaseModel):
     name: str | None = None
@@ -162,30 +145,15 @@ async def _with_retry(
             log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
             await asyncio.sleep(delay)
 
-_ALLOWED_UNITS = (
-    "volume: ml, l, tsp, tbsp, cup | "
-    "weight: g, kg | "
-    "count: clove, slice, can, bunch, pinch, sprig, handful"
-)
-
-_EXTRACTION_SYSTEM = """\
-You faithfully extract recipes from social-media captions, webpages, video transcripts,
-or images. Preserve the original language.
-
-CRITICAL: Only extract ingredients, quantities, and steps explicitly present in the source.
-Never add ingredients, change stated numbers, estimate values, convert units, round values,
-infer missing steps, calculate nutrition, assign tags, detect allergens, or add references.
-
-Return JSON matching the provided schema. If there is no recipe, return null title and an
- empty components array. Create a component for each explicit section. Extract servings and total
-time only when stated; otherwise return null. Convert a stated total time to whole minutes, including
-compact values such as "1h 5m" (65 minutes). For a stated servings range, use its midpoint rounded to
-a whole number. Separate qty, unit, and name only when doing so preserves the source exactly.
-Use only these units: """ + _ALLOWED_UNITS + """. For unsupported units, preserve the entire
-ingredient text in name with null qty and unit. Leave enrichment fields empty.
-Keep ingredient punctuation faithful: write preparation or alternatives after a
-comma directly (for example, "garlic, minced"), never inside an invented
-parenthetical such as "garlic (, minced)".
+_IMAGE_EXTRACTION_SYSTEM = """\
+Extract recipes from recipe images, preserving the original language and every
+stated fact. Never add ingredients, change amounts, estimate, convert, translate,
+or normalize source wording. For each ingredient, put the complete visible
+ingredient line in `name` exactly as written and always leave `qty` and `unit`
+null. A later deterministic parser separates supported amount and unit values.
+Keep all remaining ingredient wording, preparation notes, and alternatives in
+that same complete line. Extract steps and explicit recipe facts faithfully.
+When no recipe is visible, return a null title and no components.
 """
 
 _TRANSCRIPTION_SYSTEM = """\
@@ -819,13 +787,24 @@ async def enrich_v2_recipe(
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
     """Enrich v2 evidence while keeping its canonical facts immutable."""
+    parsed_components = [
+        [parse_ingredient(item.text) for item in component.ingredients]
+        for component in extracted.components
+    ]
     components = [
         SourceComponent(
             name=component.name,
-            ingredients=[{"qty": None, "unit": None, "name": item.text} for item in component.ingredients],
+            ingredients=[
+                {
+                    "qty": parsed.qty,
+                    "unit": parsed.unit,
+                    "name": parsed.name or item.text,
+                }
+                for item, parsed in zip(component.ingredients, parsed_component)
+            ],
             steps=[step.text for step in component.steps],
         )
-        for component in extracted.components
+        for component, parsed_component in zip(extracted.components, parsed_components)
     ]
     servings = _source_number(extracted.yield_servings)
     nutrition = extracted.nutrition
@@ -888,10 +867,14 @@ async def enrich_v2_recipe(
         assembled.overview = None
     assembled.components = [
         output.model_copy(update={
-            "ingredients": [Ingredient(qty=None, unit=None, name=item.text,
-                                        shopping_list_value=item.text,
-                                        shopping_list_category=derived.shopping_list_category)
-                            for item, derived in zip(source_component.ingredients, output.ingredients)],
+            "ingredients": [
+                _v2_parsed_ingredient(parsed, item.text, derived.shopping_list_category)
+                for item, parsed, derived in zip(
+                    source_component.ingredients,
+                    parsed_component,
+                    output.ingredients,
+                )
+            ],
             "steps": [item.text for item in source_component.steps],
             "ingredient_links": [item.link_url for item in source_component.ingredients],
             "ingredient_evidence": [{
@@ -902,7 +885,9 @@ async def enrich_v2_recipe(
                               for item in source_component.steps],
             "name_evidence": [ref.model_dump(mode="json") for ref in source_component.name_references],
         })
-        for output, source_component in zip(assembled.components, extracted.components)
+        for output, source_component, parsed_component in zip(
+            assembled.components, extracted.components, parsed_components
+        )
     ]
     if allergens:
         allergen_results = await asyncio.gather(*(
@@ -922,50 +907,6 @@ async def enrich_v2_recipe(
     return assembled
 
 
-async def extract_recipe(
-    text: str,
-    source_hint: str = "",
-    model: str | None = None,
-    available_tags: list[str] | None = None,
-    generous: bool = False,
-    usage: UsageTracker | None = None,
-) -> RecipeExtraction:
-    extraction_model = model or settings.gemini_extraction_model
-    parts = []
-    if source_hint:
-        parts.append(f"Source: {source_hint}")
-    parts.append(text)
-    prompt = "\n\n".join(parts)
-
-    client = _build_client()
-    response = await _with_retry(
-        lambda: client.models.generate_content(
-            model=extraction_model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                system_instruction=_EXTRACTION_SYSTEM,
-                temperature=0,
-                response_mime_type="application/json",
-                response_schema=RecipeSourceExtraction,
-            ),
-        ),
-        generous=generous,
-    )
-    if usage is not None:
-        usage.add(response)
-
-    raw = response.text
-    log.debug("Gemini raw response (%s): %s", source_hint, raw[:500])
-    source = RecipeSourceExtraction.model_validate(json.loads(raw))
-    if stated_time := stated_total_time_minutes(text):
-        source = source.model_copy(update={"total_time_minutes": stated_time})
-    enrichment, step_ingredient_lines = await asyncio.gather(
-        _enrich_recipe(source, available_tags, generous, usage),
-        _match_source_step_ingredient_lines_safely(source, generous, usage),
-    )
-    return assemble_recipe(source, enrichment, step_ingredient_lines)
-
-
 async def extract_recipe_from_image(
     image_data: bytes,
     mime_type: str = "image/jpeg",
@@ -975,15 +916,13 @@ async def extract_recipe_from_image(
     usage: UsageTracker | None = None,
 ) -> RecipeExtraction:
     extraction_model = model or settings.gemini_extraction_model
-    parts_text = []
-    parts_text.append(
+    text_prompt = (
         "Extract the recipe from this image. "
         "This may be a photo of a cookbook page, recipe card, handwritten recipe, or screenshot. "
         "If the image does not contain a recipe (e.g. it's an unrelated photo, a meme, or text "
         "with no ingredients or steps), return null title and an empty components array — do not "
         "invent a recipe."
     )
-    text_prompt = "\n\n".join(parts_text)
 
     client = _build_client()
     response = await _with_retry(
@@ -994,7 +933,7 @@ async def extract_recipe_from_image(
                 text_prompt,
             ],
             config=types.GenerateContentConfig(
-                system_instruction=_EXTRACTION_SYSTEM,
+                system_instruction=_IMAGE_EXTRACTION_SYSTEM,
                 temperature=0,
                 response_mime_type="application/json",
                 response_schema=RecipeSourceExtraction,
@@ -1007,12 +946,64 @@ async def extract_recipe_from_image(
 
     raw = response.text
     log.debug("Gemini image extraction raw: %s", raw[:500])
-    source = RecipeSourceExtraction.model_validate(json.loads(raw))
+    extracted_source = RecipeSourceExtraction.model_validate(json.loads(raw))
+    raw_ingredients: list[list[str]] = []
+    parsed_components = []
+    for component in extracted_source.components:
+        raw_component: list[str] = []
+        parsed_component = []
+        for ingredient in component.ingredients:
+            source_text = " ".join(
+                part for part in (
+                    ingredient.qty,
+                    ingredient.unit.value if ingredient.unit else None,
+                    ingredient.name,
+                ) if part
+            )
+            raw_component.append(source_text)
+            parsed = parse_ingredient(source_text)
+            parsed_component.append(_v2_parsed_ingredient(parsed, source_text, None))
+        raw_ingredients.append(raw_component)
+        parsed_components.append(parsed_component)
+
+    source = extracted_source.model_copy(update={
+        "components": [
+            component.model_copy(update={
+                "ingredients": [
+                    SourceIngredient(qty=item.qty, unit=item.unit, name=item.name)
+                    for item in parsed_component
+                ],
+            })
+            for component, parsed_component in zip(extracted_source.components, parsed_components)
+        ],
+    })
+    requested_estimates = {
+        field for field, value in {
+            "total_time_minutes": source.total_time_minutes,
+            "kcal_per_serving": source.kcal_per_serving,
+            "protein_per_serving": source.protein_per_serving,
+            "fat_per_serving": source.fat_per_serving,
+            "carbs_per_serving": source.carbs_per_serving,
+        }.items() if value is None
+    }
     enrichment, step_ingredient_lines = await asyncio.gather(
-        _enrich_recipe(source, available_tags, generous, usage),
+        _enrich_recipe(
+            source, available_tags, generous, usage,
+            source_faithful=True, requested_estimates=requested_estimates,
+        ),
         _match_source_step_ingredient_lines_safely(source, generous, usage),
     )
-    return assemble_recipe(source, enrichment, step_ingredient_lines)
+    assembled = assemble_recipe(source, enrichment, step_ingredient_lines)
+    assembled.components = [
+        component.model_copy(update={
+            "ingredients": [
+                ingredient.model_copy(update={"shopping_list_value": source_text})
+                for ingredient, source_text in zip(component.ingredients, raw_component)
+            ],
+        })
+        for component, raw_component in zip(assembled.components, raw_ingredients)
+    ]
+    return assembled
 
 
 async def estimate_unit_variants(

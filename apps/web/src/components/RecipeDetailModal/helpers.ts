@@ -3,6 +3,7 @@ import type {
   RecipeSaveRequest,
   SaveComponent,
 } from '@carrot/shared/types'
+import { displayIngredientWithLocalizedUnit as formatIngredientWithLocalizedUnit } from '@carrot/shared/utils/ingredientUtils'
 import {
   getImperialCupQty,
   scaleIngredientQuantity,
@@ -115,6 +116,11 @@ export const displayIngredient = (s: string): string => {
 
   return serializeIngredient(parsed)
 }
+
+export const displayIngredientWithLocalizedUnit = (
+  s: string,
+  translateUnit: (unit: string, qty: string) => string,
+): string => formatIngredientWithLocalizedUnit(s, translateUnit)
 
 export const getScaledIngredientValues = (
   component: SaveComponent,
@@ -283,7 +289,8 @@ export const showRailComponentHeaders = (
 export const buildIngredientRailRows = (
   components: SaveComponent[],
   unitSystem: string,
-  servingScale: number
+  servingScale: number,
+  translateUnit: (unit: string, qty: string) => string,
 ): RailRow[] => {
   const showHeaders = showRailComponentHeaders(components)
   const rows: RailRow[] = []
@@ -300,7 +307,7 @@ export const buildIngredientRailRows = (
         rows.push({
           key: `${componentIndex}-${ingredientIndex}`,
           kind: 'ingredient',
-          text: displayIngredient(ingredient),
+          text: displayIngredientWithLocalizedUnit(ingredient, translateUnit),
         })
       }
     )

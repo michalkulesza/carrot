@@ -1,0 +1,425 @@
+{
+  "reviewed_rows_including_overlap": 647,
+  "reviewed_rows_deduplicated": 632,
+  "summary": {
+    "category:count-size-descriptor": {
+      "rows": 16,
+      "fields": {
+        "qty": {
+          "correct": 16,
+          "total": 16,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 16,
+          "total": 16,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 16,
+          "total": 16,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 16,
+      "all_fields_rate": 1.0
+    },
+    "category:decimal": {
+      "rows": 9,
+      "fields": {
+        "qty": {
+          "correct": 9,
+          "total": 9,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 9,
+          "total": 9,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 9,
+          "total": 9,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 9,
+      "all_fields_rate": 1.0
+    },
+    "category:foreign-language-candidate": {
+      "rows": 432,
+      "fields": {
+        "qty": {
+          "correct": 432,
+          "total": 432,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 432,
+          "total": 432,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 432,
+          "total": 432,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 432,
+      "all_fields_rate": 1.0
+    },
+    "category:fraction": {
+      "rows": 57,
+      "fields": {
+        "qty": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 57,
+      "all_fields_rate": 1.0
+    },
+    "category:integer": {
+      "rows": 57,
+      "fields": {
+        "qty": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 57,
+      "all_fields_rate": 1.0
+    },
+    "category:likely-unit": {
+      "rows": 116,
+      "fields": {
+        "qty": {
+          "correct": 116,
+          "total": 116,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 116,
+          "total": 116,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 116,
+          "total": 116,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 116,
+      "all_fields_rate": 1.0
+    },
+    "category:likely-unquantified": {
+      "rows": 57,
+      "fields": {
+        "qty": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 57,
+          "total": 57,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 57,
+      "all_fields_rate": 1.0
+    },
+    "category:quantity-looking": {
+      "rows": 143,
+      "fields": {
+        "qty": {
+          "correct": 143,
+          "total": 143,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 143,
+          "total": 143,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 143,
+          "total": 143,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 143,
+      "all_fields_rate": 1.0
+    },
+    "category:range": {
+      "rows": 21,
+      "fields": {
+        "qty": {
+          "correct": 21,
+          "total": 21,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 21,
+          "total": 21,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 21,
+          "total": 21,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 21,
+      "all_fields_rate": 1.0
+    },
+    "language:de": {
+      "rows": 94,
+      "fields": {
+        "qty": {
+          "correct": 94,
+          "total": 94,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 94,
+          "total": 94,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 94,
+          "total": 94,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 94,
+      "all_fields_rate": 1.0
+    },
+    "language:en": {
+      "rows": 185,
+      "fields": {
+        "qty": {
+          "correct": 185,
+          "total": 185,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 185,
+          "total": 185,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 185,
+          "total": 185,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 185,
+      "all_fields_rate": 1.0
+    },
+    "language:en, it": {
+      "rows": 10,
+      "fields": {
+        "qty": {
+          "correct": 10,
+          "total": 10,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 10,
+          "total": 10,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 10,
+          "total": 10,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 10,
+      "all_fields_rate": 1.0
+    },
+    "language:es": {
+      "rows": 50,
+      "fields": {
+        "qty": {
+          "correct": 50,
+          "total": 50,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 50,
+          "total": 50,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 50,
+          "total": 50,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 50,
+      "all_fields_rate": 1.0
+    },
+    "language:fr": {
+      "rows": 96,
+      "fields": {
+        "qty": {
+          "correct": 96,
+          "total": 96,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 96,
+          "total": 96,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 96,
+          "total": 96,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 96,
+      "all_fields_rate": 1.0
+    },
+    "language:pl": {
+      "rows": 189,
+      "fields": {
+        "qty": {
+          "correct": 189,
+          "total": 189,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 189,
+          "total": 189,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 189,
+          "total": 189,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 189,
+      "all_fields_rate": 1.0
+    },
+    "language:yo, es": {
+      "rows": 8,
+      "fields": {
+        "qty": {
+          "correct": 8,
+          "total": 8,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 8,
+          "total": 8,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 8,
+          "total": 8,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 8,
+      "all_fields_rate": 1.0
+    },
+    "overall": {
+      "rows": 632,
+      "fields": {
+        "qty": {
+          "correct": 632,
+          "total": 632,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 632,
+          "total": 632,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 632,
+          "total": 632,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 632,
+      "all_fields_rate": 1.0
+    },
+    "source:candidates.csv": {
+      "rows": 200,
+      "fields": {
+        "qty": {
+          "correct": 200,
+          "total": 200,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 200,
+          "total": 200,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 200,
+          "total": 200,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 200,
+      "all_fields_rate": 1.0
+    },
+    "source:foreign_candidates.csv": {
+      "rows": 447,
+      "fields": {
+        "qty": {
+          "correct": 447,
+          "total": 447,
+          "rate": 1.0
+        },
+        "unit": {
+          "correct": 447,
+          "total": 447,
+          "rate": 1.0
+        },
+        "name": {
+          "correct": 447,
+          "total": 447,
+          "rate": 1.0
+        }
+      },
+      "all_fields_correct": 447,
+      "all_fields_rate": 1.0
+    }
+  },
+  "mismatches": []
+}

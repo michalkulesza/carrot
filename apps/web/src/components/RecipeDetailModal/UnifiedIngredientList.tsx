@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
+import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import {
-  displayIngredient,
+  displayIngredientWithLocalizedUnit,
   getMetricCupHint,
   getScaledIngredientValues,
 } from './helpers'
@@ -55,6 +56,13 @@ const UnifiedIngredientList = ({
   readOnly?: boolean
 }) => {
   const { t } = useTranslation()
+  const formatIngredient = (ingredient: string) =>
+    displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
+      t(`units.${unit}`, {
+        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+        defaultValue: unit,
+      }),
+    )
   const ingredients = useMemo<UnifiedIngredient[]>(
     () =>
       components.flatMap((component, componentIndex) =>
@@ -116,7 +124,7 @@ const UnifiedIngredientList = ({
                   type="checkbox"
                   checked={checked}
                   onChange={() => onToggleIngredient(key)}
-                  aria-label={displayIngredient(ingredient)}
+                  aria-label={formatIngredient(ingredient)}
                   className="mt-1 h-4 w-4 shrink-0 accent-primary"
                 />
                 <span
@@ -124,7 +132,7 @@ const UnifiedIngredientList = ({
                     checked ? 'text-zinc-400 line-through' : ''
                   }`}
                 >
-                  {displayIngredient(ingredient)}
+                  {formatIngredient(ingredient)}
                   {getMetricCupHint(
                     component,
                     ingredientIndex,

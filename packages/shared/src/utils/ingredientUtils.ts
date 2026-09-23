@@ -120,6 +120,56 @@ export const displayIngredient = (s: string): string => {
   return serializeIngredient(parsed)
 }
 
+const quantityValue = (quantity: string): number => {
+  const normalized = quantity.trim().replace(',', '.')
+  const mixedFraction = normalized.match(/^(\d+)\s+(\d+)\/(\d+)$/)
+  if (mixedFraction) {
+    const denominator = Number(mixedFraction[3])
+    return denominator ? Number(mixedFraction[1]) + Number(mixedFraction[2]) / denominator : 0
+  }
+
+  const fraction = normalized.match(/^(\d+)\/(\d+)$/)
+  if (fraction) {
+    const denominator = Number(fraction[2])
+    return denominator ? Number(fraction[1]) / denominator : 0
+  }
+
+  const value = Number(normalized)
+  return Number.isFinite(value) ? value : 0
+}
+
+export const getIngredientQuantityCount = (qty: string): number =>
+  Math.max(...qty.split(/\s*[–—-]\s*/).map(quantityValue), 0)
+
+export const displayIngredientWithLocalizedUnit = (
+  s: string,
+  translateUnit: (unit: string, qty: string) => string,
+): string => {
+  const trimmed = (s ?? '').trim()
+  const quantityRange = trimmed.match(
+    /^(\d+(?:[.,]\d+)?\s*[–—-]\s*\d+(?:[.,]\d+)?)\s+(.+)$/,
+  )
+  if (quantityRange) {
+    const rangedIngredient = parseIngredient(`1 ${quantityRange[2]}`)
+    if (rangedIngredient.unit) {
+      return [
+        quantityRange[1],
+        translateUnit(rangedIngredient.unit, quantityRange[1]),
+        rangedIngredient.name,
+      ]
+        .filter(Boolean)
+        .join(' ')
+    }
+  }
+
+  const parsed = parseIngredient(s)
+  if (!parsed.unit) return displayIngredient(s)
+
+  return [parsed.qty, translateUnit(parsed.unit, parsed.qty), parsed.name]
+    .filter(Boolean)
+    .join(' ')
+}
+
 export interface AggregatedIngredient {
   key: string
   name: string

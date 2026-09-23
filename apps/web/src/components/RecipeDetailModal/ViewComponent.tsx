@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
+import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import {
-  displayIngredient,
+  displayIngredientWithLocalizedUnit,
   getMetricCupHint,
   getScaledIngredientValues,
 } from './helpers'
@@ -76,6 +77,13 @@ const ViewComponent = ({
   showGroupHeader = true,
 }: ViewComponentProps) => {
   const { t } = useTranslation()
+  const formatIngredient = (ingredient: string) =>
+    displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
+      t(`units.${unit}`, {
+        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+        defaultValue: unit,
+      }),
+    )
   const [ingredientsExpanded, setIngredientsExpanded] = useState(!collapsible)
   const displayName = INTERNAL_COMPONENT_NAMES.has(comp.name) ? '' : comp.name
   const ingredients = useMemo(
@@ -156,7 +164,7 @@ const ViewComponent = ({
                     type="checkbox"
                     checked={checked}
                     onChange={() => onToggleIngredient(key)}
-                    aria-label={displayIngredient(ing)}
+                    aria-label={formatIngredient(ing)}
                     className="mt-1 h-4 w-4 shrink-0 accent-primary"
                   />
                   <span
@@ -164,7 +172,7 @@ const ViewComponent = ({
                       checked ? 'text-zinc-400 line-through' : ''
                     }`}
                   >
-                    {displayIngredient(ing)}
+                    {formatIngredient(ing)}
                     {getMetricCupHint(comp, i, unitSystem, servingScale, t)}
                   </span>
                   {flag && (

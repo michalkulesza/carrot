@@ -32,15 +32,21 @@ class UnitEnum(StrEnum):
     TSP = "tsp"
     TBSP = "tbsp"
     CUP = "cup"
+    CL = "cl"
     G = "g"
     KG = "kg"
+    OZ = "oz"
+    LB = "lb"
     CLOVE = "clove"
+    LEAF = "leaf"
+    SHEET = "sheet"
     SLICE = "slice"
     CAN = "can"
     BUNCH = "bunch"
     PINCH = "pinch"
     SPRIG = "sprig"
     HANDFUL = "handful"
+    PIECE = "piece"
 
 
 class ShoppingCategory(StrEnum):

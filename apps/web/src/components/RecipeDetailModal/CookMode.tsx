@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Clock, List, Play, X } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
+import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import { parseDurationMatches } from '@carrot/shared/utils/timerUtils'
 import {
   getRemainingSeconds,
@@ -53,8 +54,14 @@ const CookMode = ({
     [recipe]
   )
   const railRows = useMemo(
-    () => buildIngredientRailRows(recipe.components, unitSystem, servingScale),
-    [recipe.components, unitSystem, servingScale]
+    () =>
+      buildIngredientRailRows(recipe.components, unitSystem, servingScale, (unit, qty) =>
+        t(`units.${unit}`, {
+          count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+          defaultValue: unit,
+        })
+      ),
+    [recipe.components, unitSystem, servingScale, t]
   )
   const railTargets = useMemo(
     () => resolveRailTargets(recipe.components),

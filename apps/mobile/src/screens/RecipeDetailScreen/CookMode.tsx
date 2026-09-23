@@ -18,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "expo-router";
 import type { RecipeOut } from "@carrot/shared/types";
+import { getIngredientQuantityCount } from "@carrot/shared/utils/ingredientUtils";
 import { parseDurationMatches } from "@carrot/shared/utils/timerUtils";
 import {
   formatCountdown,
@@ -161,8 +162,14 @@ const CookMode = ({
   );
   const servingScale = recipe.servings && selectedServings ? selectedServings / recipe.servings : 1;
   const railRows = useMemo(
-    () => buildIngredientRailRows(recipe.components, unitSystem, servingScale),
-    [recipe.components, unitSystem, servingScale],
+    () =>
+      buildIngredientRailRows(recipe.components, unitSystem, servingScale, (unit, qty) =>
+        t(`units.${unit}`, {
+          count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+          defaultValue: unit,
+        }),
+      ),
+    [recipe.components, unitSystem, servingScale, t],
   );
   const railTargets = useMemo(() => resolveRailTargets(recipe.components), [recipe.components]);
   const [index, setIndex] = useState(0);

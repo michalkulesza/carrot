@@ -4,15 +4,21 @@ export const UNITS = [
   "tsp",
   "tbsp",
   "cup",
+  "cl",
   "g",
   "kg",
+  "oz",
+  "lb",
   "clove",
+  "leaf",
+  "sheet",
   "slice",
   "can",
   "bunch",
   "pinch",
   "sprig",
   "handful",
+  "piece",
 ] as const;
 
 export type Unit = (typeof UNITS)[number];

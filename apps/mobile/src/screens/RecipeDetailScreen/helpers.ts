@@ -1,6 +1,6 @@
 import type { RecipeOut, RecipeSaveRequest, SaveComponent, ShoppingCategory } from '@carrot/shared/types'
 import {
-  displayIngredient,
+  displayIngredientWithLocalizedUnit,
   parseIngredient,
   serializeIngredient,
   type StructuredIngredient,
@@ -161,6 +161,7 @@ export const buildIngredientRailRows = (
   components: SaveComponent[],
   unitSystem: string,
   servingScale: number,
+  translateUnit: (unit: string, qty: string) => string,
 ): RailRow[] => {
   const showHeaders = showRailComponentHeaders(components)
   const rows: RailRow[] = []
@@ -172,7 +173,10 @@ export const buildIngredientRailRows = (
       rows.push({
         key: `${componentIndex}-${ingredientIndex}`,
         kind: 'ingredient',
-        text: displayIngredient(scaleIngredientQuantity(ingredient, servingScale)),
+        text: displayIngredientWithLocalizedUnit(
+          scaleIngredientQuantity(ingredient, servingScale),
+          translateUnit,
+        ),
       })
     })
   })

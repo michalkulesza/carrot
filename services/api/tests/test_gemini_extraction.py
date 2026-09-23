@@ -58,70 +58,6 @@ def _match(component_index: int, step_index: int, references: list[dict]) -> dic
     }
 
 
-@pytest.mark.asyncio
-async def test_text_extraction_uses_configured_model_and_deterministic_sampling(monkeypatch) -> None:
-    generate_content = Mock(side_effect=[_response(_source_payload()), _response(_enrichment_payload())])
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-    monkeypatch.setattr(gemini.settings, "gemini_extraction_model", "configured-extraction-model")
-
-    result = await gemini.extract_recipe("Ingredients: 1 onion")
-
-    extraction_call, enrichment_call = generate_content.call_args_list
-    assert extraction_call.kwargs["model"] == "configured-extraction-model"
-    assert enrichment_call.kwargs["model"] == "gemini-3.1-flash-lite"
-    assert extraction_call.kwargs["config"].temperature == 0
-    assert enrichment_call.kwargs["config"].temperature == 0
-    assert "Never add ingredients" in extraction_call.kwargs["config"].system_instruction
-    assert "total_time_minutes" in enrichment_call.kwargs["config"].system_instruction
-    assert "exclude unattended resting" in enrichment_call.kwargs["config"].system_instruction
-    assert "1 cup frozen corn kernels" in enrichment_call.kwargs["config"].system_instruction
-    assert result.total_time_minutes == 45
-
-
-@pytest.mark.asyncio
-async def test_query_one_uses_source_only_schema_and_query_two_is_enrichment_only(monkeypatch) -> None:
-    generate_content = Mock(side_effect=[_response(_source_payload()), _response(_enrichment_payload())])
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-
-    await gemini.extract_recipe("Ingredients: 1 onion")
-
-    extraction_call, enrichment_call = generate_content.call_args_list
-    assert extraction_call.kwargs["config"].response_schema is RecipeSourceExtraction
-    assert enrichment_call.kwargs["config"].response_schema is RecipeEnrichment
-    # Query-1 schema cannot express enrichment-only fields.
-    assert "shopping_list_values" not in RecipeSourceExtraction.model_fields
-    # Query-2 schema cannot express source-owned fields — combiner must supply them.
-    assert "title" not in RecipeEnrichment.model_fields
-    assert "servings" not in RecipeEnrichment.model_fields
-    assert "step_ingredient_line" not in EnrichmentComponent.model_fields
-    # Query 2 receives the query-1 result as input.
-    sent_prompt = json.loads(enrichment_call.kwargs["contents"])
-    assert sent_prompt["source_recipe"]["components"] == _source_payload()["components"]
-
-
-@pytest.mark.asyncio
-async def test_enrichment_falls_back_only_for_misaligned_field(monkeypatch) -> None:
-    source = _one_component_source().model_dump(mode="json")
-    invalid_enrichment = _matching_enrichment().model_dump(mode="json")
-    invalid_enrichment["components"][0]["metric_ingredients"] = ["100 g onion"]
-    invalid_enrichment["components"][0]["shopping_list_values"] = ["1 onion", "1 onion"]
-    generate_content = Mock(side_effect=[
-        _response(source),
-        _response(invalid_enrichment),
-        _response(_onion_step_match_payload()),
-    ])
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-
-    result = await gemini.extract_recipe("Ingredients: 1 onion")
-
-    assert result.components[0].ingredients[0].shopping_list_value == "1 onion"
-    assert result.components[0].metric_ingredients == ["1 onion"]
-    assert generate_content.call_count == 3
-
-
 def test_metric_weight_conversion_is_not_replaced_with_the_source_measurement() -> None:
     source = ["1 1/2 lbs. skinless salmon fillet"]
     metric = ["680 g skinless salmon fillet"]
@@ -363,25 +299,18 @@ async def test_repeated_unconverted_metric_ingredient_does_not_fail_import(monke
         "shopping_list_values": ["1 bag frozen corn kernels"],
         "shopping_list_categories": ["frozen"],
     }]))
-    generate_content = Mock(side_effect=[
-        _response(source.model_dump(mode="json")),
-        *[_response(enrichment.model_dump(mode="json")) for _ in range(3)],
-        _response({"matches": [{
-            "component_index": 0,
-            "step_index": 0,
-            "references": [{"ingredient_index": 0, "evidence": "corn"}],
-        }]}),
-    ])
+    generate_content = Mock(side_effect=[_response(enrichment.model_dump(mode="json")) for _ in range(3)])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
-    result = await gemini.extract_recipe("Ingredients: 1 cup frozen corn kernels")
+    enriched = await gemini._enrich_recipe(source, None, False, None)
+    result = gemini.assemble_recipe(source, enriched)
 
     component = result.components[0]
     assert component.metric_ingredients == ["1 cup frozen corn kernels"]
     assert component.ingredients[0].shopping_list_value == "1 bag frozen corn kernels"
     assert component.ingredients[0].shopping_list_category == "frozen"
-    assert generate_content.call_count == 5
+    assert generate_content.call_count == 3
 
 
 @pytest.mark.parametrize(
@@ -412,23 +341,22 @@ def test_unconverted_metric_measurements_fall_back_individually(
 
 @pytest.mark.asyncio
 async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> None:
-    source = _one_component_source().model_dump(mode="json")
+    source = _one_component_source()
     missing_time = _matching_enrichment(total_time_minutes=None).model_dump(mode="json")
     complete = _matching_enrichment(total_time_minutes=565).model_dump(mode="json")
     generate_content = Mock(side_effect=[
-        _response(source),
         _response(missing_time),
         _response(complete),
-        _response(_onion_step_match_payload()),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
-    result = await gemini.extract_recipe("Ingredients: 1 onion")
+    enrichment = await gemini._enrich_recipe(source, None, False, None)
+    result = gemini.assemble_recipe(source, enrichment)
 
-    retry_prompt = json.loads(generate_content.call_args_list[2].kwargs["contents"])
+    retry_prompt = json.loads(generate_content.call_args_list[1].kwargs["contents"])
     assert result.total_time_minutes == 565
-    assert generate_content.call_count == 4
+    assert generate_content.call_count == 2
     assert "total_time_minutes must be calculated" in retry_prompt["previous_validation_error"]
 
 
@@ -444,6 +372,46 @@ async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None
     assert extraction_call.kwargs["model"] == "image-model"
     assert enrichment_call.kwargs["model"] == "gemini-3.1-flash-lite"
     assert extraction_call.kwargs["config"].temperature == 0
+
+
+@pytest.mark.asyncio
+async def test_image_extraction_uses_parser_v2_and_preserves_full_source_line(monkeypatch) -> None:
+    raw_line = "1 cup basmati rice, rinsed"
+    source = _source_payload(
+        title="Rice",
+        total_time_minutes=20,
+        components=[{"ingredients": [{"qty": None, "unit": None, "name": raw_line}]}],
+    )
+    enrichment = _enrichment_payload(
+        total_time_minutes=None,
+        components=[{
+            "metric_ingredients": ["180 g basmati rice, rinsed"],
+            "imperial_ingredients": ["1 cup basmati rice, rinsed"],
+            "metric_steps": [],
+            "imperial_steps": [],
+            "shopping_list_values": ["1 cup basmati rice, rinsed"],
+            "shopping_list_categories": ["pantry"],
+        }],
+    )
+    generate_content = Mock(side_effect=[_response(source), _response(enrichment)])
+    monkeypatch.setattr(
+        gemini,
+        "_build_client",
+        lambda: SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)),
+    )
+
+    result = await gemini.extract_recipe_from_image(b"image")
+
+    extraction_call, enrichment_call = generate_content.call_args_list
+    assert "complete visible" in extraction_call.kwargs["config"].system_instruction
+    enrichment_source = json.loads(enrichment_call.kwargs["contents"])["source_recipe"]
+    parsed_source = enrichment_source["components"][0]["ingredients"][0]
+    assert (parsed_source["qty"], parsed_source["unit"], parsed_source["name"]) == (
+        "1", "cup", "basmati rice, rinsed",
+    )
+    ingredient = result.components[0].ingredients[0]
+    assert (ingredient.qty, ingredient.unit, ingredient.name) == ("1", "cup", "basmati rice, rinsed")
+    assert ingredient.shopping_list_value == raw_line
 
 
 @pytest.mark.asyncio
@@ -547,18 +515,12 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     assert component.step_ingredient_line == [0, 0]
 
 
-def test_stated_compact_total_time_overrides_enrichment_estimate() -> None:
-    source = _one_component_source().model_copy(update={"total_time_minutes": gemini.stated_total_time_minutes("Total time: 1h 5m")})
+def test_source_total_time_overrides_enrichment_estimate() -> None:
+    source = _one_component_source().model_copy(update={"total_time_minutes": 65})
     assembled = gemini.assemble_recipe(source, _matching_enrichment(total_time_minutes=110), [[0, 0]])
 
     assert source.total_time_minutes == 65
     assert assembled.total_time_minutes == 65
-
-
-def test_stated_total_time_stops_before_recipe_instruction_durations() -> None:
-    assert gemini.stated_total_time_minutes(
-        "Total time: 1 hour hour 5 minutes minutes Servings: 3 Marinate for 30 minutes."
-    ) == 65
 
 
 def test_enrichment_preserves_tsp_and_tbsp_in_both_unit_variants() -> None:
@@ -704,11 +666,54 @@ async def test_v2_enrichment_runs_allergen_analysis_only_when_configured(
     result = await gemini.enrich_v2_recipe(source, allergens=allergens)
 
     assert generate_content.call_count == expected_calls
-    assert result.components[0].ingredients[0].name == ingredient
+    expected_name = "peanut butter" if allergens else "onion"
+    parsed_ingredient = result.components[0].ingredients[0]
+    assert parsed_ingredient.name == expected_name
+    assert parsed_ingredient.shopping_list_value == ingredient
+    assert parsed_ingredient.qty == ("1" if allergens else "1")
+    assert parsed_ingredient.unit == ("tbsp" if allergens else None)
     assert result.components[0].ingredients[0].allergen == expected_allergen
     if allergens:
         assert result.components[0].ingredients[0].substitute == "tahini"
         assert result.allergen_status == "analyzed"
+
+
+@pytest.mark.asyncio
+async def test_v2_enrichment_uses_parser_and_keeps_uncertain_source_text(monkeypatch) -> None:
+    source = ExtractedRecipe.model_validate({
+        "title": "Example",
+        "components": [{"ingredients": [
+            {"text": "1,2 litra wody", "evidence_ids": ["pasted_text:0"]},
+            {"text": "10 g fresh yeast, or 5g instant yeast", "evidence_ids": ["pasted_text:1"]},
+            {"text": "40 cl crème fraîche", "evidence_ids": ["pasted_text:2"]},
+            {"text": "2 sztuki cytryny", "evidence_ids": ["pasted_text:3"]},
+            {"text": "260ml Lukewarm milk 38-40°C (310ml if you want to skip egg)", "evidence_ids": ["pasted_text:4"]},
+        ]}],
+    })
+    enrichment = {"components": [{
+        "metric_ingredients": ["1.2 l wody", "10 g fresh yeast, or 5g instant yeast", "40 cl crème fraîche", "2 sztuki cytryny", "260 ml Lukewarm milk"],
+        "imperial_ingredients": ["1.2 l wody", "10 g fresh yeast, or 5g instant yeast", "40 cl crème fraîche", "2 sztuki cytryny", "260 ml Lukewarm milk"],
+        "metric_steps": [],
+        "imperial_steps": [],
+        "shopping_list_values": ["1,2 litra wody", "10 g fresh yeast, or 5g instant yeast", "40 cl crème fraîche", "2 sztuki cytryny", "260ml Lukewarm milk 38-40°C (310ml if you want to skip egg)"],
+        "shopping_list_categories": ["other", "other", "other", "produce", "dairy_eggs"],
+    }]}
+    generate_content = Mock(return_value=_response(enrichment))
+    monkeypatch.setattr(gemini, "_build_client", lambda: SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)))
+
+    result = await gemini.enrich_v2_recipe(source)
+
+    ingredients = result.components[0].ingredients
+    assert (ingredients[0].qty, ingredients[0].unit, ingredients[0].name) == ("1.2", "l", "wody")
+    assert ingredients[0].shopping_list_value == "1,2 litra wody"
+    assert (ingredients[1].qty, ingredients[1].unit, ingredients[1].name) == (
+        None, None, "10 g fresh yeast, or 5g instant yeast",
+    )
+    assert (ingredients[2].qty, ingredients[2].unit, ingredients[2].name) == ("40", "cl", "crème fraîche")
+    assert (ingredients[3].qty, ingredients[3].unit, ingredients[3].name) == ("2", "piece", "cytryny")
+    assert (ingredients[4].qty, ingredients[4].unit, ingredients[4].name) == (
+        "260", "ml", "Lukewarm milk 38-40°C (310ml if you want to skip egg)",
+    )
 
 
 @pytest.mark.asyncio
@@ -785,17 +790,13 @@ def test_enrichment_repairs_only_invalid_shopping_categories() -> None:
 
 @pytest.mark.asyncio
 async def test_enrichment_prompt_contains_fixed_shopping_category_catalog(monkeypatch) -> None:
-    generate_content = Mock(side_effect=[
-        _response(_one_component_source().model_dump(mode="json")),
-        _response(_matching_enrichment().model_dump(mode="json")),
-        _response(_onion_step_match_payload()),
-    ])
+    generate_content = Mock(return_value=_response(_matching_enrichment().model_dump(mode="json")))
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
 
-    await gemini.extract_recipe("Ingredients: 1 onion")
+    await gemini._enrich_recipe(_one_component_source(), None, False, None)
 
-    instruction = generate_content.call_args_list[1].kwargs["config"].system_instruction
+    instruction = generate_content.call_args.kwargs["config"].system_instruction
     assert "shopping_list_categories" in instruction
     for category in ("produce", "pantry", "dairy_eggs", "meat_seafood", "frozen", "other"):
         assert category in instruction
