@@ -356,7 +356,7 @@ const AddRecipeModal = ({
                     <input
                       ref={importImageInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
                       className="hidden"
                       onChange={handleImportImageInputChange}
                     />

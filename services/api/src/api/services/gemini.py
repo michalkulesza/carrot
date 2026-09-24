@@ -146,17 +146,6 @@ async def _with_retry(
             log.warning("Gemini transient error (attempt %d), retrying in %ds: %s", attempt, delay, msg[:120])
             await asyncio.sleep(delay)
 
-_IMAGE_EXTRACTION_SYSTEM = """\
-Extract recipes from recipe images, preserving the original language and every
-stated fact. Never add ingredients, change amounts, estimate, convert, translate,
-or normalize source wording. For each ingredient, put the complete visible
-ingredient line in `name` exactly as written and always leave `qty` and `unit`
-null. A later deterministic parser separates supported amount and unit values.
-Keep all remaining ingredient wording, preparation notes, and alternatives in
-that same complete line. Extract steps and explicit recipe facts faithfully.
-When no recipe is visible, return a null title and no components.
-"""
-
 _TRANSCRIPTION_SYSTEM = """\
 You are a precise audio transcription system. Transcribe only the spoken audio
 you can hear. Detect the language automatically; it may be Polish, Spanish,
@@ -732,103 +721,34 @@ async def enrich_v2_recipe(
     return assembled
 
 
-async def extract_recipe_from_image(
-    image_data: bytes,
-    mime_type: str = "image/jpeg",
-    model: str | None = None,
-    available_tags: list[str] | None = None,
-    generous: bool = False,
-    usage: UsageTracker | None = None,
-) -> RecipeExtraction:
-    extraction_model = model or settings.gemini_extraction_model
-    text_prompt = (
-        "Extract the recipe from this image. "
-        "This may be a photo of a cookbook page, recipe card, handwritten recipe, or screenshot. "
-        "If the image does not contain a recipe (e.g. it's an unrelated photo, a meme, or text "
-        "with no ingredients or steps), return null title and an empty components array — do not "
-        "invent a recipe."
-    )
+_IMAGE_TRANSCRIPTION_PROMPT = """\
+Transcribe only text visibly present in this image, in its original language.
+Preserve headings, line breaks, punctuation, numbers, and reading order. For
+handwriting or unclear print, mark only the uncertain characters or words with
+[unclear]; do not guess. Include visible non-recipe text as written. Do not
+extract or organize recipe facts, infer missing words or steps, translate,
+summarize, convert units, or explain the image. Return plain text only. If no
+text is legible, return an empty response.
+"""
 
+
+async def transcribe_image_text(
+    image_data: bytes,
+    mime_type: str,
+    model: str | None = None,
+    usage: UsageTracker | None = None,
+) -> str:
+    """One vision request per job attempt; the job handles transient retries."""
     client = _build_client()
-    response = await _with_retry(
-        lambda: client.models.generate_content(
-            model=extraction_model,
-            contents=[
-                types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data)),
-                text_prompt,
-            ],
-            config=types.GenerateContentConfig(
-                system_instruction=_IMAGE_EXTRACTION_SYSTEM,
-                temperature=0,
-                response_mime_type="application/json",
-                response_schema=RecipeSourceExtraction,
-            ),
-        ),
-        generous=generous,
+    response = await asyncio.to_thread(
+        client.models.generate_content,
+        model=model or settings.gemini_extraction_model,
+        contents=[types.Part(inline_data=types.Blob(mime_type=mime_type, data=image_data)), _IMAGE_TRANSCRIPTION_PROMPT],
+        config=types.GenerateContentConfig(temperature=0, response_mime_type="text/plain"),
     )
     if usage is not None:
         usage.add(response)
-
-    raw = response.text
-    log.debug("Gemini image extraction raw: %s", raw[:500])
-    extracted_source = RecipeSourceExtraction.model_validate(json.loads(raw))
-    raw_ingredients: list[list[str]] = []
-    parsed_components = []
-    for component in extracted_source.components:
-        raw_component: list[str] = []
-        parsed_component = []
-        for ingredient in component.ingredients:
-            source_text = " ".join(
-                part for part in (
-                    ingredient.qty,
-                    ingredient.unit.value if ingredient.unit else None,
-                    ingredient.name,
-                ) if part
-            )
-            raw_component.append(source_text)
-            parsed = parse_ingredient(source_text)
-            parsed_component.append(_v2_parsed_ingredient(parsed, source_text, None))
-        raw_ingredients.append(raw_component)
-        parsed_components.append(parsed_component)
-
-    source = extracted_source.model_copy(update={
-        "components": [
-            component.model_copy(update={
-                "ingredients": [
-                    SourceIngredient(qty=item.qty, unit=item.unit, name=item.name)
-                    for item in parsed_component
-                ],
-            })
-            for component, parsed_component in zip(extracted_source.components, parsed_components)
-        ],
-    })
-    requested_estimates = {
-        field for field, value in {
-            "total_time_minutes": source.total_time_minutes,
-            "kcal_per_serving": source.kcal_per_serving,
-            "protein_per_serving": source.protein_per_serving,
-            "fat_per_serving": source.fat_per_serving,
-            "carbs_per_serving": source.carbs_per_serving,
-        }.items() if value is None
-    }
-    enrichment, step_ingredient_lines = await asyncio.gather(
-        _enrich_recipe(
-            source, available_tags, generous, usage,
-            source_faithful=True, requested_estimates=requested_estimates,
-        ),
-        _match_source_step_ingredient_lines_safely(source, generous, usage),
-    )
-    assembled = assemble_recipe(source, enrichment, step_ingredient_lines)
-    assembled.components = [
-        component.model_copy(update={
-            "ingredients": [
-                ingredient.model_copy(update={"shopping_list_value": source_text})
-                for ingredient, source_text in zip(component.ingredients, raw_component)
-            ],
-        })
-        for component, raw_component in zip(assembled.components, raw_ingredients)
-    ]
-    return assembled
+    return (response.text or "").strip()
 
 
 class _StepIngredientReference(BaseModel):

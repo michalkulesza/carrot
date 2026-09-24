@@ -12,6 +12,7 @@ class SourceKind(StrEnum):
     HTML = "html"
     SOCIAL = "social"
     TEXT = "text"
+    IMAGE_TEXT = "image_text"
 
 
 class EvidenceKind(StrEnum):
@@ -21,6 +22,7 @@ class EvidenceKind(StrEnum):
     LINKED_PAGE = "linked_page"
     TRANSCRIPT = "transcript"
     PASTED_TEXT = "pasted_text"
+    IMAGE_TRANSCRIPT = "image_transcript"
 
 
 class ExtractionStage(StrEnum):
@@ -104,7 +106,15 @@ class TextPayload(BaseModel):
     text: str = Field(min_length=1, max_length=20000)
 
 
-SourcePayload = Annotated[SocialPayload | HtmlPayload | TextPayload, Field(discriminator="kind")]
+class ImageTextPayload(BaseModel):
+    schema_version: Literal[1]
+    kind: Literal[SourceKind.IMAGE_TEXT]
+    source_url: str = ""
+    capture: Capture = Field(default_factory=lambda: Capture(status="complete"))
+    text: str = Field(min_length=1, max_length=20000)
+
+
+SourcePayload = Annotated[SocialPayload | HtmlPayload | TextPayload | ImageTextPayload, Field(discriminator="kind")]
 SOURCE_PAYLOAD_ADAPTER = TypeAdapter(SourcePayload)
 
 

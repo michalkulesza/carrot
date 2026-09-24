@@ -10,7 +10,6 @@ Open work only. When an item is completed, move it to the matching category in [
 
 - [ ] **Extractor v2** — Core extraction and production integration are complete. Add 25 reviewed TikTok fixtures (five each in en, pl, de, fr, es); Facebook support is tracked separately under Core product features. The extractor stays source-agnostic, accepting cleaned HTML or normalized text. Plan: [Extractor v2](specs/extractor-v2.md).
 - [ ] Preserve ingredient groups in social imports. The caption in [instagram-Dcg94qVxius.json](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) labels groups such as Carne, Chiles, Verduras, Condimentos, and Además, but the imported recipe does not keep those groups. Improve extraction and add this fixture as a regression case.
-- [ ] Route image imports through extractor v2. Make one Gemini vision call to transcribe visible text faithfully, preserving headings, line breaks, reading order, and uncertainty. Pass that text to the existing v2 text pipeline and use its normal extraction, enrichment, unit conversion, failure handling, and persistence. Keep the image and transcription as source evidence, and compare cookbook pages, screenshots, and handwriting before rollout. The one-call limit applies to image transcription; v2's existing model calls remain as they are.
 
 ## Core product features
 
@@ -20,8 +19,12 @@ Open work only. When an item is completed, move it to the matching category in [
 - [ ] **Round up fractional shopping-list quantities** — Display purchasable whole-item amounts while retaining the precise underlying quantity to prevent over-buying.
 - [ ] **Cook from what I have / pantry** — Track pantry staples, rank recipes by missing ingredients, and subtract pantry items from the shopping list.
 - [ ] **Web recipe import source icons** — Add icons for supported sources beneath the import method buttons.
-- [ ] **Facebook and Facebook short-video imports** — Support Facebook post, Reel/short-video, and `fb.watch` URLs through a Facebook-specific acquisition adapter. Capture the description, creator identity, verified creator-authored comments, linked recipe pages, and video/audio evidence where available; pass a versioned payload to the extraction-v2 orchestrator. Preserve source provenance and apply the existing safe-fetch and fallback rules. This is a later product item, separate from the extractor-v2 release.
-  - [ ] Add reviewed Facebook extraction-v2 fixtures: five recipes for each of English, Polish, German, French, and Spanish (25 fixtures total), plus end-to-end import tests before enabling the source.
+- [ ] **Threads, YouTube, Facebook, and Pinterest recipe imports** — Support recipe URLs from these platforms through source-specific acquisition adapters feeding extractor v2. Preserve source provenance and apply the existing safe-fetch and fallback rules. Keep this work separate from the extractor-v2 release.
+  - [ ] Support Threads posts, including post text, media, and linked recipe pages where available.
+  - [ ] Support YouTube videos and Shorts, including descriptions, captions or transcripts, and linked recipe pages where available.
+  - [ ] **Facebook and Facebook short-video imports** — Support Facebook post, Reel/short-video, and `fb.watch` URLs through a Facebook-specific acquisition adapter. Capture the description, creator identity, verified creator-authored comments, linked recipe pages, and video/audio evidence where available; pass a versioned payload to the extraction-v2 orchestrator.
+    - [ ] Add reviewed Facebook extraction-v2 fixtures: five recipes for each of English, Polish, German, French, and Spanish (25 fixtures total), plus end-to-end import tests before enabling the source.
+  - [ ] Support Pinterest pins, including pin text, images, and linked recipe pages where available.
 - [ ] **Make the allergen pass opt-in** — Skip the allergen Gemini call entirely while a user has no allergens set. Enable it the moment the first allergen is added in settings, and backfill existing recipes with an allergens-only pass (no re-extraction, no re-enrichment). Show an in-app progress message while the backfill runs and send a notification when it finishes.
 
 ## Experience and product polish

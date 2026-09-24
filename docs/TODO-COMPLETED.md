@@ -4,6 +4,8 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 
 ## Most urgent
 
+- [x] **Route image imports through extractor v2** — Image jobs use one Gemini vision transcription call per attempt, then the shared v2 extraction, enrichment, and persistence path. Web and mobile remain connected to the image job API; the legacy image pipeline was removed. Live pancake-image and isolated database checks passed. Completed: [image import extractor v2](specs/completed/image-import-extractor-v2.md).
+
 - [x] **Review serving quantity scaling** — Verified serving changes across metric and US ingredient variants; fixed quantity ranges, per-item measurements, and tiny nonzero amounts in [ingredientScaling.ts](../packages/shared/src/utils/ingredientScaling.ts).
 
 - [x] **Unit/amount parser v2** — Connected deterministic parsing to active recipe ingestion. Text and image imports preserve each full source ingredient line as `shopping_list_value`; the image extraction path no longer asks Gemini to split quantities or units. Reviewed benchmark: 200/200 diverse rows and 447/447 foreign-language rows agree exactly on `qty`, `unit`, and `name` (status excluded). Removed the unused legacy text extraction helper and Gemini splitting prompt. Completed: [unit/amount parser v2](specs/completed/unit-amount-parser-v2.md).

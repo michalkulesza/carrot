@@ -8,7 +8,6 @@ from api.services.import_worker import run
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("api.services.transcription").setLevel(logging.DEBUG)
-logging.getLogger("api.services.pipeline").setLevel(logging.DEBUG)
 
 
 async def main() -> None:

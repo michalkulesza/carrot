@@ -13,11 +13,14 @@ from api.services.extraction_v2.contracts import (
     AudioEvidenceExtractor, AudioExtractionInput, CompleteOutcome, EvidenceKind,
     EvidenceSource, ExtractedRecipe, ExtractionInput, ExtractionOutcome,
     ExtractionStage, ExtractorV2, FailedOutcome, FailureReason, HtmlPayload,
-    IncompleteOutcome, IssueCode, LanguageDetector, LanguageResult, SocialPayload, TextPayload,
+    ImageTextPayload, IncompleteOutcome, IssueCode, LanguageDetector, LanguageResult, SocialPayload, TextPayload,
     SOURCE_PAYLOAD_ADAPTER, TraceEvent,
     validate_extracted_recipe,
 )
 from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES
+from api.services.extraction_v2.evidence import text_reference
+from api.services.extraction_v2.extractor import parse_yield_servings
+from api.services.extraction_v2.lexicons import heading_kind, looks_like_ingredient, looks_like_step
 from api.services.extraction_v2.merge import has_ingredients, has_instructions, merge_recipes, recipes_can_merge
 from api.services.extraction_v2.sources import (
     LinkedPageProvider, TextSegment, TranscriptionProvider, is_safe_http_url, normalize_segments,
@@ -27,6 +30,74 @@ from api.services.html_cleaner import clean_html_body
 
 MAX_LINKED_PAGES = 3
 _URL_IN_TEXT = re.compile(r"https?://[^\s<>()]+", re.IGNORECASE)
+
+
+def _ground_image_title(recipe: ExtractedRecipe, source: ExtractionInput) -> ExtractedRecipe:
+    """Keep a short printed title near recipe section headings, with its source span."""
+    if recipe.title or not (has_ingredients(recipe) or has_instructions(recipe)):
+        return recipe
+    lines: list[tuple[str, int, int]] = []
+    offset = 0
+    for raw in source.content.splitlines(keepends=True):
+        value = raw.strip()
+        if value:
+            start = offset + len(raw) - len(raw.lstrip())
+            lines.append((value, start, start + len(value)))
+        offset += len(raw)
+
+    def plausible(value: str) -> bool:
+        return (
+            len(value) <= 100 and len(value.split()) <= 12
+            and not value.endswith((".", "!", "?"))
+            and heading_kind(value) is None
+            and not looks_like_ingredient(value)
+            and not looks_like_step(value)
+            and parse_yield_servings(value) is None
+            and not re.search(r"\b\d+(?:[.,]\d+)?\s*(?:min(?:utes?)?|hours?|hrs?)\b", value, re.IGNORECASE)
+        )
+
+    candidate: list[tuple[str, int, int]] | None = None
+    for index, (value, _, _) in enumerate(lines):
+        if heading_kind(value) != "ingredients":
+            continue
+        for title_index in range(index - 1, max(-1, index - 4), -1):
+            line = lines[title_index]
+            if not plausible(line[0]):
+                continue
+            candidate = [line]
+            if title_index > 0:
+                previous = lines[title_index - 1]
+                separator = source.content[previous[2]:line[1]]
+                same_heading_style = (
+                    (previous[0].isupper() and line[0].isupper())
+                    or (previous[0].istitle() and line[0].istitle())
+                )
+                if (
+                    separator in {"\n", "\r\n"}
+                    and same_heading_style
+                    and plausible(previous[0])
+                    and len(previous[0]) + len(line[0]) + 1 <= 80
+                    and len(previous[0].split()) + len(line[0].split()) <= 8
+                ):
+                    candidate.insert(0, previous)
+            break
+        if candidate:
+            break
+    if candidate is None:
+        for index in range(len(lines) - 2):
+            if (
+                plausible(lines[index][0])
+                and parse_yield_servings(lines[index + 1][0]) is not None
+                and heading_kind(lines[index + 2][0]) == "instructions"
+            ):
+                candidate = [lines[index]]
+                break
+    if candidate is None:
+        return recipe
+    return recipe.model_copy(update={
+        "title": " ".join(line[0] for line in candidate),
+        "title_references": [text_reference(source, start, end) for _, start, end in candidate],
+    })
 
 
 def _supported_social_segments(
@@ -89,31 +160,35 @@ class ExtractionOrchestrator:
             )
         if isinstance(payload, HtmlPayload):
             return await self._extract_html_payload(payload)
-        if isinstance(payload, TextPayload):
+        if isinstance(payload, (TextPayload, ImageTextPayload)):
             return await self._extract_text_payload(payload)
         return await self._extract_social_payload(payload)
 
-    async def _extract_text_payload(self, payload: TextPayload) -> ExtractionOutcome:
+    async def _extract_text_payload(self, payload: TextPayload | ImageTextPayload) -> ExtractionOutcome:
         source_url = payload.source_url
         language = self._dependencies.language_detector.detect(payload.text)
-        source = EvidenceSource(id="pasted_text:0", kind=EvidenceKind.PASTED_TEXT,
+        image_source = isinstance(payload, ImageTextPayload)
+        source = EvidenceSource(id="image_transcript:0" if image_source else "pasted_text:0",
+                                kind=EvidenceKind.IMAGE_TRANSCRIPT if image_source else EvidenceKind.PASTED_TEXT,
                                 source_url=source_url, text=payload.text, language=language)
         evidence = [source]
-        trace = [TraceEvent(stage=ExtractionStage.INPUT, event="text_received", evidence_ids=[source.id])]
+        trace = [TraceEvent(stage=ExtractionStage.INPUT, event="image_transcript_received" if image_source else "text_received", evidence_ids=[source.id])]
         failure = self._language_failure(language, source_url, evidence, trace, source.id)
         if failure:
             return failure
         try:
-            recipe = validate_extracted_recipe(await self._dependencies.extractor.extract_text(
-                ExtractionInput(content=payload.text, evidence_ids=[source.id]),
-            ), {source.id})
+            extraction_input = ExtractionInput(content=payload.text, evidence_ids=[source.id])
+            recipe = await self._dependencies.extractor.extract_text(extraction_input)
+            if image_source:
+                recipe = _ground_image_title(recipe, extraction_input)
+            recipe = validate_extracted_recipe(recipe, {source.id})
         except TimeoutError:
             return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
                                  reason=FailureReason.MODEL_TIMEOUT, failed_stage=ExtractionStage.TEXT)
         except Exception:
             return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
                                  reason=FailureReason.INVALID_MODEL_RESPONSE, failed_stage=ExtractionStage.TEXT)
-        trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="pasted_text_extracted", evidence_ids=[source.id]))
+        trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="image_transcript_extracted" if image_source else "pasted_text_extracted", evidence_ids=[source.id]))
         return self._classify(source_url, recipe, evidence, trace)
 
     def _language_failure(

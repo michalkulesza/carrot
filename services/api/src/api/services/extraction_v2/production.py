@@ -11,7 +11,7 @@ from api.services import gemini
 from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
 from api.services.extraction_v2.contracts import (
     Capture, Comment, ExtractionOutcome, FailureReason, FailedOutcome,
-    ExtractionStage, HtmlPayload, SocialPayload, TextPayload,
+    ExtractionStage, HtmlPayload, ImageTextPayload, SocialPayload, TextPayload,
 )
 from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
 from api.services.extraction_v2.gemini_selection import (
@@ -135,4 +135,9 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
 
 async def extract_pasted_text(text: str, usage: gemini.UsageTracker) -> ExtractionOutcome:
     payload = TextPayload(schema_version=1, kind="text", text=text[:20000])
+    return await create_production_orchestrator(usage).extract(payload.model_dump(mode="json"))
+
+
+async def extract_image_transcript(text: str, usage: gemini.UsageTracker) -> ExtractionOutcome:
+    payload = ImageTextPayload(schema_version=1, kind="image_text", text=text)
     return await create_production_orchestrator(usage).extract(payload.model_dump(mode="json"))

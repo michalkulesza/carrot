@@ -40,15 +40,17 @@ from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure
-from api.services.pipeline import run_image_import_stream
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
-from api.services.extraction_v2.production import acquire_and_extract_url, extract_pasted_text
+from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
 from api.services import gemini as gemini_svc
 
 log = logging.getLogger(__name__)
 _POLL_INTERVAL_SECONDS = 2
 _MAX_IMPORT_RETRIES = 3
 _IMPORT_RETRY_DELAY_SECONDS = 30
+_MAX_IMAGE_BYTES = 8 * 1024 * 1024
+_MAX_TRANSCRIPT_CHARS = 20_000
+_IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 
 
 class ImportPipelineFailure(Exception):
@@ -261,7 +263,6 @@ async def _is_member(session, job: ImportJob) -> bool:
 
 
 async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: list[str]) -> ImportResult:
-    result: ImportResult | None = None
     if job.kind == ImportJobKind.URL:
         usage = gemini_svc.UsageTracker()
         outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
@@ -289,14 +290,45 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
             source_capture={"schema_version": 1, "kind": "text", "text": job.input["text"][:20000]},
         )
     else:
-        image_data = base64.b64decode(job.input["image_base64"])
-        generator = run_image_import_stream(image_data, job.input.get("mime_type", "image/jpeg"), model=job.model, available_tags=available_tags, allergens=allergens or None)
-    async for event in generator:
-        if event["type"] == "done":
-            result = ImportResult.model_validate(event["result"])
-    if result is None or result.recipe is None or result.stage == "failed":
-        raise ImportPipelineFailure(result.error if result else "extraction_failed")
-    return result
+        mime_type = job.input.get("mime_type", "image/jpeg")
+        encoded = job.input.get("image_base64", "")
+        if mime_type not in _IMAGE_MIME_TYPES or len(encoded) > ((_MAX_IMAGE_BYTES + 2) // 3) * 4:
+            raise ImportPipelineFailure(FailureReason.INVALID_INPUT.value.lower(), "input")
+        try:
+            image_data = base64.b64decode(encoded, validate=True)
+        except (ValueError, base64.binascii.Error):
+            raise ImportPipelineFailure(FailureReason.INVALID_INPUT.value.lower(), "input") from None
+        if not image_data or len(image_data) > _MAX_IMAGE_BYTES:
+            raise ImportPipelineFailure(FailureReason.INVALID_INPUT.value.lower(), "input")
+        usage = gemini_svc.UsageTracker()
+        try:
+            transcript = await gemini_svc.transcribe_image_text(image_data, mime_type, model=job.model, usage=usage)
+        except TimeoutError:
+            raise ImportPipelineFailure(FailureReason.MODEL_TIMEOUT.value.lower(), "transcript") from None
+        except Exception as error:
+            message = str(error).lower()
+            reason = (FailureReason.MODEL_RATE_LIMITED if "429" in message or "resource_exhausted" in message
+                      else FailureReason.TRANSCRIPTION_FAILED)
+            raise ImportPipelineFailure(reason.value.lower(), "transcript") from None
+        if not transcript:
+            raise ImportPipelineFailure(FailureReason.UNREADABLE_CONTENT.value.lower(), "transcript")
+        if len(transcript) > _MAX_TRANSCRIPT_CHARS:
+            raise ImportPipelineFailure(FailureReason.INVALID_INPUT.value.lower(), "transcript")
+        outcome = await extract_image_transcript(transcript, usage)
+        if isinstance(outcome, FailedOutcome):
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+        recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
+        return ImportResult(
+            stage="transcript", recipe=recipe, metadata=ImportMetadata(),
+            outcome=outcome.outcome, issue_codes=[code.value for code in outcome.issue_codes],
+            evidence=[item.model_dump(mode="json") for item in outcome.evidence],
+            trace=[item.model_dump(mode="json") for item in outcome.trace],
+            source_capture={
+                "schema_version": 1, "kind": "image", "mime_type": mime_type,
+                "image_base64": encoded, "transcript": transcript,
+                "capture": {"status": "complete", "errors": []},
+            },
+        )
 
 
 def _is_transient(error: Exception) -> bool:

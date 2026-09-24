@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 import os
 from pathlib import Path
@@ -308,6 +309,85 @@ async def test_import_job_persists_partial_url_source_facts_and_is_idempotent(mo
             assert saved.components[0]["steps"] == []
             assert evidence["evidence"][0]["id"] == "caption:0"
             assert count == 1
+    finally:
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_image_job_persists_v2_recipe_and_private_source_capture(monkeypatch):
+    database_url = os.getenv("CARROT_ISOLATED_TEST_DATABASE_URL")
+    if not database_url:
+        pytest.skip("requires an isolated disposable Postgres database")
+    parsed = urlsplit(database_url)
+    assert parsed.hostname in {"localhost", "127.0.0.1"}
+    assert parsed.port != 5432
+    assert parsed.path.lstrip("/").startswith("carrot_extraction_v2_test_")
+    engine = create_async_engine(database_url)
+    maker = async_sessionmaker(engine, expire_on_commit=False)
+    image = b"image-fixture"
+    encoded = base64.b64encode(image).decode()
+    transcript = "Tomato Soup\nServes 2\nIngredients\n2 tomatoes\nInstructions\nChop tomatoes and simmer."
+    vision_calls = []
+    try:
+        async with engine.begin() as connection:
+            await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+            await connection.run_sync(Base.metadata.create_all)
+        monkeypatch.setattr(import_worker, "async_session_maker", maker)
+        monkeypatch.setattr(gemini, "_build_client", _no_gemini)
+
+        async def transcribe(data, mime_type, model=None, usage=None):
+            vision_calls.append((data, mime_type))
+            return transcript
+
+        async def enrich(extracted, *_args, **_kwargs):
+            return models.RecipeExtraction(
+                title=extracted.title,
+                title_evidence=[ref.model_dump(mode="json") for ref in extracted.title_references],
+                components=[models.RecipeComponent(
+                    name=component.name,
+                    ingredients=[models.Ingredient(name=item.text, shopping_list_value=item.text)
+                                 for item in component.ingredients],
+                    steps=[step.text for step in component.steps],
+                ) for component in extracted.components],
+            )
+
+        monkeypatch.setattr(gemini, "transcribe_image_text", transcribe)
+        monkeypatch.setattr(gemini, "enrich_v2_recipe", enrich)
+        user = User(email=f"image-{uuid4()}@example.com", hashed_password="unused", is_active=True, is_verified=True)
+        household = models.Household(name="Image v2 test", invite_code=uuid4().hex[:8])
+        async with maker() as session:
+            session.add_all([user, household])
+            await session.flush()
+            session.add(models.HouseholdMember(user_id=user.id, household_id=household.id))
+            await session.commit()
+        async with maker() as session:
+            created = await imports.enqueue_import_job(
+                models.ImportJobCreate(kind=models.ImportJobKind.IMAGE, input={
+                    "image_base64": encoded, "mime_type": "image/webp",
+                }, idempotency_key=uuid4()),
+                Response(), user, session, household.id,
+            )
+        assert await import_worker._claim_job() == created.id
+        await import_worker._process_job(created.id)
+        await import_worker._process_job(created.id)
+        async with maker() as session:
+            job = await session.get(models.ImportJob, created.id)
+            assert job.status == models.ImportJobStatus.SUCCEEDED
+            assert job.outcome == "complete"
+            assert job.input == {}
+            recipe = await recipes.get_recipe(str(job.result_recipe_id), user, session, household.id)
+            source = await session.get(models.RecipeSourceEvidence, job.result_recipe_id)
+            count = await session.scalar(select(func.count()).select_from(models.Recipe).where(models.Recipe.author_id == user.id))
+            assert recipe.title == "Tomato Soup"
+            assert recipe.title_evidence[0]["quote"] == "Tomato Soup"
+            assert recipe.components[0]["ingredients"] == ["2 tomatoes"]
+            assert recipe.components[0]["steps"] == ["Chop tomatoes and simmer."]
+            assert source.evidence[0]["kind"] == "image_transcript"
+            assert source.evidence[0]["text"] == transcript
+            assert source.capture["transcript"] == transcript
+            assert base64.b64decode(source.capture["image_base64"]) == image
+            assert count == 1
+        assert vision_calls == [(image, "image/webp")]
     finally:
         await engine.dispose()
 

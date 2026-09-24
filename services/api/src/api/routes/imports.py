@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import binascii
 import json
 import uuid
 from datetime import datetime
@@ -25,6 +27,8 @@ from api.users import User, current_active_user
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 _ACTIVE_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING)
+_MAX_IMAGE_BYTES = 8 * 1024 * 1024
+_IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 
 
 def _scope_filter(model, household_id: uuid.UUID):
@@ -76,8 +80,16 @@ def _validate_input(body: ImportJobCreate) -> None:
         return
     if body.kind == "text" and isinstance(value.get("text"), str) and value["text"].strip():
         return
-    if body.kind == "image" and isinstance(value.get("image_base64"), str) and value["image_base64"]:
-        return
+    if body.kind == "image" and isinstance(value.get("image_base64"), str):
+        encoded = value["image_base64"]
+        if value.get("mime_type", "image/jpeg") in _IMAGE_MIME_TYPES and len(encoded) <= ((_MAX_IMAGE_BYTES + 2) // 3) * 4:
+            try:
+                image = base64.b64decode(encoded, validate=True)
+            except (ValueError, binascii.Error):
+                pass
+            else:
+                if 0 < len(image) <= _MAX_IMAGE_BYTES:
+                    return
     raise HTTPException(status_code=422, detail="invalid_import_input")
 
 

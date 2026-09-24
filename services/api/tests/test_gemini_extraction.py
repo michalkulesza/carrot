@@ -7,10 +7,9 @@ import pytest
 from api.models import (
     EnrichmentComponent,
     RecipeEnrichment,
-    RecipeExtraction,
     RecipeSourceExtraction,
 )
-from api.services import gemini, import_worker, pipeline
+from api.services import gemini, import_worker
 from api.services.extraction_v2.contracts import ExtractedRecipe
 
 
@@ -263,60 +262,6 @@ async def test_enrichment_retries_when_recipe_time_is_missing(monkeypatch) -> No
 
 
 @pytest.mark.asyncio
-async def test_image_extraction_uses_deterministic_sampling(monkeypatch) -> None:
-    generate_content = Mock(side_effect=[_response(_source_payload()), _response(_enrichment_payload())])
-    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
-    monkeypatch.setattr(gemini, "_build_client", lambda: client)
-
-    await gemini.extract_recipe_from_image(b"image", mime_type="image/jpeg", model="image-model")
-
-    extraction_call, enrichment_call = generate_content.call_args_list
-    assert extraction_call.kwargs["model"] == "image-model"
-    assert enrichment_call.kwargs["model"] == "gemini-3.1-flash-lite"
-    assert extraction_call.kwargs["config"].temperature == 0
-
-
-@pytest.mark.asyncio
-async def test_image_extraction_uses_parser_v2_and_preserves_full_source_line(monkeypatch) -> None:
-    raw_line = "1 cup basmati rice, rinsed"
-    source = _source_payload(
-        title="Rice",
-        total_time_minutes=20,
-        components=[{"ingredients": [{"qty": None, "unit": None, "name": raw_line}]}],
-    )
-    enrichment = _enrichment_payload(
-        total_time_minutes=None,
-        components=[{
-            "metric_ingredients": ["180 g basmati rice, rinsed"],
-            "imperial_ingredients": ["1 cup basmati rice, rinsed"],
-            "metric_steps": [],
-            "imperial_steps": [],
-            "shopping_list_values": ["1 cup basmati rice, rinsed"],
-            "shopping_list_categories": ["pantry"],
-        }],
-    )
-    generate_content = Mock(side_effect=[_response(source), _response(enrichment)])
-    monkeypatch.setattr(
-        gemini,
-        "_build_client",
-        lambda: SimpleNamespace(models=SimpleNamespace(generate_content=generate_content)),
-    )
-
-    result = await gemini.extract_recipe_from_image(b"image")
-
-    extraction_call, enrichment_call = generate_content.call_args_list
-    assert "complete visible" in extraction_call.kwargs["config"].system_instruction
-    enrichment_source = json.loads(enrichment_call.kwargs["contents"])["source_recipe"]
-    parsed_source = enrichment_source["components"][0]["ingredients"][0]
-    assert (parsed_source["qty"], parsed_source["unit"], parsed_source["name"]) == (
-        "1", "cup", "basmati rice, rinsed",
-    )
-    ingredient = result.components[0].ingredients[0]
-    assert (ingredient.qty, ingredient.unit, ingredient.name) == ("1", "cup", "basmati rice, rinsed")
-    assert ingredient.shopping_list_value == raw_line
-
-
-@pytest.mark.asyncio
 async def test_audio_transcription_uses_flash_lite_and_faithful_prompt(monkeypatch) -> None:
     response = SimpleNamespace(text="Dodaj dwie łyżki oliwy.")
     generate_content = Mock(return_value=response)
@@ -455,27 +400,6 @@ def test_assemble_recipe_rejects_mismatched_ingredient_count() -> None:
     enrichment.components[0].shopping_list_values = []
     with pytest.raises(ValueError):
         gemini.assemble_recipe(source, enrichment)
-
-
-def test_is_complete_accepts_ingredients_and_steps_split_across_components() -> None:
-    # A recipe with sub-headed ingredient sections ("For the paste", "For the
-    # pork") and one shared instruction list: no single component carries
-    # both ingredients and steps, but the recipe as a whole is complete.
-    recipe = RecipeExtraction.model_validate(_enrichment_payload(components=[
-        {"name": "For the paste", "ingredients": [{"name": "tahini"}], "steps": []},
-        {"name": "For the pork", "ingredients": [{"name": "pork mince"}], "steps": []},
-        {"name": None, "ingredients": [], "steps": ["Mix the paste.", "Cook the pork."]},
-    ]))
-
-    assert pipeline._is_complete(recipe) is True
-
-
-def test_is_complete_rejects_recipe_with_no_ingredients_anywhere() -> None:
-    recipe = RecipeExtraction.model_validate(_enrichment_payload(components=[
-        {"name": None, "ingredients": [], "steps": ["Do something."]},
-    ]))
-
-    assert pipeline._is_complete(recipe) is False
 
 
 @pytest.mark.asyncio
