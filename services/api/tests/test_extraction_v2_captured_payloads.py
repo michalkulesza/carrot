@@ -13,7 +13,7 @@ import pytest
 from api.services import gemini
 from api.services.extraction_v2.contracts import SOURCE_PAYLOAD_ADAPTER, TextSelection
 from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
-from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
+from api.services.extraction_v2.extractor import RecipeEvidenceExtractor, split_inline_ingredient_group
 from api.services.extraction_v2.evidence import reference_matches
 from api.services.extraction_v2.gemini_selection import HybridTextExtractor
 from api.services.extraction_v2.language import LinguaLanguageDetector
@@ -244,6 +244,63 @@ async def test_dxw_frozen_audio_replay_keeps_caption_facts_and_transcript_proven
             assert step.text.strip()
             assert step.evidence_ids == [transcript.id]
             assert set(step.evidence_ids) <= valid_evidence_ids
+
+
+@pytest.mark.asyncio
+async def test_instagram_caption_keeps_inline_ingredient_groups(monkeypatch: pytest.MonkeyPatch) -> None:
+    capture_path = CAPTURE_DIR / "instagram-Dcg94qVxius.json"
+    payload = json.loads(capture_path.read_text(encoding="utf-8"))
+    expected = _expectations()[capture_path.name]
+    outcome = await _extract_reviewed_capture(capture_path, payload, expected, monkeypatch)
+
+    assert outcome.recipe is not None
+    _assert_subset(expected["recipe"], _recipe_projection(outcome.model_dump(mode="json")["recipe"]))
+    groups = {component.name: component for component in outcome.recipe.components if component.name}
+    expected_ingredients = {
+        "Carne": "2.4 kg de diezmillo (sazona con sal antes de sellarla).",
+        "Chiles": "6 chiles guajillo, 5 chiles ancho y 3 chiles pasilla.",
+        "Verduras": "4 jitomates medianos, 1 cebolla blanca, 1 cabeza de ajo y 6 dientes de ajo.",
+        "Condimentos": "1\u00bd cditas de or\u00e9gano, 1 cdta de tomillo, 1 cdta de mejorana, 1 cdta de comino, 4 clavos de olor, 10 pimientas negras, 3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel.",
+        "Adem\u00e1s": "\u00bc taza de vinagre blanco, 1\u00bd taza de agua, sal de grano y aceite.",
+    }
+    assert set(groups) == set(expected_ingredients)
+    caption = next(source for source in outcome.evidence if source.id == "caption:0")
+    for name, text in expected_ingredients.items():
+        group = groups[name]
+        assert group.name_references
+        assert all(reference_matches(reference, caption.text) for reference in group.name_references)
+        ingredient, = group.ingredients
+        assert ingredient.text == text
+        assert ingredient.evidence_ids == [caption.id]
+        assert ingredient.references
+        assert all(reference_matches(reference, caption.text) for reference in ingredient.references)
+
+
+def test_inline_ingredient_group_parser_rejects_timed_instruction() -> None:
+    assert split_inline_ingredient_group("Cocci\u00f3n: 55 minutos en olla de presi\u00f3n.") is None
+
+
+@pytest.mark.asyncio
+async def test_instagram_caption_deterministic_fallback_keeps_inline_groups() -> None:
+    capture_path = CAPTURE_DIR / "instagram-Dcg94qVxius.json"
+    payload = json.loads(capture_path.read_text(encoding="utf-8"))
+    outcome = await ExtractionOrchestrator(ExtractionDependencies(
+        RecipeEvidenceExtractor(), LinguaLanguageDetector(),
+        transcription_provider=None, audio_evidence_extractor=None,
+    )).extract(payload)
+
+    assert outcome.recipe is not None
+    groups = {component.name: component for component in outcome.recipe.components if component.name}
+    assert set(groups) == {"Carne", "Chiles", "Verduras", "Condimentos", "Adem\u00e1s"}
+    caption = next(source for source in outcome.evidence if source.id == "caption:0")
+    for group in groups.values():
+        assert group.name_references
+        assert all(reference_matches(reference, caption.text) for reference in group.name_references)
+        assert group.ingredients
+        for ingredient in group.ingredients:
+            assert ingredient.evidence_ids == [caption.id]
+            assert ingredient.references
+            assert all(reference_matches(reference, caption.text) for reference in ingredient.references)
 
 
 def test_audio_response_fixtures_reference_transcribed_captures() -> None:

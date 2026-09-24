@@ -183,6 +183,26 @@ def _extract(
             # after the final real instruction.
             continue
         if section == "ingredients":
+            inline_group = split_inline_ingredient_group(block.text) if block.kind == "item" else None
+            if inline_group is not None and block.references and block.references[0].locator_kind == "text":
+                name, name_offset, ingredient_text, ingredient_offset = inline_group
+                start, _ = (int(part) for part in block.references[0].locator.split(":"))
+                name_reference = block.references[0].model_copy(update={
+                    "locator": f"{start + name_offset}:{start + name_offset + len(name)}",
+                    "quote": name,
+                })
+                ingredient_start = start + ingredient_offset
+                ingredient_reference = block.references[0].model_copy(update={
+                    "locator": f"{ingredient_start}:{ingredient_start + len(ingredient_text)}",
+                    "quote": ingredient_text,
+                })
+                active = _Component(name, [name_reference])
+                components.append(active)
+                active.ingredients.append(IngredientEvidence(
+                    text=ingredient_text, evidence_ids=_ids(block),
+                    locator=ingredient_reference.locator, references=[ingredient_reference],
+                ))
+                continue
             if _is_component_label(block):
                 name = block.text.rstrip(":")
                 if active.name == name and not active.ingredients:
@@ -355,6 +375,12 @@ def _text_blocks(source: ExtractionInput) -> list[Block]:
         if not stripped:
             continue
         offset = match.start() + len(raw) - len(raw.lstrip())
+        decorated_heading = re.match(r"^[^\w]*(.+)$", stripped, re.UNICODE)
+        if decorated_heading and heading_kind(decorated_heading.group(1)):
+            heading = decorated_heading.group(1).rstrip(":")
+            heading_start = offset + decorated_heading.start(1)
+            blocks.append(_text_block(source, heading, "heading", heading_start, heading_start + len(heading)))
+            continue
         # Support "Ingredients: 1 onion" while leaving commas untouched.
         inline = re.match(r"^([^:]{2,50}):\s+(.+)$", stripped)
         if inline and heading_kind(inline.group(1)):
@@ -844,6 +870,35 @@ def parse_nutrition_text(value: str) -> NutritionEvidence:
     )
     result.carbohydrates = _nutrition_value(value, _CARBOHYDRATE_LABEL)
     return result
+
+
+_INLINE_GROUP = re.compile(
+    r"(?P<name>[A-ZÀ-ÖØ-Þ][^\W\d_]*(?:[ \t]+[^\W\d_]+){0,3}):[ \t]*(?P<value>.+)$",
+    re.UNICODE,
+)
+
+
+def split_inline_ingredient_group(text: str) -> tuple[str, int, str, int] | None:
+    """Split a decorated inline group label from an ingredient line.
+
+    Social captions commonly put an emoji before a short title-cased group
+    label ("🌶️Chiles: 2 chiles"). Requiring an ingredient-like value keeps
+    ordinary prose and colon-bearing directions out of this path.
+    """
+    matches = list(_INLINE_GROUP.finditer(text))
+    if not matches:
+        return None
+    match = matches[-1]
+    value = match.group("value").strip()
+    if not value or not (
+        looks_like_ingredient(value)
+        or re.match(r"^\d?[¼½¾](?:\s|[a-z])", value, re.IGNORECASE)
+    ):
+        return None
+    if re.match(r"^\d+(?:[.,]\d+)?\s*(?:seconds?|minutes?|hours?|segundos?|minutos?|horas?)\b", value, re.IGNORECASE):
+        return None
+    value_start = match.start("value") + (len(match.group("value")) - len(match.group("value").lstrip()))
+    return match.group("name"), match.start("name"), value, value_start
 
 
 def parse_yield_servings(value: str | None, *, allow_unlabelled: bool = False) -> str | None:

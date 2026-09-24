@@ -39,6 +39,26 @@ def test_selection_copies_exact_lines_and_grounds_nutrition_qualifiers() -> None
     assert all(reference_matches(reference, source.content) for reference in recipe.nutrition.references)
 
 
+def test_inline_group_keeps_following_ingredient_lines_until_next_group() -> None:
+    source = ExtractionInput(
+        content="Ingredients:\nCarne: 2 kg beef\n1 onion\n2 cloves garlic\nChiles: 3 dried chiles\n1 tsp flakes",
+        evidence_ids=["caption:0"],
+    )
+    recipe = materialize_selection(source, index_text_lines(source), TextSelection.model_validate({
+        "components": [{"ingredient_line_ids": ["line:2", "line:3", "line:4", "line:5", "line:6"]}],
+    }))
+
+    assert [(component.name, [item.text for item in component.ingredients]) for component in recipe.components] == [
+        ("Carne", ["2 kg beef", "1 onion", "2 cloves garlic"]),
+        ("Chiles", ["3 dried chiles", "1 tsp flakes"]),
+    ]
+    assert all(
+        reference_matches(reference, source.content)
+        for component in recipe.components
+        for reference in [*component.name_references, *(ref for ingredient in component.ingredients for ref in ingredient.references)]
+    )
+
+
 def test_selection_removes_leading_emoji_markers_and_keeps_precise_references() -> None:
     source = ExtractionInput(
         content="✔️260 g chicken\n1️⃣ Mix thoroughly.\n2. Serve hot.",

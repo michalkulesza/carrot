@@ -5974,23 +5974,26 @@
         },
         "components": [
           {
-            "ingredients": [
-              {
-                "text": "Carne: 2.4 kg de diezmillo (sazona con sal antes de sellarla)."
-              },
-              {
-                "text": "Chiles: 6 chiles guajillo, 5 chiles ancho y 3 chiles pasilla."
-              },
-              {
-                "text": "Verduras: 4 jitomates medianos, 1 cebolla blanca, 1 cabeza de ajo y 6 dientes de ajo."
-              },
-              {
-                "text": "Condimentos: 1½ cditas de orégano, 1 cdta de tomillo, 1 cdta de mejorana, 1 cdta de comino, 4 clavos de olor, 10 pimientas negras, 3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel."
-              },
-              {
-                "text": "Además: ¼ taza de vinagre blanco, 1½ taza de agua, sal de grano y aceite."
-              }
-            ],
+            "name": "Carne",
+            "ingredients": [{ "text": "2.4 kg de diezmillo (sazona con sal antes de sellarla)." }]
+          },
+          {
+            "name": "Chiles",
+            "ingredients": [{ "text": "6 chiles guajillo, 5 chiles ancho y 3 chiles pasilla." }]
+          },
+          {
+            "name": "Verduras",
+            "ingredients": [{ "text": "4 jitomates medianos, 1 cebolla blanca, 1 cabeza de ajo y 6 dientes de ajo." }]
+          },
+          {
+            "name": "Condimentos",
+            "ingredients": [{ "text": "1½ cditas de orégano, 1 cdta de tomillo, 1 cdta de mejorana, 1 cdta de comino, 4 clavos de olor, 10 pimientas negras, 3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel." }]
+          },
+          {
+            "name": "Además",
+            "ingredients": [{ "text": "¼ taza de vinagre blanco, 1½ taza de agua, sal de grano y aceite." }]
+          },
+          {
             "steps": [
               "Cocción: 55 minutos en olla de presión o 3 horas a fuego bajo en olla convencional."
             ]

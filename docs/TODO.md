@@ -9,7 +9,6 @@ Open work only. When an item is completed, move it to the matching category in [
 - [ ] **Extraction critical-field monitoring** — Send a Sentry info event when a completed recipe extraction lacks source-provided total time, servings, calories, protein, fat, or carbohydrates. Include only safe diagnostic metadata such as missing field names, source kind, and sanitized source URL; never include recipe text or user-provided content.
 
 - [ ] **Extractor v2** — Core extraction and production integration are complete. Add 25 reviewed TikTok fixtures (five each in en, pl, de, fr, es); Facebook support is tracked separately under Core product features. The extractor stays source-agnostic, accepting cleaned HTML or normalized text. Plan: [Extractor v2](specs/extractor-v2.md).
-- [ ] Preserve ingredient groups in social imports. The caption in [instagram-Dcg94qVxius.json](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) labels groups such as Carne, Chiles, Verduras, Condimentos, and Además, but the imported recipe does not keep those groups. Improve extraction and add this fixture as a regression case.
 
 ## Core product features
 

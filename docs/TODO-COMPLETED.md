@@ -4,6 +4,8 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 
 ## Most urgent
 
+- [x] **Preserve ingredient groups in social imports** — Inline labels in the [Instagram capture](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) are retained as ingredient groups in selected-line and deterministic extraction, with offline regression coverage.
+
 - [x] **Route image imports through extractor v2** — Image jobs use one Gemini vision transcription call per attempt, then the shared v2 extraction, enrichment, and persistence path. Web and mobile remain connected to the image job API; the legacy image pipeline was removed. Live pancake-image and isolated database checks passed. Completed: [image import extractor v2](specs/completed/image-import-extractor-v2.md).
 
 - [x] **Review serving quantity scaling** — Verified serving changes across metric and US ingredient variants; fixed quantity ranges, per-item measurements, and tiny nonzero amounts in [ingredientScaling.ts](../packages/shared/src/utils/ingredientScaling.ts).

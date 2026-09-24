@@ -29,6 +29,7 @@ from api.services.extraction_v2.extractor import (
     MAX_CONTENT_CHARS,
     parse_nutrition_text,
     parse_yield_servings,
+    split_inline_ingredient_group,
 )
 
 _SELECTION_SYSTEM = """\
@@ -476,12 +477,29 @@ def materialize_selection(source: ExtractionInput, indexed: TextSelectionInput, 
         result = RecipeComponentEvidence(
             name=heading.text if heading else None, name_references=[ref(heading)] if heading else [],
         )
+        inline_groups: list[RecipeComponentEvidence] = []
         for line_id in component.ingredient_line_ids:
             line = lines[line_id]
             text, prefix_length = _clean_selected_text(line.text)
+            inline_group = split_inline_ingredient_group(text)
+            if inline_group is not None:
+                name, name_offset, ingredient_text, ingredient_offset = inline_group
+                group = RecipeComponentEvidence(
+                    name=name,
+                    name_references=[ref(line, name, prefix_length + name_offset)],
+                )
+                start = line.start + prefix_length + ingredient_offset
+                group.ingredients.append(IngredientEvidence(
+                    text=ingredient_text, evidence_ids=[line.evidence_id],
+                    locator=f"{start}:{start + len(ingredient_text)}",
+                    references=[ref(line, ingredient_text, prefix_length + ingredient_offset)],
+                ))
+                inline_groups.append(group)
+                continue
+            target = inline_groups[-1] if inline_groups else result
             for ingredient_text, ingredient_offset in _split_inline_ingredient_line(text):
                 start = line.start + prefix_length + ingredient_offset
-                result.ingredients.append(IngredientEvidence(
+                target.ingredients.append(IngredientEvidence(
                     text=ingredient_text, evidence_ids=[line.evidence_id],
                     locator=f"{start}:{start + len(ingredient_text)}",
                     references=[ref(line, ingredient_text, prefix_length + ingredient_offset)],
@@ -489,7 +507,10 @@ def materialize_selection(source: ExtractionInput, indexed: TextSelectionInput, 
         result.steps.extend(_materialize_instruction_steps(
             [lines[line_id] for line_id in component.instruction_line_ids], ref,
         ))
-        if result.name is not None or result.ingredients or result.steps:
+        if result.name is not None or result.ingredients:
+            components.append(result)
+        components.extend(inline_groups)
+        if result.steps and not (result.name is not None or result.ingredients):
             components.append(result)
     selected = selection.nutrition
     yield_lines = [lines[item] for item in selection.yield_line_ids]
