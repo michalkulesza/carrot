@@ -17,7 +17,7 @@ Production imports must distinguish complete, saved-incomplete, and failed resul
 - `services/api/src/api/services/pipeline.py` is the live legacy URL/text/image path. `import_worker.py` consumes its `ImportResult`, then persists a `Recipe`. The enqueue route already uses an idempotency key, and the worker locks a job before saving. Preserve those safeguards.
 - `gemini.py` has a source-only schema, model enrichment, step-to-ingredient matching, unit variants, and conditional allergen analysis. Its current enrichment schema requires numeric macros and may estimate total time; revise this contract for v2's unknown/source/estimated distinctions.
 - `Recipe.components` is JSON, while recipes and import jobs lack persisted v2 issues, evidence, and failure-stage fields. `RecipeSaveRequest`, `RecipeOut`, `ImportJobOut`, shared TypeScript types, and web/mobile recipe detail views need coordinated changes. Schema upgrades currently live in `main.py` startup SQL and must also work for the worker startup path.
-- `docs/specs/rendered-html-imports.md` owns headless rendering. Integrate with its bounded renderer when available. Until then, use a bounded safe HTML fetch; renderer failure may fall back to raw HTML, but extraction itself must never fall back to the legacy pipeline.
+- `docs/specs/completed/rendered-html-imports.md` owns headless rendering. Integrate with its bounded renderer when available. Until then, use a bounded safe HTML fetch; renderer failure may fall back to raw HTML, but extraction itself must never fall back to the legacy pipeline.
 
 ## Decisions for implementation
 

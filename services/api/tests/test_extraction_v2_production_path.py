@@ -20,6 +20,7 @@ from api.services.extraction_v2 import production
 from api.services.extraction_v2 import sources
 from api.services.scraper import parse_scrapecreators_reel_response
 from api.services import transcription
+from api.services.html_renderer import RenderedPage, RendererFailure
 from api import models
 from api.database import Base
 from api.routes import imports, recipes
@@ -33,6 +34,54 @@ CAPTURES = Path(__file__).parent / "captured-payloads"
 
 def _no_gemini(*_args, **_kwargs):
     raise AssertionError("production-path tests must not call Gemini")
+
+
+@pytest.mark.asyncio
+async def test_rendered_dom_is_used_and_source_urls_are_redacted(monkeypatch):
+    url = "https://recipes.example/private/path?token=secret#fragment"
+    html = "<html><body><h1>Rendered recipe</h1><script>dynamic recipe card</script></body></html>"
+    async def render(_url):
+        assert _url == url
+        return RenderedPage(url, "https://recipes.example/landed?session=secret", html, 100)
+    async def extract(payload):
+        assert payload["html"] == html
+        from api.services.extraction_v2.contracts import CompleteOutcome, ExtractedRecipe
+        return CompleteOutcome(outcome="complete", source_url=payload["source_url"], evidence=[], trace=[], recipe=ExtractedRecipe())
+    monkeypatch.setattr(production, "render_url", render)
+    monkeypatch.setattr(production, "is_safe_public_destination", lambda _url: _safe())
+    monkeypatch.setattr(production, "create_production_orchestrator", lambda _usage: type("O", (), {"extract": staticmethod(extract)})())
+    monkeypatch.setattr(gemini, "_build_client", _no_gemini)
+
+    outcome, _metadata, capture = await production.acquire_and_extract_url(url, gemini.UsageTracker())
+
+    assert outcome.trace[-1].event == "html_rendered"
+    assert capture["requested_url"] == "https://recipes.example"
+    assert capture["final_url"] == "https://recipes.example"
+    assert "secret" not in str(capture)
+    assert capture["html"] == html
+
+
+@pytest.mark.asyncio
+async def test_renderer_timeout_uses_bounded_raw_fallback(monkeypatch):
+    url = "https://recipes.example/recipe"
+    async def timeout(_url):
+        raise RendererFailure("timeout", operational=True)
+    async def raw(_url):
+        return "<html><body>raw page</body></html>", url
+    async def extract(payload):
+        from api.services.extraction_v2.contracts import CompleteOutcome, ExtractedRecipe
+        assert "raw page" in payload["html"]
+        return CompleteOutcome(outcome="complete", source_url=payload["source_url"], evidence=[], trace=[], recipe=ExtractedRecipe())
+    monkeypatch.setattr(production, "render_url", timeout)
+    monkeypatch.setattr(production, "is_safe_public_destination", lambda _url: _safe())
+    monkeypatch.setattr(production, "_fetch_html", raw)
+    monkeypatch.setattr(production, "create_production_orchestrator", lambda _usage: type("O", (), {"extract": staticmethod(extract)})())
+
+    outcome, _metadata, capture = await production.acquire_and_extract_url(url, gemini.UsageTracker())
+
+    assert outcome.trace[-1].event == "html_raw_fallback"
+    assert outcome.trace[-1].detail == "timeout"
+    assert capture["render_status"] == "raw_fallback"
 
 
 @pytest.mark.asyncio
@@ -57,7 +106,7 @@ async def test_captured_html_import_retains_source_facts_and_final_url(monkeypat
 
     assert outcome.outcome == "complete", outcome.model_dump(mode="json")
     assert metadata.source_url == final_url
-    assert source_capture["final_url"] == final_url
+    assert source_capture["final_url"] == "https://www.andy-cooks.com"
     assert outcome.recipe.title == "Chicken teriyaki"
     assert "6 chicken thighs, skin on" in [item.text for component in outcome.recipe.components for item in component.ingredients]
     assert "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat." in [step.text for component in outcome.recipe.components for step in component.steps]

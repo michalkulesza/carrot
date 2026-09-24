@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from urllib.parse import urljoin, urlsplit
+from urllib.parse import urlunsplit
 
 import httpx
 
@@ -11,7 +12,7 @@ from api.services import gemini
 from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
 from api.services.extraction_v2.contracts import (
     Capture, Comment, ExtractionOutcome, FailureReason, FailedOutcome,
-    ExtractionStage, HtmlPayload, ImageTextPayload, SocialPayload, TextPayload,
+    ExtractionStage, HtmlPayload, ImageTextPayload, SocialPayload, TextPayload, TraceEvent,
 )
 from api.services.extraction_v2.extractor import RecipeEvidenceExtractor
 from api.services.extraction_v2.gemini_selection import (
@@ -26,6 +27,7 @@ from api.services.extraction_v2.sources import (
     is_safe_public_destination,
 )
 from api.services.scraper import scraper
+from api.services.html_renderer import RendererFailure, render_url
 
 _MAX_HTML_BYTES = 2 * 1024 * 1024
 _MAX_REDIRECTS = 5
@@ -34,6 +36,11 @@ _UNSUPPORTED_SOCIAL_SUFFIXES = (
     "facebook.com", "fb.watch", "youtube.com", "youtu.be", "pinterest.com",
     "x.com", "twitter.com", "snapchat.com",
 )
+
+
+def _safe_source_url(url: str) -> str:
+    parsed = urlsplit(url)
+    return urlunsplit((parsed.scheme, parsed.hostname or "", "", "", ""))
 
 
 def create_production_orchestrator(usage: gemini.UsageTracker) -> ExtractionOrchestrator:
@@ -120,8 +127,18 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
         ), source_capture
     if any(host == suffix or host.endswith(f".{suffix}") for suffix in _UNSUPPORTED_SOCIAL_SUFFIXES):
         return _failure(url, FailureReason.UNSUPPORTED_SOURCE, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+    render_status = "rendered"
+    renderer_failure = None
     try:
-        html, final_url = await _fetch_html(url)
+        try:
+            rendered = await render_url(url)
+            html, final_url = rendered.html, rendered.final_url
+        except RendererFailure as error:
+            if not error.operational:
+                raise
+            renderer_failure = error.category
+            render_status = "raw_fallback"
+            html, final_url = await _fetch_html(url)
     except Exception:
         return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     payload = HtmlPayload(
@@ -129,7 +146,11 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
         capture=Capture(status="complete"), html=html,
     )
     outcome = await create_production_orchestrator(usage).extract(payload.model_dump(mode="json"))
-    source_capture = {"schema_version": 1, "kind": "html", "final_url": final_url, "html": html}
+    outcome.trace.append(TraceEvent(
+        stage=ExtractionStage.INPUT, event=f"html_{render_status}", detail=renderer_failure,
+    ))
+    source_capture = {"schema_version": 1, "kind": "html", "requested_url": _safe_source_url(url), "final_url": _safe_source_url(final_url),
+                      "render_status": render_status, "renderer_failure": renderer_failure, "html": html}
     return outcome, ImportMetadata(source_url=final_url), source_capture
 
 

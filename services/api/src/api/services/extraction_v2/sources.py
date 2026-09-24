@@ -15,6 +15,7 @@ import httpx
 
 from api.services.extraction_v2.contracts import Comment, EvidenceKind
 from api.services.scraper import ReelMetadata, parse_scrapecreators_reel_response
+from api.services.html_renderer import RendererFailure, render_url
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,8 @@ class LinkedPage:
     requested_url: str
     final_url: str
     html: str
+    render_status: str = "raw_fallback"
+    renderer_failure: str | None = None
 
 
 class LinkedPageProvider(Protocol):
@@ -55,6 +58,13 @@ class HttpLinkedPageProvider:
     _MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 
     async def fetch(self, url: str) -> LinkedPage:
+        try:
+            page = await render_url(url)
+            return LinkedPage(url, page.final_url, page.html, "rendered")
+        except RendererFailure as error:
+            if not error.operational:
+                raise
+            renderer_failure = error.category
         current_url = url
         timeout = httpx.Timeout(connect=10, read=20, write=10, pool=10)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
@@ -78,7 +88,7 @@ class HttpLinkedPageProvider:
                         if downloaded > self._MAX_RESPONSE_BYTES:
                             raise ValueError("linked page exceeds response size limit")
                         chunks.append(chunk)
-                    return LinkedPage(url, str(response.url), b"".join(chunks).decode(response.encoding or "utf-8", errors="replace"))
+                    return LinkedPage(url, str(response.url), b"".join(chunks).decode(response.encoding or "utf-8", errors="replace"), "raw_fallback", renderer_failure)
         raise ValueError("linked page exceeded redirect limit")
 
 

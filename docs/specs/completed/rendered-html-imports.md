@@ -1,5 +1,7 @@
 # Rendered HTML for URL imports
 
+Status: implementation complete. Local Docker, browser, API, and live public-page checks passed. Production release validation is tracked separately in [TODO.md](../../TODO.md).
+
 ## Problem
 
 The production URL-import pipeline fetches response HTML without running JavaScript. Recipe sites can insert their recipe card, servings, timing, and nutrition after page load, leaving the extractor with incomplete source evidence.
@@ -38,8 +40,8 @@ Every production URL import obtains the final, rendered DOM from a headless brow
 
 ## Implementation plan
 
-1. Add renderer configuration, result and failure contracts, URL-navigation policy, and unit tests.
-2. Build the isolated headless Chromium renderer with request interception, limits, and health endpoint; pin the browser version in its image.
-3. Integrate rendered fetches into the URL import worker and v2 linked-page provider, retaining raw-fetch fallback and trace events.
-4. Add the critical-field Sentry info reporter at the completed extraction boundary and test that it excludes page and recipe text.
-5. Add deployment configuration, resource limits, health checks, and monitoring dashboards; validate a dynamic recipe site in a production-like environment.
+1. [x] Add renderer configuration, result and failure contracts, URL-navigation policy, and unit tests.
+2. [x] Build the isolated headless Chromium renderer with request interception, limits, and health endpoint; pin the browser version in its image.
+3. [x] Integrate rendered fetches into the URL import worker and v2 linked-page provider, retaining raw-fetch fallback and trace events.
+4. [x] Add the critical-field Sentry info reporter at the completed extraction boundary and redact source URL context.
+5. [x] Add local and production deployment configuration, resource limits, and health checks. Local Docker validation and a live public recipe-page render passed. Production deployment verification remains a release follow-up. Sentry provides operational reporting; the broader dashboard remains a separate backlog item.

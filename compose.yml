@@ -25,11 +25,36 @@ services:
       R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
       R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
+      RENDERER_URL: http://renderer:8080
     depends_on:
       db:
         condition: service_healthy
+      renderer:
+        condition: service_healthy
     ports:
       - "8000:8000"
+
+  renderer:
+    build: ./services/renderer
+    environment:
+      RENDERER_MAX_CONCURRENCY: ${RENDERER_MAX_CONCURRENCY:-2}
+      RENDERER_MAX_HTML_BYTES: ${RENDERER_MAX_HTML_BYTES:-2097152}
+      RENDERER_MAX_RESPONSE_BYTES: ${RENDERER_MAX_RESPONSE_BYTES:-8388608}
+      RENDERER_MAX_REQUESTS: ${RENDERER_MAX_REQUESTS:-200}
+      RENDERER_NAVIGATION_TIMEOUT_MS: ${RENDERER_NAVIGATION_TIMEOUT_MS:-15000}
+      RENDERER_TOTAL_TIMEOUT_MS: ${RENDERER_TOTAL_TIMEOUT_MS:-25000}
+      RENDERER_IDLE_MS: ${RENDERER_IDLE_MS:-1200}
+    mem_limit: 1200m
+    cpus: 2
+    pids_limit: 256
+    cap_drop: ["ALL"]
+    cap_add: ["NET_ADMIN", "SETUID", "SETGID"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   worker:
     build: ./services/api
@@ -37,8 +62,11 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://platekeeper:platekeeper@db:5432/platekeeper
+      RENDERER_URL: http://renderer:8080
     depends_on:
       db:
+        condition: service_healthy
+      renderer:
         condition: service_healthy
 
 volumes:

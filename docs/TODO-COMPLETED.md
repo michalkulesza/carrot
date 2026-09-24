@@ -4,6 +4,8 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 
 ## Most urgent
 
+- [x] **Rendered HTML for URL imports** — Production URL and linked-page imports use a bounded Chromium renderer before extraction. A validating proxy and container egress rules block unsafe destinations; operational failures use the bounded raw-fetch fallback with trace diagnostics. Local browser and API tests passed. Plan: [rendered HTML imports](specs/completed/rendered-html-imports.md).
+
 - [x] **Preserve ingredient groups in social imports** — Inline labels in the [Instagram capture](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) are retained as ingredient groups in selected-line and deterministic extraction, with offline regression coverage.
 
 - [x] **Route image imports through extractor v2** — Image jobs use one Gemini vision transcription call per attempt, then the shared v2 extraction, enrichment, and persistence path. Web and mobile remain connected to the image job API; the legacy image pipeline was removed. Live pancake-image and isolated database checks passed. Completed: [image import extractor v2](specs/completed/image-import-extractor-v2.md).

@@ -4,8 +4,6 @@ Open work only. When an item is completed, move it to the matching category in [
 
 ## Most urgent
 
-- [ ] **Rendered HTML for URL imports** — Fetch recipe websites in production through a bounded headless-browser renderer so extraction receives the post-JavaScript DOM, including dynamically inserted recipe cards, nutrition, yields, and timings. Keep browser navigation isolated, block private-network destinations and unsafe redirects, enforce strict page/resource/time limits, and retain the final rendered HTML as source evidence. Implementation plan: [rendered HTML imports](specs/rendered-html-imports.md).
-
 - [ ] **Extraction critical-field monitoring** — Send a Sentry info event when a completed recipe extraction lacks source-provided total time, servings, calories, protein, fat, or carbohydrates. Include only safe diagnostic metadata such as missing field names, source kind, and sanitized source URL; never include recipe text or user-provided content.
 
 - [ ] **Extractor v2** — Core extraction and production integration are complete. Add 25 reviewed TikTok fixtures (five each in en, pl, de, fr, es); Facebook support is tracked separately under Core product features. The extractor stays source-agnostic, accepting cleaned HTML or normalized text. Plan: [Extractor v2](specs/extractor-v2.md).
@@ -36,6 +34,7 @@ Open work only. When an item is completed, move it to the matching category in [
 
 ## Quality, release, and growth
 
+- [ ] **Verify rendered HTML imports after deployment** — Run a production import of a JavaScript-created recipe card and confirm title, ingredients, steps, servings, total time, available nutrition, source evidence, and renderer diagnostics. Check the renderer health and import trace.
 - [ ] **Automated tests** — Add meaningful coverage for core user flows and regressions.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.

@@ -39,7 +39,7 @@ from api.services import apns as apns_svc
 from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
-from api.services.monitoring import report_recipe_import_failure
+from api.services.monitoring import report_recipe_import_failure, report_missing_source_fields
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
 from api.services import gemini as gemini_svc
@@ -268,6 +268,15 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
         if isinstance(outcome, FailedOutcome):
             raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+        report_missing_source_fields(
+            recipe=outcome.recipe,
+            source_kind="html" if source_capture.get("kind") == "html" else "social",
+            source_url=metadata.source_url or job.input["url"],
+            renderer_status=str(source_capture.get("render_status") or next(
+                (event.event.removeprefix("html_") for event in outcome.trace if event.event.startswith("html_")),
+                "not_applicable",
+            )),
+        )
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=metadata,

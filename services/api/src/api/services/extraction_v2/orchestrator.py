@@ -346,6 +346,11 @@ class ExtractionOrchestrator:
                     last_operational_failure = (FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.LINKED_PAGE)
                     trace.append(TraceEvent(stage=ExtractionStage.LINKED_PAGE, event="fetch_failed", detail=type(error).__name__))
                     continue
+                trace.append(TraceEvent(
+                    stage=ExtractionStage.LINKED_PAGE,
+                    event=f"html_{page.render_status}",
+                    detail=page.renderer_failure,
+                ))
                 cleaned = clean_html_body(page.html)
                 language = self._dependencies.language_detector.detect(cleaned)
                 source = EvidenceSource(id=f"linked_page:{index}", kind=EvidenceKind.LINKED_PAGE, source_url=page.final_url, text=cleaned, language=language)

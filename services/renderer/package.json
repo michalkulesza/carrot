@@ -1,0 +1,1 @@
+{"name":"carrot-renderer","version":"1.0.0","private":true,"type":"module","scripts":{"test":"node --test"},"dependencies":{"ipaddr.js":"2.2.0","playwright-core":"1.52.0"}}

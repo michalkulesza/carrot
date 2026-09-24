@@ -22,6 +22,8 @@ class Settings(BaseSettings):
     embedding_hnsw_ef_construction: int = 64
     sentry_dsn: str = ""
     sentry_environment: str = "development"
+    renderer_url: str = "http://renderer:8080"
+    renderer_timeout_seconds: float = 28
     allowed_origins: str = "http://localhost:5173"
     public_web_url: str = "http://localhost:5173"
     database_url: str = "postgresql+asyncpg://platekeeper:platekeeper@localhost:5432/platekeeper"
