@@ -4,6 +4,8 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 
 ## Most urgent
 
+- [x] **Extraction essential-content monitoring** — For HTML, social, pasted-text, and image imports, report final recipe extractions missing ingredients or cooking instructions/steps, plus terminal unsupported-language outcomes. Replaced the time, servings, and nutrition gap event; retained terminal failure reporting and redacted diagnostic context. Sentry is configured through the environment. Completed: [extraction monitoring](specs/completed/extraction-critical-field-monitoring.md).
+
 - [x] **Rendered HTML for URL imports** — Production URL and linked-page imports use a bounded Chromium renderer before extraction. A validating proxy and container egress rules block unsafe destinations; operational failures use the bounded raw-fetch fallback with trace diagnostics. Local browser and API tests passed. Plan: [rendered HTML imports](specs/completed/rendered-html-imports.md).
 
 - [x] **Preserve ingredient groups in social imports** — Inline labels in the [Instagram capture](../services/api/tests/captured-payloads/instagram-Dcg94qVxius.json) are retained as ingredient groups in selected-line and deterministic extraction, with offline regression coverage.

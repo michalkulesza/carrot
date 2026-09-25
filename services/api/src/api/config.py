@@ -1,8 +1,18 @@
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(
+            str(REPOSITORY_ROOT / "services" / "api" / ".env"),
+            str(REPOSITORY_ROOT / ".env"),
+        ),
+        extra="ignore",
+    )
 
     scrapecreators_api_key: str = ""
     gemini_api_key: str = ""

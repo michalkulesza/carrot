@@ -39,7 +39,7 @@ from api.services import apns as apns_svc
 from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
-from api.services.monitoring import report_recipe_import_failure, report_missing_source_fields
+from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
 from api.services import gemini as gemini_svc
@@ -268,15 +268,6 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
         if isinstance(outcome, FailedOutcome):
             raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
-        report_missing_source_fields(
-            recipe=outcome.recipe,
-            source_kind="html" if source_capture.get("kind") == "html" else "social",
-            source_url=metadata.source_url or job.input["url"],
-            renderer_status=str(source_capture.get("render_status") or next(
-                (event.event.removeprefix("html_") for event in outcome.trace if event.event.startswith("html_")),
-                "not_applicable",
-            )),
-        )
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=metadata,
@@ -357,6 +348,21 @@ def _is_transient(error: Exception) -> bool:
     return "429" in message or "500" in message or "503" in message or "rate limit" in message or "timeout" in message
 
 
+def _source_host_is_html(source_url: str | None) -> bool:
+    from urllib.parse import urlsplit
+
+    host = (urlsplit(source_url or "").hostname or "").lower().removeprefix("www.")
+    social_hosts = ("instagram.com", "tiktok.com", "youtube.com", "youtu.be", "facebook.com", "fb.watch")
+    return not any(host == domain or host.endswith(f".{domain}") for domain in social_hosts)
+
+
+def _final_source_kind(input_kind: str, source_capture: dict) -> str:
+    captured_kind = source_capture.get("kind")
+    if captured_kind in {"html", "social", "text", "image"}:
+        return captured_kind
+    return {ImportJobKind.URL: "html", ImportJobKind.TEXT: "text", ImportJobKind.IMAGE: "image"}.get(input_kind, "unknown")
+
+
 async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
     now = datetime.utcnow()
     async with async_session_maker() as session:
@@ -389,9 +395,11 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             job.updated_at = now
             await _event_for_job(session, job, "import_job.failed")
             report_recipe_import_failure(
-                input_kind=job.kind,
+                input_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else ("text" if job.kind == ImportJobKind.TEXT else "image"),
                 source_url=job.input.get("url") if job.kind == ImportJobKind.URL else None,
                 reason=job.failure_code,
+                failure_stage=job.failure_stage,
+                source_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else str(job.kind),
                 error=None if isinstance(error, ImportPipelineFailure) else error,
             )
         await session.commit()
@@ -439,7 +447,21 @@ async def _process_job(job_id: uuid.UUID) -> None:
             current.next_attempt_at = None
             current.updated_at = datetime.utcnow()
             await _event_for_job(session, current, "import_job.succeeded")
+            source_url = current.input.get("url") if current.kind == ImportJobKind.URL else None
+            source_kind = _final_source_kind(current.kind, result.source_capture)
+            renderer_status = result.source_capture.get("render_status")
+            fallback_status = result.source_capture.get("fallback_status")
             await session.commit()
+            report_missing_critical_fields(
+                input_kind=source_kind,
+                source_kind=source_kind,
+                issue_codes=result.issue_codes,
+                source_url=source_url,
+                final_outcome=result.outcome,
+                failure_stage=result.stage,
+                renderer_status=renderer_status,
+                fallback_status=fallback_status,
+            )
     except Exception as error:
         log.warning("Import job %s failed (%s)", job_id, type(error).__name__)
         await _fail_or_retry(job_id, error)

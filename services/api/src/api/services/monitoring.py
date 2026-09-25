@@ -29,44 +29,54 @@ def report_recipe_import_failure(
     reason: str,
     source_url: str | None = None,
     input_size: int | None = None,
+    failure_stage: str | None = None,
+    source_kind: str | None = None,
     error: Exception | None = None,
 ) -> None:
     """Report a terminal import failure without sending pasted recipe contents."""
     with sentry_sdk.new_scope() as scope:
         scope.set_tag("operation", "recipe_import")
         scope.set_tag("input_kind", input_kind)
+        scope.set_tag("reason", str(reason))
         scope.set_context("recipe_import", {
-            "source_url": _sanitize_source_url(source_url),
+            "source_origin": _sanitize_source_url(source_url),
             "input_size": input_size,
-            "reason": reason,
+            "reason": str(reason),
+            "failure_stage": failure_stage,
+            "source_kind": source_kind or input_kind,
         })
+        scope.fingerprint = ["recipe_import_failure", str(reason)]
         if error is not None:
             sentry_sdk.capture_exception(error)
         else:
             sentry_sdk.capture_message(f"Recipe import failed: {reason}", level="error")
 
 
-def report_missing_source_fields(*, recipe, source_kind: str, source_url: str | None, renderer_status: str) -> None:
-    """Report extraction gaps before enrichment can fill missing source facts."""
-    nutrition = recipe.nutrition
-    missing = [
-        name for name, present in (
-            ("total_time", bool(recipe.total_time_minutes or recipe.total_time_text)),
-            ("servings", bool(recipe.yield_servings or recipe.yield_text)),
-            ("calories", bool(nutrition.calories)),
-            ("protein", bool(nutrition.protein)),
-            ("fat", bool(nutrition.fat)),
-            ("carbohydrates", bool(nutrition.carbohydrates)),
-        ) if not present
-    ]
+def report_missing_critical_fields(
+    *, input_kind: str, issue_codes: list[str], source_url: str | None = None,
+    final_outcome: str | None = None, failure_stage: str | None = None,
+    renderer_status: str | None = None, fallback_status: str | None = None,
+    source_kind: str | None = None,
+) -> None:
+    """Report final recipe gaps using only bounded, allowlisted import metadata."""
+    missing = sorted({code for code in issue_codes if code in {"MISSING_INGREDIENTS", "MISSING_INSTRUCTIONS"}})
     if not missing:
         return
     with sentry_sdk.new_scope() as scope:
-        scope.set_tag("operation", "recipe_import_source_fields")
+        scope.set_tag("event_type", "recipe_import_missing_critical_fields")
+        scope.set_tag("input_kind", input_kind)
+        scope.set_tag("issue_code", ",".join(missing))
+        if source_kind:
+            scope.set_tag("source_kind", source_kind)
+        scope.fingerprint = ["recipe_import_missing_critical_fields", *missing]
         scope.set_context("recipe_import", {
-            "missing_fields": missing,
-            "source_kind": source_kind,
-            "source_url": _sanitize_source_url(source_url),
-            "renderer_status": renderer_status,
+            "issue_codes": missing,
+            "input_kind": input_kind,
+            "source_kind": source_kind or input_kind,
+            "source_origin": _sanitize_source_url(source_url),
+            "final_outcome": final_outcome,
+            "failure_stage": failure_stage,
+            "renderer_status": renderer_status if renderer_status in {"rendered", "raw_fallback", "not_applicable", "failed", "partial"} else None,
+            "fallback_status": fallback_status if fallback_status in {"complete", "partial", "failed", "not_applicable"} else None,
         })
-        sentry_sdk.capture_message("Recipe extraction missing source fields", level="info")
+        sentry_sdk.capture_message("Recipe import missing critical fields", level="warning")

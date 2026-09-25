@@ -66,8 +66,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios --device",
     "web": "expo start --web",
-    "build:android": "set -a && . ./.env && set +a && pnpm exec eas build --platform android --local",
-    "build:ios": "set -a && . ./.env && set +a && EXPO_PUBLIC_API_URL=https://app.carrot.xcxz.xyz pnpm exec eas build --platform ios --local",
+    "build:android": "node scripts/eas-build-local.mjs android",
+    "build:ios": "node scripts/eas-build-local.mjs ios",
     "submit:android": "pnpm exec eas submit -p android --latest",
     "submit:ios": "pnpm exec eas submit -p ios --latest"
   },
