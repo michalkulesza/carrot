@@ -38,6 +38,7 @@ from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
 from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
+from api.services.allergen_rechecks import recover_running_jobs, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
@@ -635,8 +636,10 @@ async def _push_loop() -> None:
 
 async def run() -> None:
     await _requeue_stale()
+    await recover_running_jobs()
     await asyncio.gather(
         *(_worker_loop() for _ in range(3)),
         *(_embedding_worker_loop() for _ in range(settings.embedding_worker_batch_size)),
+        allergen_recheck_worker_loop(_POLL_INTERVAL_SECONDS),
         _push_loop(),
     )

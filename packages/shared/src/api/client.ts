@@ -2,6 +2,7 @@ import type {
   RecipeSaveRequest,
   RecipeOut,
   RecipeStats,
+  AllergenRecheckStatus,
   Tag,
   MealPlanEntry,
   UserPreferences,
@@ -183,13 +184,21 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<RecipeOut>;
   };
 
-  const dismissRecipeIssue = async (id: string, issueCode: string): Promise<RecipeOut> => {
-    const res = await apiFetch(`/api/recipes/${id}/issues/${encodeURIComponent(issueCode)}`, { method: "DELETE" });
+  const dismissRecipeIssue = async (
+    id: string,
+    issueCode: string,
+  ): Promise<RecipeOut> => {
+    const res = await apiFetch(
+      `/api/recipes/${id}/issues/${encodeURIComponent(issueCode)}`,
+      { method: "DELETE" },
+    );
     await throwOnError(res, "Failed to dismiss recipe issue");
     return res.json() as Promise<RecipeOut>;
   };
 
-  const fetchRecipeSourceEvidence = async (id: string): Promise<RecipeSourceEvidence> => {
+  const fetchRecipeSourceEvidence = async (
+    id: string,
+  ): Promise<RecipeSourceEvidence> => {
     const res = await apiFetch(`/api/recipes/${id}/source`);
     await throwOnError(res, "Failed to fetch recipe source evidence");
     return res.json() as Promise<RecipeSourceEvidence>;
@@ -259,6 +268,12 @@ export const createApiClient = (config: ApiClientConfig) => {
     const res = await apiFetch("/api/recipes/stats");
     if (!res.ok) throw new Error("Failed to load stats");
     return res.json() as Promise<RecipeStats>;
+  };
+
+  const getAllergenRecheckStatus = async (): Promise<AllergenRecheckStatus> => {
+    const res = await apiFetch("/api/recipes/allergen-recheck-status");
+    await throwOnError(res, "Failed to load allergen check progress");
+    return res.json() as Promise<AllergenRecheckStatus>;
   };
 
   const listRecipes = async (): Promise<RecipeOut[]> => {
@@ -1098,6 +1113,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     setRelatedRecipes,
     deleteRecipe,
     fetchStats,
+    getAllergenRecheckStatus,
     listRecipes,
     fetchRecipe,
     searchRecipes,

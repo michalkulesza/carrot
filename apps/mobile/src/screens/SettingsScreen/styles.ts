@@ -147,6 +147,8 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   allergenPad: { padding: 16 },
+  allergenRecheckStatus: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  allergenRecheckText: { fontSize: 13, color: colors.secondaryLabel },
   scopeLabel: { fontSize: 12, color: colors.tertiaryLabel, marginBottom: 4 },
   allergenDisclaimer: { fontSize: 13, lineHeight: 18, color: colors.tertiaryLabel, marginBottom: 12 },
   accordionBlock: {

@@ -309,6 +309,23 @@ class RecipeEmbedding(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
+class RecipeAllergenCheck(Base):
+    """A coalescing, durable allergen-only refresh request for one recipe."""
+
+    __tablename__ = "recipe_allergen_checks"
+    __table_args__ = (Index("ix_recipe_allergen_checks_status", "status", "requested_at"),)
+
+    recipe_id: Mapped[uuid.UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), primary_key=True
+    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")
+    revision: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    requested_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
+
 # ── Gemini extraction schema ──────────────────────────────────────────────────
 
 class Ingredient(BaseModel):

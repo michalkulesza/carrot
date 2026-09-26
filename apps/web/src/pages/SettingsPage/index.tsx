@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import type { ChangeEvent } from 'react'
 import type {
+  AllergenRecheckStatus,
   HouseholdOut,
   RecipeStats,
   UserPreferences,
@@ -33,6 +35,7 @@ import { settingsHashes } from '../../routing/routeState'
 
 interface SettingsPageProps {
   stats: RecipeStats | null
+  allergenRecheckStatus: AllergenRecheckStatus | null
   onStatsRefresh: () => void
   preferences: UserPreferences | null
   onPreferencesChange: (prefs: UserPreferences) => void
@@ -40,6 +43,7 @@ interface SettingsPageProps {
 
 const SettingsPage = ({
   stats,
+  allergenRecheckStatus,
   onStatsRefresh,
   preferences,
   onPreferencesChange,
@@ -48,6 +52,7 @@ const SettingsPage = ({
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold()
   const { t } = useTranslation()
+  const qc = useQueryClient()
   const location = useLocation()
   const navigate = useNavigate()
   const { enabled: wakeLockDefault, setEnabled: setWakeLockDefault } =
@@ -61,7 +66,9 @@ const SettingsPage = ({
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false)
   const [managingHousehold, setManagingHousehold] =
     useState<HouseholdOut | null>(null)
+  const [hasSavedAllergens, setHasSavedAllergens] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const allergenSaveQueueRef = useRef<Promise<void>>(Promise.resolve())
 
   const displayName = user?.nickname || user?.email || ''
 
@@ -112,17 +119,31 @@ const SettingsPage = ({
   )
 
   const handleSaveAllergens = useCallback(
-    async (data: string[]) => {
-      if (activeHousehold) {
-        await updateHouseholdAllergens(activeHousehold.id, data)
-        refetchHouseholds()
-      } else {
-        const updated = await updatePreferences({ personal_allergens: data })
-        onPreferencesChange(updated)
-      }
+    (data: string[]) => {
+      const save = allergenSaveQueueRef.current
+        .catch(() => {})
+        .then(async () => {
+          if (activeHousehold) {
+            await updateHouseholdAllergens(activeHousehold.id, data)
+            refetchHouseholds()
+          } else {
+            const updated = await updatePreferences({
+              personal_allergens: data,
+            })
+            onPreferencesChange(updated)
+          }
+          setHasSavedAllergens(true)
+          void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
+        })
+      allergenSaveQueueRef.current = save
+      return save
     },
-    [activeHousehold, refetchHouseholds, onPreferencesChange]
+    [activeHousehold, refetchHouseholds, onPreferencesChange, qc]
   )
+
+  useEffect(() => {
+    setHasSavedAllergens(false)
+  }, [activeHouseholdId])
 
   const handleCreateOpen = useCallback(() => setCreateOpen(true), [])
   const handleCreateClose = useCallback(() => setCreateOpen(false), [])
@@ -199,6 +220,12 @@ const SettingsPage = ({
             allergens={currentAllergens}
             scopeLabel={allergenScopeLabel}
             onSaveAllergens={handleSaveAllergens}
+            allergenRecheckStatus={
+              hasSavedAllergens ||
+              (allergenRecheckStatus && !allergenRecheckStatus.done)
+                ? allergenRecheckStatus
+                : null
+            }
             autoSubstitute={preferences?.auto_substitute ?? false}
             onPreferencesChange={onPreferencesChange}
           />

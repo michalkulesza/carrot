@@ -26,6 +26,7 @@ from api.routes.recipes import _link_recipe_to_household
 from api.services.embeddings import queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
 from api.users import User, current_active_user
+from api.services.allergen_rechecks import enqueue_household_allergen_checks
 
 router = APIRouter(tags=["households"])
 
@@ -445,7 +446,11 @@ async def update_household(
     if body.color is not None and body.color in PRESET_COLORS:
         household.color = body.color
     if body.allergens is not None:
+        allergens_changed = household.allergens != body.allergens
         household.allergens = body.allergens
+
+    if body.allergens is not None and allergens_changed:
+        await enqueue_household_allergen_checks(session, household_id)
 
     await session.commit()
     await session.refresh(household)

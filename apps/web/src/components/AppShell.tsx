@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { Plus } from 'react-feather'
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import BottomNav from './BottomNav'
@@ -29,6 +30,7 @@ import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type {
+  AllergenRecheckStatus,
   ImportJob,
   RecipeOut,
   Tag,
@@ -49,6 +51,7 @@ import {
   parseStep,
 } from '../routing/routeState'
 import { getActiveAllergens } from '../pages/RecipesPage/helpers'
+import { getAllergenRecheckStatus } from '../api/client'
 
 const AddRecipeFab = ({ onAddRecipe }: { onAddRecipe: () => void }) => {
   const { t } = useTranslation()
@@ -266,6 +269,46 @@ const RoutedAppShell = ({
 }: RoutedAppShellProps) => {
   const location = useLocation()
   const navigate = useNavigate()
+  const qc = useQueryClient()
+  const { t } = useTranslation()
+  const { activeHouseholdId } = useHousehold()
+  const previousAllergenStatus = useRef<{
+    householdId: string
+    status: AllergenRecheckStatus
+  } | null>(null)
+  const { data: allergenRecheckStatus } = useQuery({
+    queryKey: ['allergen-recheck-status', activeHouseholdId],
+    queryFn: getAllergenRecheckStatus,
+    enabled: Boolean(activeHouseholdId),
+    refetchInterval: (query) =>
+      query.state.data && !query.state.data.done ? 1000 : 15000,
+  })
+
+  useEffect(() => {
+    if (!activeHouseholdId || !allergenRecheckStatus) return
+    const previous = previousAllergenStatus.current
+    const prior =
+      previous?.householdId === activeHouseholdId ? previous.status : null
+    if (prior && allergenRecheckStatus.completed > prior.completed) {
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+    }
+    if (prior && !prior.done && allergenRecheckStatus.done) {
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+      if (allergenRecheckStatus.failed > 0) {
+        toast.danger(
+          t('settings.allergenRecheckFailed', {
+            failed: allergenRecheckStatus.failed,
+          })
+        )
+      } else {
+        toast.success(t('settings.allergenRecheckComplete'))
+      }
+    }
+    previousAllergenStatus.current = {
+      householdId: activeHouseholdId,
+      status: allergenRecheckStatus,
+    }
+  }, [activeHouseholdId, allergenRecheckStatus, qc, t])
   const { openAddRecipe, closeOverlay, openRecipe } = useRouteNavigation()
   const background = getRoutedBackground(location)
   const contentLocation =
@@ -349,7 +392,10 @@ const RoutedAppShell = ({
                     path="/plan"
                     element={
                       <HouseholdGate>
-                        <MealPlanPage recipes={recipes} preferences={preferences} />
+                        <MealPlanPage
+                          recipes={recipes}
+                          preferences={preferences}
+                        />
                       </HouseholdGate>
                     }
                   />
@@ -366,6 +412,7 @@ const RoutedAppShell = ({
                     element={
                       <SettingsPage
                         stats={stats}
+                        allergenRecheckStatus={allergenRecheckStatus ?? null}
                         onStatsRefresh={onStatsRefresh}
                         preferences={preferences}
                         onPreferencesChange={onPreferencesChange}
@@ -465,6 +512,7 @@ const AppShell = () => {
       qc.setQueryData<RecipeOut[]>(['recipes'], (old = []) =>
         old.map((r) => (r.id === updated.id ? updated : r))
       )
+      void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
     },
     [qc]
   )
@@ -482,6 +530,7 @@ const AppShell = () => {
   const handleRecipeSaved = useCallback(() => {
     void qc.invalidateQueries({ queryKey: ['recipes'] })
     void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+    void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
   }, [qc])
 
   const handleStatsRefresh = useCallback(() => {

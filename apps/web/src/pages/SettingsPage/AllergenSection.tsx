@@ -7,7 +7,7 @@ import {
 } from '@carrot/shared/utils/allergenKeys'
 import CheckboxGroup from './CheckboxGroup'
 
-const AUTO_SAVE_DELAY_MS = 3000
+const AUTO_SAVE_DELAY_MS = 500
 
 interface AllergenSectionProps {
   allergens: string[]
@@ -22,35 +22,62 @@ const AllergenSection = ({
 }: AllergenSectionProps) => {
   const { t } = useTranslation()
   const [predefined, setPredefined] = useState<string[]>(allergens ?? [])
-  const isFirstRender = useRef(true)
+  const [editRevision, setEditRevision] = useState(0)
+  const onSaveRef = useRef(onSave)
+  const translateRef = useRef(t)
+
+  useEffect(() => {
+    onSaveRef.current = onSave
+    translateRef.current = t
+  }, [onSave, t])
+
+  useEffect(() => {
+    if (editRevision !== 0) return
+    setPredefined((current) =>
+      current.length === allergens.length &&
+      current.every((key, index) => key === allergens[index])
+        ? current
+        : allergens
+    )
+  }, [allergens, editRevision])
 
   const togglePredefined = useCallback((key: string) => {
     setPredefined((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     )
+    setEditRevision((revision) => revision + 1)
   }, [])
 
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    if (editRevision === 0) return
 
+    let active = true
     const timeoutId = setTimeout(() => {
-      onSave(predefined)
-        .then(() =>
-          toast.success(t('settings.allergensSaved'), { timeout: 2000 })
-        )
-        .catch((e) =>
-          toast.danger(
-            e instanceof Error ? e.message : t('settings.failedToSave'),
-            { timeout: 3000 }
-          )
-        )
+      const save = onSaveRef.current
+
+      save(predefined)
+        .then(() => {
+          if (active)
+            toast.success(translateRef.current('settings.allergensSaved'), {
+              timeout: 2000,
+            })
+        })
+        .catch((error) => {
+          if (active)
+            toast.danger(
+              error instanceof Error
+                ? error.message
+                : translateRef.current('settings.failedToSave'),
+              { timeout: 3000 }
+            )
+        })
     }, AUTO_SAVE_DELAY_MS)
 
-    return () => clearTimeout(timeoutId)
-  }, [predefined, onSave, t])
+    return () => {
+      active = false
+      clearTimeout(timeoutId)
+    }
+  }, [editRevision, predefined])
 
   return (
     <div className="flex flex-col gap-4">

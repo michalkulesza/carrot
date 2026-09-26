@@ -226,6 +226,7 @@ export const useEditDraft = ({
       qc.setQueryData<RecipeOut[]>(['recipes'], (prev) =>
         prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
       )
+      void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
       onSaveSuccess(updated)
       setEditing(false)
     } catch {

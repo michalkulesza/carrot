@@ -37,6 +37,7 @@ from api.models import (
 from api.routes.context import get_active_household_id, get_scope_key
 from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
+from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -44,6 +45,14 @@ log = logging.getLogger(__name__)
 
 _CSV_FIELDS = ["title", "servings", "kcal_per_serving", "thumbnail_url", "creator_handle", "components"]
 _PUBLIC_SHARE_LIFETIME = timedelta(days=7)
+
+
+@router.get("/allergen-recheck-status")
+async def allergen_recheck_status(
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> dict[str, int | bool]:
+    return await household_recheck_status(session, household_id)
 
 
 def _recipe_filter(household_id: uuid.UUID):
@@ -255,6 +264,7 @@ async def import_recipes(
         session.add(recipe)
         await session.flush()
         await _link_recipe_to_household(session, recipe.id, household_id)
+        await enqueue_recipe_allergen_check(session, recipe.id)
         await queue_recipe_embedding(session, recipe)
         count += 1
 
@@ -398,6 +408,7 @@ async def save_recipe(
     await _link_recipe_to_household(session, recipe.id, household_id)
     await _set_tags(session, recipe, body.tag_ids, household_id)
     await session.flush()
+    await enqueue_recipe_allergen_check(session, recipe.id)
     await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)
@@ -526,6 +537,7 @@ async def update_recipe(
     recipe.notes = body.notes
     components = _reconcile_component_derivatives(recipe.components or [], body.components)
     stored_components = recipe.components or []
+    ingredients_changed = len(components) != len(stored_components)
     serialized_components = []
     all_steps_unchanged = True
     has_steps = False
@@ -534,8 +546,31 @@ async def update_recipe(
         value = component.model_dump()
         stored = stored_components[index] if index < len(stored_components) else {}
         ingredients_unchanged = component.ingredients == stored.get("ingredients", [])
+        ingredients_changed = ingredients_changed or not ingredients_unchanged
         steps_unchanged = component.steps == stored.get("steps", [])
         all_steps_unchanged = all_steps_unchanged and steps_unchanged
+        if ingredients_unchanged:
+            value["ingredient_flags"] = stored.get("ingredient_flags", [])
+        else:
+            stored_ingredients = stored.get("ingredients", [])
+            stored_flags = stored.get("ingredient_flags", [])
+            incoming_flags = component.ingredient_flags or []
+            value["ingredient_flags"] = [
+                stored_flags[ingredient_index]
+                if (
+                    ingredient_index < len(stored_ingredients)
+                    and ingredient_index < len(stored_flags)
+                    and ingredient == stored_ingredients[ingredient_index]
+                )
+                else incoming_flags[ingredient_index].model_dump()
+                if (
+                    ingredient_index < len(incoming_flags)
+                    and incoming_flags[ingredient_index].substitute_applied
+                    and incoming_flags[ingredient_index].original_display
+                )
+                else {"allergen": None, "substitute": None, "substitute_applied": False, "original_display": None}
+                for ingredient_index, ingredient in enumerate(component.ingredients)
+            ]
         if ingredients_unchanged:
             for field in ("ingredient_links", "ingredient_evidence"):
                 if not value.get(field):
@@ -558,6 +593,9 @@ async def update_recipe(
     await _set_tags(session, recipe, body.tag_ids, household_id)
 
     await session.flush()
+    if ingredients_changed:
+        recipe.allergen_status = "unknown"
+        await enqueue_recipe_allergen_check(session, recipe.id)
     await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)

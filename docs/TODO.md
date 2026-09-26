@@ -25,6 +25,11 @@ Open work only. When an item is completed, move it to the matching category in [
 ## Experience and product polish
 
 - [ ] **Web recipe details looks not great** !!!!!!!
+  - [ ] Match mobile recipe editing: add and remove ingredients and steps, edit component names and shopping categories, and add a photo when none exists.
+  - [ ] Let users change a recipe's household memberships from web recipe detail.
+  - [ ] Let users edit a single ingredient before adding it to the shopping list from web recipe detail.
+  - [ ] Add cook-mode text size controls and a recipe bug-report action on web.
+  - [ ] Show a way to set a base serving count for recipes imported without one before offering ingredient scaling on web and mobile.
 - [ ] **iOS Universal Links for recipe URLs** — Configure the Associated Domains entitlement and `apple-app-site-association` hosting so supported Carrot web recipe links can open the native app, with authenticated scope handling and browser fallback.
 
 ## Quality, release, and growth

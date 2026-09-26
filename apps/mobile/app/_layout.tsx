@@ -166,6 +166,34 @@ const AppStartupGate = ({ children }: { children: React.ReactNode }) => {
   return children
 }
 
+const AllergenRecheckSync = ({ scopeKey }: { scopeKey: string }) => {
+  const api = useApiClient()
+  const qc = useQueryClient()
+  const previousStatusRef = useRef<{ completed: number; done: boolean } | null>(null)
+  const { data: status } = useQuery({
+    queryKey: ['allergen-recheck-status', scopeKey],
+    queryFn: api.getAllergenRecheckStatus,
+    refetchInterval: (query) => query.state.data?.done === false ? 1_000 : 15_000,
+  })
+
+  useEffect(() => {
+    if (!status) return
+    const previous = previousStatusRef.current
+    previousStatusRef.current = { completed: status.completed, done: status.done }
+    if (
+      previous === null ||
+      status.completed < previous.completed ||
+      (previous.done && !status.done) ||
+      status.completed > previous.completed ||
+      (!previous.done && status.done)
+    ) {
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+    }
+  }, [qc, status])
+
+  return null
+}
+
 function RootLayoutNav() {
   const { t } = useTranslation()
   const { user, loading, signupEmail, signupToken } = useAuth()
@@ -337,6 +365,11 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={navigationTheme}>
+      {user?.active_household_id ? (
+        <AllergenRecheckSync
+          scopeKey={`${user.id}:${user.active_household_id}`}
+        />
+      ) : null}
       <Stack
         screenOptions={rootStackScreenOptions}
       >

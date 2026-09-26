@@ -48,6 +48,7 @@ const NewRecipeScreen = () => {
     try {
       await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags))
       await qc.invalidateQueries({ queryKey: ['recipes'] })
+      void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
       router.back()
     } catch (err) {
       setError(err instanceof Error ? err.message : t('addRecipe.failedToSave'))

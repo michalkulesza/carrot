@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "expo-router";
 import BellMenu from "../../components/BellMenu";
 import BugReportButton from "../../components/BugReportButton";
@@ -25,7 +25,12 @@ import { useCookingMode } from "../../context/CookingModeContext";
 import { usePreferences } from "@carrot/shared/hooks/usePreferences";
 import { useHouseholds } from "@carrot/shared/hooks/useHouseholds";
 import { useApiClient } from "@carrot/shared/api/context";
-import type { UserPreferences, HouseholdOut } from "@carrot/shared/types";
+import { useQueryClient } from "@tanstack/react-query";
+import type {
+  AllergenRecheckStatus,
+  HouseholdOut,
+  UserPreferences,
+} from "@carrot/shared/types";
 import { useAuth } from "../../context/AuthContext";
 import { useScreenLoading } from "../../hooks/useScreenLoading";
 import { useHousehold } from "../../context/HouseholdContext";
@@ -68,15 +73,64 @@ const SettingsScreen = () => {
   const { t, i18n } = useTranslation();
   const { user, logout, deleteAccount, refreshUser } = useAuth();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [allergenRecheckStatus, setAllergenRecheckStatus] =
+    useState<AllergenRecheckStatus | null>(null);
   const { preferences, isLoading, error, update } = usePreferences();
   const { showSpinner } = useScreenLoading(isLoading);
   const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
     useHousehold();
   const { create: createHousehold, joinByCode } = useHouseholds();
   const api = useApiClient();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } = useCookingMode();
   const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false);
+  const allergenRecheckPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const allergenRecheckRunRef = useRef(0);
+  const allergenRecheckCompletedRef = useRef(0);
+
+  useEffect(
+    () => () => {
+      allergenRecheckRunRef.current += 1;
+      if (allergenRecheckPollRef.current) {
+        clearTimeout(allergenRecheckPollRef.current);
+      }
+    },
+    [],
+  );
+
+  const pollAllergenRecheck = useCallback(async () => {
+    const run = ++allergenRecheckRunRef.current;
+    allergenRecheckCompletedRef.current = 0;
+    const poll = async (): Promise<void> => {
+      try {
+        const status = await api.getAllergenRecheckStatus();
+        if (run !== allergenRecheckRunRef.current) return;
+        if (
+          status.completed > allergenRecheckCompletedRef.current ||
+          status.done
+        ) {
+          allergenRecheckCompletedRef.current = status.completed;
+          void queryClient.invalidateQueries({ queryKey: ["recipes"] });
+        }
+        setAllergenRecheckStatus(status);
+        if (!status.done) {
+          allergenRecheckPollRef.current = setTimeout(() => {
+            void poll();
+          }, 1_000);
+        }
+      } catch {
+        if (run === allergenRecheckRunRef.current) {
+          setAllergenRecheckStatus(null);
+        }
+      }
+    };
+
+    if (allergenRecheckPollRef.current) {
+      clearTimeout(allergenRecheckPollRef.current);
+    }
+    await poll();
+  }, [api, queryClient]);
 
   useEffect(() => {
     AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
@@ -299,8 +353,19 @@ const SettingsScreen = () => {
           personal_allergens: data,
         } as Partial<UserPreferences>);
       }
+      await queryClient.invalidateQueries({
+        queryKey: ["allergen-recheck-status"],
+      });
+      await pollAllergenRecheck();
     },
-    [activeHousehold, api, refetchHouseholds, update],
+    [
+      activeHousehold,
+      api,
+      pollAllergenRecheck,
+      queryClient,
+      refetchHouseholds,
+      update,
+    ],
   );
 
   const handleAppearanceChange = useCallback(
@@ -468,6 +533,23 @@ const SettingsScreen = () => {
             scopeLabel={allergenScopeLabel}
             onSave={handleSaveAllergens}
           />
+          {allergenRecheckStatus ? (
+            <View style={styles.allergenRecheckStatus}>
+              {!allergenRecheckStatus.done ? <ActivityIndicator size="small" /> : null}
+              <Text style={styles.allergenRecheckText}>
+                {allergenRecheckStatus.done
+                  ? allergenRecheckStatus.failed > 0
+                    ? t("settings.allergenRecheckFailed", {
+                        failed: allergenRecheckStatus.failed,
+                      })
+                    : t("settings.allergenRecheckComplete")
+                  : t("settings.allergenRecheckProgress", {
+                      completed: allergenRecheckStatus.completed,
+                      total: allergenRecheckStatus.total,
+                    })}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
 

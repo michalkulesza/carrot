@@ -204,6 +204,15 @@ export interface ImportJobsSnapshot {
   jobs: ImportJob[];
 }
 
+export interface AllergenRecheckStatus {
+  total: number;
+  pending: number;
+  running: number;
+  failed: number;
+  completed: number;
+  done: boolean;
+}
+
 export interface ImportJobEvent {
   id: number;
   type:
@@ -267,7 +276,15 @@ export interface RecipeOut {
   source_url: string | null;
   notes: string | null;
   issue_codes: RecipeIssueCode[];
-  nutrition_provenance: Partial<Record<"kcal_per_serving" | "protein_per_serving" | "fat_per_serving" | "carbs_per_serving", ValueProvenance>>;
+  nutrition_provenance: Partial<
+    Record<
+      | "kcal_per_serving"
+      | "protein_per_serving"
+      | "fat_per_serving"
+      | "carbs_per_serving",
+      ValueProvenance
+    >
+  >;
   nutrition_status: "complete" | "incomplete" | "unknown";
   total_time_provenance: ValueProvenance;
   allergen_status: "analyzed" | "uncertain" | "unknown";
@@ -285,8 +302,20 @@ export interface RecipeOut {
 
 export interface RecipeSourceEvidence {
   schema_version: number;
-  evidence: { id: string; kind: string; source_url: string; text: string; language: { code: string | null; confidence: number | null }; author_verified?: boolean | null }[];
-  trace: { stage: string; event: string; detail?: string | null; evidence_ids: string[] }[];
+  evidence: {
+    id: string;
+    kind: string;
+    source_url: string;
+    text: string;
+    language: { code: string | null; confidence: number | null };
+    author_verified?: boolean | null;
+  }[];
+  trace: {
+    stage: string;
+    event: string;
+    detail?: string | null;
+    evidence_ids: string[];
+  }[];
 }
 
 export interface PublicRecipeTag {
@@ -303,9 +332,9 @@ export interface PublicRecipeOut {
   protein_per_serving: number | null;
   fat_per_serving: number | null;
   carbs_per_serving: number | null;
-  nutrition_provenance: RecipeOut['nutrition_provenance'];
-  nutrition_status: RecipeOut['nutrition_status'];
-  allergen_status: RecipeOut['allergen_status'];
+  nutrition_provenance: RecipeOut["nutrition_provenance"];
+  nutrition_status: RecipeOut["nutrition_status"];
+  allergen_status: RecipeOut["allergen_status"];
   overview: string | null;
   thumbnail_url: string | null;
   source_url: string | null;

@@ -1,7 +1,10 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Switch } from '@heroui/react'
-import type { UserPreferences } from '@carrot/shared/types'
+import type {
+  AllergenRecheckStatus,
+  UserPreferences,
+} from '@carrot/shared/types'
 import { updatePreferences } from '../../api/client'
 import AllergenSection from './AllergenSection'
 
@@ -10,6 +13,7 @@ interface AllergiesSectionProps {
   allergens: string[]
   scopeLabel: string
   onSaveAllergens: (data: string[]) => Promise<void>
+  allergenRecheckStatus: AllergenRecheckStatus | null
   autoSubstitute: boolean
   onPreferencesChange: (prefs: UserPreferences) => void
 }
@@ -19,6 +23,7 @@ const AllergiesSection = ({
   allergens,
   scopeLabel,
   onSaveAllergens,
+  allergenRecheckStatus,
   autoSubstitute,
   onPreferencesChange,
 }: AllergiesSectionProps) => {
@@ -45,6 +50,20 @@ const AllergiesSection = ({
           scopeLabel={scopeLabel}
           onSave={onSaveAllergens}
         />
+        {allergenRecheckStatus && (
+          <p className="text-xs text-zinc-500" role="status">
+            {allergenRecheckStatus.done
+              ? allergenRecheckStatus.failed > 0
+                ? t('settings.allergenRecheckFailed', {
+                    failed: allergenRecheckStatus.failed,
+                  })
+                : t('settings.allergenRecheckComplete')
+              : t('settings.allergenRecheckProgress', {
+                  completed: allergenRecheckStatus.completed,
+                  total: allergenRecheckStatus.total,
+                })}
+          </p>
+        )}
         <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-100">
           <div>
             <p className="text-sm font-medium">

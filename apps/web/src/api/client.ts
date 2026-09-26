@@ -45,6 +45,7 @@ export const {
   addPublicRecipeToLibrary,
   deleteRecipe,
   fetchStats,
+  getAllergenRecheckStatus,
   listRecipes,
   fetchRecipe,
   listMyRecipes,

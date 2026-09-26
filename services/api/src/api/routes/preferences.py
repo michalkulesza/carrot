@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_async_session
 from api.models import RecipeServingPreferenceUpdate, UserPreferences, UserPreferencesOut, UserPreferencesUpdate
+from api.services.allergen_rechecks import enqueue_user_allergen_checks
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
@@ -38,6 +39,7 @@ async def update_preferences(
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> UserPreferencesOut:
+    allergens_changed = False
     result = await session.execute(
         select(UserPreferences).where(UserPreferences.user_id == user.id)
     )
@@ -50,6 +52,7 @@ async def update_preferences(
             prefs.auto_substitute = body.auto_substitute
         if body.personal_allergens is not None:
             prefs.personal_allergens = body.personal_allergens
+            allergens_changed = True
         if body.language is not None:
             prefs.language = body.language
         if body.unit_system is not None:
@@ -65,6 +68,7 @@ async def update_preferences(
         if body.auto_substitute is not None:
             prefs.auto_substitute = body.auto_substitute
         if body.personal_allergens is not None:
+            allergens_changed = prefs.personal_allergens != body.personal_allergens
             prefs.personal_allergens = body.personal_allergens
         if body.language is not None:
             prefs.language = body.language
@@ -75,6 +79,8 @@ async def update_preferences(
         if body.show_completed_shopping_items is not None:
             prefs.show_completed_shopping_items = body.show_completed_shopping_items
 
+    if allergens_changed:
+        await enqueue_user_allergen_checks(session, user.id)
     await session.commit()
     await session.refresh(prefs)
     return UserPreferencesOut.model_validate(prefs)

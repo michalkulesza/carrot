@@ -20,6 +20,7 @@ from api.models import (
 )
 from api.routes.recipes import _build_recipe_out, _get_household_ids_map, _link_recipe_to_household
 from api.services.embeddings import queue_recipe_embedding
+from api.services.allergen_rechecks import enqueue_recipe_allergen_check
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/public/recipes", tags=["public recipes"])
@@ -105,6 +106,7 @@ async def add_public_recipe_to_library(
     await session.flush()
     await _link_recipe_to_household(session, recipe.id, body.household_id)
     session.add(RecipePublicShareLibraryAddition(public_share_id=share.id, user_id=user.id, recipe_id=recipe.id))
+    await enqueue_recipe_allergen_check(session, recipe.id)
     await queue_recipe_embedding(session, recipe)
     await session.commit()
     await session.refresh(recipe)
