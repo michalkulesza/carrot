@@ -203,7 +203,7 @@ const RouteMessage = ({
     <div
       role="dialog"
       aria-live="polite"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4"
     >
       <div className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl">
         <h2 className="text-lg font-semibold">{t(title)}</h2>

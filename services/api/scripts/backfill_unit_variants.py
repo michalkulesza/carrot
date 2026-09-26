@@ -1,4 +1,4 @@
-"""Backfill legacy recipe unit arrays with deterministic conversions."""
+"""Backfill missing or unchanged recipe unit arrays with deterministic conversions."""
 
 import asyncio
 import sys
@@ -9,6 +9,7 @@ from sqlalchemy import select
 from api.database import async_session_maker
 from api.models import Recipe
 from api.services.unit_variants import build_variants
+from api.users import User  # noqa: F401 - registers the Recipe.author relationship
 
 
 async def main(recipe_ids: list[uuid.UUID] | None = None) -> None:
@@ -27,13 +28,24 @@ async def main(recipe_ids: list[uuid.UUID] | None = None) -> None:
                 ingredients = component.get("ingredients", [])
                 steps = component.get("steps", [])
                 generated = build_variants(ingredients, steps)
-                updated.append({
-                    **component,
-                    **{
-                        field: component.get(field) or values
-                        for field, values in generated.items()
-                    },
-                })
+                replace_ingredients = (
+                    component.get("metric_ingredients")
+                    == component.get("imperial_ingredients")
+                    == ingredients
+                )
+                replace_steps = (
+                    component.get("metric_steps")
+                    == component.get("imperial_steps")
+                    == steps
+                )
+                updated_component = component.copy()
+                for field, values in generated.items():
+                    replace_unchanged = (
+                        replace_ingredients if field.endswith("ingredients") else replace_steps
+                    )
+                    if not component.get(field) or replace_unchanged:
+                        updated_component[field] = values
+                updated.append(updated_component)
             if updated != recipe.components:
                 recipe.components = updated
                 await session.commit()

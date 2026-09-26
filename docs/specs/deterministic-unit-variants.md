@@ -1,6 +1,6 @@
 # Deterministic unit variants
 
-Status: implementation complete; runtime behavior awaits verification.
+Status: implementation complete; local runtime verified, production not verified.
 
 ## Problem and outcome
 
@@ -25,8 +25,8 @@ Imported recipes currently ask Gemini to write metric and US ingredient and step
 
 ## Verification
 
-Manual review covered alignment, conversion direction, cup preservation, and import-path coverage. Python syntax parsing and `git diff --check` passed. Automated tests and runtime import checks were not run.
+Manual review covered alignment, conversion direction, cup preservation, and import-path coverage. Python syntax parsing and `git diff --check` passed. Automated tests and runtime import checks were not run. The local worker was rebuilt with the converter; the backfill repaired a newly imported recipe with identical stored variants, and the database now contains distinct metric and imperial ingredient arrays for that recipe.
 
 ## Known limits
 
-The converter leaves ambiguous, compound, and non-leading measurements unchanged. Some accented unit spellings are not covered by its source-span matcher and remain unchanged. Existing stored variants remain in place; the backfill script fills missing arrays only.
+The converter leaves ambiguous, compound, and non-leading measurements unchanged. Some accented unit spellings are not covered by its source-span matcher and remain unchanged. The backfill script preserves distinct stored variants and repairs missing variants or identical variants that still match the canonical source arrays.
