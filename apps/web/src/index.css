@@ -1,5 +1,9 @@
 @import '@heroui/react/styles';
 
+.modal__backdrop {
+  z-index: 100;
+}
+
 html {
   overflow-y: scroll;
 }

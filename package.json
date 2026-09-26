@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "be": "docker compose up -d && uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0",
-    "be:web": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter web dev --host\"",
-    "be:ios": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter mobile ios\"",
-    "be:android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter mobile android\"",
+    "be+web": "docker compose up -d && concurrently --names api,web --prefix-colors cyan,magenta \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter web dev --host\"",
+    "be+ios": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter mobile ios\"",
+    "be+android": "docker compose up -d && concurrently --names api,mobile --prefix-colors cyan,yellow \"uv run --directory services/api uvicorn src.api.main:app --reload --port 8088 --host 0.0.0.0\" \"pnpm --filter mobile android\"",
     "web": "pnpm --filter web dev --host",
     "ios": "pnpm --filter mobile ios",
     "android": "pnpm --filter mobile android",

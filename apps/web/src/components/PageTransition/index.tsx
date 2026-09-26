@@ -18,7 +18,13 @@ const PageTransition = ({ location, children }: PageTransitionProps) => {
   useGSAP(
     () => {
       const content = contentRef.current
-      if (!content || previousPathnameRef.current === location.pathname) return
+      if (!content) return
+
+      if (previousPathnameRef.current === location.pathname) {
+        setDisplayLocation(location)
+
+        return
+      }
 
       previousPathnameRef.current = location.pathname
 
@@ -45,7 +51,12 @@ const PageTransition = ({ location, children }: PageTransitionProps) => {
         )
     },
     {
-      dependencies: [location.pathname],
+      dependencies: [
+        location.pathname,
+        location.search,
+        location.hash,
+        location.key,
+      ],
       scope: contentRef,
       revertOnUpdate: true,
     }
