@@ -1,5 +1,13 @@
 @import '@heroui/react/styles';
 
+@layer base {
+  button:not(:disabled),
+  a[href],
+  [role='button']:not([aria-disabled='true']) {
+    @apply cursor-pointer;
+  }
+}
+
 .modal__backdrop {
   z-index: 100;
 }
