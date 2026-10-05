@@ -1,4 +1,4 @@
-import { useState, type FocusEventHandler, type ReactNode } from 'react'
+import { useRef, useState, type FocusEventHandler, type ReactNode } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
@@ -17,11 +17,13 @@ import {
 import RecipeActionRow from './RecipeActionRow'
 import RecipeIngredientsCard from './RecipeIngredientsCard'
 import RecipeIngredientsSheet from './RecipeIngredientsSheet'
+import RecipeRailBar from './RecipeRailBar'
 import RecipeSpecSheet from './RecipeSpecSheet'
 import RecipeStepList from './RecipeStepList'
 import AllergenUncertainNotice from './AllergenUncertainNotice'
 import ShareRecipeDialog from './ShareRecipeDialog'
 import { useIsDesktop } from './useIsDesktop'
+import { useRailPhotoHidden } from './useRailPhotoHidden'
 import { useUnifiedIngredients } from './useUnifiedIngredients'
 
 interface RecipeViewLayoutProps {
@@ -107,6 +109,9 @@ const RecipeViewLayout = ({
 }: RecipeViewLayoutProps) => {
   const { t } = useTranslation()
   const desktop = useIsDesktop()
+  const railRef = useRef<HTMLElement>(null)
+  const photoRef = useRef<HTMLDivElement>(null)
+  const photoHidden = useRailPhotoHidden(desktop, railRef, photoRef)
   const [shareOpen, setShareOpen] = useState(false)
   const [shoppingMode, setShoppingMode] = useState(false)
   const [ingredientsOpen, setIngredientsOpen] = useState(false)
@@ -248,8 +253,20 @@ const RecipeViewLayout = ({
   if (desktop) {
     return (
       <div className="grid h-full min-h-0 grid-cols-[340px_minmax(0,1fr)] bg-white font-['Nunito',system-ui,sans-serif] text-[#1F1D2B]">
-        <aside className="flex min-h-0 flex-col overflow-auto border-r border-[#ECEAF0] bg-white">
+        <aside
+          ref={railRef}
+          className="flex min-h-0 flex-col overflow-auto border-r border-[#ECEAF0] bg-white"
+        >
+          <RecipeRailBar
+            title={recipe.title}
+            thumbnailUrl={recipe.thumbnail_url}
+            visible={photoHidden}
+            onBackToTop={() =>
+              railRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+            }
+          />
           <div
+            ref={photoRef}
             className="mx-3 mt-3 h-[200px] shrink-0 overflow-hidden rounded-[14px] bg-[#EDE7E0]"
             role="img"
             aria-label={recipe.title}

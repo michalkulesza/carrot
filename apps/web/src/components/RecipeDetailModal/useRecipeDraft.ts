@@ -29,7 +29,7 @@ export const useRecipeDraft = () => {
   const setField = (field: DraftTextField, value: string) =>
     setDraft((current) => (current ? { ...current, [field]: value } : current))
 
-  const setThumbnailUrl = (url: string) =>
+  const setThumbnailUrl = (url: string | null) =>
     setDraft((current) =>
       current ? { ...current, thumbnail_url: url } : current
     )
@@ -58,5 +58,87 @@ export const useRecipeDraft = () => {
         : current
     )
 
-  return { draft, setDraft, setField, setThumbnailUrl, setIngredient, setStep }
+  const addIngredient = (ci: number) =>
+    setDraft((current) =>
+      current
+        ? mapComponent(current, ci, (component) => ({
+            ...component,
+            ingredients: [...component.ingredients, ''],
+            shopping_list_ingredients: component.shopping_list_ingredients
+              ? [...component.shopping_list_ingredients, '']
+              : component.shopping_list_ingredients,
+            shopping_list_categories: component.shopping_list_categories
+              ? [...component.shopping_list_categories, 'other']
+              : component.shopping_list_categories,
+          }))
+        : current
+    )
+
+  const removeIngredient = (ci: number, ii: number) =>
+    setDraft((current) =>
+      current
+        ? mapComponent(current, ci, (component) => ({
+            ...component,
+            ingredients: component.ingredients.filter(
+              (_, index) => index !== ii
+            ),
+            shopping_list_ingredients:
+              component.shopping_list_ingredients?.filter(
+                (_, index) => index !== ii
+              ),
+            shopping_list_categories:
+              component.shopping_list_categories?.filter(
+                (_, index) => index !== ii
+              ),
+          }))
+        : current
+    )
+
+  // Pasted text re-parses every line, so per-line derived data is dropped
+  // and rebuilt by the backend on save.
+  const replaceIngredients = (ci: number, lines: string[]) =>
+    setDraft((current) =>
+      current
+        ? mapComponent(current, ci, (component) => ({
+            ...component,
+            ingredients: lines,
+            shopping_list_ingredients: null,
+            shopping_list_categories: null,
+          }))
+        : current
+    )
+
+  const addStep = (ci: number) =>
+    setDraft((current) =>
+      current
+        ? mapComponent(current, ci, (component) => ({
+            ...component,
+            steps: [...component.steps, ''],
+          }))
+        : current
+    )
+
+  const removeStep = (ci: number, si: number) =>
+    setDraft((current) =>
+      current
+        ? mapComponent(current, ci, (component) => ({
+            ...component,
+            steps: component.steps.filter((_, index) => index !== si),
+          }))
+        : current
+    )
+
+  return {
+    draft,
+    setDraft,
+    setField,
+    setThumbnailUrl,
+    setIngredient,
+    setStep,
+    addIngredient,
+    removeIngredient,
+    replaceIngredients,
+    addStep,
+    removeStep,
+  }
 }
