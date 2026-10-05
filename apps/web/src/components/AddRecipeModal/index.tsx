@@ -1,21 +1,11 @@
-import { FormEvent, useEffect, useRef, useState } from 'react'
-import {
-  Search,
-  Link as LinkIcon,
-  Type,
-  Image as ImageIcon,
-  Loader,
-} from 'react-feather'
+import { useEffect, useRef, useState } from 'react'
+import { Search } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import {
   Modal,
   ModalBackdrop,
   ModalContainer,
   ModalDialog,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  Button,
   toast,
 } from '@heroui/react'
 import type { ImportJob, RecipeOut } from '@carrot/shared/types'
@@ -27,26 +17,16 @@ import {
 import { useHousehold } from '../../context/HouseholdContext'
 import { proxyUrl } from '../../utils/imageUtils'
 import NetworkImage from '../NetworkImage'
-
-const IMPORT_METHODS = [
-  { key: 'url', labelKey: 'addRecipe.fromUrl', Icon: LinkIcon },
-  { key: 'text', labelKey: 'addRecipe.fromText', Icon: Type },
-  { key: 'image', labelKey: 'addRecipe.fromImage', Icon: ImageIcon },
-] as const
-
-const IMPORT_SOURCE_BADGES = [
-  { label: 'Web', icon: '🌐' },
-  { label: 'Instagram', icon: '📸' },
-  { label: 'TikTok', icon: '🎵' },
-]
+import ImportRecipeBody from './ImportRecipeBody'
+import type { ImportMode } from './importSources'
 
 interface AddRecipeModalProps {
   isOpen: boolean
-  initialImportMode?: 'url' | 'text' | 'image'
+  initialImportMode?: ImportMode
   onClose: () => void
   onSaved?: () => void
   onImportEnqueued: (job: ImportJob) => void
-  onImportModeChange?: (mode: 'url' | 'text' | 'image') => void
+  onImportModeChange?: (mode: ImportMode) => void
 }
 
 const AddRecipeModal = ({
@@ -59,11 +39,13 @@ const AddRecipeModal = ({
 }: AddRecipeModalProps) => {
   const { t } = useTranslation()
   const { activeHouseholdId } = useHousehold()
-  const [importMode, setImportMode] = useState<'url' | 'text' | 'image'>('url')
+  const [importMode, setImportMode] = useState<ImportMode>('url')
   const [url, setUrl] = useState('')
   const [pastedText, setPastedText] = useState('')
-  const importImageInputRef = useRef<HTMLInputElement>(null)
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const submittingRef = useRef(false)
   const [error, setError] = useState<string | null>(null)
   const [myRecipes, setMyRecipes] = useState<RecipeOut[]>([])
   const [librarySearch, setLibrarySearch] = useState('')
@@ -81,18 +63,31 @@ const AddRecipeModal = ({
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (!photo) {
+      setPhotoPreview(null)
+
+      return
+    }
+    const objectUrl = URL.createObjectURL(photo)
+    setPhotoPreview(objectUrl)
+
+    return () => URL.revokeObjectURL(objectUrl)
+  }, [photo])
+
   const reset = () => {
     setImportMode('url')
     setUrl('')
     setPastedText('')
-    if (importImageInputRef.current) importImageInputRef.current.value = ''
+    setPhoto(null)
     setLoading(false)
+    submittingRef.current = false
     setError(null)
     setLibrarySearch('')
   }
 
   async function handleLink(recipe: RecipeOut) {
-    if (!activeHouseholdId) return
+    if (!activeHouseholdId || linking) return
     setLinking(true)
     setError(null)
     try {
@@ -116,19 +111,27 @@ const AddRecipeModal = ({
     onClose()
   }
 
-  async function handlePaste() {
+  const readClipboard = async () => {
     try {
-      const text = await navigator.clipboard.readText()
-      setUrl(text.trim())
+      return (await navigator.clipboard.readText()).trim()
     } catch {
-      /* permission denied */
+      return null /* permission denied */
     }
   }
 
-  const enqueue = async (
-    kind: 'url' | 'text' | 'image',
-    input: Record<string, string>
-  ) => {
+  const handlePasteUrl = async () => {
+    const text = await readClipboard()
+    if (text !== null) setUrl(text)
+  }
+
+  const handlePasteText = async () => {
+    const text = await readClipboard()
+    if (text !== null) setPastedText(text)
+  }
+
+  const enqueue = async (kind: ImportMode, input: Record<string, string>) => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setLoading(true)
     setError(null)
     try {
@@ -145,41 +148,41 @@ const AddRecipeModal = ({
       setError(
         err instanceof Error ? err.message : t('importJobs.enqueueFailed')
       )
-    } finally {
+      submittingRef.current = false
       setLoading(false)
     }
   }
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-    if (importMode === 'url') {
-      void enqueue('url', { url: url.trim() })
-    } else if (importMode === 'text') {
-      void enqueue('text', { text: pastedText.trim() })
-    }
-  }
-
-  const handleImageFile = (file: File) => {
+  const enqueuePhoto = (file: File) => {
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = reader.result as string
-      const base64 = dataUrl.slice(dataUrl.indexOf(',') + 1)
       void enqueue('image', {
-        image_base64: base64,
+        image_base64: dataUrl.slice(dataUrl.indexOf(',') + 1),
         mime_type: file.type || 'image/jpeg',
       })
     }
     reader.readAsDataURL(file)
   }
 
-  const handleImportImageInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0]
-    if (file) handleImageFile(file)
+  const canSubmit =
+    importMode === 'url'
+      ? url.trim().length > 0
+      : importMode === 'text'
+        ? pastedText.trim().length > 0
+        : photo !== null
+
+  const handleSubmit = () => {
+    if (importMode === 'url') void enqueue('url', { url: url.trim() })
+    else if (importMode === 'text')
+      void enqueue('text', { text: pastedText.trim() })
+    else if (photo) enqueuePhoto(photo)
   }
 
-  const modalTitle = t('addRecipe.importRecipe')
+  const handleModeChange = (mode: ImportMode) => {
+    setImportMode(mode)
+    onImportModeChange?.(mode)
+  }
 
   const unlinkedRecipes = myRecipes.filter(
     (r) => !activeHouseholdId || !r.household_ids.includes(activeHouseholdId)
@@ -192,230 +195,87 @@ const AddRecipeModal = ({
     if (!open) handleClose()
   }
 
+  const libraryContent =
+    unlinkedRecipes.length > 0 ? (
+      <div className="flex flex-col gap-2 border-t border-[#ECEAF0] pt-4">
+        <p className="text-xs font-bold uppercase tracking-[0.07em] text-[#8C8A99]">
+          {t('addRecipe.fromPersonalLibrary')}
+        </p>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 shrink-0 -translate-y-1/2 text-zinc-400" />
+          <input
+            type="text"
+            placeholder={t('recipes.searchPlaceholder')}
+            value={librarySearch}
+            onChange={(e) => setLibrarySearch(e.target.value)}
+            className="w-full rounded-lg border border-zinc-200 py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+          />
+        </div>
+        <ul className="flex max-h-44 flex-col gap-0.5 overflow-y-auto">
+          {filteredPersonalRecipes.map((r) => (
+            <li key={r.id}>
+              <button
+                type="button"
+                disabled={linking}
+                onClick={() => handleLink(r)}
+                className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-zinc-100 disabled:opacity-50"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  {r.thumbnail_url && (
+                    <NetworkImage
+                      src={proxyUrl(r.thumbnail_url)!}
+                      alt=""
+                      className="h-8 w-8 shrink-0 rounded"
+                    />
+                  )}
+                  <span className="truncate font-medium">{r.title}</span>
+                </div>
+                <span className="shrink-0 text-xs font-semibold text-primary">
+                  {t('common.add')}
+                </span>
+              </button>
+            </li>
+          ))}
+          {filteredPersonalRecipes.length === 0 && (
+            <li className="px-3 py-2 text-sm text-zinc-400">
+              {t('recipes.noResults')}
+            </li>
+          )}
+        </ul>
+      </div>
+    ) : null
+
   return (
     <Modal isOpen={isOpen} onOpenChange={handleModalOpenChange}>
       <ModalBackdrop isDismissable>
         <ModalContainer
           size="lg"
           scroll="inside"
-          className="!rounded-xl overflow-hidden"
+          className="!rounded-none overflow-hidden sm:!rounded-3xl"
         >
-          <ModalDialog className="relative max-h-[calc(100dvh-2rem)] sm:max-h-[700px]">
-            <ModalHeader>{modalTitle}</ModalHeader>
-            <ModalBody>
-              {unlinkedRecipes.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                    {t('addRecipe.fromPersonalLibrary')}
-                  </p>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400 shrink-0 pointer-events-none" />
-                    <input
-                      type="text"
-                      placeholder={t('recipes.searchPlaceholder')}
-                      value={librarySearch}
-                      onChange={(e) => setLibrarySearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
-                  </div>
-                  <ul className="max-h-44 overflow-y-auto flex flex-col gap-0.5">
-                    {filteredPersonalRecipes.map((r) => (
-                      <li key={r.id}>
-                        <button
-                          type="button"
-                          disabled={linking}
-                          onClick={() => handleLink(r)}
-                          className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-sm hover:bg-zinc-100 transition-colors disabled:opacity-50"
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            {r.thumbnail_url && (
-                              <NetworkImage
-                                src={proxyUrl(r.thumbnail_url)!}
-                                alt=""
-                                className="w-8 h-8 rounded shrink-0"
-                              />
-                            )}
-                            <span className="truncate font-medium">
-                              {r.title}
-                            </span>
-                          </div>
-                          <span className="text-xs text-primary shrink-0 font-semibold">
-                            {t('common.add')}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                    {filteredPersonalRecipes.length === 0 && (
-                      <li className="text-sm text-zinc-400 px-3 py-2">
-                        {t('recipes.noResults')}
-                      </li>
-                    )}
-                  </ul>
-                  <div className="flex items-center gap-2 text-xs text-zinc-400 pt-1">
-                    <div className="flex-1 h-px bg-zinc-200" />
-                    <span>{t('addRecipe.orImportFromUrl')}</span>
-                    <div className="flex-1 h-px bg-zinc-200" />
-                  </div>
-                </div>
-              )}
-
-              <div className="flex flex-col gap-3">
-                <div className="flex gap-1.5">
-                  {IMPORT_METHODS.map(({ key, labelKey, Icon }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => {
-                        setImportMode(key)
-                        onImportModeChange?.(key)
-                      }}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        importMode === key
-                          ? 'bg-primary text-white'
-                          : 'bg-zinc-100 text-zinc-500 hover:bg-zinc-200'
-                      }`}
-                    >
-                      <Icon className="w-3.5 h-3.5" />
-                      {t(labelKey)}
-                    </button>
-                  ))}
-                </div>
-
-                {importMode === 'url' && (
-                  <form
-                    id="import-form"
-                    onSubmit={handleSubmit}
-                    className="flex flex-col gap-3"
-                  >
-                    <div className="flex gap-1.5 flex-wrap">
-                      {IMPORT_SOURCE_BADGES.map(({ label, icon }) => (
-                        <span
-                          key={label}
-                          className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-500"
-                        >
-                          {icon} {label}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex gap-2 items-end">
-                      <div className="flex flex-col gap-1 flex-1">
-                        <label
-                          className="text-sm font-medium"
-                          htmlFor="recipe-url"
-                        >
-                          {t('addRecipe.recipeUrl')}
-                        </label>
-                        <input
-                          id="recipe-url"
-                          type="url"
-                          placeholder={t('addRecipe.urlPlaceholder')}
-                          value={url}
-                          onChange={(e) => setUrl(e.target.value)}
-                          required
-                          className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onPress={handlePaste}
-                        className="shrink-0 mb-0.5"
-                      >
-                        {t('addRecipe.paste')}
-                      </Button>
-                    </div>
-                  </form>
-                )}
-
-                {importMode === 'text' && (
-                  <form
-                    id="import-form"
-                    onSubmit={handleSubmit}
-                    className="flex flex-col gap-1"
-                  >
-                    <label
-                      className="text-sm font-medium"
-                      htmlFor="recipe-text"
-                    >
-                      {t('addRecipe.methodText')}
-                    </label>
-                    <textarea
-                      id="recipe-text"
-                      rows={7}
-                      placeholder={t('addRecipe.pasteTextPlaceholder')}
-                      value={pastedText}
-                      onChange={(e) => setPastedText(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                    />
-                  </form>
-                )}
-
-                {importMode === 'image' && (
-                  <div className="flex flex-col gap-2">
-                    <input
-                      ref={importImageInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
-                      className="hidden"
-                      onChange={handleImportImageInputChange}
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      onPress={() => importImageInputRef.current?.click()}
-                      isDisabled={loading}
-                    >
-                      {t('addRecipe.methodGallery')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {error && (
-                <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mt-2">
-                  <strong>{t('addRecipe.importFailed')}</strong>
-                  <p className="mt-1">{error}</p>
-                </div>
-              )}
-            </ModalBody>
-            <ModalFooter className="flex flex-col gap-2 items-stretch">
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="tertiary"
-                  onPress={handleClose}
-                  isDisabled={loading}
-                >
-                  {t('common.cancel')}
-                </Button>
-                {importMode !== 'image' && (
-                  <Button
-                    variant="primary"
-                    type="submit"
-                    form="import-form"
-                    isDisabled={loading}
-                  >
-                    {importMode === 'text'
-                      ? t('addRecipe.extractRecipe')
-                      : t('addRecipe.import')}
-                  </Button>
-                )}
-              </div>
-            </ModalFooter>
-            {loading && (
-              <div
-                aria-live="polite"
-                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/90 text-center backdrop-blur-sm"
-              >
-                <Loader
-                  aria-hidden="true"
-                  className="h-7 w-7 animate-spin text-primary"
-                />
-                <p className="text-sm font-medium text-zinc-700">
-                  {t('importJobs.running')}
-                </p>
-              </div>
-            )}
+          <ModalDialog
+            aria-label={t('addRecipe.importRecipe')}
+            className="relative flex !h-dvh !max-h-none !w-screen !max-w-none flex-col !rounded-none !p-0 sm:!h-auto sm:!max-h-[calc(100dvh-2rem)] sm:!w-[640px] sm:!max-w-[640px] sm:!rounded-3xl"
+          >
+            <ImportRecipeBody
+              mode={importMode}
+              onModeChange={handleModeChange}
+              url={url}
+              onUrlChange={setUrl}
+              onPasteUrl={handlePasteUrl}
+              text={pastedText}
+              onTextChange={setPastedText}
+              onPasteText={handlePasteText}
+              photo={photo}
+              photoPreview={photoPreview}
+              onPhotoChange={setPhoto}
+              loading={loading}
+              canSubmit={canSubmit}
+              error={error}
+              onSubmit={handleSubmit}
+              onClose={handleClose}
+              libraryContent={libraryContent}
+            />
           </ModalDialog>
         </ModalContainer>
       </ModalBackdrop>

@@ -15,8 +15,6 @@ import {
   RAIL_VISIBLE_STORAGE_KEY,
   resolveRailTargets,
 } from './helpers'
-import NetworkImage from '../NetworkImage'
-import { proxyUrl } from '../../utils/imageUtils'
 
 interface CookStep {
   componentIndex: number
@@ -55,11 +53,18 @@ const CookMode = ({
   )
   const railRows = useMemo(
     () =>
-      buildIngredientRailRows(recipe.components, unitSystem, servingScale, (unit, qty) =>
-        t(`units.${unit}`, {
-          count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
-          defaultValue: unit,
-        })
+      buildIngredientRailRows(
+        recipe.components,
+        unitSystem,
+        servingScale,
+        (unit, qty) =>
+          t(`units.${unit}`, {
+            count:
+              ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty
+                ? getIngredientQuantityCount(qty)
+                : 1,
+            defaultValue: unit,
+          })
       ),
     [recipe.components, unitSystem, servingScale, t]
   )
@@ -166,8 +171,9 @@ const CookMode = ({
     >
       <div className="mx-auto flex min-h-full max-w-4xl flex-col px-5 pb-8 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-10">
         <header className="flex items-center gap-3">
-          <NetworkImage src={proxyUrl(recipe.thumbnail_url)} alt={recipe.title} className="h-11 w-11 rounded-xl shrink-0" />
-          <div className="min-w-0 flex-1" />
+          <h1 className="min-w-0 flex-1 truncate font-serif text-xl font-semibold tracking-tight sm:text-2xl">
+            {recipe.title}
+          </h1>
           <button
             type="button"
             onClick={toggleRail}
@@ -207,7 +213,7 @@ const CookMode = ({
             </p>
           </div>
           {durations.length > 0 && (
-            <div className="mt-7 flex w-full max-w-2xl items-start gap-2 overflow-x-auto">
+            <div className="mt-7 flex w-full max-w-2xl flex-wrap items-start justify-center gap-2">
               {durations.map((duration, durationIndex) => {
                 const id = timerId(durationIndex)
                 const timer = timers.get(id)

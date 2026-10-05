@@ -20,6 +20,7 @@ Open work only. When an item is completed, move it to the matching category in [
 - [ ] **Facebook and Facebook short-video imports** — Support Facebook post, Reel/short-video, and `fb.watch` URLs through a Facebook-specific acquisition adapter. Capture the description, creator identity, verified creator-authored comments, linked recipe pages, and video/audio evidence where available; pass a versioned payload to the extraction-v2 orchestrator.
 - [ ] Add reviewed Facebook extraction-v2 fixtures: five recipes for each of English, Polish, German, French, and Spanish (25 fixtures total), plus end-to-end import tests before enabling the source.
 - [ ] Support Pinterest pins, including pin text, images, and linked recipe pages where available.
+- [ ] **Multi-page photo import** — The Import Recipe design lets users add up to 5 photos and combine them into one recipe. The import API (`kind: "image"`) accepts a single `image_base64`, so the web import modal currently takes one photo. Extend the job input and extractor to accept several pages, then add the numbered page grid with "Add page" and remove buttons.
 - [ ] **Make the allergen pass opt-in** — Skip the allergen Gemini call entirely while a user has no allergens set. Enable it the moment the first allergen is added in settings, and backfill existing recipes with an allergens-only pass (no re-extraction, no re-enrichment). Show an in-app progress message while the backfill runs and send a notification when it finishes.
 
 ## Experience and product polish
@@ -29,6 +30,7 @@ Open work only. When an item is completed, move it to the matching category in [
   - [ ] Let users change a recipe's household memberships from web recipe detail.
   - [ ] Let users edit a single ingredient before adding it to the shopping list from web recipe detail.
   - [ ] Add cook-mode text size controls and a recipe bug-report action on web.
+  - [ ] Revisit the new recipe popup's step cards once ingredients can be assigned to steps (if feasible): show the "uses" ingredient chips under each step, as in the Recipe Popup Final design.
   - [ ] Show a way to set a base serving count for recipes imported without one before offering ingredient scaling on web and mobile.
 - [ ] **iOS Universal Links for recipe URLs** — Configure the Associated Domains entitlement and `apple-app-site-association` hosting so supported Carrot web recipe links can open the native app, with authenticated scope handling and browser fallback.
 

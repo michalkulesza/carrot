@@ -1,4 +1,4 @@
-import { useCallback, useState, type ChangeEvent, type RefObject } from 'react'
+import { useState, type ChangeEvent, type RefObject } from 'react'
 import {
   Calendar,
   Edit2,
@@ -20,7 +20,7 @@ import {
   type Mode,
 } from './helpers'
 import EditLine from './EditLine'
-import { createPublicShare } from '../../api/client'
+import ShareRecipeDialog from './ShareRecipeDialog'
 
 interface RecipeHeroSectionProps {
   recipe: RecipeOut
@@ -41,6 +41,8 @@ interface RecipeHeroSectionProps {
   onToggleFavourite: () => void
   onEdit: () => void
   readOnly?: boolean
+  part?: 'all' | 'image' | 'details'
+  renderFileInput?: boolean
 }
 
 const RecipeHeroSection = ({
@@ -62,6 +64,8 @@ const RecipeHeroSection = ({
   onToggleFavourite,
   onEdit,
   readOnly = false,
+  part = 'all',
+  renderFileInput = true,
 }: RecipeHeroSectionProps) => {
   const { t } = useTranslation()
   const r = recipe
@@ -71,39 +75,6 @@ const RecipeHeroSection = ({
   const headerBg = getHeaderBg(mode)
   const allergens = getRecipeAllergens(r)
   const [shareOpen, setShareOpen] = useState(false)
-  const [shareUrl, setShareUrl] = useState<string | null>(null)
-  const [shareExpiry, setShareExpiry] = useState<string | null>(null)
-  const [sharing, setSharing] = useState(false)
-  const [shareError, setShareError] = useState<string | null>(null)
-
-  const handleCreateShare = useCallback(async () => {
-    if (sharing) return
-    setSharing(true)
-    setShareError(null)
-    try {
-      const share = await createPublicShare(r.id)
-      setShareUrl(share.url)
-      setShareExpiry(share.expires_at)
-      if (navigator.share)
-        await navigator.share({ title: r.title, url: share.url })
-      else await navigator.clipboard.writeText(share.url)
-    } catch (error) {
-      setShareError(
-        error instanceof Error ? error.message : t('publicShare.createError')
-      )
-    } finally {
-      setSharing(false)
-    }
-  }, [r.id, r.title, sharing, t])
-
-  const handleCopyShare = useCallback(async () => {
-    if (!shareUrl) return
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-    } catch {
-      setShareError(t('publicShare.copyError'))
-    }
-  }, [shareUrl, t])
 
   const tagRow = (
     <div className="mt-2">
@@ -119,192 +90,177 @@ const RecipeHeroSection = ({
     </div>
   )
 
-  const toolbar = !readOnly && mode === 'view' && (
-    <div className="absolute top-3 right-3 flex gap-1 z-10">
+  const desktopToolbar = part === 'details'
+  const toolbar = !readOnly && mode === 'view' && part !== 'image' && (
+    <div
+      className={
+        desktopToolbar
+          ? 'mt-4 flex flex-wrap gap-2'
+          : 'absolute top-3 right-3 z-10 flex gap-1'
+      }
+    >
       <button
         type="button"
         onClick={() => setShareOpen(true)}
         aria-label={t('publicShare.open')}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors"
+        className={
+          desktopToolbar
+            ? 'inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50'
+            : 'w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors'
+        }
       >
         <Share2 className="w-4 h-4" />
+        {desktopToolbar && t('publicShare.open')}
       </button>
       <button
         type="button"
         onClick={onToggleAddMode}
         aria-label={t('shoppingList.addToList')}
         aria-pressed={addMode}
-        className={`w-8 h-8 flex items-center justify-center rounded-full transition-colors ${
+        className={`${desktopToolbar ? 'inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm' : 'w-8 h-8 flex items-center justify-center rounded-full'} transition-colors ${
           addMode
             ? 'bg-primary text-primary-foreground'
-            : 'bg-white/90 text-zinc-600 hover:bg-white shadow-sm'
+            : desktopToolbar
+              ? 'text-zinc-700 hover:bg-zinc-50'
+              : 'bg-white/90 text-zinc-600 hover:bg-white shadow-sm'
         }`}
       >
         <ShoppingCart className="w-4 h-4" />
+        {desktopToolbar && t('shoppingList.addToList')}
       </button>
       <button
         type="button"
         onClick={onOpenMealPlan}
         aria-label={t('mealPlan.addToMealPlan')}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors"
+        className={
+          desktopToolbar
+            ? 'inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50'
+            : 'w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors'
+        }
       >
         <Calendar className="w-4 h-4" />
+        {desktopToolbar && t('mealPlan.addToMealPlan')}
       </button>
       <button
         type="button"
         onClick={onEdit}
         aria-label={t('common.edit')}
-        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors"
+        className={
+          desktopToolbar
+            ? 'inline-flex h-9 items-center gap-2 rounded-lg border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50'
+            : 'w-8 h-8 flex items-center justify-center rounded-full bg-white/90 text-zinc-600 hover:bg-white shadow-sm transition-colors'
+        }
       >
         <Edit2 className="w-4 h-4" />
+        {desktopToolbar && t('common.edit')}
       </button>
     </div>
   )
 
   return (
     <div className={`relative ${headerBg}`}>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={onThumbnailFile}
-      />
+      {(part !== 'details' || shareOpen) && (
+        <div className="relative">
+          {renderFileInput && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onThumbnailFile}
+            />
+          )}
 
-      {proxied && (
-        <NetworkImage
-          src={proxied}
-          alt={r.title}
-          className="w-full h-64 object-cover"
-        />
-      )}
+          {part !== 'details' && proxied && (
+            <NetworkImage
+              src={proxied}
+              alt={r.title}
+              className="w-full h-64 object-cover"
+            />
+          )}
 
-      {toolbar}
+          {!proxied && part === 'image' && (
+            <div className="h-28 bg-zinc-100" aria-hidden="true" />
+          )}
 
-      {shareOpen && (
-        <div
-          className="absolute inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('publicShare.title')}
-        >
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold">{t('publicShare.title')}</h3>
-            <p className="mt-2 text-sm text-zinc-600">
-              {t('publicShare.description')}
-            </p>
-            {shareError && (
-              <p className="mt-3 text-sm text-danger">{shareError}</p>
-            )}
-            {shareUrl && (
-              <input
-                readOnly
-                value={shareUrl}
-                aria-label={t('publicShare.link')}
-                className="mt-3 w-full rounded border p-2 text-xs"
-              />
-            )}
-            {shareExpiry && (
-              <p className="mt-2 text-xs text-zinc-500">
-                {t('publicShare.expires', {
-                  date: new Date(shareExpiry).toLocaleDateString(),
-                })}
-              </p>
-            )}
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShareOpen(false)}
-                className="rounded px-3 py-2 text-sm"
-              >
-                {t('common.close')}
-              </button>
-              {shareUrl && !navigator.share ? (
-                <button
-                  type="button"
-                  onClick={handleCopyShare}
-                  className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground"
-                >
-                  {t('publicShare.copy')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  disabled={sharing}
-                  onClick={handleCreateShare}
-                  className="rounded bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-60"
-                >
-                  {sharing ? t('common.loading') : t('publicShare.share')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+          {part === 'all' && toolbar}
 
-      {mode === 'editing' && proxied && (
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={imgUploading}
-          className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/40 text-white text-xs font-semibold hover:bg-black/60 transition-colors backdrop-blur-sm disabled:opacity-60"
-        >
-          {imgUploading ? t('common.uploading') : t('common.changePhoto')}
-        </button>
-      )}
+          <ShareRecipeDialog
+            recipe={r}
+            open={shareOpen}
+            onClose={() => setShareOpen(false)}
+          />
 
-      <div
-        className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pb-1 ${proxied ? 'pt-5' : 'pt-14'}`}
-      >
-        <div className="flex items-start gap-2">
-          {!readOnly && mode === 'view' && (
+          {part === 'all' && mode === 'editing' && proxied && (
             <button
               type="button"
-              onClick={onToggleFavourite}
-              aria-label={
-                r.is_favourite
-                  ? t('recipes.removeFromFavourites')
-                  : t('recipes.addToFavourites')
-              }
-              className={`mt-0.5 shrink-0 p-1 transition-colors ${
-                r.is_favourite
-                  ? 'text-amber-400'
-                  : 'text-zinc-300 hover:text-amber-400'
-              }`}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={imgUploading}
+              className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/40 text-white text-xs font-semibold hover:bg-black/60 transition-colors backdrop-blur-sm disabled:opacity-60"
             >
-              <Star
-                className="w-6 h-6"
-                fill={r.is_favourite ? 'currentColor' : 'none'}
-              />
+              {imgUploading ? t('common.uploading') : t('common.changePhoto')}
             </button>
           )}
-          {mode === 'editing' ? (
-            <EditLine
-              value={draft.title}
-              onChange={onTitleChange}
-              className="flex-1 text-2xl font-bold leading-snug"
-              multiline
-            />
-          ) : r.source_url ? (
-            <a
-              href={r.source_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start gap-1.5 text-2xl font-bold leading-snug text-zinc-900 hover:text-primary transition-colors"
-            >
-              <span>{r.title}</span>
-              <Link className="mt-1.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            </a>
-          ) : (
-            <h2 className="text-2xl font-bold leading-snug">{r.title}</h2>
-          )}
         </div>
-        {tagRow}
-        {mode === 'view' && <AllergenBadges allergens={allergens} />}
-      </div>
+      )}
 
-      {mode === 'editing' && !proxied && (
-        <div className="px-10 pt-2">
+      {part !== 'image' && (
+        <div
+          className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} ${part === 'details' ? 'px-6 sm:px-10 lg:px-0' : 'px-10'} pb-1 ${proxied || part === 'details' ? 'pt-5' : 'pt-14'}`}
+        >
+          <div className="flex items-start gap-2">
+            {!readOnly && mode === 'view' && (
+              <button
+                type="button"
+                onClick={onToggleFavourite}
+                aria-label={
+                  r.is_favourite
+                    ? t('recipes.removeFromFavourites')
+                    : t('recipes.addToFavourites')
+                }
+                className={`mt-0.5 shrink-0 p-1 transition-colors ${
+                  r.is_favourite
+                    ? 'text-amber-400'
+                    : 'text-zinc-300 hover:text-amber-400'
+                }`}
+              >
+                <Star
+                  className="w-6 h-6"
+                  fill={r.is_favourite ? 'currentColor' : 'none'}
+                />
+              </button>
+            )}
+            {mode === 'editing' ? (
+              <EditLine
+                value={draft.title}
+                onChange={onTitleChange}
+                className="flex-1 text-2xl font-bold leading-snug"
+                multiline
+              />
+            ) : r.source_url ? (
+              <a
+                href={r.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-start gap-1.5 text-2xl font-bold leading-snug text-zinc-900 hover:text-primary transition-colors"
+              >
+                <span>{r.title}</span>
+                <Link className="mt-1.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              </a>
+            ) : (
+              <h2 className="text-2xl font-bold leading-snug">{r.title}</h2>
+            )}
+          </div>
+          {tagRow}
+          {mode === 'view' && <AllergenBadges allergens={allergens} />}
+          {desktopToolbar && toolbar}
+        </div>
+      )}
+
+      {part !== 'image' && mode === 'editing' && !proxied && (
+        <div
+          className={`${part === 'details' ? 'px-6 sm:px-10 lg:px-0' : 'px-10'} pt-2`}
+        >
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -314,6 +270,17 @@ const RecipeHeroSection = ({
             {imgUploading ? t('common.uploading') : t('common.addPhoto')}
           </button>
         </div>
+      )}
+
+      {part === 'details' && mode === 'editing' && proxied && (
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={imgUploading}
+          className="mt-2 text-sm text-primary underline disabled:opacity-60"
+        >
+          {imgUploading ? t('common.uploading') : t('common.changePhoto')}
+        </button>
       )}
     </div>
   )

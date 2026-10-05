@@ -10,6 +10,39 @@ import {
 } from '@carrot/shared/utils/ingredientScaling'
 import { UNITS } from '../../api/client'
 
+export const TEXT_SIZE_CLASSES = [
+  'text-sm',
+  'text-base',
+  'text-[17px]',
+  'text-xl',
+  'text-2xl',
+] as const
+
+export const INTERNAL_COMPONENT_NAMES = new Set([
+  'main',
+  'ingredient_list',
+  'step_list',
+  'instruction_section',
+  'main_steps',
+  'main_dish',
+  'section',
+  'instructions',
+  'steps',
+])
+
+export const formatCookingTime = (
+  minutes: number | null,
+  t: (key: string) => string
+) => {
+  if (minutes === null) return ''
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours === 0) return `${minutes} ${t('recipes.minutesShort')}`
+  if (remainingMinutes === 0) return `${hours} ${t('recipes.hoursShort')}`
+
+  return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
+}
+
 export type Mode = 'view' | 'editing' | 'confirming'
 
 export const getHeaderBg = (mode: Mode): string => {
@@ -119,7 +152,7 @@ export const displayIngredient = (s: string): string => {
 
 export const displayIngredientWithLocalizedUnit = (
   s: string,
-  translateUnit: (unit: string, qty: string) => string,
+  translateUnit: (unit: string, qty: string) => string
 ): string => formatIngredientWithLocalizedUnit(s, translateUnit)
 
 export const getScaledIngredientValues = (
@@ -291,7 +324,7 @@ export const buildIngredientRailRows = (
   components: SaveComponent[],
   unitSystem: string,
   servingScale: number,
-  translateUnit: (unit: string, qty: string) => string,
+  translateUnit: (unit: string, qty: string) => string
 ): RailRow[] => {
   const showHeaders = showRailComponentHeaders(components)
   const rows: RailRow[] = []

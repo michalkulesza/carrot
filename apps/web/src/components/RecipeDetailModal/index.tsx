@@ -1,33 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
-import { useDismissRecipeIssue } from '@carrot/shared/hooks/useRecipes'
 import {
   usePreferences,
   useRecipeServingPreference,
 } from '@carrot/shared/hooks/usePreferences'
-import { useTags } from '@carrot/shared/hooks/useTags'
 import {
   Modal,
   ModalBackdrop,
+  ModalBody,
   ModalContainer,
   ModalDialog,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
   toast,
 } from '@heroui/react'
-import type {
-  RecipeOut,
-  SaveComponent,
-  ShoppingListItemInput,
-  Tag,
-} from '@carrot/shared/types'
+import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
 import {
-  addTagToRecipe,
-  deleteRecipe,
-  removeRecipeFromHousehold,
-  removeTagFromRecipe,
   toggleFavourite,
   updateRecipe,
   uploadThumbnail,
@@ -40,22 +26,24 @@ import {
   applyIngredientRestore,
   buildRecipeUpdateFromDraft,
   buildRecipeUpdateFromRecipe,
-  getShoppingListIngredient,
   toEditState,
-  type EditState,
   type Mode,
 } from './helpers'
+import type { IngredientActions } from './ingredientActions'
+import { useRecipeDeletion } from './useRecipeDeletion'
+import { useRecipeDraft } from './useRecipeDraft'
+import { useRecipeNotes } from './useRecipeNotes'
+import { useRecipeTags } from './useRecipeTags'
 import { useScreenWakeLock } from './useScreenWakeLock'
-import RecipeHeroSection from './RecipeHeroSection'
-import RecipeMetaBar from './RecipeMetaBar'
-import RecipeNotesSection from './RecipeNotesSection'
-import RelatedRecipesSection from './RelatedRecipesSection'
-import RecipeModalFooter from './RecipeModalFooter'
-import ViewComponent from './ViewComponent'
-import UnifiedIngredientList from './UnifiedIngredientList'
-import EditComponent from './EditComponent'
+import { useShoppingListActions } from './useShoppingListActions'
 import CookMode from './CookMode'
-import RecipeIssueBanner from './RecipeIssueBanner'
+import PopupRelatedSection from './PopupRelatedSection'
+import RecipeClassicLayout from './RecipeClassicLayout'
+import RecipeComponentColumn from './RecipeComponentColumn'
+import RecipeHeroSection from './RecipeHeroSection'
+import RecipeModalFooter from './RecipeModalFooter'
+import RecipeNotices from './RecipeNotices'
+import RecipeViewLayout from './RecipeViewLayout'
 
 interface RecipeDetailModalProps {
   recipe: RecipeOut | null
@@ -88,46 +76,64 @@ const RecipeDetailModal = ({
 }: RecipeDetailModalProps) => {
   const { t } = useTranslation()
   const wakeLock = useScreenWakeLock(Boolean(recipe))
-  const { addItems: addShoppingListItems } = useShoppingList()
   const { preferences } = usePreferences()
   const { user } = useAuth()
   const { households, activeHouseholdId } = useHousehold()
-  const { create: createTagMutation } = useTags()
-  const dismissIssue = useDismissRecipeIssue()
   const [mode, setMode] = useState<Mode>('view')
   const [addMode, setAddMode] = useState(false)
   const [mealPlanOpen, setMealPlanOpen] = useState(false)
-  const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set())
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(
     new Set()
   )
-  const [draft, setDraft] = useState<EditState | null>(null)
-  const [localTags, setLocalTags] = useState<Tag[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imgUploading, setImgUploading] = useState(false)
-  const [localNotes, setLocalNotes] = useState(recipe?.notes ?? '')
-  const [notesSaving, setNotesSaving] = useState(false)
   const [fontSizeIndex, setFontSizeIndex] = useState(2)
-  const savedNotesRef = useRef(recipe?.notes ?? '')
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const deletePendingRef = useRef(false)
+  const unitSystem = preferences?.unit_system ?? 'metric'
   const originalServings = recipe?.servings ?? null
   const { selectedServings, setServings } = useRecipeServingPreference(
     recipe?.id,
     originalServings
   )
+  const servingScale =
+    recipe?.servings && selectedServings
+      ? selectedServings / recipe.servings
+      : 1
+
+  const { draft, setDraft, setField, setThumbnailUrl, setIngredient, setStep } =
+    useRecipeDraft()
+  const tags = useRecipeTags(recipe, allTags)
+  const notes = useRecipeNotes(recipe, tags.localTags, onUpdated)
+  const shopping = useShoppingListActions(recipe, unitSystem, servingScale)
+  const deletion = useRecipeDeletion({
+    recipe,
+    activeHouseholdId,
+    onDeleted,
+    onClose,
+    onBusyChange: (isBusy) => {
+      setBusy(isBusy)
+      if (isBusy) setError(null)
+    },
+    onFailed: (message) => {
+      setError(message)
+      setMode('editing')
+    },
+  })
+
+  const { setLocalTags } = tags
+  const { resetNotes } = notes
+  const { resetSessionAdded } = shopping
 
   useEffect(() => {
     if (recipe) {
       setDraft(toEditState(recipe))
       setLocalTags(recipe.tags ?? [])
-      setLocalNotes(recipe.notes ?? '')
-      savedNotesRef.current = recipe.notes ?? ''
+      resetNotes(recipe.notes ?? '')
       setMode(initialMode ?? 'view')
       setAddMode(false)
       setMealPlanOpen(false)
-      setSessionAdded(new Set())
+      resetSessionAdded()
       setCheckedIngredients(new Set())
       setError(null)
     }
@@ -155,7 +161,7 @@ const RecipeDetailModal = ({
       setImgUploading(true)
       try {
         const result = await uploadThumbnail(file, recipe.id)
-        setDraft((d) => (d ? { ...d, thumbnail_url: result.url } : d))
+        setThumbnailUrl(result.url)
       } catch {
         // keep existing thumbnail on failure
       } finally {
@@ -163,18 +169,11 @@ const RecipeDetailModal = ({
         if (fileInputRef.current) fileInputRef.current.value = ''
       }
     },
-    [recipe]
-  )
-
-  const handleTagCreate = useCallback(
-    async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name),
-    [createTagMutation]
+    [recipe, setThumbnailUrl]
   )
 
   if (!recipe || !draft) return null
   const r = recipe
-  const servingScale =
-    r.servings && selectedServings ? selectedServings / r.servings : 1
   if (
     cookModeOpen &&
     r.components.some((component) => component.steps.length > 0)
@@ -183,7 +182,7 @@ const RecipeDetailModal = ({
       <CookMode
         recipe={r}
         onClose={onCloseCookMode ?? onClose}
-        unitSystem={preferences?.unit_system ?? 'metric'}
+        unitSystem={unitSystem}
         servingScale={servingScale}
       />
     )
@@ -191,85 +190,8 @@ const RecipeDetailModal = ({
 
   const components =
     mode === 'editing' ? draft.components : (r.components as SaveComponent[])
-  const single = components.length === 1
-  const ingredientGroupCount = components.filter(
-    (component) => component.ingredients.length > 0
-  ).length
-  const hasMultipleIngredientGroups = ingredientGroupCount > 1
-
-  const setIngredient = (ci: number, ii: number, val: string) => {
-    setDraft((d) => {
-      if (!d) return d
-      const comps = d.components.map((c, ci2) =>
-        ci2 !== ci
-          ? c
-          : {
-              ...c,
-              ingredients: c.ingredients.map((v, ii2) =>
-                ii2 === ii ? val : v
-              ),
-            }
-      )
-
-      return { ...d, components: comps }
-    })
-  }
-
-  const setStep = (ci: number, si: number, val: string) => {
-    setDraft((d) => {
-      if (!d) return d
-      const comps = d.components.map((c, ci2) =>
-        ci2 !== ci
-          ? c
-          : { ...c, steps: c.steps.map((s, si2) => (si2 === si ? val : s)) }
-      )
-
-      return { ...d, components: comps }
-    })
-  }
-
-  const handleTagAdd = async (tag: Tag) => {
-    setLocalTags((prev) => [...prev, tag])
-    try {
-      await addTagToRecipe(r.id, tag.id)
-    } catch {
-      setLocalTags((prev) => prev.filter((existing) => existing.id !== tag.id))
-    }
-  }
-
-  const handleTagRemove = async (tagId: string) => {
-    setLocalTags((prev) => prev.filter((tag) => tag.id !== tagId))
-    try {
-      await removeTagFromRecipe(r.id, tagId)
-    } catch {
-      const removed = allTags.find((tag) => tag.id === tagId)
-      if (removed) setLocalTags((prev) => [...prev, removed])
-    }
-  }
-  const handleNotesSave = async () => {
-    const trimmed = localNotes.trim()
-    if (trimmed === savedNotesRef.current.trim()) return
-    setNotesSaving(true)
-    try {
-      const updated = await updateRecipe(
-        r.id,
-        buildRecipeUpdateFromRecipe(r, {
-          components: r.components as SaveComponent[],
-          notes: trimmed || null,
-          tagIds: localTags.map((tag) => tag.id),
-        })
-      )
-      savedNotesRef.current = trimmed
-      onUpdated?.(updated)
-    } catch {
-      // silent — user can retry by editing again
-    } finally {
-      setNotesSaving(false)
-    }
-  }
 
   const handleSave = async () => {
-    if (!draft) return
     setBusy(true)
     setError(null)
     try {
@@ -278,8 +200,8 @@ const RecipeDetailModal = ({
         buildRecipeUpdateFromDraft(
           draft,
           r,
-          localNotes,
-          localTags.map((tag) => tag.id)
+          notes.localNotes,
+          tags.localTags.map((tag) => tag.id)
         )
       )
       toast.success(t('recipes.recipeUpdated'), { timeout: 3000 })
@@ -303,8 +225,8 @@ const RecipeDetailModal = ({
         r.id,
         buildRecipeUpdateFromRecipe(r, {
           components: newComponents,
-          notes: localNotes.trim() || null,
-          tagIds: localTags.map((tag) => tag.id),
+          notes: notes.localNotes.trim() || null,
+          tagIds: tags.localTags.map((tag) => tag.id),
         })
       )
       onUpdated?.(updated)
@@ -328,44 +250,6 @@ const RecipeDetailModal = ({
       t('recipes.failedToRestoreIngredient')
     )
 
-  const handleDeleteEverywhere = async () => {
-    if (deletePendingRef.current) return
-    deletePendingRef.current = true
-    setBusy(true)
-    setError(null)
-    try {
-      await deleteRecipe(r.id)
-      toast.danger(t('recipes.recipeDeleted'), { timeout: 3000 })
-      onDeleted?.(r.id)
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
-      setMode('editing')
-    } finally {
-      deletePendingRef.current = false
-      setBusy(false)
-    }
-  }
-
-  const handleRemoveFromHousehold = async () => {
-    if (!activeHouseholdId || deletePendingRef.current) return
-    deletePendingRef.current = true
-    setBusy(true)
-    setError(null)
-    try {
-      await removeRecipeFromHousehold(r.id, activeHouseholdId)
-      toast.danger(t('recipes.recipeDeleted'), { timeout: 3000 })
-      onDeleted?.(r.id)
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('recipes.failedToDelete'))
-      setMode('editing')
-    } finally {
-      deletePendingRef.current = false
-      setBusy(false)
-    }
-  }
-
   const handleToggleFavourite = async () => {
     try {
       const result = await toggleFavourite(r.id)
@@ -383,55 +267,6 @@ const RecipeDetailModal = ({
   const handleIncreaseServings = () => {
     if (selectedServings !== null)
       setServings(Math.min(99, selectedServings + 1))
-  }
-
-  const handleAddIngredient = (ci: number, ii: number) => {
-    const comp = (r.components as SaveComponent[])[ci]
-    const text = getShoppingListIngredient(
-      comp,
-      ii,
-      preferences?.unit_system ?? 'metric',
-      servingScale
-    )
-    const item: ShoppingListItemInput = {
-      id: crypto.randomUUID(),
-      text,
-      category: comp.shopping_list_categories?.[ii] ?? 'other',
-    }
-    addShoppingListItems.mutate([item])
-    setSessionAdded((prev) => new Set(prev).add(`${ci}-${ii}`))
-  }
-
-  const handleAddAllIngredients = (ci: number) => {
-    const comp = (r.components as SaveComponent[])[ci]
-    const keys: string[] = []
-    const items: ShoppingListItemInput[] = []
-    comp.ingredients.forEach((_, ii) => {
-      const key = `${ci}-${ii}`
-      if (!sessionAdded.has(key)) {
-        keys.push(key)
-        const text = getShoppingListIngredient(
-          comp,
-          ii,
-          preferences?.unit_system ?? 'metric',
-          servingScale
-        )
-        items.push({
-          id: crypto.randomUUID(),
-          text,
-          category: comp.shopping_list_categories?.[ii] ?? 'other',
-        })
-      }
-    })
-    if (items.length === 0) return
-    addShoppingListItems.mutate(items)
-    setSessionAdded((prev) => new Set([...prev, ...keys]))
-  }
-
-  const handleAddAllUnifiedIngredients = () => {
-    components.forEach((_, componentIndex) =>
-      handleAddAllIngredients(componentIndex)
-    )
   }
 
   const handleToggleIngredient = (key: string) => {
@@ -455,10 +290,6 @@ const RecipeDetailModal = ({
     setError(null)
   }
 
-  const handleRequestDelete = () => {
-    setMode('confirming')
-  }
-
   const handleClose = () => {
     setMode('view')
     setError(null)
@@ -469,6 +300,105 @@ const RecipeDetailModal = ({
     if (!open) handleClose()
   }
 
+  const openCookMode = onOpenCookMode ?? (() => {})
+  const openMealPlan = () => setMealPlanOpen(true)
+  const enterEditMode = () => setMode('editing')
+
+  const ingredientActions: IngredientActions = {
+    addMode,
+    sessionAdded: shopping.sessionAdded,
+    checkedIngredients,
+    onToggleIngredient: handleToggleIngredient,
+    onReplaceIngredient: handleReplaceIngredient,
+    onRestoreIngredient: handleRestoreIngredient,
+    onAddIngredient: shopping.handleAddIngredient,
+    onAddAllIngredients: shopping.handleAddAllIngredients,
+    onAddAllUnifiedIngredients: shopping.handleAddAllUnifiedIngredients,
+  }
+
+  const renderHero = (part: 'all' | 'image' | 'details') => (
+    <RecipeHeroSection
+      recipe={r}
+      draft={draft}
+      mode={mode}
+      part={part}
+      renderFileInput={false}
+      onTitleChange={(value) => setField('title', value)}
+      localTags={tags.localTags}
+      allTags={allTags}
+      onTagAdd={tags.handleTagAdd}
+      onTagRemove={tags.handleTagRemove}
+      onTagCreate={tags.handleTagCreate}
+      fileInputRef={fileInputRef}
+      onThumbnailFile={handleThumbnailFile}
+      imgUploading={imgUploading}
+      addMode={addMode}
+      onToggleAddMode={() => setAddMode((value) => !value)}
+      onOpenMealPlan={openMealPlan}
+      onToggleFavourite={handleToggleFavourite}
+      onEdit={enterEditMode}
+    />
+  )
+
+  const viewLayout = mode === 'view'
+  const viewContent = (
+    <RecipeViewLayout
+      key={r.id}
+      recipe={r}
+      components={components}
+      unitSystem={unitSystem}
+      servingScale={servingScale}
+      selectedServings={selectedServings}
+      onDecreaseServings={handleDecreaseServings}
+      onIncreaseServings={handleIncreaseServings}
+      tags={tags.localTags}
+      wakeLockActive={wakeLock.active}
+      onToggleWakeLock={wakeLock.toggle}
+      activeAllergens={activeAllergens}
+      sessionAdded={shopping.sessionAdded}
+      checkedIngredients={checkedIngredients}
+      onToggleIngredient={handleToggleIngredient}
+      onReplaceIngredient={handleReplaceIngredient}
+      onRestoreIngredient={handleRestoreIngredient}
+      onAddAllIngredients={shopping.handleAddAllUnifiedIngredients}
+      onAddIngredient={shopping.handleAddIngredient}
+      onToggleFavourite={handleToggleFavourite}
+      onEdit={enterEditMode}
+      onOpenMealPlan={openMealPlan}
+      onOpenCookMode={openCookMode}
+      onClose={handleClose}
+      banners={<RecipeNotices recipe={r} error={error} />}
+      notes={notes.localNotes}
+      onNotesChange={notes.setLocalNotes}
+      onNotesBlur={notes.handleNotesSave}
+      renderRelated={(desktop) => (
+        <PopupRelatedSection
+          recipeId={r.id}
+          onOpen={(id) => onOpenRecipe?.(id)}
+          desktop={desktop}
+        />
+      )}
+    />
+  )
+
+  const footer = (
+    <RecipeModalFooter
+      recipe={r}
+      mode={mode}
+      busy={busy}
+      isAuthor={!!user && r.author_id === user.id}
+      households={households}
+      activeHouseholdId={activeHouseholdId}
+      onCancel={cancelMode}
+      onCancelDelete={handleCancelDelete}
+      onSave={handleSave}
+      onRequestDelete={() => setMode('confirming')}
+      onRemoveFromHousehold={deletion.handleRemoveFromHousehold}
+      onDeleteEverywhere={deletion.handleDeleteEverywhere}
+      onClose={handleClose}
+    />
+  )
+
   return (
     <>
       <Modal isOpen={!!recipe} onOpenChange={handleModalOpenChange}>
@@ -476,41 +406,34 @@ const RecipeDetailModal = ({
           <ModalContainer
             size="lg"
             scroll="inside"
-            className="!rounded-xl overflow-hidden"
+            className={
+              viewLayout
+                ? '!rounded-none lg:!rounded-[20px] overflow-hidden'
+                : '!rounded-xl overflow-hidden'
+            }
           >
-            <ModalDialog className="!max-w-[712px] !p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[1000px] rounded-xl">
-              <ModalHeader className="flex-col gap-0 p-0">
-                <RecipeHeroSection
+            <ModalDialog
+              className={
+                viewLayout
+                  ? '!p-0 !w-screen !max-w-none !h-dvh !max-h-none !rounded-none lg:!w-[min(1120px,calc(100vw-3rem))] lg:!max-w-[1120px] lg:!h-[min(820px,calc(100dvh-2rem))] lg:!rounded-[20px]'
+                  : '!max-w-[712px] lg:!w-[min(1180px,calc(100vw-3rem))] lg:!max-w-[1180px] !p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[1000px] rounded-xl'
+              }
+            >
+              {viewLayout ? (
+                <ModalBody className="!p-0 !overflow-hidden min-h-0 flex-1">
+                  {viewContent}
+                </ModalBody>
+              ) : (
+                <RecipeClassicLayout
                   recipe={r}
                   draft={draft}
                   mode={mode}
-                  onTitleChange={(v) =>
-                    setDraft((d) => (d ? { ...d, title: v } : d))
-                  }
-                  localTags={localTags}
-                  allTags={allTags}
-                  onTagAdd={handleTagAdd}
-                  onTagRemove={handleTagRemove}
-                  onTagCreate={handleTagCreate}
+                  error={error}
+                  renderHero={renderHero}
+                  footer={footer}
                   fileInputRef={fileInputRef}
                   onThumbnailFile={handleThumbnailFile}
-                  imgUploading={imgUploading}
-                  addMode={addMode}
-                  onToggleAddMode={() => setAddMode((v) => !v)}
-                  onOpenMealPlan={() => setMealPlanOpen(true)}
-                  onToggleFavourite={handleToggleFavourite}
-                  onEdit={() => setMode('editing')}
-                />
-              </ModalHeader>
-
-              <ModalBody className="!px-0 !pb-5 !pt-0">
-                <RecipeMetaBar
-                  recipe={r}
-                  draft={draft}
-                  mode={mode}
-                  onNutritionChange={(field, value) =>
-                    setDraft((d) => d && { ...d, [field]: value })
-                  }
+                  onNutritionChange={setField}
                   wakeLockActive={wakeLock.active}
                   onToggleWakeLock={wakeLock.toggle}
                   fontSizeIndex={fontSizeIndex}
@@ -519,128 +442,27 @@ const RecipeDetailModal = ({
                   selectedServings={selectedServings}
                   onDecreaseServings={handleDecreaseServings}
                   onIncreaseServings={handleIncreaseServings}
-                  onOpenCookMode={onOpenCookMode ?? (() => {})}
-                />
-
-                <div className="px-10">
-                  <RecipeIssueBanner
-                    key={r.id}
-                    issueCodes={r.issue_codes ?? []}
-                    sourceUrl={r.source_url}
-                    onDismiss={(issueCode) =>
-                      dismissIssue
-                        .mutateAsync({ id: r.id, issueCode })
-                        .then(() => undefined)
-                    }
-                  />
-                  {r.allergen_status === 'uncertain' && (
-                    <p className="mb-3 rounded-lg bg-warning/10 p-3 text-sm text-zinc-600">
-                      {t('recipes.allergensUncertain')}
-                    </p>
-                  )}
-                  {error && (
-                    <div className="bg-danger-50 text-danger rounded-lg p-3 text-sm mb-3">
-                      {error}
-                    </div>
-                  )}
-
-                  <RelatedRecipesSection
-                    recipeId={r.id}
-                    onOpen={(id) => onOpenRecipe?.(id)}
-                  />
-
-                  <RecipeNotesSection
-                    value={localNotes}
-                    onChange={setLocalNotes}
-                    onBlur={handleNotesSave}
-                    saving={notesSaving}
+                  onOpenCookMode={openCookMode}
+                  onOpenRecipe={onOpenRecipe}
+                  notes={notes.localNotes}
+                  onNotesChange={notes.setLocalNotes}
+                  onNotesBlur={notes.handleNotesSave}
+                  notesSaving={notes.notesSaving}
+                >
+                  <RecipeComponentColumn
+                    recipe={r}
+                    components={components}
+                    mode={mode}
+                    unitSystem={unitSystem}
+                    servingScale={servingScale}
+                    activeAllergens={activeAllergens}
                     fontSizeIndex={fontSizeIndex}
+                    ingredientActions={ingredientActions}
+                    onIngredientChange={setIngredient}
+                    onStepChange={setStep}
                   />
-
-                  {mode !== 'editing' && components.length > 0 && (
-                    <UnifiedIngredientList
-                      components={components}
-                      unitSystem={preferences?.unit_system ?? 'metric'}
-                      servingScale={servingScale}
-                      activeAllergens={activeAllergens}
-                      addMode={addMode}
-                      sessionAdded={sessionAdded}
-                      checkedIngredients={checkedIngredients}
-                      onToggleIngredient={handleToggleIngredient}
-                      onReplaceIngredient={handleReplaceIngredient}
-                      onRestoreIngredient={handleRestoreIngredient}
-                      onAddIngredient={handleAddIngredient}
-                      onAddAllIngredients={handleAddAllUnifiedIngredients}
-                      fontSizeIndex={fontSizeIndex}
-                    />
-                  )}
-
-                  {mode === 'editing'
-                    ? components.map((comp, ci) => (
-                        <EditComponent
-                          key={ci}
-                          comp={comp}
-                          single={single}
-                          onIngredientChange={(ii, val) =>
-                            setIngredient(ci, ii, val)
-                          }
-                          onStepChange={(si, val) => setStep(ci, si, val)}
-                        />
-                      ))
-                    : components.map((comp, ci) => (
-                        <ViewComponent
-                          key={ci}
-                          comp={comp}
-                          unitSystem={preferences?.unit_system ?? 'metric'}
-                          single={single}
-                          activeAllergens={activeAllergens}
-                          onReplaceIngredient={(ii) =>
-                            handleReplaceIngredient(ci, ii)
-                          }
-                          onRestoreIngredient={(ii) =>
-                            handleRestoreIngredient(ci, ii)
-                          }
-                          recipeId={r.id}
-                          recipeTitle={r.title}
-                          componentIndex={ci}
-                          addMode={addMode}
-                          sessionAdded={sessionAdded}
-                          checkedIngredients={checkedIngredients}
-                          onToggleIngredient={handleToggleIngredient}
-                          onAddIngredient={(ii) => handleAddIngredient(ci, ii)}
-                          onAddAllIngredients={() =>
-                            handleAddAllIngredients(ci)
-                          }
-                          fontSizeIndex={fontSizeIndex}
-                          servingScale={servingScale}
-                          collapsible={
-                            hasMultipleIngredientGroups &&
-                            comp.ingredients.length > 0
-                          }
-                          showIngredients={hasMultipleIngredientGroups}
-                          showGroupHeader={components.length > 1}
-                        />
-                      ))}
-                </div>
-              </ModalBody>
-
-              <ModalFooter className="flex-col gap-2 items-stretch px-10 pb-5 pt-3">
-                <RecipeModalFooter
-                  recipe={r}
-                  mode={mode}
-                  busy={busy}
-                  isAuthor={!!user && r.author_id === user.id}
-                  households={households}
-                  activeHouseholdId={activeHouseholdId}
-                  onCancel={cancelMode}
-                  onCancelDelete={handleCancelDelete}
-                  onSave={handleSave}
-                  onRequestDelete={handleRequestDelete}
-                  onRemoveFromHousehold={handleRemoveFromHousehold}
-                  onDeleteEverywhere={handleDeleteEverywhere}
-                  onClose={handleClose}
-                />
-              </ModalFooter>
+                </RecipeClassicLayout>
+              )}
             </ModalDialog>
           </ModalContainer>
         </ModalBackdrop>

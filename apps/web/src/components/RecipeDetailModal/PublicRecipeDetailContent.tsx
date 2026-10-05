@@ -121,7 +121,9 @@ const PublicRecipeDetailContent = ({
       />
       <div className="mx-auto max-w-[800px] px-10 pb-5">
         <UnifiedIngredientList
+          key={`${token}-${hasMultipleIngredientGroups}`}
           components={components}
+          collapsible={hasMultipleIngredientGroups}
           unitSystem="metric"
           servingScale={scale}
           activeAllergens={[]}
@@ -138,7 +140,7 @@ const PublicRecipeDetailContent = ({
         />
         {components.map((component, index) => (
           <ViewComponent
-            key={index}
+            key={`${token}-${index}`}
             comp={component}
             unitSystem="metric"
             single={components.length === 1}

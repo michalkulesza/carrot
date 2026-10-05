@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { ChevronDown, ChevronUp } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
 import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
@@ -39,6 +40,7 @@ const UnifiedIngredientList = ({
   onAddAllIngredients,
   fontSizeIndex,
   readOnly = false,
+  collapsible = false,
 }: {
   components: SaveComponent[]
   unitSystem: string
@@ -54,14 +56,19 @@ const UnifiedIngredientList = ({
   onAddAllIngredients: () => void
   fontSizeIndex: number
   readOnly?: boolean
+  collapsible?: boolean
 }) => {
   const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(!collapsible)
   const formatIngredient = (ingredient: string) =>
     displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
       t(`units.${unit}`, {
-        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+        count:
+          ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty
+            ? getIngredientQuantityCount(qty)
+            : 1,
         defaultValue: unit,
-      }),
+      })
     )
   const ingredients = useMemo<UnifiedIngredient[]>(
     () =>
@@ -88,10 +95,22 @@ const UnifiedIngredientList = ({
   return (
     <section className="mt-8 mb-5">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-xs font-semibold uppercase text-zinc-400">
-          {t('recipes.sectionIngredients')}
-        </p>
-        {addMode && (
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={() => setExpanded((current) => !current)}
+            aria-expanded={expanded}
+            className="flex min-h-11 flex-1 items-center justify-between text-left text-sm font-semibold text-zinc-600"
+          >
+            <span>{t('recipes.allIngredients')}</span>
+            {expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        ) : (
+          <p className="text-xs font-semibold uppercase text-zinc-400">
+            {t('recipes.sectionIngredients')}
+          </p>
+        )}
+        {expanded && addMode && (
           <button
             type="button"
             onClick={onAddAllIngredients}
@@ -104,90 +123,93 @@ const UnifiedIngredientList = ({
           </button>
         )}
       </div>
-      <ul className="space-y-1">
-        {ingredients.map(
-          ({ component, componentIndex, ingredient, ingredientIndex }) => {
-            const key = `${componentIndex}-${ingredientIndex}`
-            const flag = component.ingredient_flags?.[ingredientIndex]
-            const added = sessionAdded.has(key)
-            const checked = checkedIngredients.has(key)
-            const addButtonLabel = added
-              ? t('shoppingList.addedToList')
-              : t('shoppingList.addToList')
+      {expanded && (
+        <ul className="space-y-1">
+          {ingredients.map(
+            ({ component, componentIndex, ingredient, ingredientIndex }) => {
+              const key = `${componentIndex}-${ingredientIndex}`
+              const flag = component.ingredient_flags?.[ingredientIndex]
+              const added = sessionAdded.has(key)
+              const checked = checkedIngredients.has(key)
+              const addButtonLabel = added
+                ? t('shoppingList.addedToList')
+                : t('shoppingList.addToList')
 
-            return (
-              <li
-                key={key}
-                className={`flex items-start gap-2 ${TEXT_SIZE_CLASSES[fontSizeIndex]}`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => onToggleIngredient(key)}
-                  aria-label={formatIngredient(ingredient)}
-                  className="mt-1 h-4 w-4 shrink-0 accent-primary"
-                />
-                <span
-                  className={`flex-1 transition-colors ${
-                    checked ? 'text-zinc-400 line-through' : ''
-                  }`}
+              return (
+                <li
+                  key={key}
+                  className={`flex items-start gap-2 ${TEXT_SIZE_CLASSES[fontSizeIndex]}`}
                 >
-                  {formatIngredient(ingredient)}
-                  {getMetricCupHint(
-                    component,
-                    ingredientIndex,
-                    unitSystem,
-                    servingScale,
-                    t
-                  )}
-                </span>
-                {component.ingredient_links?.[ingredientIndex] && (
-                  <a
-                    href={
-                      component.ingredient_links[ingredientIndex] ?? undefined
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className="shrink-0 text-xs font-medium text-primary underline"
-                  >
-                    {t('recipes.openLinkedRecipe')}
-                  </a>
-                )}
-                {!readOnly && flag && (
-                  <AllergenPopover
-                    flag={flag}
-                    activeAllergens={activeAllergens}
-                    onReplace={() =>
-                      onReplaceIngredient(componentIndex, ingredientIndex)
-                    }
-                    onRestore={() =>
-                      onRestoreIngredient(componentIndex, ingredientIndex)
-                    }
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => onToggleIngredient(key)}
+                    aria-label={formatIngredient(ingredient)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-primary"
                   />
-                )}
-                {addMode && (
-                  <button
-                    type="button"
-                    onClick={
-                      added
-                        ? undefined
-                        : () => onAddIngredient(componentIndex, ingredientIndex)
-                    }
-                    aria-label={addButtonLabel}
-                    className={`shrink-0 -mt-0.5 -mr-1 flex items-center justify-center w-7 h-7 rounded-full transition-colors ${
-                      added
-                        ? 'text-emerald-500 cursor-default'
-                        : 'text-primary hover:bg-primary/10 hover:text-primary-600 cursor-pointer'
+                  <span
+                    className={`flex-1 transition-colors ${
+                      checked ? 'text-zinc-400 line-through' : ''
                     }`}
                   >
-                    {added ? '✓' : '+'}
-                  </button>
-                )}
-              </li>
-            )
-          }
-        )}
-      </ul>
+                    {formatIngredient(ingredient)}
+                    {getMetricCupHint(
+                      component,
+                      ingredientIndex,
+                      unitSystem,
+                      servingScale,
+                      t
+                    )}
+                  </span>
+                  {component.ingredient_links?.[ingredientIndex] && (
+                    <a
+                      href={
+                        component.ingredient_links[ingredientIndex] ?? undefined
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="shrink-0 text-xs font-medium text-primary underline"
+                    >
+                      {t('recipes.openLinkedRecipe')}
+                    </a>
+                  )}
+                  {!readOnly && flag && (
+                    <AllergenPopover
+                      flag={flag}
+                      activeAllergens={activeAllergens}
+                      onReplace={() =>
+                        onReplaceIngredient(componentIndex, ingredientIndex)
+                      }
+                      onRestore={() =>
+                        onRestoreIngredient(componentIndex, ingredientIndex)
+                      }
+                    />
+                  )}
+                  {addMode && (
+                    <button
+                      type="button"
+                      onClick={
+                        added
+                          ? undefined
+                          : () =>
+                              onAddIngredient(componentIndex, ingredientIndex)
+                      }
+                      aria-label={addButtonLabel}
+                      className={`shrink-0 -mt-0.5 -mr-1 flex items-center justify-center w-7 h-7 rounded-full transition-colors ${
+                        added
+                          ? 'text-emerald-500 cursor-default'
+                          : 'text-primary hover:bg-primary/10 hover:text-primary-600 cursor-pointer'
+                      }`}
+                    >
+                      {added ? '✓' : '+'}
+                    </button>
+                  )}
+                </li>
+              )
+            }
+          )}
+        </ul>
+      )}
     </section>
   )
 }

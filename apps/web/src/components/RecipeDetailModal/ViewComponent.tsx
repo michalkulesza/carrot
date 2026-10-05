@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
 import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import {
+  INTERNAL_COMPONENT_NAMES,
+  TEXT_SIZE_CLASSES,
   displayIngredientWithLocalizedUnit,
   getMetricCupHint,
   getScaledIngredientValues,
@@ -34,26 +36,6 @@ interface ViewComponentProps {
   showGroupHeader?: boolean
 }
 
-const TEXT_SIZE_CLASSES = [
-  'text-sm',
-  'text-base',
-  'text-[17px]',
-  'text-xl',
-  'text-2xl',
-] as const
-
-const INTERNAL_COMPONENT_NAMES = new Set([
-  'main',
-  'ingredient_list',
-  'step_list',
-  'instruction_section',
-  'main_steps',
-  'main_dish',
-  'section',
-  'instructions',
-  'steps',
-])
-
 const ViewComponent = ({
   comp,
   unitSystem,
@@ -80,11 +62,14 @@ const ViewComponent = ({
   const formatIngredient = (ingredient: string) =>
     displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
       t(`units.${unit}`, {
-        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+        count:
+          ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty
+            ? getIngredientQuantityCount(qty)
+            : 1,
         defaultValue: unit,
-      }),
+      })
     )
-  const [ingredientsExpanded, setIngredientsExpanded] = useState(!collapsible)
+  const [ingredientsExpanded, setIngredientsExpanded] = useState(true)
   const displayName = INTERNAL_COMPONENT_NAMES.has(comp.name) ? '' : comp.name
   const ingredients = useMemo(
     () => getScaledIngredientValues(comp, unitSystem, servingScale),

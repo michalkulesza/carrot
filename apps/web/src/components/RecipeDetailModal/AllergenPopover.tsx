@@ -8,6 +8,7 @@ interface AllergenPopoverProps {
   activeAllergens: string[]
   onReplace: () => void
   onRestore: () => void
+  pill?: boolean
 }
 
 const AllergenPopover = ({
@@ -15,6 +16,7 @@ const AllergenPopover = ({
   activeAllergens,
   onReplace,
   onRestore,
+  pill = false,
 }: AllergenPopoverProps) => {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
@@ -96,14 +98,22 @@ const AllergenPopover = ({
         ref={btnRef}
         type="button"
         onClick={handleOpen}
-        className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium whitespace-nowrap ${
-          flag.substitute_applied
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-            : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
-        }`}
+        className={
+          pill
+            ? `flex items-center rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap ${flag.substitute_applied ? 'bg-emerald-50 text-emerald-700' : 'bg-[#FEF3DC] text-[#A85A0B]'}`
+            : `flex items-center gap-1 px-2 py-0.5 rounded-md border text-xs font-medium whitespace-nowrap ${
+                flag.substitute_applied
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                  : 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100'
+              }`
+        }
         title={buttonTitle}
       >
-        {flag.substitute_applied ? '✓' : `⚠ ${flag.allergen}`}
+        {flag.substitute_applied
+          ? '✓'
+          : pill
+            ? flag.allergen?.toLowerCase()
+            : `⚠ ${flag.allergen}`}
       </button>
       {open && (
         <div

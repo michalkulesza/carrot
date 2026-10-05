@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ChangeEvent, type CSSProperties, type FocusEventHandler } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type CSSProperties,
+  type FocusEventHandler,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface RecipeNotesSectionProps {
@@ -71,7 +78,9 @@ const RecipeNotesSection = ({
           onClick={() => setEditing(true)}
           className={`w-full min-h-16 text-left ${TEXT_SIZE_CLASSES[fontSizeIndex]} rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 leading-relaxed text-zinc-700 transition-colors hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30`}
         >
-          {value || <span className="text-zinc-400">{t('common.tapToAddNotes')}</span>}
+          {value || (
+            <span className="text-zinc-400">{t('common.tapToAddNotes')}</span>
+          )}
         </button>
       )}
     </div>

@@ -4,7 +4,12 @@ import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import HouseholdAvatarIndicators from '../HouseholdAvatarIndicators'
 import NutritionBoxGrid from '../NutritionBoxGrid'
-import { getHeaderBg, type EditState, type Mode } from './helpers'
+import {
+  formatCookingTime,
+  getHeaderBg,
+  type EditState,
+  type Mode,
+} from './helpers'
 import ServingStepper from './ServingStepper'
 
 type NutritionField =
@@ -40,22 +45,10 @@ interface RecipeMetaBarProps {
   readOnly?: boolean
   primaryAction?: { label: string; onClick: () => void; disabled: boolean }
   primaryActionContent?: ReactNode
+  twoColumn?: boolean
 }
 
 const TEXT_SIZES = [14, 16, 17, 20, 22] as const
-
-const formatCookingTime = (
-  minutes: number | null,
-  t: (key: string) => string
-) => {
-  if (minutes === null) return ''
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  if (hours === 0) return `${minutes} ${t('recipes.minutesShort')}`
-  if (remainingMinutes === 0) return `${hours} ${t('recipes.hoursShort')}`
-
-  return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
-}
 
 const RecipeMetaBar = ({
   recipe,
@@ -74,6 +67,7 @@ const RecipeMetaBar = ({
   readOnly = false,
   primaryAction,
   primaryActionContent,
+  twoColumn = false,
 }: RecipeMetaBarProps) => {
   const { t } = useTranslation()
   const r = recipe
@@ -172,7 +166,7 @@ const RecipeMetaBar = ({
 
   return (
     <div
-      className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} px-10 pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}
+      className={`${readOnly ? 'mx-auto max-w-[800px]' : ''} ${twoColumn ? 'px-10 lg:px-0' : 'px-10'} pt-5 pb-0 flex flex-col gap-2 ${headerBg}`}
     >
       <NutritionBoxGrid
         editing={editing}
