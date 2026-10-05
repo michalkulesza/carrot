@@ -51,7 +51,7 @@ const CategoryFilterDropdown = ({
     : 'flex-1 min-w-0 flex items-center justify-between gap-1 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
 
   return (
-    <div className="relative flex-1 min-w-0" ref={containerRef}>
+    <div className="relative flex-1 min-w-0 md:flex-none" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((isOpen) => !isOpen)}

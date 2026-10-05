@@ -1,12 +1,17 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Switch } from '@heroui/react'
 import type {
   AllergenRecheckStatus,
   UserPreferences,
 } from '@carrot/shared/types'
+import {
+  ALLERGEN_KEYS,
+  INTOLERANCE_KEYS,
+} from '@carrot/shared/utils/allergenKeys'
 import { updatePreferences } from '../../api/client'
 import AllergenSection from './AllergenSection'
+import CountPill from './CountPill'
 
 interface AllergiesSectionProps {
   remountKey: string
@@ -38,10 +43,19 @@ const AllergiesSection = ({
     [onPreferencesChange]
   )
 
+  const activeCount = useMemo(
+    () =>
+      [...ALLERGEN_KEYS, ...INTOLERANCE_KEYS].filter((key) =>
+        allergens.includes(key)
+      ).length,
+    [allergens]
+  )
+
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+      <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
         {t('settings.allergiesIntolerances')}
+        <CountPill count={activeCount} />
       </h2>
       <div className="rounded-xl border border-zinc-200 bg-white p-4 flex flex-col gap-4">
         <AllergenSection

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Disclosure, toast } from '@heroui/react'
 import {
@@ -6,6 +6,7 @@ import {
   INTOLERANCE_KEYS,
 } from '@carrot/shared/utils/allergenKeys'
 import CheckboxGroup from './CheckboxGroup'
+import CountPill from './CountPill'
 
 const AUTO_SAVE_DELAY_MS = 500
 
@@ -79,6 +80,15 @@ const AllergenSection = ({
     }
   }, [editRevision, predefined])
 
+  const allergenCount = useMemo(
+    () => ALLERGEN_KEYS.filter((key) => predefined.includes(key)).length,
+    [predefined]
+  )
+  const intoleranceCount = useMemo(
+    () => INTOLERANCE_KEYS.filter((key) => predefined.includes(key)).length,
+    [predefined]
+  )
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-xs text-zinc-400">{scopeLabel}</p>
@@ -87,7 +97,10 @@ const AllergenSection = ({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              {t('settings.allergens')}
+              <span className="flex items-center gap-2">
+                {t('settings.allergens')}
+                <CountPill count={allergenCount} />
+              </span>
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
@@ -106,7 +119,10 @@ const AllergenSection = ({
         <Disclosure>
           <Disclosure.Heading>
             <Disclosure.Trigger className="w-full flex items-center justify-between py-2 text-sm font-medium text-zinc-700">
-              {t('settings.intolerances')}
+              <span className="flex items-center gap-2">
+                {t('settings.intolerances')}
+                <CountPill count={intoleranceCount} />
+              </span>
               <Disclosure.Indicator />
             </Disclosure.Trigger>
           </Disclosure.Heading>
