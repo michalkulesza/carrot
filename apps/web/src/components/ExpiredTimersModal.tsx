@@ -2,8 +2,6 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalBody,
   ModalContainer,
   ModalDialog,
@@ -16,6 +14,7 @@ import {
   type TimerEntry,
 } from '../context/TimerContext'
 import { useRouteNavigation } from '../routing/RouteNavigationContext'
+import Modal from './AnimatedModal'
 
 interface ExpiredTimerItemProps {
   timer: TimerEntry
@@ -85,37 +84,33 @@ const ExpiredTimersModal = () => {
     [dismissExpired, openRecipe]
   )
 
-  if (expiredQueue.length === 0) return null
-
   return (
-    <Modal isOpen onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer
-          size="sm"
-          scroll="inside"
-          className="!rounded-xl overflow-hidden"
-        >
-          <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[600px]">
-            <ModalHeader>
-              {t('timers.timerDone', { count: expiredQueue.length })}
-            </ModalHeader>
-            <ModalBody className="flex flex-col gap-3">
-              {expiredQueue.map((timer) => (
-                <ExpiredTimerItem
-                  key={timer.id}
-                  timer={timer}
-                  onGoToStep={goToStep}
-                />
-              ))}
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="primary" onPress={dismissExpired}>
-                {t('common.ok')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+    <Modal isOpen={expiredQueue.length > 0} onOpenChange={handleOpenChange}>
+      <ModalContainer
+        size="sm"
+        scroll="inside"
+        className="!rounded-xl overflow-hidden"
+      >
+        <ModalDialog className="max-h-[calc(100dvh-2rem)] sm:max-h-[600px]">
+          <ModalHeader>
+            {t('timers.timerDone', { count: expiredQueue.length })}
+          </ModalHeader>
+          <ModalBody className="flex flex-col gap-3">
+            {expiredQueue.map((timer) => (
+              <ExpiredTimerItem
+                key={timer.id}
+                timer={timer}
+                onGoToStep={goToStep}
+              />
+            ))}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="primary" onPress={dismissExpired}>
+              {t('common.ok')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

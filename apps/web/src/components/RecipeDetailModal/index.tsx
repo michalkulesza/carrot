@@ -4,14 +4,7 @@ import {
   usePreferences,
   useRecipeServingPreference,
 } from '@carrot/shared/hooks/usePreferences'
-import {
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalContainer,
-  ModalDialog,
-  toast,
-} from '@heroui/react'
+import { ModalBody, ModalContainer, ModalDialog, toast } from '@heroui/react'
 import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
 import {
   toggleFavourite,
@@ -44,8 +37,10 @@ import RecipeHeroSection from './RecipeHeroSection'
 import RecipeModalFooter from './RecipeModalFooter'
 import RecipeNotices from './RecipeNotices'
 import RecipeViewLayout from './RecipeViewLayout'
+import Modal from '../AnimatedModal'
 
 interface RecipeDetailModalProps {
+  isExiting?: boolean
   recipe: RecipeOut | null
   allTags: Tag[]
   onClose: () => void
@@ -61,6 +56,7 @@ interface RecipeDetailModalProps {
 }
 
 const RecipeDetailModal = ({
+  isExiting = false,
   recipe,
   allTags,
   onClose,
@@ -291,8 +287,7 @@ const RecipeDetailModal = ({
   }
 
   const handleClose = () => {
-    setMode('view')
-    setError(null)
+    if (isExiting) return
     onClose()
   }
 
@@ -402,70 +397,68 @@ const RecipeDetailModal = ({
   return (
     <>
       <Modal isOpen={!!recipe} onOpenChange={handleModalOpenChange}>
-        <ModalBackdrop isDismissable>
-          <ModalContainer
-            size="lg"
-            scroll="inside"
+        <ModalContainer
+          size="lg"
+          scroll="inside"
+          className={
+            viewLayout
+              ? '!rounded-none lg:!rounded-[20px] overflow-hidden'
+              : '!rounded-xl overflow-hidden'
+          }
+        >
+          <ModalDialog
             className={
               viewLayout
-                ? '!rounded-none lg:!rounded-[20px] overflow-hidden'
-                : '!rounded-xl overflow-hidden'
+                ? '!p-0 !w-screen !max-w-none !h-dvh !max-h-none !rounded-none lg:!w-[min(1120px,calc(100vw-3rem))] lg:!max-w-[1120px] lg:!h-[min(820px,calc(100dvh-2rem))] lg:!rounded-[20px]'
+                : '!max-w-[712px] lg:!w-[min(1180px,calc(100vw-3rem))] lg:!max-w-[1180px] !p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[1000px] rounded-xl'
             }
           >
-            <ModalDialog
-              className={
-                viewLayout
-                  ? '!p-0 !w-screen !max-w-none !h-dvh !max-h-none !rounded-none lg:!w-[min(1120px,calc(100vw-3rem))] lg:!max-w-[1120px] lg:!h-[min(820px,calc(100dvh-2rem))] lg:!rounded-[20px]'
-                  : '!max-w-[712px] lg:!w-[min(1180px,calc(100vw-3rem))] lg:!max-w-[1180px] !p-0 max-h-[calc(100dvh-2rem)] sm:max-h-[1000px] rounded-xl'
-              }
-            >
-              {viewLayout ? (
-                <ModalBody className="!p-0 !overflow-hidden min-h-0 flex-1">
-                  {viewContent}
-                </ModalBody>
-              ) : (
-                <RecipeClassicLayout
+            {viewLayout ? (
+              <ModalBody className="!p-0 !overflow-hidden min-h-0 flex-1">
+                {viewContent}
+              </ModalBody>
+            ) : (
+              <RecipeClassicLayout
+                recipe={r}
+                draft={draft}
+                mode={mode}
+                error={error}
+                renderHero={renderHero}
+                footer={footer}
+                fileInputRef={fileInputRef}
+                onThumbnailFile={handleThumbnailFile}
+                onNutritionChange={setField}
+                wakeLockActive={wakeLock.active}
+                onToggleWakeLock={wakeLock.toggle}
+                fontSizeIndex={fontSizeIndex}
+                onFontSizeChange={setFontSizeIndex}
+                onCancelMode={cancelMode}
+                selectedServings={selectedServings}
+                onDecreaseServings={handleDecreaseServings}
+                onIncreaseServings={handleIncreaseServings}
+                onOpenCookMode={openCookMode}
+                onOpenRecipe={onOpenRecipe}
+                notes={notes.localNotes}
+                onNotesChange={notes.setLocalNotes}
+                onNotesBlur={notes.handleNotesSave}
+                notesSaving={notes.notesSaving}
+              >
+                <RecipeComponentColumn
                   recipe={r}
-                  draft={draft}
+                  components={components}
                   mode={mode}
-                  error={error}
-                  renderHero={renderHero}
-                  footer={footer}
-                  fileInputRef={fileInputRef}
-                  onThumbnailFile={handleThumbnailFile}
-                  onNutritionChange={setField}
-                  wakeLockActive={wakeLock.active}
-                  onToggleWakeLock={wakeLock.toggle}
+                  unitSystem={unitSystem}
+                  servingScale={servingScale}
+                  activeAllergens={activeAllergens}
                   fontSizeIndex={fontSizeIndex}
-                  onFontSizeChange={setFontSizeIndex}
-                  onCancelMode={cancelMode}
-                  selectedServings={selectedServings}
-                  onDecreaseServings={handleDecreaseServings}
-                  onIncreaseServings={handleIncreaseServings}
-                  onOpenCookMode={openCookMode}
-                  onOpenRecipe={onOpenRecipe}
-                  notes={notes.localNotes}
-                  onNotesChange={notes.setLocalNotes}
-                  onNotesBlur={notes.handleNotesSave}
-                  notesSaving={notes.notesSaving}
-                >
-                  <RecipeComponentColumn
-                    recipe={r}
-                    components={components}
-                    mode={mode}
-                    unitSystem={unitSystem}
-                    servingScale={servingScale}
-                    activeAllergens={activeAllergens}
-                    fontSizeIndex={fontSizeIndex}
-                    ingredientActions={ingredientActions}
-                    onIngredientChange={setIngredient}
-                    onStepChange={setStep}
-                  />
-                </RecipeClassicLayout>
-              )}
-            </ModalDialog>
-          </ModalContainer>
-        </ModalBackdrop>
+                  ingredientActions={ingredientActions}
+                  onIngredientChange={setIngredient}
+                  onStepChange={setStep}
+                />
+              </RecipeClassicLayout>
+            )}
+          </ModalDialog>
+        </ModalContainer>
       </Modal>
       <AssignToMealPlanModal
         isOpen={mealPlanOpen}

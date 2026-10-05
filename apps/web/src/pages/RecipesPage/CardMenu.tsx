@@ -1,5 +1,7 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import PopupSurface from '../../components/PopupSurface'
 
 interface CardMenuProps {
   onView: () => void
@@ -66,28 +68,30 @@ const CardMenu = ({ onView, onEdit, onDelete }: CardMenuProps) => {
       >
         ⋯
       </button>
-      {open && (
-        <div className="absolute right-0 top-9 z-50 w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1 overflow-hidden">
-          <button
-            className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={handleView}
-          >
-            {t('common.view')}
-          </button>
-          <button
-            className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors"
-            onClick={handleEdit}
-          >
-            {t('common.edit')}
-          </button>
-          <button
-            className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger-50 transition-colors"
-            onClick={handleDelete}
-          >
-            {t('common.delete')}
-          </button>
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <PopupSurface className="absolute right-0 top-9 z-50 w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1 overflow-hidden">
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors"
+              onClick={handleView}
+            >
+              {t('common.view')}
+            </button>
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-zinc-50 transition-colors"
+              onClick={handleEdit}
+            >
+              {t('common.edit')}
+            </button>
+            <button
+              className="w-full text-left px-4 py-2.5 text-sm text-danger hover:bg-danger-50 transition-colors"
+              onClick={handleDelete}
+            >
+              {t('common.delete')}
+            </button>
+          </PopupSurface>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

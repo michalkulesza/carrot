@@ -3,6 +3,7 @@ import IngredientChecklist, {
   type IngredientChecklistProps,
 } from './IngredientChecklist'
 import PopupStepper from './PopupStepper'
+import PopupSurface from '../PopupSurface'
 
 interface RecipeIngredientsSheetProps extends IngredientChecklistProps {
   servings: number | null
@@ -27,14 +28,19 @@ const RecipeIngredientsSheet = ({
   const { t } = useTranslation()
 
   return (
-    <div className="absolute inset-0 z-30">
+    <PopupSurface
+      className="absolute inset-0 z-30"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
       <button
         type="button"
         aria-label={t('common.close')}
         onClick={onClose}
         className="absolute inset-0 bg-[rgba(20,16,24,0.45)]"
       />
-      <div
+      <PopupSurface
         role="dialog"
         aria-label={t('recipes.sectionIngredients')}
         className="absolute inset-x-0 bottom-0 flex max-h-[78%] flex-col rounded-t-3xl bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.18)]"
@@ -88,8 +94,8 @@ const RecipeIngredientsSheet = ({
             {t('shoppingList.addToList')}
           </button>
         </div>
-      </div>
-    </div>
+      </PopupSurface>
+    </PopupSurface>
   )
 }
 

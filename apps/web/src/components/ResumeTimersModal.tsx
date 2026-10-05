@@ -2,8 +2,6 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalBody,
   ModalContainer,
   ModalDialog,
@@ -15,6 +13,7 @@ import {
   formatCountdown,
   type TimerEntry,
 } from '../context/TimerContext'
+import Modal from './AnimatedModal'
 
 interface InterruptedTimersListProps {
   timers: TimerEntry[]
@@ -79,33 +78,32 @@ const ResumeTimersModal = () => {
     [confirmResume]
   )
 
-  if (!resumeInfo) return null
-
-  const { interrupted, expired } = resumeInfo
+  const { interrupted, expired } = resumeInfo ?? {
+    interrupted: [],
+    expired: [],
+  }
 
   return (
-    <Modal isOpen onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader>{t('timers.running')}</ModalHeader>
-            <ModalBody className="flex flex-col gap-4">
-              {interrupted.length > 0 && (
-                <InterruptedTimersList timers={interrupted} />
-              )}
-              {expired.length > 0 && <ExpiredTimersList timers={expired} />}
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="tertiary" onPress={confirmClear}>
-                {t('common.clearAll')}
-              </Button>
-              <Button variant="primary" onPress={confirmResume}>
-                {t('common.ok')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+    <Modal isOpen={!!resumeInfo} onOpenChange={handleOpenChange}>
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader>{t('timers.running')}</ModalHeader>
+          <ModalBody className="flex flex-col gap-4">
+            {interrupted.length > 0 && (
+              <InterruptedTimersList timers={interrupted} />
+            )}
+            {expired.length > 0 && <ExpiredTimersList timers={expired} />}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="tertiary" onPress={confirmClear}>
+              {t('common.clearAll')}
+            </Button>
+            <Button variant="primary" onPress={confirmResume}>
+              {t('common.ok')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

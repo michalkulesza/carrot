@@ -1,6 +1,4 @@
 import {
-  Modal,
-  ModalBackdrop,
   ModalContainer,
   ModalDialog,
   ModalHeader,
@@ -10,6 +8,7 @@ import {
 } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
+import Modal from '../../components/AnimatedModal'
 
 interface DeleteRecipeModalProps {
   deleteTarget: RecipeOut | null
@@ -32,36 +31,26 @@ const DeleteRecipeModal = ({
 
   return (
     <Modal isOpen={!!deleteTarget} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl">
-          <ModalDialog>
-            <ModalHeader className="text-base font-semibold">
-              {t('recipes.deleteTitle')}
-            </ModalHeader>
-            <ModalBody>
-              <p className="text-sm text-zinc-600">
-                {t('recipes.deleteConfirm', { title: deleteTarget?.title })}
-              </p>
-            </ModalBody>
-            <ModalFooter className="flex justify-end gap-2">
-              <Button
-                variant="tertiary"
-                onPress={onCancel}
-                isDisabled={deleting}
-              >
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="danger"
-                onPress={onConfirm}
-                isDisabled={deleting}
-              >
-                {deleting ? t('common.deleting') : t('common.delete')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+      <ModalContainer size="sm" className="!rounded-xl">
+        <ModalDialog>
+          <ModalHeader className="text-base font-semibold">
+            {t('recipes.deleteTitle')}
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-sm text-zinc-600">
+              {t('recipes.deleteConfirm', { title: deleteTarget?.title })}
+            </p>
+          </ModalBody>
+          <ModalFooter className="flex justify-end gap-2">
+            <Button variant="tertiary" onPress={onCancel} isDisabled={deleting}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onPress={onConfirm} isDisabled={deleting}>
+              {deleting ? t('common.deleting') : t('common.delete')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

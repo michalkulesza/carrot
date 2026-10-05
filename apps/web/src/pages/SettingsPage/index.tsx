@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
@@ -136,6 +137,7 @@ const SettingsPage = ({
           void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
         })
       allergenSaveQueueRef.current = save
+
       return save
     },
     [activeHousehold, refetchHouseholds, onPreferencesChange, qc]
@@ -276,14 +278,17 @@ const SettingsPage = ({
         onCreated={refetchHouseholds}
       />
 
-      {managingHousehold && (
-        <ManageHouseholdModal
-          household={managingHousehold}
-          isOpen={!!managingHousehold}
-          onClose={handleManagingHouseholdClose}
-          onChanged={refetchHouseholds}
-        />
-      )}
+      <AnimatePresence>
+        {managingHousehold && (
+          <ManageHouseholdModal
+            key="manage-household"
+            household={managingHousehold}
+            isOpen={!!managingHousehold}
+            onClose={handleManagingHouseholdClose}
+            onChanged={refetchHouseholds}
+          />
+        )}
+      </AnimatePresence>
 
       <LogoutConfirmModal
         isOpen={logoutConfirmOpen}

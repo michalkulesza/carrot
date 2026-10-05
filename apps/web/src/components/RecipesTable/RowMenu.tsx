@@ -1,6 +1,8 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import PopupSurface from '../PopupSurface'
 
 interface RowMenuProps {
   onView: () => void
@@ -72,35 +74,38 @@ const RowMenu = ({ onView, onEdit, onDelete }: RowMenuProps) => {
       >
         ⋯
       </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={menuStyle}
-            className="w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-              onClick={handleViewClick}
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <PopupSurface
+              ref={menuRef}
+              style={menuStyle}
+              className="w-36 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
+              onClick={(e) => e.stopPropagation()}
             >
-              {t('common.view')}
-            </button>
-            <button
-              className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
-              onClick={handleEditClick}
-            >
-              {t('common.edit')}
-            </button>
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
-              onClick={handleDeleteClick}
-            >
-              {t('common.delete')}
-            </button>
-          </div>,
-          document.body
-        )}
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
+                onClick={handleViewClick}
+              >
+                {t('common.view')}
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors"
+                onClick={handleEditClick}
+              >
+                {t('common.edit')}
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors"
+                onClick={handleDeleteClick}
+              >
+                {t('common.delete')}
+              </button>
+            </PopupSurface>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }

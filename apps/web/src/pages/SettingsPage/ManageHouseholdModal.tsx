@@ -2,8 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalBody,
   ModalContainer,
   ModalDialog,
@@ -22,6 +20,7 @@ import {
 } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import { buildColorSwatchStyle, PRESET_COLORS } from './helpers'
+import Modal from '../../components/AnimatedModal'
 
 interface ManageHouseholdModalProps {
   household: HouseholdOut
@@ -107,9 +106,12 @@ const ManageHouseholdModal = ({
 }: ManageHouseholdModalProps) => {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const { members, isLoading: membersLoading, remove, promote } = useMembers(
-    isOpen ? household.id : null
-  )
+  const {
+    members,
+    isLoading: membersLoading,
+    remove,
+    promote,
+  } = useMembers(isOpen ? household.id : null)
   const [name, setName] = useState(household.name)
   const [color, setColor] = useState(household.color)
   const [inviteCode, setInviteCode] = useState(household.invite_code)
@@ -240,154 +242,152 @@ const ManageHouseholdModal = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader>{t('settings.manageHousehold')}</ModalHeader>
-            <ModalBody className="flex flex-col gap-5">
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t('settings.nameLabel')}
-                </p>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader>{t('settings.manageHousehold')}</ModalHeader>
+          <ModalBody className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                {t('settings.nameLabel')}
+              </p>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
 
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t('settings.colorLabel')}
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
-                      style={buildColorSwatchStyle(c, color)}
-                      onClick={() => setColor(c)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <Button
-                size="sm"
-                variant="secondary"
-                onPress={handleSave}
-                isDisabled={saving}
-              >
-                {t('settings.saveChanges')}
-              </Button>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t('settings.inviteCode')}
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-lg tracking-widest px-3 py-1.5 rounded-lg bg-zinc-100 flex-1 text-center">
-                    {inviteCode}
-                  </span>
-                  <Button size="sm" variant="secondary" onPress={handleCopyCode}>
-                    <Copy size={14} />
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      isDisabled={rotating}
-                      onPress={handleRotateCode}
-                    >
-                      <RefreshCw size={14} />
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t('settings.members')}
-                </p>
-                <MembersList
-                  loading={membersLoading}
-                  members={members}
-                  isAdmin={isAdmin}
-                  currentUserId={user?.id}
-                  busyUserId={busyUserId}
-                  onRemove={handleRemoveMember}
-                  onPromote={handlePromoteMember}
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                  {t('settings.inviteByEmail')}
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    placeholder={t('settings.inviteEmailPlaceholder')}
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                {t('settings.colorLabel')}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="w-7 h-7 rounded-full border-2 transition-transform hover:scale-110"
+                    style={buildColorSwatchStyle(c, color)}
+                    onClick={() => setColor(c)}
                   />
+                ))}
+              </div>
+            </div>
+
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={handleSave}
+              isDisabled={saving}
+            >
+              {t('settings.saveChanges')}
+            </Button>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                {t('settings.inviteCode')}
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-lg tracking-widest px-3 py-1.5 rounded-lg bg-zinc-100 flex-1 text-center">
+                  {inviteCode}
+                </span>
+                <Button size="sm" variant="secondary" onPress={handleCopyCode}>
+                  <Copy size={14} />
+                </Button>
+                {isAdmin && (
                   <Button
                     size="sm"
                     variant="secondary"
-                    isDisabled={inviting}
-                    onPress={handleInvite}
+                    isDisabled={rotating}
+                    onPress={handleRotateCode}
                   >
-                    {t('common.invite')}
+                    <RefreshCw size={14} />
                   </Button>
-                </div>
+                )}
               </div>
+            </div>
 
-              {error && <p className="text-sm text-danger">{error}</p>}
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                {t('settings.members')}
+              </p>
+              <MembersList
+                loading={membersLoading}
+                members={members}
+                isAdmin={isAdmin}
+                currentUserId={user?.id}
+                busyUserId={busyUserId}
+                onRemove={handleRemoveMember}
+                onPromote={handlePromoteMember}
+              />
+            </div>
 
-              <div className="border-t border-zinc-200 pt-3">
-                {!confirmLeave ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                {t('settings.inviteByEmail')}
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder={t('settings.inviteEmailPlaceholder')}
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="flex-1 px-3 py-1.5 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  isDisabled={inviting}
+                  onPress={handleInvite}
+                >
+                  {t('common.invite')}
+                </Button>
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-danger">{error}</p>}
+
+            <div className="border-t border-zinc-200 pt-3">
+              {!confirmLeave ? (
+                <Button
+                  size="sm"
+                  variant="danger-soft"
+                  onPress={() => setConfirmLeave(true)}
+                >
+                  {t('settings.leaveHousehold')}
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-danger font-medium">
+                    {t('settings.areYouSure')}
+                  </span>
                   <Button
                     size="sm"
-                    variant="danger-soft"
-                    onPress={() => setConfirmLeave(true)}
+                    variant="danger"
+                    isDisabled={leaving}
+                    onPress={handleLeave}
                   >
                     {t('settings.leaveHousehold')}
                   </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-danger font-medium">
-                      {t('settings.areYouSure')}
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      isDisabled={leaving}
-                      onPress={handleLeave}
-                    >
-                      {t('settings.leaveHousehold')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      onPress={() => setConfirmLeave(false)}
-                    >
-                      {t('common.cancel')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>
-                {t('common.close')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    onPress={() => setConfirmLeave(false)}
+                  >
+                    {t('common.cancel')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="tertiary" onPress={onClose}>
+              {t('common.close')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

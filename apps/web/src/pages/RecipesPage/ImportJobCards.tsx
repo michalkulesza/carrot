@@ -3,8 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { ChevronRight } from 'react-feather'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalBody,
   ModalContainer,
   ModalDialog,
@@ -13,6 +11,7 @@ import {
 } from '@heroui/react'
 import { useApiClient } from '@carrot/shared/api/context'
 import type { ImportJob } from '@carrot/shared/types'
+import Modal from '../../components/AnimatedModal'
 
 const ImportJobCards = ({
   jobs,
@@ -44,8 +43,6 @@ const ImportJobCards = ({
       setActionJobId(null)
     }
   }
-
-  if (!jobs.length) return null
 
   return (
     <>
@@ -154,43 +151,41 @@ const ImportJobCards = ({
         })}
       </div>
       <Modal
-        isOpen={manualActionJob !== null}
+        isOpen={manualActionJob !== null && jobs.length > 0}
         onOpenChange={(open) => !open && setManualActionJob(null)}
       >
-        <ModalBackdrop isDismissable>
-          <ModalContainer size="sm">
-            <ModalDialog>
-              <ModalHeader>
-                {t('importJobs.userActionRequired.title')}
-              </ModalHeader>
-              <ModalBody>{t('importJobs.userActionRequired.body')}</ModalBody>
-              <ModalFooter>
-                <Button
-                  variant="tertiary"
-                  onPress={() => {
-                    if (manualActionJob)
-                      void runAction(manualActionJob.id, () =>
-                        onDismiss(manualActionJob.id)
-                      )
-                    setManualActionJob(null)
-                  }}
-                >
-                  {t('importJobs.dismiss')}
-                </Button>
-                <Button
-                  variant="primary"
-                  onPress={() => {
-                    if (manualActionJob)
-                      onContinueManually(manualActionJob.source_url)
-                    setManualActionJob(null)
-                  }}
-                >
-                  {t('importJobs.userActionRequired.continue')}
-                </Button>
-              </ModalFooter>
-            </ModalDialog>
-          </ModalContainer>
-        </ModalBackdrop>
+        <ModalContainer size="sm">
+          <ModalDialog>
+            <ModalHeader>
+              {t('importJobs.userActionRequired.title')}
+            </ModalHeader>
+            <ModalBody>{t('importJobs.userActionRequired.body')}</ModalBody>
+            <ModalFooter>
+              <Button
+                variant="tertiary"
+                onPress={() => {
+                  if (manualActionJob)
+                    void runAction(manualActionJob.id, () =>
+                      onDismiss(manualActionJob.id)
+                    )
+                  setManualActionJob(null)
+                }}
+              >
+                {t('importJobs.dismiss')}
+              </Button>
+              <Button
+                variant="primary"
+                onPress={() => {
+                  if (manualActionJob)
+                    onContinueManually(manualActionJob.source_url)
+                  setManualActionJob(null)
+                }}
+              >
+                {t('importJobs.userActionRequired.continue')}
+              </Button>
+            </ModalFooter>
+          </ModalDialog>
+        </ModalContainer>
       </Modal>
     </>
   )

@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useRef } from 'react'
 import { Plus } from 'react-feather'
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+import { AnimatePresence, useIsPresent } from 'framer-motion'
+import {
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+  type Location,
+} from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from '@heroui/react'
+import { ModalContainer, ModalDialog, toast } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n'
 import BottomNav from './BottomNav'
@@ -52,6 +59,7 @@ import {
 } from '../routing/routeState'
 import { getActiveAllergens } from '../pages/RecipesPage/helpers'
 import { getAllergenRecheckStatus } from '../api/client'
+import Modal from './AnimatedModal'
 
 const AddRecipeFab = ({ onAddRecipe }: { onAddRecipe: () => void }) => {
   const { t } = useTranslation()
@@ -71,8 +79,10 @@ const AddRecipeFab = ({ onAddRecipe }: { onAddRecipe: () => void }) => {
 
 const PublicRecipeOverlay = ({
   onAdded,
+  location,
 }: {
   onAdded: (recipe: RecipeOut) => Promise<void>
+  location: Location
 }) => {
   const { households, activeHouseholdId } = useHousehold()
   const navigate = useNavigate()
@@ -82,6 +92,7 @@ const PublicRecipeOverlay = ({
 
   return (
     <PublicRecipePage
+      token={location.pathname.split('/')[2]}
       signedIn
       households={households}
       activeHouseholdId={activeHouseholdId}
@@ -92,6 +103,7 @@ const PublicRecipeOverlay = ({
 }
 
 interface RecipeRouteOverlayProps {
+  location: Location
   allTags: import('@carrot/shared/types').Tag[]
   recipes: RecipeOut[]
   onUpdated: (recipe: RecipeOut) => void
@@ -99,12 +111,13 @@ interface RecipeRouteOverlayProps {
 }
 
 const RecipeRouteOverlay = ({
+  location,
   allTags,
   recipes,
   onUpdated,
   onDeleted,
 }: RecipeRouteOverlayProps) => {
-  const location = useLocation()
+  const isPresent = useIsPresent()
   const navigate = useNavigate()
   const { activeHouseholdId, activeHousehold } = useHousehold()
   const { preferences } = usePreferences()
@@ -125,7 +138,7 @@ const RecipeRouteOverlay = ({
   const activeAllergens = getActiveAllergens(activeHousehold, preferences)
 
   useEffect(() => {
-    if (location.hash && location.hash !== '#cook')
+    if (isPresent && location.hash && location.hash !== '#cook')
       navigate(`${location.pathname}${location.search}`, {
         replace: true,
         state: location.state,
@@ -136,9 +149,10 @@ const RecipeRouteOverlay = ({
     location.search,
     location.state,
     navigate,
+    isPresent,
   ])
   useEffect(() => {
-    if (!step || !recipe) return
+    if (!isPresent || !step || !recipe) return
     const params = new URLSearchParams(location.search)
     params.delete('step')
     const query = params.toString()
@@ -154,6 +168,7 @@ const RecipeRouteOverlay = ({
     navigate,
     recipe,
     step,
+    isPresent,
   ])
 
   if (!validId)
@@ -172,6 +187,7 @@ const RecipeRouteOverlay = ({
 
   return (
     <RecipeDetailModal
+      isExiting={!isPresent}
       recipe={recipe}
       allTags={allTags}
       onClose={() => closeOverlay()}
@@ -203,30 +219,37 @@ const RouteMessage = ({
   const { t } = useTranslation()
 
   return (
-    <div
-      role="dialog"
-      aria-live="polite"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 p-4"
+    <Modal
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) onClose?.()
+      }}
     >
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl">
-        <h2 className="text-lg font-semibold">{t(title)}</h2>
-        <div className="mt-5 flex justify-center gap-3">
-          {retry && (
-            <button
-              className="rounded-lg bg-primary px-4 py-2 text-white"
-              onClick={retry}
-            >
-              {t('common.tryAgain')}
-            </button>
-          )}
-          {onClose && (
-            <button className="rounded-lg border px-4 py-2" onClick={onClose}>
-              {t('common.close')}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+      <ModalContainer size="sm">
+        <ModalDialog
+          aria-label={t(title)}
+          aria-live="polite"
+          className="w-full max-w-sm rounded-xl bg-white p-6 text-center shadow-xl"
+        >
+          <h2 className="text-lg font-semibold">{t(title)}</h2>
+          <div className="mt-5 flex justify-center gap-3">
+            {retry && (
+              <button
+                className="rounded-lg bg-primary px-4 py-2 text-white"
+                onClick={retry}
+              >
+                {t('common.tryAgain')}
+              </button>
+            )}
+            {onClose && (
+              <button className="rounded-lg border px-4 py-2" onClick={onClose}>
+                {t('common.close')}
+              </button>
+            )}
+          </div>
+        </ModalDialog>
+      </ModalContainer>
+    </Modal>
   )
 }
 
@@ -380,7 +403,6 @@ const RoutedAppShell = ({
                     onContinueImportManually={onContinueImportManually}
                     onAddRecipe={() => openAddRecipe()}
                   />
-                  <PublicRecipeOverlay onAdded={onPublicRecipeAdded} />
                 </>
               ) : (
                 <Routes location={displayLocation}>
@@ -431,14 +453,25 @@ const RoutedAppShell = ({
       </div>
       <BottomNav onAddRecipe={() => openAddRecipe()} />
       <AddRecipeFab onAddRecipe={() => openAddRecipe()} />
-      {isRecipeRoute && (
-        <RecipeRouteOverlay
-          allTags={allTags}
-          recipes={recipes}
-          onUpdated={onRecipeUpdated}
-          onDeleted={onRecipeDeleted}
-        />
-      )}
+      <AnimatePresence>
+        {location.pathname.startsWith('/r/') && (
+          <PublicRecipeOverlay
+            key="public-recipe-overlay"
+            location={location}
+            onAdded={onPublicRecipeAdded}
+          />
+        )}
+        {isRecipeRoute && (
+          <RecipeRouteOverlay
+            key="recipe-overlay"
+            location={location}
+            allTags={allTags}
+            recipes={recipes}
+            onUpdated={onRecipeUpdated}
+            onDeleted={onRecipeDeleted}
+          />
+        )}
+      </AnimatePresence>
       <AddRecipeModal
         isOpen={isAddRoute}
         initialImportMode={importMode}

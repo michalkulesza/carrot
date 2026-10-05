@@ -1,6 +1,8 @@
+import { AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
 import { Globe } from 'react-feather'
 import { useTranslation } from 'react-i18next'
+import PopupSurface from './PopupSurface'
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -46,20 +48,22 @@ const LanguageSwitcher = () => {
       >
         <Globe size={18} />
       </button>
-      {open && (
-        <div className="absolute right-0 mt-1 w-36 rounded-xl bg-white border border-zinc-200 shadow-lg overflow-hidden">
-          {LANGUAGES.map(({ code, label }) => (
-            <button
-              key={code}
-              type="button"
-              onClick={() => select(code)}
-              className={getLanguageOptionClassName(i18n.language === code)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <PopupSurface className="absolute right-0 mt-1 w-36 rounded-xl bg-white border border-zinc-200 shadow-lg overflow-hidden">
+            {LANGUAGES.map(({ code, label }) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => select(code)}
+                className={getLanguageOptionClassName(i18n.language === code)}
+              >
+                {label}
+              </button>
+            ))}
+          </PopupSurface>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

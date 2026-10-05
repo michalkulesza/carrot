@@ -2,8 +2,6 @@ import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalBody,
   ModalContainer,
   ModalDialog,
@@ -14,6 +12,7 @@ import {
 import { createHousehold } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import { buildColorSwatchStyle, PRESET_COLORS } from './helpers'
+import Modal from '../../components/AnimatedModal'
 
 const MIN_NAME_LENGTH = 3
 
@@ -69,57 +68,55 @@ const CreateHouseholdModal = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader>{t('settings.newHouseholdTitle')}</ModalHeader>
-            <ModalBody className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="household-name">
-                  {t('settings.householdNameOptional')}
-                </label>
-                <input
-                  id="household-name"
-                  type="text"
-                  placeholder={t('settings.householdNamePlaceholder')}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader>{t('settings.newHouseholdTitle')}</ModalHeader>
+          <ModalBody className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium" htmlFor="household-name">
+                {t('settings.householdNameOptional')}
+              </label>
+              <input
+                id="household-name"
+                type="text"
+                placeholder={t('settings.householdNamePlaceholder')}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">
+                {t('settings.colorLabel')}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {PRESET_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
+                    style={buildColorSwatchStyle(c, color)}
+                    onClick={() => setColor(c)}
+                  />
+                ))}
               </div>
-              <div>
-                <p className="text-sm font-medium mb-2">
-                  {t('settings.colorLabel')}
-                </p>
-                <div className="flex gap-2 flex-wrap">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      className="w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 cursor-pointer"
-                      style={buildColorSwatchStyle(c, color)}
-                      onClick={() => setColor(c)}
-                    />
-                  ))}
-                </div>
-              </div>
-              {error && <p className="text-sm text-danger">{error}</p>}
-            </ModalBody>
-            <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button
-                variant="primary"
-                onPress={handleCreate}
-                isDisabled={busy || !isNameValid}
-              >
-                {t('common.create')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+            </div>
+            {error && <p className="text-sm text-danger">{error}</p>}
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="tertiary" onPress={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              onPress={handleCreate}
+              isDisabled={busy || !isNameValid}
+            >
+              {t('common.create')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

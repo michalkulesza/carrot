@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ShoppingCategory } from '@carrot/shared/types'
@@ -50,17 +51,19 @@ const CategoryChip = ({
           <path d="m6 9 6 6 6-6" />
         </svg>
       </button>
-      {open && (
-        <CategoryMenu
-          category={category}
-          categories={categories}
-          placement={menuAbove ? 'above' : 'below'}
-          onPick={(option) => {
-            onPick(option)
-            setOpen(false)
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {open && (
+          <CategoryMenu
+            category={category}
+            categories={categories}
+            placement={menuAbove ? 'above' : 'below'}
+            onPick={(option) => {
+              onPick(option)
+              setOpen(false)
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

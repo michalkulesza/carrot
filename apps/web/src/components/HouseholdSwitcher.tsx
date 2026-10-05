@@ -1,7 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import {
-  Modal,
-  ModalBackdrop,
   ModalContainer,
   ModalDialog,
   ModalHeader,
@@ -10,6 +8,7 @@ import {
 import { Check } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { useHousehold } from '../context/HouseholdContext'
+import Modal from './AnimatedModal'
 
 interface HouseholdOption {
   id: string
@@ -90,27 +89,25 @@ const HouseholdSwitcher = ({ isOpen, onClose }: HouseholdSwitcherProps) => {
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader className="pb-2">
-              {t('households.switchContext')}
-            </ModalHeader>
-            <ModalBody className="px-2 pb-4">
-              <ul className="flex flex-col gap-1">
-                {options.map((opt) => (
-                  <HouseholdOptionRow
-                    key={opt.id}
-                    option={opt}
-                    active={opt.id === activeHouseholdId}
-                    onSelect={handleSwitch}
-                  />
-                ))}
-              </ul>
-            </ModalBody>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader className="pb-2">
+            {t('households.switchContext')}
+          </ModalHeader>
+          <ModalBody className="px-2 pb-4">
+            <ul className="flex flex-col gap-1">
+              {options.map((opt) => (
+                <HouseholdOptionRow
+                  key={opt.id}
+                  option={opt}
+                  active={opt.id === activeHouseholdId}
+                  onSelect={handleSwitch}
+                />
+              ))}
+            </ul>
+          </ModalBody>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

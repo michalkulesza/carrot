@@ -1,4 +1,5 @@
 import { Search, X } from 'react-feather'
+import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { ReactNode } from 'react'
 
@@ -28,7 +29,10 @@ const RecipeSearchInput = ({
         className="w-full pl-9 pr-8 py-2 text-sm rounded-full bg-white border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-zinc-400"
       />
       {isSemanticLoading && (
-        <span className="absolute right-8 h-3 w-3 rounded-full border-2 border-zinc-300 border-t-primary animate-spin" aria-label={t('recipes.semanticSearchLoading')} />
+        <span
+          className="absolute right-8 h-3 w-3 rounded-full border-2 border-zinc-300 border-t-primary animate-spin"
+          aria-label={t('recipes.semanticSearchLoading')}
+        />
       )}
       {searchQuery && (
         <button
@@ -39,7 +43,7 @@ const RecipeSearchInput = ({
           <X className="w-4 h-4" />
         </button>
       )}
-      {searchOverlay}
+      <AnimatePresence>{searchOverlay}</AnimatePresence>
     </div>
   )
 }

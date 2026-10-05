@@ -1,6 +1,8 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
+import PopupSurface from '../../components/PopupSurface'
 
 interface MyRecipeRowMenuProps {
   busy: boolean
@@ -83,37 +85,40 @@ const MyRecipeRowMenu = ({
       >
         ⋯
       </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={menuStyle}
-            className="w-52 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors cursor-pointer"
-              onClick={handleAddToHouseholdClick}
+      {createPortal(
+        <AnimatePresence>
+          {open && (
+            <PopupSurface
+              ref={menuRef}
+              style={menuStyle}
+              className="w-52 rounded-xl bg-white shadow-xl border border-zinc-100 py-1"
+              onClick={(e) => e.stopPropagation()}
             >
-              {t('recipes.addToHousehold')}
-            </button>
-            {showDeleteFromHousehold && (
+              <button
+                className="w-full text-left px-4 py-2 text-sm hover:bg-zinc-50 transition-colors cursor-pointer"
+                onClick={handleAddToHouseholdClick}
+              >
+                {t('recipes.addToHousehold')}
+              </button>
+              {showDeleteFromHousehold && (
+                <button
+                  className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors cursor-pointer"
+                  onClick={handleDeleteFromHouseholdClick}
+                >
+                  {t('recipes.deleteFromHousehold', { name: householdName })}
+                </button>
+              )}
               <button
                 className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors cursor-pointer"
-                onClick={handleDeleteFromHouseholdClick}
+                onClick={handleDeleteEverywhereClick}
               >
-                {t('recipes.deleteFromHousehold', { name: householdName })}
+                {t('recipes.deleteEverywhere')}
               </button>
-            )}
-            <button
-              className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors cursor-pointer"
-              onClick={handleDeleteEverywhereClick}
-            >
-              {t('recipes.deleteEverywhere')}
-            </button>
-          </div>,
-          document.body
-        )}
+            </PopupSurface>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }

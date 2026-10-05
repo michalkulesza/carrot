@@ -1,4 +1,6 @@
+import { AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
+import PopupSurface from './PopupSurface'
 
 export interface NutritionBoxGridItem {
   label: string
@@ -67,7 +69,9 @@ const NutritionBoxDisplay = ({ item, onToggle }: NutritionBoxDisplayProps) => {
       aria-label={item.accessibilityLabel}
       className="w-full flex flex-col items-center justify-center rounded-[10px] bg-zinc-100 px-2 py-2 min-w-0 hover:bg-zinc-200 transition-colors"
     >
-      <span className={`text-base font-semibold text-zinc-900 ${item.blurred ? 'blur-[4px] select-none' : ''}`}>
+      <span
+        className={`text-base font-semibold text-zinc-900 ${item.blurred ? 'blur-[4px] select-none' : ''}`}
+      >
         {displayValue}
       </span>
       <span className="mt-1 text-xs text-zinc-500 truncate max-w-full">
@@ -78,9 +82,9 @@ const NutritionBoxDisplay = ({ item, onToggle }: NutritionBoxDisplayProps) => {
 }
 
 const NutritionDisclaimer = ({ text }: { text: string }) => (
-  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 w-48 rounded-lg border border-zinc-200 bg-white p-2.5 text-xs text-zinc-600 shadow-lg z-20">
+  <PopupSurface className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 w-48 rounded-lg border border-zinc-200 bg-white p-2.5 text-xs text-zinc-600 shadow-lg z-20">
     {text}
-  </div>
+  </PopupSurface>
 )
 
 const NutritionBoxGrid = ({
@@ -135,7 +139,9 @@ const NutritionBoxGrid = ({
               onToggle={() => setOpenIndex((v) => (v === i ? null : i))}
             />
           )}
-          {openIndex === i && <NutritionDisclaimer text={disclaimerText} />}
+          <AnimatePresence>
+            {openIndex === i && <NutritionDisclaimer text={disclaimerText} />}
+          </AnimatePresence>
         </div>
       ))}
     </div>

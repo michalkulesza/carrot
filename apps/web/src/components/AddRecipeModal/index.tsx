@@ -1,13 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search } from 'react-feather'
 import { useTranslation } from 'react-i18next'
-import {
-  Modal,
-  ModalBackdrop,
-  ModalContainer,
-  ModalDialog,
-  toast,
-} from '@heroui/react'
+import { ModalContainer, ModalDialog, toast } from '@heroui/react'
 import type { ImportJob, RecipeOut } from '@carrot/shared/types'
 import {
   enqueueImportJob,
@@ -19,6 +13,7 @@ import { proxyUrl } from '../../utils/imageUtils'
 import NetworkImage from '../NetworkImage'
 import ImportRecipeBody from './ImportRecipeBody'
 import type { ImportMode } from './importSources'
+import Modal from '../AnimatedModal'
 
 interface AddRecipeModalProps {
   isOpen: boolean
@@ -247,38 +242,36 @@ const AddRecipeModal = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleModalOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer
-          size="lg"
-          scroll="inside"
-          className="!rounded-none overflow-hidden sm:!rounded-3xl"
+      <ModalContainer
+        size="lg"
+        scroll="inside"
+        className="!rounded-none overflow-hidden sm:!rounded-3xl"
+      >
+        <ModalDialog
+          aria-label={t('addRecipe.importRecipe')}
+          className="relative flex !h-dvh !max-h-none !w-screen !max-w-none flex-col !rounded-none !p-0 sm:!h-auto sm:!max-h-[calc(100dvh-2rem)] sm:!w-[640px] sm:!max-w-[640px] sm:!rounded-3xl"
         >
-          <ModalDialog
-            aria-label={t('addRecipe.importRecipe')}
-            className="relative flex !h-dvh !max-h-none !w-screen !max-w-none flex-col !rounded-none !p-0 sm:!h-auto sm:!max-h-[calc(100dvh-2rem)] sm:!w-[640px] sm:!max-w-[640px] sm:!rounded-3xl"
-          >
-            <ImportRecipeBody
-              mode={importMode}
-              onModeChange={handleModeChange}
-              url={url}
-              onUrlChange={setUrl}
-              onPasteUrl={handlePasteUrl}
-              text={pastedText}
-              onTextChange={setPastedText}
-              onPasteText={handlePasteText}
-              photo={photo}
-              photoPreview={photoPreview}
-              onPhotoChange={setPhoto}
-              loading={loading}
-              canSubmit={canSubmit}
-              error={error}
-              onSubmit={handleSubmit}
-              onClose={handleClose}
-              libraryContent={libraryContent}
-            />
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+          <ImportRecipeBody
+            mode={importMode}
+            onModeChange={handleModeChange}
+            url={url}
+            onUrlChange={setUrl}
+            onPasteUrl={handlePasteUrl}
+            text={pastedText}
+            onTextChange={setPastedText}
+            onPasteText={handlePasteText}
+            photo={photo}
+            photoPreview={photoPreview}
+            onPhotoChange={setPhoto}
+            loading={loading}
+            canSubmit={canSubmit}
+            error={error}
+            onSubmit={handleSubmit}
+            onClose={handleClose}
+            libraryContent={libraryContent}
+          />
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

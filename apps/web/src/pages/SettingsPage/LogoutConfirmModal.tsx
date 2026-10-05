@@ -2,13 +2,12 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Button,
-  Modal,
-  ModalBackdrop,
   ModalContainer,
   ModalDialog,
   ModalFooter,
   ModalHeader,
 } from '@heroui/react'
+import Modal from '../../components/AnimatedModal'
 
 interface LogoutConfirmModalProps {
   isOpen: boolean
@@ -32,21 +31,19 @@ const LogoutConfirmModal = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader>{t('settings.logOutConfirmTitle')}</ModalHeader>
-            <ModalFooter>
-              <Button variant="tertiary" onPress={onClose}>
-                {t('common.cancel')}
-              </Button>
-              <Button variant="danger" onPress={onConfirm}>
-                {t('settings.logOut')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader>{t('settings.logOutConfirmTitle')}</ModalHeader>
+          <ModalFooter>
+            <Button variant="tertiary" onPress={onClose}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="danger" onPress={onConfirm}>
+              {t('settings.logOut')}
+            </Button>
+          </ModalFooter>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

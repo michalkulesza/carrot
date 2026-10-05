@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import {
-  Modal,
-  ModalBackdrop,
   ModalContainer,
   ModalDialog,
   ModalHeader,
@@ -17,6 +15,7 @@ import {
   formatMonthYear,
   weekdayShortByIndex,
 } from '@carrot/shared/utils/dateUtils'
+import Modal from './AnimatedModal'
 
 interface AssignToMealPlanModalProps {
   isOpen: boolean
@@ -218,71 +217,68 @@ const AssignToMealPlanModal = ({
 
   return (
     <Modal isOpen={isOpen} onOpenChange={handleOpenChange}>
-      <ModalBackdrop isDismissable>
-        <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
-          <ModalDialog>
-            <ModalHeader className="flex-col gap-0 pb-0">
-              <div className="flex items-center justify-between w-full">
-                <MonthNavButton
-                  direction="prev"
-                  onClick={handlePrevMonth}
-                  ariaLabel={t('mealPlan.prevMonth')}
-                />
-                <span className="text-base font-semibold">
-                  {formatMonthYear(visibleMonth, i18n.language)}
+      <ModalContainer size="sm" className="!rounded-xl overflow-hidden">
+        <ModalDialog>
+          <ModalHeader className="flex-col gap-0 pb-0">
+            <div className="flex items-center justify-between w-full">
+              <MonthNavButton
+                direction="prev"
+                onClick={handlePrevMonth}
+                ariaLabel={t('mealPlan.prevMonth')}
+              />
+              <span className="text-base font-semibold">
+                {formatMonthYear(visibleMonth, i18n.language)}
+              </span>
+              <MonthNavButton
+                direction="next"
+                onClick={handleNextMonth}
+                ariaLabel={t('mealPlan.nextMonth')}
+              />
+            </div>
+          </ModalHeader>
+          <ModalBody className="pt-3 pb-5">
+            <div className="grid grid-cols-7 mb-1">
+              {weekdayLabels.map((label, i) => (
+                <span
+                  key={i}
+                  className="text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                >
+                  {label}
                 </span>
-                <MonthNavButton
-                  direction="next"
-                  onClick={handleNextMonth}
-                  ariaLabel={t('mealPlan.nextMonth')}
-                />
-              </div>
-            </ModalHeader>
-            <ModalBody className="pt-3 pb-5">
-              <div className="grid grid-cols-7 mb-1">
-                {weekdayLabels.map((label, i) => (
-                  <span
-                    key={i}
-                    className="text-center text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <div className="flex flex-col gap-1">
-                {rows.map((row, rowIndex) => (
-                  <div key={rowIndex} className="grid grid-cols-7">
-                    {row.map((date, i) => {
-                      if (!date)
-                        return <div key={i} className="aspect-square" />
+              ))}
+            </div>
+            <div className="flex flex-col gap-1">
+              {rows.map((row, rowIndex) => (
+                <div key={rowIndex} className="grid grid-cols-7">
+                  {row.map((date, i) => {
+                    if (!date) return <div key={i} className="aspect-square" />
 
-                      const isoDate = toISODate(date)
-                      const isToday = isoDate === todayIso
-                      const isJustAssigned = justAssigned === isoDate
-                      const isAlreadyAssigned =
-                        !isJustAssigned && assignedDates.has(isoDate)
-                      const ariaLabel = `${date.getDate()} ${formatMonthYear(date, i18n.language)}`
+                    const isoDate = toISODate(date)
+                    const isToday = isoDate === todayIso
+                    const isJustAssigned = justAssigned === isoDate
+                    const isAlreadyAssigned =
+                      !isJustAssigned && assignedDates.has(isoDate)
+                    const ariaLabel = `${date.getDate()} ${formatMonthYear(date, i18n.language)}`
 
-                      return (
-                        <CalendarDayCell
-                          key={i}
-                          date={date}
-                          isToday={isToday}
-                          isJustAssigned={isJustAssigned}
-                          isAlreadyAssigned={isAlreadyAssigned}
-                          disabled={setEntry.isPending}
-                          ariaLabel={ariaLabel}
-                          onSelect={handleSelectDate}
-                        />
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </ModalBody>
-          </ModalDialog>
-        </ModalContainer>
-      </ModalBackdrop>
+                    return (
+                      <CalendarDayCell
+                        key={i}
+                        date={date}
+                        isToday={isToday}
+                        isJustAssigned={isJustAssigned}
+                        isAlreadyAssigned={isAlreadyAssigned}
+                        disabled={setEntry.isPending}
+                        ariaLabel={ariaLabel}
+                        onSelect={handleSelectDate}
+                      />
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </ModalBody>
+        </ModalDialog>
+      </ModalContainer>
     </Modal>
   )
 }

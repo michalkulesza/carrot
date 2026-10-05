@@ -1,8 +1,10 @@
+import { AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { Tag, TagCategory } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
+import PopupSurface from '../../../../components/PopupSurface'
 
 interface CategoryFilterDropdownProps {
   category: TagCategory
@@ -58,23 +60,25 @@ const CategoryFilterDropdown = ({
         <span className="truncate">{label}</span>
         <ChevronDown size={12} aria-hidden={true} />
       </button>
-      {open && (
-        <div className="absolute left-0 top-8 z-50 w-48 max-h-56 overflow-y-auto overflow-hidden bg-white border border-zinc-200 rounded-xl shadow-xl">
-          {tags.map((tag) => (
-            <button
-              key={tag.id}
-              type="button"
-              onClick={() => onToggleTag(tag.id)}
-              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100"
-            >
-              {tTag(tag.name, t)}
-              {selectedTagIds.has(tag.id) && (
-                <span className="text-primary">✓</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {open && (
+          <PopupSurface className="absolute left-0 top-8 z-50 w-48 max-h-56 overflow-y-auto overflow-hidden bg-white border border-zinc-200 rounded-xl shadow-xl">
+            {tags.map((tag) => (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => onToggleTag(tag.id)}
+                className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100"
+              >
+                {tTag(tag.name, t)}
+                {selectedTagIds.has(tag.id) && (
+                  <span className="text-primary">✓</span>
+                )}
+              </button>
+            ))}
+          </PopupSurface>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,7 +1,9 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@heroui/react'
 import type { AllergenFlag } from '@carrot/shared/types'
+import PopupSurface from '../PopupSurface'
 
 interface AllergenPopoverProps {
   flag: AllergenFlag
@@ -62,61 +64,63 @@ const AllergenPopover = ({
       >
         ⚠ {flag.allergen}
       </button>
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] text-sm">
-          {flag.substitute_applied && flag.original_display ? (
-            <>
-              <p className="text-zinc-600 mb-2">
-                {t('recipes.originally')}{' '}
-                <strong className="text-zinc-800">
-                  {flag.original_display}
-                </strong>
-                , {t('recipes.replacedWith')}{' '}
-                <strong className="text-zinc-800">{flag.substitute}</strong>{' '}
-                {t('recipes.dueTo')} {flag.allergen}.
-              </p>
-              <Button
-                size="sm"
-                variant="secondary"
-                onPress={handleRestoreClick}
-              >
-                {t('recipes.restoreOriginal')}
-              </Button>
-            </>
-          ) : flag.substitute ? (
-            <>
-              <p className="text-zinc-600 mb-2">
+      <AnimatePresence>
+        {open && (
+          <PopupSurface className="absolute right-0 top-full mt-1 z-50 bg-white border border-zinc-200 rounded-xl shadow-lg p-3 min-w-[220px] text-sm">
+            {flag.substitute_applied && flag.original_display ? (
+              <>
+                <p className="text-zinc-600 mb-2">
+                  {t('recipes.originally')}{' '}
+                  <strong className="text-zinc-800">
+                    {flag.original_display}
+                  </strong>
+                  , {t('recipes.replacedWith')}{' '}
+                  <strong className="text-zinc-800">{flag.substitute}</strong>{' '}
+                  {t('recipes.dueTo')} {flag.allergen}.
+                </p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onPress={handleRestoreClick}
+                >
+                  {t('recipes.restoreOriginal')}
+                </Button>
+              </>
+            ) : flag.substitute ? (
+              <>
+                <p className="text-zinc-600 mb-2">
+                  {t('recipes.contains')}{' '}
+                  <strong className="text-zinc-800">{flag.allergen}</strong>.{' '}
+                  {t('recipes.suggestedSubstitute')}{' '}
+                  <strong className="text-zinc-800">{flag.substitute}</strong>.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onPress={handleReplaceClick}
+                  >
+                    {t('recipes.replace')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="tertiary"
+                    onPress={handleKeepOriginalClick}
+                  >
+                    {t('recipes.keepOriginal')}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-zinc-600">
                 {t('recipes.contains')}{' '}
                 <strong className="text-zinc-800">{flag.allergen}</strong>.{' '}
-                {t('recipes.suggestedSubstitute')}{' '}
-                <strong className="text-zinc-800">{flag.substitute}</strong>.
+                {t('recipes.noSubstituteAvailable')}
               </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="primary"
-                  onPress={handleReplaceClick}
-                >
-                  {t('recipes.replace')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="tertiary"
-                  onPress={handleKeepOriginalClick}
-                >
-                  {t('recipes.keepOriginal')}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <p className="text-zinc-600">
-              {t('recipes.contains')}{' '}
-              <strong className="text-zinc-800">{flag.allergen}</strong>.{' '}
-              {t('recipes.noSubstituteAvailable')}
-            </p>
-          )}
-        </div>
-      )}
+            )}
+          </PopupSurface>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

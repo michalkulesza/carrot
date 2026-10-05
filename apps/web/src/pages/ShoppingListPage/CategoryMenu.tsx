@@ -2,6 +2,7 @@ import { useEffect, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ShoppingCategory } from '@carrot/shared/types'
 import { AISLE_STYLES } from './aisles'
+import PopupSurface from '../../components/PopupSurface'
 
 export const useDismiss = (
   open: boolean,
@@ -42,7 +43,7 @@ const CategoryMenu = ({
   const { t } = useTranslation()
 
   return (
-    <div
+    <PopupSurface
       role="menu"
       className={`absolute right-0 z-40 flex min-w-[170px] flex-col gap-0.5 rounded-xl border border-[#ECEAF0] bg-white p-1.5 font-['Nunito',system-ui,sans-serif] shadow-[0_8px_24px_rgba(31,29,43,0.14)] ${
         placement === 'above'
@@ -88,7 +89,7 @@ const CategoryMenu = ({
           </button>
         )
       })}
-    </div>
+    </PopupSurface>
   )
 }
 

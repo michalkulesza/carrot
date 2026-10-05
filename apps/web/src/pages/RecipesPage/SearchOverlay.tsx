@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import type { IngredientMatch } from './helpers'
 import SearchResultItem from './SearchResultItem'
+import PopupSurface from '../../components/PopupSurface'
 
 interface SearchOverlayProps {
   titleMatches: RecipeOut[]
@@ -19,10 +20,13 @@ const SearchOverlay = ({
   onSelectRecipe,
 }: SearchOverlayProps) => {
   const { t } = useTranslation()
-  const hasResults = titleMatches.length > 0 || ingredientMatches.length > 0 || semanticMatches.length > 0
+  const hasResults =
+    titleMatches.length > 0 ||
+    ingredientMatches.length > 0 ||
+    semanticMatches.length > 0
 
   return (
-    <div className="absolute left-0 right-0 top-full z-40 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
+    <PopupSurface className="absolute left-0 right-0 top-full z-40 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
       <div className="max-h-[60vh] overflow-y-auto">
         {!hasResults && !isSemanticLoading ? (
           <p className="px-4 py-8 text-sm text-zinc-400 text-center">
@@ -71,20 +75,27 @@ const SearchOverlay = ({
                   </span>
                 </div>
                 {semanticMatches.map((recipe) => (
-                  <SearchResultItem key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe)} />
+                  <SearchResultItem
+                    key={recipe.id}
+                    recipe={recipe}
+                    onClick={() => onSelectRecipe(recipe)}
+                  />
                 ))}
               </>
             )}
           </>
         ) : null}
         {isSemanticLoading && (
-          <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-zinc-400" role="status">
+          <div
+            className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-zinc-400"
+            role="status"
+          >
             <span className="h-4 w-4 rounded-full border-2 border-zinc-300 border-t-primary animate-spin" />
             {t('recipes.semanticSearchLoading')}
           </div>
         )}
       </div>
-    </div>
+    </PopupSurface>
   )
 }
 

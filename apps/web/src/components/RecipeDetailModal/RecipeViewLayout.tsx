@@ -1,4 +1,5 @@
 import { useState, type FocusEventHandler, type ReactNode } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
 import { normalizeAllergenKey } from '../../pages/SettingsPage/helpers'
@@ -367,18 +368,21 @@ const RecipeViewLayout = ({
           {t('cookMode.start')}
         </button>
       </div>
-      {ingredientsOpen && (
-        <RecipeIngredientsSheet
-          {...checklist}
-          servings={selectedServings}
-          onDecreaseServings={onDecreaseServings}
-          onIncreaseServings={onIncreaseServings}
-          allAdded={allAdded}
-          onAddAll={onAddAllIngredients}
-          onToggleShoppingMode={toggleShoppingMode}
-          onClose={() => setIngredientsOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {ingredientsOpen && (
+          <RecipeIngredientsSheet
+            key="ingredients-sheet"
+            {...checklist}
+            servings={selectedServings}
+            onDecreaseServings={onDecreaseServings}
+            onIncreaseServings={onIncreaseServings}
+            allAdded={allAdded}
+            onAddAll={onAddAllIngredients}
+            onToggleShoppingMode={toggleShoppingMode}
+            onClose={() => setIngredientsOpen(false)}
+          />
+        )}
+      </AnimatePresence>
       {share}
     </div>
   )

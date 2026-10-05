@@ -1,9 +1,14 @@
+import { AnimatePresence } from 'framer-motion'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
-import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
+import {
+  TAG_CATEGORIES,
+  groupTagsByCategory,
+} from '@carrot/shared/utils/tagFilters'
+import PopupSurface from './PopupSurface'
 
 interface TagRowProps {
   tags: Tag[]
@@ -64,7 +69,10 @@ const TagPicker = ({
   onSearchKeyDown,
   filtered,
   onSelectTag,
-  canCreate, creating, onCreate, trimmedSearch,
+  canCreate,
+  creating,
+  onCreate,
+  trimmedSearch,
   allTagsEmpty,
 }: TagPickerProps) => {
   const { t } = useTranslation()
@@ -74,6 +82,7 @@ const TagPicker = ({
 
   const groupedSections = useMemo(() => {
     const grouped = groupTagsByCategory(filtered)
+
     return [
       ...TAG_CATEGORIES.map((category) => ({
         key: category,
@@ -85,7 +94,7 @@ const TagPicker = ({
   }, [filtered, t])
 
   return (
-    <div className="absolute left-0 top-6 z-50 w-52 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
+    <PopupSurface className="absolute left-0 top-6 z-50 w-52 bg-white rounded-xl shadow-xl border border-zinc-200 overflow-hidden">
       <div className="px-3 py-2 border-b border-zinc-200">
         <input
           ref={inputRef}
@@ -115,12 +124,23 @@ const TagPicker = ({
             ))}
           </div>
         ))}
-        {canCreate && <button type="button" disabled={creating} className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-primary/5 transition-colors disabled:opacity-50" onClick={onCreate}>{creating ? t('tags.creating') : t('tags.createTag', { name: trimmedSearch })}</button>}
+        {canCreate && (
+          <button
+            type="button"
+            disabled={creating}
+            className="w-full text-left px-3 py-2 text-sm text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+            onClick={onCreate}
+          >
+            {creating
+              ? t('tags.creating')
+              : t('tags.createTag', { name: trimmedSearch })}
+          </button>
+        )}
         {filtered.length === 0 && !canCreate && (
           <p className="px-3 py-2 text-sm text-zinc-400">{emptyStateLabel}</p>
         )}
       </div>
-    </div>
+    </PopupSurface>
   )
 }
 
@@ -154,7 +174,17 @@ const TagRow = ({
 
     return available.filter((tag) => tag.name.toLowerCase().includes(query))
   }, [available, trimmedSearch])
-  const canCreate = useMemo(() => Boolean(onCreateTag && trimmedSearch && !allTags.some((tag) => tag.name.toLowerCase() === trimmedSearch.toLowerCase())), [allTags, onCreateTag, trimmedSearch])
+  const canCreate = useMemo(
+    () =>
+      Boolean(
+        onCreateTag &&
+        trimmedSearch &&
+        !allTags.some(
+          (tag) => tag.name.toLowerCase() === trimmedSearch.toLowerCase()
+        )
+      ),
+    [allTags, onCreateTag, trimmedSearch]
+  )
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -183,7 +213,15 @@ const TagRow = ({
     },
     [onAdd]
   )
-  const handleCreate = useCallback(async () => { if (!onCreateTag || !trimmedSearch) return; setCreating(true); try { handleAddTag(await onCreateTag(trimmedSearch)) } finally { setCreating(false) } }, [handleAddTag, onCreateTag, trimmedSearch])
+  const handleCreate = useCallback(async () => {
+    if (!onCreateTag || !trimmedSearch) return
+    setCreating(true)
+    try {
+      handleAddTag(await onCreateTag(trimmedSearch))
+    } finally {
+      setCreating(false)
+    }
+  }, [handleAddTag, onCreateTag, trimmedSearch])
 
   const handleSearchKeyDown = useCallback(
     (e: KeyboardEvent<HTMLInputElement>) => {
@@ -226,18 +264,23 @@ const TagRow = ({
             +
           </button>
 
-          {pickerOpen && (
-            <TagPicker
-              inputRef={inputRef}
-              search={search}
-              onSearchChange={setSearch}
-              onSearchKeyDown={handleSearchKeyDown}
-              filtered={filtered}
-              onSelectTag={handleAddTag}
-              canCreate={canCreate} creating={creating} onCreate={() => void handleCreate()} trimmedSearch={trimmedSearch}
-              allTagsEmpty={allTags.length === 0}
-            />
-          )}
+          <AnimatePresence>
+            {pickerOpen && (
+              <TagPicker
+                inputRef={inputRef}
+                search={search}
+                onSearchChange={setSearch}
+                onSearchKeyDown={handleSearchKeyDown}
+                filtered={filtered}
+                onSelectTag={handleAddTag}
+                canCreate={canCreate}
+                creating={creating}
+                onCreate={() => void handleCreate()}
+                trimmedSearch={trimmedSearch}
+                allTagsEmpty={allTags.length === 0}
+              />
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>

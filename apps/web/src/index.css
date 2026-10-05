@@ -12,6 +12,22 @@
   z-index: 100;
 }
 
+/* HeroUI retains these surfaces through their CSS exit animation. */
+:is(
+  .popover,
+  .tooltip,
+  .dropdown__popover,
+  .select__popover,
+  .combo-box__popover,
+  .autocomplete__popover,
+  .color-picker__popover,
+  .date-picker__popover,
+  .date-range-picker__popover
+)[data-exiting='true'] {
+  --tw-exit-scale: 0.97;
+  --tw-duration: 0.18s;
+}
+
 html {
   overflow-y: scroll;
 }
@@ -27,8 +43,8 @@ html {
 :root,
 .light,
 .default,
-[data-theme="light"],
-[data-theme="default"] {
+[data-theme='light'],
+[data-theme='default'] {
   --accent: #ea8e4e;
 }
 
