@@ -45,7 +45,7 @@ FIXTURE_PATH = Path(__file__).parent / "showcase_fixture.json"
 def _load_fixture() -> dict:
     if not FIXTURE_PATH.exists():
         return {"recipes": [], "meal_plan_entries": [], "shopping_list_items": []}
-    return json.loads(FIXTURE_PATH.read_text())
+    return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
 async def ensure_showcase_user() -> None:
@@ -131,8 +131,20 @@ async def reset_showcase_account() -> None:
                 id=new_id,
                 author_id=user_id,
                 title=recipe_fixture["title"],
+                source_title=recipe_fixture.get("source_title"),
                 servings=recipe_fixture.get("servings"),
+                total_time_minutes=recipe_fixture.get("total_time_minutes"),
                 kcal_per_serving=recipe_fixture.get("kcal_per_serving"),
+                protein_per_serving=recipe_fixture.get("protein_per_serving"),
+                fat_per_serving=recipe_fixture.get("fat_per_serving"),
+                carbs_per_serving=recipe_fixture.get("carbs_per_serving"),
+                issue_codes=recipe_fixture.get("issue_codes", []),
+                nutrition_provenance=recipe_fixture.get("nutrition_provenance", {}),
+                nutrition_status=recipe_fixture.get("nutrition_status", "unknown"),
+                total_time_provenance=recipe_fixture.get("total_time_provenance", {"status": "unknown"}),
+                allergen_status=recipe_fixture.get("allergen_status", "unknown"),
+                overview=recipe_fixture.get("overview"),
+                title_evidence=recipe_fixture.get("title_evidence", []),
                 thumbnail_url=recipe_fixture.get("thumbnail_url"),
                 creator_handle=recipe_fixture.get("creator_handle"),
                 source_url=recipe_fixture.get("source_url"),

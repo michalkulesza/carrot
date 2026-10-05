@@ -29,7 +29,7 @@ async def main() -> None:
             print(f"No user found with email {SHOWCASE_EMAIL}. Log in and create it first.")
             return
 
-        recipes = (await session.execute(select(Recipe).where(Recipe.user_id == user.id))).scalars().all()
+        recipes = (await session.execute(select(Recipe).where(Recipe.author_id == user.id))).scalars().all()
         meal_plan_entries = (
             (await session.execute(select(MealPlanEntry).where(MealPlanEntry.user_id == user.id))).scalars().all()
         )
@@ -52,14 +52,25 @@ async def main() -> None:
                 {
                     "fixture_id": recipe_fixture_ids[recipe.id],
                     "title": recipe.title,
+                    "source_title": recipe.source_title,
                     "servings": recipe.servings,
+                    "total_time_minutes": recipe.total_time_minutes,
                     "kcal_per_serving": recipe.kcal_per_serving,
+                    "protein_per_serving": recipe.protein_per_serving,
+                    "fat_per_serving": recipe.fat_per_serving,
+                    "carbs_per_serving": recipe.carbs_per_serving,
+                    "issue_codes": recipe.issue_codes,
+                    "nutrition_provenance": recipe.nutrition_provenance,
+                    "nutrition_status": recipe.nutrition_status,
+                    "total_time_provenance": recipe.total_time_provenance,
+                    "allergen_status": recipe.allergen_status,
+                    "overview": recipe.overview,
+                    "title_evidence": recipe.title_evidence,
                     "thumbnail_url": recipe.thumbnail_url,
                     "creator_handle": recipe.creator_handle,
                     "source_url": recipe.source_url,
                     "components": recipe.components,
                     "notes": recipe.notes,
-                    "shared_to_personal": recipe.shared_to_personal,
                     "tag_names": [tag.name for tag in recipe.tags],
                 }
                 for recipe in recipes
@@ -80,7 +91,7 @@ async def main() -> None:
         }
 
     out_path = Path(__file__).parent / "src" / "api" / "showcase_fixture.json"
-    out_path.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n")
+    out_path.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"Wrote {len(fixture['recipes'])} recipes, {len(fixture['meal_plan_entries'])} meal plan entries, "
           f"{len(fixture['shopping_list_items'])} shopping list items to {out_path}")
 
