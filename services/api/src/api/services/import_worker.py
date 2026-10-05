@@ -23,14 +23,12 @@ from api.models import (
     ImportJobStatus,
     ImportMetadata,
     ImportResult,
-    Ingredient,
     Recipe,
     RecipeSourceEvidence,
     RecipeEmbedding,
     EmbeddingStatus,
     Tag,
     UserPreferences,
-    ShoppingCategory,
 )
 from api.routes.imports import _event_for_job
 from api.routes.recipes import _link_recipe_to_household
@@ -43,6 +41,7 @@ from api.services.embeddings import _vector_literal, build_embedding_document, e
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
+from api.services.recipe_components import serialize_components
 from api.services import gemini as gemini_svc
 
 log = logging.getLogger(__name__)
@@ -126,12 +125,6 @@ async def _get_tags_and_allergens(
     return [tag.name for tag in tags], allergens
 
 
-def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
-    name = ingredient.substitute if auto_substitute and ingredient.allergen and ingredient.substitute else ingredient.name
-    value = " ".join(part for part in (ingredient.qty, ingredient.unit.value if ingredient.unit else None, name) if part)
-    return _normalize_ingredient_punctuation(value)
-
-
 async def _archive_thumbnail(recipe: Recipe) -> None:
     thumbnail_url = recipe.thumbnail_url
     is_r2_url = bool(
@@ -164,44 +157,10 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         )).all())
     preferences = await session.get(UserPreferences, job.user_id)
     auto_substitute = bool(preferences and preferences.auto_substitute)
-    components = []
-    for component in recipe_data.components or []:
-        flattened = [_flatten_ingredient(ingredient, auto_substitute) for ingredient in component.ingredients]
-        components.append({
-            "name": component.name or "",
-            "yield_note": component.yield_note or "",
-            "ingredients": flattened,
-            "shopping_list_ingredients": [
-                _normalize_ingredient_punctuation(ingredient.shopping_list_value or display)
-                for ingredient, display in zip(component.ingredients, flattened)
-            ],
-            "shopping_list_categories": [
-                ingredient.shopping_list_category or ShoppingCategory.OTHER
-                for ingredient in component.ingredients
-            ],
-            "steps": component.steps,
-            "metric_ingredients": [
-                _normalize_ingredient_punctuation(value)
-                for value in component.metric_ingredients or flattened
-            ],
-            "imperial_ingredients": [
-                _normalize_ingredient_punctuation(value)
-                for value in component.imperial_ingredients or flattened
-            ],
-            "metric_steps": component.metric_steps or component.steps,
-            "imperial_steps": component.imperial_steps or component.steps,
-            "ingredient_flags": [{
-                "allergen": ingredient.allergen,
-                "substitute": ingredient.substitute,
-                "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
-                "original_display": None,
-            } for ingredient in component.ingredients],
-            "step_ingredient_line": component.step_ingredient_line,
-            "ingredient_links": component.ingredient_links,
-            "ingredient_evidence": component.ingredient_evidence,
-            "step_evidence": component.step_evidence,
-            "name_evidence": component.name_evidence,
-        })
+    components = serialize_components(recipe_data, auto_substitute)
+    for component in components:
+        for field in ("ingredients", "shopping_list_ingredients", "metric_ingredients", "imperial_ingredients"):
+            component[field] = [_normalize_ingredient_punctuation(value) for value in component[field]]
     metadata = result.metadata
     recipe = Recipe(
         author_id=job.user_id,

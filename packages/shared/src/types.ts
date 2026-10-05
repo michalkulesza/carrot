@@ -65,6 +65,7 @@ export interface AllergenFlag {
   substitute: string | null;
   substitute_applied: boolean;
   original_display: string | null;
+  original_values?: Record<string, string> | null;
   ingredient_name?: string | null;
 }
 

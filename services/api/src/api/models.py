@@ -68,6 +68,7 @@ class AllergenFlag(BaseModel):
     substitute: str | None = None
     substitute_applied: bool = False
     original_display: str | None = None
+    original_values: dict[str, str] | None = None
 
 
 # ── Association tables ────────────────────────────────────────────────────────

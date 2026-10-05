@@ -1,4 +1,4 @@
-"""Predefined allergen/intolerance keys checked against every imported recipe.
+"""Predefined allergen/intolerance keys available in preference settings.
 
 Must stay in sync with ALLERGEN_KEYS/INTOLERANCE_KEYS in
 packages/shared/src/constants/allergens.ts.

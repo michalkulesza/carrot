@@ -8,6 +8,7 @@ import { TagPickerModal, IngredientEditor } from '../../components/RecipeFieldEd
 import { QuantityUnitPickerModal } from '../../components/QuantityUnitPickerModal'
 import { SHOPPING_CATEGORIES, type ShoppingCategory, type Tag } from '@carrot/shared/types'
 import { parseIngredient, serializeIngredient } from '@carrot/shared/utils/ingredientUtils'
+import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import { uploadThumbnailImage, makeTempRecipeId } from '../../api/uploadThumbnail'
@@ -66,34 +67,39 @@ const RecipeFormView = ({
     }
   }, [recipe, onChange, t])
 
-  const handleReplaceAllergen = useCallback((ci: number, ii: number) => {
-    const comp = recipe.components[ci]
-    const flag = comp.ingredient_flags[ii]
-    if (!flag?.substitute) return
-    const originalDisplay = serializeIngredient(comp.ingredients[ii])
-    const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : {
-        ...c,
-        ingredients: c.ingredients.map((ing, idx) => idx === ii ? parseIngredient(flag.substitute!) : ing),
-        ingredient_flags: c.ingredient_flags.map((f, idx) => idx === ii ? { ...f!, substitute_applied: true, original_display: originalDisplay } : f),
-      },
-    )
-    onChange({ ...recipe, components })
-  }, [recipe, onChange])
-
-  const handleRestoreAllergen = useCallback((ci: number, ii: number) => {
-    const comp = recipe.components[ci]
-    const flag = comp.ingredient_flags[ii]
-    if (!flag?.original_display) return
-    const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci ? c : {
-        ...c,
-        ingredients: c.ingredients.map((ing, idx) => idx === ii ? parseIngredient(flag.original_display!) : ing),
-        ingredient_flags: c.ingredient_flags.map((f, idx) => idx === ii ? { ...f!, substitute_applied: false, original_display: null } : f),
-      },
-    )
-    onChange({ ...recipe, components })
-  }, [recipe, onChange])
+  const handleSubstitution = useCallback(
+    (ci: number, ii: number, apply: boolean) => {
+      const comp = recipe.components[ci];
+      const flag = comp.ingredient_flags[ii];
+      const display = apply ? flag?.substitute : flag?.original_display;
+      if (!display || (apply && flag?.substitute_applied)) return;
+      const components = recipe.components.map((component, index) =>
+        index !== ci
+          ? component
+          : {
+              ...substituteIngredient(
+                component,
+                component.ingredients.map(serializeIngredient),
+                ii,
+                apply,
+              ),
+              ingredients: component.ingredients.map((ingredient, index) =>
+                index === ii ? parseIngredient(display) : ingredient,
+              ),
+            },
+      );
+      onChange({ ...recipe, components });
+    },
+    [recipe, onChange],
+  );
+  const handleReplaceAllergen = useCallback(
+    (ci: number, ii: number) => handleSubstitution(ci, ii, true),
+    [handleSubstitution],
+  );
+  const handleRestoreAllergen = useCallback(
+    (ci: number, ii: number) => handleSubstitution(ci, ii, false),
+    [handleSubstitution],
+  );
 
   const setIngredient = useCallback((ci: number, ii: number, val: StructuredIngredient) => {
     onChange({

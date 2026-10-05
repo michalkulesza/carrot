@@ -6,19 +6,16 @@ from time import monotonic
 
 from sqlalchemy import select
 
-from api import users
 from api.database import async_session_maker
 from api.models import (
     ImportResult,
-    Ingredient,
     Recipe,
-    RecipeExtraction,
     RecipeSourceEvidence,
-    ShoppingCategory,
     UserPreferences,
     recipe_households_table,
 )
 from api.services.import_worker import _get_tags_and_allergens
+from api.services.recipe_components import serialize_components
 from api.services.monitoring import init_sentry
 from api.services import gemini
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
@@ -30,46 +27,6 @@ class ReimportFailure(Exception):
     def __init__(self, message: str, retryable: bool) -> None:
         super().__init__(message)
         self.retryable = retryable
-
-
-def _flatten_ingredient(ingredient: Ingredient, auto_substitute: bool) -> str:
-    name = ingredient.substitute if auto_substitute and ingredient.allergen and ingredient.substitute else ingredient.name
-    return " ".join(part for part in (ingredient.qty, ingredient.unit.value if ingredient.unit else None, name) if part)
-
-
-def _components(extraction: RecipeExtraction, auto_substitute: bool) -> list[dict]:
-    components = []
-    for component in extraction.components:
-        flattened = [_flatten_ingredient(ingredient, auto_substitute) for ingredient in component.ingredients]
-        components.append({
-            "name": component.name or component.role,
-            "yield_note": component.yield_note or "",
-            "ingredients": flattened,
-            "shopping_list_ingredients": [
-                ingredient.shopping_list_value or display
-                for ingredient, display in zip(component.ingredients, flattened)
-            ],
-            "shopping_list_categories": [
-                ingredient.shopping_list_category or ShoppingCategory.OTHER
-                for ingredient in component.ingredients
-            ],
-            "steps": component.steps,
-            "metric_ingredients": component.metric_ingredients or flattened,
-            "imperial_ingredients": component.imperial_ingredients or flattened,
-            "metric_steps": component.metric_steps or component.steps,
-            "imperial_steps": component.imperial_steps or component.steps,
-            "ingredient_flags": [{
-                "allergen": ingredient.allergen,
-                "substitute": ingredient.substitute,
-                "substitute_applied": bool(auto_substitute and ingredient.allergen and ingredient.substitute),
-                "original_display": None,
-            } for ingredient in component.ingredients],
-            "ingredient_links": component.ingredient_links,
-            "ingredient_evidence": component.ingredient_evidence,
-            "step_evidence": component.step_evidence,
-            "name_evidence": component.name_evidence,
-        })
-    return components
 
 
 def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool) -> None:
@@ -92,7 +49,7 @@ def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: boo
     recipe.allergen_status = extraction.allergen_status
     recipe.overview = extraction.overview
     recipe.title_evidence = extraction.title_evidence
-    recipe.components = _components(extraction, auto_substitute)
+    recipe.components = serialize_components(extraction, auto_substitute)
 
     if result.metadata.thumbnail_url:
         recipe.thumbnail_url = result.metadata.thumbnail_url

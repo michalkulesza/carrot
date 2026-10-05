@@ -5,6 +5,7 @@ import type {
   StageEvent,
 } from '@carrot/shared/types'
 import { UNITS } from '../../api/client'
+import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 
 export interface StepState extends StageEvent {
   status: 'active' | 'done'
@@ -104,7 +105,7 @@ export const toEditable = (
 ): EditableRecipe => {
   const { recipe, metadata, stage } = result
 
-  return {
+  const editable: EditableRecipe = {
     title: recipe?.title ?? '',
     servings: recipe?.servings?.toString() ?? '',
     totalTimeMinutes: recipe?.total_time_minutes?.toString() ?? '',
@@ -121,8 +122,7 @@ export const toEditable = (
       name: c.name ?? c.role,
       yield_note: c.yield_note ?? '',
       ingredients: c.ingredients.map((ing) => {
-        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
-        const nameToUse = useSub ? ing.substitute! : ing.name
+        const nameToUse = ing.name
         // Gemini sometimes returns the full ingredient string in name with null qty/unit
         if (!ing.qty) {
           return parseIngredient(nameToUse)
@@ -135,8 +135,7 @@ export const toEditable = (
         }
       }),
       shopping_list_ingredients: c.ingredients.map((ing) => {
-        const useSub = autoSubstitute && !!ing.allergen && !!ing.substitute
-        const nameToUse = useSub ? ing.substitute! : ing.name
+        const nameToUse = ing.name
 
         return (
           ing.shopping_list_value ||
@@ -155,11 +154,31 @@ export const toEditable = (
       ingredient_flags: c.ingredients.map((ing) => ({
         allergen: ing.allergen ?? null,
         substitute: ing.substitute ?? null,
-        substitute_applied:
-          autoSubstitute && !!ing.allergen && !!ing.substitute,
+        substitute_applied: false,
         original_display: null,
         ingredient_name: ing.name,
       })),
     })),
   }
+  if (autoSubstitute) {
+    editable.components = editable.components.map((component) => {
+      let result = component
+      component.ingredient_flags.forEach((flag, index) => {
+        if (!flag?.allergen || !flag.substitute) return
+        result = {
+          ...substituteIngredient(
+            result,
+            result.ingredients.map(serializeIngredient),
+            index,
+            true
+          ),
+          ingredients: result.ingredients.map((ingredient, i) =>
+            i === index ? parseIngredient(flag.substitute!) : ingredient
+          ),
+        }
+      })
+      return result
+    })
+  }
+  return editable
 }

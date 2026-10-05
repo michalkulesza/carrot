@@ -9,6 +9,7 @@ import {
   scaleIngredientQuantity,
 } from '@carrot/shared/utils/ingredientScaling'
 import { UNITS } from '../../api/client'
+import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 
 export const TEXT_SIZE_CLASSES = [
   'text-sm',
@@ -54,8 +55,7 @@ export const getHeaderBg = (mode: Mode): string => {
 }
 
 // Recipe-level allergen badges are derived from the per-ingredient flags
-// Gemini already computed against the full predefined allergen list at
-// import time — no extra call needed to know what's in a recipe.
+// Computed against the selected personal and household allergens.
 export const getRecipeAllergens = (recipe: RecipeOut): string[] => {
   const seen = new Set<string>()
   const allergens: string[] = []
@@ -243,23 +243,17 @@ export const applyIngredientReplace = (
   ii: number
 ): SaveComponent[] | null => {
   const flag = components[ci].ingredient_flags?.[ii]
-  if (!flag?.substitute) return null
-  const originalDisplay = components[ci].ingredients[ii]
-  const substitute = flag.substitute
-
-  return components.map((c, cIdx) => {
-    if (cIdx !== ci) return c
-    const newIngredients = c.ingredients.map((ing, iIdx) =>
-      iIdx === ii ? substitute : ing
-    )
-    const newFlags = (c.ingredient_flags ?? []).map((f, fIdx) =>
-      fIdx === ii
-        ? { ...f, substitute_applied: true, original_display: originalDisplay }
-        : f
-    )
-
-    return { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
-  })
+  if (!flag?.substitute || flag.substitute_applied) return null
+  return components.map((component, index) =>
+    index !== ci
+      ? component
+      : {
+          ...substituteIngredient(component, component.ingredients, ii, true),
+          ingredients: component.ingredients.map((value, index) =>
+            index === ii ? flag.substitute! : value
+          ),
+        }
+  )
 }
 
 export const applyIngredientRestore = (
@@ -269,21 +263,16 @@ export const applyIngredientRestore = (
 ): SaveComponent[] | null => {
   const flag = components[ci].ingredient_flags?.[ii]
   if (!flag?.original_display) return null
-  const originalDisplay = flag.original_display
-
-  return components.map((c, cIdx) => {
-    if (cIdx !== ci) return c
-    const newIngredients = c.ingredients.map((ing, iIdx) =>
-      iIdx === ii ? originalDisplay : ing
-    )
-    const newFlags = (c.ingredient_flags ?? []).map((f, fIdx) =>
-      fIdx === ii
-        ? { ...f, substitute_applied: false, original_display: null }
-        : f
-    )
-
-    return { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
-  })
+  return components.map((component, index) =>
+    index !== ci
+      ? component
+      : {
+          ...substituteIngredient(component, component.ingredients, ii, false),
+          ingredients: component.ingredients.map((value, index) =>
+            index === ii ? flag.original_display! : value
+          ),
+        }
+  )
 }
 
 export const buildRecipeUpdateFromDraft = (

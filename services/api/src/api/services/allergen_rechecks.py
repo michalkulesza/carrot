@@ -180,6 +180,7 @@ async def _process(recipe_id: uuid.UUID, revision: int) -> None:
                 previous_flags = component.get("ingredient_flags", []) or []
                 value["ingredient_flags"] = [
                     {
+                        **(previous_flags[index] if index < len(previous_flags) and previous_flags[index] else {}),
                         "allergen": flag.get("allergen"),
                         "substitute": flag.get("substitute"),
                         "substitute_applied": bool(previous_flags[index].get("substitute_applied")) if index < len(previous_flags) and previous_flags[index] else False,

@@ -3,6 +3,7 @@ import { ExternalLink } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { Tag } from '@carrot/shared/types'
 import TagRow from '../TagRow'
+import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 import EditLine from './EditLine'
 import RecipeComponentSection from './RecipeComponentSection'
 import RecipeMacroPills from './RecipeMacroPills'
@@ -67,46 +68,32 @@ const EditableRecipeView = ({
     onChange({ ...recipe, components })
   }
 
-  const handleReplace = (ci: number, ii: number) => {
+  const handleSubstitution = (ci: number, ii: number, apply: boolean) => {
     const comp = recipe.components[ci]
     const flag = comp.ingredient_flags[ii]
-    if (!flag?.substitute) return
-    const originalDisplay = serializeIngredient(comp.ingredients[ii])
-    const newIngredients = comp.ingredients.map((ing, idx) =>
-      idx === ii ? parseIngredient(flag.substitute!) : ing
-    )
-    const newFlags = comp.ingredient_flags.map((f, idx) =>
-      idx === ii
-        ? { ...f!, substitute_applied: true, original_display: originalDisplay }
-        : f
-    )
-    const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci
-        ? c
-        : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
+    const display = apply ? flag?.substitute : flag?.original_display
+    if (!display || (apply && flag?.substitute_applied)) return
+    const components = recipe.components.map((component, index) =>
+      index !== ci
+        ? component
+        : {
+            ...substituteIngredient(
+              component,
+              component.ingredients.map(serializeIngredient),
+              ii,
+              apply
+            ),
+            ingredients: component.ingredients.map((ingredient, index) =>
+              index === ii ? parseIngredient(display) : ingredient
+            ),
+          }
     )
     onChange({ ...recipe, components })
   }
-
-  const handleRestore = (ci: number, ii: number) => {
-    const comp = recipe.components[ci]
-    const flag = comp.ingredient_flags[ii]
-    if (!flag?.original_display) return
-    const newIngredients = comp.ingredients.map((ing, idx) =>
-      idx === ii ? parseIngredient(flag.original_display!) : ing
-    )
-    const newFlags = comp.ingredient_flags.map((f, idx) =>
-      idx === ii
-        ? { ...f!, substitute_applied: false, original_display: null }
-        : f
-    )
-    const components = recipe.components.map((c, ci2) =>
-      ci2 !== ci
-        ? c
-        : { ...c, ingredients: newIngredients, ingredient_flags: newFlags }
-    )
-    onChange({ ...recipe, components })
-  }
+  const handleReplace = (ci: number, ii: number) =>
+    handleSubstitution(ci, ii, true)
+  const handleRestore = (ci: number, ii: number) =>
+    handleSubstitution(ci, ii, false)
 
   const setStep = (ci: number, si: number, val: string) => {
     setIsAdapted(true)
