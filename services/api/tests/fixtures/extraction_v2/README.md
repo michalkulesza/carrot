@@ -14,6 +14,9 @@ Gemini response under `audio_responses/`. Each fixture records the source
 capture's SHA-256, model, and capture date beside the raw JSON response. The test
 checks the hash before replay so a changed transcript or caption cannot reuse a
 stale response; the regular audio adapter still validates and grounds it.
+The hash uses capture bytes with CRLF line endings normalized to LF, so Windows
+and Linux checkouts agree. When freezing a response, calculate `capture_sha256`
+with `hashlib.sha256(capture_path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()`.
 
 `instagram-DXWc3znDQkZ.json` is a reviewed exception to exact recipe-output
 comparison. Its frozen response still runs through the production audio adapter

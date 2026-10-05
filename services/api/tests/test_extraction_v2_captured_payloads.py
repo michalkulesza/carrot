@@ -59,6 +59,11 @@ def _audio_response_path(capture_path: Path) -> Path:
     return AUDIO_RESPONSE_DIR / capture_path.name
 
 
+def _capture_sha256(capture_bytes: bytes) -> str:
+    """Ignore Git checkout line endings while retaining source-content checks."""
+    return hashlib.sha256(capture_bytes.replace(b"\r\n", b"\n")).hexdigest()
+
+
 def _block_gemini_client(*args: Any, **kwargs: Any) -> None:
     raise AssertionError("offline captured-payload tests must not create a Gemini client")
 
@@ -76,7 +81,7 @@ async def _extract_reviewed_capture(
     if response_path.exists():
         fixture = json.loads(response_path.read_text(encoding="utf-8"))
         assert fixture["source_capture"] == capture_path.name
-        assert fixture["capture_sha256"] == hashlib.sha256(capture_path.read_bytes()).hexdigest(), (
+        assert fixture["capture_sha256"] == _capture_sha256(capture_path.read_bytes()), (
             f"audio response is stale for changed capture {capture_path.name}"
         )
         response = fixture["response"]
@@ -312,7 +317,38 @@ def test_audio_response_fixtures_reference_transcribed_captures() -> None:
         fixture = json.loads(response_path.read_text(encoding="utf-8"))
         assert fixture["source_capture"] == response_path.name
         capture_bytes = capture_path.read_bytes()
-        assert fixture["capture_sha256"] == hashlib.sha256(capture_bytes).hexdigest()
+        assert fixture["capture_sha256"] == _capture_sha256(capture_bytes)
         assert fixture["model"]
         assert fixture["captured_date_utc"]
         gemini.AudioRecipeEvidence.model_validate(fixture["response"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("line_ending", [b"\n", b"\r\n"], ids=["lf", "crlf"])
+async def test_frozen_audio_replay_accepts_checkout_line_endings(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, line_ending: bytes,
+) -> None:
+    original = CAPTURE_DIR / DXW_AUDIO_QUALITY_EXCEPTION
+    capture_path = tmp_path / original.name
+    canonical = original.read_bytes().replace(b"\r\n", b"\n")
+    capture_path.write_bytes(canonical.replace(b"\n", line_ending))
+    payload = json.loads(capture_path.read_text(encoding="utf-8"))
+    outcome = await _extract_reviewed_capture(
+        capture_path, payload, _expectations()[original.name], monkeypatch,
+    )
+    assert outcome.outcome == "complete"
+
+
+@pytest.mark.asyncio
+async def test_frozen_audio_replay_rejects_changed_capture_content(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    original = CAPTURE_DIR / DXW_AUDIO_QUALITY_EXCEPTION
+    capture_path = tmp_path / original.name
+    payload = json.loads(original.read_text(encoding="utf-8"))
+    payload["audio"]["transcript"] += " Changed transcript."
+    capture_path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(AssertionError, match="audio response is stale"):
+        await _extract_reviewed_capture(
+            capture_path, payload, _expectations()[original.name], monkeypatch,
+        )
