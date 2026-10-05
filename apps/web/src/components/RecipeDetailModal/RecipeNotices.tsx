@@ -7,12 +7,14 @@ interface RecipeNoticesProps {
   recipe: RecipeOut
   error: string | null
   spacingClassName?: string
+  hideAllergenNotice?: boolean
 }
 
 const RecipeNotices = ({
   recipe,
   error,
   spacingClassName = '',
+  hideAllergenNotice = false,
 }: RecipeNoticesProps) => {
   const { t } = useTranslation()
   const dismissIssue = useDismissRecipeIssue()
@@ -29,7 +31,7 @@ const RecipeNotices = ({
             .then(() => undefined)
         }
       />
-      {recipe.allergen_status === 'uncertain' && (
+      {!hideAllergenNotice && recipe.allergen_status === 'uncertain' && (
         <p
           className={`rounded-lg bg-warning/10 p-3 text-sm text-zinc-600 ${spacingClassName}`}
         >

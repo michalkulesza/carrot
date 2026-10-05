@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import AllergenPopover from './AllergenPopover'
 import { getMetricCupHint } from './helpers'
-import { CheckIcon, PlusIcon } from './PopupIcons'
+import { CheckIcon, HelpIcon, PlusIcon } from './PopupIcons'
 import type {
   IngredientParts,
   UnifiedIngredient,
@@ -20,6 +20,7 @@ export interface IngredientChecklistProps {
   shoppingMode: boolean
   sessionAdded: Set<string>
   onAddIngredient: (componentIndex: number, ingredientIndex: number) => void
+  allergenUncertain?: boolean
 }
 
 interface IngredientChecklistViewProps extends IngredientChecklistProps {
@@ -39,6 +40,7 @@ const IngredientChecklist = ({
   shoppingMode,
   sessionAdded,
   onAddIngredient,
+  allergenUncertain = false,
   desktop,
 }: IngredientChecklistViewProps) => {
   const { t } = useTranslation()
@@ -57,6 +59,8 @@ const IngredientChecklist = ({
           const showPlus = shoppingMode && !added
           const flag = component.ingredient_flags?.[ingredientIndex]
           const { amount, name } = formatParts(ingredient)
+          const formatted = `${amount} ${name}`.trim()
+          const link = component.ingredient_links?.[ingredientIndex]
           const handleClick = () => {
             if (showPlus) onAddIngredient(componentIndex, ingredientIndex)
             else if (!shoppingMode) onToggleIngredient(key)
@@ -73,35 +77,43 @@ const IngredientChecklist = ({
                 type="button"
                 role="checkbox"
                 aria-checked={done}
-                aria-label={showPlus ? t('shoppingList.addToList') : undefined}
+                aria-label={showPlus ? t('shoppingList.addToList') : formatted}
                 onClick={handleClick}
-                className={`flex min-w-0 flex-1 items-center text-left ${desktop ? 'gap-3' : 'gap-3.5'}`}
+                className={`flex shrink-0 items-center justify-center border-[1.5px] ${box} ${
+                  showPlus
+                    ? 'border-[#E8894A] bg-[#FDEFE4] text-[#E07B39]'
+                    : done
+                      ? shoppingMode
+                        ? 'border-emerald-500 bg-emerald-500'
+                        : 'border-[#E8894A] bg-[#E8894A]'
+                      : 'border-[#CFCBD8] bg-white'
+                }`}
               >
+                {showPlus ? (
+                  <PlusIcon size={desktop ? 11 : 13} />
+                ) : (
+                  done && <CheckIcon size={desktop ? 11 : 12} />
+                )}
+              </button>
+              <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
                 <span
-                  className={`flex shrink-0 items-center justify-center border-[1.5px] ${box} ${
-                    showPlus
-                      ? 'border-[#E8894A] bg-[#FDEFE4] text-[#E07B39]'
-                      : done
-                        ? shoppingMode
-                          ? 'border-emerald-500 bg-emerald-500'
-                          : 'border-[#E8894A] bg-[#E8894A]'
-                        : 'border-[#CFCBD8] bg-white'
-                  }`}
-                >
-                  {showPlus ? (
-                    <PlusIcon size={desktop ? 11 : 13} />
-                  ) : (
-                    done && <CheckIcon size={desktop ? 11 : 12} />
-                  )}
-                </span>
-                <span
-                  className={`flex-1 ${desktop ? 'text-[15px]' : 'text-base'} ${
+                  className={`${desktop ? 'text-[15px]' : 'text-base'} ${
                     done && !shoppingMode
                       ? 'text-[#B4B1BF] line-through'
                       : 'text-[#1F1D2B]'
                   }`}
                 >
                   {amount && <b className="font-extrabold">{amount}</b>} {name}
+                  {allergenUncertain && link && (
+                    <span
+                      role="img"
+                      aria-label={t('recipes.allergensUncertain')}
+                      title={t('recipes.allergensUncertain')}
+                      className="ml-1.5 inline-block align-[-2px] text-[#C27A12]"
+                    >
+                      <HelpIcon size={15} />
+                    </span>
+                  )}
                   {getMetricCupHint(
                     component,
                     ingredientIndex,
@@ -110,7 +122,30 @@ const IngredientChecklist = ({
                     t
                   )}
                 </span>
-              </button>
+                {link && (
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full bg-[#EEEAFE] px-2.5 py-0.5 text-xs font-bold text-[#5B4BC4] hover:bg-[#E4DFF7]"
+                  >
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M7 17 17 7M8 7h9v9" />
+                    </svg>
+                    {t('recipes.openLinkedRecipe')}
+                  </a>
+                )}
+              </div>
               {flag && (
                 <AllergenPopover
                   pill

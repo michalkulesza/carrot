@@ -192,7 +192,8 @@
     "startTimerLabel": "Lancer le minuteur de {{duration}}",
     "forServings": "pour {{count}}",
     "byCreator": "par @{{handle}}",
-    "addedByName": "ajoutée par {{name}}"
+    "addedByName": "ajoutée par {{name}}",
+    "favouriteShort": "Favori"
   },
   "nav": {
     "recipes": "Recettes",

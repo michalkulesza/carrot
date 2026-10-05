@@ -19,6 +19,7 @@ import RecipeIngredientsCard from './RecipeIngredientsCard'
 import RecipeIngredientsSheet from './RecipeIngredientsSheet'
 import RecipeSpecSheet from './RecipeSpecSheet'
 import RecipeStepList from './RecipeStepList'
+import AllergenUncertainNotice from './AllergenUncertainNotice'
 import ShareRecipeDialog from './ShareRecipeDialog'
 import { useIsDesktop } from './useIsDesktop'
 import { useUnifiedIngredients } from './useUnifiedIngredients'
@@ -128,6 +129,8 @@ const RecipeViewLayout = ({
       return next
     })
 
+  const allergenUncertain = recipe.allergen_status === 'uncertain'
+  const allergenNotice = allergenUncertain ? <AllergenUncertainNotice /> : null
   const checklist = {
     items,
     formatParts,
@@ -141,6 +144,7 @@ const RecipeViewLayout = ({
     shoppingMode,
     sessionAdded,
     onAddIngredient,
+    allergenUncertain,
   }
   const toggleShoppingMode = () => setShoppingMode((current) => !current)
 
@@ -295,6 +299,7 @@ const RecipeViewLayout = ({
                 onToggleShoppingMode={toggleShoppingMode}
               />
             )}
+            {allergenNotice}
             {stepList}
           </div>
         </div>
@@ -371,6 +376,7 @@ const RecipeViewLayout = ({
       <AnimatePresence>
         {ingredientsOpen && (
           <RecipeIngredientsSheet
+            notice={allergenNotice}
             key="ingredients-sheet"
             {...checklist}
             servings={selectedServings}

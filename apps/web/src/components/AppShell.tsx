@@ -545,6 +545,11 @@ const AppShell = () => {
       qc.setQueryData<RecipeOut[]>(['recipes'], (old = []) =>
         old.map((r) => (r.id === updated.id ? updated : r))
       )
+      // The open recipe popup reads its own detail query, so update that too.
+      qc.setQueriesData<RecipeOut>(
+        { queryKey: ['recipes', 'detail'] },
+        (old) => (old && old.id === updated.id ? updated : old)
+      )
       void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
     },
     [qc]

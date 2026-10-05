@@ -26,7 +26,7 @@ const RecipeActionRow = ({
   const actions = [
     {
       key: 'save',
-      label: t('common.save'),
+      label: t('recipes.favouriteShort'),
       ariaLabel: isFavourite
         ? t('recipes.removeFromFavourites')
         : t('recipes.addToFavourites'),

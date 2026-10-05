@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import IngredientChecklist, {
   type IngredientChecklistProps,
@@ -13,6 +14,7 @@ interface RecipeIngredientsSheetProps extends IngredientChecklistProps {
   onAddAll: () => void
   onToggleShoppingMode: () => void
   onClose: () => void
+  notice?: ReactNode
 }
 
 const RecipeIngredientsSheet = ({
@@ -23,6 +25,7 @@ const RecipeIngredientsSheet = ({
   onAddAll,
   onToggleShoppingMode,
   onClose,
+  notice,
   ...checklist
 }: RecipeIngredientsSheetProps) => {
   const { t } = useTranslation()
@@ -70,6 +73,7 @@ const RecipeIngredientsSheet = ({
         </div>
         <div className="flex-1 overflow-auto px-5 py-1 [scrollbar-width:none]">
           <IngredientChecklist {...checklist} desktop={false} />
+          {notice && <div className="py-3">{notice}</div>}
         </div>
         <div className="flex gap-2.5 px-4 pb-[30px] pt-3">
           {checklist.shoppingMode && !allAdded && (

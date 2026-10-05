@@ -196,7 +196,8 @@
     "startTimerLabel": "Uruchom minutnik: {{duration}}",
     "forServings": "dla {{count}}",
     "byCreator": "autor: @{{handle}}",
-    "addedByName": "dodał(a): {{name}}"
+    "addedByName": "dodał(a): {{name}}",
+    "favouriteShort": "Ulubione"
   },
   "nav": {
     "recipes": "Przepisy",

@@ -76,6 +76,12 @@ const RecipeDetailModal = ({
   const { user } = useAuth()
   const { households, activeHouseholdId } = useHousehold()
   const [mode, setMode] = useState<Mode>('view')
+  // Shown straight away on tap; cleared once the recipe itself catches up.
+  const [localFavourite, setLocalFavourite] = useState<boolean | null>(null)
+  const favouritePendingRef = useRef(false)
+  useEffect(() => {
+    setLocalFavourite(null)
+  }, [recipe?.id, recipe?.is_favourite])
   const [addMode, setAddMode] = useState(false)
   const [mealPlanOpen, setMealPlanOpen] = useState(false)
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(
@@ -247,11 +253,18 @@ const RecipeDetailModal = ({
     )
 
   const handleToggleFavourite = async () => {
+    if (favouritePendingRef.current) return
+    favouritePendingRef.current = true
+    setLocalFavourite(!(localFavourite ?? r.is_favourite))
     try {
       const result = await toggleFavourite(r.id)
+      setLocalFavourite(result.is_favourite)
       onUpdated?.({ ...r, is_favourite: result.is_favourite })
     } catch {
+      setLocalFavourite(null)
       toast.danger(t('recipes.failedToSave'), { timeout: 3000 })
+    } finally {
+      favouritePendingRef.current = false
     }
   }
 
@@ -339,7 +352,7 @@ const RecipeDetailModal = ({
   const viewContent = (
     <RecipeViewLayout
       key={r.id}
-      recipe={r}
+      recipe={{ ...r, is_favourite: localFavourite ?? r.is_favourite }}
       components={components}
       unitSystem={unitSystem}
       servingScale={servingScale}
@@ -362,7 +375,7 @@ const RecipeDetailModal = ({
       onOpenMealPlan={openMealPlan}
       onOpenCookMode={openCookMode}
       onClose={handleClose}
-      banners={<RecipeNotices recipe={r} error={error} />}
+      banners={<RecipeNotices recipe={r} error={error} hideAllergenNotice />}
       notes={notes.localNotes}
       onNotesChange={notes.setLocalNotes}
       onNotesBlur={notes.handleNotesSave}

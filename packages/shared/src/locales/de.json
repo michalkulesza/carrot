@@ -190,7 +190,8 @@
     "startTimerLabel": "{{duration}}-Timer starten",
     "forServings": "für {{count}}",
     "byCreator": "von @{{handle}}",
-    "addedByName": "hinzugefügt von {{name}}"
+    "addedByName": "hinzugefügt von {{name}}",
+    "favouriteShort": "Favorit"
   },
   "nav": {
     "recipes": "Rezepte",
