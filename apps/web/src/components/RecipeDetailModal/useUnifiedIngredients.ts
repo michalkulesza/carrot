@@ -5,20 +5,9 @@ import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils
 import {
   displayIngredientWithLocalizedUnit,
   getScaledIngredientValues,
+  SHORT_UNITS,
   parseIngredient,
 } from './helpers'
-
-const SHORT_UNITS = new Set([
-  'ml',
-  'l',
-  'cl',
-  'g',
-  'kg',
-  'tsp',
-  'tbsp',
-  'oz',
-  'lb',
-])
 
 export interface UnifiedIngredient {
   key: string

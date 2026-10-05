@@ -708,7 +708,18 @@
     "exportError": "Failed to export PDF",
     "month": "Month",
     "ingredient": "Ingredient",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "toGet": "{{count}} to get",
+    "inBasket": "{{done}} of {{total}} in the basket",
+    "doneLabel": "Done:",
+    "addItemHint": "Add an item — try “2 lemons” or “500g mince”",
+    "addItemShort": "Add an item",
+    "aisleAllIn": "All in",
+    "aisleLeft": "{{count}} left",
+    "editItem": "Edit item",
+    "dropHere": "Drop here",
+    "showCompleted": "Show completed",
+    "hideCompleted": "Hide completed"
   },
   "languages": {
     "en": "English",

@@ -630,7 +630,18 @@
     "presenceEditing": "{{name}} modifie",
     "addToList": "Ajouter à la liste de courses",
     "addedToList": "Ajouté",
-    "addAll": "Tout ajouter"
+    "addAll": "Tout ajouter",
+    "toGet": "{{count}} à acheter",
+    "inBasket": "{{done}} sur {{total}} dans le panier",
+    "doneLabel": "Terminé :",
+    "addItemHint": "Ajouter un article — essayez « 2 citrons » ou « 500g de viande hachée »",
+    "addItemShort": "Ajouter un article",
+    "aisleAllIn": "Tout est là",
+    "aisleLeft": "{{count}} restants",
+    "editItem": "Modifier l'article",
+    "dropHere": "Déposer ici",
+    "showCompleted": "Afficher les terminés",
+    "hideCompleted": "Masquer les terminés"
   },
   "importJobs": {
     "queued": "Importation de recette mise en file d’attente",

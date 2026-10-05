@@ -43,6 +43,18 @@ export const formatCookingTime = (
   return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
 }
 
+export const SHORT_UNITS = new Set([
+  'ml',
+  'l',
+  'cl',
+  'g',
+  'kg',
+  'tsp',
+  'tbsp',
+  'oz',
+  'lb',
+])
+
 export type Mode = 'view' | 'editing' | 'confirming'
 
 export const getHeaderBg = (mode: Mode): string => {

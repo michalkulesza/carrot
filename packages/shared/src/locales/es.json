@@ -629,7 +629,18 @@
     "presenceEditing": "{{name}} está editando",
     "addToList": "Añadir a la lista de la compra",
     "addedToList": "Añadido",
-    "addAll": "Añadir todo"
+    "addAll": "Añadir todo",
+    "toGet": "{{count}} por comprar",
+    "inBasket": "{{done}} de {{total}} en la cesta",
+    "doneLabel": "Listo:",
+    "addItemHint": "Añade un artículo — prueba «2 limones» o «500g de carne picada»",
+    "addItemShort": "Añadir un artículo",
+    "aisleAllIn": "Todo dentro",
+    "aisleLeft": "quedan {{count}}",
+    "editItem": "Editar artículo",
+    "dropHere": "Suelta aquí",
+    "showCompleted": "Mostrar completados",
+    "hideCompleted": "Ocultar completados"
   },
   "importJobs": {
     "queued": "Importación de receta en cola",

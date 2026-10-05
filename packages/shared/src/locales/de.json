@@ -630,7 +630,18 @@
     "presenceEditing": "{{name}} bearbeitet",
     "addToList": "Zur Einkaufsliste hinzufügen",
     "addedToList": "Hinzugefügt",
-    "addAll": "Alle hinzufügen"
+    "addAll": "Alle hinzufügen",
+    "toGet": "{{count}} zu besorgen",
+    "inBasket": "{{done}} von {{total}} im Korb",
+    "doneLabel": "Erledigt:",
+    "addItemHint": "Artikel hinzufügen – z. B. „2 Zitronen“ oder „500g Hackfleisch“",
+    "addItemShort": "Artikel hinzufügen",
+    "aisleAllIn": "Alles drin",
+    "aisleLeft": "{{count}} übrig",
+    "editItem": "Artikel bearbeiten",
+    "dropHere": "Hier ablegen",
+    "showCompleted": "Erledigte anzeigen",
+    "hideCompleted": "Erledigte ausblenden"
   },
   "importJobs": {
     "queued": "Rezeptimport vorgemerkt",

@@ -634,7 +634,18 @@
     "presenceEditing": "{{name}} edytuje",
     "addToList": "Dodaj do listy zakupów",
     "addedToList": "Dodano",
-    "addAll": "Dodaj wszystko"
+    "addAll": "Dodaj wszystko",
+    "toGet": "Do kupienia: {{count}}",
+    "inBasket": "{{done}} z {{total}} w koszyku",
+    "doneLabel": "Gotowe:",
+    "addItemHint": "Dodaj pozycję — spróbuj „2 cytryny” lub „500g mielonego”",
+    "addItemShort": "Dodaj pozycję",
+    "aisleAllIn": "Wszystko",
+    "aisleLeft": "zostało {{count}}",
+    "editItem": "Edytuj pozycję",
+    "dropHere": "Upuść tutaj",
+    "showCompleted": "Pokaż ukończone",
+    "hideCompleted": "Ukryj ukończone"
   },
   "importJobs": {
     "queued": "Import przepisu dodany do kolejki",
