@@ -64,12 +64,20 @@ export interface ParsedRecipeText {
   chars: number
 }
 
-const isStepLine = (line: string) => /^(\d+[.)]\s|step\s*\d)/i.test(line)
-const isIngredientLine = (line: string) =>
-  !isStepLine(line) &&
-  /^((\d+[\d./½¼¾]*\s?(g|kg|ml|l|tsp|tbsp|cups?|oz)?\b)|pinch|a\s|[-•*])/i.test(
+// Recipe text can be in any supported language, independently of the UI locale.
+const isStepLine = (line: string) =>
+  /^(?:\d+[.)]\s|(?:step|schritt|krok|étape|etape|paso)\s*\d+(?!\d))/iu.test(
     line
   )
+
+const INGREDIENT_AMOUNT_PATTERN =
+  /^(?:\d+(?:[.,]\d+|\/\d+)?(?:\s+\d+\/\d+|\s*[½¼¾])?|[½¼¾])(?:\s|(?=[\p{L}]))/u
+const INGREDIENT_CUE_PATTERN =
+  /^(?:(?:(?:a|eine|una|une)\s+)?(?:pinch|prise|szczypta|szczyptę|szczypty|pincée|pincee|pizca))(?!\p{L})|^a\s|^[-•*]/iu
+
+const isIngredientLine = (line: string) =>
+  !isStepLine(line) &&
+  (INGREDIENT_AMOUNT_PATTERN.test(line) || INGREDIENT_CUE_PATTERN.test(line))
 
 export const parseRecipeText = (text: string): ParsedRecipeText => {
   const lines = text

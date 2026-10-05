@@ -1,6 +1,8 @@
 import type { ShoppingCategory } from '@carrot/shared/types'
 import { AISLE_STAGES } from './aisleKeywords'
 
+export { parseItemText } from './itemQuantity'
+
 export interface AisleStyle {
   bg: string
   fg: string
@@ -23,6 +25,8 @@ export const normalizeItemText = (text: string): string =>
     .toLowerCase()
     .replace(/ł/g, 'l')
     .replace(/ß/g, 'ss')
+    .replace(/œ/g, 'oe')
+    .replace(/æ/g, 'ae')
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/[-_/,.;:()'’"]/g, ' ')
@@ -45,33 +49,33 @@ const compileWord = (word: string): string => {
   return `${start}${escape(normalized)}${end}`
 }
 
-const COMPILED_STAGES = AISLE_STAGES.map(({ category, words }) => ({
-  category,
-  pattern: new RegExp(
-    words
-      .map(compileWord)
-      .filter((part) => part.length > 0)
-      .join('|'),
-    'u'
-  ),
-}))
+const compilePattern = (words: string[]): RegExp | null =>
+  words.length ? new RegExp(words.map(compileWord).join('|'), 'u') : null
 
-export const guessCategory = (text: string): ShoppingCategory => {
+const COMPILED_STAGES = AISLE_STAGES.map(
+  ({ category, words, languageWords }) => ({
+    category,
+    pattern: compilePattern(words),
+    languagePatterns: Object.fromEntries(
+      Object.entries(languageWords ?? {}).map(([language, keywords]) => [
+        language,
+        compilePattern(keywords),
+      ])
+    ),
+  })
+)
+
+export const guessCategory = (
+  text: string,
+  locale = 'en'
+): ShoppingCategory => {
   const normalized = normalizeItemText(text)
   if (!normalized) return 'other'
-  const match = COMPILED_STAGES.find(({ pattern }) => pattern.test(normalized))
+  const language = locale.toLowerCase().split(/[-_]/)[0]
+  const match = COMPILED_STAGES.find(
+    ({ pattern, languagePatterns }) =>
+      pattern?.test(normalized) || languagePatterns[language]?.test(normalized)
+  )
 
   return match ? match.category : 'other'
-}
-
-const AMOUNT_PATTERN =
-  /^(\d+[\d./½¼¾]*\s?(?:g|kg|ml|l|lb|oz|tbsp|tsp|cups?|cloves?|x)?)\s+(.+)$/i
-
-export const parseItemText = (text: string) => {
-  const trimmed = text.trim()
-  const match = AMOUNT_PATTERN.exec(trimmed)
-
-  return match
-    ? { amount: match[1].trim(), name: match[2] }
-    : { amount: '', name: trimmed }
 }

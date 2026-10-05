@@ -12,6 +12,7 @@ import type { ShoppingCategory } from '@carrot/shared/types'
 export interface AisleStage {
   category: ShoppingCategory
   words: string[]
+  languageWords?: Record<string, string[]>
 }
 
 const FROZEN = [
@@ -40,8 +41,6 @@ const FROZEN = [
   // fr
   'surgel',
   'congel',
-  'glace$',
-  'glaces$',
   'creme glacee',
   // es
   'congelad',
@@ -340,7 +339,6 @@ const PANTRY_OVERRIDES = [
   'chilli powder',
   'chili powder',
   'cayenne',
-  'paprika',
   'icing sugar',
   'powdered sugar',
   'egg noodle',
@@ -534,6 +532,7 @@ const PANTRY_OVERRIDES = [
   'seche',
   'seches',
   'sec$',
+  'raisins secs',
   'concentre de tomate',
   'coulis',
   'passata',
@@ -543,7 +542,6 @@ const PANTRY_OVERRIDES = [
   'poivre',
   'piment en poudre',
   'flocons de piment',
-  'paprika',
   'sucre glace',
   'sucre en poudre',
   'nouilles aux oeufs',
@@ -1358,7 +1356,6 @@ const PRODUCE = [
   'gurke',
   'zucchini',
   'aubergine',
-  'paprika',
   'peperoni',
   'chili',
   'zwiebel',
@@ -1422,10 +1419,8 @@ const PRODUCE = [
   'clementine',
   'peche',
   'nectarine',
-  'prune',
   'abricot',
   'cerise',
-  'raisin',
   'melon',
   'pasteque',
   'ananas',
@@ -1655,9 +1650,7 @@ const PANTRY = [
   'hazelnut',
   'pecan',
   'seed',
-  'raisin',
   'sultana',
-  'prune',
   'date$',
   'dates$',
   'apricots dried',
@@ -1954,6 +1947,7 @@ const PANTRY = [
   'sesame',
   'graine',
   'raisins secs',
+  'pruneau',
   'cafe',
   'the$',
   'infusion',
@@ -2055,11 +2049,31 @@ const PANTRY = [
   'postre',
 ]
 
+// Resolve only words whose meaning changes between supported languages using
+// the active locale; all unambiguous keywords remain multilingual.
 export const AISLE_STAGES: AisleStage[] = [
   { category: 'frozen', words: FROZEN },
   { category: 'other', words: HOUSEHOLD },
   { category: 'pantry', words: PANTRY_OVERRIDES },
+  // Bare French glace also occurs in pantry phrases such as sucre glace.
+  { category: 'frozen', words: ['glace$', 'glaces$'] },
   { category: 'produce', words: PRODUCE_OVERRIDES },
+  {
+    category: 'pantry',
+    words: [],
+    languageWords: {
+      en: ['paprika$', 'raisin$', 'raisins$', 'prune$', 'prunes$'],
+      fr: ['paprika$'],
+    },
+  },
+  {
+    category: 'produce',
+    words: [],
+    languageWords: {
+      de: ['paprika$'],
+      fr: ['raisin$', 'raisins$', 'prune$', 'prunes$'],
+    },
+  },
   { category: 'meat_seafood', words: MEAT_SEAFOOD },
   { category: 'dairy_eggs', words: DAIRY_EGGS },
   { category: 'produce', words: PRODUCE },

@@ -223,7 +223,7 @@ const ShoppingItemRow = ({
                 type="button"
                 {...attributes}
                 {...listeners}
-                aria-label="Drag to reorder"
+                aria-label={t('recipes.dragToReorder')}
                 className="flex h-7 w-7 cursor-grab items-center justify-center rounded text-zinc-300 transition-colors hover:text-zinc-500 active:cursor-grabbing"
               >
                 <GripIcon />

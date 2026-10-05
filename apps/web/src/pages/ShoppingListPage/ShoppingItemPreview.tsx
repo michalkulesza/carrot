@@ -4,16 +4,14 @@ import {
   displayIngredientWithLocalizedUnit,
   getIngredientQuantityCount,
 } from '@carrot/shared/utils/ingredientUtils'
-import {
-  SHORT_UNITS,
-  parseIngredient,
-} from '../../components/RecipeDetailModal/helpers'
+import { formatIngredientParts } from '../../utils/ingredientDisplay'
 import { AISLE_STYLES } from './aisles'
+import { parseItemQuantity } from './itemQuantity'
 
 export const useItemDisplay = (item: ShoppingListItem) => {
   const { t } = useTranslation()
   const translateUnit = (unit: string, qty: string) =>
-    t(`units.${unit}`, {
+    t(`units.${unit.toLowerCase()}`, {
       count:
         ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty
           ? getIngredientQuantityCount(qty)
@@ -24,21 +22,13 @@ export const useItemDisplay = (item: ShoppingListItem) => {
     item.text,
     translateUnit
   )
-  const parsed = parseIngredient(item.text)
-  const amount = parsed.qty
-    ? [
-        parsed.qty,
-        !parsed.unit
-          ? ''
-          : SHORT_UNITS.has(parsed.unit)
-            ? parsed.unit
-            : translateUnit(parsed.unit, parsed.qty),
-      ]
-        .filter(Boolean)
-        .join(' ')
-    : ''
+  const { amount, name } = formatIngredientParts(
+    item.text,
+    translateUnit,
+    parseItemQuantity
+  )
 
-  return { displayText, amount, name: parsed.qty ? parsed.name : displayText }
+  return { displayText, amount, name: amount ? name : displayText }
 }
 
 // The floating copy of a row shown by the drag overlay while an item is

@@ -11,14 +11,16 @@ interface AddItemRowProps {
 }
 
 const AddItemRow = ({ categories, onAdd }: AddItemRowProps) => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
   const wide = useMediaQuery('(min-width: 768px)')
   const submittedRef = useRef(false)
   const [picked, setPicked] = useState<ShoppingCategory | null>(null)
   const trimmed = text.trim()
   const parsed = trimmed ? parseItemText(trimmed) : null
-  const category = trimmed ? (picked ?? guessCategory(trimmed)) : null
+  const category = trimmed
+    ? (picked ?? guessCategory(trimmed, i18n.resolvedLanguage ?? i18n.language))
+    : null
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()

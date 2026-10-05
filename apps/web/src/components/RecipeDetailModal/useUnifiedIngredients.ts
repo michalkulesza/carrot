@@ -5,9 +5,8 @@ import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils
 import {
   displayIngredientWithLocalizedUnit,
   getScaledIngredientValues,
-  SHORT_UNITS,
-  parseIngredient,
 } from './helpers'
+import { formatIngredientParts } from '../../utils/ingredientDisplay'
 
 export interface UnifiedIngredient {
   key: string
@@ -53,20 +52,8 @@ export const useUnifiedIngredients = (
     })
   const format = (ingredient: string) =>
     displayIngredientWithLocalizedUnit(ingredient, translateUnit)
-  const formatParts = (ingredient: string): IngredientParts => {
-    const parsed = parseIngredient(ingredient)
-    if (!parsed.qty) return { amount: '', name: format(ingredient) }
-    const unitText = !parsed.unit
-      ? ''
-      : SHORT_UNITS.has(parsed.unit)
-        ? parsed.unit
-        : translateUnit(parsed.unit, parsed.qty)
-
-    return {
-      amount: [parsed.qty, unitText].filter(Boolean).join(' '),
-      name: parsed.name,
-    }
-  }
+  const formatParts = (ingredient: string): IngredientParts =>
+    formatIngredientParts(ingredient, translateUnit)
 
   return { items, format, formatParts }
 }
