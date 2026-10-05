@@ -37,6 +37,7 @@ from api.models import (
 from api.routes.context import get_active_household_id, get_scope_key
 from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
+from api.services.related_recipes import add_related_recipes
 from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
 from api.users import User, current_active_user
 
@@ -575,6 +576,13 @@ async def update_recipe(
             for field in ("ingredient_links", "ingredient_evidence"):
                 if not value.get(field):
                     value[field] = stored.get(field, [])
+        # Resolved ids are server-owned: keep a stored id only while its line still has the same link.
+        stored_links = stored.get("ingredient_links") or []
+        stored_ids = stored.get("linked_recipe_ids") or []
+        value["linked_recipe_ids"] = [
+            stored_ids[link_index] if link_index < len(stored_ids) and link_index < len(stored_links) and stored_links[link_index] == link else None
+            for link_index, link in enumerate(value.get("ingredient_links") or [])
+        ]
         if steps_unchanged and not value.get("step_evidence"):
             value["step_evidence"] = stored.get("step_evidence", [])
         if component.name == stored.get("name") and not value.get("name_evidence"):
@@ -827,14 +835,7 @@ async def set_related_recipes(
         (recipe_related_recipes_table.c.recipe_id == recipe_id) |
         (recipe_related_recipes_table.c.related_recipe_id == recipe_id)
     ))
-    if targets:
-        insert_stmt = pg_insert(recipe_related_recipes_table).on_conflict_do_nothing(
-            index_elements=["recipe_id", "related_recipe_id"]
-        )
-        await session.execute(insert_stmt, [
-            {"recipe_id": min(recipe_id, target.id), "related_recipe_id": max(recipe_id, target.id)}
-            for target in targets
-        ])
+    await add_related_recipes(session, recipe_id, [target.id for target in targets])
     await session.commit()
     scope = get_scope_key("recipes", user.id, household_id)
     await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})

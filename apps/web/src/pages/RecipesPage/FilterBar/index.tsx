@@ -7,6 +7,7 @@ import {
 } from '@carrot/shared/utils/tagFilters'
 import CategoryFilterDropdown from './CategoryFilterDropdown'
 import FilterTagButton from './FilterTagButton'
+import HorizontalScrollStrip from './HorizontalScrollStrip'
 
 interface FilterBarProps {
   allTags: Tag[]
@@ -54,7 +55,7 @@ const FilterBar = ({
       </div>
 
       {groupedTags.other.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide md:flex-1 md:min-w-0">
+        <HorizontalScrollStrip>
           {groupedTags.other.map((tag) => (
             <FilterTagButton
               key={tag.id}
@@ -63,7 +64,7 @@ const FilterBar = ({
               onToggleTag={onToggleTag}
             />
           ))}
-        </div>
+        </HorizontalScrollStrip>
       )}
     </div>
   )

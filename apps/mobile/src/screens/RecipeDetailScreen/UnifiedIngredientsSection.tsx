@@ -9,6 +9,7 @@ import {
 import { styles } from './styles'
 import { createShoppingListItemInput } from '../../utils/uuid'
 import IngredientRow from './IngredientRow'
+import { effectiveAllergenFlag } from '@carrot/shared/utils/allergenKeys'
 
 interface UnifiedIngredient {
   componentIndex: number
@@ -145,8 +146,10 @@ const UnifiedIngredientsSection = ({
               addMode={addMode}
               isAdded={sessionAdded.has(key)}
               onAdd={() => onAdd(key, createShoppingListItemInput(shoppingListValue, shoppingCategory))}
-              allergenFlag={components[componentIndex].ingredient_flags?.[ingredientIndex] ?? null}
+              allergenFlag={effectiveAllergenFlag(components[componentIndex].ingredient_flags?.[ingredientIndex]) ?? null}
               linkedRecipeUrl={components[componentIndex].ingredient_links?.[ingredientIndex] ?? null}
+              linkedRecipeId={components[componentIndex].linked_recipe_ids?.[ingredientIndex] ?? null}
+              linkedAllergens={components[componentIndex].ingredient_flags?.[ingredientIndex]?.linked_allergens ?? null}
               activeAllergens={activeAllergens}
               fontSize={fontSize}
               lineHeight={lineHeight}

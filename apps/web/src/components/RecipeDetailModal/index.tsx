@@ -376,6 +376,7 @@ const RecipeDetailModal = ({
       onOpenCookMode={openCookMode}
       onClose={handleClose}
       banners={<RecipeNotices recipe={r} error={error} hideAllergenNotice />}
+      onOpenRecipe={onOpenRecipe}
       notes={notes.localNotes}
       onNotesChange={notes.setLocalNotes}
       onNotesBlur={notes.handleNotesSave}
@@ -467,6 +468,7 @@ const RecipeDetailModal = ({
                   ingredientActions={ingredientActions}
                   onIngredientChange={setIngredient}
                   onStepChange={setStep}
+                  onOpenRecipe={onOpenRecipe}
                 />
               </RecipeClassicLayout>
             )}

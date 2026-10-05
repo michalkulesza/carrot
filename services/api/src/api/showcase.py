@@ -20,6 +20,7 @@ from api.models import (
     ImportJob,
     MealPlanEntry,
     Recipe,
+    ShoppingCategory,
     ShoppingListItem,
     Tag,
     UserPreferences,
@@ -28,6 +29,7 @@ from api.models import (
     user_recipe_favourites_table,
 )
 from api.routes.households import generate_invite_code
+from api.services.related_recipes import add_related_recipes
 from api.users import SHOWCASE_EMAIL, User, UserCreate, UserManager
 
 logger = logging.getLogger(__name__)
@@ -41,10 +43,19 @@ CHECK_INTERVAL_SECONDS = 5 * 60
 
 FIXTURE_PATH = Path(__file__).parent / "showcase_fixture.json"
 
+# Meal plan seeded on every reset, as (days relative to the reset date, fixture recipe title),
+# so the demo always shows a plan around "today" instead of fixed dates that go stale.
+SHOWCASE_MEAL_PLAN: list[tuple[int, str]] = [
+    (-1, "Beef Stew"),
+    (0, "Chicken and Pesto Rice With Peas"),
+    (1, "Beef Stroganoff"),
+    (2, "Chicken teriyaki"),
+]
+
 
 def _load_fixture() -> dict:
     if not FIXTURE_PATH.exists():
-        return {"recipes": [], "meal_plan_entries": [], "shopping_list_items": []}
+        return {"recipes": [], "shopping_list_items": []}
     return json.loads(FIXTURE_PATH.read_text(encoding="utf-8"))
 
 
@@ -171,28 +182,52 @@ async def reset_showcase_account() -> None:
 
         await session.flush()
 
-        for entry_fixture in fixture.get("meal_plan_entries", []):
-            recipe_id = recipe_id_map.get(entry_fixture.get("recipe_fixture_id"))
-            text = entry_fixture.get("text")
-            if recipe_id is None and not text:
+        # Fixture components reference linked recipes by fixture_id; point them at the re-seeded rows.
+        for recipe_fixture in fixture.get("recipes", []):
+            parent_id = recipe_id_map[recipe_fixture["fixture_id"]]
+            components = recipe_fixture.get("components", [])
+            if not any(component.get("linked_recipe_ids") for component in components):
+                continue
+            remapped = [{**component, "linked_recipe_ids": [
+                str(recipe_id_map[linked]) if linked in recipe_id_map else None
+                for linked in component.get("linked_recipe_ids") or []
+            ]} for component in components]
+            await session.execute(update(Recipe).where(Recipe.id == parent_id).values(components=remapped))
+            await add_related_recipes(session, parent_id, {
+                uuid.UUID(linked) for component in remapped for linked in component["linked_recipe_ids"] if linked
+            })
+
+        recipe_id_by_title = {
+            recipe_fixture["title"]: recipe_id_map[recipe_fixture["fixture_id"]]
+            for recipe_fixture in fixture.get("recipes", [])
+        }
+        today = datetime.utcnow().date()
+        for day_offset, title in SHOWCASE_MEAL_PLAN:
+            recipe_id = recipe_id_by_title.get(title)
+            if recipe_id is None:
+                logger.warning("Showcase meal plan recipe %r not found in fixture", title)
                 continue
             session.add(
                 MealPlanEntry(
                     user_id=user_id,
                     household_id=household_id,
-                    date=datetime.fromisoformat(entry_fixture["date"]).date(),
+                    date=today + timedelta(days=day_offset),
                     recipe_id=recipe_id,
-                    text=text,
                 )
             )
 
-        for position, item_text in enumerate(fixture.get("shopping_list_items", [])):
+        for position, item_fixture in enumerate(fixture.get("shopping_list_items", [])):
+            # Older fixtures stored items as plain text strings.
+            if isinstance(item_fixture, str):
+                item_fixture = {"text": item_fixture}
             session.add(
                 ShoppingListItem(
                     user_id=user_id,
                     household_id=household_id,
-                    text=item_text,
-                    position=position,
+                    text=item_fixture["text"],
+                    category=item_fixture.get("category", ShoppingCategory.OTHER),
+                    completed=item_fixture.get("completed", False),
+                    position=item_fixture.get("position", position),
                 )
             )
 

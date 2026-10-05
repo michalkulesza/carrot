@@ -1,11 +1,12 @@
 import type { Tag, TagCategory } from '../types'
 
-export const TAG_CATEGORIES: TagCategory[] = ['protein', 'carb', 'cuisine', 'time']
+export const TAG_CATEGORIES: TagCategory[] = ['meal', 'protein', 'carb', 'cuisine', 'time']
 
 export const groupTagsByCategory = (
   tags: Tag[]
 ): Record<TagCategory, Tag[]> & { other: Tag[] } => {
   const grouped: Record<TagCategory, Tag[]> & { other: Tag[] } = {
+    meal: [],
     protein: [],
     carb: [],
     cuisine: [],

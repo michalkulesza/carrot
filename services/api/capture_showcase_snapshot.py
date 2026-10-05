@@ -1,7 +1,8 @@
-"""One-off script: run once after manually creating recipes/meal plans/shopping
-list items for the showcase@demo.com account through the app UI. Dumps that
-account's current data into showcase_fixture.json, which is what
-api.showcase.reset_showcase_account() restores on every hourly reset.
+"""One-off script: run once after manually creating recipes/shopping list items
+for the showcase@demo.com account through the app UI. Dumps that account's
+current data into showcase_fixture.json, which is what
+api.showcase.reset_showcase_account() restores on every hourly reset. The meal
+plan is not captured; it is seeded from SHOWCASE_MEAL_PLAN in api.showcase.
 
 Run from services/api/:  uv run python capture_showcase_snapshot.py
 
@@ -18,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from sqlalchemy import select  # noqa: E402
 
 from api.database import async_session_maker  # noqa: E402
-from api.models import MealPlanEntry, Recipe, ShoppingListItem  # noqa: E402
+from api.models import Recipe, ShoppingListItem  # noqa: E402
 from api.users import SHOWCASE_EMAIL, User  # noqa: E402
 
 
@@ -30,15 +31,12 @@ async def main() -> None:
             return
 
         recipes = (await session.execute(select(Recipe).where(Recipe.author_id == user.id))).scalars().all()
-        meal_plan_entries = (
-            (await session.execute(select(MealPlanEntry).where(MealPlanEntry.user_id == user.id))).scalars().all()
-        )
         shopping_list_items = (
             (
                 await session.execute(
                     select(ShoppingListItem)
                     .where(ShoppingListItem.user_id == user.id)
-                    .order_by(ShoppingListItem.position)
+                    .order_by(ShoppingListItem.category, ShoppingListItem.position, ShoppingListItem.created_at)
                 )
             )
             .scalars()
@@ -75,24 +73,20 @@ async def main() -> None:
                 }
                 for recipe in recipes
             ],
-            "meal_plan_entries": [
+            "shopping_list_items": [
                 {
-                    **(
-                        {"recipe_fixture_id": recipe_fixture_ids[entry.recipe_id]}
-                        if entry.recipe_id in recipe_fixture_ids
-                        else {"text": entry.text}
-                    ),
-                    "date": entry.date.isoformat(),
+                    "text": item.text,
+                    "category": item.category,
+                    "completed": item.completed,
+                    "position": item.position,
                 }
-                for entry in meal_plan_entries
-                if entry.recipe_id in recipe_fixture_ids or entry.text
+                for item in shopping_list_items
             ],
-            "shopping_list_items": [item.text for item in shopping_list_items],
         }
 
     out_path = Path(__file__).parent / "src" / "api" / "showcase_fixture.json"
     out_path.write_text(json.dumps(fixture, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Wrote {len(fixture['recipes'])} recipes, {len(fixture['meal_plan_entries'])} meal plan entries, "
+    print(f"Wrote {len(fixture['recipes'])} recipes, "
           f"{len(fixture['shopping_list_items'])} shopping list items to {out_path}")
 
 

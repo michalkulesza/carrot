@@ -1,8 +1,9 @@
 #!/bin/sh
 set -eu
 # Prevent Chromium DNS rebinding from reaching private, loopback, or reserved IPs.
-iptables -A OUTPUT -d 127.0.0.11/32 -p udp --dport 53 -j ACCEPT
-iptables -A OUTPUT -d 127.0.0.11/32 -p tcp --dport 53 -j ACCEPT
+# Docker's embedded resolver DNATs 127.0.0.11:53 to a random port before the filter table runs.
+iptables -A OUTPUT -d 127.0.0.11/32 -p udp -j ACCEPT
+iptables -A OUTPUT -d 127.0.0.11/32 -p tcp -j ACCEPT
 while read -r kind resolver _; do
   [ "$kind" = nameserver ] || continue
   case "$resolver" in

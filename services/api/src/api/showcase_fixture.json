@@ -1,7 +1,7 @@
 {
   "recipes": [
     {
-      "fixture_id": "36478132-1c54-42c1-bdfe-f7625af226c6",
+      "fixture_id": "0629bb01-67fe-4639-8ebb-80828259570a",
       "title": "Beef Stew",
       "source_title": "Beef Stew",
       "servings": 4,
@@ -453,7 +453,7 @@
       "tag_names": []
     },
     {
-      "fixture_id": "38f4b255-8b21-4685-b1cb-40376238364c",
+      "fixture_id": "ca4feaef-a873-41f8-88e0-229c558bcbd8",
       "title": "Chicken teriyaki",
       "source_title": "Chicken teriyaki",
       "servings": 4,
@@ -981,535 +981,7 @@
       "tag_names": []
     },
     {
-      "fixture_id": "6d85ced9-b2fe-4954-9a9c-86b6dad5d1da",
-      "title": "Chicken teriyaki",
-      "source_title": "Chicken teriyaki",
-      "servings": 4,
-      "total_time_minutes": 25,
-      "kcal_per_serving": 480,
-      "protein_per_serving": 32,
-      "fat_per_serving": 22,
-      "carbs_per_serving": 38,
-      "issue_codes": [],
-      "nutrition_provenance": {
-        "kcal_per_serving": {
-          "status": "ai"
-        },
-        "protein_per_serving": {
-          "status": "ai"
-        },
-        "fat_per_serving": {
-          "status": "ai"
-        },
-        "carbs_per_serving": {
-          "status": "ai"
-        }
-      },
-      "nutrition_status": "complete",
-      "total_time_provenance": {
-        "status": "source",
-        "references": [
-          {
-            "evidence_id": "html:0",
-            "locator_kind": "html",
-            "locator": "/article[0]/script[0]:0:5386",
-            "quote": "{ \"@context\": \"https://schema.org/\", \"@type\": \"Recipe\", \"name\": \"Chicken teriyaki\", \"image\": [ \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1600&height=900\", \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=800&height=600\", \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1000&height=1000\" ], \"description\": \"Crispy chicken, sticky sauce, and very easy to throw together. This Chicken Teriyaki’s all about juicy thighs in a glossy glaze with just the right hit of sweet, salty, and a cheeky splash of sake.\", \"keywords\": [\"Dinner\",\"Protein\",\"Chicken\",\"Easy\",\"Quick\"], \"recipeYield\": \"4\", \"author\": { \"@type\": \"Person\", \"name\": \"Andy\" }, \"cookTime\": \"PT20M\", \"prepTime\": \"PT5M\", \"totalTime\": \"PT25M\", \"recipeCategory\": \"<p>Dinner</p>\", \"recipeIngredient\": [ \"2 spring onions, white and green parts separated\",\"6 chicken thighs, skin on\",\"2 tsp sesame oil\",\"thumb-sized piece of ginger, finely grated\",\"2 garlic cloves, finely grated\",\"1½ tbsp sake \",\"¼ cup (60ml) Tamari soy\",\"¼ cup (60ml) mirin\",\"1 tbsp honey\",\"1 bunch pak choy, washed, halved lengthwise\",\"steamed Jasmine rice, to serve\",\"toasted sesame seeds, to garnish\"], \"recipeInstructions\": [ { \"@type\": \"HowToStep\", \"text\": \"Dice the white part of the spring onions, and finely slice the green parts. Set aside.\", \"name\": \"Dice the white part of the spring onions, and finely slice the green parts. Set aside.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-1\"},{ \"@type\": \"HowToStep\", \"text\": \"Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.\", \"name\": \"Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-2\"},{ \"@type\": \"HowToStep\", \"text\": \"When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.\", \"name\": \"When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-3\"},{ \"@type\": \"HowToStep\", \"text\": \"When the skin side is golden brown, transfer chicken to a tray.\", \"name\": \"When the skin side is golden brown, transfer chicken to a tray.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-4\"},{ \"@type\": \"HowToStep\", \"text\": \"Heat sesame oil in the same pan on medium high.\", \"name\": \"Heat sesame oil in the same pan on medium high.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-5\"},{ \"@type\": \"HowToStep\", \"text\": \"Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.\", \"name\": \"Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-6\"},{ \"@type\": \"HowToStep\", \"text\": \"Add sake and stir to deglaze pan.\", \"name\": \"Add sake and stir to deglaze pan.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-7\"},{ \"@type\": \"HowToStep\", \"text\": \"Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.\", \"name\": \"Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-8\"},{ \"@type\": \"HowToStep\", \"text\": \"Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.\", \"name\": \"Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-9\"},{ \"@type\": \"HowToStep\", \"text\": \"Steam pak choy for 1-2 minutes, until just tender.\", \"name\": \"Steam pak choy for 1-2 minutes, until just tender.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-10\"},{ \"@type\": \"HowToStep\", \"text\": \"Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds.\", \"name\": \"Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-11\"}], \"nutrition\": { \"@type\": \"NutritionInformation\", \"servingSize\": \"4\",\"\": \"\"}, \"recipeCuisine\": \"Japanese\", \"aggregateRating\": { \"@type\": \"AggregateRating\", \"ratingValue\": \"5\", \"bestRating\": \"5\", \"worstRating\": \"1\", \"ratingCount\": \"10\" }, \"video\": { \"@type\": \"VideoObject\", \"name\": \"Chicken teriyaki\", \"description\": \"Crispy chicken, sticky sauce, and very easy to throw together. This Chicken Teriyaki’s all about juicy thighs in a glossy glaze with just the right hit of sweet, salty, and a cheeky splash of sake.\", \"thumbnailUrl\": \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1600&height=900\", \"uploadDate\": \"2025-04-22T06:33:02.241+00:00\", \"contentUrl\": \"https://www.youtube.com/watch?v=hgL2CsiYzHQ\" }}",
-            "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-          }
-        ]
-      },
-      "allergen_status": "unknown",
-      "overview": "The chicken is pan-seared until the skin is golden and crispy, then simmered in a savory-sweet glaze made from ginger, garlic, sake, soy, mirin, and honey. It is served over steamed jasmine rice with tender pak choy and garnished with fresh spring onions and toasted sesame seeds.",
-      "title_evidence": [
-        {
-          "evidence_id": "html:0",
-          "locator_kind": "html",
-          "locator": "/article[0]/script[0]:0:5386",
-          "quote": "{ \"@context\": \"https://schema.org/\", \"@type\": \"Recipe\", \"name\": \"Chicken teriyaki\", \"image\": [ \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1600&height=900\", \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=800&height=600\", \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1000&height=1000\" ], \"description\": \"Crispy chicken, sticky sauce, and very easy to throw together. This Chicken Teriyaki’s all about juicy thighs in a glossy glaze with just the right hit of sweet, salty, and a cheeky splash of sake.\", \"keywords\": [\"Dinner\",\"Protein\",\"Chicken\",\"Easy\",\"Quick\"], \"recipeYield\": \"4\", \"author\": { \"@type\": \"Person\", \"name\": \"Andy\" }, \"cookTime\": \"PT20M\", \"prepTime\": \"PT5M\", \"totalTime\": \"PT25M\", \"recipeCategory\": \"<p>Dinner</p>\", \"recipeIngredient\": [ \"2 spring onions, white and green parts separated\",\"6 chicken thighs, skin on\",\"2 tsp sesame oil\",\"thumb-sized piece of ginger, finely grated\",\"2 garlic cloves, finely grated\",\"1½ tbsp sake \",\"¼ cup (60ml) Tamari soy\",\"¼ cup (60ml) mirin\",\"1 tbsp honey\",\"1 bunch pak choy, washed, halved lengthwise\",\"steamed Jasmine rice, to serve\",\"toasted sesame seeds, to garnish\"], \"recipeInstructions\": [ { \"@type\": \"HowToStep\", \"text\": \"Dice the white part of the spring onions, and finely slice the green parts. Set aside.\", \"name\": \"Dice the white part of the spring onions, and finely slice the green parts. Set aside.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-1\"},{ \"@type\": \"HowToStep\", \"text\": \"Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.\", \"name\": \"Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-2\"},{ \"@type\": \"HowToStep\", \"text\": \"When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.\", \"name\": \"When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-3\"},{ \"@type\": \"HowToStep\", \"text\": \"When the skin side is golden brown, transfer chicken to a tray.\", \"name\": \"When the skin side is golden brown, transfer chicken to a tray.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-4\"},{ \"@type\": \"HowToStep\", \"text\": \"Heat sesame oil in the same pan on medium high.\", \"name\": \"Heat sesame oil in the same pan on medium high.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-5\"},{ \"@type\": \"HowToStep\", \"text\": \"Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.\", \"name\": \"Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-6\"},{ \"@type\": \"HowToStep\", \"text\": \"Add sake and stir to deglaze pan.\", \"name\": \"Add sake and stir to deglaze pan.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-7\"},{ \"@type\": \"HowToStep\", \"text\": \"Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.\", \"name\": \"Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-8\"},{ \"@type\": \"HowToStep\", \"text\": \"Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.\", \"name\": \"Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-9\"},{ \"@type\": \"HowToStep\", \"text\": \"Steam pak choy for 1-2 minutes, until just tender.\", \"name\": \"Steam pak choy for 1-2 minutes, until just tender.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-10\"},{ \"@type\": \"HowToStep\", \"text\": \"Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds.\", \"name\": \"Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds.\", \"url\": \"https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki#step-11\"}], \"nutrition\": { \"@type\": \"NutritionInformation\", \"servingSize\": \"4\",\"\": \"\"}, \"recipeCuisine\": \"Japanese\", \"aggregateRating\": { \"@type\": \"AggregateRating\", \"ratingValue\": \"5\", \"bestRating\": \"5\", \"worstRating\": \"1\", \"ratingCount\": \"10\" }, \"video\": { \"@type\": \"VideoObject\", \"name\": \"Chicken teriyaki\", \"description\": \"Crispy chicken, sticky sauce, and very easy to throw together. This Chicken Teriyaki’s all about juicy thighs in a glossy glaze with just the right hit of sweet, salty, and a cheeky splash of sake.\", \"thumbnailUrl\": \"https://cdn.shopify.com/s/files/1/0725/3911/1726/files/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe.jpg?v=1745303436&width=1600&height=900\", \"uploadDate\": \"2025-04-22T06:33:02.241+00:00\", \"contentUrl\": \"https://www.youtube.com/watch?v=hgL2CsiYzHQ\" }}",
-          "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-        }
-      ],
-      "thumbnail_url": "http://www.andy-cooks.com/cdn/shop/articles/20250422063033-andy-20cooks-20-20easy-20chicken-20teriyaki-20recipe_e32b6b5e-cabd-41c2-8cd9-06bc7468a62d.jpg?v=1745459806",
-      "creator_handle": "andy-cooks.com",
-      "source_url": "https://www.andy-cooks.com/blogs/recipes/chicken-teriyaki",
-      "components": [
-        {
-          "name": "main",
-          "yield_note": "",
-          "ingredients": [
-            "2 spring onions, white and green parts separated",
-            "6 chicken thighs, skin on",
-            "2 tsp sesame oil",
-            "thumb-sized piece of ginger, finely grated",
-            "2 clove garlic, finely grated",
-            "1 1/2 tbsp sake",
-            "1/4 cup (60ml) Tamari soy",
-            "1/4 cup (60ml) mirin",
-            "1 tbsp honey",
-            "1 bunch pak choy, washed, halved lengthwise",
-            "steamed Jasmine rice, to serve",
-            "toasted sesame seeds, to garnish"
-          ],
-          "shopping_list_ingredients": [
-            "2 spring onions, white and green parts separated",
-            "6 chicken thighs, skin on",
-            "2 tsp sesame oil",
-            "thumb-sized piece of ginger, finely grated",
-            "2 garlic cloves, finely grated",
-            "1½ tbsp sake",
-            "¼ cup (60ml) Tamari soy",
-            "¼ cup (60ml) mirin",
-            "1 tbsp honey",
-            "1 bunch pak choy, washed, halved lengthwise",
-            "steamed Jasmine rice, to serve",
-            "toasted sesame seeds, to garnish"
-          ],
-          "shopping_list_categories": [
-            "produce",
-            "meat_seafood",
-            "pantry",
-            "produce",
-            "produce",
-            "pantry",
-            "pantry",
-            "pantry",
-            "pantry",
-            "produce",
-            "pantry",
-            "pantry"
-          ],
-          "steps": [
-            "Dice the white part of the spring onions, and finely slice the green parts. Set aside.",
-            "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.",
-            "When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.",
-            "When the skin side is golden brown, transfer chicken to a tray.",
-            "Heat sesame oil in the same pan on medium high.",
-            "Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.",
-            "Add sake and stir to deglaze pan.",
-            "Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.",
-            "Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.",
-            "Steam pak choy for 1-2 minutes, until just tender.",
-            "Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds."
-          ],
-          "metric_ingredients": [
-            "2 spring onions, white and green parts separated",
-            "6 chicken thighs, skin on",
-            "2 tsp sesame oil",
-            "thumb-sized piece of ginger, finely grated",
-            "2 clove garlic, finely grated",
-            "1 1/2 tbsp sake",
-            "1/4 cup (60ml) Tamari soy",
-            "1/4 cup (60ml) mirin",
-            "1 tbsp honey",
-            "1 bunch pak choy, washed, halved lengthwise",
-            "steamed Jasmine rice, to serve",
-            "toasted sesame seeds, to garnish"
-          ],
-          "imperial_ingredients": [
-            "2 spring onions, white and green parts separated",
-            "6 chicken thighs, skin on",
-            "2 tsp sesame oil",
-            "thumb-sized piece of ginger, finely grated",
-            "2 clove garlic, finely grated",
-            "1 1/2 tbsp sake",
-            "1/4 cup (60ml) Tamari soy",
-            "1/4 cup (60ml) mirin",
-            "1 tbsp honey",
-            "1 bunch pak choy, washed, halved lengthwise",
-            "steamed Jasmine rice, to serve",
-            "toasted sesame seeds, to garnish"
-          ],
-          "metric_steps": [
-            "Dice the white part of the spring onions, and finely slice the green parts. Set aside.",
-            "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.",
-            "When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.",
-            "When the skin side is golden brown, transfer chicken to a tray.",
-            "Heat sesame oil in the same pan on medium high.",
-            "Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.",
-            "Add sake and stir to deglaze pan.",
-            "Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.",
-            "Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.",
-            "Steam pak choy for 1-2 minutes, until just tender.",
-            "Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds."
-          ],
-          "imperial_steps": [
-            "Dice the white part of the spring onions, and finely slice the green parts. Set aside.",
-            "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.",
-            "When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.",
-            "When the skin side is golden brown, transfer chicken to a tray.",
-            "Heat sesame oil in the same pan on medium high.",
-            "Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.",
-            "Add sake and stir to deglaze pan.",
-            "Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.",
-            "Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.",
-            "Steam pak choy for 1-2 minutes, until just tender.",
-            "Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds."
-          ],
-          "ingredient_flags": [
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            },
-            {
-              "allergen": null,
-              "substitute": null,
-              "substitute_applied": false,
-              "original_display": null
-            }
-          ],
-          "ingredient_links": [
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null,
-            null
-          ],
-          "ingredient_evidence": [
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[0]:0:48",
-                  "quote": "2 spring onions, white and green parts separated",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[1]:0:25",
-                  "quote": "6 chicken thighs, skin on",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[2]:0:16",
-                  "quote": "2 tsp sesame oil",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[3]:0:42",
-                  "quote": "thumb-sized piece of ginger, finely grated",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[4]:0:30",
-                  "quote": "2 garlic cloves, finely grated",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[5]:0:12",
-                  "quote": "1½ tbsp sake",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[6]:0:23",
-                  "quote": "¼ cup (60ml) Tamari soy",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[7]:0:18",
-                  "quote": "¼ cup (60ml) mirin",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[8]:0:12",
-                  "quote": "1 tbsp honey",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[9]:0:43",
-                  "quote": "1 bunch pak choy, washed, halved lengthwise",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[10]:0:30",
-                  "quote": "steamed Jasmine rice, to serve",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[0]/div[0]/ul[0]/li[11]:0:32",
-                  "quote": "toasted sesame seeds, to garnish",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ],
-              "links": []
-            }
-          ],
-          "step_evidence": [
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[0]/p[0]:0:86",
-                  "quote": "Dice the white part of the spring onions, and finely slice the green parts. Set aside.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[1]:0:91",
-                  "quote": "Place chicken in a cold oiled frying pan, skin side down and place over a medium high heat.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[2]:0:96",
-                  "quote": "When chicken starts to sizzle, reduce heat to medium low and cook slowly, until fat renders out.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[3]:0:63",
-                  "quote": "When the skin side is golden brown, transfer chicken to a tray.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[4]:0:47",
-                  "quote": "Heat sesame oil in the same pan on medium high.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[5]:0:79",
-                  "quote": "Add white part of onion, ginger and garlic, cook for 2 minutes, until aromatic.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[6]:0:33",
-                  "quote": "Add sake and stir to deglaze pan.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[7]:0:89",
-                  "quote": "Add soy, mirin and honey, bring to a boil, stirring. Return chicken to pan, skin side up.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[8]:0:89",
-                  "quote": "Cook chicken in sauce for 5 minutes, basting regularly, until sauce reduces and thickens.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[9]:0:50",
-                  "quote": "Steam pak choy for 1-2 minutes, until just tender.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            },
-            {
-              "references": [
-                {
-                  "evidence_id": "html:0",
-                  "locator_kind": "html",
-                  "locator": "/article[0]/div[1]/div[0]/div[0]/div[0]/div[0]/div[0]/div[1]/div[1]/ol[0]/li[10]/p[0]:0:156",
-                  "quote": "Slice chicken and serve on steamed rice, drizzled with the sauce, with pak choy on the side, garnished with green part of the spring onion and sesame seeds.",
-                  "document_hash": "28d176f2a6285b23f326b69a0529ee1d8800acb9e53be6f0e3f510ad66bf7f7c"
-                }
-              ]
-            }
-          ],
-          "name_evidence": []
-        }
-      ],
-      "notes": null,
-      "tag_names": []
-    },
-    {
-      "fixture_id": "f7ed16ce-4b30-4dc8-b68f-00cd2e4939f6",
+      "fixture_id": "fa8341c2-d2ea-4c2e-9c4a-b4002bbd9bfe",
       "title": "Beef Stroganoff",
       "source_title": "Beef Stroganoff",
       "servings": 4,
@@ -2202,7 +1674,7 @@
       ]
     },
     {
-      "fixture_id": "809da474-d511-4684-9072-192125e9421d",
+      "fixture_id": "9f90c802-fb8a-4488-a49d-639e3ef0bb89",
       "title": "Chicken and Pesto Rice With Peas",
       "source_title": "Chicken and Pesto Rice With Peas",
       "servings": 6,
@@ -2275,7 +1747,7 @@
           }
         ]
       },
-      "allergen_status": "uncertain",
+      "allergen_status": "analyzed",
       "overview": "Season and brown chicken in a Dutch oven, then remove. Sauté onion and garlic, stir in rice, broth, and pesto, then return chicken to the pot. Bake covered until cooked, stir in peas, and let sit before serving with basil, lemon, and extra pesto.",
       "title_evidence": [
         {
@@ -2440,10 +1912,13 @@
               "original_display": null
             },
             {
-              "allergen": null,
-              "substitute": null,
+              "allergen": "milk",
+              "substitute": "3/4 cup dairy-free vegan pesto (made with nutritional yeast instead of parmesan)",
               "substitute_applied": false,
-              "original_display": null
+              "original_display": null,
+              "linked_allergens": [
+                "milk"
+              ]
             },
             {
               "allergen": null,
@@ -2717,32 +2192,530 @@
               ]
             }
           ],
-          "name_evidence": []
+          "name_evidence": [],
+          "linked_recipe_ids": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "f87fdc0d-091c-4662-8238-6c35a656611f",
+            null,
+            null,
+            null
+          ]
         }
       ],
       "notes": null,
       "tag_names": []
-    }
-  ],
-  "meal_plan_entries": [
+    },
     {
-      "recipe_fixture_id": "38f4b255-8b21-4685-b1cb-40376238364c",
-      "date": "2026-10-06"
+      "fixture_id": "f87fdc0d-091c-4662-8238-6c35a656611f",
+      "title": "Basic Pesto Sauce",
+      "source_title": "Basic Pesto Sauce",
+      "servings": null,
+      "total_time_minutes": 20,
+      "kcal_per_serving": 168,
+      "protein_per_serving": 3,
+      "fat_per_serving": 17,
+      "carbs_per_serving": 1,
+      "issue_codes": [],
+      "nutrition_provenance": {
+        "kcal_per_serving": {
+          "status": "source",
+          "references": [
+            {
+              "evidence_id": "html:0",
+              "locator_kind": "html",
+              "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/div[1]/div[0]:0:411",
+              "quote": "Nutritional analysis per serving 1 gram carbs; 4 milligrams cholesterol; 168 calories; 10 grams monounsaturated fat; 3 grams polyunsaturated fat; 3 grams saturated fat; 17 grams fat; 76 milligrams sodium; 3 grams protein Note: The information shown is Edamam’s estimate based on available ingredients and preparation. It should not be considered a substitute for a professional nutritionist’s advice. Powered by",
+              "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+            }
+          ]
+        },
+        "protein_per_serving": {
+          "status": "source",
+          "references": [
+            {
+              "evidence_id": "html:0",
+              "locator_kind": "html",
+              "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/div[1]/div[0]:0:411",
+              "quote": "Nutritional analysis per serving 1 gram carbs; 4 milligrams cholesterol; 168 calories; 10 grams monounsaturated fat; 3 grams polyunsaturated fat; 3 grams saturated fat; 17 grams fat; 76 milligrams sodium; 3 grams protein Note: The information shown is Edamam’s estimate based on available ingredients and preparation. It should not be considered a substitute for a professional nutritionist’s advice. Powered by",
+              "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+            }
+          ]
+        },
+        "fat_per_serving": {
+          "status": "source",
+          "references": [
+            {
+              "evidence_id": "html:0",
+              "locator_kind": "html",
+              "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/div[1]/div[0]:0:411",
+              "quote": "Nutritional analysis per serving 1 gram carbs; 4 milligrams cholesterol; 168 calories; 10 grams monounsaturated fat; 3 grams polyunsaturated fat; 3 grams saturated fat; 17 grams fat; 76 milligrams sodium; 3 grams protein Note: The information shown is Edamam’s estimate based on available ingredients and preparation. It should not be considered a substitute for a professional nutritionist’s advice. Powered by",
+              "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+            }
+          ]
+        },
+        "carbs_per_serving": {
+          "status": "source",
+          "references": [
+            {
+              "evidence_id": "html:0",
+              "locator_kind": "html",
+              "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/div[1]/div[0]:0:411",
+              "quote": "Nutritional analysis per serving 1 gram carbs; 4 milligrams cholesterol; 168 calories; 10 grams monounsaturated fat; 3 grams polyunsaturated fat; 3 grams saturated fat; 17 grams fat; 76 milligrams sodium; 3 grams protein Note: The information shown is Edamam’s estimate based on available ingredients and preparation. It should not be considered a substitute for a professional nutritionist’s advice. Powered by",
+              "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+            }
+          ]
+        }
+      },
+      "nutrition_status": "complete",
+      "total_time_provenance": {
+        "status": "source",
+        "references": [
+          {
+            "evidence_id": "html:0",
+            "locator_kind": "html",
+            "locator": "/main[0]/div[0]:0:5274",
+            "quote": "Jessica Emily Marx for The New York Times Media 1 of 1 Total Time 20 minutes Rating 5 (2,901) Comments Read 247 comments The key to making creamy pesto is to add the ingredients to the food processor in the right order to ensure that the nuts break down to a fine paste before the greens have a chance to turn brown. Use basic basil pesto as a pasta sauce, or thin it out with a little olive oil to drizzle it over steak, chicken, fish, pizza or tomato salad. The mint-pistachio variation is inspired by the chef Travis Lett, of Gjelina in Venice, Calif. or to save this recipe. or to print this recipe. Advertisement SKIP ADVERTISEMENT Ingredients Yield: 1⅔ cups ½ cup pine nuts, lightly toasted ¾ cup extra-virgin olive oil 2 garlic cloves 2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches) 1 cup finely grated Parmesan cheese (3 ounces/85 grams) ½ teaspoon kosher salt, more to taste Ingredient Substitution Guide Nutritional analysis per serving 1 gram carbs; 4 milligrams cholesterol; 168 calories; 10 grams monounsaturated fat; 3 grams polyunsaturated fat; 3 grams saturated fat; 17 grams fat; 76 milligrams sodium; 3 grams protein Note: The information shown is Edamam’s estimate based on available ingredients and preparation. It should not be considered a substitute for a professional nutritionist’s advice. Powered by Preparation Step 1 Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped. Step 2 Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown. Step 3 Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days. Tips To make wild nettle pesto, substitute ½ pound stemmed nettle leaves for the basil. Set a large saucepan over high heat and add 3 tablespoons olive oil. When the oil shimmers, add the nettles and sauté, stirring constantly with tongs, for 30 to 60 seconds until wilted. Remove pan from heat and allow to cool. Squeeze all the water you can from nettles, then roughly chop. Add ½ teaspoon red pepper flakes and proceed as directed above. Toss with pasta, or thin and drizzle over baked or grilled fish. To make Mr. Lett's mint-pistachio pesto, substitute mint for the basil and pistachios for the pine nuts. Substitute 2 tablespoons pecorino Romano for the Parmesan and add 1 teaspoon finely grated lemon zest. Use to garnish spring vegetables, fish and shellfish. Private Notes Leave a Private Comment on this recipe and see it here. Ratings 5 out of 5 2,901 user ratings Your rating or to rate this recipe. Have you cooked this? or to mark this recipe as cooked. Comments I freeze pesto in large plastic ziplock freezer bags, squeezing out all of the air, closing and then patting the pesto into a thin layer. You can break off what you need, and because the layer is thin, it will quickly defrost and come to room temperature. Blanch the basil if you want bright green. Try walnuts if you cannot get great pine nuts. Some sources say you should not add nuts and cheese before freezing pesto, but in my experience, the nuts and cheese do just fine.`` At cooking school in Italy I was taught to blanch basil for pesto and basil oil to keep it bright green indefinitely. Drop into boiling water, stir, drain as water returns to the boil (a few seconds) and immediately put into an ice bath. It doesn't affect the flavor. I notice some other recommendations for blanching and I agree. Courtesy of Marcella Hazaan, pesto freezes well--minus the dairy. Something to consider when basil is abundant and cheap during the summer. She also uses a combo of 3 parts Parmesan to 1 part pecorino, plus some added butter which transforms this recipe into a real mother of a sauce. This is such a great recipe. I make a huge batch every summer to use up all our basil and we enjoy summer freshness all winter long. I have always frozen this in small jars, complete with the cheese, and it has always come out perfectly. you can use walnuts as a sub for pine nuts which aren't easy to find in southern maryland. I have made a lot of basil pesto. I don’t really love your proportions. I use more basil (also I blanche it to retain the green color but not necessary). Pine nuts should be toasted. Private comments are only visible to you. Recipe Tags Basil Five Ingredient Italian Parmesan Pine Nut Quick Sauces and Gravies Side Dish Summer Advertisement SKIP ADVERTISEMENT or to save this recipe.",
+            "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+          }
+        ]
+      },
+      "allergen_status": "analyzed",
+      "overview": "This pesto is made by pulsing toasted pine nuts, olive oil, and garlic in a food processor, then incorporating basil leaves. The mixture is finished by stirring in grated Parmesan cheese and salt. It can be served thick with pasta or thinned with extra oil for use as a garnish.",
+      "title_evidence": [
+        {
+          "evidence_id": "html:0",
+          "locator_kind": "html",
+          "locator": "/main[0]/script[0]:0:16862",
+          "quote": "{\"@context\":\"https://schema.org\",\"@id\":\"urn:nyt:ScoopRecipe:c42465bd0d9f5d9589f6d7e1a0973c51\",\"@type\":\"Recipe\",\"aggregateRating\":{\"@type\":\"AggregateRating\",\"ratingCount\":2901,\"ratingValue\":5},\"author\":{\"@id\":\"nyt://person/e742fe4e-e5ff-5b4d-951b-896685a9bacb\",\"@type\":\"Person\",\"name\":\"Samin Nosrat\",\"sameAs\":\"https://www.nytimes.com/by/samin-nosrat\",\"url\":\"https://cooking.nytimes.com/author/samin-nosrat\"},\"copyrightHolder\":{\"@id\":\"https://cooking.nytimes.com/#publisher\",\"@type\":\"Organization\",\"name\":\"NYT Cooking\"},\"copyrightYear\":2016,\"dateModified\":\"2016-08-03T00:00:00Z\",\"datePublished\":\"2016-08-03T00:00:00Z\",\"description\":\"The key to making creamy pesto is to add the ingredients to the food processor in the right order to ensure that the nuts break down to a fine paste before the greens have a chance to turn brown. Use basic basil pesto as a pasta sauce, or thin it out with a little olive oil to drizzle it over steak, chicken, fish, pizza or tomato salad. The mint-pistachio variation is inspired by the chef Travis Lett, of Gjelina in Venice, Calif.\",\"image\":[{\"@id\":\"nyt://image/65a72452-95a3-5e15-b09a-b041860392a6#videoSixteenByNineJumbo1600\",\"@type\":\"ImageObject\",\"contentUrl\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-videoSixteenByNineJumbo1600.jpg\",\"creditText\":\"Jessica Emily Marx for The New York Times\",\"dateModified\":\"2022-09-21T16:53:45.441Z\",\"datePublished\":\"2016-08-02T17:43:42.000Z\",\"height\":\"900\",\"uploadDate\":\"2016-08-02T17:43:42.000Z\",\"url\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-videoSixteenByNineJumbo1600.jpg\",\"width\":\"1600\"},{\"@id\":\"nyt://image/65a72452-95a3-5e15-b09a-b041860392a6#superJumbo\",\"@type\":\"ImageObject\",\"contentUrl\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-superJumbo.jpg\",\"creditText\":\"Jessica Emily Marx for The New York Times\",\"dateModified\":\"2022-09-21T16:53:45.441Z\",\"datePublished\":\"2016-08-02T17:43:42.000Z\",\"height\":\"1318\",\"uploadDate\":\"2016-08-02T17:43:42.000Z\",\"url\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-superJumbo.jpg\",\"width\":\"1976\"},{\"@id\":\"nyt://image/65a72452-95a3-5e15-b09a-b041860392a6#facebookJumbo\",\"@type\":\"ImageObject\",\"contentUrl\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-facebookJumbo.jpg\",\"creditText\":\"Jessica Emily Marx for The New York Times\",\"dateModified\":\"2022-09-21T16:53:45.441Z\",\"datePublished\":\"2016-08-02T17:43:42.000Z\",\"height\":\"549\",\"uploadDate\":\"2016-08-02T17:43:42.000Z\",\"url\":\"https://static01.nyt.com/images/2016/08/03/dining/03SauceSUB3/03SauceSUB3-facebookJumbo.jpg\",\"width\":\"1050\"}],\"isAccessibleForFree\":false,\"keywords\":\"Basil, Five Ingredient, Parmesan, Pine Nut, Quick, Summer\",\"mainEntityOfPage\":{\"@id\":\"//cooking.nytimes.com/recipes/1018235-basic-pesto-sauce\",\"@type\":\"WebPage\",\"name\":\"Basic Pesto Sauce\"},\"name\":\"Basic Pesto Sauce\",\"nutrition\":{\"@type\":\"NutritionInformation\",\"calories\":\"167.925\",\"carbohydrateContent\":\"1.1 grams\",\"cholesterolContent\":\"4.3 milligrams\",\"fatContent\":\"17.2 grams\",\"fiberContent\":\"0.3 grams\",\"proteinContent\":\"3.1 grams\",\"saturatedFatContent\":\"2.9 grams\",\"sodiumContent\":\"75.8 milligrams\",\"sugarContent\":\"0.2 grams\",\"unsaturatedFatContent\":\"3.1 grams\"},\"publisher\":{\"@id\":\"https://cooking.nytimes.com/#publisher\",\"@type\":\"Organization\",\"name\":\"NYT Cooking\"},\"recipeCategory\":\"Sauces and Gravies, Side Dish\",\"recipeCuisine\":\"Italian\",\"recipeIngredient\":[\"½ cup pine nuts, lightly toasted\",\"¾ cup extra-virgin olive oil\",\"2 garlic cloves\",\"2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)\",\"1 cup finely grated Parmesan cheese (3 ounces/85 grams)\",\"½ teaspoon kosher salt, more to taste\"],\"recipeInstructions\":[{\"@type\":\"HowToStep\",\"text\":\"Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped.\",\"url\":\"https://cooking.nytimes.com/recipes/1018235-basic-pesto-sauce#recipe-step-1\"},{\"@type\":\"HowToStep\",\"text\":\"Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown.\",\"url\":\"https://cooking.nytimes.com/recipes/1018235-basic-pesto-sauce#recipe-step-2\"},{\"@type\":\"HowToStep\",\"text\":\"Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days.\",\"url\":\"https://cooking.nytimes.com/recipes/1018235-basic-pesto-sauce#recipe-step-3\"}],\"recipeYield\":\"1 cups\",\"review\":[{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"nancyintoronto\"},\"datePublished\":\"2026-09-05T23:02:52Z\",\"reviewBody\":\"This is such a great recipe. I make a huge batch every summer to use up all our basil and we enjoy summer freshness all winter long. I have always frozen this in small jars, complete with the cheese, and it has always come out perfectly.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Terps Fan\"},\"datePublished\":\"2026-09-04T22:06:35Z\",\"reviewBody\":\"you can use walnuts as a sub for pine nuts which aren't easy to find in southern maryland.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Joy\"},\"datePublished\":\"2026-08-11T22:25:06Z\",\"reviewBody\":\"I have made a lot of basil pesto. I don’t really love your proportions. I use more basil (also I blanche it to retain the green color but not necessary). Pine nuts should be toasted.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Chillybeans\"},\"datePublished\":\"2026-08-11T15:28:03Z\",\"reviewBody\":\"If you have mortar and pestle-use that to mash the garlic and pine nuts-then add to basil in food processor. Makes a difference for me in the flavor\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Valerie\"},\"datePublished\":\"2026-07-17T21:27:02Z\",\"reviewBody\":\"Very bad proportion of olive oil to basil. I used a half a cup of olive oil and it was still way too much and I had to add a lot more basil... Surprised for the New York times!\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Marty Pulvers\"},\"datePublished\":\"2026-07-16T02:40:15Z\",\"reviewBody\":\"Just finished making, and then eating this pesto recipe. It was very different than the pesto I've been making for decades (from the venerable \\\"San Francisco Firehouse Favorites\\\" of 1965) and it was good. I even, as almost always on a first try, pureed things in the wrong order. I'll make it again, as printed.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"C. Gaffney\"},\"datePublished\":\"2026-07-14T22:39:54Z\",\"reviewBody\":\"I toast the pine nuts first to add a depth of flavor to the pesto. I have been very happy with the results of substituting Meyer Lemon Oil or Blood Orange Oil for the plain olive oil. I also add the juice of one large lemon and that seems to help keep the pesto bright green after I freeze it. The addition of a 1/2 tsp - 1 tsp of red pepper flakes also gives it a bit of a kick.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"SAF\"},\"datePublished\":\"2026-07-13T21:07:07Z\",\"reviewBody\":\"2 cups of packed basil leaves (no stems) does not add up to 2 1/2 ounces/75 grams.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Liz\"},\"datePublished\":\"2026-07-08T19:19:10Z\",\"reviewBody\":\"Pecans are a delicious substitution for pine nuts.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Kristin\"},\"datePublished\":\"2026-05-31T23:20:57Z\",\"reviewBody\":\"This slaps\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"ATM\"},\"datePublished\":\"2026-05-24T22:56:46Z\",\"reviewBody\":\"Way too much oil!\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Carole Maloof\"},\"datePublished\":\"2026-05-21T18:35:35Z\",\"reviewBody\":\"I have frozen pesto complete with cheese in plastic ice cube trays. Punch out when frozen and put into a ziplock freezer bags. This way you can take out just what you need.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Logical\"},\"datePublished\":\"2026-05-11T19:52:34Z\",\"reviewBody\":\"I add lemon juice and lemon zest. Really brightens it up. I also start the process of pounding the basil leaves with the garlic and coarse salt in a mortar and pestle and get it down to as fine as I can before transferring to a food processor. This really enhances the flavor.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"MollyM\"},\"datePublished\":\"2025-10-20T07:45:39Z\",\"reviewBody\":\"Followed the recipe exactly except I used almonds, as I didn't have pine nuts. It is beautiful and the best I've ever made. I've been eating small spoonfuls of this fresh, bright sauce.\\nI was able to use my own home grown basil, which I did blanch following directions from other commenters. I found that it absorbed a LOT of water, like a sponge. Wringing it out a couple of times did not diminish any flavor. A keeper\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"SteveT\"},\"datePublished\":\"2025-10-14T23:29:30Z\",\"reviewBody\":\"To avoid losing the flavor of the basil,\\n•\\tDo not use too much garlic. I use one clove.\\n•\\tParmesan is salty, so use a mixture of Pecorino and Parmesan cheeses. \\n•\\tIf necessary, add the salt after adding the cheeses to the mixture.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Suzanne\"},\"datePublished\":\"2016-08-03T16:16:22Z\",\"reviewBody\":\"I freeze pesto in large plastic ziplock freezer bags, squeezing out all of the air, closing and then patting the pesto into a thin layer. You can break off what you need, and because the layer is thin, it will quickly defrost and come to room temperature. Blanch the basil if you want bright green. Try walnuts if you cannot get great pine nuts. Some sources say you should not add nuts and cheese before freezing pesto, but in my experience, the nuts and cheese do just fine.``\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Jenny\"},\"datePublished\":\"2019-05-24T20:15:58Z\",\"reviewBody\":\"At cooking school in Italy I was taught to blanch basil for pesto and basil oil to keep it bright green indefinitely. Drop into boiling water, stir, drain as water returns to the boil (a few seconds) and immediately put into an ice bath. It doesn't affect the flavor. I notice some other recommendations for blanching and I agree.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Laurence Grant\"},\"datePublished\":\"2016-08-03T10:21:49Z\",\"reviewBody\":\"Courtesy of Marcella Hazaan, pesto freezes well--minus the dairy. Something to consider when basil is abundant and cheap during the summer. She also uses a combo of 3 parts Parmesan to 1 part pecorino, plus some added butter which transforms this recipe into a real mother of a sauce.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Chris\"},\"datePublished\":\"2016-08-03T12:59:36Z\",\"reviewBody\":\"Actually, it isn't. Marcella Hazan uses butter (common in norther Italy, supposedly; my family is from the south) and two types of cheese--parmigiano and romano. I know because I made it yesterday, and it's still the best pesto recipe I have ever used, though it is also the only one!<br/><br/>She also doesn't toast the pine nuts, though that could be interesting.<br/><br/>I disagree with the recommendation to pulse the nuts so finely. The nuts add a nicer texture if not turned into meal/dust.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Zann\"},\"datePublished\":\"2017-08-26T20:22:53Z\",\"reviewBody\":\"In 2015 The NY Times had an article about pine nuts being depleted from the ecosystem that depends on them. <br/><br/><a href=\\\"https://mobile.nytimes.com/2015/10/19/opinion/making-pesto-hold-the-pine-nuts.html\\\" title=\\\"https://mobile.nytimes.com/2015/10/19/opinion/making-pesto-hold-the-pine-nuts.html\\\" target=\\\"_blank\\\">https://mobile.nytimes.com/2015/10/19/opinion/making-pesto-hold-the-pine...</a><br/><br/>They suggested substituting walnuts, cashews, pistachios and even almonds in place of the pine nuts. \"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"dimmerswitch\"},\"datePublished\":\"2018-08-08T20:14:07Z\",\"reviewBody\":\"Beverly Dame: Re question about how to tell if pine nuts are from Italy, Italian (& Turkish & American) pine nuts are more ovoid, egg shaped, whereas Asian pine nuts are rounded. Sadly most sold in US are from China as less $$. Even those sold by places like Whole Foods. The processing chemicals used in China to remove pine nut shells can lead to \\\"pine nut mouth\\\". I had it once. Three weeks of bitter taste for anything I consumed, even water. Stopped using China sourced.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Pennyfix\"},\"datePublished\":\"2018-04-29T15:25:50Z\",\"reviewBody\":\"When my pesto with cashews was ready to Server I womdered how to get it out of the food processsor without wasting a lot. \\n\\nHere is my solution: Most of the pesto went into a twist-off-glas to store in the fridge. From the freshly cooked pasta I put a cup of the cooking water into the food processor to pulse with the rest of the pesto into a creamy light sauce to pour over the pasta. Grated pecorino on the side if desired.\\n\\nTruely delicious!\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Evan\"},\"datePublished\":\"2019-05-24T20:15:58Z\",\"reviewBody\":\"Pesto has been a staple of mine for years, but I use different proportions and make it dairy-free. I double the pine nuts (about 2/3 cup), use 4 cups of basil (or about one large package from my local supermarket), and I use only about 1/4 cup of olive oil. I also add a bit of lemon juice, and omit the cheese entirely. The trick is to toast the pine nuts on an ungreased pan as the first step, and then run them through the food processor, followed by the basil, and then the other ingredients.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Ruth\"},\"datePublished\":\"2016-08-03T12:59:36Z\",\"reviewBody\":\"I make pesto with pepitas and/or sunflower seeds, so that my kid can take it to nut-free kid environments. It's good.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Anne\"},\"datePublished\":\"2019-05-28T16:27:14Z\",\"reviewBody\":\"I put my pesto in ice cube trays and freeze. I get individual portions without the pesto going bad.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Babs\"},\"datePublished\":\"2016-08-03T10:20:06Z\",\"reviewBody\":\"Too much raw garlic! I'd use only one small clove to 2 cups of basil leaves. If you add about a 1/2 cup of flat leaf (Italian) parsley leaves along with the basil, the sauce will maintain a brighter green color.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"George DeBaby\"},\"datePublished\":\"2018-05-17T19:57:03Z\",\"reviewBody\":\"Pine nuts are traditional. But here is the South it’s pecans. I used walnuts for ever until one day I had enough of what to me was a slight bitter taste in my pesto. I used some pecans and it changed my pesto forever. Pecans are slightly sweeter but have a much more shuttle taste. “In the background” as my chef grandfather used to say when adding minor ingredients.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Brian\"},\"datePublished\":\"2016-08-03T12:57:37Z\",\"reviewBody\":\"I always freeze mine with the cheese in it and it seems thaw and still taste fine?\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"Stephanie\"},\"datePublished\":\"2016-08-03T12:59:52Z\",\"reviewBody\":\"Pesto keeps longer than 3 days IF: Cover the pesto COMPLETELY with EVOO in a closed, air-tight GLASS container. Keep ALL of the inside of the container and inner lid above the pesto ABSOLUTELY clean or THIS part will turn black (trouble) and you don't want this to harm your pesto especially when you try to remove any of the pesto for use later. Do this EACH time you store it. Refrigerate. Recipes might add oil on top but don't mention the need to KEEP the inside of the container CLEAN.\"},{\"@type\":\"Review\",\"author\":{\"@type\":\"Person\",\"name\":\"marlette\"},\"datePublished\":\"2016-08-04T17:01:27Z\",\"reviewBody\":\"I make several recipes of pesto, some with toasted walnuts instead of pine nuts,and freeze in plastic ice cube trays. After freezing, I toss them into freezer bags and use over pasta for winter dinners.I add smoked salmon or trout for a complete meal along with a nice salad.\"}],\"totalTime\":\"PT20M\",\"url\":\"//cooking.nytimes.com/recipes/1018235-basic-pesto-sauce\"}",
+          "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+        }
+      ],
+      "thumbnail_url": "https://pub-7d0d268afc43489da9af5cc6e3d788f3.r2.dev/thumbnails/2c2cfaac-43f2-4f6d-93d2-000d16c303c3/cbfe812c-d8d4-4ee7-a698-f5a146de1a2b.jpg",
+      "creator_handle": null,
+      "source_url": "https://cooking.nytimes.com/recipes/1018235-basic-pesto-sauce",
+      "components": [
+        {
+          "name": "",
+          "yield_note": "",
+          "ingredients": [
+            "1/2 cup pine nuts, lightly toasted",
+            "3/4 cup extra-virgin olive oil",
+            "2 clove garlic",
+            "2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)",
+            "1 cup finely grated Parmesan cheese (3 ounces/85 grams)",
+            "1/2 tsp kosher salt, more to taste"
+          ],
+          "shopping_list_ingredients": [
+            "½ cup pine nuts, lightly toasted",
+            "¾ cup extra-virgin olive oil",
+            "2 garlic cloves",
+            "2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)",
+            "1 cup finely grated Parmesan cheese (3 ounces/85 grams)",
+            "½ teaspoon kosher salt, more to taste"
+          ],
+          "shopping_list_categories": [
+            "pantry",
+            "pantry",
+            "produce",
+            "produce",
+            "dairy_eggs",
+            "pantry"
+          ],
+          "steps": [
+            "Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped.",
+            "Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown.",
+            "Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days.",
+            "To make wild nettle pesto, substitute ½ pound stemmed nettle leaves for the basil. Set a large saucepan over high heat and add 3 tablespoons olive oil. When the oil shimmers, add the nettles and sauté, stirring constantly with tongs, for 30 to 60 seconds until wilted. Remove pan from heat and allow to cool. Squeeze all the water you can from nettles, then roughly chop. Add ½ teaspoon red pepper flakes and proceed as directed above. Toss with pasta, or thin and drizzle over baked or grilled fish.",
+            "To make Mr. Lett's mint-pistachio pesto, substitute mint for the basil and pistachios for the pine nuts. Substitute 2 tablespoons pecorino Romano for the Parmesan and add 1 teaspoon finely grated lemon zest. Use to garnish spring vegetables, fish and shellfish."
+          ],
+          "metric_ingredients": [
+            "1/2 cup pine nuts, lightly toasted",
+            "3/4 cup extra-virgin olive oil",
+            "2 clove garlic",
+            "2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)",
+            "1 cup finely grated Parmesan cheese (3 ounces/85 grams)",
+            "1/2 tsp kosher salt, more to taste"
+          ],
+          "imperial_ingredients": [
+            "1/2 cup pine nuts, lightly toasted",
+            "3/4 cup extra-virgin olive oil",
+            "2 clove garlic",
+            "2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)",
+            "1 cup finely grated Parmesan cheese (3 ounces/85 grams)",
+            "1/2 tsp kosher salt, more to taste"
+          ],
+          "metric_steps": [
+            "Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped.",
+            "Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown.",
+            "Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days.",
+            "To make wild nettle pesto, substitute ½ pound stemmed nettle leaves for the basil. Set a large saucepan over high heat and add 3 tablespoons olive oil. When the oil shimmers, add the nettles and sauté, stirring constantly with tongs, for 30 to 60 seconds until wilted. Remove pan from heat and allow to cool. Squeeze all the water you can from nettles, then roughly chop. Add ½ teaspoon red pepper flakes and proceed as directed above. Toss with pasta, or thin and drizzle over baked or grilled fish.",
+            "To make Mr. Lett's mint-pistachio pesto, substitute mint for the basil and pistachios for the pine nuts. Substitute 2 tablespoons pecorino Romano for the Parmesan and add 1 teaspoon finely grated lemon zest. Use to garnish spring vegetables, fish and shellfish."
+          ],
+          "imperial_steps": [
+            "Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped.",
+            "Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown.",
+            "Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days.",
+            "To make wild nettle pesto, substitute ½ pound stemmed nettle leaves for the basil. Set a large saucepan over high heat and add 3 tablespoons olive oil. When the oil shimmers, add the nettles and sauté, stirring constantly with tongs, for 30 to 60 seconds until wilted. Remove pan from heat and allow to cool. Squeeze all the water you can from nettles, then roughly chop. Add ½ teaspoon red pepper flakes and proceed as directed above. Toss with pasta, or thin and drizzle over baked or grilled fish.",
+            "To make Mr. Lett's mint-pistachio pesto, substitute mint for the basil and pistachios for the pine nuts. Substitute 2 tablespoons pecorino Romano for the Parmesan and add 1 teaspoon finely grated lemon zest. Use to garnish spring vegetables, fish and shellfish."
+          ],
+          "ingredient_flags": [
+            {
+              "allergen": null,
+              "substitute": null,
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            },
+            {
+              "allergen": null,
+              "substitute": null,
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            },
+            {
+              "allergen": null,
+              "substitute": null,
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            },
+            {
+              "allergen": null,
+              "substitute": null,
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            },
+            {
+              "allergen": "milk",
+              "substitute": "1 cup (85g) nutritional yeast",
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            },
+            {
+              "allergen": null,
+              "substitute": null,
+              "substitute_applied": false,
+              "original_display": null,
+              "original_values": null
+            }
+          ],
+          "step_ingredient_line": [
+            1,
+            1,
+            4,
+            1,
+            3
+          ],
+          "ingredient_links": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "linked_recipe_ids": [
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+          ],
+          "ingredient_evidence": [
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[0]/p[0]:0:32",
+                  "quote": "½ cup pine nuts, lightly toasted",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[1]/p[0]:0:28",
+                  "quote": "¾ cup extra-virgin olive oil",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[2]/p[0]:0:15",
+                  "quote": "2 garlic cloves",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[3]/p[0]:0:85",
+                  "quote": "2 cups packed basil leaves (2 ½ ounces/75 grams, from 1 big bunch or 2 small bunches)",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[4]/p[0]:0:55",
+                  "quote": "1 cup finely grated Parmesan cheese (3 ounces/85 grams)",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[0]/div[0]/ul[0]/li[5]/p[0]:0:37",
+                  "quote": "½ teaspoon kosher salt, more to taste",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ],
+              "links": []
+            }
+          ],
+          "step_evidence": [
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[1]/div[0]/div[0]/ol[0]/li[0]/div[1]/p[0]:0:216",
+                  "quote": "Pulse pine nuts in a food processor until they're completely broken down. Stop to scrape down the sides of the bowl with a spatula from time to time. Add olive oil and garlic and pulse until garlic is finely chopped.",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ]
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[1]/div[0]/div[0]/ol[0]/li[1]/div[1]/p[0]:0:351",
+                  "quote": "Chop basil very roughly — just run a knife through it once or twice to cut most of the leaves into halves or thirds — then add to food processor. Pulse, stopping every 15 seconds to push the leaves down with a rubber spatula, until basil is entirely worked into the oil. Pulse for another few seconds, and then stop to prevent turning the basil brown.",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ]
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[1]/div[0]/div[0]/ol[0]/li[2]/div[1]/p[0]:0:511",
+                  "quote": "Pour pesto base into a bowl and add grated cheese and salt. Stir to combine, then taste and adjust seasoning as needed. Leave the sauce thick to toss with cooked pasta and a little pasta cooking water. To use the pesto as a garnish for grilled or roasted meats, fish and vegetables, thin it out with 2 to 3 more tablespoons olive oil until it’s the consistency of a loose paste. To store leftovers, pour a little more olive oil over the pesto to cover. Refrigerate in an airtight container for up to three days.",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ]
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[1]/div[0]/div[1]/ul[0]/li[0]/p[0]:0:500",
+                  "quote": "To make wild nettle pesto, substitute ½ pound stemmed nettle leaves for the basil. Set a large saucepan over high heat and add 3 tablespoons olive oil. When the oil shimmers, add the nettles and sauté, stirring constantly with tongs, for 30 to 60 seconds until wilted. Remove pan from heat and allow to cool. Squeeze all the water you can from nettles, then roughly chop. Add ½ teaspoon red pepper flakes and proceed as directed above. Toss with pasta, or thin and drizzle over baked or grilled fish.",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ]
+            },
+            {
+              "references": [
+                {
+                  "evidence_id": "html:0",
+                  "locator_kind": "html",
+                  "locator": "/main[0]/div[0]/div[0]/div[2]/div[1]/div[0]/div[1]/ul[0]/li[1]/p[0]:0:261",
+                  "quote": "To make Mr. Lett's mint-pistachio pesto, substitute mint for the basil and pistachios for the pine nuts. Substitute 2 tablespoons pecorino Romano for the Parmesan and add 1 teaspoon finely grated lemon zest. Use to garnish spring vegetables, fish and shellfish.",
+                  "document_hash": "fe37add5dd9266341004e5f86423d1f292b9bac0f5680e2ccda3b495db29af01"
+                }
+              ]
+            }
+          ],
+          "name_evidence": []
+        }
+      ],
+      "notes": null,
+      "tag_names": [
+        "Vegetarian",
+        "Gluten-Free",
+        "Keto",
+        "Low-Carb",
+        "Italian",
+        "Mediterranean",
+        "Quick"
+      ]
     }
   ],
   "shopping_list_items": [
-    "Â½ medium white or yellow onion, minced",
-    "Crushed red pepper",
-    "6 garlic cloves, minced",
-    "Â¾ cup store-bought or homemade pesto, plus more for serving",
-    "2 tablespoons extra-virgin olive oil",
-    "10 ounces frozen peas",
-    "Â¼ cup roughly chopped fresh basil, for serving",
-    "1 lemon, for serving",
-    "2 pounds boneless, skinless chicken thighs, cut into 1-inch cubes",
-    "Salt and black pepper",
-    "herre",
-    "4 cups/32 ounces chicken broth",
-    "2 cup long-grain white rice, rinsed"
+    {
+      "text": "10 ounces frozen peas",
+      "category": "frozen",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "2 pounds boneless, skinless chicken thighs, cut into 1-inch cubes",
+      "category": "meat_seafood",
+      "completed": false,
+      "position": 0
+    },
+    {
+      "text": "6 chicken thighs, skin on",
+      "category": "meat_seafood",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "Salt and black pepper",
+      "category": "pantry",
+      "completed": false,
+      "position": 0
+    },
+    {
+      "text": "1 tbsp honey",
+      "category": "pantry",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "steamed Jasmine rice, to serve",
+      "category": "pantry",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "toasted sesame seeds, to garnish",
+      "category": "pantry",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "Crushed red pepper",
+      "category": "pantry",
+      "completed": false,
+      "position": 1
+    },
+    {
+      "text": "2 tablespoons extra-virgin olive oil",
+      "category": "pantry",
+      "completed": false,
+      "position": 2
+    },
+    {
+      "text": "2 cups long-grain white rice, rinsed",
+      "category": "pantry",
+      "completed": false,
+      "position": 3
+    },
+    {
+      "text": "4 cups/32 ounces chicken broth",
+      "category": "pantry",
+      "completed": false,
+      "position": 4
+    },
+    {
+      "text": "¾ cup store-bought or homemade pesto, plus more for serving",
+      "category": "pantry",
+      "completed": false,
+      "position": 5
+    },
+    {
+      "text": "2 tsp sesame oil",
+      "category": "pantry",
+      "completed": false,
+      "position": 6
+    },
+    {
+      "text": "1½ tbsp sake",
+      "category": "pantry",
+      "completed": false,
+      "position": 7
+    },
+    {
+      "text": "¼ cup (60ml) Tamari soy",
+      "category": "pantry",
+      "completed": false,
+      "position": 8
+    },
+    {
+      "text": "¼ cup (60ml) mirin",
+      "category": "pantry",
+      "completed": false,
+      "position": 9
+    },
+    {
+      "text": "½ medium white or yellow onion, minced",
+      "category": "produce",
+      "completed": false,
+      "position": 0
+    },
+    {
+      "text": "thumb-sized piece of ginger, finely grated",
+      "category": "produce",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "1 bunch pak choy, washed, halved lengthwise",
+      "category": "produce",
+      "completed": true,
+      "position": 0
+    },
+    {
+      "text": "6 garlic cloves, minced",
+      "category": "produce",
+      "completed": false,
+      "position": 1
+    },
+    {
+      "text": "¼ cup roughly chopped fresh basil, for serving",
+      "category": "produce",
+      "completed": false,
+      "position": 2
+    },
+    {
+      "text": "1 lemon, for serving",
+      "category": "produce",
+      "completed": false,
+      "position": 3
+    },
+    {
+      "text": "2 spring onions, white and green parts separated",
+      "category": "produce",
+      "completed": false,
+      "position": 4
+    }
   ]
 }

@@ -62,6 +62,24 @@ async def test_rendered_dom_is_used_and_source_urls_are_redacted(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_html_import_uses_og_image_as_thumbnail(monkeypatch):
+    url = "https://recipes.example/pesto"
+    html = '<html><head><meta property="og:image" content="/img/pesto.jpg"></head><body>Pesto</body></html>'
+    async def render(_url):
+        return RenderedPage(url, url, html, 100)
+    async def extract(payload):
+        from api.services.extraction_v2.contracts import CompleteOutcome, ExtractedRecipe
+        return CompleteOutcome(outcome="complete", source_url=payload["source_url"], evidence=[], trace=[], recipe=ExtractedRecipe())
+    monkeypatch.setattr(production, "render_url", render)
+    monkeypatch.setattr(production, "is_safe_public_destination", lambda _url: _safe())
+    monkeypatch.setattr(production, "create_production_orchestrator", lambda _usage: type("O", (), {"extract": staticmethod(extract)})())
+
+    _outcome, metadata, _capture = await production.acquire_and_extract_url(url, gemini.UsageTracker())
+
+    assert metadata.thumbnail_url == "https://recipes.example/img/pesto.jpg"
+
+
+@pytest.mark.asyncio
 async def test_renderer_timeout_uses_bounded_raw_fallback(monkeypatch):
     url = "https://recipes.example/recipe"
     async def timeout(_url):

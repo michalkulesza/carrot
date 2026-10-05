@@ -10,6 +10,7 @@ import {
 } from '@carrot/shared/utils/ingredientScaling'
 import { UNITS } from '../../api/client'
 import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
+import { flagAllergens } from '@carrot/shared/utils/allergenKeys'
 
 export const TEXT_SIZE_CLASSES = [
   'text-sm',
@@ -61,11 +62,12 @@ export const getRecipeAllergens = (recipe: RecipeOut): string[] => {
   const allergens: string[] = []
   for (const component of recipe.components as SaveComponent[]) {
     for (const flag of component.ingredient_flags ?? []) {
-      if (!flag.allergen || flag.substitute_applied) continue
-      const key = flag.allergen.toLowerCase()
-      if (seen.has(key)) continue
-      seen.add(key)
-      allergens.push(flag.allergen)
+      for (const allergen of flagAllergens(flag)) {
+        const key = allergen.toLowerCase()
+        if (seen.has(key)) continue
+        seen.add(key)
+        allergens.push(allergen)
+      }
     }
   }
 

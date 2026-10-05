@@ -66,6 +66,7 @@ export interface AllergenFlag {
   substitute_applied: boolean;
   original_display: string | null;
   original_values?: Record<string, string> | null;
+  linked_allergens?: string[] | null;
   ingredient_name?: string | null;
 }
 
@@ -92,13 +93,14 @@ export interface RecipeComponent {
   shopping_list_categories?: ShoppingCategory[] | null;
   step_ingredient_line?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
+  linked_recipe_ids?: (string | null)[];
   ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
   step_evidence?: { references?: unknown[] }[];
   name_evidence?: unknown[];
   title_evidence?: unknown[];
 }
 
-export type TagCategory = "protein" | "carb" | "cuisine" | "time";
+export type TagCategory = "meal" | "protein" | "carb" | "cuisine" | "time";
 
 export interface Tag {
   id: string;
@@ -241,6 +243,7 @@ export interface SaveComponent {
   ingredient_flags?: AllergenFlag[];
   step_ingredient_line?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
+  linked_recipe_ids?: (string | null)[];
   ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
   step_evidence?: { references?: unknown[] }[];
   name_evidence?: unknown[];

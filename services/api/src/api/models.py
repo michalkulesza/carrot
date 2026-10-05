@@ -69,6 +69,7 @@ class AllergenFlag(BaseModel):
     substitute_applied: bool = False
     original_display: str | None = None
     original_values: dict[str, str] | None = None
+    linked_allergens: list[str] | None = None
 
 
 # ── Association tables ────────────────────────────────────────────────────────
@@ -492,6 +493,7 @@ class SaveComponent(BaseModel):
     ingredient_flags: list[AllergenFlag] | None = None
     step_ingredient_line: list[int | None] | None = None
     ingredient_links: list[str | None] = []
+    linked_recipe_ids: list[str | None] = []
     ingredient_evidence: list[dict[str, Any]] = []
     step_evidence: list[dict[str, Any]] = []
     name_evidence: list[dict[str, Any]] = []
@@ -829,6 +831,9 @@ class ImportJob(Base):
     input: Mapped[dict] = mapped_column(JSON, nullable=False)
     model: Mapped[str | None] = mapped_column(String(100), nullable=True, default=None)
     result_recipe_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
+    )
+    parent_recipe_id: Mapped[uuid.UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
     )
     failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)

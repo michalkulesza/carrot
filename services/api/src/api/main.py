@@ -50,7 +50,8 @@ _DEFAULT_TAGS: list[tuple[str, str | None]] = [
     ("Vegetarian", None), ("Vegan", None), ("Gluten-Free", None), ("Dairy-Free", None),
     ("Keto", None), ("Low-Carb", None),
     # Meal type
-    ("Breakfast", None), ("Lunch", None), ("Dinner", None), ("Snack", None), ("Dessert", None), ("Drink", None),
+    ("Breakfast", "meal"), ("Lunch", "meal"), ("Dinner", "meal"), ("Snack", "meal"), ("Dessert", "meal"),
+    ("Drink", None),
     # Method
     ("Grilled", None), ("Baked", None), ("One-Pot", None),
     # Other
@@ -158,6 +159,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMP"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS started_at TIMESTAMP"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS dismissed_at TIMESTAMP"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS parent_recipe_id UUID REFERENCES recipes(id) ON DELETE SET NULL"))
         await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN attempts SET DEFAULT 0"))
         await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN model DROP NOT NULL"))
         await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN model DROP DEFAULT"))

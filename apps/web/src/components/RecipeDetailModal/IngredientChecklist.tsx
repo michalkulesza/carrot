@@ -1,6 +1,9 @@
 import { useTranslation } from 'react-i18next'
+import { effectiveAllergenFlag } from '@carrot/shared/utils/allergenKeys'
 import AllergenPopover from './AllergenPopover'
 import { getMetricCupHint } from './helpers'
+import LinkedAllergenBadges from './LinkedAllergenBadges'
+import LinkedRecipeLink from './LinkedRecipeLink'
 import { CheckIcon, HelpIcon, PlusIcon } from './PopupIcons'
 import type {
   IngredientParts,
@@ -21,6 +24,7 @@ export interface IngredientChecklistProps {
   sessionAdded: Set<string>
   onAddIngredient: (componentIndex: number, ingredientIndex: number) => void
   allergenUncertain?: boolean
+  onOpenRecipe?: (id: string) => void
 }
 
 interface IngredientChecklistViewProps extends IngredientChecklistProps {
@@ -41,6 +45,7 @@ const IngredientChecklist = ({
   sessionAdded,
   onAddIngredient,
   allergenUncertain = false,
+  onOpenRecipe,
   desktop,
 }: IngredientChecklistViewProps) => {
   const { t } = useTranslation()
@@ -57,10 +62,13 @@ const IngredientChecklist = ({
           const added = sessionAdded.has(key)
           const done = shoppingMode ? added : checkedIngredients.has(key)
           const showPlus = shoppingMode && !added
-          const flag = component.ingredient_flags?.[ingredientIndex]
+          const flag = effectiveAllergenFlag(
+            component.ingredient_flags?.[ingredientIndex]
+          )
           const { amount, name } = formatParts(ingredient)
           const formatted = `${amount} ${name}`.trim()
           const link = component.ingredient_links?.[ingredientIndex]
+          const linkedRecipeId = component.linked_recipe_ids?.[ingredientIndex]
           const handleClick = () => {
             if (showPlus) onAddIngredient(componentIndex, ingredientIndex)
             else if (!shoppingMode) onToggleIngredient(key)
@@ -104,7 +112,7 @@ const IngredientChecklist = ({
                   }`}
                 >
                   {amount && <b className="font-extrabold">{amount}</b>} {name}
-                  {allergenUncertain && link && (
+                  {allergenUncertain && link && !flag?.linked_allergens && (
                     <span
                       role="img"
                       aria-label={t('recipes.allergensUncertain')}
@@ -123,10 +131,10 @@ const IngredientChecklist = ({
                   )}
                 </span>
                 {link && (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <LinkedRecipeLink
+                    url={link}
+                    recipeId={linkedRecipeId}
+                    onOpenRecipe={onOpenRecipe}
                     className="inline-flex items-center gap-1 rounded-full bg-[#EEEAFE] px-2.5 py-0.5 text-xs font-bold text-[#5B4BC4] hover:bg-[#E4DFF7]"
                   >
                     <svg
@@ -143,9 +151,14 @@ const IngredientChecklist = ({
                       <path d="M7 17 17 7M8 7h9v9" />
                     </svg>
                     {t('recipes.openLinkedRecipe')}
-                  </a>
+                  </LinkedRecipeLink>
                 )}
               </div>
+              <LinkedAllergenBadges
+                pill
+                allergens={flag?.linked_allergens}
+                activeAllergens={activeAllergens}
+              />
               {flag && (
                 <AllergenPopover
                   pill

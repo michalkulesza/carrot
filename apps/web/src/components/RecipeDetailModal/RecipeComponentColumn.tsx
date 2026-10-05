@@ -16,6 +16,7 @@ interface RecipeComponentColumnProps {
   ingredientActions: IngredientActions
   onIngredientChange: (ci: number, ii: number, value: string) => void
   onStepChange: (ci: number, si: number, value: string) => void
+  onOpenRecipe?: (id: string) => void
 }
 
 const RecipeComponentColumn = ({
@@ -29,6 +30,7 @@ const RecipeComponentColumn = ({
   ingredientActions,
   onIngredientChange,
   onStepChange,
+  onOpenRecipe,
 }: RecipeComponentColumnProps) => {
   const single = components.length === 1
   const hasMultipleIngredientGroups =
@@ -65,6 +67,7 @@ const RecipeComponentColumn = ({
           onAddIngredient={ingredientActions.onAddIngredient}
           onAddAllIngredients={ingredientActions.onAddAllUnifiedIngredients}
           fontSizeIndex={fontSizeIndex}
+          onOpenRecipe={onOpenRecipe}
         />
       )}
       {components.map((comp, ci) => (

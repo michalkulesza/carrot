@@ -6,6 +6,7 @@ from urllib.parse import urljoin, urlsplit
 from urllib.parse import urlunsplit
 
 import httpx
+from bs4 import BeautifulSoup
 
 from api.models import ImportMetadata
 from api.services import gemini
@@ -93,6 +94,13 @@ def _failure(url: str, reason: FailureReason, stage: ExtractionStage) -> FailedO
     return FailedOutcome(outcome="failed", source_url=url, evidence=[], trace=[], reason=reason, failed_stage=stage)
 
 
+def _og_image(html: str, base_url: str) -> str | None:
+    tag = BeautifulSoup(html, "html.parser").find("meta", attrs={"property": "og:image"})
+    content = str(tag.get("content") or "").strip() if tag else ""
+    url = urljoin(base_url, content) if content else None
+    return url if url and urlsplit(url).scheme in ("http", "https") else None
+
+
 async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple[ExtractionOutcome, ImportMetadata, dict]:
     if not await is_safe_public_destination(url):
         return _failure(url, FailureReason.INVALID_INPUT, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
@@ -151,7 +159,7 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
     ))
     source_capture = {"schema_version": 1, "kind": "html", "requested_url": _safe_source_url(url), "final_url": _safe_source_url(final_url),
                       "render_status": render_status, "renderer_failure": renderer_failure, "html": html}
-    return outcome, ImportMetadata(source_url=final_url), source_capture
+    return outcome, ImportMetadata(source_url=final_url, thumbnail_url=_og_image(html, final_url)), source_capture
 
 
 async def extract_pasted_text(text: str, usage: gemini.UsageTracker) -> ExtractionOutcome:

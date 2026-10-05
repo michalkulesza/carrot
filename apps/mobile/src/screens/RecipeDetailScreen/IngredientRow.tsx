@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Linking, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 import type { AllergenFlag } from '@carrot/shared/types'
 import {
   displayIngredientWithLocalizedUnit,
@@ -24,6 +25,8 @@ const IngredientRow = ({
   fontSize = 17,
   lineHeight = 22,
   linkedRecipeUrl,
+  linkedRecipeId,
+  linkedAllergens,
 }: {
   ingredient: string
   cupHint?: string
@@ -35,8 +38,11 @@ const IngredientRow = ({
   fontSize?: number
   lineHeight?: number
   linkedRecipeUrl?: string | null
+  linkedRecipeId?: string | null
+  linkedAllergens?: string[] | null
 }) => {
   const { t } = useTranslation()
+  const router = useRouter()
   const [isAllergenTooltipOpen, setIsAllergenTooltipOpen] = useState(false)
   const displayValue = displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
     t(`units.${unit}`, {
@@ -48,6 +54,15 @@ const IngredientRow = ({
     allergenFlag?.allergen ?? null,
     activeAllergens,
   )
+  const linkedAllergenLabels = (linkedAllergens ?? [])
+    .filter((allergen) => matchesActiveAllergen(allergen, activeAllergens))
+    .map((allergen) =>
+      t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }),
+    )
+  const handleOpenLinkedRecipe = () => {
+    if (linkedRecipeId) router.navigate(`/recipe/${linkedRecipeId}`)
+    else if (linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
+  }
   const allergenTooltip = allergenFlag?.substitute
     ? `${t('recipes.suggestedSubstitute')} ${allergenFlag.substitute}`
     : t('recipes.noSubstituteAvailable')
@@ -64,9 +79,17 @@ const IngredientRow = ({
         {cupHint}
       </Text>
       {linkedRecipeUrl && (
-        <Pressable onPress={() => void Linking.openURL(linkedRecipeUrl)} accessibilityRole="link" accessibilityLabel={t('recipes.openLinkedRecipe')}>
+        <Pressable onPress={handleOpenLinkedRecipe} accessibilityRole="link" accessibilityLabel={t('recipes.openLinkedRecipe')}>
           <Text style={styles.linkedRecipeText}>{t('recipes.openLinkedRecipe')}</Text>
         </Pressable>
+      )}
+      {linkedAllergenLabels.length > 0 && (
+        <Text
+          style={styles.linkedAllergenText}
+          accessibilityLabel={`${t('recipes.fromLinkedRecipe')}: ${linkedAllergenLabels.join(', ')}`}
+        >
+          {`⚠ ${linkedAllergenLabels.join(', ')}`}
+        </Text>
       )}
       {addMode && (
         <Pressable

@@ -41,6 +41,7 @@ from api.services.embeddings import _vector_literal, build_embedding_document, e
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
+from api.services.linked_recipes import attach_child_to_parent, spawn_linked_imports
 from api.services.recipe_components import serialize_components
 from api.services import gemini as gemini_svc
 
@@ -388,6 +389,10 @@ async def _process_job(job_id: uuid.UUID) -> None:
             if current.result_recipe_id is not None:
                 current.status = ImportJobStatus.SUCCEEDED
                 current.updated_at = datetime.utcnow()
+                if current.parent_recipe_id is not None:
+                    existing = await session.get(Recipe, current.result_recipe_id)
+                    if existing is not None:
+                        await attach_child_to_parent(session, current.parent_recipe_id, existing, current.input.get("url"))
                 await session.commit()
                 return
             if not await _is_member(session, current):
@@ -398,16 +403,25 @@ async def _process_job(job_id: uuid.UUID) -> None:
                 await session.commit()
                 return
             recipe = await _save_recipe(session, current, result)
+            source_url = current.input.get("url") if current.kind == ImportJobKind.URL else None
+            try:
+                async with session.begin_nested():  # linking is best-effort; never lose the imported recipe
+                    if current.parent_recipe_id is None:
+                        await spawn_linked_imports(session, recipe, current)
+                    else:
+                        await attach_child_to_parent(session, current.parent_recipe_id, recipe, source_url)
+            except Exception as error:
+                log.warning("Linked recipe handling failed for job %s (%s)", job_id, type(error).__name__)
             current.status = ImportJobStatus.SUCCEEDED
             current.outcome = result.outcome or "complete"
             current.failure_code = None
             current.failure_stage = None
             current.result_recipe_id = recipe.id
-            current.input = {}
+            if current.parent_recipe_id is None:  # a child keeps its URL so a retry can still find the parent's link
+                current.input = {}
             current.next_attempt_at = None
             current.updated_at = datetime.utcnow()
             await _event_for_job(session, current, "import_job.succeeded")
-            source_url = current.input.get("url") if current.kind == ImportJobKind.URL else None
             source_kind = _final_source_kind(current.kind, result.source_capture)
             renderer_status = result.source_capture.get("render_status")
             fallback_status = result.source_capture.get("fallback_status")
@@ -559,8 +573,11 @@ async def _deliver_pushes() -> None:
             .with_for_update(skip_locked=True)
             .limit(20)
         )).all())
+        child_job_ids = set((await session.scalars(
+            select(ImportJob.id).where(ImportJob.id.in_({event.job_id for event in events}), ImportJob.parent_recipe_id.is_not(None))
+        )).all())
         for event in events:
-            subscriptions = list((await session.scalars(select(DeviceSubscription).where(DeviceSubscription.user_id == event.user_id))).all())
+            subscriptions = [] if event.job_id in child_job_ids else list((await session.scalars(select(DeviceSubscription).where(DeviceSubscription.user_id == event.user_id))).all())
             for subscription in subscriptions:
                 success = event.type == "import_job.succeeded"
                 requires_user_action = event.payload.get("failure_code") == ImportFailureCode.USER_ACTION_REQUIRED

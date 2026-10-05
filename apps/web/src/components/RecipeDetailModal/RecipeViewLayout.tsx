@@ -53,6 +53,7 @@ interface RecipeViewLayoutProps {
   onNotesBlur: FocusEventHandler<HTMLTextAreaElement>
   banners: ReactNode
   renderRelated: (desktop: boolean) => ReactNode
+  onOpenRecipe?: (id: string) => void
 }
 
 const Chip = ({
@@ -102,6 +103,7 @@ const RecipeViewLayout = ({
   onNotesBlur,
   banners,
   renderRelated,
+  onOpenRecipe,
 }: RecipeViewLayoutProps) => {
   const { t } = useTranslation()
   const desktop = useIsDesktop()
@@ -145,6 +147,7 @@ const RecipeViewLayout = ({
     sessionAdded,
     onAddIngredient,
     allergenUncertain,
+    onOpenRecipe,
   }
   const toggleShoppingMode = () => setShoppingMode((current) => !current)
 

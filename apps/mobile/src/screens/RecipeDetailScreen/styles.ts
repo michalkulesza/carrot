@@ -110,6 +110,7 @@ export const styles = StyleSheet.create({
   issueText: { color: colors.label, flex: 1 },
   issueAction: { color: colors.blue, fontWeight: "600", textDecorationLine: "underline" },
   issueError: { color: colors.orange, marginBottom: 8 },
+  linkedAllergenText: { color: colors.orange, fontSize: 12, marginLeft: 8 },
   linkedRecipeText: { color: colors.blue, fontSize: 12, textDecorationLine: "underline" },
   uncertainAllergens: { marginHorizontal: 20, marginTop: 12, color: colors.secondaryLabel },
   servingStepperButton: {

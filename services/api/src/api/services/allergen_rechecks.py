@@ -23,6 +23,7 @@ from api.models import (
 )
 from api.routes.context import get_scope_key
 from api.services import gemini as gemini_svc
+from api.services import linked_recipes
 
 log = logging.getLogger(__name__)
 
@@ -189,10 +190,12 @@ async def _process(recipe_id: uuid.UUID, revision: int) -> None:
                     for index, flag in enumerate(flags)
                 ]
                 refreshed.append(value)
-            recipe.components = refreshed
-            recipe.allergen_status = "uncertain" if any(
-                link for component in refreshed for link in component.get("ingredient_links", [])
-            ) else "analyzed"
+            summary_before = (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components or []))
+            recipe.components, recipe.allergen_status = await linked_recipes.resolve_linked_allergens(session, refreshed)
+            if summary_before != (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components)):
+                # Only a changed summary propagates, which stops A <-> B links from rechecking forever.
+                for parent_id in await linked_recipes.parent_recipe_ids(session, recipe_id):
+                    await enqueue_recipe_allergen_check(session, parent_id)
             job.status = SUCCEEDED
             job.completed_at = datetime.utcnow()
             job.last_error = None

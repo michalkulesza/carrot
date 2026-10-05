@@ -8,7 +8,10 @@ import {
   getMetricCupHint,
   getScaledIngredientValues,
 } from './helpers'
+import { effectiveAllergenFlag } from '@carrot/shared/utils/allergenKeys'
 import AllergenPopover from './AllergenPopover'
+import LinkedAllergenBadges from './LinkedAllergenBadges'
+import LinkedRecipeLink from './LinkedRecipeLink'
 
 const TEXT_SIZE_CLASSES = [
   'text-sm',
@@ -41,6 +44,7 @@ const UnifiedIngredientList = ({
   fontSizeIndex,
   readOnly = false,
   collapsible = false,
+  onOpenRecipe,
 }: {
   components: SaveComponent[]
   unitSystem: string
@@ -57,6 +61,7 @@ const UnifiedIngredientList = ({
   fontSizeIndex: number
   readOnly?: boolean
   collapsible?: boolean
+  onOpenRecipe?: (id: string) => void
 }) => {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(!collapsible)
@@ -128,7 +133,10 @@ const UnifiedIngredientList = ({
           {ingredients.map(
             ({ component, componentIndex, ingredient, ingredientIndex }) => {
               const key = `${componentIndex}-${ingredientIndex}`
-              const flag = component.ingredient_flags?.[ingredientIndex]
+              const flag = effectiveAllergenFlag(
+                component.ingredient_flags?.[ingredientIndex]
+              )
+              const link = component.ingredient_links?.[ingredientIndex]
               const added = sessionAdded.has(key)
               const checked = checkedIngredients.has(key)
               const addButtonLabel = added
@@ -161,18 +169,20 @@ const UnifiedIngredientList = ({
                       t
                     )}
                   </span>
-                  {component.ingredient_links?.[ingredientIndex] && (
-                    <a
-                      href={
-                        component.ingredient_links[ingredientIndex] ?? undefined
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 text-xs font-medium text-primary underline"
+                  {link && (
+                    <LinkedRecipeLink
+                      url={link}
+                      recipeId={component.linked_recipe_ids?.[ingredientIndex]}
+                      onOpenRecipe={onOpenRecipe}
+                      className="shrink-0 cursor-pointer text-xs font-medium text-primary underline"
                     >
                       {t('recipes.openLinkedRecipe')}
-                    </a>
+                    </LinkedRecipeLink>
                   )}
+                  <LinkedAllergenBadges
+                    allergens={flag?.linked_allergens}
+                    activeAllergens={activeAllergens}
+                  />
                   {!readOnly && flag && (
                     <AllergenPopover
                       flag={flag}
