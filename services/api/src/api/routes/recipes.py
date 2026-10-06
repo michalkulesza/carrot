@@ -38,6 +38,7 @@ from api.routes.context import get_active_household_id, get_scope_key
 from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
 from api.services.related_recipes import add_related_recipes
+from api.services.monitoring import report_service_failure
 from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
 from api.users import User, current_active_user
 
@@ -349,6 +350,7 @@ async def search_recipes(
         return [_build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id)) for recipe in recipes]
     except Exception as error:
         log.warning("semantic_search_failed query_length=%d error=%s", len(query), type(error).__name__)
+        report_service_failure("semantic_search", error=error)
         return []
 
 

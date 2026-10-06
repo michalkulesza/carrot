@@ -1,5 +1,17 @@
-import { useCallback, useEffect, useState, type SyntheticEvent } from 'react'
+import { useCallback, useState, type SyntheticEvent } from 'react'
 import { PLACEHOLDER_URL } from '../utils/imageUtils'
+
+type ImageState = 'loading' | 'loaded' | 'failed'
+
+// Pages unmount on navigation; images already shown this session start visible
+// instead of replaying the skeleton and fade-in when the page remounts.
+const loadedSrcs = new Set<string>()
+
+const initialState = (src: string | null | undefined): ImageState => {
+  if (!src) return 'failed'
+
+  return loadedSrcs.has(src) ? 'loaded' : 'loading'
+}
 
 interface NetworkImageProps {
   src: string | null | undefined
@@ -16,18 +28,38 @@ const NetworkImage = ({
   imgClassName = '',
   onError,
 }: NetworkImageProps) => {
-  const [imageState, setImageState] = useState<'loading' | 'loaded' | 'failed'>(src ? 'loading' : 'failed')
+  const [imageState, setImageState] = useState<ImageState>(() =>
+    initialState(src)
+  )
+  const [prevSrc, setPrevSrc] = useState(src)
 
-  useEffect(() => setImageState(src ? 'loading' : 'failed'), [src])
+  // Reset during render rather than in an effect: a cached image can fire `load`
+  // before effects flush, and an effect reset would then leave it hidden forever.
+  if (src !== prevSrc) {
+    setPrevSrc(src)
+    setImageState(initialState(src))
+  }
 
-  const handleLoad = useCallback(() => setImageState('loaded'), [])
+  const markLoaded = useCallback(() => {
+    if (src) loadedSrcs.add(src)
+    setImageState('loaded')
+  }, [src])
+
+  // Catch images that finished loading before React attached the listener.
+  const imgRef = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (img?.complete && img.naturalWidth > 0) markLoaded()
+    },
+    [markLoaded]
+  )
 
   const handleError = useCallback(
     (e: SyntheticEvent<HTMLImageElement>) => {
+      if (src) loadedSrcs.delete(src)
       setImageState('failed')
       onError?.(e)
     },
-    [onError]
+    [onError, src]
   )
 
   return (
@@ -45,9 +77,10 @@ const NetworkImage = ({
         </div>
       ) : (
         <img
+          ref={imgRef}
           src={src ?? undefined}
           alt={alt}
-          onLoad={handleLoad}
+          onLoad={markLoaded}
           onError={handleError}
           className={`w-full h-full object-cover transition-opacity duration-300 ${imageState === 'loaded' ? 'opacity-100' : 'opacity-0'} ${imgClassName}`}
         />

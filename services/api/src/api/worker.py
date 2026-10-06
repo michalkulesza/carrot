@@ -5,12 +5,14 @@ from sqlalchemy import text
 
 from api.database import Base, engine, initialize_vector_schema
 from api.services.import_worker import run
+from api.services.monitoring import init_sentry
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("api.services.transcription").setLevel(logging.DEBUG)
 
 
 async def main() -> None:
+    init_sentry()
     async with engine.begin() as connection:
         await connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await connection.run_sync(Base.metadata.create_all)

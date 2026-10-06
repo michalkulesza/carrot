@@ -15,7 +15,9 @@ import {
 } from 'react-feather'
 import HouseholdSwitcher from '../HouseholdSwitcher'
 import NextMealCard from '../NextMealCard'
+import NextMealCardSkeleton from '../NextMealCardSkeleton'
 import { useHousehold } from '../../context/HouseholdContext'
+import HouseholdButtonSkeleton from './HouseholdButtonSkeleton'
 import SidebarLink from './SidebarLink'
 
 gsap.registerPlugin(useGSAP)
@@ -42,12 +44,14 @@ const NAV_ITEMS: NavItem[] = [
 const GATED_VISIBLE_LABEL_KEYS = new Set(['nav.newHousehold', 'nav.settings'])
 
 const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
-  const { households, activeHousehold } = useHousehold()
+  const { households, activeHousehold, isLoadingHouseholds } = useHousehold()
   const { t } = useTranslation()
   const sidebarRef = useRef<HTMLElement>(null)
   const [switcherOpen, setSwitcherOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
-  const isGated = households.length === 0
+  // Assume the common non-gated layout while loading so the menu doesn't
+  // collapse to the gated items and then grow once households arrive.
+  const isGated = !isLoadingHouseholds && households.length === 0
   const navItems = isGated
     ? NAV_ITEMS.filter((item) => GATED_VISIBLE_LABEL_KEYS.has(item.labelKey))
     : NAV_ITEMS.filter((item) => item.labelKey !== 'nav.newHousehold')
@@ -141,7 +145,17 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
         <SidebarIcon size={18} />
       </button>
 
-      {!isGated && (
+      {isLoadingHouseholds && (
+        <>
+          <HouseholdButtonSkeleton collapsed={collapsed} />
+          <div className="h-px bg-zinc-200 mx-1 mb-3" />
+          {!hideNextMeal && (
+            <NextMealCardSkeleton compact={collapsed} className="mb-3" />
+          )}
+        </>
+      )}
+
+      {!isLoadingHouseholds && !isGated && (
         <>
           <button
             type="button"
@@ -174,7 +188,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
         </>
       )}
 
-      {!isGated && !hideNextMeal && (
+      {!isLoadingHouseholds && !isGated && !hideNextMeal && (
         <NextMealCard compact={collapsed} className="mb-3" />
       )}
 
@@ -191,7 +205,7 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
         ))}
       </nav>
 
-      {!isGated && (
+      {!isLoadingHouseholds && !isGated && (
         <HouseholdSwitcher isOpen={switcherOpen} onClose={handleSwitcherClose} />
       )}
     </aside>

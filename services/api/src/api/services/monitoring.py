@@ -23,6 +23,22 @@ def init_sentry() -> None:
         )
 
 
+def report_service_failure(
+    operation: str, *, status_code: int | None = None, error: Exception | None = None,
+) -> None:
+    """Report handled failures without provider bodies, tokens, or user content."""
+    error_type = type(error).__name__ if error is not None else None
+    reason = str(status_code) if status_code is not None else (error_type or "unknown")
+    with sentry_sdk.new_scope() as scope:
+        scope.set_tag("operation", operation)
+        scope.fingerprint = ["service_failure", operation, reason]
+        scope.set_context("service_failure", {
+            "status_code": status_code,
+            "error_type": error_type,
+        })
+        sentry_sdk.capture_message(f"Service failure: {operation}", level="error")
+
+
 def report_recipe_import_failure(
     *,
     input_kind: str,

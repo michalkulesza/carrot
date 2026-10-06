@@ -5,6 +5,7 @@ import logging
 import httpx
 
 from api.config import settings
+from api.services.monitoring import report_service_failure
 
 log = logging.getLogger(__name__)
 
@@ -24,9 +25,11 @@ async def send_email(to: str, subject: str, html: str, text: str) -> None:
                 json={"from": settings.email_from, "to": [to], "subject": subject, "html": html, "text": text},
             )
         if resp.status_code not in (200, 201):
-            log.warning("Resend failed status=%d body=%s", resp.status_code, resp.text[:200])
+            log.warning("Resend failed status=%d", resp.status_code)
+            report_service_failure("email_send", status_code=resp.status_code)
     except Exception as exc:
-        log.warning("Email send error: %s", exc)
+        log.warning("Email send error: %s", type(exc).__name__)
+        report_service_failure("email_send", error=exc)
 
 
 async def send_verification_code(to: str, code: str) -> None:

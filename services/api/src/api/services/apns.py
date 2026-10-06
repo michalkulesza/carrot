@@ -9,6 +9,7 @@ import httpx
 import jwt
 
 from api.config import settings
+from api.services.monitoring import report_service_failure
 
 log = logging.getLogger(__name__)
 
@@ -39,15 +40,14 @@ async def _send(
         return
 
     host = _APNS_SANDBOX_HOST if settings.apns_sandbox else _APNS_PROD_HOST
-    token = _make_jwt()
-    headers = {
-        "authorization": f"bearer {token}",
-        "apns-topic": topic,
-        "apns-push-type": push_type,
-        "apns-priority": "10",
-    }
-
     try:
+        token = _make_jwt()
+        headers = {
+            "authorization": f"bearer {token}",
+            "apns-topic": topic,
+            "apns-push-type": push_type,
+            "apns-priority": "10",
+        }
         async with httpx.AsyncClient(http2=True, timeout=10) as client:
             resp = await client.post(
                 f"{host}/3/device/{device_token}",
@@ -55,9 +55,11 @@ async def _send(
                 headers=headers,
             )
         if resp.status_code not in (200, 201):
-            log.warning("APNs push failed status=%d body=%s", resp.status_code, resp.text[:200])
+            log.warning("APNs push failed status=%d", resp.status_code)
+            report_service_failure("push_send", status_code=resp.status_code)
     except Exception as exc:
-        log.warning("APNs push error: %s", exc)
+        log.warning("APNs push error: %s", type(exc).__name__)
+        report_service_failure("push_send", error=exc)
 
 
 async def send_alert(

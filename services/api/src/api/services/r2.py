@@ -3,6 +3,7 @@ import logging
 import uuid
 
 from api.config import settings
+from api.services.monitoring import report_service_failure
 
 log = logging.getLogger(__name__)
 
@@ -50,4 +51,5 @@ def delete_image(url: str) -> None:
     try:
         _s3_client().delete_object(Bucket=settings.r2_bucket_name, Key=key)
     except Exception as exc:
-        log.warning("Failed to delete R2 object %s: %s", key, exc)
+        log.warning("Failed to delete R2 object: %s", type(exc).__name__)
+        report_service_failure("image_delete", error=exc)

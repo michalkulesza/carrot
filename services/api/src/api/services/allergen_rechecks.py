@@ -24,6 +24,7 @@ from api.models import (
 from api.routes.context import get_scope_key
 from api.services import gemini as gemini_svc
 from api.services import linked_recipes
+from api.services.monitoring import report_service_failure
 
 log = logging.getLogger(__name__)
 
@@ -203,6 +204,7 @@ async def _process(recipe_id: uuid.UUID, revision: int) -> None:
             await _publish_recipe_changed(session, recipe_id)
     except Exception as error:
         log.warning("Allergen recheck failed for recipe %s: %s", recipe_id, type(error).__name__)
+        report_service_failure("allergen_recheck", error=error)
         async with async_session_maker() as session:
             job = await session.scalar(select(RecipeAllergenCheck).where(RecipeAllergenCheck.recipe_id == recipe_id).with_for_update())
             if job is not None and job.revision == revision:

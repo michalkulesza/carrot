@@ -38,7 +38,7 @@ from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.allergen_rechecks import recover_running_jobs, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
-from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields
+from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields, report_service_failure
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
 from api.services.linked_recipes import attach_child_to_parent, spawn_linked_imports
@@ -144,7 +144,8 @@ async def _archive_thumbnail(recipe: Recipe) -> None:
         archived_url = await asyncio.to_thread(r2_svc.upload_image, response.content, str(recipe.id))
         recipe.thumbnail_url = archived_url
     except Exception as error:
-        log.warning("Thumbnail R2 upload failed for recipe %s: %s", recipe.id, error)
+        log.warning("Thumbnail R2 upload failed for recipe %s: %s", recipe.id, type(error).__name__)
+        report_service_failure("thumbnail_archive", error=error)
 
 
 async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
@@ -412,6 +413,7 @@ async def _process_job(job_id: uuid.UUID) -> None:
                         await attach_child_to_parent(session, current.parent_recipe_id, recipe, source_url)
             except Exception as error:
                 log.warning("Linked recipe handling failed for job %s (%s)", job_id, type(error).__name__)
+                report_service_failure("linked_recipe_handling", error=error)
             current.status = ImportJobStatus.SUCCEEDED
             current.outcome = result.outcome or "complete"
             current.failure_code = None
@@ -500,6 +502,7 @@ async def _retry_embedding_job(recipe_id: uuid.UUID, error: Exception) -> None:
             job.status = EmbeddingStatus.FAILED
             job.next_attempt_at = None
             log.warning("embedding_job_terminal_failure recipe_id=%s retries=%d", recipe_id, job.retry_count)
+            report_service_failure("recipe_embedding", error=error)
         else:
             job.status = EmbeddingStatus.PENDING
             delay = settings.embedding_retry_base_seconds * (2 ** min(job.retry_count - 1, 6))
@@ -606,7 +609,8 @@ async def _push_loop() -> None:
         try:
             await _deliver_pushes()
         except Exception as error:
-            log.warning("Import push relay failed: %s", error)
+            log.warning("Import push relay failed: %s", type(error).__name__)
+            report_service_failure("import_push_relay", error=error)
         await asyncio.sleep(_POLL_INTERVAL_SECONDS)
 
 

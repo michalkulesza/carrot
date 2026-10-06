@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { useNextMealPlanEntry } from '@carrot/shared/hooks/useNextMealPlanEntry'
 import { formatNextMealDate } from '@carrot/shared/utils/dateUtils'
 import NetworkImage from './NetworkImage'
+import NextMealCardSkeleton from './NextMealCardSkeleton'
 import { proxyUrl } from '../utils/imageUtils'
 import { useRouteNavigation } from '../routing/RouteNavigationContext'
 
@@ -34,6 +35,10 @@ const NextMealCard = ({
   }, [entry, openMealPlan, openRecipeRoute])
   const handleRetry = useCallback(() => void refetch(), [refetch])
 
+  if (isLoading) {
+    return <NextMealCardSkeleton compact={compact} className={className} />
+  }
+
   if (compact) {
     const label = error
       ? t('nextMeal.error')
@@ -46,25 +51,12 @@ const NextMealCard = ({
       <button
         type="button"
         onClick={handleClick}
-        disabled={isLoading}
         title={label}
-        aria-label={isLoading ? t('common.loading') : label}
-        className={`flex min-h-11 w-full items-center justify-center rounded-xl p-2.5 text-zinc-600 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 disabled:animate-pulse ${className}`}
+        aria-label={label}
+        className={`flex min-h-11 w-full items-center justify-center rounded-xl p-2.5 text-zinc-600 transition-colors hover:bg-zinc-200/60 hover:text-zinc-900 ${className}`}
       >
         <Calendar size={20} />
       </button>
-    )
-  }
-
-  if (isLoading) {
-    return (
-      <div
-        className={`min-h-24 animate-pulse rounded-xl bg-zinc-200/70 p-3 ${className}`}
-        aria-label={t('common.loading')}
-      >
-        <div className="mb-3 h-3 w-24 rounded bg-zinc-300" />
-        <div className="h-10 rounded-lg bg-zinc-300/80" />
-      </div>
     )
   }
 
