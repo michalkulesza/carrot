@@ -284,7 +284,91 @@
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
     "nicknameTooLong": "Le pseudo doit contenir 50 caractères maximum",
     "codeRequired": "Saisissez le code à 6 chiffres",
-    "registrationError": "L'inscription a échoué. Veuillez réessayer."
+    "registrationError": "L'inscription a échoué. Veuillez réessayer.",
+    "welcomeBack": "Bon retour",
+    "stepOf": "Étape {{current}} sur {{total}}",
+    "emailLooksValid": "L'adresse e-mail semble valide",
+    "sendingCode": "Envoi du code…",
+    "codeSentTo": "Saisissez le code à 6 chiffres envoyé à",
+    "changeEmail": "Modifier",
+    "checkSpam": "Introuvable ? Vérifiez vos spams.",
+    "codeDigit": "Chiffre {{index}} sur {{total}}",
+    "optional": "Facultatif",
+    "nicknamePlaceholder": "ex. Batman",
+    "shownAs": "Affiché comme <bold>{{name}}</bold> sur les recettes partagées",
+    "passwordPlaceholder": "Au moins 8 caractères",
+    "showPassword": "Afficher",
+    "hidePassword": "Masquer",
+    "passwordStrength": {
+      "empty": "Utilisez au moins 8 caractères",
+      "tooShort": "Trop court",
+      "okay": "Correct — ajoutez des chiffres ou des symboles",
+      "good": "Bien",
+      "strong": "Mot de passe robuste"
+    },
+    "termsNotice": "En créant un compte, vous acceptez les Conditions d'utilisation et la Politique de confidentialité.",
+    "features": {
+      "dotLabel": "Afficher la fonctionnalité {{index}}",
+      "household": {
+        "label": "Foyer",
+        "title": "Cuisinez ensemble",
+        "description": "Partagez recettes, plans et listes avec tout votre foyer.",
+        "kitchenName": "Cuisine témoin",
+        "members": "4 membres · recettes et liste partagées"
+      },
+      "allergens": {
+        "label": "Allergènes",
+        "title": "Allergènes signalés",
+        "description": "Repérez gluten, produits laitiers et fruits à coque d'un coup d'œil, jusqu'à l'ingrédient.",
+        "recipe": "Poulet et riz au pesto",
+        "dairy": "Lait",
+        "nuts": "Fruits à coque",
+        "glutenFree": "Sans gluten",
+        "ingredient": "pesto",
+        "flags": "lait, fruits à coque"
+      },
+      "linkedRecipes": {
+        "label": "Recettes liées",
+        "title": "Recettes liées",
+        "description": "Associez une sauce ou un accompagnement à chaque plat qui l'utilise.",
+        "recipe": "Poulet et riz au pesto",
+        "uses": "utilise",
+        "component": "Pesto au basilic maison"
+      },
+      "scaling": {
+        "label": "Quantités",
+        "title": "Ajustez tout",
+        "description": "Modifiez le nombre de portions et chaque quantité suit.",
+        "serves": "Portions",
+        "chicken": "cuisses de poulet",
+        "rice": "riz",
+        "garlic": "gousses d'ail"
+      },
+      "units": {
+        "label": "Unités",
+        "title": "Vos unités",
+        "description": "Passez du métrique aux cups US d'une simple pression.",
+        "metric": "Métrique",
+        "us": "US",
+        "chicken": "poulet",
+        "broth": "bouillon",
+        "oil": "huile d'olive"
+      },
+      "timers": {
+        "label": "Minuteurs",
+        "title": "Minuteurs intégrés",
+        "description": "Lancez un minuteur directement depuis l'étape en cours.",
+        "step": "Étape 4 · Laisser mijoter le riz"
+      },
+      "mealPlan": {
+        "label": "Menu",
+        "title": "Planifiez la semaine",
+        "description": "Déposez des recettes dans votre semaine, puis faites vos courses avec une seule liste.",
+        "weekdayInitials": "LMMJVSD",
+        "summary": "3 dîners prévus",
+        "listReady": "liste prête"
+      }
+    }
   },
   "timers": {
     "startTimer": "Démarrer le minuteur",
@@ -349,9 +433,9 @@
     "allergenDisclaimer": "Les alertes allergènes sont des estimations assistées par IA, pas un substitut à la lecture complète des étiquettes d'ingrédients.",
     "allergens": "Allergènes",
     "intolerances": "Intolérances",
-    "allergenRecheckProgress": "V\u00e9rification des allerg\u00e8nes dans les recettes ({{completed}}/{{total}})",
-    "allergenRecheckComplete": "V\u00e9rification des allerg\u00e8nes termin\u00e9e",
-    "allergenRecheckFailed": "Impossible de v\u00e9rifier {{failed}} recettes pour les allerg\u00e8nes",
+    "allergenRecheckProgress": "Vérification des allergènes dans les recettes ({{completed}}/{{total}})",
+    "allergenRecheckComplete": "Vérification des allergènes terminée",
+    "allergenRecheckFailed": "Impossible de vérifier {{failed}} recettes pour les allergènes",
     "allergensSaved": "Allergènes enregistrés",
     "failedToSave": "Échec de l'enregistrement",
     "autoApplySubstitutes": "Appliquer les substituts automatiquement",

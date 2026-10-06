@@ -99,7 +99,7 @@ const GoogleSignInButton = ({
       theme: 'outline',
       size: 'large',
       shape: 'pill',
-      width: 320,
+      width: 328,
       locale: i18n.language,
       text: 'continue_with',
     })

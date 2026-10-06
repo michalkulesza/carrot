@@ -1,18 +1,17 @@
-import {
-  type ChangeEvent,
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Card, CardContent } from '@heroui/react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import BrandLogo from '../components/BrandLogo'
+import AuthLayout from '../components/Auth/AuthLayout'
+import SignupProgress from '../components/Auth/SignupProgress'
+import MailTile from '../components/Auth/MailTile'
+import AuthHeading from '../components/Auth/AuthHeading'
+import OtpInput from '../components/Auth/OtpInput'
+import AuthError from '../components/Auth/AuthError'
+import AuthSubmitButton from '../components/Auth/AuthSubmitButton'
 
-const RESEND_COOLDOWN = 60
+const CODE_LENGTH = 6
+const RESEND_COOLDOWN_MS = 60_000
 
 const ERROR_KEYS: Record<string, string> = {
   SIGNUP_CODE_INVALID: 'auth.codeInvalid',
@@ -28,130 +27,159 @@ const VerifyPage = () => {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [cooldown, setCooldown] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [isVerified, setIsVerified] = useState(false)
+  // A code was just sent on the previous screen, so the cooldown starts now.
+  const [resendAvailableAt, setResendAvailableAt] = useState(
+    () => Date.now() + RESEND_COOLDOWN_MS
+  )
+  const [now, setNow] = useState(() => Date.now())
+  const [resending, setResending] = useState(false)
+  const verifyInProgressRef = useRef(false)
+  const resendInProgressRef = useRef(false)
+
+  const secondsLeft = Math.max(0, Math.ceil((resendAvailableAt - now) / 1000))
+  const isCodeComplete = code.length === CODE_LENGTH
 
   useEffect(() => {
     if (!signupEmail) navigate('/register', { replace: true })
   }, [signupEmail, navigate])
 
-  useEffect(
-    () => () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    },
-    []
-  )
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      const current = Date.now()
 
-  const startCooldown = useCallback(() => {
-    setCooldown(RESEND_COOLDOWN)
-    intervalRef.current = setInterval(() => {
-      setCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current!)
-
-          return 0
-        }
-
-        return prev - 1
-      })
+      setNow(current)
+      if (current >= resendAvailableAt) clearInterval(intervalId)
     }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [resendAvailableAt])
+
+  const handleCodeChange = useCallback((value: string) => {
+    setError(null)
+    setCode(value)
   }, [])
 
+  const handleVerify = useCallback(async () => {
+    if (!signupEmail || !isCodeComplete || verifyInProgressRef.current) return
+
+    verifyInProgressRef.current = true
+    setError(null)
+    setLoading(true)
+
+    try {
+      await verifySignupCode(signupEmail, code)
+      setIsVerified(true)
+      navigate('/complete-profile', { replace: true })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : ''
+      setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
+      setCode('')
+    } finally {
+      setLoading(false)
+      verifyInProgressRef.current = false
+    }
+  }, [signupEmail, isCodeComplete, code, verifySignupCode, navigate, t])
+
   const handleSubmit = useCallback(
-    async (e: FormEvent) => {
+    (e: FormEvent) => {
       e.preventDefault()
-      if (!signupEmail || code.length < 6) return
-
-      setError(null)
-      setLoading(true)
-
-      try {
-        await verifySignupCode(signupEmail, code)
-        navigate('/complete-profile', { replace: true })
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : ''
-        setError(t(ERROR_KEYS[msg] ?? 'auth.invalidCode'))
-        setCode('')
-      } finally {
-        setLoading(false)
-      }
+      void handleVerify()
     },
-    [signupEmail, code, verifySignupCode, navigate, t]
+    [handleVerify]
   )
 
   const handleResend = useCallback(async () => {
-    if (!signupEmail || cooldown > 0) return
+    if (!signupEmail || secondsLeft > 0 || resendInProgressRef.current) return
+
+    resendInProgressRef.current = true
+    setError(null)
+    setResending(true)
 
     try {
       await requestSignupCode(signupEmail)
-      startCooldown()
-    } catch {
-      // ignore — cooldown UI already reflects the attempt
+      setCode('')
+      setNow(Date.now())
+      setResendAvailableAt(Date.now() + RESEND_COOLDOWN_MS)
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : t('auth.registrationError')
+      )
+    } finally {
+      setResending(false)
+      resendInProgressRef.current = false
     }
-  }, [signupEmail, cooldown, requestSignupCode, startCooldown])
+  }, [signupEmail, secondsLeft, requestSignupCode, t])
 
-  const handleCodeChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setError(null)
-    setCode(e.target.value.replace(/\D/g, '').slice(0, 6))
-  }, [])
+  const handleChangeEmail = useCallback(() => {
+    navigate('/register')
+  }, [navigate])
+
+  const canResend = secondsLeft === 0 && !resending
+  const otpState = isVerified ? 'verified' : error ? 'error' : 'default'
+
+  let submitVariant: 'ready' | 'muted' | 'success' = 'muted'
+  if (isVerified) submitVariant = 'success'
+  else if (isCodeComplete) submitVariant = 'ready'
 
   return (
-    <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <BrandLogo />
+    <AuthLayout>
+      <SignupProgress step={2} />
+
+      <MailTile />
+
+      <AuthHeading
+        title={t('auth.verifyTitle')}
+        subtitle={t('auth.codeSentTo')}
+      >
+        <div className="flex flex-wrap items-baseline gap-x-2 text-[15px] leading-[1.45]">
+          <b className="min-w-0 break-all font-extrabold text-ink">
+            {signupEmail ?? ''}
+          </b>
+          <button
+            type="button"
+            onClick={handleChangeEmail}
+            className="font-extrabold text-carrot-strong"
+          >
+            {t('auth.changeEmail')}
+          </button>
         </div>
+      </AuthHeading>
 
-        <Card>
-          <CardContent className="flex flex-col gap-4 p-6">
-            <div>
-              <h2 className="text-xl font-semibold">{t('auth.verifyTitle')}</h2>
-              <p className="text-sm text-zinc-600 mt-1">
-                {t('auth.verifySubtitle', { email: signupEmail ?? '' })}
-              </p>
-            </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+        <OtpInput
+          value={code}
+          onChange={handleCodeChange}
+          onSubmit={handleVerify}
+          disabled={loading || isVerified}
+          state={otpState}
+        />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={code}
-                onChange={handleCodeChange}
-                placeholder={t('auth.codePlaceholder')}
-                className="px-3 py-4 text-3xl font-bold tracking-[0.5em] text-center rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                aria-label={t('auth.codePlaceholder')}
-              />
+        <AuthError message={error} />
 
-              {error && (
-                <p className="text-danger text-sm text-center">{error}</p>
-              )}
+        <AuthSubmitButton variant={submitVariant} isBusy={loading}>
+          {loading ? t('auth.verifying') : t('auth.verify')}
+        </AuthSubmitButton>
+      </form>
 
-              <Button
-                variant="primary"
-                type="submit"
-                isDisabled={loading || code.length < 6}
-                fullWidth
-              >
-                {loading ? t('auth.verifying') : t('auth.verify')}
-              </Button>
-            </form>
-
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={cooldown > 0}
-              className="text-sm text-primary font-medium disabled:text-zinc-400 disabled:cursor-not-allowed text-center"
-            >
-              {cooldown > 0
-                ? t('auth.resendIn', { seconds: cooldown })
-                : t('auth.resendCode')}
-            </button>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-between gap-3 text-sm font-semibold text-ink-subtle">
+        <span>{t('auth.checkSpam')}</span>
+        <button
+          type="button"
+          onClick={handleResend}
+          aria-disabled={!canResend}
+          className={`font-extrabold tabular-nums ${
+            canResend ? 'text-carrot-strong' : 'cursor-default text-ink-faint'
+          }`}
+        >
+          {secondsLeft > 0
+            ? t('auth.resendIn', { seconds: secondsLeft })
+            : t('auth.resendCode')}
+        </button>
       </div>
-    </main>
+    </AuthLayout>
   )
 }
 

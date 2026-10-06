@@ -282,7 +282,91 @@
     "passwordTooShort": "Password must be at least 8 characters",
     "nicknameTooLong": "Nickname must be 50 characters or fewer",
     "codeRequired": "Enter the 6-digit code",
-    "registrationError": "Registration failed. Please try again."
+    "registrationError": "Registration failed. Please try again.",
+    "welcomeBack": "Welcome back",
+    "stepOf": "Step {{current}} of {{total}}",
+    "emailLooksValid": "Email looks valid",
+    "sendingCode": "Sending code…",
+    "codeSentTo": "Enter the 6-digit code sent to",
+    "changeEmail": "Change",
+    "checkSpam": "Can't find it? Check spam.",
+    "codeDigit": "Digit {{index}} of {{total}}",
+    "optional": "Optional",
+    "nicknamePlaceholder": "e.g. Batman",
+    "shownAs": "Shown as <bold>{{name}}</bold> on shared recipes",
+    "passwordPlaceholder": "At least 8 characters",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "passwordStrength": {
+      "empty": "Use 8 or more characters",
+      "tooShort": "Too short",
+      "okay": "Okay — add numbers or symbols",
+      "good": "Good",
+      "strong": "Strong password"
+    },
+    "termsNotice": "By creating an account you agree to the Terms and Privacy Policy.",
+    "features": {
+      "dotLabel": "Show feature {{index}}",
+      "household": {
+        "label": "Household",
+        "title": "Cook together",
+        "description": "Share recipes, plans and lists with everyone in your household.",
+        "kitchenName": "Showcase Kitchen",
+        "members": "4 members · shared recipes & list"
+      },
+      "allergens": {
+        "label": "Allergens",
+        "title": "Allergens, flagged",
+        "description": "See gluten, dairy and nuts at a glance, right down to the ingredient.",
+        "recipe": "Chicken & Pesto Rice",
+        "dairy": "Dairy",
+        "nuts": "Nuts",
+        "glutenFree": "Gluten-free",
+        "ingredient": "pesto",
+        "flags": "dairy, nuts"
+      },
+      "linkedRecipes": {
+        "label": "Linked recipes",
+        "title": "Linked recipes",
+        "description": "Connect a sauce or side to every dish that uses it.",
+        "recipe": "Chicken & Pesto Rice",
+        "uses": "uses",
+        "component": "Homemade Basil Pesto"
+      },
+      "scaling": {
+        "label": "Scaling",
+        "title": "Scale anything",
+        "description": "Change the servings and every amount updates with it.",
+        "serves": "Serves",
+        "chicken": "chicken thighs",
+        "rice": "rice",
+        "garlic": "garlic cloves"
+      },
+      "units": {
+        "label": "Units",
+        "title": "Your units",
+        "description": "Flip between metric and US cups in one tap.",
+        "metric": "Metric",
+        "us": "US",
+        "chicken": "chicken",
+        "broth": "broth",
+        "oil": "olive oil"
+      },
+      "timers": {
+        "label": "Timers",
+        "title": "Built-in timers",
+        "description": "Start a timer straight from the step you are on.",
+        "step": "Step 4 · Simmer the rice"
+      },
+      "mealPlan": {
+        "label": "Meal plan",
+        "title": "Plan the week",
+        "description": "Drop recipes into your week, then shop it as one list.",
+        "weekdayInitials": "MTWTFSS",
+        "summary": "3 dinners planned",
+        "listReady": "list ready"
+      }
+    }
   },
   "timers": {
     "timerDone_one": "Timer done",

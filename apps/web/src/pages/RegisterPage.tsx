@@ -1,35 +1,19 @@
-import { type FormEvent, useCallback, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Button, Card, CardContent } from '@heroui/react'
+import { type FormEvent, useCallback, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import BrandLogo from '../components/BrandLogo'
-import LanguageSwitcher from '../components/LanguageSwitcher'
-import GoogleSignInButton from '../components/GoogleSignInButton'
+import AuthLayout from '../components/Auth/AuthLayout'
+import SignupProgress from '../components/Auth/SignupProgress'
+import AuthHeading from '../components/Auth/AuthHeading'
+import AuthTextField from '../components/Auth/AuthTextField'
+import AuthSubmitButton from '../components/Auth/AuthSubmitButton'
+import AuthError from '../components/Auth/AuthError'
+import OrDivider from '../components/Auth/OrDivider'
+import GoogleSection from '../components/Auth/GoogleSection'
+import AuthSwitchPrompt from '../components/Auth/AuthSwitchPrompt'
 
 const ACCOUNT_EXISTS = 'ACCOUNT_EXISTS'
-
-interface GoogleSignInSectionProps {
-  loading: boolean
-  onCredential: (idToken: string) => void
-  onError: () => void
-}
-
-const GoogleSignInSection = ({
-  loading,
-  onCredential,
-  onError,
-}: GoogleSignInSectionProps) => {
-  const { t } = useTranslation()
-
-  if (loading) {
-    return (
-      <p className="text-center text-sm text-zinc-600">{t('auth.creating')}</p>
-    )
-  }
-
-  return <GoogleSignInButton onCredential={onCredential} onError={onError} />
-}
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 const RegisterPage = () => {
   const { requestSignupCode, loginWithGoogle } = useAuth()
@@ -39,15 +23,21 @@ const RegisterPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const requestInProgressRef = useRef(false)
+  const isValidEmail = EMAIL_PATTERN.test(email.trim())
+  const isBusy = loading || googleLoading
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault()
+      if (!isValidEmail || requestInProgressRef.current) return
+
+      requestInProgressRef.current = true
       setError(null)
       setLoading(true)
 
       try {
-        await requestSignupCode(email)
+        await requestSignupCode(email.trim())
         navigate('/verify', { replace: true })
       } catch (err) {
         const fallbackMessage =
@@ -59,13 +49,17 @@ const RegisterPage = () => {
         setError(displayMessage)
       } finally {
         setLoading(false)
+        requestInProgressRef.current = false
       }
     },
-    [email, requestSignupCode, navigate, t]
+    [email, isValidEmail, requestSignupCode, navigate, t]
   )
 
   const handleGoogleCredential = useCallback(
     async (idToken: string) => {
+      if (requestInProgressRef.current) return
+
+      requestInProgressRef.current = true
       setError(null)
       setGoogleLoading(true)
 
@@ -76,6 +70,7 @@ const RegisterPage = () => {
         setError(t('auth.googleSignInError'))
       } finally {
         setGoogleLoading(false)
+        requestInProgressRef.current = false
       }
     },
     [loginWithGoogle, navigate, t]
@@ -85,78 +80,65 @@ const RegisterPage = () => {
     setError(t('auth.googleSignInError'))
   }, [t])
 
+  const validBadge = isValidEmail ? (
+    <span
+      role="img"
+      aria-label={t('auth.emailLooksValid')}
+      className="flex h-[22px] w-[22px] items-center justify-center rounded-full bg-mint text-xs font-extrabold text-white"
+    >
+      ✓
+    </span>
+  ) : null
+
   return (
-    <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <LanguageSwitcher />
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <BrandLogo />
-          <p className="text-zinc-600 mt-1 text-sm">{t('auth.tagline')}</p>
-        </div>
+    <AuthLayout>
+      <SignupProgress step={1} />
 
-        <Card>
-          <CardContent className="flex flex-col gap-4 p-6">
-            <div>
-              <h2 className="text-xl font-semibold">
-                {t('auth.createAccount')}
-              </h2>
-              <p className="text-sm text-zinc-600 mt-1">
-                {t('auth.signupEmailSubtitle')}
-              </p>
-            </div>
+      <AuthHeading
+        title={t('auth.createAccount')}
+        subtitle={t('auth.signupEmailSubtitle')}
+      />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="email">
-                  {t('auth.email')}
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                  className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+        <AuthTextField
+          id="email"
+          type="email"
+          label={t('auth.email')}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          placeholder="you@example.com"
+          required
+          disabled={isBusy}
+          tone={isValidEmail ? 'valid' : 'default'}
+          trailing={validBadge}
+        />
 
-              {error && <p className="text-danger text-sm">{error}</p>}
+        <AuthError message={error} />
 
-              <Button
-                variant="primary"
-                type="submit"
-                isDisabled={loading}
-                fullWidth
-              >
-                {loading ? t('auth.creating') : t('auth.continue')}
-              </Button>
-            </form>
+        <AuthSubmitButton
+          variant={isValidEmail ? 'ready' : 'muted'}
+          isBusy={isBusy}
+        >
+          {loading ? t('auth.sendingCode') : t('auth.continue')}
+        </AuthSubmitButton>
+      </form>
 
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-zinc-200" />
-              <span className="text-xs text-zinc-500">
-                {t('auth.orDivider')}
-              </span>
-              <div className="h-px flex-1 bg-zinc-200" />
-            </div>
+      <OrDivider />
 
-            <GoogleSignInSection
-              loading={googleLoading}
-              onCredential={handleGoogleCredential}
-              onError={handleGoogleError}
-            />
+      <GoogleSection
+        loading={googleLoading}
+        loadingLabel={t('auth.creating')}
+        onCredential={handleGoogleCredential}
+        onError={handleGoogleError}
+      />
 
-            <p className="text-center text-sm text-zinc-600">
-              {t('auth.alreadyHaveAccount')}{' '}
-              <Link to="/login" className="text-primary font-medium">
-                {t('auth.signIn')}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      <AuthSwitchPrompt
+        prompt={t('auth.alreadyHaveAccount')}
+        linkLabel={t('auth.signIn')}
+        to="/login"
+      />
+    </AuthLayout>
   )
 }
 

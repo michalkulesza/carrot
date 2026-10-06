@@ -72,6 +72,30 @@ html {
 
   /* success shades */
   --color-success-700: oklch(0.56 0.16 150);
+
+  /* design palette — text, surfaces and accents from the claude.ai designs */
+  --color-ink: #1f1d2b;
+  --color-ink-soft: #4a4858;
+  --color-ink-muted: #6b6a78;
+  --color-ink-subtle: #8c8a99;
+  --color-ink-faint: #a9a6b4;
+  --color-line: #eceaf0;
+  --color-line-strong: #e4e1ea;
+  --color-mist: #f4f3f7;
+  --color-mist-soft: #f1eff5;
+  --color-canvas: #f7f6fa;
+  --color-carrot: #e8894a;
+  --color-carrot-hover: #dd7a38;
+  --color-carrot-strong: #e07b39;
+  --color-carrot-muted: #f3c5a6;
+  --color-carrot-tint: #fdefe4;
+  --color-carrot-wash: #fff8f2;
+  --color-mint: #2f9e5b;
+  --color-mint-ink: #2f7a4a;
+  --color-mint-border: #7cc48f;
+  --color-mint-wash: #f1faf4;
+
+  --font-nunito: 'Nunito', system-ui, sans-serif;
 }
 
 @layer utilities {

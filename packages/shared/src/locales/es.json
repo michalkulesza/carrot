@@ -258,6 +258,7 @@
     "accountExistsGoogleError": "Ya existe una cuenta con este correo electrónico a través de Google. Usa \"Continuar con Google\" para iniciar sesión.",
     "completeProfileTitle": "Configura tu cuenta",
     "completeProfileSubtitle": "Elige una contraseña y cómo quieres que te llamen.",
+    "completeProfileError": "No se pudo completar el registro. Inténtalo de nuevo.",
     "brandName": "carrot",
     "tagline": "Tu biblioteca personal de recetas",
     "continueWithGoogle": "Continuar con Google",
@@ -283,7 +284,91 @@
     "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
     "nicknameTooLong": "El apodo debe tener 50 caracteres como máximo",
     "codeRequired": "Introduce el código de 6 dígitos",
-    "registrationError": "Error en el registro. Inténtalo de nuevo."
+    "registrationError": "Error en el registro. Inténtalo de nuevo.",
+    "welcomeBack": "Bienvenido de nuevo",
+    "stepOf": "Paso {{current}} de {{total}}",
+    "emailLooksValid": "El correo parece válido",
+    "sendingCode": "Enviando código…",
+    "codeSentTo": "Introduce el código de 6 dígitos enviado a",
+    "changeEmail": "Cambiar",
+    "checkSpam": "¿No lo encuentras? Revisa el spam.",
+    "codeDigit": "Dígito {{index}} de {{total}}",
+    "optional": "Opcional",
+    "nicknamePlaceholder": "p. ej. Batman",
+    "shownAs": "Se mostrará como <bold>{{name}}</bold> en las recetas compartidas",
+    "passwordPlaceholder": "Al menos 8 caracteres",
+    "showPassword": "Mostrar",
+    "hidePassword": "Ocultar",
+    "passwordStrength": {
+      "empty": "Usa 8 o más caracteres",
+      "tooShort": "Demasiado corta",
+      "okay": "Aceptable — añade números o símbolos",
+      "good": "Buena",
+      "strong": "Contraseña segura"
+    },
+    "termsNotice": "Al crear una cuenta aceptas los Términos y la Política de privacidad.",
+    "features": {
+      "dotLabel": "Mostrar función {{index}}",
+      "household": {
+        "label": "Hogar",
+        "title": "Cocinad juntos",
+        "description": "Comparte recetas, planes y listas con todos en tu hogar.",
+        "kitchenName": "Cocina de muestra",
+        "members": "4 miembros · recetas y lista compartidas"
+      },
+      "allergens": {
+        "label": "Alérgenos",
+        "title": "Alérgenos señalados",
+        "description": "Ve gluten, lácteos y frutos secos de un vistazo, hasta el ingrediente.",
+        "recipe": "Pollo con arroz al pesto",
+        "dairy": "Lácteos",
+        "nuts": "Frutos secos",
+        "glutenFree": "Sin gluten",
+        "ingredient": "pesto",
+        "flags": "lácteos, frutos secos"
+      },
+      "linkedRecipes": {
+        "label": "Recetas vinculadas",
+        "title": "Recetas vinculadas",
+        "description": "Conecta una salsa o guarnición con cada plato que la usa.",
+        "recipe": "Pollo con arroz al pesto",
+        "uses": "usa",
+        "component": "Pesto de albahaca casero"
+      },
+      "scaling": {
+        "label": "Escalado",
+        "title": "Escala lo que quieras",
+        "description": "Cambia las raciones y cada cantidad se actualiza.",
+        "serves": "Raciones",
+        "chicken": "muslos de pollo",
+        "rice": "arroz",
+        "garlic": "dientes de ajo"
+      },
+      "units": {
+        "label": "Unidades",
+        "title": "Tus unidades",
+        "description": "Cambia entre métrico y tazas de EE. UU. con un toque.",
+        "metric": "Métrico",
+        "us": "EE. UU.",
+        "chicken": "pollo",
+        "broth": "caldo",
+        "oil": "aceite de oliva"
+      },
+      "timers": {
+        "label": "Temporizadores",
+        "title": "Temporizadores integrados",
+        "description": "Inicia un temporizador desde el paso en el que estás.",
+        "step": "Paso 4 · Cocer el arroz a fuego lento"
+      },
+      "mealPlan": {
+        "label": "Menú semanal",
+        "title": "Planifica la semana",
+        "description": "Arrastra recetas a tu semana y compra todo con una sola lista.",
+        "weekdayInitials": "LMXJVSD",
+        "summary": "3 cenas planificadas",
+        "listReady": "lista preparada"
+      }
+    }
   },
   "timers": {
     "startTimer": "Iniciar temporizador",
@@ -348,9 +433,9 @@
     "allergenDisclaimer": "Los avisos de alérgenos son estimaciones asistidas por IA, no un sustituto de leer la etiqueta completa de ingredientes.",
     "allergens": "Alérgenos",
     "intolerances": "Intolerancias",
-    "allergenRecheckProgress": "Comprobando al\u00e9rgenos en las recetas ({{completed}}/{{total}})",
-    "allergenRecheckComplete": "Comprobaci\u00f3n de al\u00e9rgenos completada",
-    "allergenRecheckFailed": "No se pudieron comprobar los al\u00e9rgenos de {{failed}} recetas",
+    "allergenRecheckProgress": "Comprobando alérgenos en las recetas ({{completed}}/{{total}})",
+    "allergenRecheckComplete": "Comprobación de alérgenos completada",
+    "allergenRecheckFailed": "No se pudieron comprobar los alérgenos de {{failed}} recetas",
     "allergensSaved": "Alérgenos guardados",
     "failedToSave": "Error al guardar",
     "autoApplySubstitutes": "Aplicar sustitutos automáticamente",

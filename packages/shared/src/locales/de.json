@@ -282,7 +282,91 @@
     "passwordTooShort": "Das Passwort muss mindestens 8 Zeichen lang sein",
     "nicknameTooLong": "Der Spitzname darf höchstens 50 Zeichen lang sein",
     "codeRequired": "Gib den 6-stelligen Code ein",
-    "registrationError": "Registrierung fehlgeschlagen. Bitte versuche es erneut."
+    "registrationError": "Registrierung fehlgeschlagen. Bitte versuche es erneut.",
+    "welcomeBack": "Willkommen zurück",
+    "stepOf": "Schritt {{current}} von {{total}}",
+    "emailLooksValid": "E-Mail-Adresse sieht gut aus",
+    "sendingCode": "Code wird gesendet…",
+    "codeSentTo": "Gib den 6-stelligen Code ein, der gesendet wurde an",
+    "changeEmail": "Ändern",
+    "checkSpam": "Nicht gefunden? Schau im Spam-Ordner nach.",
+    "codeDigit": "Ziffer {{index}} von {{total}}",
+    "optional": "Optional",
+    "nicknamePlaceholder": "z. B. Batman",
+    "shownAs": "Wird bei geteilten Rezepten als <bold>{{name}}</bold> angezeigt",
+    "passwordPlaceholder": "Mindestens 8 Zeichen",
+    "showPassword": "Zeigen",
+    "hidePassword": "Verbergen",
+    "passwordStrength": {
+      "empty": "Verwende mindestens 8 Zeichen",
+      "tooShort": "Zu kurz",
+      "okay": "Okay — füge Zahlen oder Symbole hinzu",
+      "good": "Gut",
+      "strong": "Starkes Passwort"
+    },
+    "termsNotice": "Mit der Kontoerstellung stimmst du den Nutzungsbedingungen und der Datenschutzerklärung zu.",
+    "features": {
+      "dotLabel": "Funktion {{index}} anzeigen",
+      "household": {
+        "label": "Haushalt",
+        "title": "Gemeinsam kochen",
+        "description": "Teile Rezepte, Pläne und Listen mit allen in deinem Haushalt.",
+        "kitchenName": "Musterküche",
+        "members": "4 Mitglieder · gemeinsame Rezepte & Liste"
+      },
+      "allergens": {
+        "label": "Allergene",
+        "title": "Allergene im Blick",
+        "description": "Erkenne Gluten, Milchprodukte und Nüsse auf einen Blick, bis hin zur Zutat.",
+        "recipe": "Hähnchen mit Pesto-Reis",
+        "dairy": "Milch",
+        "nuts": "Nüsse",
+        "glutenFree": "Glutenfrei",
+        "ingredient": "Pesto",
+        "flags": "Milch, Nüsse"
+      },
+      "linkedRecipes": {
+        "label": "Verknüpfte Rezepte",
+        "title": "Verknüpfte Rezepte",
+        "description": "Verbinde eine Soße oder Beilage mit jedem Gericht, das sie verwendet.",
+        "recipe": "Hähnchen mit Pesto-Reis",
+        "uses": "verwendet",
+        "component": "Selbstgemachtes Basilikumpesto"
+      },
+      "scaling": {
+        "label": "Skalierung",
+        "title": "Alles skalieren",
+        "description": "Ändere die Portionen und jede Menge passt sich an.",
+        "serves": "Portionen",
+        "chicken": "Hähnchenschenkel",
+        "rice": "Reis",
+        "garlic": "Knoblauchzehen"
+      },
+      "units": {
+        "label": "Einheiten",
+        "title": "Deine Einheiten",
+        "description": "Wechsle mit einem Tipp zwischen metrisch und US-Cups.",
+        "metric": "Metrisch",
+        "us": "US",
+        "chicken": "Hähnchen",
+        "broth": "Brühe",
+        "oil": "Olivenöl"
+      },
+      "timers": {
+        "label": "Timer",
+        "title": "Integrierte Timer",
+        "description": "Starte einen Timer direkt in dem Schritt, bei dem du bist.",
+        "step": "Schritt 4 · Reis köcheln lassen"
+      },
+      "mealPlan": {
+        "label": "Essensplan",
+        "title": "Plane die Woche",
+        "description": "Zieh Rezepte in deine Woche und kaufe sie dann als eine Liste ein.",
+        "weekdayInitials": "MDMDFSS",
+        "summary": "3 Abendessen geplant",
+        "listReady": "Liste bereit"
+      }
+    }
   },
   "timers": {
     "startTimer": "Timer starten",
@@ -347,9 +431,9 @@
     "allergenDisclaimer": "Allergen-Hinweise sind KI-gestützte Schätzungen und ersetzen nicht das Lesen der vollständigen Zutatenliste.",
     "allergens": "Allergene",
     "intolerances": "Unverträglichkeiten",
-    "allergenRecheckProgress": "Rezepte auf Allergene pr\u00fcfen ({{completed}}/{{total}})",
-    "allergenRecheckComplete": "Allergenpr\u00fcfung der Rezepte abgeschlossen",
-    "allergenRecheckFailed": "{{failed}} Rezepte konnten nicht auf Allergene gepr\u00fcft werden",
+    "allergenRecheckProgress": "Rezepte auf Allergene prüfen ({{completed}}/{{total}})",
+    "allergenRecheckComplete": "Allergenprüfung der Rezepte abgeschlossen",
+    "allergenRecheckFailed": "{{failed}} Rezepte konnten nicht auf Allergene geprüft werden",
     "allergensSaved": "Allergene gespeichert",
     "failedToSave": "Speichern fehlgeschlagen",
     "autoApplySubstitutes": "Ersatzstoffe automatisch anwenden",

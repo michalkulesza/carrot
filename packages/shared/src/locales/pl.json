@@ -292,7 +292,91 @@
     "passwordTooShort": "Hasło musi mieć co najmniej 8 znaków",
     "nicknameTooLong": "Pseudonim może mieć maksymalnie 50 znaków",
     "codeRequired": "Podaj 6-cyfrowy kod",
-    "registrationError": "Rejestracja nie powiodła się. Spróbuj ponownie."
+    "registrationError": "Rejestracja nie powiodła się. Spróbuj ponownie.",
+    "welcomeBack": "Witaj ponownie",
+    "stepOf": "Krok {{current}} z {{total}}",
+    "emailLooksValid": "Adres e-mail wygląda poprawnie",
+    "sendingCode": "Wysyłanie kodu…",
+    "codeSentTo": "Wpisz 6-cyfrowy kod wysłany na adres",
+    "changeEmail": "Zmień",
+    "checkSpam": "Nie widzisz go? Sprawdź spam.",
+    "codeDigit": "Cyfra {{index}} z {{total}}",
+    "optional": "Opcjonalnie",
+    "nicknamePlaceholder": "np. Batman",
+    "shownAs": "Widoczny jako <bold>{{name}}</bold> przy udostępnionych przepisach",
+    "passwordPlaceholder": "Co najmniej 8 znaków",
+    "showPassword": "Pokaż",
+    "hidePassword": "Ukryj",
+    "passwordStrength": {
+      "empty": "Użyj co najmniej 8 znaków",
+      "tooShort": "Za krótkie",
+      "okay": "W porządku — dodaj cyfry lub symbole",
+      "good": "Dobre",
+      "strong": "Silne hasło"
+    },
+    "termsNotice": "Tworząc konto, akceptujesz Regulamin i Politykę prywatności.",
+    "features": {
+      "dotLabel": "Pokaż funkcję {{index}}",
+      "household": {
+        "label": "Gospodarstwo",
+        "title": "Gotujcie razem",
+        "description": "Dziel się przepisami, planami i listami z całym gospodarstwem domowym.",
+        "kitchenName": "Kuchnia pokazowa",
+        "members": "4 osoby · wspólne przepisy i lista"
+      },
+      "allergens": {
+        "label": "Alergeny",
+        "title": "Alergeny oznaczone",
+        "description": "Zobacz gluten, nabiał i orzechy od razu, aż do poziomu składnika.",
+        "recipe": "Kurczak z ryżem i pesto",
+        "dairy": "Nabiał",
+        "nuts": "Orzechy",
+        "glutenFree": "Bez glutenu",
+        "ingredient": "pesto",
+        "flags": "nabiał, orzechy"
+      },
+      "linkedRecipes": {
+        "label": "Powiązane przepisy",
+        "title": "Powiązane przepisy",
+        "description": "Połącz sos lub dodatek z każdym daniem, które go używa.",
+        "recipe": "Kurczak z ryżem i pesto",
+        "uses": "używa",
+        "component": "Domowe pesto bazyliowe"
+      },
+      "scaling": {
+        "label": "Skalowanie",
+        "title": "Skaluj wszystko",
+        "description": "Zmień liczbę porcji, a każda ilość zmieni się razem z nią.",
+        "serves": "Porcje",
+        "chicken": "udka z kurczaka",
+        "rice": "ryż",
+        "garlic": "ząbki czosnku"
+      },
+      "units": {
+        "label": "Jednostki",
+        "title": "Twoje jednostki",
+        "description": "Przełączaj się między jednostkami metrycznymi a amerykańskimi kubkami jednym dotknięciem.",
+        "metric": "Metryczne",
+        "us": "US",
+        "chicken": "kurczak",
+        "broth": "bulion",
+        "oil": "oliwa z oliwek"
+      },
+      "timers": {
+        "label": "Minutniki",
+        "title": "Wbudowane minutniki",
+        "description": "Uruchom minutnik prosto z kroku, na którym jesteś.",
+        "step": "Krok 4 · Gotuj ryż na wolnym ogniu"
+      },
+      "mealPlan": {
+        "label": "Plan posiłków",
+        "title": "Zaplanuj tydzień",
+        "description": "Wrzuć przepisy do tygodnia, a potem zrób zakupy z jednej listy.",
+        "weekdayInitials": "PWŚCPSN",
+        "summary": "3 zaplanowane obiady",
+        "listReady": "lista gotowa"
+      }
+    }
   },
   "timers": {
     "startTimer": "Uruchom minutnik",
@@ -359,9 +443,9 @@
     "allergenDisclaimer": "Oznaczenia alergenów to szacunki wspomagane przez AI, a nie zamiennik czytania pełnej listy składników.",
     "allergens": "Alergeny",
     "intolerances": "Nietolerancje",
-    "allergenRecheckProgress": "Sprawdzanie alergen\u00f3w w przepisach ({{completed}}/{{total}})",
-    "allergenRecheckComplete": "Sprawdzanie alergen\u00f3w w przepisach zako\u0144czone",
-    "allergenRecheckFailed": "Nie uda\u0142o si\u0119 sprawdzi\u0107 alergen\u00f3w w {{failed}} przepisach",
+    "allergenRecheckProgress": "Sprawdzanie alergenów w przepisach ({{completed}}/{{total}})",
+    "allergenRecheckComplete": "Sprawdzanie alergenów w przepisach zakończone",
+    "allergenRecheckFailed": "Nie udało się sprawdzić alergenów w {{failed}} przepisach",
     "allergensSaved": "Alergeny zapisane",
     "failedToSave": "Nie udało się zapisać",
     "autoApplySubstitutes": "Automatycznie stosuj zamienniki",

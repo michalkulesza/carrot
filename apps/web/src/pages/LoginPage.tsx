@@ -1,34 +1,16 @@
 import { type FormEvent, useCallback, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, Card, CardContent } from '@heroui/react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
-import BrandLogo from '../components/BrandLogo'
-import LanguageSwitcher from '../components/LanguageSwitcher'
-import GoogleSignInButton from '../components/GoogleSignInButton'
+import AuthLayout from '../components/Auth/AuthLayout'
+import AuthHeading from '../components/Auth/AuthHeading'
+import AuthTextField from '../components/Auth/AuthTextField'
+import AuthSubmitButton from '../components/Auth/AuthSubmitButton'
+import AuthError from '../components/Auth/AuthError'
+import OrDivider from '../components/Auth/OrDivider'
+import GoogleSection from '../components/Auth/GoogleSection'
+import AuthSwitchPrompt from '../components/Auth/AuthSwitchPrompt'
 import { isSafeReturnPath } from '../routing/routeState'
-
-interface GoogleSignInSectionProps {
-  loading: boolean
-  onCredential: (idToken: string) => void
-  onError: () => void
-}
-
-const GoogleSignInSection = ({
-  loading,
-  onCredential,
-  onError,
-}: GoogleSignInSectionProps) => {
-  const { t } = useTranslation()
-
-  if (loading) {
-    return (
-      <p className="text-center text-sm text-zinc-600">{t('auth.signingIn')}</p>
-    )
-  }
-
-  return <GoogleSignInButton onCredential={onCredential} onError={onError} />
-}
 
 const LoginPage = () => {
   const { login, loginWithGoogle } = useAuth()
@@ -99,84 +81,54 @@ const LoginPage = () => {
   }, [t])
 
   return (
-    <main className="relative min-h-screen bg-background flex flex-col items-center justify-center px-4">
-      <LanguageSwitcher />
-      <div className="w-full max-w-[434px]">
-        <div className="mb-8 text-center">
-          <BrandLogo />
-          <p className="text-zinc-600 mt-1 text-sm">{t('auth.tagline')}</p>
+    <AuthLayout>
+      <AuthHeading title={t('auth.welcomeBack')} subtitle={t('auth.tagline')} />
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]">
+        <div className="flex flex-col gap-3.5">
+          <AuthTextField
+            id="email"
+            type="email"
+            label={t('auth.email')}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+            disabled={isSigningIn}
+          />
+          <AuthTextField
+            id="password"
+            type="password"
+            label={t('auth.password')}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
+            disabled={isSigningIn}
+          />
         </div>
 
-        <Card>
-          <CardContent className="flex flex-col gap-4 p-6">
-            <h2 className="text-xl font-semibold">{t('auth.signIn')}</h2>
+        <AuthError message={error} />
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="email">
-                  {t('auth.email')}
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                  disabled={isSigningIn}
-                  className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium" htmlFor="password">
-                  {t('auth.password')}
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  disabled={isSigningIn}
-                  className="px-3 py-2 text-sm rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
+        <AuthSubmitButton variant="ready" isBusy={isSigningIn}>
+          {isSigningIn ? t('auth.signingIn') : t('auth.signIn')}
+        </AuthSubmitButton>
+      </form>
 
-              {error && <p className="text-danger text-sm">{error}</p>}
+      <OrDivider />
 
-              <Button
-                variant="primary"
-                type="submit"
-                isDisabled={isSigningIn}
-                fullWidth
-              >
-                {isSigningIn ? t('auth.signingIn') : t('auth.signIn')}
-              </Button>
-            </form>
+      <GoogleSection
+        loading={isSigningIn}
+        loadingLabel={t('auth.signingIn')}
+        onCredential={handleGoogleCredential}
+        onError={handleGoogleError}
+      />
 
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-zinc-200" />
-              <span className="text-xs text-zinc-500">
-                {t('auth.orDivider')}
-              </span>
-              <div className="h-px flex-1 bg-zinc-200" />
-            </div>
-
-            <GoogleSignInSection
-              loading={isSigningIn}
-              onCredential={handleGoogleCredential}
-              onError={handleGoogleError}
-            />
-
-            <p className="text-center text-sm text-zinc-600">
-              {t('auth.noAccount')}{' '}
-              <Link to="/register" className="text-primary font-medium">
-                {t('auth.createOne')}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    </main>
+      <AuthSwitchPrompt
+        prompt={t('auth.noAccount')}
+        linkLabel={t('auth.createOne')}
+        to="/register"
+      />
+    </AuthLayout>
   )
 }
 
