@@ -40,39 +40,53 @@ const CategoryFilterDropdown = ({
 
   const selectedTags = tags.filter((tag) => selectedTagIds.has(tag.id))
   const isActive = selectedTags.length > 0
-  const label = isActive
+  const value = isActive
     ? selectedTags.length > 1
       ? `${tTag(selectedTags[0].name, t)} +${selectedTags.length - 1}`
       : tTag(selectedTags[0].name, t)
-    : t(`tags.category.${category}`)
+    : null
+  const categoryName = t(`tags.category.${category}`)
 
   const buttonClass = isActive
-    ? 'flex-1 min-w-0 flex items-center justify-between gap-1 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-secondary text-white'
-    : 'flex-1 min-w-0 flex items-center justify-between gap-1 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+    ? 'border-carrot'
+    : 'border-line hover:border-line-strong'
 
   return (
-    <div className="relative flex-1 min-w-0 md:flex-none" ref={containerRef}>
+    <div className="relative min-w-0 flex-1 md:flex-none" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((isOpen) => !isOpen)}
-        className={buttonClass}
+        aria-expanded={open}
+        className={`flex w-full min-w-0 items-center justify-between gap-1 rounded-[10px] border bg-white px-2 py-1.5 text-xs font-bold transition-colors md:justify-start md:gap-2 md:px-3 md:py-2 md:text-sm ${buttonClass}`}
       >
-        <span className="truncate">{label}</span>
-        <ChevronDown size={12} aria-hidden={true} />
+        <span className="hidden text-ink-subtle md:inline">{categoryName}</span>
+        {value ? (
+          <span className="truncate text-carbs-ink">{value}</span>
+        ) : (
+          <>
+            <span className="truncate md:hidden">{categoryName}</span>
+            <span className="hidden md:inline">{t('recipes.filterAny')}</span>
+          </>
+        )}
+        <ChevronDown
+          size={14}
+          className="shrink-0 text-ink-subtle"
+          aria-hidden={true}
+        />
       </button>
       <AnimatePresence>
         {open && (
-          <PopupSurface className="absolute left-0 top-8 z-50 w-48 max-h-56 overflow-y-auto overflow-hidden bg-white border border-zinc-200 rounded-xl shadow-xl">
+          <PopupSurface className="absolute left-0 top-full mt-1 z-50 w-48 max-h-56 overflow-y-auto overflow-hidden bg-white border border-line rounded-xl shadow-xl font-nunito">
             {tags.map((tag) => (
               <button
                 key={tag.id}
                 type="button"
                 onClick={() => onToggleTag(tag.id)}
-                className="flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-zinc-100"
+                className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-ink-soft text-left transition-colors hover:bg-row-hover"
               >
                 {tTag(tag.name, t)}
                 {selectedTagIds.has(tag.id) && (
-                  <span className="text-primary">✓</span>
+                  <span className="text-carrot-strong">✓</span>
                 )}
               </button>
             ))}

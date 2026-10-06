@@ -1,4 +1,3 @@
-import { Star } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import type { Tag } from '@carrot/shared/types'
 import {
@@ -6,8 +5,9 @@ import {
   TAG_CATEGORIES,
 } from '@carrot/shared/utils/tagFilters'
 import CategoryFilterDropdown from './CategoryFilterDropdown'
-import FilterTagButton from './FilterTagButton'
+import FavouritesChip from './FavouritesChip'
 import HorizontalScrollStrip from './HorizontalScrollStrip'
+import TagPills from './TagPills'
 
 interface FilterBarProps {
   allTags: Tag[]
@@ -15,6 +15,9 @@ interface FilterBarProps {
   onToggleFilterFavourites: () => void
   selectedTagIds: Set<string>
   onToggleTag: (tagId: string) => void
+  shownCount: number
+  totalCount: number
+  onClearAll: () => void
 }
 
 const FilterBar = ({
@@ -23,25 +26,22 @@ const FilterBar = ({
   onToggleFilterFavourites,
   selectedTagIds,
   onToggleTag,
+  shownCount,
+  totalCount,
+  onClearAll,
 }: FilterBarProps) => {
   const { t } = useTranslation()
   const groupedTags = groupTagsByCategory(allTags)
-
-  const favouritesButtonClass = filterFavourites
-    ? 'shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors bg-amber-400 text-white'
-    : 'shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+  const hasActiveFilters = filterFavourites || selectedTagIds.size > 0
+  const hasOtherTags = groupedTags.other.length > 0
 
   return (
-    <div className="flex flex-col gap-2 px-4 pb-1 mt-3 md:flex-row md:items-center md:px-6">
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={onToggleFilterFavourites}
-          className={favouritesButtonClass}
-          aria-label={t('recipes.filterFavourites')}
-        >
-          <Star size={13} fill="currentColor" aria-hidden={true} />
-        </button>
+    <div className="mt-3 bg-toolbar font-nunito text-ink-soft md:mt-0">
+      <div className="flex items-center gap-2 px-4 py-3 md:gap-2.5 md:px-[22px]">
+        <FavouritesChip
+          active={filterFavourites}
+          onToggle={onToggleFilterFavourites}
+        />
 
         {TAG_CATEGORIES.map((category) => (
           <CategoryFilterDropdown
@@ -52,19 +52,48 @@ const FilterBar = ({
             onToggleTag={onToggleTag}
           />
         ))}
+
+        <div className="ml-auto hidden shrink-0 items-center gap-3.5 text-sm font-bold md:flex">
+          <span className="text-ink-subtle">
+            {t('recipes.shownOfTotal', {
+              shown: shownCount,
+              total: totalCount,
+            })}
+          </span>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="font-extrabold text-carrot-strong transition-colors hover:text-carrot-hover"
+            >
+              {t('recipes.clearAll')}
+            </button>
+          )}
+        </div>
       </div>
 
-      {groupedTags.other.length > 0 && (
-        <HorizontalScrollStrip>
-          {groupedTags.other.map((tag) => (
-            <FilterTagButton
-              key={tag.id}
-              tag={tag}
-              active={selectedTagIds.has(tag.id)}
+      {hasOtherTags && (
+        <div className="border-b border-line pb-3 md:px-[22px] md:pb-3.5 md:pt-0.5">
+          <div className="px-4 md:hidden">
+            <HorizontalScrollStrip>
+              <TagPills
+                tags={groupedTags.other}
+                selectedTagIds={selectedTagIds}
+                onToggleTag={onToggleTag}
+              />
+            </HorizontalScrollStrip>
+          </div>
+          <div className="hidden flex-wrap items-center gap-1.5 md:flex">
+            <span className="mr-1.5 text-[11px] font-extrabold uppercase tracking-[.08em] text-ink-subtle">
+              {t('tags.tags')}
+            </span>
+            <TagPills
+              tags={groupedTags.other}
+              selectedTagIds={selectedTagIds}
               onToggleTag={onToggleTag}
             />
-          ))}
-        </HorizontalScrollStrip>
+          </div>
+        </div>
       )}
     </div>
   )

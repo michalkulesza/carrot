@@ -14,6 +14,12 @@ export type SortField =
 export type SortDir = 'asc' | 'desc'
 export type Sort = { field: SortField; dir: SortDir } | null
 
+export interface MacroMax {
+  protein: number
+  fat: number
+  carbs: number
+}
+
 export const formatDate = (iso: string): string =>
   new Date(iso).toLocaleDateString(i18n.language, {
     month: 'short',
@@ -64,8 +70,19 @@ export const applySortRows = (rows: RecipeOut[], sort: Sort): RecipeOut[] => {
 
 export const getTableColumns = (showAddedBy: boolean): string =>
   showAddedBy
-    ? '32px 28px 56px minmax(135px,1fr) 72px 72px 72px 72px 72px 84px 120px 120px 100px 40px'
-    : '32px 28px 56px minmax(135px,1fr) 72px 72px 72px 72px 72px 84px 120px 100px 40px'
+    ? '20px 24px 56px minmax(160px,1fr) 70px 56px 90px 90px 90px 70px 150px 90px 90px 24px'
+    : '20px 24px 56px minmax(160px,1fr) 70px 56px 90px 90px 90px 70px 150px 90px 24px'
 
 export const getTableMinWidth = (showAddedBy: boolean): number =>
-  showAddedBy ? 1195 : 1067
+  showAddedBy ? 1302 : 1198
+
+export const getMacroMax = (rows: RecipeOut[]): MacroMax => {
+  const max = (values: (number | null)[]): number =>
+    values.reduce<number>((acc, v) => (v != null && v > acc ? v : acc), 0)
+
+  return {
+    protein: max(rows.map((r) => r.protein_per_serving)),
+    fat: max(rows.map((r) => r.fat_per_serving)),
+    carbs: max(rows.map((r) => r.carbs_per_serving)),
+  }
+}

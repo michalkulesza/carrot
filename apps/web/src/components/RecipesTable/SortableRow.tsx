@@ -7,6 +7,8 @@ import GripIcon from './GripIcon'
 import StarIcon from './StarIcon'
 import ThumbCell from './ThumbCell'
 import NumericCell from './NumericCell'
+import MacroCell from './MacroCell'
+import type { MacroMax } from './helpers'
 import EmptyDash from './EmptyDash'
 import RowMenu from './RowMenu'
 import { formatDate } from './helpers'
@@ -16,6 +18,7 @@ interface SortableRowProps {
   recipe: RecipeOut
   showAddedBy: boolean
   cols: string
+  macroMax: MacroMax
   onView: () => void
   onEdit: () => void
   onDelete: () => void
@@ -26,6 +29,7 @@ const SortableRow = ({
   recipe,
   showAddedBy,
   cols,
+  macroMax,
   onView,
   onEdit,
   onDelete,
@@ -71,8 +75,8 @@ const SortableRow = ({
     transition,
     gridTemplateColumns: cols,
   }
-  const rowClassName = `group grid items-center gap-2 px-2 py-2 border-b border-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`
-  const starButtonClassName = `flex items-center justify-center w-full h-8 transition-colors rounded ${recipe.is_favourite ? 'text-amber-400 hover:text-amber-300' : 'text-zinc-300 hover:text-amber-400'}`
+  const rowClassName = `group grid items-center gap-3.5 px-5 py-2.5 border-b border-mist text-[15px] hover:bg-row-hover transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`
+  const starButtonClassName = `flex items-center justify-center w-full h-8 transition-colors rounded ${recipe.is_favourite ? 'text-amber-400 hover:text-amber-300' : 'text-ink-ghost hover:text-amber-400'}`
   const favouriteAriaLabel = recipe.is_favourite
     ? t('recipes.removeFromFavourites')
     : t('recipes.addToFavourites')
@@ -89,7 +93,7 @@ const SortableRow = ({
         {...attributes}
         {...listeners}
         onClick={handleGripClick}
-        className="flex items-center justify-center w-full h-8 cursor-grab active:cursor-grabbing text-zinc-300 hover:text-zinc-500 transition-colors rounded"
+        className="flex items-center justify-center w-full h-8 cursor-grab active:cursor-grabbing text-ink-ghost hover:text-ink-faint transition-colors rounded"
         aria-label={t('recipes.dragToReorder')}
       >
         <GripIcon />
@@ -109,35 +113,47 @@ const SortableRow = ({
       </div>
 
       <div className="min-w-0 overflow-hidden">
-        <p className="font-medium text-sm leading-snug line-clamp-2">
+        <p className="font-extrabold text-[15px] leading-snug line-clamp-2 text-pretty">
           {recipe.title}
         </p>
       </div>
 
-      <NumericCell value={recipe.servings} />
+      <NumericCell value={recipe.servings} centered />
       <NumericCell value={recipe.kcal_per_serving} />
-      <NumericCell value={recipe.protein_per_serving} />
-      <NumericCell value={recipe.fat_per_serving} />
-      <NumericCell value={recipe.carbs_per_serving} />
+      <MacroCell
+        value={recipe.protein_per_serving}
+        max={macroMax.protein}
+        macro="protein"
+      />
+      <MacroCell
+        value={recipe.fat_per_serving}
+        max={macroMax.fat}
+        macro="fat"
+      />
+      <MacroCell
+        value={recipe.carbs_per_serving}
+        max={macroMax.carbs}
+        macro="carbs"
+      />
 
       <HouseholdAvatarIndicators recipe={recipe} size="sm" />
 
-      <div className="text-sm text-zinc-500 truncate overflow-hidden">
+      <div className="text-ink-soft truncate overflow-hidden">
         {recipe.creator_handle ? `@${recipe.creator_handle}` : <EmptyDash />}
       </div>
 
       {showAddedBy && (
-        <div className="text-sm text-zinc-500 truncate overflow-hidden">
+        <div className="text-ink-soft truncate overflow-hidden">
           {recipe.added_by ?? <EmptyDash />}
         </div>
       )}
 
-      <div className="text-xs text-zinc-400 whitespace-nowrap overflow-hidden">
+      <div className="text-[13px] text-ink-subtle whitespace-nowrap overflow-hidden">
         {formatDate(recipe.created_at)}
       </div>
 
       <div
-        className="sticky right-0 z-[1] bg-white group-hover:bg-zinc-50 transition-colors shadow-[-2px_0_4px_-2px_rgba(0,0,0,0.06)]"
+        className="sticky right-0 z-[1] bg-white group-hover:bg-row-hover transition-colors"
         onClick={handleMenuClick}
       >
         <RowMenu onView={onView} onEdit={onEdit} onDelete={onDelete} />

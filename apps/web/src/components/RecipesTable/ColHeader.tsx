@@ -6,7 +6,8 @@ interface ColHeaderProps {
   field: SortField
   sort: Sort
   onToggleSort: (field: SortField) => void
-  align?: 'left' | 'right'
+  align?: 'left' | 'center'
+  idleClassName?: string
 }
 
 const ColHeader = ({
@@ -15,18 +16,18 @@ const ColHeader = ({
   sort,
   onToggleSort,
   align = 'left',
+  idleClassName = 'text-ink-subtle hover:text-ink-soft',
 }: ColHeaderProps) => {
   const active = sort?.field === field
-  const justifyClassName = align === 'right' ? 'justify-end' : 'justify-start'
-  const colorClassName = active
-    ? 'text-zinc-700'
-    : 'text-zinc-400 hover:text-zinc-600'
+  const justifyClassName =
+    align === 'center' ? 'justify-center' : 'justify-start'
+  const colorClassName = active ? 'text-ink' : idleClassName
 
   return (
     <button
       type="button"
       onClick={() => onToggleSort(field)}
-      className={`flex items-center gap-0.5 text-xs font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ${justifyClassName} ${colorClassName}`}
+      className={`flex items-center text-xs font-extrabold uppercase tracking-[.06em] transition-colors whitespace-nowrap ${justifyClassName} ${colorClassName}`}
     >
       {label}
       <SortIndicator field={field} sort={sort} />

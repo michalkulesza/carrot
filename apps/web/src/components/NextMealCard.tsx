@@ -1,13 +1,19 @@
 import { useCallback } from 'react'
-import { Calendar, ChevronRight } from 'react-feather'
+import { Calendar } from 'react-feather'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useNextMealPlanEntry } from '@carrot/shared/hooks/useNextMealPlanEntry'
 import { formatNextMealDate } from '@carrot/shared/utils/dateUtils'
 import NetworkImage from './NetworkImage'
 import NextMealCardSkeleton from './NextMealCardSkeleton'
+import NextMealCardLabel from './NextMealCardLabel'
 import { proxyUrl } from '../utils/imageUtils'
+import { formatCookingTime } from '../utils/formatCookingTime'
 import { useRouteNavigation } from '../routing/RouteNavigationContext'
+
+const CARD_SHELL =
+  'flex flex-col gap-2.5 rounded-2xl border border-line bg-white p-3 font-nunito'
+const CARD_HOVER = 'transition-colors hover:border-line-strong hover:shadow-sm'
 
 interface NextMealCardProps {
   compact?: boolean
@@ -62,16 +68,15 @@ const NextMealCard = ({
 
   if (error) {
     return (
-      <div
-        className={`rounded-xl border border-red-200 bg-red-50 p-3 ${className}`}
-      >
-        <p className="text-sm font-medium text-red-800">
+      <div className={`${CARD_SHELL} ${className}`}>
+        <NextMealCardLabel>{t('nextMeal.title')}</NextMealCardLabel>
+        <p className="text-sm font-semibold text-red-700">
           {t('nextMeal.error')}
         </p>
         <button
           type="button"
           onClick={handleRetry}
-          className="mt-2 min-h-11 text-sm font-semibold text-red-700 underline underline-offset-2"
+          className="min-h-11 self-start text-sm font-bold text-carrot-strong underline underline-offset-2"
         >
           {t('nextMeal.retry')}
         </button>
@@ -84,24 +89,17 @@ const NextMealCard = ({
       <button
         type="button"
         onClick={openMealPlan}
-        className={`flex min-h-24 w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white p-3 text-left transition-colors hover:bg-zinc-50 ${className}`}
+        className={`${CARD_SHELL} ${CARD_HOVER} w-full cursor-pointer text-left ${className}`}
       >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Calendar size={20} aria-hidden="true" />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-zinc-900">
+        <NextMealCardLabel>{t('nextMeal.title')}</NextMealCardLabel>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-[15px] font-extrabold leading-tight text-ink">
             {t('nextMeal.empty')}
           </span>
-          <span className="mt-0.5 block text-xs font-medium text-primary">
+          <span className="text-xs font-semibold text-carrot-strong">
             {t('nextMeal.openPlan')}
           </span>
         </span>
-        <ChevronRight
-          size={18}
-          className="shrink-0 text-zinc-400"
-          aria-hidden="true"
-        />
       </button>
     )
   }
@@ -117,42 +115,38 @@ const NextMealCard = ({
   const thumbnailSrc = entry.recipe
     ? proxyUrl(entry.recipe.thumbnail_url)
     : null
+  const cookingTime =
+    entry.recipe && entry.recipe.total_time_minutes !== null
+      ? formatCookingTime(entry.recipe.total_time_minutes, t)
+      : ''
+  const metaLabel = cookingTime ? `${dateLabel} · ${cookingTime}` : dateLabel
 
   return (
     <button
       type="button"
       onClick={openRecipe}
-      className={`w-full rounded-xl border border-zinc-200 bg-white p-3 text-left transition-colors hover:bg-zinc-50 ${className}`}
+      className={`${CARD_SHELL} ${CARD_HOVER} w-full cursor-pointer text-left ${className}`}
       aria-label={`${t('nextMeal.title')}: ${entryTitle}, ${dateLabel}`}
     >
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wide text-zinc-500">
-        {t('nextMeal.title')}
-      </span>
-      <span className="flex min-w-0 items-center gap-3">
-        {thumbnailSrc ? (
-          <NetworkImage
-            src={thumbnailSrc}
-            alt=""
-            className="h-11 w-11 shrink-0 rounded-lg"
-          />
-        ) : (
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Calendar size={20} aria-hidden="true" />
-          </span>
-        )}
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold text-zinc-900">
-            {entryTitle}
-          </span>
-          <span className="mt-0.5 block text-xs text-zinc-500">
-            {dateLabel}
-          </span>
-        </span>
-        <ChevronRight
-          size={18}
-          className="shrink-0 text-zinc-400"
-          aria-hidden="true"
+      <NextMealCardLabel>{t('nextMeal.title')}</NextMealCardLabel>
+      {thumbnailSrc ? (
+        <NetworkImage
+          src={thumbnailSrc}
+          alt=""
+          className="h-[132px] w-full shrink-0 rounded-xl"
         />
+      ) : (
+        <span className="flex h-[132px] w-full shrink-0 items-center justify-center rounded-xl bg-carrot-tint text-carrot">
+          <Calendar size={32} aria-hidden="true" />
+        </span>
+      )}
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="line-clamp-2 text-[15px] font-extrabold leading-tight text-ink">
+          {entryTitle}
+        </span>
+        <span className="text-xs font-semibold text-ink-muted">
+          {metaLabel}
+        </span>
       </span>
     </button>
   )

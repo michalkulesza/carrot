@@ -1,3 +1,3 @@
-const EmptyDash = () => <span className="text-zinc-300">—</span>
+const EmptyDash = () => <span className="text-ink-ghost">—</span>
 
 export default EmptyDash

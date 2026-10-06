@@ -201,6 +201,9 @@ const RecipesPage = ({
           onToggleFilterFavourites={handleToggleFilterFavourites}
           selectedTagIds={selectedTagIds}
           onToggleTag={handleToggleTag}
+          shownCount={displayed.length}
+          totalCount={recipes.length}
+          onClearAll={handleClearFilters}
         />
 
         {showImportJobs && (

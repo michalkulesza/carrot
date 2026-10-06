@@ -2,10 +2,13 @@ import EmptyDash from './EmptyDash'
 
 interface NumericCellProps {
   value: number | null
+  centered?: boolean
 }
 
-const NumericCell = ({ value }: NumericCellProps) => (
-  <div className="text-sm text-zinc-600 text-right tabular-nums pr-2 overflow-hidden">
+const NumericCell = ({ value, centered = false }: NumericCellProps) => (
+  <div
+    className={`overflow-hidden tabular-nums ${centered ? 'text-center' : ''}`}
+  >
     {value != null ? value : <EmptyDash />}
   </div>
 )

@@ -69,7 +69,7 @@ const RowMenu = ({ onView, onEdit, onDelete }: RowMenuProps) => {
         ref={triggerRef}
         type="button"
         onClick={openMenu}
-        className="w-7 h-7 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors text-base leading-none"
+        className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-faint font-extrabold hover:text-ink-soft hover:bg-mist transition-colors text-base leading-none"
         aria-label={t('recipes.rowActions')}
       >
         ⋯

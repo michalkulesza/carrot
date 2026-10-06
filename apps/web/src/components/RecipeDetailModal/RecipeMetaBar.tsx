@@ -4,13 +4,9 @@ import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import HouseholdAvatarIndicators from '../HouseholdAvatarIndicators'
 import NutritionBoxGrid from '../NutritionBoxGrid'
-import {
-  formatCookingTime,
-  getHeaderBg,
-  type EditState,
-  type Mode,
-} from './helpers'
+import { getHeaderBg, type EditState, type Mode } from './helpers'
 import ServingStepper from './ServingStepper'
+import { formatCookingTime } from '../../utils/formatCookingTime'
 
 type NutritionField =
   | 'servings'

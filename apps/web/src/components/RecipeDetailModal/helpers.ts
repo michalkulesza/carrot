@@ -32,19 +32,6 @@ export const INTERNAL_COMPONENT_NAMES = new Set([
   'steps',
 ])
 
-export const formatCookingTime = (
-  minutes: number | null,
-  t: (key: string) => string
-) => {
-  if (minutes === null) return ''
-  const hours = Math.floor(minutes / 60)
-  const remainingMinutes = minutes % 60
-  if (hours === 0) return `${minutes} ${t('recipes.minutesShort')}`
-  if (remainingMinutes === 0) return `${hours} ${t('recipes.hoursShort')}`
-
-  return `${hours} ${t('recipes.hoursShort')} ${remainingMinutes} ${t('recipes.minutesShort')}`
-}
-
 export type Mode = 'view' | 'editing' | 'confirming'
 
 export const getHeaderBg = (mode: Mode): string => {
@@ -246,6 +233,7 @@ export const applyIngredientReplace = (
 ): SaveComponent[] | null => {
   const flag = components[ci].ingredient_flags?.[ii]
   if (!flag?.substitute || flag.substitute_applied) return null
+
   return components.map((component, index) =>
     index !== ci
       ? component
@@ -265,6 +253,7 @@ export const applyIngredientRestore = (
 ): SaveComponent[] | null => {
   const flag = components[ci].ingredient_flags?.[ii]
   if (!flag?.original_display) return null
+
   return components.map((component, index) =>
     index !== ci
       ? component

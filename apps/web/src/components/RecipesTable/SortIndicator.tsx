@@ -10,11 +10,7 @@ const SortIndicator = ({ field, sort }: SortIndicatorProps) => {
     return null
   }
 
-  return (
-    <span className="ml-1 text-primary text-[10px]">
-      {sort.dir === 'asc' ? '↑' : '↓'}
-    </span>
-  )
+  return <span className="ml-1 text-ink">{sort.dir === 'asc' ? '↑' : '↓'}</span>
 }
 
 export default SortIndicator

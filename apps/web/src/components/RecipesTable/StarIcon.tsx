@@ -5,7 +5,7 @@ interface StarIconProps {
 }
 
 const StarIcon = ({ filled }: StarIconProps) => (
-  <Star size={14} fill={filled ? 'currentColor' : 'none'} aria-hidden={true} />
+  <Star size={18} fill={filled ? 'currentColor' : 'none'} aria-hidden={true} />
 )
 
 export default StarIcon

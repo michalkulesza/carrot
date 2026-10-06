@@ -94,6 +94,19 @@ html {
   --color-mint-ink: #2f7a4a;
   --color-mint-border: #7cc48f;
   --color-mint-wash: #f1faf4;
+  --color-ink-ghost: #c9c6d2;
+
+  --color-protein: #7c6ae0;
+  --color-protein-ink: #5b4bc4;
+  --color-protein-track: #eeebfa;
+  --color-fat: #f0a43a;
+  --color-fat-ink: #b87516;
+  --color-fat-track: #fcf0dc;
+  --color-carbs: #e8894a;
+  --color-carbs-ink: #c4652a;
+  --color-carbs-track: #fbe9dc;
+  --color-row-hover: #fbfafd;
+  --color-toolbar: #f8f7fa;
 
   --font-nunito: 'Nunito', system-ui, sans-serif;
 }

@@ -15,15 +15,16 @@ const FilterTagButton = ({
 }: FilterTagButtonProps) => {
   const { t } = useTranslation()
 
-  const buttonClass = active
-    ? 'shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-secondary text-white'
-    : 'shrink-0 text-xs font-medium px-3 py-1.5 rounded-full transition-colors bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+  const stateClass = active
+    ? 'bg-ink text-white border-ink'
+    : 'bg-white text-ink-soft border-line hover:border-line-strong'
 
   return (
     <button
       type="button"
       onClick={() => onToggleTag(tag.id)}
-      className={buttonClass}
+      aria-pressed={active}
+      className={`shrink-0 rounded-full border px-[11px] py-1 text-[13px] font-bold transition-colors ${stateClass}`}
     >
       {tTag(tag.name, t)}
     </button>

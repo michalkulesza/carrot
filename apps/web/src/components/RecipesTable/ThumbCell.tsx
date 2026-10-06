@@ -11,7 +11,7 @@ const ThumbCell = ({ url, title }: ThumbCellProps) => {
 
   if (!proxied) {
     return (
-      <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-100 shrink-0 flex items-center justify-center text-zinc-200 text-xl">
+      <div className="w-14 h-14 rounded-[10px] overflow-hidden bg-mist shrink-0 flex items-center justify-center text-ink-ghost text-xl">
         🍽
       </div>
     )
@@ -21,7 +21,7 @@ const ThumbCell = ({ url, title }: ThumbCellProps) => {
     <NetworkImage
       src={proxied}
       alt={title}
-      className="w-12 h-12 rounded-lg shrink-0"
+      className="w-14 h-14 rounded-[10px] shrink-0"
     />
   )
 }

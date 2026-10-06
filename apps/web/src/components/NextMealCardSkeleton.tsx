@@ -29,20 +29,18 @@ const NextMealCardSkeleton = ({
     <div
       role="status"
       aria-label={t('common.loading')}
-      className={`w-full rounded-xl border border-zinc-200 bg-white p-3 ${className}`}
+      className={`flex w-full flex-col gap-2.5 rounded-2xl border border-line bg-white p-3 ${className}`}
     >
-      <div className="mb-2 flex h-4 items-center">
-        <div className="h-3 w-24 animate-pulse rounded bg-zinc-200" />
+      <div className="flex h-4 items-center">
+        <div className="h-2.5 w-28 animate-pulse rounded bg-zinc-200" />
       </div>
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="h-11 w-11 shrink-0 animate-pulse rounded-lg bg-zinc-200" />
-        <div className="min-w-0 flex-1">
-          <div className="flex h-5 items-center">
-            <div className="h-3.5 w-3/4 animate-pulse rounded bg-zinc-200" />
-          </div>
-          <div className="mt-0.5 flex h-4 items-center">
-            <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-200" />
-          </div>
+      <div className="h-[132px] w-full animate-pulse rounded-xl bg-zinc-200" />
+      <div className="flex flex-col gap-0.5">
+        <div className="flex h-[19px] items-center">
+          <div className="h-3.5 w-3/4 animate-pulse rounded bg-zinc-200" />
+        </div>
+        <div className="flex h-4 items-center">
+          <div className="h-3 w-1/3 animate-pulse rounded bg-zinc-200" />
         </div>
       </div>
     </div>
