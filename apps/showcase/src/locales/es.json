@@ -2,29 +2,42 @@
   "hero": {
     "tagline": "Tu biblioteca personal de recetas"
   },
-  "cta": {
-    "web": {
-      "title": "Web",
-      "subtitle": "Abrir en el navegador"
+  "showcase": {
+    "headline": "Tu biblioteca\nde recetas.",
+    "subtitle": "Importa desde cualquier sitio, planifica la semana y compra por pasillos, junto a tu hogar.",
+    "pass": {
+      "header": "Carrot · Pase demo",
+      "admitOne": "Entrada única",
+      "email": "Correo",
+      "password": "Contraseña",
+      "copy": "Copiar",
+      "copied": "✓ Copiado",
+      "valid": "Válido",
+      "anytime": "Siempre",
+      "resets": "Reinicio",
+      "automatically": "Automático"
     },
-    "ios": {
-      "title": "iOS",
-      "subtitle": "Únete a la prueba pública en TestFlight"
+    "cta": {
+      "web": "Abrir app web",
+      "ios": "iOS pronto",
+      "android": "Android pronto"
     },
-    "android": {
-      "title": "Android",
-      "subtitle": "Próximamente"
+    "demo": {
+      "tags": {
+        "dessert": "Postre",
+        "baked": "Horneado",
+        "gluten": "Gluten"
+      },
+      "recipeTitle": "Blondie de chocolate blanco y frutos rojos",
+      "butter": "de mantequilla",
+      "eggs": "huevos",
+      "flour": "de harina",
+      "shopping": "Compra · {{count}} pendientes",
+      "produce": "Frutas y verduras",
+      "garlic": "dientes de ajo",
+      "lemon": "limón",
+      "timerStep": "Cocer el arroz a fuego lento"
     }
-  },
-  "modal": {
-    "title": "Prueba la app de iOS",
-    "description": "Esta cuenta de prueba está preconfigurada. Puedes hacer los cambios que quieras: un proceso de limpieza restablece automáticamente el estado predeterminado de la cuenta.",
-    "email": "Correo electrónico",
-    "password": "Contraseña",
-    "copy": "Copiar",
-    "copied": "Copiado",
-    "openTestflight": "Abrir TestFlight",
-    "close": "Cerrar"
   },
   "footer": {
     "privacyPolicy": "Política de privacidad",

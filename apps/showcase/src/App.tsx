@@ -8,9 +8,9 @@ import Support from './pages/Support'
 const App = () => (
   <BrowserRouter>
     <Routes>
+      <Route path="showcase" element={<Showcase />} />
       <Route element={<Layout />}>
         <Route index element={<Splash />} />
-        <Route path="showcase" element={<Showcase />} />
         <Route path="privacy-policy" element={<PrivacyPolicy />} />
         <Route path="support" element={<Support />} />
       </Route>

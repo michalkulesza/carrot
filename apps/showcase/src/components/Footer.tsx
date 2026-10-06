@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 const FOOTER_LINK_CLASS =
-  'text-sm font-medium text-[#8A8A8A] transition-colors hover:text-[#111111]'
+  'text-xs-plus font-bold text-ink-muted transition-colors hover:text-ink'
 
 const Footer = () => {
   const { t } = useTranslation()

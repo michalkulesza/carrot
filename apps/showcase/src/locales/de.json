@@ -2,29 +2,42 @@
   "hero": {
     "tagline": "Deine persönliche Rezeptsammlung"
   },
-  "cta": {
-    "web": {
-      "title": "Web",
-      "subtitle": "Im Browser öffnen"
+  "showcase": {
+    "headline": "Deine persönliche\nRezeptsammlung.",
+    "subtitle": "Von überall importieren, die Woche planen, nach Gängen einkaufen – gemeinsam mit deinem Haushalt.",
+    "pass": {
+      "header": "Carrot · Demo-Pass",
+      "admitOne": "Einzelticket",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "copy": "Kopieren",
+      "copied": "✓ Kopiert",
+      "valid": "Gültig",
+      "anytime": "Jederzeit",
+      "resets": "Reset",
+      "automatically": "Automatisch"
     },
-    "ios": {
-      "title": "iOS",
-      "subtitle": "Am öffentlichen TestFlight-Test teilnehmen"
+    "cta": {
+      "web": "Web-App öffnen",
+      "ios": "iOS bald",
+      "android": "Android bald"
     },
-    "android": {
-      "title": "Android",
-      "subtitle": "Demnächst verfügbar"
+    "demo": {
+      "tags": {
+        "dessert": "Dessert",
+        "baked": "Gebacken",
+        "gluten": "Gluten"
+      },
+      "recipeTitle": "Blondie mit weißer Schokolade und Beeren",
+      "butter": "Butter",
+      "eggs": "Eier",
+      "flour": "Weizenmehl",
+      "shopping": "Einkauf · {{count}} offen",
+      "produce": "Obst & Gemüse",
+      "garlic": "Knoblauchzehen",
+      "lemon": "Zitrone",
+      "timerStep": "Reis köcheln lassen"
     }
-  },
-  "modal": {
-    "title": "iOS-App ausprobieren",
-    "description": "Dieses Testkonto ist vorbereitet. Du kannst beliebige Änderungen vornehmen — ein Bereinigungsdienst setzt den Kontostatus automatisch zurück.",
-    "email": "E-Mail",
-    "password": "Passwort",
-    "copy": "Kopieren",
-    "copied": "Kopiert",
-    "openTestflight": "TestFlight öffnen",
-    "close": "Schließen"
   },
   "footer": {
     "privacyPolicy": "Datenschutzerklärung",

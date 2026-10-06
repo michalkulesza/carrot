@@ -16,3 +16,69 @@ body {
     Arial,
     sans-serif;
 }
+
+@theme {
+  --font-nunito: 'Nunito', system-ui, sans-serif;
+
+  /* design palette — from the claude.ai "Showcase Landing Final" design */
+  --color-ink: #1f1d2b;
+  --color-ink-muted: #6b6a78;
+  --color-ink-subtle: #8c8a99;
+  --color-ink-faint: #a9a6b4;
+  --color-line: #eceaf0;
+  --color-line-strong: #ddd9e4;
+  --color-line-heavy: #cfcbd8;
+  --color-track: #f1eff5;
+  --color-canvas: #f7f6fa;
+  --color-canvas-dot: #e4e1ea;
+
+  --color-carrot: #e8894a;
+  --color-carrot-bright: #f28b3c;
+  --color-carrot-deep: #b4501a;
+  --color-carrot-strong: #c4652a;
+  --color-carrot-ink: #7a3a12;
+  --color-carrot-light: #f6b88a;
+  --color-carrot-line: #f2c6a6;
+  --color-carrot-wash: #fdefe4;
+
+  --color-violet: #7c6ae0;
+  --color-violet-ink: #5b4bc4;
+  --color-violet-wash: #eeeafe;
+  --color-amber: #f0a43a;
+  --color-amber-ink: #a85a0b;
+  --color-amber-wash: #fef3dc;
+  --color-mint: #3f9b62;
+  --color-mint-ink: #2f7a4a;
+  --color-success: #2f9e5b;
+
+  --text-micro: 0.625rem;
+  --text-2xs: 0.6875rem;
+  --text-xs-plus: 0.8125rem;
+  --text-sm-plus: 0.9375rem;
+  --text-xl-plus: 1.375rem;
+  --text-hero: 3.25rem;
+  --text-hero--line-height: 1.04;
+
+  --tracking-ticket: 0.14em;
+  --tracking-stamp: 0.12em;
+  --tracking-label: 0.08em;
+
+  --radius-chip: 9px;
+  --radius-button: 14px;
+  --radius-tile: 18px;
+  --radius-panel: 20px;
+
+  --shadow-cta: 0 12px 24px rgb(232 137 74 / 0.3);
+  --shadow-float-sm: 0 24px 50px rgb(31 29 43 / 0.14);
+  --shadow-float-md: 0 30px 60px rgb(31 29 43 / 0.16);
+  --shadow-float-lg: 0 40px 80px rgb(31 29 43 / 0.18);
+  --drop-shadow-pass: 0 18px 30px rgb(31 29 43 / 0.12);
+}
+
+@utility bg-dot-grid {
+  background-image: radial-gradient(
+    var(--color-canvas-dot) 1.2px,
+    transparent 1.3px
+  );
+  background-size: 22px 22px;
+}

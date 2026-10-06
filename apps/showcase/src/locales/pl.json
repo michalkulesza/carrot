@@ -2,29 +2,42 @@
   "hero": {
     "tagline": "Twoja osobista biblioteka przepisów"
   },
-  "cta": {
-    "web": {
-      "title": "Web",
-      "subtitle": "Otwórz w przeglądarce"
+  "showcase": {
+    "headline": "Twoja osobista\nbiblioteka przepisów.",
+    "subtitle": "Importuj zewsząd, planuj tydzień, rób zakupy według działów — razem z domownikami.",
+    "pass": {
+      "header": "Carrot · Karnet demo",
+      "admitOne": "Dla 1 osoby",
+      "email": "E-mail",
+      "password": "Hasło",
+      "copy": "Kopiuj",
+      "copied": "✓ Skopiowano",
+      "valid": "Ważny",
+      "anytime": "Zawsze",
+      "resets": "Reset",
+      "automatically": "Automatyczny"
     },
-    "ios": {
-      "title": "iOS",
-      "subtitle": "Dołącz do publicznego testu na TestFlight"
+    "cta": {
+      "web": "Otwórz aplikację web",
+      "ios": "iOS wkrótce",
+      "android": "Android wkrótce"
     },
-    "android": {
-      "title": "Android",
-      "subtitle": "Wkrótce"
+    "demo": {
+      "tags": {
+        "dessert": "Deser",
+        "baked": "Pieczone",
+        "gluten": "Gluten"
+      },
+      "recipeTitle": "Blondie z białą czekoladą i owocami",
+      "butter": "masła",
+      "eggs": "jajka",
+      "flour": "mąki pszennej",
+      "shopping": "Zakupy · {{count}} do kupienia",
+      "produce": "Warzywa i owoce",
+      "garlic": "ząbków czosnku",
+      "lemon": "cytryna",
+      "timerStep": "Gotuj ryż na wolnym ogniu"
     }
-  },
-  "modal": {
-    "title": "Wypróbuj aplikację na iOS",
-    "description": "To konto testowe jest wstępnie skonfigurowane. Możesz wprowadzać dowolne zmiany — mechanizm czyszczący automatycznie przywróci domyślny stan konta.",
-    "email": "E-mail",
-    "password": "Hasło",
-    "copy": "Kopiuj",
-    "copied": "Skopiowano",
-    "openTestflight": "Otwórz TestFlight",
-    "close": "Zamknij"
   },
   "footer": {
     "privacyPolicy": "Polityka prywatności",

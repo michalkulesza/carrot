@@ -1,19 +1,18 @@
 import { useTranslation } from 'react-i18next'
-import carrotLogo from '../assets/carrot-logo.svg'
-import { HERO_BACKGROUND } from '../constants'
+import BrandMark from '../components/BrandMark'
 
 const Splash = () => {
   const { t } = useTranslation()
 
   return (
-    <div
-      className="flex flex-1 flex-col items-center justify-center gap-1 px-6 py-16 text-center"
-      style={{ backgroundImage: HERO_BACKGROUND }}
-    >
-      <img src={carrotLogo} alt="Carrot" className="h-[87px] w-[228px]" />
-      <p className="max-w-[369px] text-[27px] font-bold text-[#111111]">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+      <div className="flex items-center gap-2.5">
+        <BrandMark size="lg" />
+        <span className="text-2xl font-extrabold">Carrot</span>
+      </div>
+      <h1 className="max-w-130 text-4xl font-extrabold tracking-tight sm:text-hero">
         {t('hero.tagline')}
-      </p>
+      </h1>
     </div>
   )
 }

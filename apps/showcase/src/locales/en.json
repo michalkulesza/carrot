@@ -2,29 +2,42 @@
   "hero": {
     "tagline": "Your personal recipe library"
   },
-  "cta": {
-    "web": {
-      "title": "Web",
-      "subtitle": "Open in browser"
+  "showcase": {
+    "headline": "Your personal\nrecipe library.",
+    "subtitle": "Import from anywhere, plan the week, shop by aisle, together with your household.",
+    "pass": {
+      "header": "Carrot · Demo pass",
+      "admitOne": "Admit one",
+      "email": "Email",
+      "password": "Password",
+      "copy": "Copy",
+      "copied": "✓ Copied",
+      "valid": "Valid",
+      "anytime": "Anytime",
+      "resets": "Resets",
+      "automatically": "Automatically"
     },
-    "ios": {
-      "title": "iOS",
-      "subtitle": "Join Public test on TestFlight"
+    "cta": {
+      "web": "Open web app",
+      "ios": "iOS soon",
+      "android": "Android soon"
     },
-    "android": {
-      "title": "Android",
-      "subtitle": "Coming soon"
+    "demo": {
+      "tags": {
+        "dessert": "Dessert",
+        "baked": "Baked",
+        "gluten": "Gluten"
+      },
+      "recipeTitle": "White Chocolate and Berry Blondie",
+      "butter": "butter",
+      "eggs": "eggs",
+      "flour": "plain flour",
+      "shopping": "Shopping · {{count}} to get",
+      "produce": "Produce",
+      "garlic": "garlic cloves",
+      "lemon": "lemon",
+      "timerStep": "Simmer the rice"
     }
-  },
-  "modal": {
-    "title": "Try the iOS app",
-    "description": "This test account is preseeded. Feel free to make any changes as there is a cleanup worker that will bring this account state to default automatically.",
-    "email": "Email",
-    "password": "Password",
-    "copy": "Copy",
-    "copied": "Copied",
-    "openTestflight": "Open TestFlight",
-    "close": "Close"
   },
   "footer": {
     "privacyPolicy": "Privacy Policy",

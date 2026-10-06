@@ -2,29 +2,42 @@
   "hero": {
     "tagline": "Votre bibliothèque de recettes personnelle"
   },
-  "cta": {
-    "web": {
-      "title": "Web",
-      "subtitle": "Ouvrir dans le navigateur"
+  "showcase": {
+    "headline": "Votre bibliothèque\nde recettes.",
+    "subtitle": "Importez de partout, planifiez la semaine, faites vos courses par rayon, avec tout votre foyer.",
+    "pass": {
+      "header": "Carrot · Pass démo",
+      "admitOne": "Entrée unique",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "copy": "Copier",
+      "copied": "✓ Copié",
+      "valid": "Valable",
+      "anytime": "Toujours",
+      "resets": "Remise à zéro",
+      "automatically": "Automatique"
     },
-    "ios": {
-      "title": "iOS",
-      "subtitle": "Rejoindre le test public sur TestFlight"
+    "cta": {
+      "web": "Ouvrir l'app web",
+      "ios": "iOS bientôt",
+      "android": "Android bientôt"
     },
-    "android": {
-      "title": "Android",
-      "subtitle": "Bientôt disponible"
+    "demo": {
+      "tags": {
+        "dessert": "Dessert",
+        "baked": "Au four",
+        "gluten": "Gluten"
+      },
+      "recipeTitle": "Blondie au chocolat blanc et aux fruits rouges",
+      "butter": "de beurre",
+      "eggs": "œufs",
+      "flour": "de farine",
+      "shopping": "Courses · {{count}} à acheter",
+      "produce": "Fruits et légumes",
+      "garlic": "gousses d'ail",
+      "lemon": "citron",
+      "timerStep": "Laisser mijoter le riz"
     }
-  },
-  "modal": {
-    "title": "Essayer l'application iOS",
-    "description": "Ce compte de test est préconfiguré. N'hésitez pas à apporter des modifications : un processus de nettoyage restaure automatiquement l'état par défaut du compte.",
-    "email": "E-mail",
-    "password": "Mot de passe",
-    "copy": "Copier",
-    "copied": "Copié",
-    "openTestflight": "Ouvrir TestFlight",
-    "close": "Fermer"
   },
   "footer": {
     "privacyPolicy": "Politique de confidentialité",

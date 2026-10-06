@@ -1,73 +1,110 @@
-import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import carrotLogo from '../assets/carrot-logo.svg'
-import IosTestflightModal from '../components/IosTestflightModal'
-import { HERO_BACKGROUND } from '../constants'
+import BrandMark from '../components/BrandMark'
+import DemoPass from '../components/DemoPass'
+import Footer from '../components/Footer'
+import ProductShot from '../components/ProductShot'
 
 const WEB_APP_URL = 'https://app.carrot.xcxz.xyz/'
 
-const CTA_CARD_CLASS =
-  'flex min-w-[200px] max-w-[280px] flex-1 flex-col items-center justify-center gap-2 rounded-3xl bg-[#FF8A3D] px-5 py-9 text-center shadow-[0_10px_24px_-8px_rgba(255,138,61,0.55)] transition-all hover:-translate-y-0.5 hover:bg-[#F17A29] hover:shadow-[0_14px_28px_-8px_rgba(255,138,61,0.65)]'
+const SOON_BADGE_CLASS =
+  'flex h-13.5 shrink-0 items-center gap-2 whitespace-nowrap rounded-button border-2 border-dashed border-line-strong px-4 text-sm font-extrabold text-ink-subtle'
+
+const GlobeIcon = () => (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+  </svg>
+)
+
+const PhoneIcon = () => (
+  <svg
+    aria-hidden="true"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <rect x="6" y="2" width="12" height="20" rx="3" />
+    <path d="M11 18h2" />
+  </svg>
+)
+
+const AndroidIcon = () => (
+  <svg
+    aria-hidden="true"
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+  >
+    <rect x="5" y="8" width="14" height="11" rx="2" />
+    <path d="M8 8a4 4 0 0 1 8 0M8 4l1.5 2M16 4l-1.5 2" />
+  </svg>
+)
 
 const Showcase = () => {
   const { t } = useTranslation()
-  const [iosModalOpen, setIosModalOpen] = useState(false)
 
   return (
-    <div
-      className="flex flex-1 flex-col items-center justify-center gap-14 px-6 py-16"
-      style={{ backgroundImage: HERO_BACKGROUND }}
-    >
-      <div className="flex flex-col items-center gap-1 text-center">
-        <img src={carrotLogo} alt="Carrot" className="h-[87px] w-[228px]" />
-        <p className="max-w-[369px] text-[27px] font-bold text-[#111111]">
-          {t('hero.tagline')}
-        </p>
-      </div>
+    <div className="flex min-h-screen flex-col overflow-x-hidden bg-canvas bg-dot-grid font-nunito text-ink">
+      <main className="mx-auto my-auto flex w-full max-w-7xl flex-col gap-16 px-4 pt-10 pb-12 sm:px-10 xl:flex-row xl:items-start xl:justify-between xl:gap-8 xl:px-18 xl:pt-16 xl:pr-50">
+        <div className="flex w-full max-w-130 flex-col gap-6.5 max-xl:mx-auto">
+          <div className="flex items-center gap-2.5">
+            <BrandMark size="lg" />
+            <span className="text-2xl font-extrabold">Carrot</span>
+          </div>
 
-      <div className="flex w-full max-w-[920px] flex-wrap items-stretch justify-center gap-5">
-        <a
-          href={WEB_APP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={CTA_CARD_CLASS}
-        >
-          <span className="text-xl font-extrabold text-white">
-            {t('cta.web.title')}
-          </span>
-          <span className="text-sm font-semibold text-white/85">
-            {t('cta.web.subtitle')}
-          </span>
-        </a>
+          <div className="flex flex-col gap-3">
+            <h1 className="text-4xl font-extrabold tracking-tight whitespace-pre-line sm:text-hero">
+              {t('showcase.headline')}
+            </h1>
+            <p className="text-lg leading-normal font-semibold text-ink-muted">
+              {t('showcase.subtitle')}
+            </p>
+          </div>
 
-        <button
-          type="button"
-          onClick={() => setIosModalOpen(true)}
-          className={CTA_CARD_CLASS}
-        >
-          <span className="text-xl font-extrabold text-white">
-            {t('cta.ios.title')}
-          </span>
-          <span className="text-sm font-semibold text-white/85">
-            {t('cta.ios.subtitle')}
-          </span>
-        </button>
+          <DemoPass />
 
-        <div className="flex min-w-[200px] max-w-[280px] flex-1 flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-[#F3C9A6] bg-[#FFF6EE] px-5 py-9 text-center">
-          <span className="text-xl font-extrabold text-[#D9A87A]">
-            {t('cta.android.title')}
-          </span>
-          <span className="text-sm font-semibold text-[#D9A87A]">
-            {t('cta.android.subtitle')}
-          </span>
+          <div className="flex flex-wrap gap-2.5">
+            <a
+              href={WEB_APP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-13.5 shrink-0 items-center gap-2.5 rounded-button bg-carrot px-5.5 text-base font-extrabold whitespace-nowrap text-white shadow-cta transition-colors hover:bg-carrot-strong"
+            >
+              <GlobeIcon />
+              {t('showcase.cta.web')}
+            </a>
+            <span className={SOON_BADGE_CLASS}>
+              <PhoneIcon />
+              {t('showcase.cta.ios')}
+            </span>
+            <span className={SOON_BADGE_CLASS}>
+              <AndroidIcon />
+              {t('showcase.cta.android')}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <IosTestflightModal
-        open={iosModalOpen}
-        onClose={() => setIosModalOpen(false)}
-        webAppUrl={WEB_APP_URL}
-      />
+        <ProductShot />
+      </main>
+
+      <Footer />
     </div>
   )
 }
