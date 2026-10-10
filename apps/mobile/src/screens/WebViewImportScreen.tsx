@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Feather } from '@expo/vector-icons'
 import { WebView } from 'react-native-webview'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '@carrot/shared/api/context'
+import type { CapturedHtmlPayload, ImportJob } from '@carrot/shared/types'
+import { CAPTURE_REJECTED_DETAIL } from '@carrot/shared/utils/challengeDetection'
+import { VISIBLE_CAPTURE_SCRIPT, parseCapturedMessage } from '../components/DeviceHtmlCapture/helpers'
 import { enqueueImport } from '../utils/enqueueImport'
 
 // Keep well under the backend's extraction cap so the page text doesn't blow up route params.
@@ -48,7 +51,7 @@ const ExtractButton = ({
 }
 
 const WebViewImportScreen = () => {
-  const { url } = useLocalSearchParams<{ url?: string }>()
+  const { url, jobId } = useLocalSearchParams<{ url?: string; jobId?: string }>()
   const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
@@ -58,13 +61,47 @@ const WebViewImportScreen = () => {
   const [pageLoaded, setPageLoaded] = useState(false)
   const [extracting, setExtracting] = useState(false)
 
+  const submitCapture = useMutation({
+    mutationFn: (payload: CapturedHtmlPayload) => api.submitCapturedHtml(jobId ?? '', payload),
+    onSuccess: (job) => {
+      qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => jobs.map((item) => (item.id === job.id ? job : item)))
+    },
+  })
+
   const handleExtract = useCallback(() => {
+    if (extracting) return
     setExtracting(true)
-    webViewRef.current?.injectJavaScript(EXTRACT_SCRIPT)
-  }, [])
+    webViewRef.current?.injectJavaScript(jobId ? VISIBLE_CAPTURE_SCRIPT : EXTRACT_SCRIPT)
+  }, [extracting, jobId])
+
+  const handleCaptureMessage = useCallback(
+    async (data: string) => {
+      const payload = parseCapturedMessage(data)
+      if (!payload || !jobId) {
+        setExtracting(false)
+        return
+      }
+      try {
+        await submitCapture.mutateAsync(payload)
+        router.back()
+      } catch (err) {
+        if (err instanceof Error && err.message === CAPTURE_REJECTED_DETAIL) {
+          router.back()
+          return
+        }
+        setExtracting(false)
+        Alert.alert(t('addRecipe.importFailed'), t('importJobs.captureFailed'))
+      }
+    },
+    [jobId, submitCapture, router, t]
+  )
 
   const handleMessage = useCallback(
     async (event: { nativeEvent: { data: string } }) => {
+      if (jobId) {
+        await handleCaptureMessage(event.nativeEvent.data)
+        return
+      }
       const text = event.nativeEvent.data.trim()
       if (!text) {
         setExtracting(false)
@@ -78,7 +115,7 @@ const WebViewImportScreen = () => {
         Alert.alert(t('addRecipe.importFailed'), err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
       }
     },
-    [api, qc, router, t]
+    [api, qc, router, t, jobId, handleCaptureMessage]
   )
 
   useLayoutEffect(() => {

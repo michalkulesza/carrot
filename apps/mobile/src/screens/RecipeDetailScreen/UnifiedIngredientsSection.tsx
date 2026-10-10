@@ -21,6 +21,7 @@ interface UnifiedIngredient {
 }
 
 const UnifiedIngredientsSection = ({
+  recipeId,
   components,
   unitSystem,
   servingScale,
@@ -32,6 +33,7 @@ const UnifiedIngredientsSection = ({
   fontSize,
   lineHeight,
 }: {
+  recipeId: string
   components: SaveComponent[]
   unitSystem: string
   servingScale: number
@@ -141,6 +143,7 @@ const UnifiedIngredientsSection = ({
           return (
             <IngredientRow
               key={key}
+              recipeId={recipeId}
               ingredient={ingredient}
               cupHint={cupHint}
               addMode={addMode}

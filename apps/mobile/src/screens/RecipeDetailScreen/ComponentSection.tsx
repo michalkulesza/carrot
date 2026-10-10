@@ -151,6 +151,7 @@ const ComponentSection = ({
           {ingredientsExpanded && ingredients.map((ingredient, i) => (
             <IngredientRow
               key={i}
+              recipeId={recipe.id}
               ingredient={ingredient}
               cupHint={getCupHint(i)}
               addMode={addMode}

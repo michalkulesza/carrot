@@ -586,6 +586,15 @@ class RelatedRecipeRequest(BaseModel):
     recipe_ids: list[uuid.UUID]
 
 
+class LinkedRecipeImportRequest(BaseModel):
+    url: str = Field(max_length=2048)
+
+
+class LinkedRecipeImportOut(BaseModel):
+    recipe_id: uuid.UUID | None = None
+    job_id: uuid.UUID | None = None
+
+
 class RecipeOrderRequest(BaseModel):
     ids: list[uuid.UUID]
 
@@ -780,6 +789,7 @@ class ImportJobStatus(StrEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    AWAITING_CHILDREN = "awaiting_children"
 
 
 class ImportFailureCode(StrEnum):
@@ -870,8 +880,14 @@ class ImportJobOut(BaseModel):
     outcome: str | None = None
     retry_count: int
     next_attempt_at: datetime | None = None
+    device_capture_eligible: bool = False
     created_at: datetime
     updated_at: datetime
+
+
+class CapturedHtmlSubmit(BaseModel):
+    html: str
+    final_url: str
 
 
 class ImportJobEvent(Base):

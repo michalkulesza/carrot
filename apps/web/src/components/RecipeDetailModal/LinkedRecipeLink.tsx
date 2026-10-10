@@ -1,17 +1,20 @@
 import type { ReactNode } from 'react'
+import UnresolvedLinkMenu from './UnresolvedLinkMenu'
 
 interface LinkedRecipeLinkProps {
   url: string
   recipeId: string | null | undefined
+  parentRecipeId?: string
   onOpenRecipe?: (id: string) => void
   className: string
   children: ReactNode
 }
 
-// A resolved link opens the imported recipe in-app; otherwise it opens the source page.
+// A resolved link opens the imported recipe in-app; an unresolved one offers import or the source page.
 const LinkedRecipeLink = ({
   url,
   recipeId,
+  parentRecipeId,
   onOpenRecipe,
   className,
   children,
@@ -25,6 +28,18 @@ const LinkedRecipeLink = ({
       >
         {children}
       </button>
+    )
+
+  if (parentRecipeId)
+    return (
+      <UnresolvedLinkMenu
+        url={url}
+        parentRecipeId={parentRecipeId}
+        onOpenRecipe={onOpenRecipe}
+        className={className}
+      >
+        {children}
+      </UnresolvedLinkMenu>
     )
 
   return (

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'expo-router'
 import { ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import * as Haptics from 'expo-haptics'
 import type { ImportJob } from '@carrot/shared/types'
 import { colors } from '../../theme/colors'
@@ -13,7 +15,16 @@ import { clearImportImagePreview, getImportImagePreview } from '../../utils/impo
 import { resolveRecipePreview } from '../../utils/recipePreview'
 import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { useAuth } from '../../context/AuthContext'
+import { deviceCaptureStore, useDeviceCaptureState } from '../../components/DeviceHtmlCapture/store'
 import { styles } from './styles'
+
+const getCardTitle = (job: ImportJob, capturingOnDevice: boolean, retryScheduled: boolean, t: TFunction) => {
+  if (capturingOnDevice) return t('importJobs.capturingOnDevice')
+  if (job.status === 'failed') return t(`importJobs.failure.${job.failure_code ?? 'unexpected'}`)
+  if (job.status === 'running') return t('importJobs.running')
+  if (retryScheduled) return t('importJobs.takingLonger')
+  return t('importJobs.pending')
+}
 
 const PendingJobCard = ({
   job,
@@ -30,6 +41,8 @@ const PendingJobCard = ({
 }) => {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const router = useRouter()
+  const { capturingJobId, needsInteractionJobIds } = useDeviceCaptureState()
   const [actionPending, setActionPending] = useState(false)
   const actionInProgress = useRef(false)
   const sourceUrlOpening = useRef(false)
@@ -39,13 +52,9 @@ const PendingJobCard = ({
   const imagePreview = getImportImagePreview(job.id)
   const [resolvedImagePreview, setResolvedImagePreview] = useState<string | null>(null)
   const imageUri = imagePreview ?? resolvedImagePreview ?? (job.kind === 'text' ? PLACEHOLDER_URL : null)
-  const title = job.status === 'failed'
-    ? t(`importJobs.failure.${job.failure_code ?? 'unexpected'}`)
-    : job.status === 'running'
-      ? t('importJobs.running')
-      : retryScheduled
-        ? t('importJobs.takingLonger')
-        : t('importJobs.pending')
+  const capturingOnDevice = job.status === 'failed' && capturingJobId === job.id
+  const captureNeedsInteraction = job.device_capture_eligible && needsInteractionJobIds.has(job.id)
+  const title = getCardTitle(job, capturingOnDevice, retryScheduled, t)
   const handleAction = async (action: () => Promise<unknown>) => {
     if (actionInProgress.current) return
     actionInProgress.current = true
@@ -60,16 +69,26 @@ const PendingJobCard = ({
       setActionPending(false)
     }
   }
-  const handleRetry = () => void handleAction(onRetry)
+  const handleRetry = () => {
+    deviceCaptureStore.reset(job.id)
+    void handleAction(onRetry)
+  }
   const handleCancel = () => void handleAction(onCancel)
   const handleDismiss = () => void handleAction(onDismiss)
-  const requiresUserAction = job.status === 'failed' && (job.failure_code === 'user_action_required' || [
+  const requiresUserAction = job.status === 'failed' && !capturingOnDevice && (captureNeedsInteraction || job.failure_code === 'user_action_required' || [
     'unsupported_source', 'unsupported_language', 'language_undetermined',
     'no_recipe_content', 'ambiguous_recipe', 'unreadable_content',
   ].includes(job.failure_code ?? ''))
   const canOpenSourceUrl = Boolean(job.source_url)
+  const handleOpenPage = () => {
+    router.push({ pathname: '/webview-import', params: { url: job.source_url ?? '', jobId: job.id } })
+  }
   const handleUserAction = () => {
+    const openPageAction = job.device_capture_eligible
+      ? [{ text: t('importJobs.openPageToContinue'), onPress: handleOpenPage }]
+      : []
     Alert.alert(t('importJobs.userActionRequired.title'), t('importJobs.userActionRequired.body'), [
+      ...openPageAction,
       { text: t('importJobs.dismiss'), style: 'destructive', onPress: handleDismiss },
       {
         text: t('importJobs.userActionRequired.continue'),
@@ -105,7 +124,7 @@ const PendingJobCard = ({
     <>
       <View style={styles.pendingImageWrap}>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.pendingImage} />}
-        {job.status === 'failed' ? (
+        {job.status === 'failed' && !capturingOnDevice ? (
           <View style={styles.pendingFailureOverlay}>
             <Feather name="alert-circle" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
           </View>
@@ -188,7 +207,7 @@ const PendingJobCard = ({
             <Feather name="chevron-right" size={22} color={colors.brand} />
           </Pressable>
         </View>
-      ) : job.status === 'failed' ? (
+      ) : capturingOnDevice ? null : job.status === 'failed' ? (
         <View style={styles.pendingActionRow}>
           <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
             <Feather name="refresh-cw" size={16} color={colors.blue} />

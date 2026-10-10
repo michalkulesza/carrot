@@ -153,6 +153,7 @@ const RecipeViewLayout = ({
     onAddIngredient,
     allergenUncertain,
     onOpenRecipe,
+    recipeId: recipe.id,
   }
   const toggleShoppingMode = () => setShoppingMode((current) => !current)
 

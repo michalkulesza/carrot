@@ -45,6 +45,7 @@ const UnifiedIngredientList = ({
   readOnly = false,
   collapsible = false,
   onOpenRecipe,
+  recipeId,
 }: {
   components: SaveComponent[]
   unitSystem: string
@@ -62,6 +63,7 @@ const UnifiedIngredientList = ({
   readOnly?: boolean
   collapsible?: boolean
   onOpenRecipe?: (id: string) => void
+  recipeId?: string
 }) => {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(!collapsible)
@@ -173,6 +175,7 @@ const UnifiedIngredientList = ({
                     <LinkedRecipeLink
                       url={link}
                       recipeId={component.linked_recipe_ids?.[ingredientIndex]}
+                      parentRecipeId={recipeId}
                       onOpenRecipe={onOpenRecipe}
                       className="shrink-0 cursor-pointer text-xs font-medium text-primary underline"
                     >

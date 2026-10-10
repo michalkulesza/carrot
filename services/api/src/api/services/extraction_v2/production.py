@@ -39,6 +39,15 @@ _UNSUPPORTED_SOCIAL_SUFFIXES = (
 )
 
 
+def _host_matches(host: str, suffixes: tuple[str, ...]) -> bool:
+    return any(host == suffix or host.endswith(f".{suffix}") for suffix in suffixes)
+
+
+def is_html_source(url: str) -> bool:
+    host = (urlsplit(url).hostname or "").casefold().rstrip(".")
+    return not _host_matches(host, _SOCIAL_SUFFIXES + _UNSUPPORTED_SOCIAL_SUFFIXES)
+
+
 def _safe_source_url(url: str) -> str:
     parsed = urlsplit(url)
     return urlunsplit((parsed.scheme, parsed.hostname or "", "", "", ""))
@@ -105,8 +114,7 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
     if not await is_safe_public_destination(url):
         return _failure(url, FailureReason.INVALID_INPUT, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     host = (urlsplit(url).hostname or "").casefold().rstrip(".")
-    is_social = any(host == suffix or host.endswith(f".{suffix}") for suffix in _SOCIAL_SUFFIXES)
-    if is_social:
+    if _host_matches(host, _SOCIAL_SUFFIXES):
         try:
             metadata = await scraper.fetch_reel(url)
         except Exception:
@@ -133,7 +141,7 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
             source_url=metadata.canonical_url, thumbnail_url=metadata.thumbnail_url,
             creator_handle=metadata.creator_handle,
         ), source_capture
-    if any(host == suffix or host.endswith(f".{suffix}") for suffix in _UNSUPPORTED_SOCIAL_SUFFIXES):
+    if _host_matches(host, _UNSUPPORTED_SOCIAL_SUFFIXES):
         return _failure(url, FailureReason.UNSUPPORTED_SOURCE, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     render_status = "rendered"
     renderer_failure = None
@@ -149,6 +157,21 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
             html, final_url = await _fetch_html(url)
     except Exception:
         return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+    return await _extract_html(
+        url, final_url, html, usage, render_status=render_status, renderer_failure=renderer_failure,
+    )
+
+
+async def extract_captured_html(
+    url: str, final_url: str, html: str, usage: gemini.UsageTracker,
+) -> tuple[ExtractionOutcome, ImportMetadata, dict]:
+    return await _extract_html(url, final_url, html, usage, render_status="device_capture")
+
+
+async def _extract_html(
+    url: str, final_url: str, html: str, usage: gemini.UsageTracker,
+    *, render_status: str, renderer_failure: str | None = None,
+) -> tuple[ExtractionOutcome, ImportMetadata, dict]:
     payload = HtmlPayload(
         schema_version=1, kind="html", source_url=final_url,
         capture=Capture(status="complete"), html=html,

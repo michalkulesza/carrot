@@ -29,6 +29,7 @@ from api.models import (
     EmbeddingStatus,
     Tag,
     UserPreferences,
+    recipe_households_table,
 )
 from api.routes.imports import _event_for_job
 from api.routes.recipes import _link_recipe_to_household
@@ -40,15 +41,26 @@ from api.services.allergen_rechecks import recover_running_jobs, worker_loop as 
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields, report_service_failure
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
-from api.services.extraction_v2.production import acquire_and_extract_url, extract_image_transcript, extract_pasted_text
-from api.services.linked_recipes import attach_child_to_parent, spawn_linked_imports
+from api.services.extraction_v2.production import (
+    acquire_and_extract_url, extract_captured_html, extract_image_transcript, extract_pasted_text,
+)
+from api.services.linked_recipes import (
+    attach_child_to_parent,
+    existing_linked_ids,
+    finalize_overdue_parents,
+    finalize_parent_of_child,
+    set_linked_recipe_ids,
+    spawn_linked_imports,
+)
 from api.services.recipe_components import serialize_components
+from api.services.recipe_reextraction import apply_extraction
 from api.services import gemini as gemini_svc
 
 log = logging.getLogger(__name__)
 _POLL_INTERVAL_SECONDS = 2
 _MAX_IMPORT_RETRIES = 3
 _IMPORT_RETRY_DELAY_SECONDS = 30
+_AWAITING_CHILDREN_SWEEP_SECONDS = 60
 _MAX_IMAGE_BYTES = 8 * 1024 * 1024
 _MAX_TRANSCRIPT_CHARS = 20_000
 _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
@@ -200,6 +212,37 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     return recipe
 
 
+async def _replace_recipe(session, job: ImportJob, result: ImportResult) -> Recipe | None:
+    try:
+        recipe_id = uuid.UUID(str(job.input.get("replaces_recipe_id")))
+    except ValueError:
+        return None
+    in_household = await session.scalar(
+        select(recipe_households_table.c.recipe_id).where(
+            recipe_households_table.c.recipe_id == recipe_id,
+            recipe_households_table.c.household_id == job.household_id,
+        )
+    )
+    recipe = await session.get(Recipe, recipe_id, with_for_update=True) if in_household else None
+    if recipe is None:
+        return None
+    preferences = await session.get(UserPreferences, job.user_id)
+    previous_links = existing_linked_ids(recipe.components or [])
+    apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+    recipe.components, _ = set_linked_recipe_ids(recipe.components, previous_links)
+    await session.merge(RecipeSourceEvidence(
+        recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
+        trace=result.trace[:200], capture=result.source_capture,
+    ))
+    await _archive_thumbnail(recipe)
+    await queue_recipe_embedding(session, recipe)
+    return recipe
+
+
+def _without_captured_html(job_input: dict) -> dict:
+    return {key: value for key, value in job_input.items() if key not in ("captured_html", "captured_final_url")}
+
+
 async def _claim_job() -> uuid.UUID | None:
     now = datetime.utcnow()
     async with async_session_maker() as session:
@@ -227,7 +270,12 @@ async def _is_member(session, job: ImportJob) -> bool:
 async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: list[str]) -> ImportResult:
     if job.kind == ImportJobKind.URL:
         usage = gemini_svc.UsageTracker()
-        outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
+        captured_html = job.input.get("captured_html")
+        if captured_html:
+            final_url = job.input.get("captured_final_url") or job.input["url"]
+            outcome, metadata, source_capture = await extract_captured_html(job.input["url"], final_url, captured_html, usage)
+        else:
+            outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
         if isinstance(outcome, FailedOutcome):
             raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
@@ -344,6 +392,7 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             await _event_for_job(session, job, "import_job.retry_scheduled")
         else:
             job.status = ImportJobStatus.FAILED
+            job.input = _without_captured_html(job.input)
             if isinstance(error, ImportPipelineFailure) and error.code in ImportFailureCode._value2member_map_:
                 job.failure_code = error.code
                 job.failure_stage = error.stage
@@ -356,6 +405,7 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             job.next_attempt_at = None
             job.updated_at = now
             await _event_for_job(session, job, "import_job.failed")
+            await finalize_parent_of_child(session, job)
             report_recipe_import_failure(
                 input_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else ("text" if job.kind == ImportJobKind.TEXT else "image"),
                 source_url=job.input.get("url") if job.kind == ImportJobKind.URL else None,
@@ -376,8 +426,10 @@ async def _process_job(job_id: uuid.UUID) -> None:
             if not await _is_member(session, job):
                 job.status = ImportJobStatus.FAILED
                 job.failure_code = ImportFailureCode.HOUSEHOLD_ACCESS_CHANGED
+                job.input = _without_captured_html(job.input)
                 job.next_attempt_at = None
                 await _event_for_job(session, job, "import_job.failed")
+                await finalize_parent_of_child(session, job)
                 await session.commit()
                 return
             available_tags, allergens = await _get_tags_and_allergens(session, job.user_id, job.household_id)
@@ -394,36 +446,46 @@ async def _process_job(job_id: uuid.UUID) -> None:
                     existing = await session.get(Recipe, current.result_recipe_id)
                     if existing is not None:
                         await attach_child_to_parent(session, current.parent_recipe_id, existing, current.input.get("url"))
+                    await finalize_parent_of_child(session, current)
                 await session.commit()
                 return
             if not await _is_member(session, current):
                 current.status = ImportJobStatus.FAILED
                 current.failure_code = ImportFailureCode.HOUSEHOLD_ACCESS_CHANGED
+                current.input = _without_captured_html(current.input)
                 current.next_attempt_at = None
                 await _event_for_job(session, current, "import_job.failed")
+                await finalize_parent_of_child(session, current)
                 await session.commit()
                 return
-            recipe = await _save_recipe(session, current, result)
+            recipe = await _replace_recipe(session, current, result) or await _save_recipe(session, current, result)
             source_url = current.input.get("url") if current.kind == ImportJobKind.URL else None
+            child_job_ids: list[uuid.UUID] = []
             try:
                 async with session.begin_nested():  # linking is best-effort; never lose the imported recipe
                     if current.parent_recipe_id is None:
-                        await spawn_linked_imports(session, recipe, current)
+                        child_job_ids = await spawn_linked_imports(
+                            session, recipe, user_id=current.user_id, household_id=current.household_id,
+                        )
                     else:
                         await attach_child_to_parent(session, current.parent_recipe_id, recipe, source_url)
             except Exception as error:
                 log.warning("Linked recipe handling failed for job %s (%s)", job_id, type(error).__name__)
                 report_service_failure("linked_recipe_handling", error=error)
-            current.status = ImportJobStatus.SUCCEEDED
+            awaiting_children = bool(child_job_ids)
+            current.status = ImportJobStatus.AWAITING_CHILDREN if awaiting_children else ImportJobStatus.SUCCEEDED
             current.outcome = result.outcome or "complete"
             current.failure_code = None
             current.failure_stage = None
             current.result_recipe_id = recipe.id
             if current.parent_recipe_id is None:  # a child keeps its URL so a retry can still find the parent's link
                 current.input = {}
+            else:
+                current.input = _without_captured_html(current.input)
             current.next_attempt_at = None
             current.updated_at = datetime.utcnow()
-            await _event_for_job(session, current, "import_job.succeeded")
+            await _event_for_job(session, current, "import_job.running" if awaiting_children else "import_job.succeeded")
+            await finalize_parent_of_child(session, current)
             source_kind = _final_source_kind(current.kind, result.source_capture)
             renderer_status = result.source_capture.get("render_status")
             fallback_status = result.source_capture.get("fallback_status")
@@ -614,6 +676,18 @@ async def _push_loop() -> None:
         await asyncio.sleep(_POLL_INTERVAL_SECONDS)
 
 
+async def _awaiting_children_loop() -> None:
+    while True:
+        try:
+            async with async_session_maker() as session:
+                if await finalize_overdue_parents(session):
+                    await session.commit()
+        except Exception as error:
+            log.warning("Awaiting-children sweep failed: %s", type(error).__name__)
+            report_service_failure("import_awaiting_children", error=error)
+        await asyncio.sleep(_AWAITING_CHILDREN_SWEEP_SECONDS)
+
+
 async def run() -> None:
     await _requeue_stale()
     await recover_running_jobs()
@@ -622,4 +696,5 @@ async def run() -> None:
         *(_embedding_worker_loop() for _ in range(settings.embedding_worker_batch_size)),
         allergen_recheck_worker_loop(_POLL_INTERVAL_SECONDS),
         _push_loop(),
+        _awaiting_children_loop(),
     )

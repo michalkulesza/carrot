@@ -13,7 +13,9 @@ import type {
   ImportJobEnqueue,
   ImportJobOut,
   ImportJob,
+  CapturedHtmlPayload,
   ImportJobsSnapshot,
+  LinkedRecipeImportResult,
   AuthUser,
   ShoppingListItem,
   PresenceUser,
@@ -257,6 +259,19 @@ export const createApiClient = (config: ApiClientConfig) => {
     });
     await throwOnError(res, "Failed to update related recipes");
     return res.json() as Promise<RecipeOut[]>;
+  };
+
+  const linkRecipeImport = async (
+    id: string,
+    url: string,
+  ): Promise<LinkedRecipeImportResult> => {
+    const res = await apiFetch(`/api/recipes/${id}/linked-recipes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url }),
+    });
+    await throwOnError(res, "Failed to import linked recipe");
+    return res.json() as Promise<LinkedRecipeImportResult>;
   };
 
   const deleteRecipe = async (id: string): Promise<void> => {
@@ -1015,6 +1030,19 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<ImportJob>;
   };
 
+  const submitCapturedHtml = async (
+    id: string,
+    payload: CapturedHtmlPayload,
+  ): Promise<ImportJob> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}/captured-html`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    await throwOnError(res, "Failed to submit captured page");
+    return res.json() as Promise<ImportJob>;
+  };
+
   const cancelImportJob = async (id: string): Promise<ImportJob> => {
     const res = await apiFetch(`/api/imports/jobs/${id}/cancel`, {
       method: "POST",
@@ -1111,6 +1139,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     addPublicRecipeToLibrary,
     listRelatedRecipes,
     setRelatedRecipes,
+    linkRecipeImport,
     deleteRecipe,
     fetchStats,
     getAllergenRecheckStatus,
@@ -1165,6 +1194,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     deleteAccount,
     enqueueImportJob,
     retryImportJob,
+    submitCapturedHtml,
     cancelImportJob,
     dismissImportJob,
     registerDevice,

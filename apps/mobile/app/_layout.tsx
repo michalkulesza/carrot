@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications'
 import { useIsRestoring, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
 import BugReportButton from '../src/components/BugReportButton'
+import DeviceHtmlCaptureHost from '../src/components/DeviceHtmlCapture'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
 import { useResolvedColorScheme } from '../src/context/ColorSchemeContext'
@@ -370,6 +371,7 @@ function RootLayoutNav() {
           scopeKey={`${user.id}:${user.active_household_id}`}
         />
       ) : null}
+      {user ? <DeviceHtmlCaptureHost /> : null}
       <Stack
         screenOptions={rootStackScreenOptions}
       >

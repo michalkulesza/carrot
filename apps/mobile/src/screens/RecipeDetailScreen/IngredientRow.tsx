@@ -1,9 +1,11 @@
-import { useState } from 'react'
-import { Linking, Pressable, Text, View } from 'react-native'
+import { useCallback, useState } from 'react'
+import { ActionSheetIOS, Alert, Linking, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
-import type { AllergenFlag } from '@carrot/shared/types'
+import * as Haptics from 'expo-haptics'
+import type { AllergenFlag, LinkedRecipeImportResult } from '@carrot/shared/types'
+import { useLinkedRecipeImport } from '@carrot/shared/hooks/useLinkedRecipeImport'
 import {
   displayIngredientWithLocalizedUnit,
   getIngredientQuantityCount,
@@ -15,6 +17,7 @@ import { matchesActiveAllergen } from './helpers'
 import { styles } from './styles'
 
 const IngredientRow = ({
+  recipeId,
   ingredient,
   cupHint = '',
   addMode = false,
@@ -28,6 +31,7 @@ const IngredientRow = ({
   linkedRecipeId,
   linkedAllergens,
 }: {
+  recipeId: string
   ingredient: string
   cupHint?: string
   addMode?: boolean
@@ -59,10 +63,57 @@ const IngredientRow = ({
     .map((allergen) =>
       t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }),
     )
+  const linkedRecipeImport = useLinkedRecipeImport(recipeId)
+  const [isLinkedImportQueued, setIsLinkedImportQueued] = useState(false)
+  const isLinkedImportBusy = linkedRecipeImport.isPending || isLinkedImportQueued
+
+  const handleLinkedImportSuccess = useCallback(
+    (result: LinkedRecipeImportResult) => {
+      if (result.recipe_id) {
+        router.navigate(`/recipe/${result.recipe_id}`)
+        return
+      }
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      setIsLinkedImportQueued(true)
+    },
+    [router],
+  )
+
+  const handleLinkedImportError = useCallback(() => {
+    Alert.alert(t('recipes.linkedImportFailed'))
+  }, [t])
+
+  const handleImportLinkedRecipe = useCallback(() => {
+    if (!linkedRecipeUrl || isLinkedImportBusy) return
+    linkedRecipeImport.mutate(linkedRecipeUrl, {
+      onSuccess: handleLinkedImportSuccess,
+      onError: handleLinkedImportError,
+    })
+  }, [linkedRecipeUrl, isLinkedImportBusy, linkedRecipeImport, handleLinkedImportSuccess, handleLinkedImportError])
+
+  const handleLinkedActionSheetSelect = useCallback(
+    (selectedIndex: number) => {
+      if (selectedIndex === 0) handleImportLinkedRecipe()
+      else if (selectedIndex === 1 && linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
+    },
+    [handleImportLinkedRecipe, linkedRecipeUrl],
+  )
+
   const handleOpenLinkedRecipe = () => {
-    if (linkedRecipeId) router.navigate(`/recipe/${linkedRecipeId}`)
-    else if (linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
+    if (linkedRecipeId) {
+      router.navigate(`/recipe/${linkedRecipeId}`)
+      return
+    }
+    if (!linkedRecipeUrl || isLinkedImportBusy) return
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        options: [t('recipes.importLinkedRecipe'), t('recipes.openLinkedWebsite'), t('common.cancel')],
+        cancelButtonIndex: 2,
+      },
+      handleLinkedActionSheetSelect,
+    )
   }
+  const linkedRecipeLabel = isLinkedImportBusy ? t('recipes.linkedImportQueued') : t('recipes.openLinkedRecipe')
   const allergenTooltip = allergenFlag?.substitute
     ? `${t('recipes.suggestedSubstitute')} ${allergenFlag.substitute}`
     : t('recipes.noSubstituteAvailable')
@@ -79,8 +130,13 @@ const IngredientRow = ({
         {cupHint}
       </Text>
       {linkedRecipeUrl && (
-        <Pressable onPress={handleOpenLinkedRecipe} accessibilityRole="link" accessibilityLabel={t('recipes.openLinkedRecipe')}>
-          <Text style={styles.linkedRecipeText}>{t('recipes.openLinkedRecipe')}</Text>
+        <Pressable
+          onPress={handleOpenLinkedRecipe}
+          disabled={isLinkedImportBusy}
+          accessibilityRole="link"
+          accessibilityLabel={linkedRecipeLabel}
+        >
+          <Text style={styles.linkedRecipeText}>{linkedRecipeLabel}</Text>
         </Pressable>
       )}
       {linkedAllergenLabels.length > 0 && (

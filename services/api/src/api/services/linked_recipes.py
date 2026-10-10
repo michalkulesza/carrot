@@ -1,10 +1,10 @@
 """Import recipes linked from ingredient lines and resolve their allergens onto the parent."""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
-from sqlalchemy import or_, select
+from sqlalchemy import Text, cast, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +21,9 @@ from api.services import allergen_rechecks
 from api.services.related_recipes import add_related_recipes
 
 MAX_LINKED_IMPORTS = 5
+AWAITING_CHILDREN_TIMEOUT = timedelta(minutes=10)
+_RESETTABLE_STATUSES = (ImportJobStatus.FAILED, ImportJobStatus.CANCELLED)
+_WAITING_ON_CHILD_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING)
 
 
 def normalize_link(url: str | None) -> str | None:
@@ -60,6 +63,55 @@ def set_linked_recipe_ids(components: list[dict], recipe_ids_by_url: dict[str, u
     return updated, matched
 
 
+def existing_linked_ids(components: list[dict]) -> dict[str, uuid.UUID]:
+    """Normalised link URL -> stored linked recipe id, to carry links across a re-extraction."""
+    found: dict[str, uuid.UUID] = {}
+    for component in components:
+        for link, recipe_id in zip(component.get("ingredient_links") or [], component.get("linked_recipe_ids") or []):
+            url = normalize_link(link)
+            if url and recipe_id:
+                found.setdefault(url, uuid.UUID(recipe_id))
+    return found
+
+
+async def linking_household_id(session: AsyncSession, recipe_id: uuid.UUID) -> uuid.UUID | None:
+    return await session.scalar(
+        select(recipe_households_table.c.household_id)
+        .where(recipe_households_table.c.recipe_id == recipe_id)
+        .order_by(recipe_households_table.c.household_id)
+        .limit(1)
+    )
+
+
+async def is_component_recipe(session: AsyncSession, recipe: Recipe) -> bool:
+    """True when the recipe is itself linked from another recipe, so it must not spawn its own children."""
+    imported_as_child = await session.scalar(
+        select(exists().where(ImportJob.result_recipe_id == recipe.id, ImportJob.parent_recipe_id.is_not(None)))
+    )
+    if imported_as_child:
+        return True
+    own_url = normalize_link(recipe.source_url)
+    if own_url is None:
+        return False
+    host = urlsplit(own_url).hostname
+    households = select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe.id)
+    candidates = (await session.scalars(
+        select(Recipe)
+        .join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id)
+        .where(
+            recipe_households_table.c.household_id.in_(households),
+            Recipe.id != recipe.id,
+            cast(Recipe.components, Text).ilike(f"%{host}%"),
+        )
+    )).unique().all()
+    return any(
+        normalize_link(link) == own_url
+        for candidate in candidates
+        for component in candidate.components or []
+        for link in component.get("ingredient_links") or []
+    )
+
+
 async def _household_recipes_by_url(session: AsyncSession, household_id: uuid.UUID, urls: list[str]) -> dict[str, uuid.UUID]:
     hosts = {urlsplit(url).hostname for url in urls}
     rows = (await session.execute(
@@ -81,31 +133,153 @@ def _child_idempotency_key(parent_id: uuid.UUID, url: str) -> uuid.UUID:
     return uuid.uuid5(uuid.NAMESPACE_URL, f"{parent_id}:{url}")
 
 
-async def spawn_linked_imports(session: AsyncSession, parent: Recipe, job: ImportJob) -> None:
-    """Queue an import per linked recipe (one level deep); reuse recipes the household already has."""
-    if job.parent_recipe_id is not None:
-        return
-    urls = linked_urls(parent.components or [], parent.source_url)
+async def _insert_child_job(
+    session: AsyncSession, parent_id: uuid.UUID, user_id: uuid.UUID, household_id: uuid.UUID, url: str,
+) -> uuid.UUID | None:
+    child_id = await session.scalar(
+        pg_insert(ImportJob).values(
+            user_id=user_id, household_id=household_id, kind=ImportJobKind.URL, input={"url": url},
+            parent_recipe_id=parent_id, idempotency_key=_child_idempotency_key(parent_id, url),
+            status=ImportJobStatus.PENDING, next_attempt_at=datetime.utcnow(),
+        ).on_conflict_do_nothing(index_elements=["user_id", "idempotency_key"]).returning(ImportJob.id)
+    )
+    if child_id is not None:
+        await _event_for_job(session, await session.get(ImportJob, child_id), "import_job.created")
+    return child_id
+
+
+async def spawn_linked_imports(
+    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID,
+) -> list[uuid.UUID]:
+    """Queue an import per unresolved linked recipe; reuse recipes the household already has. Returns new job ids."""
+    resolved = existing_linked_ids(parent.components or [])
+    urls = [url for url in linked_urls(parent.components or [], parent.source_url) if url not in resolved]
     if not urls:
-        return
-    existing = await _household_recipes_by_url(session, job.household_id, urls)
+        return []
+    existing = await _household_recipes_by_url(session, household_id, urls)
     existing = {url: recipe_id for url, recipe_id in existing.items() if recipe_id != parent.id}
     if existing:
-        parent.components, _ = set_linked_recipe_ids(parent.components, existing)
-        await add_related_recipes(session, parent.id, existing.values())
-        await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
+        await attach_existing_recipes(session, parent, existing)
+    child_ids: list[uuid.UUID] = []
     for url in urls:
         if url in existing:
             continue
-        child_id = await session.scalar(
-            pg_insert(ImportJob).values(
-                user_id=job.user_id, household_id=job.household_id, kind=ImportJobKind.URL, input={"url": url},
-                parent_recipe_id=parent.id, idempotency_key=_child_idempotency_key(parent.id, url),
-                status=ImportJobStatus.PENDING, next_attempt_at=datetime.utcnow(),
-            ).on_conflict_do_nothing(index_elements=["user_id", "idempotency_key"]).returning(ImportJob.id)
-        )
+        child_id = await _insert_child_job(session, parent.id, user_id, household_id, url)
         if child_id is not None:
-            await _event_for_job(session, await session.get(ImportJob, child_id), "import_job.created")
+            child_ids.append(child_id)
+    return child_ids
+
+
+async def attach_existing_recipes(session: AsyncSession, parent: Recipe, recipe_ids_by_url: dict[str, uuid.UUID]) -> None:
+    parent.components, _ = set_linked_recipe_ids(parent.components or [], recipe_ids_by_url)
+    await add_related_recipes(session, parent.id, recipe_ids_by_url.values())
+    await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
+
+
+async def import_linked_recipe(
+    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID, url: str,
+) -> tuple[uuid.UUID | None, uuid.UUID | None]:
+    """On-demand import of one linked URL. Returns (recipe_id, job_id); `url` must already be normalised."""
+    existing = (await _household_recipes_by_url(session, household_id, [url])).get(url)
+    if existing is not None and existing != parent.id:
+        await attach_existing_recipes(session, parent, {url: existing})
+        return existing, None
+
+    child_id = await _insert_child_job(session, parent.id, user_id, household_id, url)
+    if child_id is not None:
+        return None, child_id
+
+    job = await session.scalar(
+        select(ImportJob)
+        .where(ImportJob.user_id == user_id, ImportJob.idempotency_key == _child_idempotency_key(parent.id, url))
+        .with_for_update()
+    )
+    if job.status in _RESETTABLE_STATUSES:
+        job.status = ImportJobStatus.PENDING
+        job.input = {"url": url}
+        job.failure_code = None
+        job.failure_stage = None
+        job.diagnostic_error = None
+        job.outcome = None
+        job.retry_count = 0
+        job.started_at = None
+        job.dismissed_at = None
+        job.next_attempt_at = datetime.utcnow()
+        job.updated_at = datetime.utcnow()
+        await _event_for_job(session, job, "import_job.created")
+    elif job.status == ImportJobStatus.SUCCEEDED and job.result_recipe_id is not None:
+        child = await session.get(Recipe, job.result_recipe_id)
+        if child is not None:
+            await attach_existing_recipes(session, parent, {url: child.id})
+            return child.id, job.id
+    return None, job.id
+
+
+async def finalize_parent_if_ready(
+    session: AsyncSession, parent_job_id: uuid.UUID, *, force: bool = False, event_type: str = "import_job.succeeded",
+) -> bool:
+    """Mark a parent import done once all its child jobs are terminal (or unconditionally with `force`)."""
+    parent_job = await session.scalar(select(ImportJob).where(ImportJob.id == parent_job_id).with_for_update())
+    if parent_job is None or parent_job.status != ImportJobStatus.AWAITING_CHILDREN:
+        return False
+    if not force:
+        waiting = await session.scalar(
+            select(func.count()).select_from(ImportJob).where(
+                ImportJob.parent_recipe_id == parent_job.result_recipe_id,
+                ImportJob.user_id == parent_job.user_id,
+                ImportJob.status.in_(_WAITING_ON_CHILD_STATUSES),
+            )
+        )
+        if waiting:
+            return False
+    parent_job.status = ImportJobStatus.SUCCEEDED
+    parent_job.updated_at = datetime.utcnow()
+    await _event_for_job(session, parent_job, event_type)
+    return True
+
+
+async def finalize_parent_of_child(session: AsyncSession, child: ImportJob) -> bool:
+    if child.parent_recipe_id is None:
+        return False
+    parent_job_id = await session.scalar(
+        select(ImportJob.id).where(
+            ImportJob.result_recipe_id == child.parent_recipe_id,
+            ImportJob.user_id == child.user_id,
+            ImportJob.status == ImportJobStatus.AWAITING_CHILDREN,
+        )
+    )
+    if parent_job_id is None:
+        return False
+    return await finalize_parent_if_ready(session, parent_job_id)
+
+
+async def cancel_awaiting_parent(session: AsyncSession, parent_job: ImportJob) -> None:
+    """Cancelling a waiting import keeps the saved recipe, drops its unfinished children and finishes the job."""
+    children = (await session.scalars(
+        select(ImportJob).where(
+            ImportJob.parent_recipe_id == parent_job.result_recipe_id,
+            ImportJob.user_id == parent_job.user_id,
+            ImportJob.status.in_(_WAITING_ON_CHILD_STATUSES),
+        ).with_for_update()
+    )).all()
+    for child in children:
+        child.status = ImportJobStatus.CANCELLED
+        child.next_attempt_at = None
+        child.updated_at = datetime.utcnow()
+        await _event_for_job(session, child, "import_job.cancelled")
+    await finalize_parent_if_ready(session, parent_job.id, force=True, event_type="import_job.cancelled")
+
+
+async def finalize_overdue_parents(session: AsyncSession, now: datetime | None = None) -> int:
+    """Safety net so a parent can never stay busy when its children are stuck or lost."""
+    cutoff = (now or datetime.utcnow()) - AWAITING_CHILDREN_TIMEOUT
+    overdue = (await session.scalars(
+        select(ImportJob.id).where(ImportJob.status == ImportJobStatus.AWAITING_CHILDREN, ImportJob.updated_at < cutoff)
+    )).all()
+    finalized = 0
+    for parent_job_id in overdue:
+        finalized += await finalize_parent_if_ready(session, parent_job_id, force=True)
+    return finalized
 
 
 async def attach_child_to_parent(session: AsyncSession, parent_id: uuid.UUID, child: Recipe, url: str | None) -> None:

@@ -142,6 +142,11 @@ export interface StageEvent {
   label: string;
 }
 
+export interface LinkedRecipeImportResult {
+  recipe_id: string | null;
+  job_id: string | null;
+}
+
 export type ImportJobKind = "url" | "text" | "image";
 export type ImportJobStatus =
   | "pending"
@@ -197,8 +202,14 @@ export interface ImportJob {
   outcome: "complete" | "incomplete" | "failed" | null;
   retry_count: number;
   next_attempt_at: string | null;
+  device_capture_eligible: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CapturedHtmlPayload {
+  html: string;
+  final_url: string;
 }
 
 export type ImportJobOut = ImportJob;

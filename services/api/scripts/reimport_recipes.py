@@ -14,8 +14,16 @@ from api.models import (
     UserPreferences,
     recipe_households_table,
 )
+from api.services import allergen_rechecks
 from api.services.import_worker import _get_tags_and_allergens
-from api.services.recipe_components import serialize_components
+from api.services.linked_recipes import (
+    existing_linked_ids,
+    is_component_recipe,
+    linking_household_id,
+    set_linked_recipe_ids,
+    spawn_linked_imports,
+)
+from api.services.recipe_reextraction import apply_extraction
 from api.services.monitoring import init_sentry
 from api.services import gemini
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
@@ -27,36 +35,6 @@ class ReimportFailure(Exception):
     def __init__(self, message: str, retryable: bool) -> None:
         super().__init__(message)
         self.retryable = retryable
-
-
-def _apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool) -> None:
-    extraction = result.recipe
-    if extraction is None:
-        raise ValueError("re-import produced no recipe")
-
-    recipe.title = extraction.title or recipe.title
-    recipe.source_title = extraction.source_title or extraction.title or recipe.source_title
-    recipe.servings = extraction.servings
-    recipe.total_time_minutes = extraction.total_time_minutes
-    recipe.kcal_per_serving = extraction.kcal_per_serving
-    recipe.protein_per_serving = extraction.protein_per_serving
-    recipe.fat_per_serving = extraction.fat_per_serving
-    recipe.carbs_per_serving = extraction.carbs_per_serving
-    recipe.issue_codes = result.issue_codes
-    recipe.nutrition_provenance = extraction.nutrition_provenance
-    recipe.nutrition_status = extraction.nutrition_status
-    recipe.total_time_provenance = extraction.total_time_provenance
-    recipe.allergen_status = extraction.allergen_status
-    recipe.overview = extraction.overview
-    recipe.title_evidence = extraction.title_evidence
-    recipe.components = serialize_components(extraction, auto_substitute)
-
-    if result.metadata.thumbnail_url:
-        recipe.thumbnail_url = result.metadata.thumbnail_url
-    if result.metadata.creator_handle:
-        recipe.creator_handle = result.metadata.creator_handle
-    if result.metadata.source_url:
-        recipe.source_url = result.metadata.source_url
 
 
 async def _extract(url: str, available_tags: list[str], allergens: list[str]) -> ImportResult:
@@ -76,6 +54,26 @@ async def _extract(url: str, available_tags: list[str], allergens: list[str]) ->
         evidence=[item.model_dump(mode="json") for item in outcome.evidence],
         trace=[item.model_dump(mode="json") for item in outcome.trace], source_capture=source_capture,
     )
+
+
+async def _restore_links_and_spawn(session, recipe: Recipe, previous_links: dict[str, uuid.UUID]) -> None:
+    surviving_ids = set(await session.scalars(select(Recipe.id).where(Recipe.id.in_(set(previous_links.values())))))
+    surviving_links = {url: recipe_id for url, recipe_id in previous_links.items() if recipe_id in surviving_ids}
+    recipe.components, _ = set_linked_recipe_ids(recipe.components, surviving_links)
+
+    has_links = any(component.get("ingredient_links") for component in recipe.components)
+    if not has_links:
+        return
+    if await is_component_recipe(session, recipe):
+        return
+
+    household_id = await linking_household_id(session, recipe.id)
+    if recipe.author_id is None or household_id is None:
+        print(f"Not spawning linked imports for {recipe.id}: missing author or household")
+        return
+
+    await spawn_linked_imports(session, recipe, user_id=recipe.author_id, household_id=household_id)
+    await allergen_rechecks.enqueue_recipe_allergen_check(session, recipe.id)
 
 
 async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
@@ -100,7 +98,9 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
             )
             result = await _extract(source_url, available_tags, allergens)
             preferences = await session.get(UserPreferences, recipe.author_id) if recipe.author_id else None
-            _apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+            previous_links = existing_linked_ids(recipe.components or [])
+            apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+            await _restore_links_and_spawn(session, recipe, previous_links)
             await session.merge(RecipeSourceEvidence(
                 recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
                 trace=result.trace[:200], capture=result.source_capture,

@@ -25,6 +25,7 @@ export interface IngredientChecklistProps {
   onAddIngredient: (componentIndex: number, ingredientIndex: number) => void
   allergenUncertain?: boolean
   onOpenRecipe?: (id: string) => void
+  recipeId?: string
 }
 
 interface IngredientChecklistViewProps extends IngredientChecklistProps {
@@ -46,6 +47,7 @@ const IngredientChecklist = ({
   onAddIngredient,
   allergenUncertain = false,
   onOpenRecipe,
+  recipeId,
   desktop,
 }: IngredientChecklistViewProps) => {
   const { t } = useTranslation()
@@ -134,6 +136,7 @@ const IngredientChecklist = ({
                   <LinkedRecipeLink
                     url={link}
                     recipeId={linkedRecipeId}
+                    parentRecipeId={recipeId}
                     onOpenRecipe={onOpenRecipe}
                     className="inline-flex items-center gap-1 rounded-full bg-[#EEEAFE] px-2.5 py-0.5 text-xs font-bold text-[#5B4BC4] hover:bg-[#E4DFF7]"
                   >

@@ -328,6 +328,7 @@ const ReadView = ({
 
           {recipe.components.length > 0 && (
             <UnifiedIngredientsSection
+              recipeId={recipe.id}
               components={recipe.components}
               unitSystem={unitSystem}
               servingScale={servingScale}

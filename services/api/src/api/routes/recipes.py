@@ -18,6 +18,10 @@ from api.config import settings
 from api.database import get_async_session
 from api.models import (
     HouseholdMember,
+    ImportJob,
+    ImportJobStatus,
+    LinkedRecipeImportOut,
+    LinkedRecipeImportRequest,
     Recipe,
     RecipeSourceEvidence,
     RecipeHouseholdsRequest,
@@ -40,6 +44,7 @@ from api.services.orphan_cleanup import delete_orphan_recipes
 from api.services.related_recipes import add_related_recipes
 from api.services.monitoring import report_service_failure
 from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
+from api.services.linked_recipes import import_linked_recipe, normalize_link
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -62,6 +67,15 @@ def _recipe_filter(household_id: uuid.UUID):
         select(recipe_households_table.c.recipe_id).where(
             recipe_households_table.c.household_id == household_id,
             recipe_households_table.c.recipe_id == Recipe.id,
+        )
+    )
+
+
+def _not_awaiting_children():
+    return ~exists(
+        select(ImportJob.id).where(
+            ImportJob.result_recipe_id == Recipe.id,
+            ImportJob.status == ImportJobStatus.AWAITING_CHILDREN,
         )
     )
 
@@ -282,7 +296,7 @@ async def list_recipes(
 ) -> list[RecipeOut]:
     result = await session.execute(
         select(Recipe)
-        .where(_recipe_filter(household_id))
+        .where(_recipe_filter(household_id), _not_awaiting_children())
         .order_by(Recipe.position.asc().nullslast(), Recipe.created_at.desc())
     )
     recipes = result.scalars().all()
@@ -301,7 +315,7 @@ async def list_my_recipes(
 ) -> list[RecipeOut]:
     result = await session.execute(
         select(Recipe)
-        .where(Recipe.author_id == user.id)
+        .where(Recipe.author_id == user.id, _not_awaiting_children())
         .order_by(Recipe.created_at.desc())
     )
     recipes = result.scalars().all()
@@ -335,6 +349,7 @@ async def search_recipes(
             .join(RecipeEmbedding, RecipeEmbedding.recipe_id == Recipe.id)
             .where(
                 _recipe_filter(household_id),
+                _not_awaiting_children(),
                 RecipeEmbedding.model == settings.gemini_embedding_model,
                 RecipeEmbedding.dimensions == settings.gemini_embedding_dimensions,
                 RecipeEmbedding.document_version == settings.embedding_document_version,
@@ -844,6 +859,38 @@ async def set_related_recipes(
     favourite_ids = await _get_favourite_ids(session, user.id)
     household_ids_map = await _get_household_ids_map(session, [t.id for t in targets])
     return [_build_recipe_out(recipe, favourite_ids, household_ids_map.get(recipe.id)) for recipe in targets]
+
+
+@router.post("/{recipe_id}/linked-recipes", response_model=LinkedRecipeImportOut)
+async def import_linked_recipe_route(
+    recipe_id: uuid.UUID,
+    body: LinkedRecipeImportRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> LinkedRecipeImportOut:
+    parent = await session.scalar(select(Recipe).where(_recipe_write_filter(household_id, recipe_id)).with_for_update())
+    if parent is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    url = normalize_link(body.url)
+    recipe_links = {
+        normalize_link(link)
+        for component in parent.components or []
+        for link in component.get("ingredient_links") or []
+    }
+    if url is None or url == normalize_link(parent.source_url) or url not in recipe_links:
+        raise HTTPException(status_code=422, detail="url_not_linked_by_recipe")
+
+    linked_recipe_id, job_id = await import_linked_recipe(
+        session, parent, user_id=user.id, household_id=household_id, url=url,
+    )
+    await session.commit()
+
+    if linked_recipe_id is not None:
+        scope = get_scope_key("recipes", user.id, household_id)
+        await broadcaster.publish(scope, {"type": "recipe_changed", "id": str(recipe_id)})
+    return LinkedRecipeImportOut(recipe_id=linked_recipe_id, job_id=job_id)
 
 
 @router.post("/{recipe_id}/favourite")
