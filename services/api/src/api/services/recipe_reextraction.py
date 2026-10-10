@@ -1,6 +1,7 @@
 from api.models import ImportResult, Recipe
-from api.services.linked_recipes import external_urls, with_link_kinds
+from api.services.linked_recipes import external_urls, with_link_kinds, without_self_links
 from api.services.recipe_components import serialize_components
+from api.services.text_sanitizing import sanitize_recipe
 
 
 def apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool) -> None:
@@ -33,4 +34,5 @@ def apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool
         recipe.source_url = result.metadata.source_url
 
     components = serialize_components(extraction, auto_substitute)
-    recipe.components = with_link_kinds(components, recipe.source_url, previous_external)
+    recipe.components = with_link_kinds(without_self_links(components, recipe.source_url), recipe.source_url, previous_external)
+    sanitize_recipe(recipe)

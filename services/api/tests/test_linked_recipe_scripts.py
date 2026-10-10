@@ -177,3 +177,49 @@ async def test_refresh_link_kinds_apply_writes_kinds_marks_failed_children_and_r
     link_mocks.enqueue.reset_mock()
     await backfill.main(apply=True, recipe_ids=set(), refresh_kinds=True)
     link_mocks.enqueue.assert_not_awaited()
+
+
+def _dirty_recipe():
+    recipe = _recipe(["https://own.test/r/#x", "https://own.test/a"])
+    recipe.source_url = "https://own.test/r"
+    recipe.title = "Rice\x00"
+    recipe.components[0]["steps"] = ["saut\x00"]
+    for field in ("source_title", "overview", "notes", "creator_handle"):
+        setattr(recipe, field, None)
+    return recipe
+
+
+@pytest.mark.asyncio
+async def test_clean_dry_run_writes_nothing(link_mocks, monkeypatch) -> None:
+    recipe = _dirty_recipe()
+    sessions = _patch_backfill_sessions(monkeypatch, [recipe])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    monkeypatch.setattr(backfill, "_failed_non_recipe_urls", AsyncMock(return_value=set()))
+
+    await backfill.main(apply=False, recipe_ids=set(), clean=True)
+
+    assert recipe.title == "Rice\x00"
+    assert recipe.components[0]["ingredient_links"][0] == "https://own.test/r/#x"
+    link_mocks.enqueue.assert_not_awaited()
+    assert all(session.commit.await_count == 0 for session in sessions)
+
+
+@pytest.mark.asyncio
+async def test_clean_apply_writes_enqueues_recheck_and_is_idempotent(link_mocks, monkeypatch) -> None:
+    recipe = _dirty_recipe()
+    sessions = _patch_backfill_sessions(monkeypatch, [recipe])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    monkeypatch.setattr(backfill, "_failed_non_recipe_urls", AsyncMock(return_value=set()))
+
+    await backfill.main(apply=True, recipe_ids=set(), clean=True)
+
+    assert recipe.title == "Rice"
+    assert recipe.components[0]["steps"] == ["saut"]
+    assert recipe.components[0]["ingredient_links"] == [None, "https://own.test/a"]
+    assert recipe.components[0]["ingredient_link_kinds"] == [None, "recipe"]
+    link_mocks.enqueue.assert_awaited_once()
+    assert any(session.commit.await_count == 1 for session in sessions)
+
+    link_mocks.enqueue.reset_mock()
+    await backfill.main(apply=True, recipe_ids=set(), clean=True)
+    link_mocks.enqueue.assert_not_awaited()

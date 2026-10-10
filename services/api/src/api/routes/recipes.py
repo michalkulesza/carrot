@@ -50,7 +50,9 @@ from api.services.linked_recipes import (
     preserved_external_urls,
     recipe_link_urls,
     with_link_kinds,
+    without_self_links,
 )
+from api.services.text_sanitizing import sanitize_recipe
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -288,6 +290,7 @@ async def import_recipes(
             creator_handle=row.get("creator_handle") or None,
             components=components,
         )
+        sanitize_recipe(recipe)
         session.add(recipe)
         await session.flush()
         await _link_recipe_to_household(session, recipe.id, household_id)
@@ -430,8 +433,9 @@ async def save_recipe(
         creator_handle=body.creator_handle,
         source_url=body.source_url,
         notes=body.notes,
-        components=[c.model_dump() for c in body.components],
+        components=without_self_links([c.model_dump() for c in body.components], body.source_url),
     )
+    sanitize_recipe(recipe)
     session.add(recipe)
     await session.flush()
     await _link_recipe_to_household(session, recipe.id, household_id)
@@ -611,6 +615,7 @@ async def update_recipe(
             stored_ids[link_index] if link_index < len(stored_ids) and link_index < len(stored_links) and stored_links[link_index] == link else None
             for link_index, link in enumerate(value.get("ingredient_links") or [])
         ]
+        value = without_self_links([value], recipe.source_url)[0]
         value["ingredient_link_kinds"] = _server_link_kinds(stored, value.get("ingredient_links") or [], recipe.source_url)
         if steps_unchanged and not value.get("step_evidence"):
             value["step_evidence"] = stored.get("step_evidence", [])
@@ -620,6 +625,7 @@ async def update_recipe(
         has_steps = has_steps or bool(component.steps)
         serialized_components.append(value)
     recipe.components = serialized_components
+    sanitize_recipe(recipe)
     if not has_steps or not all_steps_unchanged:
         recipe.overview = None
     recipe.issue_codes = [

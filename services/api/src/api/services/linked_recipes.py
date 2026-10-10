@@ -44,6 +44,36 @@ def _site(url: str | None) -> str:
     return host.removeprefix("www.")
 
 
+def _without_www(url: str | None) -> str | None:
+    normalized = normalize_link(url)
+    return normalized and normalized.replace("//www.", "//", 1)
+
+
+def is_self_link(link: str | None, source_url: str | None) -> bool:
+    url = _without_www(link)
+    return url is not None and url == _without_www(source_url)
+
+
+def without_self_links(components: list[dict], source_url: str | None) -> list[dict]:
+    """Copy of components where links to the recipe's own page are cleared (plugins auto-link ingredients to their own guides)."""
+    cleaned = []
+    for component in components:
+        links = component.get("ingredient_links") or []
+        own = [index for index, link in enumerate(links) if is_self_link(link, source_url)]
+        if not own:
+            cleaned.append(component)
+            continue
+        updated = dict(component)
+        for field in ("ingredient_links", "linked_recipe_ids", "ingredient_link_kinds"):
+            values = list(component.get(field) or [])
+            for index in own:
+                if index < len(values):
+                    values[index] = None
+            updated[field] = values
+        cleaned.append(updated)
+    return cleaned
+
+
 def _computed_kind(link: str | None, own_site: str, non_recipe_urls: set[str]) -> str | None:
     url = normalize_link(link)
     if url is None:
@@ -70,7 +100,7 @@ def link_kinds(component: dict, source_url: str | None) -> list[str | None]:
     own_site = _site(source_url)
     return [
         (stored[index] if index < len(stored) and stored[index] else None) or _computed_kind(link, own_site, set())
-        if link else None
+        if link and not is_self_link(link, source_url) else None
         for index, link in enumerate(links)
     ]
 
@@ -110,12 +140,11 @@ def recipe_link_urls(components: list[dict], source_url: str | None) -> set[str]
 
 def linked_urls(components: list[dict], own_url: str | None = None) -> list[str]:
     """Distinct normalised recipe links, minus the recipe's own URL, capped (shop/affiliate links are external)."""
-    own = normalize_link(own_url)
     urls: list[str] = []
     for component in components:
         for link, kind in zip(component.get("ingredient_links") or [], link_kinds(component, own_url)):
             url = normalize_link(link)
-            if kind == RECIPE_LINK and url and url != own and url not in urls:
+            if kind == RECIPE_LINK and url and url not in urls:
                 urls.append(url)
     return urls[:MAX_LINKED_IMPORTS]
 
@@ -411,7 +440,7 @@ async def resolve_linked_allergens(
     """Fill `linked_allergens` on linked recipe ingredients from their analysed recipes.
 
     The status is "uncertain" while any recipe link is unresolved (no recipe, deleted, or not analysed).
-    External links are ordinary ingredients.
+    External and self links are ordinary ingredients.
     """
     ids = {uuid.UUID(recipe_id) for component in components for recipe_id in component.get("linked_recipe_ids") or [] if recipe_id}
     linked = {recipe.id: recipe for recipe in (await session.scalars(select(Recipe).where(Recipe.id.in_(ids)))).all()} if ids else {}
@@ -425,6 +454,9 @@ async def resolve_linked_allergens(
         flags += [{} for _ in range(len(links) - len(flags))]
         for index, link in enumerate(links):
             if not link:
+                continue
+            if kinds[index] is None:
+                flags[index]["linked_allergens"] = None
                 continue
             if kinds[index] == EXTERNAL_LINK:
                 flags[index]["linked_allergens"] = None

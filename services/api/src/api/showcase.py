@@ -30,6 +30,7 @@ from api.models import (
 )
 from api.routes.households import generate_invite_code
 from api.services.related_recipes import add_related_recipes
+from api.services.text_sanitizing import sanitize_recipe
 from api.users import SHOWCASE_EMAIL, User, UserCreate, UserManager
 
 logger = logging.getLogger(__name__)
@@ -162,6 +163,7 @@ async def reset_showcase_account() -> None:
                 components=recipe_fixture.get("components", []),
                 notes=recipe_fixture.get("notes"),
             )
+            sanitize_recipe(recipe)
             session.add(recipe)
             await session.flush()
             if household_id is not None:

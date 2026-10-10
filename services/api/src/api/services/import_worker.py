@@ -51,12 +51,14 @@ from api.services.linked_recipes import (
     finalize_overdue_parents,
     mark_link_external,
     with_link_kinds,
+    without_self_links,
     finalize_parent_of_child,
     set_linked_recipe_ids,
     spawn_linked_imports,
 )
 from api.services.recipe_components import serialize_components
 from api.services.recipe_reextraction import apply_extraction
+from api.services.text_sanitizing import sanitize_recipe
 from api.services import gemini as gemini_svc
 
 log = logging.getLogger(__name__)
@@ -175,7 +177,9 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     preferences = await session.get(UserPreferences, job.user_id)
     auto_substitute = bool(preferences and preferences.auto_substitute)
     metadata = result.metadata
-    components = with_link_kinds(serialize_components(recipe_data, auto_substitute), metadata.source_url)
+    components = with_link_kinds(
+        without_self_links(serialize_components(recipe_data, auto_substitute), metadata.source_url), metadata.source_url,
+    )
     for component in components:
         for field in ("ingredients", "shopping_list_ingredients", "metric_ingredients", "imperial_ingredients"):
             component[field] = [_normalize_ingredient_punctuation(value) for value in component[field]]
@@ -202,6 +206,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         title_evidence=recipe_data.title_evidence,
         tags=tags,
     )
+    sanitize_recipe(recipe)
     session.add(recipe)
     await session.flush()
     if result.evidence:

@@ -241,7 +241,7 @@ def _replace_session(recipe, in_household=True):
 async def test_replace_updates_recipe_in_place_and_keeps_links(monkeypatch) -> None:
     child_id = uuid4()
     recipe = SimpleNamespace(
-        id=uuid4(), title="Old", source_title="Old", source_url=URL, thumbnail_url=None, creator_handle=None,
+        id=uuid4(), title="Old", source_title="Old", source_url=URL, thumbnail_url=None, creator_handle=None, notes=None,
         components=[{"ingredient_links": ["https://recipes.example/sauce/"], "linked_recipe_ids": [str(child_id)]}],
     )
     new_components = [{"ingredient_links": ["https://recipes.example/sauce"], "ingredients": ["sauce"]}]

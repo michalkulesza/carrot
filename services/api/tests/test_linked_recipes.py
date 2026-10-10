@@ -718,3 +718,41 @@ def test_save_route_derives_kinds_server_side_and_keeps_confirmed_external() -> 
     kinds = recipes_route._server_link_kinds(stored, ["https://a.test/x", "https://a.test/y", "https://shop.test/z"], "https://a.test/r")
 
     assert kinds == ["external", "recipe", "external"]
+
+
+@pytest.mark.parametrize("link", [
+    "https://own.test/rice", "https://own.test/rice/", "https://www.own.test/rice", "https://own.test/rice/#step-2",
+])
+def test_without_self_links_drops_variants_of_the_own_url_and_aligns_slots(link) -> None:
+    component = _component([link, "https://own.test/other"], ids=[str(uuid4()), str(uuid4())], kinds=["recipe", "recipe"])
+
+    cleaned = linked_recipes.without_self_links([component], "https://own.test/rice")[0]
+
+    assert cleaned["ingredient_links"] == [None, "https://own.test/other"]
+    assert cleaned["linked_recipe_ids"] == [None, component["linked_recipe_ids"][1]]
+    assert cleaned["ingredient_link_kinds"] == [None, "recipe"]
+    assert component["ingredient_links"][0] == link
+
+
+def test_without_self_links_keeps_other_paths_and_queries() -> None:
+    components = [_component(["https://own.test/rice-guide", "https://own.test/rice?v=2"])]
+
+    assert linked_recipes.without_self_links(components, "https://own.test/rice") == components
+
+
+def test_link_kinds_and_linked_urls_ignore_self_links_in_legacy_data() -> None:
+    component = _component(["https://own.test/rice", "https://own.test/other"], kinds=["recipe", "recipe"])
+
+    assert linked_recipes.link_kinds(component, "https://own.test/rice/") == [None, "recipe"]
+    assert linked_recipes.linked_urls([component], "https://own.test/rice") == ["https://own.test/other"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_treats_a_self_link_as_an_ordinary_ingredient() -> None:
+    components = [_component(["https://own.test/rice"], flags=[{"allergen": "soy", "linked_allergens": ["old"]}])]
+
+    resolved, status = await linked_recipes.resolve_linked_allergens(FakeSession(), components, "https://own.test/rice")
+
+    assert status == "analyzed"
+    assert resolved[0]["ingredient_flags"][0]["linked_allergens"] is None
+    assert linked_recipes.recipe_allergens(resolved) == ["soy"]
