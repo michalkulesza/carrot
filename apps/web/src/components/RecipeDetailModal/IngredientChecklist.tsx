@@ -71,6 +71,11 @@ const IngredientChecklist = ({
           const formatted = `${amount} ${name}`.trim()
           const link = component.ingredient_links?.[ingredientIndex]
           const linkedRecipeId = component.linked_recipe_ids?.[ingredientIndex]
+          const linkKind = component.ingredient_link_kinds?.[ingredientIndex]
+          const isExternalLink = linkKind === 'external'
+          const linkLabel = isExternalLink
+            ? t('recipes.openLink')
+            : t('recipes.openLinkedRecipe')
           const handleClick = () => {
             if (showPlus) onAddIngredient(componentIndex, ingredientIndex)
             else if (!shoppingMode) onToggleIngredient(key)
@@ -114,7 +119,10 @@ const IngredientChecklist = ({
                   }`}
                 >
                   {amount && <b className="font-extrabold">{amount}</b>} {name}
-                  {allergenUncertain && link && !flag?.linked_allergens && (
+                  {allergenUncertain &&
+                    link &&
+                    !isExternalLink &&
+                    !flag?.linked_allergens && (
                     <span
                       role="img"
                       aria-label={t('recipes.allergensUncertain')}
@@ -135,6 +143,7 @@ const IngredientChecklist = ({
                 {link && (
                   <LinkedRecipeLink
                     url={link}
+                    kind={linkKind}
                     recipeId={linkedRecipeId}
                     parentRecipeId={recipeId}
                     onOpenRecipe={onOpenRecipe}
@@ -153,7 +162,7 @@ const IngredientChecklist = ({
                     >
                       <path d="M7 17 17 7M8 7h9v9" />
                     </svg>
-                    {t('recipes.openLinkedRecipe')}
+                    {linkLabel}
                   </LinkedRecipeLink>
                 )}
               </div>

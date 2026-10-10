@@ -151,6 +151,7 @@ const UnifiedIngredientsSection = ({
               onAdd={() => onAdd(key, createShoppingListItemInput(shoppingListValue, shoppingCategory))}
               allergenFlag={effectiveAllergenFlag(components[componentIndex].ingredient_flags?.[ingredientIndex]) ?? null}
               linkedRecipeUrl={components[componentIndex].ingredient_links?.[ingredientIndex] ?? null}
+              linkedRecipeKind={components[componentIndex].ingredient_link_kinds?.[ingredientIndex] ?? null}
               linkedRecipeId={components[componentIndex].linked_recipe_ids?.[ingredientIndex] ?? null}
               linkedAllergens={components[componentIndex].ingredient_flags?.[ingredientIndex]?.linked_allergens ?? null}
               activeAllergens={activeAllergens}

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react'
+import type { IngredientLinkKind } from '@carrot/shared/types'
 import UnresolvedLinkMenu from './UnresolvedLinkMenu'
 
 interface LinkedRecipeLinkProps {
   url: string
+  kind?: IngredientLinkKind | null
   recipeId: string | null | undefined
   parentRecipeId?: string
   onOpenRecipe?: (id: string) => void
@@ -10,16 +12,19 @@ interface LinkedRecipeLinkProps {
   children: ReactNode
 }
 
-// A resolved link opens the imported recipe in-app; an unresolved one offers import or the source page.
+// A resolved link opens the imported recipe in-app; an unresolved one offers import or the source page; an external one is a plain link.
 const LinkedRecipeLink = ({
   url,
+  kind,
   recipeId,
   parentRecipeId,
   onOpenRecipe,
   className,
   children,
 }: LinkedRecipeLinkProps) => {
-  if (recipeId && onOpenRecipe)
+  const isExternal = kind === 'external'
+
+  if (recipeId && onOpenRecipe && !isExternal)
     return (
       <button
         type="button"
@@ -30,7 +35,7 @@ const LinkedRecipeLink = ({
       </button>
     )
 
-  if (parentRecipeId)
+  if (parentRecipeId && !isExternal)
     return (
       <UnresolvedLinkMenu
         url={url}

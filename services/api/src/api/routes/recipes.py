@@ -44,7 +44,13 @@ from api.services.orphan_cleanup import delete_orphan_recipes
 from api.services.related_recipes import add_related_recipes
 from api.services.monitoring import report_service_failure
 from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
-from api.services.linked_recipes import import_linked_recipe, normalize_link
+from api.services.linked_recipes import (
+    import_linked_recipe,
+    normalize_link,
+    preserved_external_urls,
+    recipe_link_urls,
+    with_link_kinds,
+)
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
@@ -155,6 +161,11 @@ def _reconcile_component_derivatives(
 
         result.append(component.model_copy(update=updates))
     return result
+
+
+def _server_link_kinds(stored: dict, links: list[str | None], source_url: str | None) -> list[str | None]:
+    confirmed_external = preserved_external_urls(stored, links)
+    return with_link_kinds([{"ingredient_links": links}], source_url, confirmed_external)[0]["ingredient_link_kinds"]
 
 
 def _build_recipe_out(
@@ -600,6 +611,7 @@ async def update_recipe(
             stored_ids[link_index] if link_index < len(stored_ids) and link_index < len(stored_links) and stored_links[link_index] == link else None
             for link_index, link in enumerate(value.get("ingredient_links") or [])
         ]
+        value["ingredient_link_kinds"] = _server_link_kinds(stored, value.get("ingredient_links") or [], recipe.source_url)
         if steps_unchanged and not value.get("step_evidence"):
             value["step_evidence"] = stored.get("step_evidence", [])
         if component.name == stored.get("name") and not value.get("name_evidence"):
@@ -874,12 +886,7 @@ async def import_linked_recipe_route(
         raise HTTPException(status_code=404, detail="Recipe not found")
 
     url = normalize_link(body.url)
-    recipe_links = {
-        normalize_link(link)
-        for component in parent.components or []
-        for link in component.get("ingredient_links") or []
-    }
-    if url is None or url == normalize_link(parent.source_url) or url not in recipe_links:
+    if url is None or url == normalize_link(parent.source_url) or url not in recipe_link_urls(parent.components or [], parent.source_url):
         raise HTTPException(status_code=422, detail="url_not_linked_by_recipe")
 
     linked_recipe_id, job_id = await import_linked_recipe(

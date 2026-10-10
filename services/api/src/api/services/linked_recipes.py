@@ -1,6 +1,7 @@
 """Import recipes linked from ingredient lines and resolve their allergens onto the parent."""
 
 import uuid
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
@@ -9,6 +10,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import (
+    ImportFailureCode,
     ImportJob,
     ImportJobKind,
     ImportJobStatus,
@@ -22,6 +24,9 @@ from api.services.related_recipes import add_related_recipes
 
 MAX_LINKED_IMPORTS = 5
 AWAITING_CHILDREN_TIMEOUT = timedelta(minutes=10)
+RECIPE_LINK = "recipe"
+EXTERNAL_LINK = "external"
+NON_RECIPE_FAILURE_CODES = (ImportFailureCode.NO_RECIPE_CONTENT, ImportFailureCode.UNSUPPORTED_SOURCE)
 _RESETTABLE_STATUSES = (ImportJobStatus.FAILED, ImportJobStatus.CANCELLED)
 _WAITING_ON_CHILD_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING)
 
@@ -39,15 +44,78 @@ def _site(url: str | None) -> str:
     return host.removeprefix("www.")
 
 
+def _computed_kind(link: str | None, own_site: str, non_recipe_urls: set[str]) -> str | None:
+    url = normalize_link(link)
+    if url is None:
+        return None
+    return RECIPE_LINK if own_site and _site(url) == own_site and url not in non_recipe_urls else EXTERNAL_LINK
+
+
+def with_link_kinds(components: list[dict], source_url: str | None, non_recipe_urls: Iterable[str] = ()) -> list[dict]:
+    """Copy of components with `ingredient_link_kinds` recomputed: same-site links are recipes unless known otherwise."""
+    own_site = _site(source_url)
+    excluded = set(non_recipe_urls)
+    return [
+        {**component, "ingredient_link_kinds": [
+            _computed_kind(link, own_site, excluded) for link in component.get("ingredient_links") or []
+        ]}
+        for component in components
+    ]
+
+
+def link_kinds(component: dict, source_url: str | None) -> list[str | None]:
+    """Stored kinds per link, computed from `source_url` for legacy components that have none."""
+    links = component.get("ingredient_links") or []
+    stored = component.get("ingredient_link_kinds") or []
+    own_site = _site(source_url)
+    return [
+        (stored[index] if index < len(stored) and stored[index] else None) or _computed_kind(link, own_site, set())
+        if link else None
+        for index, link in enumerate(links)
+    ]
+
+
+def external_urls(components: list[dict]) -> set[str]:
+    """Normalised URLs stored as external, so a confirmed non-recipe page stays external across rewrites."""
+    return {
+        url
+        for component in components
+        for link, kind in zip(component.get("ingredient_links") or [], component.get("ingredient_link_kinds") or [])
+        if kind == EXTERNAL_LINK and (url := normalize_link(link))
+    }
+
+
+def preserved_external_urls(stored: dict, links: list[str | None]) -> set[str]:
+    """External URLs of `stored` whose line still carries the same link in `links`."""
+    stored_links = stored.get("ingredient_links") or []
+    stored_kinds = stored.get("ingredient_link_kinds") or []
+    return {
+        url
+        for index, link in enumerate(links)
+        if link and index < len(stored_links) and index < len(stored_kinds)
+        and stored_links[index] == link and stored_kinds[index] == EXTERNAL_LINK
+        and (url := normalize_link(link))
+    }
+
+
+def recipe_link_urls(components: list[dict], source_url: str | None) -> set[str]:
+    """Every normalised link that points at a linkable recipe (kind "recipe")."""
+    return {
+        url
+        for component in components
+        for link, kind in zip(component.get("ingredient_links") or [], link_kinds(component, source_url))
+        if kind == RECIPE_LINK and (url := normalize_link(link))
+    }
+
+
 def linked_urls(components: list[dict], own_url: str | None = None) -> list[str]:
-    """Distinct normalised same-site links, minus the recipe's own URL, capped (cross-site ones are shop/affiliate pages)."""
+    """Distinct normalised recipe links, minus the recipe's own URL, capped (shop/affiliate links are external)."""
     own = normalize_link(own_url)
-    own_site = _site(own_url)
     urls: list[str] = []
     for component in components:
-        for link in component.get("ingredient_links") or []:
+        for link, kind in zip(component.get("ingredient_links") or [], link_kinds(component, own_url)):
             url = normalize_link(link)
-            if url and url != own and own_site and _site(url) == own_site and url not in urls:
+            if kind == RECIPE_LINK and url and url != own and url not in urls:
                 urls.append(url)
     return urls[:MAX_LINKED_IMPORTS]
 
@@ -304,6 +372,27 @@ async def attach_child_to_parent(session: AsyncSession, parent_id: uuid.UUID, ch
     await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
 
 
+async def mark_link_external(session: AsyncSession, parent_id: uuid.UUID, url: str | None) -> None:
+    """Flag the parent's links to a page that turned out not to be a recipe as external and refresh its allergens."""
+    target = normalize_link(url)
+    parent = await session.get(Recipe, parent_id, with_for_update=True)
+    if parent is None or target is None:
+        return
+    changed = False
+    components = []
+    for component in parent.components or []:
+        kinds = link_kinds(component, parent.source_url)
+        for index, link in enumerate(component.get("ingredient_links") or []):
+            if normalize_link(link) == target and kinds[index] != EXTERNAL_LINK:
+                kinds[index] = EXTERNAL_LINK
+                changed = True
+        components.append({**component, "ingredient_link_kinds": kinds})
+    if not changed:
+        return
+    parent.components = components
+    await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
+
+
 def recipe_allergens(components: list[dict]) -> list[str]:
     """Sorted allergens per line: a resolved linked recipe's allergens replace the line's own flag."""
     found: set[str] = set()
@@ -316,10 +405,13 @@ def recipe_allergens(components: list[dict]) -> list[str]:
     return sorted(found)
 
 
-async def resolve_linked_allergens(session: AsyncSession, components: list[dict]) -> tuple[list[dict], str]:
-    """Fill `linked_allergens` on linked ingredients from their analysed recipes.
+async def resolve_linked_allergens(
+    session: AsyncSession, components: list[dict], source_url: str | None = None,
+) -> tuple[list[dict], str]:
+    """Fill `linked_allergens` on linked recipe ingredients from their analysed recipes.
 
-    The status is "uncertain" while any link is unresolved (no recipe, deleted, or not analysed).
+    The status is "uncertain" while any recipe link is unresolved (no recipe, deleted, or not analysed).
+    External links are ordinary ingredients.
     """
     ids = {uuid.UUID(recipe_id) for component in components for recipe_id in component.get("linked_recipe_ids") or [] if recipe_id}
     linked = {recipe.id: recipe for recipe in (await session.scalars(select(Recipe).where(Recipe.id.in_(ids)))).all()} if ids else {}
@@ -327,11 +419,15 @@ async def resolve_linked_allergens(session: AsyncSession, components: list[dict]
     resolved_components = []
     for component in components:
         links = component.get("ingredient_links") or []
+        kinds = link_kinds(component, source_url)
         ids_by_index = component.get("linked_recipe_ids") or []
         flags = [dict(flag or {}) for flag in component.get("ingredient_flags") or []]
         flags += [{} for _ in range(len(links) - len(flags))]
         for index, link in enumerate(links):
             if not link:
+                continue
+            if kinds[index] == EXTERNAL_LINK:
+                flags[index]["linked_allergens"] = None
                 continue
             recipe_id = ids_by_index[index] if index < len(ids_by_index) else None
             recipe = linked.get(uuid.UUID(recipe_id)) if recipe_id else None

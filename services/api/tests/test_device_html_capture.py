@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import ANY, AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -183,6 +183,26 @@ async def test_terminal_failure_drops_captured_html(monkeypatch) -> None:
 
     assert job.status == ImportJobStatus.FAILED
     assert job.input == {"url": URL}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("code,marks", [("no_recipe_content", True), ("unsupported_source", True), ("source_fetch_failed", False)])
+async def test_terminal_child_failure_marks_parent_link_external_only_for_non_recipe_pages(monkeypatch, code, marks) -> None:
+    parent_id = uuid4()
+    job = _job(status=ImportJobStatus.RUNNING, retry_count=import_worker._MAX_IMPORT_RETRIES, parent_recipe_id=parent_id)
+    mark = AsyncMock()
+    monkeypatch.setattr(import_worker, "async_session_maker", _session_returning(job))
+    monkeypatch.setattr(import_worker, "_event_for_job", AsyncMock())
+    monkeypatch.setattr(import_worker, "finalize_parent_of_child", AsyncMock())
+    monkeypatch.setattr(import_worker, "mark_link_external", mark)
+    monkeypatch.setattr(import_worker, "report_recipe_import_failure", lambda **_kwargs: None)
+
+    await import_worker._fail_or_retry(job.id, import_worker.ImportPipelineFailure(code, "input"))
+
+    if marks:
+        mark.assert_awaited_once_with(ANY, parent_id, URL)
+    else:
+        mark.assert_not_awaited()
 
 
 @pytest.mark.asyncio

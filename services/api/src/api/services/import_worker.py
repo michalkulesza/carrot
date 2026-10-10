@@ -47,7 +47,10 @@ from api.services.extraction_v2.production import (
 from api.services.linked_recipes import (
     attach_child_to_parent,
     existing_linked_ids,
+    NON_RECIPE_FAILURE_CODES,
     finalize_overdue_parents,
+    mark_link_external,
+    with_link_kinds,
     finalize_parent_of_child,
     set_linked_recipe_ids,
     spawn_linked_imports,
@@ -171,11 +174,11 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         )).all())
     preferences = await session.get(UserPreferences, job.user_id)
     auto_substitute = bool(preferences and preferences.auto_substitute)
-    components = serialize_components(recipe_data, auto_substitute)
+    metadata = result.metadata
+    components = with_link_kinds(serialize_components(recipe_data, auto_substitute), metadata.source_url)
     for component in components:
         for field in ("ingredients", "shopping_list_ingredients", "metric_ingredients", "imperial_ingredients"):
             component[field] = [_normalize_ingredient_punctuation(value) for value in component[field]]
-    metadata = result.metadata
     recipe = Recipe(
         author_id=job.user_id,
         title=recipe_data.title or "Imported Recipe",
@@ -408,6 +411,8 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             if auto_spawned_child:  # the linked line just stays unresolved and can be imported on tap
                 job.dismissed_at = now
             await _event_for_job(session, job, "import_job.dismissed" if auto_spawned_child else "import_job.failed")
+            if job.parent_recipe_id is not None and job.failure_code in NON_RECIPE_FAILURE_CODES:
+                await mark_link_external(session, job.parent_recipe_id, job.input.get("url"))
             await finalize_parent_of_child(session, job)
             report_recipe_import_failure(
                 input_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else ("text" if job.kind == ImportJobKind.TEXT else "image"),

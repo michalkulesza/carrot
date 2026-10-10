@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
-import type { AllergenFlag, LinkedRecipeImportResult } from '@carrot/shared/types'
+import type { AllergenFlag, IngredientLinkKind, LinkedRecipeImportResult } from '@carrot/shared/types'
 import { useLinkedRecipeImport } from '@carrot/shared/hooks/useLinkedRecipeImport'
 import {
   displayIngredientWithLocalizedUnit,
@@ -29,6 +29,7 @@ const IngredientRow = ({
   lineHeight = 22,
   linkedRecipeUrl,
   linkedRecipeId,
+  linkedRecipeKind,
   linkedAllergens,
 }: {
   recipeId: string
@@ -43,6 +44,7 @@ const IngredientRow = ({
   lineHeight?: number
   linkedRecipeUrl?: string | null
   linkedRecipeId?: string | null
+  linkedRecipeKind?: IngredientLinkKind | null
   linkedAllergens?: string[] | null
 }) => {
   const { t } = useTranslation()
@@ -99,7 +101,13 @@ const IngredientRow = ({
     [handleImportLinkedRecipe, linkedRecipeUrl],
   )
 
+  const isExternalLink = linkedRecipeKind === 'external'
+
   const handleOpenLinkedRecipe = () => {
+    if (isExternalLink) {
+      if (linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
+      return
+    }
     if (linkedRecipeId) {
       router.navigate(`/recipe/${linkedRecipeId}`)
       return
@@ -113,7 +121,11 @@ const IngredientRow = ({
       handleLinkedActionSheetSelect,
     )
   }
-  const linkedRecipeLabel = isLinkedImportBusy ? t('recipes.linkedImportQueued') : t('recipes.openLinkedRecipe')
+  const linkedRecipeLabel = isExternalLink
+    ? t('recipes.openLink')
+    : isLinkedImportBusy
+      ? t('recipes.linkedImportQueued')
+      : t('recipes.openLinkedRecipe')
   const allergenTooltip = allergenFlag?.substitute
     ? `${t('recipes.suggestedSubstitute')} ${allergenFlag.substitute}`
     : t('recipes.noSubstituteAvailable')
@@ -132,7 +144,7 @@ const IngredientRow = ({
       {linkedRecipeUrl && (
         <Pressable
           onPress={handleOpenLinkedRecipe}
-          disabled={isLinkedImportBusy}
+          disabled={!isExternalLink && isLinkedImportBusy}
           accessibilityRole="link"
           accessibilityLabel={linkedRecipeLabel}
         >

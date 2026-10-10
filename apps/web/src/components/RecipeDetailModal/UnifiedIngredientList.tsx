@@ -139,6 +139,11 @@ const UnifiedIngredientList = ({
                 component.ingredient_flags?.[ingredientIndex]
               )
               const link = component.ingredient_links?.[ingredientIndex]
+              const linkKind = component.ingredient_link_kinds?.[ingredientIndex]
+              const linkLabel =
+                linkKind === 'external'
+                  ? t('recipes.openLink')
+                  : t('recipes.openLinkedRecipe')
               const added = sessionAdded.has(key)
               const checked = checkedIngredients.has(key)
               const addButtonLabel = added
@@ -174,12 +179,13 @@ const UnifiedIngredientList = ({
                   {link && (
                     <LinkedRecipeLink
                       url={link}
+                      kind={linkKind}
                       recipeId={component.linked_recipe_ids?.[ingredientIndex]}
                       parentRecipeId={recipeId}
                       onOpenRecipe={onOpenRecipe}
                       className="shrink-0 cursor-pointer text-xs font-medium text-primary underline"
                     >
-                      {t('recipes.openLinkedRecipe')}
+                      {linkLabel}
                     </LinkedRecipeLink>
                   )}
                   <LinkedAllergenBadges

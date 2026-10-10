@@ -38,6 +38,8 @@ export const DEFAULT_SHOPPING_CATEGORIES: ShoppingCategory[] = [
   ...SHOPPING_CATEGORIES,
 ];
 
+export type IngredientLinkKind = 'recipe' | 'external';
+
 export interface ShoppingListItemInput {
   id: string;
   text: string;
@@ -94,6 +96,7 @@ export interface RecipeComponent {
   step_ingredient_line?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
   linked_recipe_ids?: (string | null)[];
+  ingredient_link_kinds?: (IngredientLinkKind | null)[];
   ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
   step_evidence?: { references?: unknown[] }[];
   name_evidence?: unknown[];
@@ -255,6 +258,7 @@ export interface SaveComponent {
   step_ingredient_line?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
   linked_recipe_ids?: (string | null)[];
+  ingredient_link_kinds?: (IngredientLinkKind | null)[];
   ingredient_evidence?: { references?: unknown[]; links?: unknown[] }[];
   step_evidence?: { references?: unknown[] }[];
   name_evidence?: unknown[];

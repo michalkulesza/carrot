@@ -171,6 +171,7 @@
     "valueAi": "KI-Sch?tzung",
     "allergensUncertain": "Die Allergeninformationen sind unvollst?ndig, weil die Zutaten einer verkn?pften Komponente unbekannt sind.",
     "openLinkedRecipe": "Verkn?pftes Rezept ?ffnen",
+    "openLink": "Link öffnen",
     "importLinkedRecipe": "Verknüpftes Rezept importieren",
     "openLinkedWebsite": "Website öffnen",
     "linkedImportQueued": "Verknüpftes Rezept wird importiert",

@@ -171,6 +171,7 @@
     "valueAi": "AI estimate",
     "allergensUncertain": "Allergen information is incomplete because a linked component has unknown ingredients.",
     "openLinkedRecipe": "Open linked recipe",
+    "openLink": "Open link",
     "importLinkedRecipe": "Import linked recipe",
     "openLinkedWebsite": "Open website",
     "linkedImportQueued": "Importing linked recipe",

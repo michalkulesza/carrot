@@ -494,6 +494,7 @@ class SaveComponent(BaseModel):
     step_ingredient_line: list[int | None] | None = None
     ingredient_links: list[str | None] = []
     linked_recipe_ids: list[str | None] = []
+    ingredient_link_kinds: list[str | None] = []
     ingredient_evidence: list[dict[str, Any]] = []
     step_evidence: list[dict[str, Any]] = []
     name_evidence: list[dict[str, Any]] = []

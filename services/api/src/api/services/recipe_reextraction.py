@@ -1,4 +1,5 @@
 from api.models import ImportResult, Recipe
+from api.services.linked_recipes import external_urls, with_link_kinds
 from api.services.recipe_components import serialize_components
 
 
@@ -22,7 +23,7 @@ def apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool
     recipe.allergen_status = extraction.allergen_status
     recipe.overview = extraction.overview
     recipe.title_evidence = extraction.title_evidence
-    recipe.components = serialize_components(extraction, auto_substitute)
+    previous_external = external_urls(recipe.components or [])
 
     if result.metadata.thumbnail_url:
         recipe.thumbnail_url = result.metadata.thumbnail_url
@@ -30,3 +31,6 @@ def apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool
         recipe.creator_handle = result.metadata.creator_handle
     if result.metadata.source_url:
         recipe.source_url = result.metadata.source_url
+
+    components = serialize_components(extraction, auto_substitute)
+    recipe.components = with_link_kinds(components, recipe.source_url, previous_external)

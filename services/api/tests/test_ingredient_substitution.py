@@ -7,6 +7,7 @@ import pytest
 from api.models import AllergenFlag, ImportMetadata, ImportResult, RecipeExtraction
 from api.services import import_worker
 from api.services.allergen_rechecks import _analysis_ingredients
+from api.services.linked_recipes import with_link_kinds
 from api.services.recipe_components import serialize_components
 
 
@@ -80,14 +81,14 @@ def test_reimport_uses_the_same_substitution_serialization():
     spec.loader.exec_module(module)
     recipe = Recipe(title="Original")
     module.apply_extraction(recipe, ImportResult(stage="transcript", recipe=extraction(), metadata=ImportMetadata()), True)
-    assert recipe.components == serialize_components(extraction(), True)
+    assert recipe.components == with_link_kinds(serialize_components(extraction(), True), None)
 
 
 @pytest.mark.asyncio
 async def test_allergen_recheck_preserves_auto_applied_original_values(monkeypatch):
     from api.services import allergen_rechecks
 
-    recipe = SimpleNamespace(components=serialize_components(extraction(), True), allergen_status="analyzed")
+    recipe = SimpleNamespace(components=serialize_components(extraction(), True), allergen_status="analyzed", source_url=None)
     originals = recipe.components[0]["ingredient_flags"][0]["original_values"].copy()
     job = SimpleNamespace(revision=1)
     read = SimpleNamespace(get=AsyncMock(return_value=recipe))
@@ -102,7 +103,7 @@ async def test_allergen_recheck_preserves_auto_applied_original_values(monkeypat
     monkeypatch.setattr(allergen_rechecks, "_allergens_for_recipe", AsyncMock(return_value=["peanuts"]))
     monkeypatch.setattr(allergen_rechecks, "_publish_recipe_changed", AsyncMock())
     if hasattr(allergen_rechecks, "linked_recipes"):
-        async def resolve(_session, components):
+        async def resolve(_session, components, _source_url=None):
             return components, "analyzed"
         monkeypatch.setattr(allergen_rechecks.linked_recipes, "resolve_linked_allergens", resolve)
     analyze = AsyncMock(return_value=[AllergenFlag(allergen="peanuts", substitute="60 g tahini"), AllergenFlag()])

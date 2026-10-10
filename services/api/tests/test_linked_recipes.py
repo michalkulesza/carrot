@@ -26,10 +26,11 @@ def _recipe(allergen_status="analyzed", components=None, source_url=None, recipe
     )
 
 
-def _component(links, ids=None, flags=None):
+def _component(links, ids=None, flags=None, kinds=None):
     return {
         "ingredients": [f"item {index}" for index, _ in enumerate(links)],
         "ingredient_links": links, "linked_recipe_ids": ids or [None] * len(links),
+        "ingredient_link_kinds": kinds or ["recipe" if link else None for link in links],
         "ingredient_flags": flags if flags is not None else [{"allergen": None} for _ in links],
     }
 
@@ -53,9 +54,47 @@ def test_linked_urls_dedupes_skips_own_url_and_caps() -> None:
 
 
 def test_linked_urls_skips_cross_site_shop_links() -> None:
-    components = [_component(["https://amzn.to/3ImXC2w", "https://www.target.com/p/x", "https://own.test/sauce"])]
+    components = [{"ingredient_links": ["https://amzn.to/3ImXC2w", "https://www.target.com/p/x", "https://own.test/sauce"]}]
 
     assert linked_recipes.linked_urls(components, "https://www.own.test/r") == ["https://own.test/sauce"]
+
+
+def test_with_link_kinds_marks_same_site_as_recipe_and_cross_site_as_external() -> None:
+    components = [{"ingredient_links": ["https://www.own.test/a", "https://amzn.to/x", None, "https://own.test/b/"]}]
+
+    kinds = linked_recipes.with_link_kinds(components, "https://own.test/r", {"https://own.test/b"})
+
+    assert kinds[0]["ingredient_link_kinds"] == ["recipe", "external", None, "external"]
+    assert "ingredient_link_kinds" not in components[0]
+
+
+def test_with_link_kinds_treats_everything_as_external_without_source_url() -> None:
+    kinds = linked_recipes.with_link_kinds([{"ingredient_links": ["https://own.test/a"]}], None)
+
+    assert kinds[0]["ingredient_link_kinds"] == ["external"]
+
+
+def test_link_kinds_computes_legacy_components_and_trusts_stored_kinds() -> None:
+    legacy = {"ingredient_links": ["https://own.test/a", "https://shop.test/b", None]}
+    stored = {"ingredient_links": ["https://own.test/a", None], "ingredient_link_kinds": ["external", None]}
+
+    assert linked_recipes.link_kinds(legacy, "https://own.test/r") == ["recipe", "external", None]
+    assert linked_recipes.link_kinds(stored, "https://own.test/r") == ["external", None]
+
+
+def test_linked_urls_and_recipe_link_urls_ignore_external_kinds() -> None:
+    components = [_component(["https://own.test/a", "https://own.test/b"], kinds=["recipe", "external"])]
+
+    assert linked_recipes.linked_urls(components, "https://own.test/r") == ["https://own.test/a"]
+    assert linked_recipes.recipe_link_urls(components, "https://own.test/r") == {"https://own.test/a"}
+
+
+def test_preserved_external_urls_requires_same_link_on_same_line() -> None:
+    stored = _component(["https://own.test/a", "https://own.test/b"], kinds=["external", "external"])
+
+    preserved = linked_recipes.preserved_external_urls(stored, ["https://own.test/a", "https://own.test/c"])
+
+    assert preserved == {"https://own.test/a"}
 
 
 def test_set_linked_recipe_ids_matches_normalised_links_only() -> None:
@@ -604,3 +643,78 @@ async def test_child_allergen_flows_to_parent_once_every_link_resolves() -> None
     assert status == "analyzed"
     assert resolved[0]["ingredient_flags"][0]["linked_allergens"] == ["gluten"]
     assert linked_recipes.recipe_allergens(resolved) == ["gluten"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_ignores_external_links_for_status_and_keeps_own_flags() -> None:
+    components = [_component(["https://shop.test/x"], flags=[{"allergen": "soy", "linked_allergens": ["old"]}], kinds=["external"])]
+
+    resolved, status = await linked_recipes.resolve_linked_allergens(FakeSession(), components)
+
+    assert status == "analyzed"
+    assert resolved[0]["ingredient_flags"][0]["linked_allergens"] is None
+    assert linked_recipes.recipe_allergens(resolved) == ["soy"]
+
+
+@pytest.mark.asyncio
+async def test_resolve_stays_uncertain_when_external_is_mixed_with_unresolved_recipe_link() -> None:
+    components = [_component(["https://shop.test/x", "https://a.test/y"], kinds=["external", "recipe"])]
+
+    _, status = await linked_recipes.resolve_linked_allergens(FakeSession(), components)
+
+    assert status == "uncertain"
+
+
+@pytest.mark.asyncio
+async def test_resolve_computes_kinds_for_legacy_components_from_source_url() -> None:
+    legacy = {"ingredient_links": ["https://shop.test/x"], "ingredient_flags": [{"allergen": None}]}
+
+    _, status = await linked_recipes.resolve_linked_allergens(FakeSession(), [legacy], "https://a.test/r")
+
+    assert status == "analyzed"
+
+
+@pytest.mark.asyncio
+async def test_mark_link_external_updates_parent_and_rechecks(spawn_mocks) -> None:
+    parent = _parent(["https://a.test/x/", "https://a.test/y"])
+    session = FakeSession()
+    session.get = AsyncMock(return_value=parent)
+
+    await linked_recipes.mark_link_external(session, parent.id, "https://a.test/x")
+
+    assert parent.components[0]["ingredient_link_kinds"] == ["external", "recipe"]
+    spawn_mocks.enqueue.assert_awaited_once_with(session, parent.id)
+
+
+@pytest.mark.asyncio
+async def test_mark_link_external_ignores_unknown_url_and_missing_parent(spawn_mocks) -> None:
+    parent = _parent(["https://a.test/x"])
+    session = FakeSession()
+    session.get = AsyncMock(return_value=parent)
+    await linked_recipes.mark_link_external(session, parent.id, "https://a.test/other")
+    session.get = AsyncMock(return_value=None)
+    await linked_recipes.mark_link_external(session, parent.id, "https://a.test/x")
+
+    spawn_mocks.enqueue.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_route_rejects_external_link() -> None:
+    parent = _recipe(components=[_component(["https://shop.test/x"], kinds=["external"])], source_url="https://a.test/r")
+    session = FakeSession(scalar=parent)
+
+    with pytest.raises(HTTPException) as error:
+        await recipes_route.import_linked_recipe_route(
+            parent.id, LinkedRecipeImportRequest(url="https://shop.test/x"),
+            user=SimpleNamespace(id=uuid4()), session=session, household_id=uuid4(),
+        )
+
+    assert error.value.status_code == 422
+
+
+def test_save_route_derives_kinds_server_side_and_keeps_confirmed_external() -> None:
+    stored = _component(["https://a.test/x", "https://a.test/y"], kinds=["external", "recipe"])
+
+    kinds = recipes_route._server_link_kinds(stored, ["https://a.test/x", "https://a.test/y", "https://shop.test/z"], "https://a.test/r")
+
+    assert kinds == ["external", "recipe", "external"]

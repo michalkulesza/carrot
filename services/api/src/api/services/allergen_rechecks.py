@@ -192,7 +192,7 @@ async def _process(recipe_id: uuid.UUID, revision: int) -> None:
                 ]
                 refreshed.append(value)
             summary_before = (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components or []))
-            recipe.components, recipe.allergen_status = await linked_recipes.resolve_linked_allergens(session, refreshed)
+            recipe.components, recipe.allergen_status = await linked_recipes.resolve_linked_allergens(session, refreshed, recipe.source_url)
             if summary_before != (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components)):
                 # Only a changed summary propagates, which stops A <-> B links from rechecking forever.
                 for parent_id in await linked_recipes.parent_recipe_ids(session, recipe_id):

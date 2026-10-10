@@ -139,3 +139,41 @@ async def test_backfill_apply_spawns_skips_components_and_is_idempotent(link_moc
 def test_has_unresolved_link_detects_null_slots() -> None:
     assert backfill.has_unresolved_link(_recipe(["https://a.test/x", None], [str(uuid4()), None])) is False
     assert backfill.has_unresolved_link(_recipe(["https://a.test/x"])) is True
+
+
+def _kind_recipe():
+    recipe = _recipe(["https://own.test/a", "https://shop.test/b"])
+    recipe.source_url = "https://own.test/r"
+    return recipe
+
+
+@pytest.mark.asyncio
+async def test_refresh_link_kinds_dry_run_writes_nothing(link_mocks, monkeypatch) -> None:
+    recipe = _kind_recipe()
+    sessions = _patch_backfill_sessions(monkeypatch, [recipe])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    monkeypatch.setattr(backfill, "_failed_non_recipe_urls", AsyncMock(return_value=set()))
+
+    await backfill.main(apply=False, recipe_ids=set(), refresh_kinds=True)
+
+    assert "ingredient_link_kinds" not in recipe.components[0]
+    link_mocks.enqueue.assert_not_awaited()
+    assert all(session.commit.await_count == 0 for session in sessions)
+
+
+@pytest.mark.asyncio
+async def test_refresh_link_kinds_apply_writes_kinds_marks_failed_children_and_rechecks(link_mocks, monkeypatch) -> None:
+    recipe = _kind_recipe()
+    sessions = _patch_backfill_sessions(monkeypatch, [recipe])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    monkeypatch.setattr(backfill, "_failed_non_recipe_urls", AsyncMock(return_value={"https://own.test/a"}))
+
+    await backfill.main(apply=True, recipe_ids=set(), refresh_kinds=True)
+
+    assert recipe.components[0]["ingredient_link_kinds"] == ["external", "external"]
+    link_mocks.enqueue.assert_awaited_once()
+    assert any(session.commit.await_count == 1 for session in sessions)
+
+    link_mocks.enqueue.reset_mock()
+    await backfill.main(apply=True, recipe_ids=set(), refresh_kinds=True)
+    link_mocks.enqueue.assert_not_awaited()
