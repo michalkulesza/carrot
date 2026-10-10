@@ -97,8 +97,9 @@ async def refresh_link_kinds(session, recipe: Recipe, apply: bool) -> bool:
 
 def _links_and_kinds(components: list[dict]) -> list[tuple]:
     return [
-        (component.get("ingredient_links") or [], component.get("ingredient_link_kinds") or [])
+        (links if any(links) else [], kinds if any(kinds) else [])
         for component in components
+        for links, kinds in [(component.get("ingredient_links") or [], component.get("ingredient_link_kinds") or [])]
     ]
 
 

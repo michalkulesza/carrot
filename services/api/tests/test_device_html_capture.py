@@ -261,13 +261,31 @@ async def test_replace_updates_recipe_in_place_and_keeps_links(monkeypatch) -> N
 
 
 @pytest.mark.asyncio
+async def test_replace_updates_authors_personal_recipe_outside_household(monkeypatch) -> None:
+    job = _job(input={"url": URL})
+    recipe = SimpleNamespace(
+        id=uuid4(), author_id=job.user_id, title="Old", source_title="Old", source_url=URL, thumbnail_url=None,
+        creator_handle=None, notes=None, components=[],
+    )
+    job.input["replaces_recipe_id"] = str(recipe.id)
+    monkeypatch.setattr(recipe_reextraction, "serialize_components", lambda *_: [])
+    monkeypatch.setattr(import_worker, "_archive_thumbnail", AsyncMock())
+    monkeypatch.setattr(import_worker, "queue_recipe_embedding", AsyncMock())
+
+    replaced = await import_worker._replace_recipe(_replace_session(recipe, in_household=False), job, _extraction_result())
+
+    assert replaced is recipe
+    assert recipe.title == "New title"
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("input_extra,in_household", [
     ({}, True),
     ({"replaces_recipe_id": "nope"}, True),
     ({"replaces_recipe_id": str(uuid4())}, False),
 ])
 async def test_replace_is_skipped_without_valid_in_household_target(input_extra, in_household) -> None:
-    recipe = SimpleNamespace(id=uuid4())
+    recipe = SimpleNamespace(id=uuid4(), author_id=uuid4())
     job = _job(input={"url": URL, **input_extra})
 
     assert await import_worker._replace_recipe(_replace_session(recipe, in_household), job, _extraction_result()) is None

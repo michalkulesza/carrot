@@ -231,8 +231,8 @@ async def _replace_recipe(session, job: ImportJob, result: ImportResult) -> Reci
             recipe_households_table.c.household_id == job.household_id,
         )
     )
-    recipe = await session.get(Recipe, recipe_id, with_for_update=True) if in_household else None
-    if recipe is None:
+    recipe = await session.get(Recipe, recipe_id, with_for_update=True)
+    if recipe is None or not (in_household or recipe.author_id == job.user_id):  # author's personal library counts
         return None
     preferences = await session.get(UserPreferences, job.user_id)
     previous_links = existing_linked_ids(recipe.components or [])
