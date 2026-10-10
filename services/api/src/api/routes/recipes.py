@@ -887,16 +887,25 @@ async def import_linked_recipe_route(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> LinkedRecipeImportOut:
-    parent = await session.scalar(select(Recipe).where(_recipe_write_filter(household_id, recipe_id)).with_for_update())
+    authored_personal = and_(Recipe.author_id == user.id, ~exists(
+        select(recipe_households_table.c.recipe_id).where(recipe_households_table.c.recipe_id == Recipe.id)
+    ))
+    parent = await session.scalar(
+        select(Recipe).where(Recipe.id == recipe_id, or_(_recipe_filter(household_id), authored_personal)).with_for_update()
+    )
     if parent is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
+    in_household = bool(await session.scalar(select(exists(select(recipe_households_table.c.recipe_id).where(
+        recipe_households_table.c.recipe_id == parent.id, recipe_households_table.c.household_id == household_id,
+    )))))
+    import_household_id = household_id if in_household else None
 
     url = normalize_link(body.url)
     if url is None or url == normalize_link(parent.source_url) or url not in recipe_link_urls(parent.components or [], parent.source_url):
         raise HTTPException(status_code=422, detail="url_not_linked_by_recipe")
 
     linked_recipe_id, job_id = await import_linked_recipe(
-        session, parent, user_id=user.id, household_id=household_id, url=url,
+        session, parent, user_id=user.id, household_id=import_household_id, url=url,
     )
     await session.commit()
 

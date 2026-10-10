@@ -78,16 +78,27 @@ async def test_reimport_restores_surviving_links_and_spawns_for_the_rest(link_mo
 
 
 @pytest.mark.asyncio
-async def test_reimport_skips_spawning_for_component_recipes_and_missing_household(link_mocks) -> None:
+async def test_reimport_skips_spawning_for_component_recipes_and_missing_author(link_mocks) -> None:
     recipe = _recipe(["https://a.test/x"])
 
     link_mocks.component.return_value = True
     await reimport._restore_links_and_spawn(FakeSession(), recipe, {})
     link_mocks.component.return_value = False
-    link_mocks.household.return_value = None
+    recipe.author_id = None
     await reimport._restore_links_and_spawn(FakeSession(), recipe, {})
 
     link_mocks.spawn.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_reimport_spawns_personal_children_for_recipe_without_household(link_mocks) -> None:
+    recipe = _recipe(["https://a.test/x"])
+    link_mocks.household.return_value = None
+
+    await reimport._restore_links_and_spawn(FakeSession(), recipe, {})
+
+    assert link_mocks.spawn.await_args.kwargs["household_id"] is None
+    assert link_mocks.spawn.await_args.kwargs["user_id"] == recipe.author_id
 
 
 @pytest.mark.asyncio
@@ -134,6 +145,21 @@ async def test_backfill_apply_spawns_skips_components_and_is_idempotent(link_moc
     link_mocks.spawn.return_value = []
     await backfill.main(apply=True, recipe_ids=set())
     assert link_mocks.spawn.await_args.args[1] is normal
+
+
+@pytest.mark.asyncio
+async def test_backfill_spawns_for_personal_recipes_and_skips_authorless(link_mocks, monkeypatch) -> None:
+    personal, authorless = _recipe(["https://a.test/x"]), _recipe(["https://b.test/y"])
+    authorless.author_id = None
+    _patch_backfill_sessions(monkeypatch, [personal, authorless])
+    link_mocks.household.return_value = None
+
+    await backfill.main(apply=True, recipe_ids=set())
+
+    link_mocks.spawn.assert_awaited_once()
+    assert link_mocks.spawn.await_args.args[1] is personal
+    assert link_mocks.spawn.await_args.kwargs["household_id"] is None
+    assert link_mocks.existing.await_args.args[3] == personal.author_id
 
 
 def test_has_unresolved_link_detects_null_slots() -> None:

@@ -54,6 +54,23 @@ def test_device_capture_eligibility(overrides, expected) -> None:
     assert imports_routes.is_device_capture_eligible(_job(**overrides)) is expected
 
 
+def test_device_capture_eligibility_tolerates_personal_job_without_household() -> None:
+    assert imports_routes.is_device_capture_eligible(_job(household_id=None)) is True
+
+
+@pytest.mark.asyncio
+async def test_personal_job_actions_are_limited_to_its_owner() -> None:
+    job = _job(household_id=None)
+    session = SimpleNamespace(get=AsyncMock())
+
+    await imports_routes._authorize_action(job, SimpleNamespace(id=job.user_id), session)
+    with pytest.raises(HTTPException) as error:
+        await imports_routes._authorize_action(job, SimpleNamespace(id=uuid4()), session)
+
+    assert error.value.status_code == 403
+    session.get.assert_not_awaited()
+
+
 @pytest.fixture
 def endpoint(monkeypatch):
     session = SimpleNamespace(commit=AsyncMock())

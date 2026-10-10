@@ -68,8 +68,8 @@ async def _restore_links_and_spawn(session, recipe: Recipe, previous_links: dict
         return
 
     household_id = await linking_household_id(session, recipe.id)
-    if recipe.author_id is None or household_id is None:
-        print(f"Not spawning linked imports for {recipe.id}: missing author or household")
+    if recipe.author_id is None:
+        print(f"Not spawning linked imports for {recipe.id}: missing author")
         return
 
     await spawn_linked_imports(session, recipe, user_id=recipe.author_id, household_id=household_id)

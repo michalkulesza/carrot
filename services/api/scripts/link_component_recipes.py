@@ -36,8 +36,8 @@ def has_unresolved_link(recipe: Recipe) -> bool:
 
 async def _plan(session, recipe: Recipe) -> tuple[uuid.UUID | None, list[str], str]:
     household_id = await linking_household_id(session, recipe.id)
-    if recipe.author_id is None or household_id is None:
-        return None, [], "skip: missing author or household"
+    if recipe.author_id is None:
+        return None, [], "skip: missing author"
     if await is_component_recipe(session, recipe):
         return None, [], "skip: component recipe"
 
@@ -46,7 +46,7 @@ async def _plan(session, recipe: Recipe) -> tuple[uuid.UUID | None, list[str], s
     if not urls:
         return None, [], "skip: no unresolved links"
 
-    existing = await _household_recipes_by_url(session, household_id, urls)
+    existing = await _household_recipes_by_url(session, household_id, urls, recipe.author_id)
     actions = [f"attach existing {existing[url]}: {url}" if url in existing else f"queue child import: {url}" for url in urls]
     return household_id, actions, "ok"
 
@@ -154,7 +154,7 @@ async def main(apply: bool, recipe_ids: set[uuid.UUID], refresh_kinds: bool = Fa
             print(f"{recipe.id} {recipe.title}: {reason}")
             for action in actions:
                 print(f"  {action}")
-            if not apply or household_id is None:
+            if not apply or reason != "ok":
                 continue
 
             child_ids = await spawn_linked_imports(session, recipe, user_id=recipe.author_id, household_id=household_id)

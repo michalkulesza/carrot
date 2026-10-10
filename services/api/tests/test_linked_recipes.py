@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from api.models import AllergenFlag, ImportJob, ImportJobStatus, LinkedRecipeImportRequest
+from api.models import AllergenFlag, ImportJob, ImportJobStatus, ImportMetadata, ImportResult, LinkedRecipeImportRequest, RecipeExtraction
 from api.routes import imports as imports_route
 from api.routes import recipes as recipes_route
 from api.services import allergen_rechecks, import_worker, linked_recipes
@@ -756,3 +756,122 @@ async def test_resolve_treats_a_self_link_as_an_ordinary_ingredient() -> None:
     assert status == "analyzed"
     assert resolved[0]["ingredient_flags"][0]["linked_allergens"] is None
     assert linked_recipes.recipe_allergens(resolved) == ["soy"]
+
+
+@pytest.mark.asyncio
+async def test_spawn_for_personal_parent_queues_jobs_without_household(spawn_mocks) -> None:
+    session = FakeSession(scalar=uuid4())
+    session.get = AsyncMock()
+    user_id = uuid4()
+
+    await linked_recipes.spawn_linked_imports(session, _parent(["https://a.test/x"]), user_id=user_id, household_id=None)
+
+    assert spawn_mocks.existing.await_args.args[1:] == (None, ["https://a.test/x"], user_id)
+    assert spawn_mocks.event.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_personal_lookup_is_limited_to_authors_recipes_without_household() -> None:
+    existing_id = uuid4()
+    session = SimpleNamespace(execute=AsyncMock(return_value=SimpleNamespace(
+        all=lambda: [(existing_id, "https://a.test/x/")],
+    )))
+    user_id = uuid4()
+
+    found = await linked_recipes._household_recipes_by_url(session, None, ["https://a.test/x"], user_id)
+
+    sql = str(session.execute.await_args.args[0])
+    assert found == {"https://a.test/x": existing_id}
+    assert "recipes.author_id =" in sql
+    assert "NOT (EXISTS" in sql
+    assert "JOIN recipe_households" not in sql
+
+
+@pytest.mark.asyncio
+async def test_route_lets_author_import_link_on_personal_recipe(monkeypatch) -> None:
+    parent = _parent(["https://a.test/x"])
+    session = FakeSession(scalar=[parent, False])
+    session.commit = AsyncMock()
+    importer = AsyncMock(return_value=(None, uuid4()))
+    monkeypatch.setattr(recipes_route, "import_linked_recipe", importer)
+
+    await recipes_route.import_linked_recipe_route(
+        parent.id, LinkedRecipeImportRequest(url="https://a.test/x"),
+        user=SimpleNamespace(id=uuid4()), session=session, household_id=uuid4(),
+    )
+
+    assert importer.await_args.kwargs["household_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_route_returns_404_when_recipe_is_neither_household_nor_authored() -> None:
+    session = FakeSession(scalar=None)
+
+    with pytest.raises(HTTPException) as error:
+        await recipes_route.import_linked_recipe_route(
+            uuid4(), LinkedRecipeImportRequest(url="https://a.test/x"),
+            user=SimpleNamespace(id=uuid4()), session=session, household_id=uuid4(),
+        )
+
+    assert error.value.status_code == 404
+
+
+def _personal_job(parent_recipe_id=None):
+    return SimpleNamespace(household_id=None, user_id=uuid4(), parent_recipe_id=parent_recipe_id)
+
+
+@pytest.mark.asyncio
+async def test_personal_job_membership_requires_parent_owned_by_job_user() -> None:
+    parent_id = uuid4()
+    job = _personal_job(parent_id)
+    owned = SimpleNamespace(get=AsyncMock(return_value=SimpleNamespace(author_id=job.user_id)))
+    foreign = SimpleNamespace(get=AsyncMock(return_value=SimpleNamespace(author_id=uuid4())))
+    gone = SimpleNamespace(get=AsyncMock(return_value=None))
+
+    assert await import_worker._is_member(owned, job) is True
+    assert await import_worker._is_member(foreign, job) is False
+    assert await import_worker._is_member(gone, job) is False
+    assert await import_worker._is_member(gone, _personal_job()) is False
+
+
+@pytest.mark.asyncio
+async def test_save_recipe_without_household_stays_personal(monkeypatch) -> None:
+    link = AsyncMock()
+    monkeypatch.setattr(import_worker, "_link_recipe_to_household", link)
+    monkeypatch.setattr(import_worker, "_archive_thumbnail", AsyncMock())
+    monkeypatch.setattr(import_worker, "queue_recipe_embedding", AsyncMock())
+    added = []
+    session = SimpleNamespace(
+        get=AsyncMock(return_value=None), add=added.append, flush=AsyncMock(),
+        scalars=AsyncMock(return_value=SimpleNamespace(all=lambda: [])),
+    )
+    job = SimpleNamespace(user_id=uuid4(), household_id=None)
+    extraction = RecipeExtraction(title="Sauce", source_title="Sauce", servings=2, total_time_minutes=10, tags=["dinner"])
+    result = ImportResult(
+        stage="transcript", recipe=extraction, metadata=ImportMetadata(source_url="https://a.test/sauce"),
+        outcome="complete", issue_codes=[], evidence=[], trace=[], source_capture={},
+    )
+
+    recipe = await import_worker._save_recipe(session, job, result)
+
+    link.assert_not_awaited()
+    assert recipe.author_id == job.user_id
+
+
+def test_scope_filter_includes_users_own_personal_jobs() -> None:
+    sql = str(imports_route._scope_filter(ImportJob, uuid4(), uuid4()))
+
+    assert "import_jobs.household_id =" in sql
+    assert "import_jobs.household_id IS NULL" in sql
+    assert "import_jobs.user_id =" in sql
+
+
+def test_job_out_tolerates_missing_household() -> None:
+    job = _job_row(
+        ImportJobStatus.PENDING, kind="url", created_by=None, failure_code=None, failure_stage=None, outcome=None,
+        retry_count=0, next_attempt_at=None, created_at=datetime(2026, 1, 1), dismissed_at=None,
+    )
+    job.household_id = None
+    job.input = {"url": "https://a.test/x"}
+
+    assert imports_route._job_out(job, None).household_id is None

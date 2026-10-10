@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import StreamingResponse
-from sqlalchemy import delete, func, select
+from sqlalchemy import and_, delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,8 +38,8 @@ _MAX_CAPTURED_HTML_BYTES = 3 * 1024 * 1024
 _DEVICE_CAPTURE_FAILURE_CODES = {ImportFailureCode.SOURCE_FETCH_FAILED, ImportFailureCode.USER_ACTION_REQUIRED}
 
 
-def _scope_filter(model, household_id: uuid.UUID):
-    return model.household_id == household_id
+def _scope_filter(model, household_id: uuid.UUID, user_id: uuid.UUID):
+    return or_(model.household_id == household_id, and_(model.household_id.is_(None), model.user_id == user_id))
 
 
 def is_device_capture_eligible(job: ImportJob) -> bool:
@@ -159,6 +159,10 @@ async def _authorize_action(
     user: User,
     session: AsyncSession,
 ) -> None:
+    if job.household_id is None:
+        if job.user_id != user.id:
+            raise HTTPException(status_code=403, detail="not_a_household_member")
+        return
     member = await session.get(HouseholdMember, {"household_id": job.household_id, "user_id": user.id})
     if member is None:
         raise HTTPException(status_code=403, detail="not_a_household_member")
@@ -226,12 +230,12 @@ async def import_job_events(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
-    event_scope = _scope_filter(ImportJobEvent, household_id)
+    event_scope = _scope_filter(ImportJobEvent, household_id, user.id)
     watermark = await session.scalar(select(func.max(ImportJobEvent.id)).where(event_scope)) or 0
     jobs = list((await session.scalars(
         select(ImportJob)
         .where(
-            _scope_filter(ImportJob, household_id),
+            _scope_filter(ImportJob, household_id, user.id),
             ImportJob.dismissed_at.is_(None),
             ImportJob.status.in_((*_ACTIVE_STATUSES, ImportJobStatus.FAILED)),
         )
@@ -257,7 +261,7 @@ async def import_job_events(
             async with async_session_maker() as event_session:
                 rows = list((await event_session.scalars(
                     select(ImportJobEvent)
-                    .where(_scope_filter(ImportJobEvent, household_id), ImportJobEvent.id > cursor)
+                    .where(_scope_filter(ImportJobEvent, household_id, user.id), ImportJobEvent.id > cursor)
                     .order_by(ImportJobEvent.id)
                     .limit(100)
                 )).all())

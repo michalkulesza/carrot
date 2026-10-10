@@ -171,8 +171,9 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
         raise ValueError("no recipe to save")
     tags: list[Tag] = []
     if recipe_data.tags:
+        tag_scope = _tag_filter(job.household_id) if job.household_id is not None else Tag.is_default.is_(True)
         tags = list((await session.scalars(
-            select(Tag).where(_tag_filter(job.household_id), func.lower(Tag.name).in_([name.lower() for name in recipe_data.tags]))
+            select(Tag).where(tag_scope, func.lower(Tag.name).in_([name.lower() for name in recipe_data.tags]))
         )).all())
     preferences = await session.get(UserPreferences, job.user_id)
     auto_substitute = bool(preferences and preferences.auto_substitute)
@@ -215,7 +216,8 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
             evidence=result.evidence[:12], trace=result.trace[:200], capture=result.source_capture,
         ))
     await _archive_thumbnail(recipe)
-    await _link_recipe_to_household(session, recipe.id, job.household_id)
+    if job.household_id is not None:
+        await _link_recipe_to_household(session, recipe.id, job.household_id)
     await queue_recipe_embedding(session, recipe)
     return recipe
 
@@ -225,7 +227,7 @@ async def _replace_recipe(session, job: ImportJob, result: ImportResult) -> Reci
         recipe_id = uuid.UUID(str(job.input.get("replaces_recipe_id")))
     except ValueError:
         return None
-    in_household = await session.scalar(
+    in_household = job.household_id is not None and await session.scalar(
         select(recipe_households_table.c.recipe_id).where(
             recipe_households_table.c.recipe_id == recipe_id,
             recipe_households_table.c.household_id == job.household_id,
@@ -272,6 +274,9 @@ async def _claim_job() -> uuid.UUID | None:
 
 
 async def _is_member(session, job: ImportJob) -> bool:
+    if job.household_id is None:
+        parent = await session.get(Recipe, job.parent_recipe_id) if job.parent_recipe_id is not None else None
+        return parent is not None and parent.author_id == job.user_id
     return await session.get(HouseholdMember, {"household_id": job.household_id, "user_id": job.user_id}) is not None
 
 

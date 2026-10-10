@@ -5,9 +5,10 @@ from collections.abc import Iterable
 from datetime import datetime, timedelta
 from urllib.parse import urlsplit, urlunsplit
 
-from sqlalchemy import Text, cast, exists, func, or_, select
+from sqlalchemy import Text, and_, cast, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql.elements import ColumnElement
 
 from api.models import (
     ImportFailureCode,
@@ -198,11 +199,21 @@ async def is_component_recipe(session: AsyncSession, recipe: Recipe) -> bool:
         return False
     host = urlsplit(own_url).hostname
     households = select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe.id)
+    in_same_household = exists(
+        select(recipe_households_table.c.recipe_id).where(
+            recipe_households_table.c.recipe_id == Recipe.id,
+            recipe_households_table.c.household_id.in_(households),
+        )
+    )
+    in_same_personal_library = and_(
+        Recipe.author_id == recipe.author_id,
+        ~_has_household(Recipe.id),
+        ~_has_household(recipe.id),
+    )
     candidates = (await session.scalars(
         select(Recipe)
-        .join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id)
         .where(
-            recipe_households_table.c.household_id.in_(households),
+            or_(in_same_household, in_same_personal_library),
             Recipe.id != recipe.id,
             cast(Recipe.components, Text).ilike(f"%{host}%"),
         )
@@ -215,17 +226,22 @@ async def is_component_recipe(session: AsyncSession, recipe: Recipe) -> bool:
     )
 
 
-async def _household_recipes_by_url(session: AsyncSession, household_id: uuid.UUID, urls: list[str]) -> dict[str, uuid.UUID]:
+def _has_household(recipe_id) -> ColumnElement[bool]:
+    return exists(select(recipe_households_table.c.recipe_id).where(recipe_households_table.c.recipe_id == recipe_id))
+
+
+async def _household_recipes_by_url(
+    session: AsyncSession, household_id: uuid.UUID | None, urls: list[str], user_id: uuid.UUID,
+) -> dict[str, uuid.UUID]:
     hosts = {urlsplit(url).hostname for url in urls}
-    rows = (await session.execute(
-        select(Recipe.id, Recipe.source_url)
-        .join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id)
-        .where(
+    statement = select(Recipe.id, Recipe.source_url).where(or_(*(Recipe.source_url.ilike(f"%{host}%") for host in hosts)))
+    if household_id is None:
+        statement = statement.where(Recipe.author_id == user_id, ~_has_household(Recipe.id))
+    else:
+        statement = statement.join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id).where(
             recipe_households_table.c.household_id == household_id,
-            or_(*(Recipe.source_url.ilike(f"%{host}%") for host in hosts)),
         )
-        .order_by(Recipe.created_at)
-    )).all()
+    rows = (await session.execute(statement.order_by(Recipe.created_at))).all()
     found: dict[str, uuid.UUID] = {}
     for recipe_id, source_url in rows:
         found.setdefault(normalize_link(source_url) or "", recipe_id)
@@ -237,7 +253,7 @@ def _child_idempotency_key(parent_id: uuid.UUID, url: str) -> uuid.UUID:
 
 
 async def _insert_child_job(
-    session: AsyncSession, parent_id: uuid.UUID, user_id: uuid.UUID, household_id: uuid.UUID, url: str,
+    session: AsyncSession, parent_id: uuid.UUID, user_id: uuid.UUID, household_id: uuid.UUID | None, url: str,
     *, requested_by_user: bool = False,
 ) -> uuid.UUID | None:
     job_input = {"url": url, "requested_by_user": True} if requested_by_user else {"url": url}
@@ -254,14 +270,14 @@ async def _insert_child_job(
 
 
 async def spawn_linked_imports(
-    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID,
+    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID | None,
 ) -> list[uuid.UUID]:
     """Queue an import per unresolved linked recipe; reuse recipes the household already has. Returns new job ids."""
     resolved = existing_linked_ids(parent.components or [])
     urls = [url for url in linked_urls(parent.components or [], parent.source_url) if url not in resolved]
     if not urls:
         return []
-    existing = await _household_recipes_by_url(session, household_id, urls)
+    existing = await _household_recipes_by_url(session, household_id, urls, user_id)
     existing = {url: recipe_id for url, recipe_id in existing.items() if recipe_id != parent.id}
     if existing:
         await attach_existing_recipes(session, parent, existing)
@@ -282,10 +298,10 @@ async def attach_existing_recipes(session: AsyncSession, parent: Recipe, recipe_
 
 
 async def import_linked_recipe(
-    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID, url: str,
+    session: AsyncSession, parent: Recipe, *, user_id: uuid.UUID, household_id: uuid.UUID | None, url: str,
 ) -> tuple[uuid.UUID | None, uuid.UUID | None]:
     """On-demand import of one linked URL. Returns (recipe_id, job_id); `url` must already be normalised."""
-    existing = (await _household_recipes_by_url(session, household_id, [url])).get(url)
+    existing = (await _household_recipes_by_url(session, household_id, [url], user_id)).get(url)
     if existing is not None and existing != parent.id:
         await attach_existing_recipes(session, parent, {url: existing})
         return existing, None

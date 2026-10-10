@@ -290,8 +290,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("DELETE FROM shopping_list_items WHERE household_id IS NULL"))
         await conn.execute(text("ALTER TABLE shopping_list_items ALTER COLUMN household_id SET NOT NULL"))
 
-        await conn.execute(text("DELETE FROM import_jobs WHERE household_id IS NULL"))
-        await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN household_id SET NOT NULL"))
+        await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN household_id DROP NOT NULL"))
 
         await conn.execute(text("DELETE FROM tags WHERE is_default = FALSE AND household_id IS NULL"))
 
