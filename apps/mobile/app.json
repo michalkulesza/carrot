@@ -31,7 +31,7 @@
           }
         }
       },
-      "buildNumber": "42",
+      "buildNumber": "43",
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.kulesza.carrot"
