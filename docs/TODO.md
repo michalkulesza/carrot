@@ -38,6 +38,7 @@ Open work only. When an item is completed, move it to the matching category in [
 ## Quality, release, and growth
 
 - [ ] **Verify rendered HTML imports after deployment** — Run a production import of a JavaScript-created recipe card and confirm title, ingredients, steps, servings, total time, available nutrition, source evidence, and renderer diagnostics. Check the renderer health and import trace.
+- [ ] **Verify the no-recipe-content import UI** — Import the "Chocolate Lava Cake" Instagram reel (https://www.instagram.com/reel/DcN5C3VxozV/?stkn=MTkzbGZnOHFmY3JoaA==), which correctly fails extraction v2 with `no_recipe_content`. Confirm web and mobile show the failure clearly in the import queue and notification, with a localized message and a way to dismiss or retry.
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.
 - [ ] **Weekly meal-plan generator** — Auto-fill a week while honoring allergens, preferences, and variety, then generate its shopping list. Specify the week as craving quotas (Chicken ×2, Pasta ×2, Asian ×1) plus an optional free-text wish; a deterministic solver proposes a week from the library with per-day lock/reroll and an honest coverage bar. Blocked on [household v2](specs/completed/household-v2.md). See [the plan](specs/completed/weekly-meal-plan-generator.md).
