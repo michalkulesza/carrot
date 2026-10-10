@@ -108,10 +108,51 @@ const ReadView = ({
   const hasImage = !!heroThumbnailUrl;
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0;
   const hasSteps = recipe.components.some((component) => component.steps.length > 0);
-  const valueLabel = (label: string, status: string | undefined) => {
-    const marker = status === 'ai' ? 'recipes.valueAi' : status === 'source' ? 'recipes.valueSource' : status === 'user' ? 'recipes.valueUser' : 'recipes.valueUnknown';
-    return `${label} · ${t(marker)}`;
-  };
+  const valueLabel = (label: string, status: string | undefined) =>
+    status === "ai" ? `${label} · ${t("recipes.valueAi")}` : label;
+  const nutritionProvenance = recipe.nutrition_provenance;
+  const kcalIsAi = nutritionProvenance?.kcal_per_serving?.status === "ai";
+  const proteinIsAi = nutritionProvenance?.protein_per_serving?.status === "ai";
+  const fatIsAi = nutritionProvenance?.fat_per_serving?.status === "ai";
+  const carbsIsAi = nutritionProvenance?.carbs_per_serving?.status === "ai";
+  const nutritionItems = [
+    {
+      label: valueLabel(t("recipes.totalTime"), recipe.total_time_provenance?.status),
+      value: formatCookingTime(recipe.total_time_minutes, t),
+      accessibilityLabel: t("recipes.totalTime"),
+      valueFontSize:
+        recipe.total_time_minutes !== null && recipe.total_time_minutes >= 60
+          ? 15
+          : undefined,
+    },
+    {
+      label: valueLabel(t("recipes.colKcal"), nutritionProvenance?.kcal_per_serving?.status),
+      value: recipe.kcal_per_serving?.toString() ?? "",
+      accessibilityLabel: t("recipes.kcalPerServing"),
+      showDisclaimer: kcalIsAi,
+    },
+    {
+      label: valueLabel(t("recipes.protein"), nutritionProvenance?.protein_per_serving?.status),
+      value: recipe.protein_per_serving?.toString() ?? "",
+      accessibilityLabel: t("recipes.proteinPerServing"),
+      unit: "g",
+      showDisclaimer: proteinIsAi,
+    },
+    {
+      label: valueLabel(t("recipes.fat"), nutritionProvenance?.fat_per_serving?.status),
+      value: recipe.fat_per_serving?.toString() ?? "",
+      accessibilityLabel: t("recipes.fatPerServing"),
+      unit: "g",
+      showDisclaimer: fatIsAi,
+    },
+    {
+      label: valueLabel(t("recipes.carbs"), nutritionProvenance?.carbs_per_serving?.status),
+      value: recipe.carbs_per_serving?.toString() ?? "",
+      accessibilityLabel: t("recipes.carbsPerServing"),
+      unit: "g",
+      showDisclaimer: carbsIsAi,
+    },
+  ];
   const [titleIsSingleLine, setTitleIsSingleLine] = useState(true);
   const handleTitleTextLayout = useCallback(
     (e: NativeSyntheticEvent<TextLayoutEventData>) => {
@@ -210,41 +251,7 @@ const ReadView = ({
 
           <NutritionBoxGrid
             editing={false}
-            items={[
-              {
-                label: valueLabel(t("recipes.totalTime"), recipe.total_time_provenance?.status),
-                value: formatCookingTime(recipe.total_time_minutes, t),
-                accessibilityLabel: t("recipes.totalTime"),
-                showDisclaimer: false,
-                valueFontSize:
-                  recipe.total_time_minutes !== null && recipe.total_time_minutes >= 60
-                    ? 15
-                    : undefined,
-              },
-              {
-                label: valueLabel(t("recipes.colKcal"), recipe.nutrition_provenance?.kcal_per_serving?.status),
-                value: recipe.kcal_per_serving?.toString() ?? "",
-                accessibilityLabel: t("recipes.kcalPerServing"),
-              },
-              {
-                label: valueLabel(t("recipes.protein"), recipe.nutrition_provenance?.protein_per_serving?.status),
-                value: recipe.protein_per_serving?.toString() ?? "",
-                accessibilityLabel: t("recipes.proteinPerServing"),
-                unit: "g",
-              },
-              {
-                label: valueLabel(t("recipes.fat"), recipe.nutrition_provenance?.fat_per_serving?.status),
-                value: recipe.fat_per_serving?.toString() ?? "",
-                accessibilityLabel: t("recipes.fatPerServing"),
-                unit: "g",
-              },
-              {
-                label: valueLabel(t("recipes.carbs"), recipe.nutrition_provenance?.carbs_per_serving?.status),
-                value: recipe.carbs_per_serving?.toString() ?? "",
-                accessibilityLabel: t("recipes.carbsPerServing"),
-                unit: "g",
-              },
-            ]}
+            items={nutritionItems}
             disclaimerText={t("recipes.nutritionEstimateDisclaimer")}
           />
 

@@ -15,7 +15,7 @@ interface NutritionBoxGridProps {
   items: NutritionBoxGridItem[]
   editing: boolean
   onChangeValue?: (index: number, value: string) => void
-  disclaimerText: string
+  disclaimerText?: string
 }
 
 interface EditableNutritionBoxProps {
@@ -93,7 +93,7 @@ interface NutritionBoxProps {
   editing: boolean
   isOpen: boolean
   alignRight: boolean
-  disclaimerText: string
+  disclaimerText?: string
   onChangeValue: (value: string) => void
   onToggleOpen: () => void
   onClose: () => void
@@ -113,7 +113,7 @@ const NutritionBox = ({
 }: NutritionBoxProps) => {
   const displayValue = item.value !== '' ? item.value : '—'
 
-  if (!editing && item.showDisclaimer === false) {
+  if (!editing && item.showDisclaimer !== true) {
     return (
       <View style={[styles.boxWrapper, wrapperStyle]}>
         <View style={styles.box}>
@@ -132,7 +132,7 @@ const NutritionBox = ({
         <NutritionBoxButton item={item} displayValue={displayValue} onPress={onToggleOpen} />
       )}
 
-      {isOpen && (
+      {isOpen && disclaimerText && (
         <TooltipPopover text={disclaimerText} alignRight={alignRight} onDismiss={onClose} />
       )}
     </View>

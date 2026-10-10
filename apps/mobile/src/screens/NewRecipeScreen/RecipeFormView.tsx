@@ -295,7 +295,7 @@ const RecipeFormView = ({
         <NutritionBoxGrid
           editing={editing}
           items={[
-            { label: editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'), value: recipe.totalTimeMinutes, accessibilityLabel: t('recipes.totalTime'), showDisclaimer: false },
+            { label: editing ? t('recipes.totalTimeMinutes') : t('recipes.totalTime'), value: recipe.totalTimeMinutes, accessibilityLabel: t('recipes.totalTime') },
             { label: t('recipes.serves'), value: recipe.servings, accessibilityLabel: t('recipes.serves') },
             {
               label: t('recipes.colKcal'),
@@ -322,7 +322,6 @@ const RecipeFormView = ({
             },
           ]}
           onChangeValue={handleNutritionChange}
-          disclaimerText={t('recipes.nutritionEstimateDisclaimer')}
         />
 
         {(recipe.creator_handle || recipe.source_url) && (

@@ -49,10 +49,12 @@ interface NutritionBoxDisplayProps {
 const NutritionBoxDisplay = ({ item, onToggle }: NutritionBoxDisplayProps) => {
   const displayValue = item.value !== '' ? item.value : '—'
 
-  if (item.showDisclaimer === false) {
+  if (item.showDisclaimer !== true) {
     return (
       <div className="flex flex-col items-center justify-center rounded-[10px] bg-zinc-100 px-2 py-2 min-w-0">
-        <span className="text-base font-semibold text-zinc-900">
+        <span
+          className={`text-base font-semibold text-zinc-900 ${item.blurred ? 'blur-[4px] select-none' : ''}`}
+        >
           {displayValue}
         </span>
         <span className="mt-1 text-xs text-zinc-500 truncate max-w-full">

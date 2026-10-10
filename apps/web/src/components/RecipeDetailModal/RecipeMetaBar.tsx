@@ -73,19 +73,15 @@ const RecipeMetaBar = ({
   const hasSteps = recipe.components.some(
     (component) => component.steps.length > 0
   )
-  const valueLabel = (label: string, status: string | undefined) => {
-    if (editing) return label
-    const marker =
-      status === 'ai'
-        ? 'recipes.valueAi'
-        : status === 'source'
-          ? 'recipes.valueSource'
-          : status === 'user'
-            ? 'recipes.valueUser'
-            : 'recipes.valueUnknown'
+  const provenance = r.nutrition_provenance
+  const isAi = (status: string | undefined) => !editing && status === 'ai'
+  const valueLabel = (label: string, status: string | undefined) =>
+    isAi(status) ? `${label} · ${t('recipes.valueAi')}` : label
 
-    return `${label} · ${t(marker)}`
-  }
+  const kcalStatus = provenance?.kcal_per_serving?.status
+  const proteinStatus = provenance?.protein_per_serving?.status
+  const fatStatus = provenance?.fat_per_serving?.status
+  const carbsStatus = provenance?.carbs_per_serving?.status
 
   const nutritionItems = [
     {
@@ -97,7 +93,6 @@ const RecipeMetaBar = ({
         ? draft.totalTimeMinutes
         : formatCookingTime(r.total_time_minutes, t),
       accessibilityLabel: t('recipes.totalTime'),
-      showDisclaimer: false,
     },
     {
       label: t('recipes.serves'),
@@ -105,50 +100,42 @@ const RecipeMetaBar = ({
       accessibilityLabel: t('recipes.serves'),
     },
     {
-      label: valueLabel(
-        t('recipes.colKcal'),
-        r.nutrition_provenance?.kcal_per_serving?.status
-      ),
+      label: valueLabel(t('recipes.colKcal'), kcalStatus),
       value: editing ? draft.kcal : (r.kcal_per_serving?.toString() ?? ''),
       accessibilityLabel: t('recipes.kcalPerServing'),
+      showDisclaimer: isAi(kcalStatus),
     },
     {
-      label: valueLabel(
-        t('recipes.protein'),
-        r.nutrition_provenance?.protein_per_serving?.status
-      ),
+      label: valueLabel(t('recipes.protein'), proteinStatus),
       value: editing
         ? draft.protein
         : r.protein_per_serving === null
           ? ''
           : `${r.protein_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.proteinPerServing'),
+      showDisclaimer: isAi(proteinStatus),
       blurred: readOnly,
     },
     {
-      label: valueLabel(
-        t('recipes.fat'),
-        r.nutrition_provenance?.fat_per_serving?.status
-      ),
+      label: valueLabel(t('recipes.fat'), fatStatus),
       value: editing
         ? draft.fat
         : r.fat_per_serving === null
           ? ''
           : `${r.fat_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.fatPerServing'),
+      showDisclaimer: isAi(fatStatus),
       blurred: readOnly,
     },
     {
-      label: valueLabel(
-        t('recipes.carbs'),
-        r.nutrition_provenance?.carbs_per_serving?.status
-      ),
+      label: valueLabel(t('recipes.carbs'), carbsStatus),
       value: editing
         ? draft.carbs
         : r.carbs_per_serving === null
           ? ''
           : `${r.carbs_per_serving}${readOnly ? 'g' : ''}`,
       accessibilityLabel: t('recipes.carbsPerServing'),
+      showDisclaimer: isAi(carbsStatus),
       blurred: readOnly,
     },
   ]
