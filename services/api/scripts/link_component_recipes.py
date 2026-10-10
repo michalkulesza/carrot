@@ -128,7 +128,26 @@ async def clean_text_and_self_links(session, recipe: Recipe, apply: bool) -> boo
     return True
 
 
-async def main(apply: bool, recipe_ids: set[uuid.UUID], refresh_kinds: bool = False, clean: bool = False) -> None:
+async def refresh_allergen_status(session, recipe: Recipe, apply: bool) -> bool:
+    allergens = await allergen_rechecks._allergens_for_recipe(session, recipe)
+    _, status = await allergen_rechecks.resolved_components_and_status(session, list(recipe.components or []), recipe.source_url, allergens)
+    if status == recipe.allergen_status:
+        return False
+
+    action = "recheck queued" if allergens else "written"
+    print(f"{recipe.id} {recipe.title}: {recipe.allergen_status} -> {status} ({action if apply else 'dry run'})")
+    if apply:
+        if allergens:
+            await allergen_rechecks.enqueue_recipe_allergen_check(session, recipe.id)
+        else:
+            recipe.allergen_status = status
+        await session.commit()
+    return True
+
+
+async def main(
+    apply: bool, recipe_ids: set[uuid.UUID], refresh_kinds: bool = False, clean: bool = False, refresh_status: bool = False,
+) -> None:
     async with async_session_maker() as session:
         statement = select(Recipe.id).order_by(Recipe.created_at)
         if recipe_ids:
@@ -138,9 +157,13 @@ async def main(apply: bool, recipe_ids: set[uuid.UUID], refresh_kinds: bool = Fa
     queued = 0
     refreshed = 0
     cleaned = 0
+    statuses = 0
     for recipe_id in all_ids:
         async with async_session_maker() as session:
             recipe = await session.get(Recipe, recipe_id)
+            if refresh_status:
+                statuses += recipe is not None and await refresh_allergen_status(session, recipe, apply)
+                continue
             if clean:
                 cleaned += recipe is not None and await clean_text_and_self_links(session, recipe, apply)
                 continue
@@ -161,6 +184,9 @@ async def main(apply: bool, recipe_ids: set[uuid.UUID], refresh_kinds: bool = Fa
             await session.commit()
             queued += len(child_ids)
 
+    if refresh_status:
+        print(f"Refreshed allergen status on {statuses} recipe(s)." if apply else f"Dry run: {statuses} recipe(s) would change; pass --apply to write.")
+        return
     if clean:
         print(f"Cleaned {cleaned} recipe(s)." if apply else f"Dry run: {cleaned} recipe(s) would change; pass --apply to write.")
         return
@@ -177,5 +203,6 @@ if __name__ == "__main__":
     parser.add_argument("--recipe-id", action="append", default=[], help="Only process this recipe UUID; repeatable")
     parser.add_argument("--refresh-link-kinds", action="store_true", help="Recompute recipe/external link kinds instead of linking recipes")
     parser.add_argument("--clean-text-and-self-links", action="store_true", help="Drop self-links, recompute kinds and strip control characters from recipe text")
+    parser.add_argument("--refresh-allergen-status", action="store_true", help="Set unknown for owners without allergens and queue rechecks where the status would change")
     args = parser.parse_args()
-    asyncio.run(main(args.apply, {uuid.UUID(value) for value in args.recipe_id}, args.refresh_link_kinds, args.clean_text_and_self_links))
+    asyncio.run(main(args.apply, {uuid.UUID(value) for value in args.recipe_id}, args.refresh_link_kinds, args.clean_text_and_self_links, args.refresh_allergen_status))

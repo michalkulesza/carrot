@@ -875,3 +875,63 @@ def test_job_out_tolerates_missing_household() -> None:
     job.input = {"url": "https://a.test/x"}
 
     assert imports_route._job_out(job, None).household_id is None
+
+
+async def _settled(monkeypatch, allergens, components, child=None, source_url="https://p.test/r"):
+    recipe = _recipe(allergen_status="uncertain", components=components, source_url=source_url)
+    monkeypatch.setattr(allergen_rechecks, "_allergens_for_recipe", AsyncMock(return_value=allergens))
+
+    await allergen_rechecks.settle_allergen_status(FakeSession([child] if child else []), recipe)
+
+    return recipe
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("links, kinds", [(["https://p.test/a"], ["recipe"]), ([], [])])
+async def test_settle_without_allergens_is_unknown_and_skips_link_resolution(monkeypatch, links, kinds) -> None:
+    components = [_component(links, kinds=kinds)]
+    resolve = AsyncMock()
+    monkeypatch.setattr(linked_recipes, "resolve_linked_allergens", resolve)
+
+    recipe = await _settled(monkeypatch, [], components)
+
+    assert recipe.allergen_status == "unknown"
+    assert recipe.components == components
+    resolve.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_settle_with_only_external_links_is_analyzed(monkeypatch) -> None:
+    recipe = await _settled(monkeypatch, ["milk"], [_component(["https://shop.test/x", None], kinds=["external", None])])
+
+    assert recipe.allergen_status == "analyzed"
+
+
+@pytest.mark.asyncio
+async def test_settle_with_unresolved_recipe_link_is_uncertain_until_child_is_analysed(monkeypatch) -> None:
+    child = _recipe(allergen_status="unknown")
+    component = _component(["https://p.test/a"], [str(child.id)])
+
+    recipe = await _settled(monkeypatch, ["milk"], [component], child=child)
+    assert recipe.allergen_status == "uncertain"
+
+    child.allergen_status = "analyzed"
+    recipe = await _settled(monkeypatch, ["milk"], [component], child=child)
+    assert recipe.allergen_status == "analyzed"
+
+
+@pytest.mark.asyncio
+async def test_recheck_without_allergens_marks_unknown_and_does_not_enqueue_parents(monkeypatch) -> None:
+    child = _recipe(components=[{"ingredients": ["1 cup milk"], "ingredient_flags": [{"allergen": None}]}])
+    session = RecheckSession(child)
+    enqueue = AsyncMock()
+    monkeypatch.setattr(allergen_rechecks, "async_session_maker", lambda: session)
+    monkeypatch.setattr(allergen_rechecks, "_allergens_for_recipe", AsyncMock(return_value=[]))
+    monkeypatch.setattr(allergen_rechecks, "_publish_recipe_changed", AsyncMock())
+    monkeypatch.setattr(allergen_rechecks, "enqueue_recipe_allergen_check", enqueue)
+    monkeypatch.setattr(linked_recipes, "parent_recipe_ids", AsyncMock(return_value=[uuid4()]))
+
+    await allergen_rechecks._process(child.id, 1)
+
+    assert child.allergen_status == "unknown"
+    enqueue.assert_not_awaited()

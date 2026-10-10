@@ -249,3 +249,44 @@ async def test_clean_apply_writes_enqueues_recheck_and_is_idempotent(link_mocks,
     link_mocks.enqueue.reset_mock()
     await backfill.main(apply=True, recipe_ids=set(), clean=True)
     link_mocks.enqueue.assert_not_awaited()
+
+
+def _status_recipe(status):
+    recipe = _recipe(["https://shop.test/x"])
+    recipe.allergen_status = status
+    return recipe
+
+
+@pytest.mark.asyncio
+async def test_refresh_allergen_status_dry_run_writes_nothing(link_mocks, monkeypatch) -> None:
+    recipe = _status_recipe("uncertain")
+    sessions = _patch_backfill_sessions(monkeypatch, [recipe])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    monkeypatch.setattr(backfill.allergen_rechecks, "_allergens_for_recipe", AsyncMock(return_value=[]))
+
+    await backfill.main(apply=False, recipe_ids=set(), refresh_status=True)
+
+    assert recipe.allergen_status == "uncertain"
+    link_mocks.enqueue.assert_not_awaited()
+    assert all(session.commit.await_count == 0 for session in sessions)
+
+
+@pytest.mark.asyncio
+async def test_refresh_allergen_status_apply_writes_unknown_and_queues_rechecks(link_mocks, monkeypatch) -> None:
+    no_allergens, with_allergens, unchanged = _status_recipe("uncertain"), _status_recipe("analyzed"), _status_recipe("unknown")
+    sessions = _patch_backfill_sessions(monkeypatch, [no_allergens, with_allergens, unchanged])
+    monkeypatch.setattr(backfill.allergen_rechecks, "enqueue_recipe_allergen_check", link_mocks.enqueue)
+    allergens = {no_allergens.id: [], with_allergens.id: ["milk"], unchanged.id: []}
+
+    async def allergens_for(_session, recipe):
+        return allergens[recipe.id]
+
+    monkeypatch.setattr(backfill.allergen_rechecks, "_allergens_for_recipe", allergens_for)
+
+    await backfill.main(apply=True, recipe_ids=set(), refresh_status=True)
+
+    assert no_allergens.allergen_status == "unknown"
+    assert with_allergens.allergen_status == "analyzed"
+    link_mocks.enqueue.assert_awaited_once()
+    assert link_mocks.enqueue.await_args.args[1] == with_allergens.id
+    assert sum(session.commit.await_count for session in sessions) == 2

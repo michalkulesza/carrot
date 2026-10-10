@@ -37,7 +37,7 @@ from api.routes.tags import _tag_filter
 from api.services import apns as apns_svc
 from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
-from api.services.allergen_rechecks import recover_running_jobs, worker_loop as allergen_recheck_worker_loop
+from api.services.allergen_rechecks import recover_running_jobs, settle_allergen_status, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields, report_service_failure
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
@@ -218,6 +218,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
     await _archive_thumbnail(recipe)
     if job.household_id is not None:
         await _link_recipe_to_household(session, recipe.id, job.household_id)
+    await settle_allergen_status(session, recipe)
     await queue_recipe_embedding(session, recipe)
     return recipe
 
@@ -240,6 +241,7 @@ async def _replace_recipe(session, job: ImportJob, result: ImportResult) -> Reci
     previous_links = existing_linked_ids(recipe.components or [])
     apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
     recipe.components, _ = set_linked_recipe_ids(recipe.components, previous_links)
+    await settle_allergen_status(session, recipe)
     await session.merge(RecipeSourceEvidence(
         recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
         trace=result.trace[:200], capture=result.source_capture,

@@ -101,6 +101,7 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
             previous_links = existing_linked_ids(recipe.components or [])
             apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
             await _restore_links_and_spawn(session, recipe, previous_links)
+            await allergen_rechecks.settle_allergen_status(session, recipe)
             await session.merge(RecipeSourceEvidence(
                 recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
                 trace=result.trace[:200], capture=result.source_capture,

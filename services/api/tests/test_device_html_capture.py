@@ -263,6 +263,7 @@ async def test_replace_updates_recipe_in_place_and_keeps_links(monkeypatch) -> N
     )
     new_components = [{"ingredient_links": ["https://recipes.example/sauce"], "ingredients": ["sauce"]}]
     monkeypatch.setattr(recipe_reextraction, "serialize_components", lambda *_: new_components)
+    monkeypatch.setattr(import_worker, "settle_allergen_status", AsyncMock())
     monkeypatch.setattr(import_worker, "_archive_thumbnail", AsyncMock())
     monkeypatch.setattr(import_worker, "queue_recipe_embedding", AsyncMock())
     session = _replace_session(recipe)
@@ -286,6 +287,7 @@ async def test_replace_updates_authors_personal_recipe_outside_household(monkeyp
     )
     job.input["replaces_recipe_id"] = str(recipe.id)
     monkeypatch.setattr(recipe_reextraction, "serialize_components", lambda *_: [])
+    monkeypatch.setattr(import_worker, "settle_allergen_status", AsyncMock())
     monkeypatch.setattr(import_worker, "_archive_thumbnail", AsyncMock())
     monkeypatch.setattr(import_worker, "queue_recipe_embedding", AsyncMock())
 

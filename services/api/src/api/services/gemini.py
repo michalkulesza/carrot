@@ -716,8 +716,6 @@ async def enrich_v2_recipe(
         assembled.allergen_status = "uncertain" if any(
             ingredient.links for component in extracted.components for ingredient in component.ingredients
         ) else "analyzed"
-    elif any(ingredient.links for component in extracted.components for ingredient in component.ingredients):
-        assembled.allergen_status = "uncertain"
     return assembled
 
 

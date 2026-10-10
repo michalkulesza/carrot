@@ -36,6 +36,7 @@ async def test_import_saves_replacement_consistently_and_keeps_restore_data(monk
         get=AsyncMock(return_value=SimpleNamespace(auto_substitute=enabled)),
         add=Mock(), flush=AsyncMock(),
     )
+    monkeypatch.setattr(import_worker, "settle_allergen_status", AsyncMock())
     for name in ("_archive_thumbnail", "_link_recipe_to_household", "queue_recipe_embedding"):
         monkeypatch.setattr(import_worker, name, AsyncMock())
     recipe = await import_worker._save_recipe(

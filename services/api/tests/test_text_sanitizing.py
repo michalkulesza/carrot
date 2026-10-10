@@ -50,6 +50,7 @@ def test_sanitize_recipe_cleans_text_fields_and_components_in_place() -> None:
 @pytest.mark.asyncio
 async def test_worker_save_drops_self_links_and_strips_control_characters(monkeypatch) -> None:
     session = SimpleNamespace(add=Mock(), flush=AsyncMock(), get=AsyncMock(return_value=None))
+    monkeypatch.setattr(import_worker, "settle_allergen_status", AsyncMock())
     for name in ("_archive_thumbnail", "_link_recipe_to_household", "queue_recipe_embedding"):
         monkeypatch.setattr(import_worker, name, AsyncMock())
     extraction = RecipeExtraction(

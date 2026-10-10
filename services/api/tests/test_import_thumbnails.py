@@ -108,6 +108,7 @@ async def test_save_recipe_archives_thumbnail_before_returning(monkeypatch) -> N
         ),
         metadata=ImportMetadata(thumbnail_url=thumbnail_url),
     )
+    monkeypatch.setattr(import_worker, "settle_allergen_status", AsyncMock())
     archive_thumbnail = AsyncMock()
     link_recipe = AsyncMock()
     queue_embedding = AsyncMock()

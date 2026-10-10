@@ -122,6 +122,22 @@ async def _allergens_for_recipe(session: AsyncSession, recipe: Recipe) -> list[s
     return sorted(allergens)
 
 
+async def resolved_components_and_status(
+    session: AsyncSession, components: list[dict], source_url: str | None, allergens: list[str],
+) -> tuple[list[dict], str]:
+    if not allergens:
+        return components, "unknown"
+    return await linked_recipes.resolve_linked_allergens(session, components, source_url)
+
+
+async def settle_allergen_status(session: AsyncSession, recipe: Recipe) -> None:
+    """Status right after an import save, where unresolved recipe links are still correctly "uncertain"."""
+    allergens = await _allergens_for_recipe(session, recipe)
+    recipe.components, recipe.allergen_status = await resolved_components_and_status(
+        session, list(recipe.components or []), recipe.source_url, allergens,
+    )
+
+
 async def _publish_recipe_changed(session: AsyncSession, recipe_id: uuid.UUID) -> None:
     household_ids = (await session.scalars(
         select(recipe_households_table.c.household_id).where(recipe_households_table.c.recipe_id == recipe_id)
@@ -192,8 +208,9 @@ async def _process(recipe_id: uuid.UUID, revision: int) -> None:
                 ]
                 refreshed.append(value)
             summary_before = (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components or []))
-            recipe.components, recipe.allergen_status = await linked_recipes.resolve_linked_allergens(session, refreshed, recipe.source_url)
-            if summary_before != (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components)):
+            recipe.components, recipe.allergen_status = await resolved_components_and_status(session, refreshed, recipe.source_url, allergens)
+            summary_after = (recipe.allergen_status, linked_recipes.recipe_allergens(recipe.components))
+            if summary_before != summary_after and (allergens or summary_before[1] != summary_after[1]):
                 # Only a changed summary propagates, which stops A <-> B links from rechecking forever.
                 for parent_id in await linked_recipes.parent_recipe_ids(session, recipe_id):
                     await enqueue_recipe_allergen_check(session, parent_id)
