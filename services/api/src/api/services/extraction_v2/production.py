@@ -24,7 +24,7 @@ from api.services.extraction_v2.orchestrator import (
     ExtractionDependencies, ExtractionOrchestrator,
 )
 from api.services.extraction_v2.sources import (
-    GeminiTranscriptionProvider, HttpLinkedPageProvider,
+    BROWSER_HEADERS, GeminiTranscriptionProvider, HttpLinkedPageProvider,
     is_safe_public_destination,
 )
 from api.services.scraper import scraper
@@ -62,7 +62,7 @@ async def _fetch_html(url: str) -> tuple[str, str]:
     current = url
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(20, connect=8), follow_redirects=False,
-        headers={"User-Agent": "Mozilla/5.0 CarrotRecipeImporter/2.0"},
+        headers=BROWSER_HEADERS,
     ) as client:
         for _ in range(_MAX_REDIRECTS + 1):
             if not await is_safe_public_destination(current):

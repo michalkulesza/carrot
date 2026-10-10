@@ -17,7 +17,7 @@ from api.services.extraction_v2.contracts import (
     SOURCE_PAYLOAD_ADAPTER, TraceEvent,
     validate_extracted_recipe,
 )
-from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES
+from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES, html_lang_fallback, visible_text
 from api.services.extraction_v2.evidence import text_reference
 from api.services.extraction_v2.extractor import parse_yield_servings
 from api.services.extraction_v2.lexicons import heading_kind, looks_like_ingredient, looks_like_step
@@ -233,7 +233,7 @@ class ExtractionOrchestrator:
 
     async def _extract_html_payload(self, payload: HtmlPayload) -> ExtractionOutcome:
         cleaned = clean_html_body(payload.html)
-        language = self._dependencies.language_detector.detect(cleaned)
+        language = html_lang_fallback(self._dependencies.language_detector.detect(visible_text(cleaned)), payload.html)
         source = EvidenceSource(id="html:0", kind=EvidenceKind.HTML, source_url=str(payload.source_url), text=cleaned, language=language)
         evidence, trace = [source], [TraceEvent(stage=ExtractionStage.INPUT, event="html_received", evidence_ids=[source.id])]
         failure = self._language_failure(language, str(payload.source_url), evidence, trace, source.id)
@@ -352,7 +352,7 @@ class ExtractionOrchestrator:
                     detail=page.renderer_failure,
                 ))
                 cleaned = clean_html_body(page.html)
-                language = self._dependencies.language_detector.detect(cleaned)
+                language = html_lang_fallback(self._dependencies.language_detector.detect(visible_text(cleaned)), page.html)
                 source = EvidenceSource(id=f"linked_page:{index}", kind=EvidenceKind.LINKED_PAGE, source_url=page.final_url, text=cleaned, language=language)
                 evidence.append(source)
                 failure = self._language_failure(language, source_url, evidence, trace, source.id)

@@ -43,6 +43,16 @@ class LinkedPage:
     renderer_failure: str | None = None
 
 
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
 class LinkedPageProvider(Protocol):
     async def fetch(self, url: str) -> LinkedPage: ...
 
@@ -67,7 +77,7 @@ class HttpLinkedPageProvider:
             renderer_failure = error.category
         current_url = url
         timeout = httpx.Timeout(connect=10, read=20, write=10, pool=10)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False) as client:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, headers=BROWSER_HEADERS) as client:
             for _ in range(self._MAX_REDIRECTS + 1):
                 if not await is_safe_public_destination(current_url):
                     raise ValueError("linked page URL is not a safe HTTP(S) destination")

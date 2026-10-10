@@ -500,3 +500,23 @@ async def test_unsupported_url_job_exposes_typed_failure_without_recipe(monkeypa
             assert await session.scalar(select(func.count()).select_from(models.Recipe).where(models.Recipe.author_id == user.id)) == 0
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_bot_blocked_page_is_a_retryable_source_fetch_failure(monkeypatch):
+    url = "https://recipes.example/blocked"
+    real_client = httpx.AsyncClient
+
+    async def blocked_render(_url):
+        raise RendererFailure("http_403", operational=True)
+
+    monkeypatch.setattr(production, "render_url", blocked_render)
+    monkeypatch.setattr(production, "is_safe_public_destination", lambda _url: _safe())
+    monkeypatch.setattr(
+        production.httpx, "AsyncClient",
+        lambda **kwargs: real_client(transport=httpx.MockTransport(lambda _request: httpx.Response(403)), **kwargs),
+    )
+
+    outcome, _metadata, _capture = await production.acquire_and_extract_url(url, gemini.UsageTracker())
+
+    assert outcome.reason == FailureReason.SOURCE_FETCH_FAILED

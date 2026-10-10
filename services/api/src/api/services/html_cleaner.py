@@ -116,6 +116,10 @@ def clean_html_body(raw_html: str) -> str:
         if _is_noise_element(element):
             element.decompose()
 
+    for element in soup.find_all(["img", "source"]):
+        if any(str(element.get(name) or "").lstrip().casefold().startswith("data:") for name in ("src", "srcset")):
+            element.decompose()
+
     container = _select_content_container(soup)
     for element in container.find_all(True):
         _keep_safe_attributes(element)

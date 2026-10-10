@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from functools import cached_property
 
+from bs4 import BeautifulSoup
+from bs4.element import CData, NavigableString, Script
 from lingua import LanguageDetectorBuilder
 
 from api.services.extraction_v2.contracts import LanguageResult
@@ -38,3 +40,23 @@ class LinguaLanguageDetector:
             code=language.iso_code_639_1.name.lower(),
             confidence=confidence,
         )
+
+
+def visible_text(html: str) -> str:
+    soup = BeautifulSoup(html, "html.parser")
+    return " ".join(soup.get_text(" ", types=(NavigableString, CData, Script)).split())
+
+
+def html_lang_fallback(result: LanguageResult, raw_html: str) -> LanguageResult:
+    if result.code is not None:
+        return result
+
+    html_element = BeautifulSoup(raw_html, "html.parser").find("html")
+    lang = html_element.get("lang") if html_element else None
+    if not isinstance(lang, str):
+        return result
+
+    code = lang.strip().replace("_", "-").split("-")[0].casefold()
+    if code in SUPPORTED_LANGUAGE_CODES:
+        return LanguageResult(code=code, confidence=result.confidence)
+    return result

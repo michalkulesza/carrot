@@ -117,3 +117,13 @@ def test_cleaner_removes_unsafe_attributes_and_empty_elements() -> None:
 
 def test_cleaner_returns_empty_html_for_empty_input() -> None:
     assert clean_html_body("   ") == ""
+
+
+def test_cleaner_strips_data_uri_images() -> None:
+    cleaned = clean_html_body(
+        '<main><img src="data:image/svg+xml;base64,AAAA"><img src="https://x.test/a.jpg" alt="a"><p>1 onion</p></main>'
+    )
+
+    assert "data:" not in cleaned
+    assert "https://x.test/a.jpg" in cleaned
+    assert "1 onion" in cleaned

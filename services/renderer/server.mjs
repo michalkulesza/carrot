@@ -88,6 +88,72 @@ function createEgressProxy({ resolveHost = resolvePublicHost, requestHttp = http
 export { createEgressProxy };
 
 const egressProxy = createEgressProxy();
+
+const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36';
+const BROWSER_CHANNEL = process.env.RENDERER_BROWSER_CHANNEL ?? 'chromium';
+const TIMEZONE_ID = process.env.RENDERER_TIMEZONE_ID || 'Europe/Berlin';
+const CHALLENGE_WAIT_MS = 8000;
+const CHALLENGE_TITLE = /just a moment|temporary error/i;
+const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt/;
+const STEALTH_INIT_SCRIPT = `(() => {
+  const define = (target, name, getter) => Object.defineProperty(target, name, { get: getter, configurable: true });
+  define(Navigator.prototype, 'webdriver', () => undefined);
+  define(Navigator.prototype, 'platform', () => 'MacIntel');
+  define(Navigator.prototype, 'languages', () => ['en-US', 'en']);
+  define(Navigator.prototype, 'hardwareConcurrency', () => 8);
+  if (!navigator.plugins.length) {
+    const names = ['PDF Viewer', 'Chrome PDF Viewer', 'Chromium PDF Viewer', 'Microsoft Edge PDF Viewer', 'WebKit built-in PDF'];
+    const plugins = names.map(name => ({ name, filename: 'internal-pdf-viewer', description: 'Portable Document Format', length: 1 }));
+    const mimeTypes = [{ type: 'application/pdf', suffixes: 'pdf', description: 'Portable Document Format' }, { type: 'text/pdf', suffixes: 'pdf', description: 'Portable Document Format' }];
+    define(Navigator.prototype, 'plugins', () => plugins);
+    define(Navigator.prototype, 'mimeTypes', () => mimeTypes);
+  }
+  window.chrome ||= {};
+  window.chrome.runtime ||= {};
+  const query = navigator.permissions?.query?.bind(navigator.permissions);
+  if (query) navigator.permissions.query = p => p?.name === 'notifications' ? Promise.resolve({ state: Notification.permission === 'default' ? 'prompt' : Notification.permission, onchange: null }) : query(p);
+  const patchWebGl = proto => {
+    const getParameter = proto.getParameter;
+    proto.getParameter = function (p) { return p === 37445 ? 'Apple Inc.' : p === 37446 ? 'Apple M1' : getParameter.call(this, p); };
+  };
+  patchWebGl(WebGLRenderingContext.prototype);
+  if (window.WebGL2RenderingContext) patchWebGl(WebGL2RenderingContext.prototype);
+  if (navigator.userAgentData) {
+    const brands = [{ brand: 'Chromium', version: '136' }, { brand: 'Google Chrome', version: '136' }, { brand: 'Not.A/Brand', version: '99' }];
+    const values = { brands, mobile: false, platform: 'macOS' };
+    define(Navigator.prototype, 'userAgentData', () => ({ ...values, getHighEntropyValues: async () => ({ ...values, architecture: 'arm', bitness: '64', platformVersion: '14.5.0', uaFullVersion: '136.0.0.0' }) }));
+  }
+})();`;
+export { USER_AGENT, STEALTH_INIT_SCRIPT };
+
+const launchOptions = {
+  headless: true,
+  args: ['--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled', `--proxy-server=http://127.0.0.1:${EGRESS_PROXY_PORT}`, '--proxy-bypass-list=<-loopback>'],
+};
+
+async function launchBrowser() {
+  if (!BROWSER_CHANNEL) return chromium.launch(launchOptions);
+  try { return await chromium.launch({ ...launchOptions, channel: BROWSER_CHANNEL }); }
+  catch { return chromium.launch(launchOptions); }
+}
+export { launchBrowser };
+
+function getBrowser() {
+  browserPromise ||= launchBrowser().catch(error => { browserPromise = undefined; throw error; });
+  return browserPromise;
+}
+
+async function looksLikeChallenge(page) {
+  try { return CHALLENGE_TITLE.test(await page.title()) || CHALLENGE_BODY.test(await page.content()); }
+  catch { return false; }
+}
+
+async function waitOutChallenge(page, started) {
+  const deadline = Math.min(Date.now() + CHALLENGE_WAIT_MS, started + TOTAL_TIMEOUT_MS - 1000);
+  if (!await looksLikeChallenge(page)) return;
+  while (Date.now() < deadline && await looksLikeChallenge(page)) await page.waitForTimeout(500);
+  await page.waitForLoadState('networkidle', { timeout: IDLE_MS }).catch(() => {});
+}
 function failure(reason, status = 422) {
   return { status, body: JSON.stringify({ ok: false, failure: reason }) };
 }
@@ -99,10 +165,12 @@ async function render(requestedUrl) {
   const started = Date.now();
   let context;
   try {
-    const browser = await (browserPromise ||= chromium.launch({ headless: true, args: [
-      '--disable-dev-shm-usage', `--proxy-server=http://127.0.0.1:${EGRESS_PROXY_PORT}`, '--proxy-bypass-list=<-loopback>',
-    ] }));
-    context = await browser.newContext({ javaScriptEnabled: true, serviceWorkers: 'block' });
+    const browser = await getBrowser();
+    context = await browser.newContext({
+      javaScriptEnabled: true, serviceWorkers: 'block', userAgent: USER_AGENT, locale: 'en-US', timezoneId: TIMEZONE_ID,
+      viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, extraHTTPHeaders: { 'Accept-Language': 'en-US,en;q=0.9' },
+    });
+    await context.addInitScript(STEALTH_INIT_SCRIPT);
     const page = await context.newPage();
     let requests = 0;
     let transferred = 0;
@@ -128,7 +196,10 @@ async function render(requestedUrl) {
         if (transferred > MAX_RESPONSE_BYTES) { oversizedResponse = true; await page.close().catch(() => {}); }
       } catch {}
     });
+    let documentStatus = null;
     page.on('response', response => {
+      const request = response.request();
+      if (request.isNavigationRequest() && request.frame() === page.mainFrame()) documentStatus = response.status();
       const declaredBytes = Number(response.headers()['content-length']);
       if (Number.isFinite(declaredBytes) && declaredBytes > MAX_RESPONSE_BYTES) {
         oversizedResponse = true;
@@ -139,6 +210,7 @@ async function render(requestedUrl) {
     try {
       const response = await page.goto(requestedUrl, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
       await page.waitForLoadState('networkidle', { timeout: IDLE_MS }).catch(() => {});
+      await waitOutChallenge(page, started);
       if (Date.now() - started >= TOTAL_TIMEOUT_MS) return failure('timeout', 504);
       if (oversizedResponse || transferred > MAX_RESPONSE_BYTES) return failure('response_too_large', 413);
       const finalUrl = page.url();
@@ -148,7 +220,7 @@ async function render(requestedUrl) {
       const bytes = Buffer.byteLength(html, 'utf8');
       if (!html.trim()) return failure('empty_html');
       if (bytes > MAX_HTML_BYTES) return failure('html_too_large', 413);
-      return { status: 200, body: JSON.stringify({ ok: true, requested_url: requestedUrl, final_url: finalUrl, html, duration_ms: Date.now() - started, response_status: response?.status() ?? null }) };
+      return { status: 200, body: JSON.stringify({ ok: true, requested_url: requestedUrl, final_url: finalUrl, html, duration_ms: Date.now() - started, response_status: documentStatus ?? response?.status() ?? null }) };
     } catch (error) {
       if (unsafeRedirect) return failure('unsafe_redirect');
       if (oversizedResponse) return failure('response_too_large', 413);
@@ -160,9 +232,7 @@ async function render(requestedUrl) {
 
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/healthz') {
-    try { await (browserPromise ||= chromium.launch({ headless: true, args: [
-      '--disable-dev-shm-usage', `--proxy-server=http://127.0.0.1:${EGRESS_PROXY_PORT}`, '--proxy-bypass-list=<-loopback>',
-    ] })); res.writeHead(200).end('ok'); }
+    try { await getBrowser(); res.writeHead(200).end('ok'); }
     catch { res.writeHead(503).end('unavailable'); }
     return;
   }

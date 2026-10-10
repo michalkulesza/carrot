@@ -425,3 +425,65 @@ async def test_rejects_facts_that_reference_unprovided_evidence() -> None:
 
     assert outcome.outcome == "failed"
     assert outcome.reason == FailureReason.INVALID_MODEL_RESPONSE
+
+
+BLOCKED_PAGE_HTML = (
+    '<html lang="en"><body><main><p>Temporary error. Please try again.</p>'
+    f'<img src="data:image/svg+xml;base64,{"QUJD" * 600}"></main></body></html>'
+)
+
+
+@dataclass
+class RecordingLanguageDetector:
+    result: LanguageResult
+    inputs: list[str] = field(default_factory=list)
+
+    def detect(self, text: str) -> LanguageResult:
+        self.inputs.append(text)
+        return self.result
+
+
+def _html_payload(html: str) -> dict:
+    return {
+        "schema_version": 1, "kind": "html", "source_url": "https://example.com/recipe",
+        "capture": {"status": "complete", "errors": []}, "html": html,
+    }
+
+
+@pytest.mark.asyncio
+async def test_language_detector_receives_visible_text_without_markup_or_base64() -> None:
+    detector = RecordingLanguageDetector(LanguageResult(code="en", confidence=0.9))
+    orchestrator = ExtractionOrchestrator(ExtractionDependencies(FakeExtractor(), detector))
+
+    await orchestrator.extract(_html_payload(BLOCKED_PAGE_HTML))
+
+    assert detector.inputs == ["Temporary error. Please try again."]
+
+
+@pytest.mark.asyncio
+async def test_html_lang_is_used_only_when_detector_has_no_code() -> None:
+    extractor = FakeExtractor()
+    detector = RecordingLanguageDetector(LanguageResult())
+    outcome = await ExtractionOrchestrator(ExtractionDependencies(extractor, detector)).extract(_html_payload(BLOCKED_PAGE_HTML))
+
+    assert outcome.evidence[0].language.code == "en"
+    assert len(extractor.html_inputs) == 1
+
+
+@pytest.mark.asyncio
+async def test_html_lang_does_not_override_confident_detection() -> None:
+    extractor = FakeExtractor()
+    detector = RecordingLanguageDetector(LanguageResult(code="ru", confidence=0.99))
+    outcome = await ExtractionOrchestrator(ExtractionDependencies(extractor, detector)).extract(_html_payload(BLOCKED_PAGE_HTML))
+
+    assert outcome.reason == FailureReason.UNSUPPORTED_LANGUAGE
+    assert extractor.html_inputs == []
+
+
+@pytest.mark.asyncio
+async def test_unsupported_html_lang_does_not_rescue_undetermined_language() -> None:
+    detector = RecordingLanguageDetector(LanguageResult(confidence=0.1))
+    html = BLOCKED_PAGE_HTML.replace('lang="en"', 'lang="ru-RU"')
+    outcome = await ExtractionOrchestrator(ExtractionDependencies(FakeExtractor(), detector)).extract(_html_payload(html))
+
+    assert outcome.reason == FailureReason.LANGUAGE_UNDETERMINED

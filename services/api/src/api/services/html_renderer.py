@@ -16,6 +16,7 @@ class RenderedPage:
     final_url: str
     html: str
     duration_ms: int
+    response_status: int | None = None
 
 
 class RendererFailure(RuntimeError):
@@ -40,4 +41,12 @@ async def render_url(url: str) -> RenderedPage:
         raise RendererFailure("invalid_renderer_response", operational=True)
     if not data["html"].strip():
         raise RendererFailure("empty_html", operational=True)
-    return RenderedPage(data["requested_url"], data["final_url"], data["html"], int(data.get("duration_ms", 0)))
+    response_status = data.get("response_status")
+    if isinstance(response_status, int) and not isinstance(response_status, bool):
+        if response_status >= 400:
+            raise RendererFailure(f"http_{response_status}", operational=True)
+    else:
+        response_status = None
+    return RenderedPage(
+        data["requested_url"], data["final_url"], data["html"], int(data.get("duration_ms", 0)), response_status,
+    )
