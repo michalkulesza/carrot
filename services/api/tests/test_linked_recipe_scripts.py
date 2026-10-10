@@ -21,8 +21,9 @@ backfill = _load("link_component_recipes")
 
 
 def _recipe(links, ids=None, author_id=None):
+    site = next((link.split("/")[2] for link in links if link), "own.test")
     return SimpleNamespace(
-        id=uuid4(), title="Wraps", author_id=author_id or uuid4(), source_url="https://own.test/r",
+        id=uuid4(), title="Wraps", author_id=author_id or uuid4(), source_url=f"https://{site}/r",
         components=[{"ingredient_links": links, "linked_recipe_ids": ids or [None] * len(links)}],
     )
 

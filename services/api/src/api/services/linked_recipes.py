@@ -34,14 +34,20 @@ def normalize_link(url: str | None) -> str | None:
     return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), parts.query, ""))
 
 
+def _site(url: str | None) -> str:
+    host = (urlsplit(url or "").hostname or "").casefold().rstrip(".")
+    return host.removeprefix("www.")
+
+
 def linked_urls(components: list[dict], own_url: str | None = None) -> list[str]:
-    """Distinct normalised linked URLs in ingredient order, minus the recipe's own URL, capped."""
+    """Distinct normalised same-site links, minus the recipe's own URL, capped (cross-site ones are shop/affiliate pages)."""
     own = normalize_link(own_url)
+    own_site = _site(own_url)
     urls: list[str] = []
     for component in components:
         for link in component.get("ingredient_links") or []:
             url = normalize_link(link)
-            if url and url != own and url not in urls:
+            if url and url != own and own_site and _site(url) == own_site and url not in urls:
                 urls.append(url)
     return urls[:MAX_LINKED_IMPORTS]
 
@@ -135,10 +141,12 @@ def _child_idempotency_key(parent_id: uuid.UUID, url: str) -> uuid.UUID:
 
 async def _insert_child_job(
     session: AsyncSession, parent_id: uuid.UUID, user_id: uuid.UUID, household_id: uuid.UUID, url: str,
+    *, requested_by_user: bool = False,
 ) -> uuid.UUID | None:
+    job_input = {"url": url, "requested_by_user": True} if requested_by_user else {"url": url}
     child_id = await session.scalar(
         pg_insert(ImportJob).values(
-            user_id=user_id, household_id=household_id, kind=ImportJobKind.URL, input={"url": url},
+            user_id=user_id, household_id=household_id, kind=ImportJobKind.URL, input=job_input,
             parent_recipe_id=parent_id, idempotency_key=_child_idempotency_key(parent_id, url),
             status=ImportJobStatus.PENDING, next_attempt_at=datetime.utcnow(),
         ).on_conflict_do_nothing(index_elements=["user_id", "idempotency_key"]).returning(ImportJob.id)
@@ -185,7 +193,7 @@ async def import_linked_recipe(
         await attach_existing_recipes(session, parent, {url: existing})
         return existing, None
 
-    child_id = await _insert_child_job(session, parent.id, user_id, household_id, url)
+    child_id = await _insert_child_job(session, parent.id, user_id, household_id, url, requested_by_user=True)
     if child_id is not None:
         return None, child_id
 
@@ -196,7 +204,7 @@ async def import_linked_recipe(
     )
     if job.status in _RESETTABLE_STATUSES:
         job.status = ImportJobStatus.PENDING
-        job.input = {"url": url}
+        job.input = {"url": url, "requested_by_user": True}
         job.failure_code = None
         job.failure_stage = None
         job.diagnostic_error = None

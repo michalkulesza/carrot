@@ -404,7 +404,10 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
             job.diagnostic_error = str(error)[:500] if isinstance(error, ImportPipelineFailure) else type(error).__name__
             job.next_attempt_at = None
             job.updated_at = now
-            await _event_for_job(session, job, "import_job.failed")
+            auto_spawned_child = job.parent_recipe_id is not None and not job.input.get("requested_by_user")
+            if auto_spawned_child:  # the linked line just stays unresolved and can be imported on tap
+                job.dismissed_at = now
+            await _event_for_job(session, job, "import_job.dismissed" if auto_spawned_child else "import_job.failed")
             await finalize_parent_of_child(session, job)
             report_recipe_import_failure(
                 input_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else ("text" if job.kind == ImportJobKind.TEXT else "image"),

@@ -43,13 +43,19 @@ def test_normalize_link_ignores_fragment_trailing_slash_and_host_case() -> None:
 
 def test_linked_urls_dedupes_skips_own_url_and_caps() -> None:
     components = [
-        _component(["https://a.test/x", "https://A.test/x/", None, "https://own.test/r", "ftp://a.test/y"]),
-        _component([f"https://b.test/{index}" for index in range(10)]),
+        _component(["https://own.test/x", "https://OWN.test/x/", None, "https://own.test/r", "ftp://own.test/y"]),
+        _component([f"https://www.own.test/{index}" for index in range(10)]),
     ]
 
     urls = linked_recipes.linked_urls(components, "https://own.test/r/#c")
 
-    assert urls == ["https://a.test/x"] + [f"https://b.test/{index}" for index in range(4)]
+    assert urls == ["https://own.test/x"] + [f"https://www.own.test/{index}" for index in range(4)]
+
+
+def test_linked_urls_skips_cross_site_shop_links() -> None:
+    components = [_component(["https://amzn.to/3ImXC2w", "https://www.target.com/p/x", "https://own.test/sauce"])]
+
+    assert linked_recipes.linked_urls(components, "https://www.own.test/r") == ["https://own.test/sauce"]
 
 
 def test_set_linked_recipe_ids_matches_normalised_links_only() -> None:
@@ -144,7 +150,7 @@ def spawn_mocks(monkeypatch):
 
 
 def _parent(links):
-    return _recipe(components=[_component(links)], source_url="https://own.test/r")
+    return _recipe(components=[_component(links)], source_url="https://a.test/r")
 
 
 def _owner():
@@ -157,7 +163,7 @@ async def test_spawn_queues_one_job_per_unique_url(spawn_mocks) -> None:
     session.get = AsyncMock()
 
     await linked_recipes.spawn_linked_imports(
-        session, _parent(["https://a.test/x", "https://a.test/x/", "https://own.test/r", "https://b.test/y"]), **_owner(),
+        session, _parent(["https://a.test/x", "https://a.test/x/", "https://a.test/r", "https://a.test/y"]), **_owner(),
     )
 
     assert session.scalar.await_count == 2
@@ -171,7 +177,7 @@ async def test_spawn_reuses_existing_household_recipe(spawn_mocks) -> None:
     spawn_mocks.existing.return_value = {"https://a.test/x": existing_id}
     session = FakeSession(scalar=uuid4())
     session.get = AsyncMock()
-    parent = _parent(["https://a.test/x", "https://b.test/y"])
+    parent = _parent(["https://a.test/x", "https://a.test/y"])
 
     await linked_recipes.spawn_linked_imports(session, parent, **_owner())
 
@@ -293,12 +299,12 @@ async def test_spawn_returns_new_job_ids_and_skips_resolved_links(spawn_mocks) -
     session = FakeSession(scalar=child_job_id)
     session.get = AsyncMock()
     resolved_id = uuid4()
-    parent = _recipe(components=[_component(["https://a.test/x", "https://b.test/y"], [str(resolved_id), None])])
+    parent = _recipe(components=[_component(["https://a.test/x", "https://a.test/y"], [str(resolved_id), None])], source_url="https://a.test/r")
 
     created = await linked_recipes.spawn_linked_imports(session, parent, **_owner())
 
     assert created == [child_job_id]
-    assert spawn_mocks.existing.await_args.args[2] == ["https://b.test/y"]
+    assert spawn_mocks.existing.await_args.args[2] == ["https://a.test/y"]
 
 
 @pytest.mark.asyncio
@@ -339,7 +345,7 @@ async def test_import_linked_recipe_resets_failed_or_cancelled_child(spawn_mocks
 
     assert result == (None, job.id)
     assert job.status == ImportJobStatus.PENDING
-    assert (job.failure_code, job.retry_count, job.dismissed_at, job.input) == (None, 0, None, {"url": "https://a.test/x"})
+    assert (job.failure_code, job.retry_count, job.dismissed_at, job.input) == (None, 0, None, {"url": "https://a.test/x", "requested_by_user": True})
     spawn_mocks.event.assert_awaited_once()
 
 
