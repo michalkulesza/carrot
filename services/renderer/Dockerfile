@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends iptables && rm 
 COPY package.json ./
 COPY package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
-COPY server.mjs ./
+COPY server.mjs socks.mjs ./
 COPY test ./test
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
