@@ -1,4 +1,5 @@
 Before doing any work, read and follow `general.md`.
+You're an orchestrator, launch subagents when need to execute plan or task, feel free to use sonnet 5.5 or haiku 5.5 depending on the task.
 
 # Misc
 - Track open product work in [docs/TODO.md](docs/TODO.md). Whenever the user asks to mark a backlog item done, remove the completed item (or completed subtask) from TODO.md and move it under the matching category in [docs/TODO-COMPLETED.md](docs/TODO-COMPLETED.md). Keep any unfinished parent task or sibling subtasks in TODO.md; do not mark a parent complete until all of its work is done.
