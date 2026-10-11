@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -9,6 +10,7 @@ from urllib.parse import urljoin
 
 from pydantic import ValidationError
 
+from api.services.extraction_v2.challenge import looks_like_bot_challenge
 from api.services.extraction_v2.contracts import (
     AudioEvidenceExtractor, AudioExtractionInput, CompleteOutcome, EvidenceKind,
     EvidenceSource, ExtractedRecipe, ExtractionInput, ExtractionOutcome,
@@ -28,6 +30,7 @@ from api.services.extraction_v2.sources import (
 )
 from api.services.html_cleaner import clean_html_body
 
+log = logging.getLogger(__name__)
 MAX_LINKED_PAGES = 3
 _URL_IN_TEXT = re.compile(r"https?://[^\s<>()]+", re.IGNORECASE)
 
@@ -186,6 +189,7 @@ class ExtractionOrchestrator:
             return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
                                  reason=FailureReason.MODEL_TIMEOUT, failed_stage=ExtractionStage.TEXT)
         except Exception:
+            log.warning("text extraction failed", exc_info=True)
             return FailedOutcome(outcome="failed", source_url=source_url, evidence=evidence, trace=trace,
                                  reason=FailureReason.INVALID_MODEL_RESPONSE, failed_stage=ExtractionStage.TEXT)
         trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="image_transcript_extracted" if image_source else "pasted_text_extracted", evidence_ids=[source.id]))
@@ -232,6 +236,10 @@ class ExtractionOrchestrator:
         return resolved
 
     async def _extract_html_payload(self, payload: HtmlPayload) -> ExtractionOutcome:
+        if looks_like_bot_challenge(payload.html):
+            return FailedOutcome(outcome="failed", source_url=str(payload.source_url), evidence=[],
+                                 trace=[TraceEvent(stage=ExtractionStage.INPUT, event="bot_challenge_detected")],
+                                 reason=FailureReason.SOURCE_BLOCKED, failed_stage=ExtractionStage.INPUT)
         cleaned = clean_html_body(payload.html)
         language = html_lang_fallback(self._dependencies.language_detector.detect(visible_text(cleaned)), payload.html)
         source = EvidenceSource(id="html:0", kind=EvidenceKind.HTML, source_url=str(payload.source_url), text=cleaned, language=language)
@@ -247,6 +255,7 @@ class ExtractionOrchestrator:
             return FailedOutcome(outcome="failed", source_url=str(payload.source_url), evidence=evidence, trace=trace,
                                  reason=FailureReason.MODEL_TIMEOUT, failed_stage=ExtractionStage.TEXT)
         except Exception:
+            log.warning("html extraction failed for %s", payload.source_url, exc_info=True)
             return FailedOutcome(outcome="failed", source_url=str(payload.source_url), evidence=evidence, trace=trace,
                                  reason=FailureReason.INVALID_MODEL_RESPONSE, failed_stage=ExtractionStage.TEXT)
         trace.append(TraceEvent(stage=ExtractionStage.TEXT, event="html_extracted", evidence_ids=[source.id]))

@@ -171,6 +171,7 @@ export type ImportFailureCode =
   | "ambiguous_recipe"
   | "unreadable_content"
   | "source_fetch_failed"
+  | "source_blocked"
   | "transcription_failed"
   | "model_timeout"
   | "model_rate_limited"

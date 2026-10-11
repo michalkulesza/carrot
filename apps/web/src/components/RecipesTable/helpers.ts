@@ -68,13 +68,43 @@ export const applySortRows = (rows: RecipeOut[], sort: Sort): RecipeOut[] => {
   })
 }
 
-export const getTableColumns = (showAddedBy: boolean): string =>
-  showAddedBy
-    ? '20px 24px 56px minmax(160px,1fr) 70px 56px 90px 90px 90px 70px 150px 90px 90px 24px'
-    : '20px 24px 56px minmax(160px,1fr) 70px 56px 90px 90px 90px 70px 150px 90px 24px'
+// Fixed tracks sized for the longest locale header label (e.g. "Hinzugef�gt von", "Gospodarstwo").
+const getTableTracks = (showAddedBy: boolean): number[] => [
+  20,
+  24,
+  56,
+  160,
+  96,
+  64,
+  90,
+  90,
+  90,
+  110,
+  150,
+  ...(showAddedBy ? [150] : []),
+  120,
+  24,
+]
+const TITLE_TRACK_INDEX = 3
+const TABLE_COLUMN_GAP_PX = 16
+const TABLE_PADDING_X_PX = 40
 
-export const getTableMinWidth = (showAddedBy: boolean): number =>
-  showAddedBy ? 1302 : 1198
+export const getTableColumns = (showAddedBy: boolean): string =>
+  getTableTracks(showAddedBy)
+    .map((px, index) =>
+      index === TITLE_TRACK_INDEX ? `minmax(${px}px,1fr)` : `${px}px`
+    )
+    .join(' ')
+
+export const getTableMinWidth = (showAddedBy: boolean): number => {
+  const tracks = getTableTracks(showAddedBy)
+
+  return (
+    tracks.reduce((sum, px) => sum + px, 0) +
+    (tracks.length - 1) * TABLE_COLUMN_GAP_PX +
+    TABLE_PADDING_X_PX
+  )
+}
 
 export const getMacroMax = (rows: RecipeOut[]): MacroMax => {
   const max = (values: (number | null)[]): number =>

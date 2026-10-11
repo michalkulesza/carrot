@@ -123,8 +123,8 @@ const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/
 const BROWSER_CHANNEL = process.env.RENDERER_BROWSER_CHANNEL ?? 'chromium';
 const TIMEZONE_ID = process.env.RENDERER_TIMEZONE_ID || 'Europe/Berlin';
 const CHALLENGE_WAIT_MS = 8000;
-const CHALLENGE_TITLE = /just a moment|temporary error/i;
-const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt/;
+const CHALLENGE_TITLE = /just a moment|temporary error|robot challenge screen/i;
+const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt|sgchallenge|sgcaptcha/;
 const STEALTH_INIT_SCRIPT = `(() => {
   const define = (target, name, getter) => Object.defineProperty(target, name, { get: getter, configurable: true });
   define(Navigator.prototype, 'webdriver', () => undefined);
@@ -154,7 +154,7 @@ const STEALTH_INIT_SCRIPT = `(() => {
     define(Navigator.prototype, 'userAgentData', () => ({ ...values, getHighEntropyValues: async () => ({ ...values, architecture: 'arm', bitness: '64', platformVersion: '14.5.0', uaFullVersion: '136.0.0.0' }) }));
   }
 })();`;
-export { USER_AGENT, STEALTH_INIT_SCRIPT };
+export { USER_AGENT, STEALTH_INIT_SCRIPT, CHALLENGE_TITLE, CHALLENGE_BODY };
 
 const launchOptions = {
   headless: true,

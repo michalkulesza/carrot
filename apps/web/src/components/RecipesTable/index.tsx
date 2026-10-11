@@ -38,7 +38,7 @@ const RecipesTable = ({
     <div className="h-full min-h-0 min-w-0 w-full flex-1 overflow-auto bg-white font-nunito text-ink">
       <div style={tableContentStyle}>
         <div
-          className="sticky top-0 z-10 grid items-center gap-3.5 border-b border-mist-soft bg-white px-5 py-3"
+          className="sticky top-0 z-10 grid items-center gap-4 border-b border-mist-soft bg-white px-5 py-3"
           style={{ gridTemplateColumns: cols }}
         >
           <div

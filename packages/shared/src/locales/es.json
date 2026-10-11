@@ -809,6 +809,7 @@
       "ambiguous_recipe": "No se pudo separar el contenido de la receta con fiabilidad.",
       "unreadable_content": "No se pudo leer el contenido de la fuente con fiabilidad.",
       "source_fetch_failed": "No se pudo acceder a la fuente. Int?ntalo de nuevo.",
+      "source_blocked": "Este sitio web bloqueó la importación automática. Pega el texto de la receta o inténtalo de nuevo más tarde.",
       "transcription_failed": "No se pudo transcribir el v?deo. Int?ntalo de nuevo.",
       "model_timeout": "La solicitud del modelo agot? el tiempo. Int?ntalo de nuevo.",
       "model_rate_limited": "El modelo est? ocupado. Int?ntalo pronto.",

@@ -46,7 +46,7 @@ const ImportJobCards = ({
 
   return (
     <>
-      <div className="mx-4 mt-4 flex flex-col gap-2">
+      <div className="mx-4 mt-4 md:mb-4 flex flex-col gap-2">
         {jobs.map((job) => {
           const actionPending = actionJobId === job.id
           const requiresUserAction =
@@ -59,6 +59,7 @@ const ImportJobCards = ({
                 'no_recipe_content',
                 'ambiguous_recipe',
                 'unreadable_content',
+                'source_blocked',
               ].includes(job.failure_code ?? ''))
           const retryScheduled = job.status === 'pending' && job.retry_count > 0
           const message =

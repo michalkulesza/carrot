@@ -75,7 +75,7 @@ const SortableRow = ({
     transition,
     gridTemplateColumns: cols,
   }
-  const rowClassName = `group grid items-center gap-3.5 px-5 py-2.5 border-b border-mist text-[15px] hover:bg-row-hover transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`
+  const rowClassName = `group grid items-center gap-4 px-5 py-2.5 border-b border-mist text-[15px] hover:bg-row-hover transition-colors cursor-pointer select-none ${isDragging ? 'opacity-50 z-10 relative' : ''}`
   const starButtonClassName = `flex items-center justify-center w-full h-8 transition-colors rounded ${recipe.is_favourite ? 'text-amber-400 hover:text-amber-300' : 'text-ink-ghost hover:text-amber-400'}`
   const favouriteAriaLabel = recipe.is_favourite
     ? t('recipes.removeFromFavourites')

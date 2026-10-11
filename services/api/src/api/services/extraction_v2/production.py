@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from urllib.parse import urljoin, urlsplit
 from urllib.parse import urlunsplit
 
@@ -12,6 +13,7 @@ from api.config import settings
 from api.models import ImportMetadata
 from api.services import gemini
 from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
+from api.services.extraction_v2.challenge import looks_like_bot_challenge
 from api.services.extraction_v2.contracts import (
     Capture, Comment, ExtractionOutcome, FailureReason, FailedOutcome,
     ExtractionStage, HtmlPayload, ImageTextPayload, SocialPayload, TextPayload, TraceEvent,
@@ -31,8 +33,16 @@ from api.services.extraction_v2.sources import (
 from api.services.scraper import scraper
 from api.services.html_renderer import RendererFailure, render_url
 
+log = logging.getLogger(__name__)
+
+
+class SourceBlocked(Exception):
+    """The site served an anti-bot challenge instead of the document."""
+
+
 _MAX_HTML_BYTES = 2 * 1024 * 1024
 _MAX_REDIRECTS = 5
+_CHALLENGE_STATUSES = (202, 403, 429, 503)
 _SOCIAL_SUFFIXES = ("instagram.com", "tiktok.com")
 _UNSUPPORTED_SOCIAL_SUFFIXES = (
     "facebook.com", "fb.watch", "youtube.com", "youtu.be", "pinterest.com",
@@ -84,9 +94,11 @@ async def _fetch_html(url: str) -> tuple[str, str]:
                         raise ValueError("redirect did not provide a destination")
                     current = urljoin(current, location)
                     continue
-                response.raise_for_status()
                 content_type = response.headers.get("content-type", "").casefold()
+                if not response.is_success and response.status_code not in _CHALLENGE_STATUSES:
+                    response.raise_for_status()
                 if content_type and "html" not in content_type:
+                    response.raise_for_status()
                     raise ValueError("URL response is not HTML")
                 length = response.headers.get("content-length")
                 if length and int(length) > _MAX_HTML_BYTES:
@@ -96,7 +108,11 @@ async def _fetch_html(url: str) -> tuple[str, str]:
                     body.extend(chunk)
                     if len(body) > _MAX_HTML_BYTES:
                         raise ValueError("HTML response exceeds size limit")
-                return bytes(body).decode(response.encoding or "utf-8", errors="replace"), str(response.url)
+                text = bytes(body).decode(response.encoding or "utf-8", errors="replace")
+                if looks_like_bot_challenge(text):
+                    raise SourceBlocked(f"bot challenge (HTTP {response.status_code})")
+                response.raise_for_status()
+                return text, str(response.url)
     raise ValueError("URL exceeded redirect limit")
 
 
@@ -150,12 +166,17 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
         try:
             rendered = await render_url(url)
             html, final_url = rendered.html, rendered.final_url
+            if looks_like_bot_challenge(html):
+                raise RendererFailure("bot_challenge", operational=True)
         except RendererFailure as error:
             if not error.operational:
                 raise
             renderer_failure = error.category
             render_status = "raw_fallback"
             html, final_url = await _fetch_html(url)
+    except SourceBlocked:
+        log.warning("source blocked by bot challenge (renderer_failure=%s)", renderer_failure)
+        return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     except Exception:
         return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     return await _extract_html(

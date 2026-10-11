@@ -766,6 +766,7 @@
       "ambiguous_recipe": "The recipe content could not be separated reliably.",
       "unreadable_content": "The source content could not be read reliably.",
       "source_fetch_failed": "The source could not be reached. Try again.",
+      "source_blocked": "This website blocked automatic import. Paste the recipe text instead, or try again later.",
       "transcription_failed": "The video could not be transcribed. Try again.",
       "model_timeout": "The model request timed out. Try again.",
       "model_rate_limited": "The model is busy. Try again shortly.",

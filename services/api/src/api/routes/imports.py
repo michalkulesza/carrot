@@ -35,7 +35,9 @@ _ACTIVE_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING, ImportJobS
 _MAX_IMAGE_BYTES = 8 * 1024 * 1024
 _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 _MAX_CAPTURED_HTML_BYTES = 3 * 1024 * 1024
-_DEVICE_CAPTURE_FAILURE_CODES = {ImportFailureCode.SOURCE_FETCH_FAILED, ImportFailureCode.USER_ACTION_REQUIRED}
+_DEVICE_CAPTURE_FAILURE_CODES = {
+    ImportFailureCode.SOURCE_FETCH_FAILED, ImportFailureCode.USER_ACTION_REQUIRED, ImportFailureCode.SOURCE_BLOCKED,
+}
 
 
 def _scope_filter(model, household_id: uuid.UUID, user_id: uuid.UUID):
@@ -48,6 +50,7 @@ def is_device_capture_eligible(job: ImportJob) -> bool:
         job.kind == ImportJobKind.URL
         and job.status == ImportJobStatus.FAILED
         and job.dismissed_at is None
+        and not (job.input or {}).get("device_capture_used")
         and job.failure_code in _DEVICE_CAPTURE_FAILURE_CODES
         and isinstance(url, str)
         and is_html_source(url)
@@ -345,7 +348,7 @@ async def submit_captured_html(
     final_scheme = urlsplit(body.final_url).scheme.lower()
     if not body.html.strip() or final_scheme not in ("http", "https") or not _hosts_are_related(body.final_url, job.input["url"]):
         raise HTTPException(status_code=422, detail="invalid_captured_html")
-    job.input = {**job.input, "captured_html": body.html, "captured_final_url": body.final_url}
+    job.input = {**job.input, "captured_html": body.html, "captured_final_url": body.final_url, "device_capture_used": True}
     job.status = ImportJobStatus.PENDING
     job.failure_code = None
     job.failure_stage = None

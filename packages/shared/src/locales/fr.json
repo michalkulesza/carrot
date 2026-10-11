@@ -809,6 +809,7 @@
       "ambiguous_recipe": "Le contenu de la recette n'a pas pu ?tre isol? de mani?re fiable.",
       "unreadable_content": "Le contenu de la source n'a pas pu ?tre lu de mani?re fiable.",
       "source_fetch_failed": "La source est inaccessible. R?essayez.",
+      "source_blocked": "Ce site a bloqué l'importation automatique. Collez plutôt le texte de la recette ou réessayez plus tard.",
       "transcription_failed": "La vid?o n'a pas pu ?tre transcrite. R?essayez.",
       "model_timeout": "La requ?te du mod?le a expir?. R?essayez.",
       "model_rate_limited": "Le mod?le est occup?. R?essayez bient?t.",
