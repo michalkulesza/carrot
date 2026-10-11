@@ -175,6 +175,7 @@ export type ImportFailureCode =
   | "model_timeout"
   | "model_rate_limited"
   | "invalid_model_response"
+  | "duplicate_recipe"
   | "unknown_error";
 
 export type RecipeIssueCode = "MISSING_INGREDIENTS" | "MISSING_INSTRUCTIONS";
@@ -200,6 +201,7 @@ export interface ImportJob {
   created_by_user_id: string;
   created_by_name: string | null;
   result_recipe_id: string | null;
+  duplicate_recipe_id: string | null;
   failure_code: ImportFailureCode | null;
   failure_stage: string | null;
   outcome: "complete" | "incomplete" | "failed" | null;

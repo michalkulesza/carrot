@@ -777,16 +777,23 @@
     "enqueueFailed": "Der Import konnte nicht gestartet werden. Bitte versuche es erneut.",
     "someone": "Jemand",
     "capturingOnDevice": "Seite wird auf deinem Gerät geladen…",
-    "openPageToContinue": "Seite öffnen",
+    "openAndPaste": "Öffnen & einfügen",
     "captureFailed": "Die Seite konnte nicht erfasst werden. Versuche es erneut.",
     "userActionRequired": {
-      "title": "Das Rezept braucht deine Hilfe",
+      "title": "Import nicht automatisch möglich",
       "body": "Das Rezept konnte nicht automatisch extrahiert werden. Kopiere den Rezepttext aus der Quelle und füge ihn in den Textimport ein.",
       "continue": "Weiter"
     },
+    "duplicate": {
+      "message": "Dieser Link passt zu einem Rezept, das du bereits gespeichert hast.",
+      "importAnyway": "Trotzdem importieren",
+      "goToRecipe": "Zum Rezept",
+      "dontImport": "Nicht importieren"
+    },
     "failure": {
+      "duplicate_recipe": "Bereits in deiner Bibliothek",
       "extraction_failed": "Rezeptimport fehlgeschlagen",
-      "user_action_required": "Das Rezept braucht deine Hilfe",
+      "user_action_required": "Import nicht automatisch möglich",
       "invalid_input": "Diese Import-Eingabe wird nicht unterstützt.",
       "household_access_changed": "Du hast keinen Zugriff mehr auf diesen Haushalt.",
       "retries_exhausted": "Der Import konnte nach mehreren Versuchen nicht abgeschlossen werden.",

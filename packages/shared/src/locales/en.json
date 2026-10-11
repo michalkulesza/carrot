@@ -738,16 +738,23 @@
     "enqueueFailed": "Could not start the import. Please try again.",
     "someone": "Someone",
     "capturingOnDevice": "Capturing the page on your device…",
-    "openPageToContinue": "Open page",
+    "openAndPaste": "Open & paste",
     "captureFailed": "Couldn't capture the page. Try again.",
     "userActionRequired": {
-      "title": "Recipe needs your input",
+      "title": "Couldn't import automatically",
       "body": "Automatic recipe extraction wasn't possible. Copy the recipe text from the source, then paste it into Text Import.",
       "continue": "Continue"
     },
+    "duplicate": {
+      "message": "This link matches a recipe you already saved.",
+      "importAnyway": "Import anyway",
+      "goToRecipe": "Go to recipe",
+      "dontImport": "Don't import"
+    },
     "failure": {
+      "duplicate_recipe": "Already in your library",
       "extraction_failed": "Recipe import failed",
-      "user_action_required": "Recipe needs your input",
+      "user_action_required": "Couldn't import automatically",
       "invalid_input": "This import input isn't supported.",
       "household_access_changed": "You no longer have access to this household.",
       "retries_exhausted": "The import could not be completed after several attempts.",

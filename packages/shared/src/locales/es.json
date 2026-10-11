@@ -781,16 +781,23 @@
     "enqueueFailed": "No se pudo iniciar la importación. Inténtalo de nuevo.",
     "someone": "Alguien",
     "capturingOnDevice": "Obteniendo la página en tu dispositivo…",
-    "openPageToContinue": "Abrir página",
+    "openAndPaste": "Abrir y pegar",
     "captureFailed": "No se pudo obtener la página. Inténtalo de nuevo.",
     "userActionRequired": {
-      "title": "La receta necesita tu ayuda",
+      "title": "No se pudo importar automáticamente",
       "body": "No se pudo extraer la receta automáticamente. Copia el texto de la receta desde la fuente y pégalo en la importación de texto.",
       "continue": "Continuar"
     },
+    "duplicate": {
+      "message": "Este enlace coincide con una receta que ya guardaste.",
+      "importAnyway": "Importar de todos modos",
+      "goToRecipe": "Ir a la receta",
+      "dontImport": "No importar"
+    },
     "failure": {
+      "duplicate_recipe": "Ya está en tu biblioteca",
       "extraction_failed": "La importación de la receta falló",
-      "user_action_required": "La receta necesita tu ayuda",
+      "user_action_required": "No se pudo importar automáticamente",
       "invalid_input": "Esta entrada de importación no es compatible.",
       "household_access_changed": "Ya no tienes acceso a este hogar.",
       "retries_exhausted": "No se pudo completar la importación tras varios intentos.",

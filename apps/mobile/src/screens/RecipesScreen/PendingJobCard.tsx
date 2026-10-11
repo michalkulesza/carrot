@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'expo-router'
-import { ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
+import { ActionSheetIOS, ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -29,20 +28,23 @@ const getCardTitle = (job: ImportJob, capturingOnDevice: boolean, retryScheduled
 const PendingJobCard = ({
   job,
   onRetry,
+  onImportAnyway,
+  onGoToRecipe,
   onCancel,
   onDismiss,
   onContinueManually,
 }: {
   job: ImportJob
   onRetry: () => Promise<unknown>
+  onImportAnyway: () => Promise<unknown>
+  onGoToRecipe: (recipeId: string) => void
   onCancel: () => Promise<unknown>
   onDismiss: () => Promise<unknown>
   onContinueManually: () => void
 }) => {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const router = useRouter()
-  const { capturingJobId, needsInteractionJobIds } = useDeviceCaptureState()
+  const { capturingJobId } = useDeviceCaptureState()
   const [actionPending, setActionPending] = useState(false)
   const actionInProgress = useRef(false)
   const sourceUrlOpening = useRef(false)
@@ -53,7 +55,6 @@ const PendingJobCard = ({
   const [resolvedImagePreview, setResolvedImagePreview] = useState<string | null>(null)
   const imageUri = imagePreview ?? resolvedImagePreview ?? (job.kind === 'text' ? PLACEHOLDER_URL : null)
   const capturingOnDevice = job.status === 'failed' && capturingJobId === job.id
-  const captureNeedsInteraction = job.device_capture_eligible && needsInteractionJobIds.has(job.id)
   const title = getCardTitle(job, capturingOnDevice, retryScheduled, t)
   const handleAction = async (action: () => Promise<unknown>) => {
     if (actionInProgress.current) return
@@ -75,29 +76,50 @@ const PendingJobCard = ({
   }
   const handleCancel = () => void handleAction(onCancel)
   const handleDismiss = () => void handleAction(onDismiss)
-  const requiresUserAction = job.status === 'failed' && !capturingOnDevice && (captureNeedsInteraction || job.failure_code === 'user_action_required' || [
-    'unsupported_source', 'unsupported_language', 'language_undetermined',
-    'no_recipe_content', 'ambiguous_recipe', 'unreadable_content',
-  ].includes(job.failure_code ?? ''))
   const canOpenSourceUrl = Boolean(job.source_url)
-  const handleOpenPage = () => {
-    router.push({ pathname: '/webview-import', params: { url: job.source_url ?? '', jobId: job.id } })
+  const isFailedCard = job.status === 'failed' && !capturingOnDevice
+  const isDuplicate = job.failure_code === 'duplicate_recipe'
+  const handleImportAnyway = () => void handleAction(onImportAnyway)
+  const handleGoToRecipe = () => {
+    if (job.duplicate_recipe_id) onGoToRecipe(job.duplicate_recipe_id)
   }
-  const handleUserAction = () => {
-    const openPageAction = job.device_capture_eligible
-      ? [{ text: t('importJobs.openPageToContinue'), onPress: handleOpenPage }]
-      : []
-    Alert.alert(t('importJobs.userActionRequired.title'), t('importJobs.userActionRequired.body'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      ...openPageAction,
-      { text: t('importJobs.remove'), style: 'destructive', onPress: handleDismiss },
+  const handleDuplicateMenu = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    const actions = [
+      { label: t('importJobs.duplicate.importAnyway'), run: handleImportAnyway },
+      ...(job.duplicate_recipe_id ? [{ label: t('importJobs.duplicate.goToRecipe'), run: handleGoToRecipe }] : []),
+      { label: t('importJobs.duplicate.dontImport'), run: handleDismiss },
+    ]
+    const options = [...actions.map((action) => action.label), t('common.cancel')]
+    ActionSheetIOS.showActionSheetWithOptions(
       {
-        text: t('importJobs.userActionRequired.continue'),
-        onPress: () => {
-          onContinueManually()
-        },
+        title,
+        message: t('importJobs.duplicate.message'),
+        options,
+        destructiveButtonIndex: actions.length - 1,
+        cancelButtonIndex: actions.length,
       },
-    ])
+      (index) => actions[index]?.run(),
+    )
+  }
+  const handleFailedMenu = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    const actions = [
+      { label: t('importJobs.openAndPaste'), run: onContinueManually },
+      { label: t('importJobs.retry'), run: handleRetry },
+      { label: t('importJobs.remove'), run: handleDismiss },
+    ]
+    const options = [...actions.map((action) => action.label), t('common.cancel')]
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title,
+        message: t('importJobs.userActionRequired.body'),
+        options,
+        destructiveButtonIndex: actions.length - 1,
+        cancelButtonIndex: actions.length,
+      },
+      (index) => actions[index]?.run(),
+    )
   }
   const handleOpenSourceUrl = async () => {
     if (!job.source_url || sourceUrlOpening.current) return
@@ -188,10 +210,11 @@ const PendingJobCard = ({
   useEffect(() => () => clearImportImagePreview(job.id), [job.id])
 
   return (
-    <View style={[styles.pendingCard, requiresUserAction && styles.pendingCardActionRequired]}>
+    <View style={[styles.pendingCard, isDuplicate && styles.pendingCardDuplicate]}>
       {canOpenSourceUrl ? (
         <Pressable
           style={styles.pendingContent}
+          onPress={isFailedCard ? (isDuplicate ? handleDuplicateMenu : handleFailedMenu) : undefined}
           onLongPress={handleSourceUrlMenu}
           delayLongPress={500}
           accessibilityRole="button"
@@ -202,23 +225,17 @@ const PendingJobCard = ({
       ) : (
         <View style={styles.pendingContent}>{cardContent}</View>
       )}
-      {requiresUserAction ? (
-        <View style={styles.pendingActionRow}>
-          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
-            <Feather name="refresh-cw" size={16} color={colors.blue} />
-          </Pressable>
-          <Pressable style={styles.pendingIconAction} onPress={handleUserAction} accessibilityLabel={t('importJobs.userActionRequired.continue')}>
-            <Feather name="chevron-right" size={22} color={colors.brand} />
-          </Pressable>
-        </View>
-      ) : capturingOnDevice ? null : job.status === 'failed' ? (
-        <View style={styles.pendingActionRow}>
-          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
-            <Feather name="refresh-cw" size={16} color={colors.blue} />
-          </Pressable>
-          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDismiss} accessibilityLabel={t('importJobs.remove')}>
-            <Feather name="x" size={18} color={PlatformColor('secondaryLabel') as unknown as string} />
-          </Pressable>
+      {capturingOnDevice ? null : job.status === 'failed' ? (
+        <View style={styles.pendingCancelWrap}>
+          {isDuplicate ? (
+            <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDuplicateMenu} accessibilityLabel={title}>
+              <Feather name="chevron-right" size={20} color={PlatformColor('secondaryLabel') as unknown as string} />
+            </Pressable>
+          ) : (
+            <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
+              <Feather name="refresh-cw" size={16} color={colors.blue} />
+            </Pressable>
+          )}
         </View>
       ) : (
         <View style={styles.pendingCancelWrap}>

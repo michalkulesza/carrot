@@ -781,16 +781,23 @@
     "enqueueFailed": "Impossible de démarrer l’importation. Réessayez.",
     "someone": "Quelqu’un",
     "capturingOnDevice": "Récupération de la page sur votre appareil…",
-    "openPageToContinue": "Ouvrir la page",
+    "openAndPaste": "Ouvrir et coller",
     "captureFailed": "Impossible de récupérer la page. Réessayez.",
     "userActionRequired": {
-      "title": "La recette nécessite votre aide",
+      "title": "Importation automatique impossible",
       "body": "L’extraction automatique de la recette n’a pas été possible. Copiez le texte de la recette depuis la source, puis collez-le dans l’import de texte.",
       "continue": "Continuer"
     },
+    "duplicate": {
+      "message": "Ce lien correspond à une recette que vous avez déjà enregistrée.",
+      "importAnyway": "Importer quand même",
+      "goToRecipe": "Aller à la recette",
+      "dontImport": "Ne pas importer"
+    },
     "failure": {
+      "duplicate_recipe": "Déjà dans votre bibliothèque",
       "extraction_failed": "Échec de l’importation de la recette",
-      "user_action_required": "La recette nécessite votre aide",
+      "user_action_required": "Importation automatique impossible",
       "invalid_input": "Cette entrée d’importation n’est pas prise en charge.",
       "household_access_changed": "Vous n’avez plus accès à ce foyer.",
       "retries_exhausted": "L’importation n’a pas pu être terminée après plusieurs tentatives.",

@@ -1030,6 +1030,14 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<ImportJob>;
   };
 
+  const importJobAnyway = async (id: string): Promise<ImportJob> => {
+    const res = await apiFetch(`/api/imports/jobs/${id}/import-anyway`, {
+      method: "POST",
+    });
+    await throwOnError(res, "Failed to import anyway");
+    return res.json() as Promise<ImportJob>;
+  };
+
   const submitCapturedHtml = async (
     id: string,
     payload: CapturedHtmlPayload,
@@ -1194,6 +1202,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     deleteAccount,
     enqueueImportJob,
     retryImportJob,
+    importJobAnyway,
     submitCapturedHtml,
     cancelImportJob,
     dismissImportJob,

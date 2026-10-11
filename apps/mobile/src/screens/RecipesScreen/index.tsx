@@ -5,7 +5,6 @@ import {
   Alert,
   FlatList,
   type LayoutChangeEvent,
-  Linking,
   ListRenderItemInfo,
   Pressable,
   ScrollView,
@@ -48,6 +47,7 @@ import { TOGGLE_HOUSEHOLD_PREFIX } from '../RecipeDetailScreen/useRecipeDetailHe
 import { styles } from './styles'
 import ThumbnailImage from './ThumbnailImage'
 import PendingJobCard from './PendingJobCard'
+import { useOpenAndPaste } from './useOpenAndPaste'
 import HeaderTitle from './HeaderTitle'
 import HeaderRight from './HeaderRight'
 import FloatingAddButton from './FloatingAddButton'
@@ -137,6 +137,8 @@ const RecipesScreen = () => {
   const isFocused = useIsFocused()
   const { openAddRecipe } = useLocalSearchParams<{ openAddRecipe?: string }>()
   const addRecipeSheetRef = useRef<AddRecipeDrawerHandle>(null)
+  const presentTextImport = useCallback(() => addRecipeSheetRef.current?.presentTextImport(), [])
+  const openAndPaste = useOpenAndPaste(presentTextImport)
   const { t } = useTranslation()
   const searchProgress = useSharedValue(0)
   const headerChromeHeightSV = useSharedValue(0)
@@ -426,7 +428,7 @@ const RecipesScreen = () => {
     [recipes, favouriteOverrides],
   )
 
-  const { jobs: importJobs, retry, cancel, dismiss } = useImportJobs(
+  const { jobs: importJobs, retry, importAnyway, cancel, dismiss } = useImportJobs(
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
   )
   const pendingJobs = useMemo(
@@ -537,6 +539,11 @@ const RecipesScreen = () => {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       router.push({ pathname: '/recipe/[id]', params: { id: recipe.id, title: recipe.title } })
     },
+    [router],
+  )
+
+  const handleGoToDuplicateRecipe = useCallback(
+    (recipeId: string) => router.push({ pathname: '/recipe/[id]', params: { id: recipeId } }),
     [router],
   )
 
@@ -725,16 +732,15 @@ const RecipesScreen = () => {
         <PendingJobCard
           job={item.job}
           onRetry={() => retry.mutateAsync(item.job.id)}
+          onImportAnyway={() => importAnyway.mutateAsync(item.job.id)}
+          onGoToRecipe={handleGoToDuplicateRecipe}
           onCancel={() => cancel.mutateAsync(item.job.id)}
           onDismiss={() => dismiss.mutateAsync(item.job.id)}
-          onContinueManually={() => {
-            addRecipeSheetRef.current?.presentTextImport()
-            if (item.job.source_url) void Linking.openURL(item.job.source_url)
-          }}
+          onContinueManually={() => void openAndPaste(item.job.source_url)}
         />
       )
     },
-    [cancel, dismiss, renderRecipe, retry, t],
+    [cancel, dismiss, handleGoToDuplicateRecipe, importAnyway, openAndPaste, renderRecipe, retry, t],
   )
 
   const favChip = useMemo(

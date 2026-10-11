@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     opacity: 0.85,
   },
-  pendingCardActionRequired: { backgroundColor: colors.brandLight, opacity: 1 },
+  pendingCardDuplicate: { backgroundColor: colors.brandLight },
   pendingContent: { flex: 1, flexDirection: 'row', minWidth: 0 },
   pendingImageWrap: {
     width: 100,
@@ -243,6 +243,5 @@ export const styles = StyleSheet.create({
   pendingUrlRow: { marginBottom: 2 },
   pendingMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pendingCancelWrap: { width: 44, alignItems: 'center', justifyContent: 'center' },
-  pendingActionRow: { width: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
   pendingIconAction: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 })
