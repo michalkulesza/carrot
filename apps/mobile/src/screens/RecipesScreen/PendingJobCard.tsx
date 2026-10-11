@@ -88,8 +88,9 @@ const PendingJobCard = ({
       ? [{ text: t('importJobs.openPageToContinue'), onPress: handleOpenPage }]
       : []
     Alert.alert(t('importJobs.userActionRequired.title'), t('importJobs.userActionRequired.body'), [
+      { text: t('common.cancel'), style: 'cancel' },
       ...openPageAction,
-      { text: t('importJobs.dismiss'), style: 'destructive', onPress: handleDismiss },
+      { text: t('importJobs.remove'), style: 'destructive', onPress: handleDismiss },
       {
         text: t('importJobs.userActionRequired.continue'),
         onPress: () => {
@@ -202,7 +203,10 @@ const PendingJobCard = ({
         <View style={styles.pendingContent}>{cardContent}</View>
       )}
       {requiresUserAction ? (
-        <View style={styles.pendingCancelWrap}>
+        <View style={styles.pendingActionRow}>
+          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
+            <Feather name="refresh-cw" size={16} color={colors.blue} />
+          </Pressable>
           <Pressable style={styles.pendingIconAction} onPress={handleUserAction} accessibilityLabel={t('importJobs.userActionRequired.continue')}>
             <Feather name="chevron-right" size={22} color={colors.brand} />
           </Pressable>
@@ -212,7 +216,7 @@ const PendingJobCard = ({
           <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
             <Feather name="refresh-cw" size={16} color={colors.blue} />
           </Pressable>
-          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDismiss} accessibilityLabel={t('importJobs.dismiss')}>
+          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDismiss} accessibilityLabel={t('importJobs.remove')}>
             <Feather name="x" size={18} color={PlatformColor('secondaryLabel') as unknown as string} />
           </Pressable>
         </View>

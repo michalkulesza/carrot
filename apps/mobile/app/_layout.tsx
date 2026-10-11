@@ -1,6 +1,6 @@
 import '../src/i18n'
 import i18n from '../src/i18n'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ActivityIndicator, AppState, StyleSheet, View } from 'react-native'
 import { Redirect, Stack, useRouter, useSegments } from 'expo-router'
@@ -30,6 +30,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
 import { ApiClientProvider, useApiClient } from '@carrot/shared/api/context'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
+import type { ImportJob } from '@carrot/shared/types'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
 import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
 import { TimerProvider } from '../src/context/TimerContext'
@@ -225,7 +226,27 @@ function RootLayoutNav() {
     }),
     [colorScheme, t],
   )
-  useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null)
+  const notifiedImportJobIdsRef = useRef(new Set<string>())
+  const handleImportJobEvent = useCallback(
+    (event: { type: string; job: ImportJob }) => {
+      const { job } = event
+      const isTerminal = event.type === 'import_job.succeeded' || event.type === 'import_job.failed'
+      if (!isTerminal || job.created_by_user_id !== user?.id) return
+      if (notifiedImportJobIdsRef.current.has(job.id)) return
+
+      notifiedImportJobIdsRef.current.add(job.id)
+      const succeeded = event.type === 'import_job.succeeded'
+      pushNotif({
+        type: succeeded ? 'recipe_imported' : 'recipe_failed',
+        title: t(succeeded ? 'bell.recipeImported' : 'bell.recipeImportFailed'),
+        body: t(succeeded ? 'bell.recipeImportedBody' : 'bell.recipeImportFailedBody'),
+        recipe_id: job.result_recipe_id ?? undefined,
+        job_id: job.id,
+      })
+    },
+    [pushNotif, t, user?.id],
+  )
+  useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null, handleImportJobEvent)
 
   useEffect(() => {
     if (!user) return
@@ -265,6 +286,9 @@ function RootLayoutNav() {
       const data = notification.request.content.data as Record<string, unknown>
       const type = data?.type as string | undefined
       const jobId = data?.job_id as string | undefined
+      const alreadyNotified = Boolean(jobId) && notifiedImportJobIdsRef.current.has(jobId as string)
+      if (alreadyNotified) return
+      if (jobId) notifiedImportJobIdsRef.current.add(jobId)
       if (type === 'recipe_imported') {
         pushNotif({
           type: 'recipe_imported',

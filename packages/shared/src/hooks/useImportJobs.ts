@@ -14,12 +14,14 @@ const applyJob = (jobs: ImportJob[], type: string, job: ImportJob): ImportJob[] 
   return jobs.map((item) => (item.id === job.id ? job : item))
 }
 
-export const useImportJobs = (scopeKey: string | null) => {
+export const useImportJobs = (scopeKey: string | null, onJobEvent?: (event: { type: string; job: ImportJob }) => void) => {
   const api = useApiClient()
   const qc = useQueryClient()
   const lastEventId = useRef(0)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const attempt = useRef(0)
+  const onJobEventRef = useRef(onJobEvent)
+  onJobEventRef.current = onJobEvent
   const completedRecipeIds = useRef(new Set<string>())
   const query = useQuery<ImportJob[]>({ queryKey, queryFn: async () => [], enabled: false, initialData: [] })
 
@@ -39,6 +41,7 @@ export const useImportJobs = (scopeKey: string | null) => {
         (snapshot) => qc.setQueryData(queryKey, snapshot.jobs),
         (event) => {
           lastEventId.current = Math.max(lastEventId.current, event.id)
+          onJobEventRef.current?.(event)
           if (event.type === 'import_job.succeeded') {
             if (event.job.result_recipe_id) completedRecipeIds.current.add(event.job.result_recipe_id)
             void api.listRecipes()

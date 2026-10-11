@@ -734,7 +734,7 @@
     "takingLonger": "Taking longer than usual…",
     "retry": "Retry",
     "cancel": "Cancel",
-    "dismiss": "Dismiss",
+    "remove": "Remove",
     "enqueueFailed": "Could not start the import. Please try again.",
     "someone": "Someone",
     "capturingOnDevice": "Capturing the page on your device…",

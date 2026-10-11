@@ -129,7 +129,7 @@ const ImportJobCards = ({
                       void runAction(job.id, () => onDismiss(job.id))
                     }
                   >
-                    {t('importJobs.dismiss')}
+                    {t('importJobs.remove')}
                   </Button>
                 </div>
               ) : (
@@ -171,7 +171,7 @@ const ImportJobCards = ({
                   setManualActionJob(null)
                 }}
               >
-                {t('importJobs.dismiss')}
+                {t('importJobs.remove')}
               </Button>
               <Button
                 variant="primary"
