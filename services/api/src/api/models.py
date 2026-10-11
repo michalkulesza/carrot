@@ -812,6 +812,7 @@ class ImportFailureCode(StrEnum):
     MODEL_RATE_LIMITED = "model_rate_limited"
     INVALID_MODEL_RESPONSE = "invalid_model_response"
     UNKNOWN_ERROR = "unknown_error"
+    DUPLICATE_RECIPE = "duplicate_recipe"
 
 
 class ImportJobKind(StrEnum):
@@ -848,6 +849,9 @@ class ImportJob(Base):
         PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
     )
     failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    duplicate_recipe_id: Mapped[uuid.UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="SET NULL"), nullable=True
+    )
     failure_stage: Mapped[str | None] = mapped_column(String(32), nullable=True)
     outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)
     diagnostic_error: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -878,6 +882,7 @@ class ImportJobOut(BaseModel):
     result_recipe_id: uuid.UUID | None = None
     failure_code: str | None = None
     failure_stage: str | None = None
+    duplicate_recipe_id: uuid.UUID | None = None
     outcome: str | None = None
     retry_count: int
     next_attempt_at: datetime | None = None

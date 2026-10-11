@@ -58,6 +58,7 @@ from api.services.linked_recipes import (
 )
 from api.services.recipe_components import serialize_components
 from api.services.recipe_reextraction import apply_extraction
+from api.services.source_urls import normalize_source_url, source_url_host
 from api.services.text_sanitizing import sanitize_recipe
 from api.services import gemini as gemini_svc
 
@@ -282,6 +283,35 @@ async def _is_member(session, job: ImportJob) -> bool:
     return await session.get(HouseholdMember, {"household_id": job.household_id, "user_id": job.user_id}) is not None
 
 
+def _checks_for_duplicate(job: ImportJob) -> bool:
+    return (
+        job.kind == ImportJobKind.URL
+        and job.parent_recipe_id is None
+        and not job.input.get("replaces_recipe_id")
+        and not job.input.get("allow_duplicate")
+        and bool(job.input.get("url"))
+    )
+
+
+async def _find_duplicate_recipe_id(session, job: ImportJob) -> uuid.UUID | None:
+    url = job.input["url"]
+    host = source_url_host(url)
+    if not host:
+        return None
+    query = select(Recipe.id, Recipe.source_url).where(Recipe.source_url.icontains(host, autoescape=True))
+    if job.household_id is not None:
+        query = query.join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id).where(
+            recipe_households_table.c.household_id == job.household_id
+        )
+    else:
+        query = query.where(Recipe.author_id == job.user_id)
+    target = normalize_source_url(url)
+    for recipe_id, source_url in (await session.execute(query.order_by(Recipe.created_at))).all():
+        if normalize_source_url(source_url) == target:
+            return recipe_id
+    return None
+
+
 async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: list[str]) -> ImportResult:
     if job.kind == ImportJobKind.URL:
         usage = gemini_svc.UsageTracker()
@@ -452,6 +482,17 @@ async def _process_job(job_id: uuid.UUID) -> None:
                 await finalize_parent_of_child(session, job)
                 await session.commit()
                 return
+            if _checks_for_duplicate(job):
+                duplicate_id = await _find_duplicate_recipe_id(session, job)
+                if duplicate_id is not None:
+                    job.status = ImportJobStatus.FAILED
+                    job.failure_code = ImportFailureCode.DUPLICATE_RECIPE
+                    job.duplicate_recipe_id = duplicate_id
+                    job.next_attempt_at = None
+                    job.updated_at = datetime.utcnow()
+                    await _event_for_job(session, job, "import_job.failed")
+                    await session.commit()
+                    return
             available_tags, allergens = await _get_tags_and_allergens(session, job.user_id, job.household_id)
             session.expunge(job)
         result = await _run_pipeline(job, available_tags, allergens)
@@ -666,10 +707,13 @@ async def _deliver_pushes() -> None:
             for subscription in subscriptions:
                 success = event.type == "import_job.succeeded"
                 requires_user_action = event.payload.get("failure_code") == ImportFailureCode.USER_ACTION_REQUIRED
+                is_duplicate = event.payload.get("failure_code") == ImportFailureCode.DUPLICATE_RECIPE
+                title = "Recipe added" if success else "Already in your library" if is_duplicate else "Couldn't import automatically" if requires_user_action else "Couldn't add recipe"
+                body = "Tap to view your new recipe." if success else "Tap to review the import." if is_duplicate else "Open the import to continue manually." if requires_user_action else "Tap to see the failed import."
                 await apns_svc.send_alert(
                     subscription.token,
-                    title="Recipe added" if success else "Recipe needs your input" if requires_user_action else "Couldn't add recipe",
-                    body="Tap to view your new recipe." if success else "Open the import to continue manually." if requires_user_action else "Tap to see the failed import.",
+                    title=title,
+                    body=body,
                     data={"type": "recipe_imported" if success else "recipe_failed", "job_id": str(event.job_id), "recipe_id": event.payload.get("result_recipe_id")},
                 )
             event.push_dispatched_at = datetime.utcnow()

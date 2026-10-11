@@ -154,6 +154,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS idempotency_key UUID"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS shared_to_personal BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS failure_code VARCHAR(64)"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS duplicate_recipe_id UUID REFERENCES recipes(id) ON DELETE SET NULL"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS diagnostic_error VARCHAR"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS next_attempt_at TIMESTAMP"))

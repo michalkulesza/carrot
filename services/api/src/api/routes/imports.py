@@ -76,6 +76,7 @@ def _job_out(job: ImportJob, creator_name: str | None) -> ImportJobOut:
         result_recipe_id=job.result_recipe_id,
         failure_code=job.failure_code,
         failure_stage=job.failure_stage,
+        duplicate_recipe_id=job.duplicate_recipe_id,
         outcome=job.outcome,
         retry_count=job.retry_count,
         next_attempt_at=job.next_attempt_at,
@@ -300,6 +301,25 @@ async def retry_import_job(job_id: uuid.UUID, user: User = Depends(current_activ
         raise HTTPException(status_code=409, detail="import_job_cannot_retry")
     job.status = ImportJobStatus.PENDING
     job.failure_code = None
+    job.diagnostic_error = None
+    job.retry_count = 0
+    job.started_at = None
+    job.next_attempt_at = datetime.utcnow()
+    job.updated_at = datetime.utcnow()
+    await _event_for_job(session, job, "import_job.created")
+    await session.commit()
+    return _job_out(job, await _creator_name(session, job.user_id))
+
+
+@router.post("/jobs/{job_id}/import-anyway", response_model=ImportJobOut)
+async def import_anyway(job_id: uuid.UUID, user: User = Depends(current_active_user), session: AsyncSession = Depends(get_async_session)) -> ImportJobOut:
+    job = await _action_job(job_id, user, session)
+    if job.status != ImportJobStatus.FAILED or job.failure_code != ImportFailureCode.DUPLICATE_RECIPE or not job.input:
+        raise HTTPException(status_code=409, detail="import_job_cannot_import_anyway")
+    job.input = {**job.input, "allow_duplicate": True}
+    job.status = ImportJobStatus.PENDING
+    job.failure_code = None
+    job.duplicate_recipe_id = None
     job.diagnostic_error = None
     job.retry_count = 0
     job.started_at = None

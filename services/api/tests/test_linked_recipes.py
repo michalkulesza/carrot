@@ -513,7 +513,7 @@ async def test_cancelling_waiting_parent_cancels_children_and_finishes_it(spawn_
 
 def test_job_out_serialises_awaiting_children_as_running() -> None:
     job = _job_row(
-        ImportJobStatus.AWAITING_CHILDREN, kind="url", created_by=None, failure_code=None, failure_stage=None, outcome=None,
+        ImportJobStatus.AWAITING_CHILDREN, kind="url", created_by=None, failure_code=None, failure_stage=None, duplicate_recipe_id=None, outcome=None,
         retry_count=0, next_attempt_at=None, created_at=datetime(2026, 1, 1),
     )
 
@@ -603,6 +603,7 @@ async def _run_worker_job(monkeypatch, child_job_ids):
     event = AsyncMock()
     result = SimpleNamespace(outcome="complete", source_capture={}, issue_codes=[], stage="transcript")
     monkeypatch.setattr(import_worker, "async_session_maker", lambda: next(sessions))
+    monkeypatch.setattr(import_worker, "_find_duplicate_recipe_id", AsyncMock(return_value=None))
     monkeypatch.setattr(import_worker, "_get_tags_and_allergens", AsyncMock(return_value=([], [])))
     monkeypatch.setattr(import_worker, "_run_pipeline", AsyncMock(return_value=result))
     monkeypatch.setattr(import_worker, "_save_recipe", AsyncMock(return_value=_recipe()))
@@ -868,7 +869,7 @@ def test_scope_filter_includes_users_own_personal_jobs() -> None:
 
 def test_job_out_tolerates_missing_household() -> None:
     job = _job_row(
-        ImportJobStatus.PENDING, kind="url", created_by=None, failure_code=None, failure_stage=None, outcome=None,
+        ImportJobStatus.PENDING, kind="url", created_by=None, failure_code=None, failure_stage=None, duplicate_recipe_id=None, outcome=None,
         retry_count=0, next_attempt_at=None, created_at=datetime(2026, 1, 1), dismissed_at=None,
     )
     job.household_id = None
