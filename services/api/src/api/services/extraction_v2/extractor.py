@@ -14,7 +14,7 @@ from api.services.extraction_v2.contracts import (
     NutritionEvidence, RecipeComponentEvidence, StepEvidence,
 )
 from api.services.extraction_v2.evidence import html_reference, normalize_evidence_text, text_reference
-from api.services.extraction_v2.lexicons import heading_kind, looks_like_ingredient, looks_like_step
+from api.services.extraction_v2.lexicons import heading_kind, instruction_group_variant, looks_like_ingredient, looks_like_step
 
 MAX_CONTENT_CHARS = 500_000
 MAX_BLOCKS = 5_000
@@ -105,6 +105,7 @@ def _extract(
     pending_step_heading: Block | None = None
     pending_step_index: int | None = None
     pending_step_continues: bool = False
+    instruction_groups: list[tuple[str, _Component, int]] = []
     saw_recipe_clue = False
     for index, block in enumerate(blocks):
         if section == "instructions" and _starts_nutrition_facts(block.text):
@@ -148,9 +149,13 @@ def _extract(
             and block.heading_level is not None and section_heading_level is not None
             and block.heading_level > section_heading_level
         ):
-            pending_step_heading = block
-            pending_step_index = None
             pending_step_continues = bool(re.match(r"^step\s*\d+\s*[:.)-]", block.text, re.IGNORECASE))
+            pending_step_index = None
+            if not pending_step_continues and instruction_group_variant(block.text) is not None:
+                pending_step_heading = None
+                instruction_groups.append((block.text, active, len(active.steps)))
+            else:
+                pending_step_heading = block
             continue
         if block.kind == "heading" and section == "ingredients" and _is_non_recipe_ingredient_heading(block.text):
             # Tips and similar editorial callouts may sit between Ingredients
@@ -258,6 +263,7 @@ def _extract(
             total_time_evidence_ids=_reference_ids(total_time_references or []),
             total_time_references=total_time_references or [], nutrition=nutrition or NutritionEvidence(),
         )
+    _drop_abbreviated_instruction_groups(instruction_groups)
     extracted_components = [item for item in components if item.ingredients or item.steps or item.name]
     ingredient_components = [item for item in extracted_components if item.ingredients]
     if (
@@ -282,6 +288,18 @@ def _extract(
         total_time_references=total_time_references or [],
         nutrition=nutrition or NutritionEvidence(),
     )
+
+
+def _drop_abbreviated_instruction_groups(groups: list[tuple[str, _Component, int]]) -> None:
+    variants = [instruction_group_variant(label) for label, _, _ in groups]
+    if "abbreviated" not in variants or "full" not in variants:
+        return
+    for position in reversed(range(len(groups))):
+        if variants[position] != "abbreviated":
+            continue
+        _, component, start = groups[position]
+        end = next((later_start for _, later, later_start in groups[position + 1:] if later is component), len(component.steps))
+        del component.steps[start:end]
 
 
 def _nearby_recipe_clue(blocks: list[Block], index: int, expected: str) -> bool:

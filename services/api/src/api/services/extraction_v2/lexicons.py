@@ -13,6 +13,14 @@ INSTRUCTION_HEADINGS = {
     "instrukcje", "zubereitung", "anleitung", "schritte", "préparation", "instructions", "preparación", "pasos",
 }
 NON_RECIPE_HEADINGS = {"nutrition", "nutrition facts", "notes", "comments", "reviews", "advertisement", "advertising"}
+ABBREVIATED_GROUP_LABELS = re.compile(
+    r"^(?:(?:the\s+)?(?:abbreviated|short(?:ened)?|quick|condensed|summary|brief)(?:\s+(?:version|recipe|method|instructions|directions))?"
+    r"|(?:recipe\s+)?summary|tl;?dr|recipe\s+in\s+brief|in\s+brief)$"
+)
+FULL_GROUP_LABELS = re.compile(
+    r"^(?:(?:the\s+)?(?:full|complete|detailed|long|extended)(?:\s+(?:version|recipe|method|instructions|directions))?"
+    r"|(?:full|complete|detailed)\s+(?:step[- ]by[- ]step\s+)?(?:recipe|instructions|directions|method))$"
+)
 COOKING_VERBS = {
     "cook", "bake", "fry", "boil", "mix", "stir", "heat", "serve", "add", "pour", "roast", "simmer",
     "ugotuj", "piec", "smaż", "wymieszaj", "dodaj", "podawaj", "kochen", "backen", "braten", "mischen",
@@ -31,6 +39,15 @@ def heading_kind(text: str) -> str | None:
         return "instructions"
     if normalized in NON_RECIPE_HEADINGS or normalized.startswith("nutritional analysis"):
         return "stop"
+    return None
+
+
+def instruction_group_variant(text: str) -> str | None:
+    normalized = re.sub(r"\s+", " ", text).strip().casefold().rstrip(":").strip()
+    if ABBREVIATED_GROUP_LABELS.match(normalized):
+        return "abbreviated"
+    if FULL_GROUP_LABELS.match(normalized):
+        return "full"
     return None
 
 

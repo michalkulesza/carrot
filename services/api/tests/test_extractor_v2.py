@@ -608,3 +608,60 @@ def test_extracted_recipe_defaults_to_empty_nutrition() -> None:
     assert nutrition.protein is None
     assert nutrition.fat is None
     assert nutrition.carbohydrates is None
+
+
+def _instruction_groups_html(*groups: tuple[str, list[str]]) -> str:
+    sections = "".join(
+        f"<div><h4>{label}</h4><ul>{''.join(f'<li>{step}</li>' for step in steps)}</ul></div>"
+        for label, steps in groups
+    )
+    return f"<main><h3>Ingredients</h3><ul><li>1 chicken breast</li></ul><h3>Instructions</h3>{sections}<h3>Recipe Notes:</h3></main>"
+
+
+async def _instruction_steps(html: str) -> list[str]:
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+    return [step.text for component in recipe.components for step in component.steps]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_drops_abbreviated_group_when_a_full_group_exists() -> None:
+    html = _instruction_groups_html(
+        ("ABBREVIATED RECIPE:", ["Toss chicken with seasoning, sear, remove."]),
+        ("FULL RECIPE:", ["Season chicken – Mix the seasoning.", "Sear – Heat the oil.", "Fluff &amp; serve – Toss the rice."]),
+    )
+    recipe = await RecipeEvidenceExtractor().extract_html(ExtractionInput(content=html, evidence_ids=["html"]))
+    steps = [step for component in recipe.components for step in component.steps]
+
+    assert [step.text for step in steps] == [
+        "Season chicken – Mix the seasoning.", "Sear – Heat the oil.", "Fluff & serve – Toss the rice.",
+    ]
+    assert not any("RECIPE" in reference.quote for step in steps for reference in step.references)
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_keeps_both_groups_in_either_order_without_prefixing_labels() -> None:
+    html = _instruction_groups_html(
+        ("Full recipe", ["Mix.", "Bake."]),
+        ("Quick version", ["Mix and bake."]),
+    )
+
+    assert await _instruction_steps(html) == ["Mix.", "Bake."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_leaves_abbreviated_group_without_full_counterpart() -> None:
+    html = _instruction_groups_html(("Abbreviated recipe:", ["Mix and bake."]), ("For the sauce", ["Simmer."]))
+
+    assert await _instruction_steps(html) == ["Mix and bake.", "For the sauce — Simmer."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_leaves_a_lone_group_untouched() -> None:
+    assert await _instruction_steps(_instruction_groups_html(("Full recipe", ["Mix.", "Bake."]))) == ["Mix.", "Bake."]
+
+
+@pytest.mark.asyncio
+async def test_html_extractor_keeps_ordinary_named_groups_and_step_titles() -> None:
+    html = _instruction_groups_html(("For the sauce", ["Simmer the tomatoes."]), ("Sear", ["Heat the oil."]))
+
+    assert await _instruction_steps(html) == ["For the sauce — Simmer the tomatoes.", "Sear — Heat the oil."]
