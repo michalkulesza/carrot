@@ -155,7 +155,9 @@ async def _archive_thumbnail(recipe: Recipe) -> None:
         return
 
     try:
-        async with httpx.AsyncClient(follow_redirects=True, timeout=15) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, timeout=15, proxy=settings.outbound_proxy_url or None,
+        ) as client:
             response = await client.get(thumbnail_url, headers={"User-Agent": "Mozilla/5.0"})
             response.raise_for_status()
 

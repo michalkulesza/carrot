@@ -13,6 +13,7 @@ from urllib.parse import urljoin, urlsplit
 
 import httpx
 
+from api.config import settings
 from api.services.extraction_v2.contracts import Comment, EvidenceKind
 from api.services.scraper import ReelMetadata, parse_scrapecreators_reel_response
 from api.services.html_renderer import RendererFailure, render_url
@@ -77,7 +78,10 @@ class HttpLinkedPageProvider:
             renderer_failure = error.category
         current_url = url
         timeout = httpx.Timeout(connect=10, read=20, write=10, pool=10)
-        async with httpx.AsyncClient(timeout=timeout, follow_redirects=False, headers=BROWSER_HEADERS) as client:
+        async with httpx.AsyncClient(
+            timeout=timeout, follow_redirects=False, headers=BROWSER_HEADERS,
+            proxy=settings.outbound_proxy_url or None,
+        ) as client:
             for _ in range(self._MAX_REDIRECTS + 1):
                 if not await is_safe_public_destination(current_url):
                     raise ValueError("linked page URL is not a safe HTTP(S) destination")

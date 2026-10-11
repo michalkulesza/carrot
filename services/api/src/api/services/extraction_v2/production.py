@@ -8,6 +8,7 @@ from urllib.parse import urlunsplit
 import httpx
 from bs4 import BeautifulSoup
 
+from api.config import settings
 from api.models import ImportMetadata
 from api.services import gemini
 from api.services.extraction_v2.adapters import GeminiAudioEvidenceExtractor
@@ -71,7 +72,7 @@ async def _fetch_html(url: str) -> tuple[str, str]:
     current = url
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(20, connect=8), follow_redirects=False,
-        headers=BROWSER_HEADERS,
+        headers=BROWSER_HEADERS, proxy=settings.outbound_proxy_url or None,
     ) as client:
         for _ in range(_MAX_REDIRECTS + 1):
             if not await is_safe_public_destination(current):
