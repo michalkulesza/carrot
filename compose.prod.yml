@@ -24,11 +24,14 @@ services:
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
       R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       RENDERER_URL: http://renderer:8080
+      OUTBOUND_PROXY_URL: ${OUTBOUND_PROXY_URL:-}
     depends_on:
       db:
         condition: service_healthy
       renderer:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:8088:8000"
     restart: unless-stopped
@@ -48,6 +51,9 @@ services:
       RENDERER_NAVIGATION_TIMEOUT_MS: ${RENDERER_NAVIGATION_TIMEOUT_MS:-15000}
       RENDERER_TOTAL_TIMEOUT_MS: ${RENDERER_TOTAL_TIMEOUT_MS:-25000}
       RENDERER_IDLE_MS: ${RENDERER_IDLE_MS:-1200}
+      RENDERER_UPSTREAM_SOCKS: ${RENDERER_UPSTREAM_SOCKS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     mem_limit: 1200m
     cpus: 2
     pids_limit: 256
@@ -71,11 +77,14 @@ services:
       R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
       R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       RENDERER_URL: http://renderer:8080
+      OUTBOUND_PROXY_URL: ${OUTBOUND_PROXY_URL:-}
     depends_on:
       db:
         condition: service_healthy
       renderer:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   web:

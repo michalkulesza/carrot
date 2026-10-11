@@ -4,6 +4,7 @@ import net from 'node:net';
 import ipaddr from 'ipaddr.js';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
+import { socksConnect, parseUpstreamSocks } from './socks.mjs';
 
 const PORT = Number(process.env.PORT || 8080);
 const MAX_CONCURRENCY = Number(process.env.RENDERER_MAX_CONCURRENCY || 2);
@@ -46,7 +47,14 @@ function pinnedAddress(records) {
   return records.find(record => record.family === 4) || records[0];
 }
 
-function createEgressProxy({ resolveHost = resolvePublicHost, requestHttp = http.request, connectTcp = net.connect } = {}) {
+function createEgressProxy({
+  resolveHost = resolvePublicHost,
+  requestHttp = http.request,
+  connectTcp = net.connect,
+  upstreamSocks = parseUpstreamSocks(process.env.RENDERER_UPSTREAM_SOCKS),
+} = {}) {
+  const connectViaSocks = (address, port) => socksConnect({ proxyHost: upstreamSocks.host, proxyPort: upstreamSocks.port, host: address.address, port });
+
   const proxy = http.createServer(async (request, response) => {
     let target;
     try { target = new URL(request.url); } catch { response.writeHead(400).end(); return; }
@@ -54,12 +62,20 @@ function createEgressProxy({ resolveHost = resolvePublicHost, requestHttp = http
     const records = await resolveHost(target.hostname);
     if (!records) { response.writeHead(403).end(); return; }
     const address = pinnedAddress(records);
+    const port = Number(target.port || 80);
     const headers = { ...request.headers, host: target.host };
     delete headers['proxy-connection'];
-    const upstream = requestHttp({
-      hostname: address.address, family: address.family, port: Number(target.port || 80),
+    const options = {
+      hostname: address.address, family: address.family, port,
       method: request.method, path: `${target.pathname}${target.search}`, headers, agent: false,
-    }, upstreamResponse => {
+    };
+    if (upstreamSocks) {
+      options.agent = null;
+      options.createConnection = (_options, callback) => {
+        connectViaSocks(address, port).then(socket => { callback(null, socket); socket.resume(); }, callback);
+      };
+    }
+    const upstream = requestHttp(options, upstreamResponse => {
       response.writeHead(upstreamResponse.statusCode || 502, upstreamResponse.headers);
       upstreamResponse.pipe(response);
     });
@@ -73,15 +89,29 @@ function createEgressProxy({ resolveHost = resolvePublicHost, requestHttp = http
     const records = await resolveHost(target.hostname);
     if (!records) { client.end('HTTP/1.1 403 Forbidden\r\n\r\n'); return; }
     const address = pinnedAddress(records);
-    const upstream = connectTcp({ host: address.address, family: address.family, port: Number(target.port || 443) });
-    upstream.once('connect', () => {
-      client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
-      if (head.length) upstream.write(head);
-      upstream.pipe(client);
-      client.pipe(upstream);
-    });
-    upstream.on('error', () => client.end('HTTP/1.1 502 Bad Gateway\r\n\r\n'));
-    client.on('error', () => upstream.destroy());
+    const port = Number(target.port || 443);
+    client.on('error', () => client.destroy());
+
+    let upstream;
+    try {
+      upstream = upstreamSocks
+        ? await connectViaSocks(address, port)
+        : await new Promise((resolve, reject) => {
+          const socket = connectTcp({ host: address.address, family: address.family, port });
+          socket.once('connect', () => resolve(socket));
+          socket.once('error', reject);
+        });
+    } catch {
+      client.end('HTTP/1.1 502 Bad Gateway\r\n\r\n');
+      return;
+    }
+
+    upstream.on('error', () => client.destroy());
+    client.on('close', () => upstream.destroy());
+    client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+    if (head.length) upstream.write(head);
+    upstream.pipe(client);
+    client.pipe(upstream);
   });
   return proxy;
 }

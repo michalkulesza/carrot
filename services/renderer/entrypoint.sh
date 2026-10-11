@@ -14,6 +14,13 @@ done < /etc/resolv.conf
 iptables -A OUTPUT -d 127.0.0.1/32 -p tcp --dport 8080 -j ACCEPT
 iptables -A OUTPUT -d 127.0.0.1/32 -p tcp --dport 18081 -j ACCEPT
 iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+if [ -n "${RENDERER_UPSTREAM_SOCKS:-}" ]; then
+  socks_host="${RENDERER_UPSTREAM_SOCKS%:*}"
+  socks_port="${RENDERER_UPSTREAM_SOCKS##*:}"
+  socks_ip="$(getent ahostsv4 "$socks_host" | awk 'NR==1 {print $1}')"
+  [ -n "$socks_ip" ] || { echo "cannot resolve RENDERER_UPSTREAM_SOCKS host $socks_host" >&2; exit 1; }
+  iptables -A OUTPUT -d "$socks_ip" -p tcp --dport "$socks_port" -j ACCEPT
+fi
 for range in 0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12 192.0.0.0/24 192.0.2.0/24 192.31.196.0/24 192.52.193.0/24 192.88.99.0/24 192.168.0.0/16 192.175.48.0/24 198.18.0.0/15 198.51.100.0/24 203.0.113.0/24 224.0.0.0/4 240.0.0.0/4; do
   iptables -A OUTPUT -d "$range" -j REJECT
 done
