@@ -119,13 +119,17 @@ export { createEgressProxy };
 
 const egressProxy = createEgressProxy();
 
-const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36';
+// Fallback when the bundled Chromium version cannot be read; keep in step with the API's BROWSER_HEADERS.
+const FALLBACK_CHROME_MAJOR = 141;
+// Chrome freezes the minor/build/patch parts of the UA string to 0.0.0.
+const buildUserAgent = major => `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${major}.0.0.0 Safari/537.36`;
+const USER_AGENT = buildUserAgent(FALLBACK_CHROME_MAJOR);
 const BROWSER_CHANNEL = process.env.RENDERER_BROWSER_CHANNEL ?? 'chromium';
 const TIMEZONE_ID = process.env.RENDERER_TIMEZONE_ID || 'Europe/Berlin';
 const CHALLENGE_WAIT_MS = 8000;
 const CHALLENGE_TITLE = /just a moment|temporary error|robot challenge screen/i;
 const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt|sgchallenge|sgcaptcha/;
-const STEALTH_INIT_SCRIPT = `(() => {
+const buildStealthInitScript = (major, fullVersion) => `(() => {
   const define = (target, name, getter) => Object.defineProperty(target, name, { get: getter, configurable: true });
   define(Navigator.prototype, 'webdriver', () => undefined);
   define(Navigator.prototype, 'platform', () => 'MacIntel');
@@ -149,12 +153,20 @@ const STEALTH_INIT_SCRIPT = `(() => {
   patchWebGl(WebGLRenderingContext.prototype);
   if (window.WebGL2RenderingContext) patchWebGl(WebGL2RenderingContext.prototype);
   if (navigator.userAgentData) {
-    const brands = [{ brand: 'Chromium', version: '136' }, { brand: 'Google Chrome', version: '136' }, { brand: 'Not.A/Brand', version: '99' }];
+    const brands = [{ brand: 'Chromium', version: '${major}' }, { brand: 'Google Chrome', version: '${major}' }, { brand: 'Not.A/Brand', version: '99' }];
     const values = { brands, mobile: false, platform: 'macOS' };
-    define(Navigator.prototype, 'userAgentData', () => ({ ...values, getHighEntropyValues: async () => ({ ...values, architecture: 'arm', bitness: '64', platformVersion: '14.5.0', uaFullVersion: '136.0.0.0' }) }));
+    define(Navigator.prototype, 'userAgentData', () => ({ ...values, getHighEntropyValues: async () => ({ ...values, architecture: 'arm', bitness: '64', platformVersion: '14.5.0', uaFullVersion: '${fullVersion}' }) }));
   }
 })();`;
-export { USER_AGENT, STEALTH_INIT_SCRIPT, CHALLENGE_TITLE, CHALLENGE_BODY };
+const STEALTH_INIT_SCRIPT = buildStealthInitScript(FALLBACK_CHROME_MAJOR, `${FALLBACK_CHROME_MAJOR}.0.0.0`);
+
+// Derives UA + userAgentData from the real browser version (e.g. "141.0.7390.37"), so they never go stale.
+function browserIdentity(version) {
+  const match = /^(\d+)\.\d+\.\d+\.\d+$/.exec(String(version ?? ''));
+  if (!match) return { userAgent: USER_AGENT, stealthScript: STEALTH_INIT_SCRIPT };
+  return { userAgent: buildUserAgent(match[1]), stealthScript: buildStealthInitScript(match[1], match[0]) };
+}
+export { USER_AGENT, STEALTH_INIT_SCRIPT, CHALLENGE_TITLE, CHALLENGE_BODY, buildUserAgent, buildStealthInitScript, browserIdentity };
 
 const launchOptions = {
   headless: true,
@@ -196,11 +208,12 @@ async function render(requestedUrl) {
   let context;
   try {
     const browser = await getBrowser();
+    const identity = browserIdentity(browser.version());
     context = await browser.newContext({
-      javaScriptEnabled: true, serviceWorkers: 'block', userAgent: USER_AGENT, locale: 'en-US', timezoneId: TIMEZONE_ID,
+      javaScriptEnabled: true, serviceWorkers: 'block', userAgent: identity.userAgent, locale: 'en-US', timezoneId: TIMEZONE_ID,
       viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, extraHTTPHeaders: { 'Accept-Language': 'en-US,en;q=0.9' },
     });
-    await context.addInitScript(STEALTH_INIT_SCRIPT);
+    await context.addInitScript(identity.stealthScript);
     const page = await context.newPage();
     let requests = 0;
     let transferred = 0;
