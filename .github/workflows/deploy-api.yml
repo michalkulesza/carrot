@@ -90,8 +90,8 @@ jobs:
             set -e
             cd /opt/carrot
             git pull
-            docker compose -f compose.prod.yml pull api worker renderer
-            docker compose -f compose.prod.yml up -d db renderer api worker
+            docker compose -f compose.prod.yml pull api worker renderer renderer-residential
+            docker compose -f compose.prod.yml up -d db renderer renderer-residential api worker
             docker image prune -f
             for i in $(seq 1 15); do
               if curl -fsS http://localhost:8088/healthz; then echo "API healthy"; exit 0; fi
