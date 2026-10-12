@@ -56,6 +56,9 @@ Completed backlog items, grouped by the category used in [TODO.md](TODO.md). Ite
 - [x] **Add related recipes** — Add reciprocal links between recipes, with a related-recipes section on web and mobile.
 - [x] **Guided Cook Mode** — Full-screen, big-type, swipeable steps; keep the screen awake, surface timers from step text, and allow ingredient checkoff while cooking.
 - [x] **Custom tags** - Bring back custom tags
+- [x] **Portuguese recipe support** — Portuguese is supported in extraction v2 and the app UI. Completed: [Italian and Portuguese support](specs/completed/italian-portuguese-support.md).
+  - [x] Re-import previewed on 2026-10-12: Portuguese now passes extraction; the stored recipe was kept because it was already better than a caption-first re-import.
+- [x] **Ingredient parser unit gaps (es/fr/it/pt)** — Added `mg`, `dl`, French "c. à café", "xícara (chá)", and "copo" handling to `ingredient_parser_v2.py` with tests. Shipped in commit 023f39c.
 
 ## Experience and product polish
 

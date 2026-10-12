@@ -68,3 +68,12 @@ Owns: `services/api/scripts/reimport_recipes.py`, a small shared helper extracti
   components "Massa"/"Calda" (or cleaned equivalents), "copo" kept, thumbnail unchanged. If better than
   stored, apply with `--apply --recipe-id cf015036-…`, then move "Portuguese recipe support" to
   TODO-COMPLETED.md and the parser-gaps TODO item too.
+
+## Outcome (2026-10-12)
+All four gaps shipped (023f39c, c3f7a6a). The root cause of the missing steps was the audio-evidence
+Gemini call timing out at 20s, plus ASCII-escaped transcripts (`ensure_ascii`); the timeout and retries
+are now scaled, and transcripts are sent with `ensure_ascii=False`. Audio steps are now assigned to the
+retained components.
+
+The Rosca de Laranja re-import was previewed twice and NOT applied. Caption ingredients are
+authoritative, and the caption omits salt and has a typo, so the stored recipe stays.
