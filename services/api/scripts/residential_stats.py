@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 
 from sqlalchemy import func, select
 
+import api.users  # noqa: F401 - registers User so all mappers configure
 from api.database import async_session_maker
 from api.models import ImportJob, ImportJobKind, Recipe
 
