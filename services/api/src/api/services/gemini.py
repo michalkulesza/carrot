@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import re
+import time
 from typing import Any, Callable, TypeVar
 
 from google import genai
@@ -250,21 +251,54 @@ def _build_client() -> genai.Client:
     return genai.Client(api_key=settings.gemini_api_key)
 
 
+_AUDIO_EVIDENCE_BUDGET_SECONDS = 90.0
+_AUDIO_EVIDENCE_BASE_REQUEST_SECONDS = 20.0
+_AUDIO_EVIDENCE_REQUEST_SECONDS_PER_CHAR = 0.01
+_AUDIO_EVIDENCE_MAX_REQUEST_SECONDS = 40.0
+_AUDIO_EVIDENCE_MAX_ATTEMPTS = 3
+_AUDIO_EVIDENCE_MIN_RETRY_SECONDS = 5.0
+_TRANSIENT_STATUS_CODES = {429, 500, 503, 504}
+_TRANSIENT_MARKERS = ("429", "500", "503", "504", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED")
+
+
+def audio_evidence_request_seconds(transcript_length: int) -> float:
+    """Per-request timeout: structured output grows with the transcript length."""
+
+    scaled = _AUDIO_EVIDENCE_BASE_REQUEST_SECONDS + transcript_length * _AUDIO_EVIDENCE_REQUEST_SECONDS_PER_CHAR
+    return min(_AUDIO_EVIDENCE_MAX_REQUEST_SECONDS, scaled)
+
+
+def _is_transient_provider_error(error: Exception) -> bool:
+    return (
+        isinstance(error, TimeoutError)
+        or getattr(error, "code", None) in _TRANSIENT_STATUS_CODES
+        or any(marker in str(error) for marker in _TRANSIENT_MARKERS)
+    )
+
+
 async def extract_audio_recipe_evidence(
     transcript: str,
     retained_recipe: dict[str, Any],
     model: str | None = None,
     usage: UsageTracker | None = None,
-    timeout_seconds: float = 45,
+    timeout_seconds: float = _AUDIO_EVIDENCE_BUDGET_SECONDS,
 ) -> AudioRecipeEvidence:
-    """Run source-only transcript extraction before enrichment in the v2 flow."""
+    """Run source-only transcript extraction before enrichment in the v2 flow.
+
+    Each request gets a transcript-scaled timeout (20-40s) and is retried on
+    transient provider errors (including per-request timeouts) with 1s/2s
+    backoff. Every attempt is clamped to what is left of ``timeout_seconds``,
+    which also bounds the whole call (worst case: 40 + 1 + 40 + 2 + remainder).
+    """
 
     if timeout_seconds <= 0:
         raise ValueError("audio evidence timeout must be positive")
     client = _build_client()
-    request_timeout_ms = max(1, int(min(timeout_seconds, 20) * 1000))
+    request_seconds = audio_evidence_request_seconds(len(transcript))
+    deadline = time.monotonic() + timeout_seconds
     async with client.aio as aio, asyncio.timeout(timeout_seconds):
-        for attempt in range(2):
+        for attempt in range(_AUDIO_EVIDENCE_MAX_ATTEMPTS):
+            attempt_seconds = min(request_seconds, max(deadline - time.monotonic(), 0.001))
             try:
                 response = await aio.models.generate_content(
                     model=model or settings.gemini_extraction_model,
@@ -275,19 +309,20 @@ async def extract_audio_recipe_evidence(
                         response_mime_type="application/json",
                         response_schema=AudioRecipeEvidence,
                         http_options=types.HttpOptions(
-                            timeout=request_timeout_ms,
+                            timeout=max(1, int(attempt_seconds * 1000)),
                             retry_options=types.HttpRetryOptions(attempts=1),
                         ),
                     ),
                 )
                 break
             except Exception as error:
-                transient = getattr(error, "code", None) in {429, 500, 503, 504} or any(
-                    code in str(error) for code in ("429", "500", "503", "504", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "DEADLINE_EXCEEDED")
-                )
-                if not transient or attempt:
+                delay = 2**attempt
+                last_attempt = attempt == _AUDIO_EVIDENCE_MAX_ATTEMPTS - 1
+                budget_left = deadline - time.monotonic() - delay
+                if not _is_transient_provider_error(error) or last_attempt or budget_left < _AUDIO_EVIDENCE_MIN_RETRY_SECONDS:
                     raise
-                await asyncio.sleep(1)
+                log.warning("Audio evidence transient error (attempt %d), retrying in %ds: %s", attempt + 1, delay, str(error)[:120])
+                await asyncio.sleep(delay)
     if usage is not None:
         usage.add(response)
     return AudioRecipeEvidence.model_validate(json.loads(response.text or "{}"))

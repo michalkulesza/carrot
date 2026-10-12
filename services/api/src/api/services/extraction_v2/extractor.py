@@ -14,7 +14,7 @@ from api.services.extraction_v2.contracts import (
     NutritionEvidence, RecipeComponentEvidence, StepEvidence,
 )
 from api.services.extraction_v2.evidence import html_reference, normalize_evidence_text, text_reference
-from api.services.extraction_v2.lexicons import heading_kind, instruction_group_variant, looks_like_ingredient, looks_like_step
+from api.services.extraction_v2.lexicons import clean_component_name, heading_kind, instruction_group_variant, looks_like_ingredient, looks_like_step
 
 MAX_CONTENT_CHARS = 500_000
 MAX_BLOCKS = 5_000
@@ -180,7 +180,11 @@ def _extract(
                     section_heading_level = None
                     continue
                 break
-            active = _Component(block.text, _references(block))
+            heading_name = clean_component_name(block.text)
+            if heading_name is None:
+                # A generic or purely decorative heading names no component.
+                continue
+            active = _Component(heading_name, _references(block))
             components.append(active)
             continue
         if not block.text or _is_noise(block.text):
@@ -203,7 +207,7 @@ def _extract(
                     "locator": f"{ingredient_start}:{ingredient_start + len(ingredient_text)}",
                     "quote": ingredient_text,
                 })
-                active = _Component(name, [name_reference])
+                active = _Component(clean_component_name(name), [name_reference])
                 components.append(active)
                 active.ingredients.append(IngredientEvidence(
                     text=ingredient_text, evidence_ids=_ids(block),
@@ -211,7 +215,9 @@ def _extract(
                 ))
                 continue
             if _is_component_label(block):
-                name = block.text.rstrip(":")
+                name = clean_component_name(block.text)
+                if name is None:
+                    continue
                 if active.name == name and not active.ingredients:
                     # Some recipe pages render a visual group label twice.
                     continue
@@ -444,7 +450,7 @@ def _text_blocks(source: ExtractionInput) -> list[Block]:
         if marker:
             start = offset + marker.start(1)
             blocks.append(_text_block(source, marker.group(1), "item", start, start + len(marker.group(1))))
-        elif heading_kind(stripped) or (len(stripped) < 80 and stripped.endswith(":")):
+        elif heading_kind(stripped) or (len(stripped) < 80 and re.search(r":[\s*_]*$", stripped)):
             blocks.append(_text_block(source, stripped.rstrip(":"), "heading", offset, offset + len(stripped.rstrip(":"))))
         else:
             blocks.append(_text_block(source, stripped, "item", offset, offset + len(stripped)))
@@ -611,7 +617,7 @@ def _bbc_good_food_recipe(source: ExtractionInput) -> ExtractedRecipe | None:
             if ingredients:
                 heading = group.get("heading")
                 components.append(RecipeComponentEvidence(
-                    name=normalize_evidence_text(heading) if isinstance(heading, str) and heading.strip() else None,
+                    name=clean_component_name(normalize_evidence_text(heading)) if isinstance(heading, str) and heading.strip() else None,
                     ingredients=ingredients,
                 ))
     if len(components) > 1 and components[0].name is None and any(component.name for component in components[1:]):

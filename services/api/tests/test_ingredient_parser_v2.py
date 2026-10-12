@@ -31,7 +31,7 @@ def test_unicode_source_fraction_and_french_alias() -> None:
     assert (fraction.qty, fraction.unit) == ("1/2", "cup")
     assert (french.qty, french.unit, french.name) == ("1", "tbsp", "farine")
     french_tsp = parse_ingredient("2 c. \u00e0 caf\u00e9 de tomate")
-    assert (french_tsp.unit, french_tsp.name) == ("tsp", "de tomate")
+    assert (french_tsp.unit, french_tsp.name) == ("tsp", "tomate")
 
 
 def test_mixed_unicode_fraction_normalizes_to_ascii() -> None:

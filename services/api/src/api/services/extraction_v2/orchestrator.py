@@ -366,7 +366,13 @@ class ExtractionOrchestrator:
                 evidence.append(source)
                 failure = self._language_failure(language, source_url, evidence, trace, source.id)
                 if failure:
-                    return failure
+                    # A creator-linked page in another language must not abort
+                    # extraction: the caption and audio remain independent sources.
+                    trace.append(TraceEvent(
+                        stage=ExtractionStage.LINKED_PAGE, event="linked_page_skipped",
+                        detail="unsupported_language", evidence_ids=[source.id],
+                    ))
+                    continue
                 try:
                     linked_recipe = self._resolve_links(validate_extracted_recipe(
                         await self._dependencies.extractor.extract_html(ExtractionInput(content=cleaned, evidence_ids=[source.id])), {source.id},
@@ -400,8 +406,18 @@ class ExtractionOrchestrator:
             source = EvidenceSource(id="transcript:0", kind=EvidenceKind.TRANSCRIPT, source_url=source_url, text=transcript, language=language)
             evidence.append(source)
             failure = self._language_failure(language, source_url, evidence, trace, source.id)
+            # A transcript whose language is merely undetermined (short or mixed
+            # speech) is still usable when supported caption text already
+            # established the recipe's language; only a confidently unsupported
+            # transcript is rejected.
+            retained_partial = has_ingredients(recipe) or has_instructions(recipe)
+            if failure and retained_partial and failure.reason == FailureReason.LANGUAGE_UNDETERMINED:
+                trace.append(TraceEvent(
+                    stage=ExtractionStage.TRANSCRIPT, event="undetermined_transcript_language_accepted", evidence_ids=[source.id],
+                ))
+                failure = None
             if failure:
-                if has_ingredients(recipe) or has_instructions(recipe):
+                if retained_partial:
                     trace.append(TraceEvent(
                         stage=ExtractionStage.TRANSCRIPT, event="unsupported_secondary_ignored", evidence_ids=[source.id],
                     ))
@@ -432,6 +448,13 @@ class ExtractionOrchestrator:
             except Exception as error:
                 last_operational_failure = (FailureReason.INVALID_MODEL_RESPONSE, ExtractionStage.AUDIO_MODEL)
                 trace.append(TraceEvent(stage=ExtractionStage.AUDIO_MODEL, event="audio_model_failed", detail=type(error).__name__))
+        elif has_ingredients(recipe) != has_instructions(recipe):
+            # Record why the other half was not supplied by audio so a
+            # re-import preview can explain an incomplete result.
+            trace.append(TraceEvent(
+                stage=ExtractionStage.TRANSCRIPT,
+                event="audio_unavailable_for_missing_half" if not transcript else "audio_extractor_unavailable",
+            ))
         if deferred_language_reason:
             # A successfully language-gated transcript supersedes the
             # unsupported/ambiguous caption. Preserve the original closed failure

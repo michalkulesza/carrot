@@ -15,7 +15,8 @@ from api.models import (
     recipe_households_table,
 )
 from api.services import allergen_rechecks
-from api.services.import_worker import _get_tags_and_allergens
+from api.config import settings
+from api.services.import_worker import _archive_thumbnail, _get_tags_and_allergens, _is_residential
 from api.services.linked_recipes import (
     existing_linked_ids,
     is_component_recipe,
@@ -56,6 +57,63 @@ async def _extract(url: str, available_tags: list[str], allergens: list[str]) ->
     )
 
 
+def _is_archived_thumbnail(url: str | None) -> bool:
+    return bool(url and settings.r2_public_url and url.startswith(settings.r2_public_url))
+
+
+async def _settle_thumbnail(
+    recipe: Recipe, previous: str | None, result: ImportResult, *, archive: bool,
+) -> str:
+    """Run after apply_extraction: never let an expiring remote URL replace an archived thumbnail.
+
+    Keeps an archived stored thumbnail; otherwise archives the new remote one via the import worker's
+    helper, falling back to the previous value when archiving fails. Returns a human-readable decision.
+    """
+    new = recipe.thumbnail_url
+    if _is_archived_thumbnail(previous):
+        recipe.thumbnail_url = previous
+        return "kept archived thumbnail"
+    if new == previous:
+        return "unchanged"
+    if not archive:
+        return "would archive new remote thumbnail"
+    await _archive_thumbnail(recipe, residential=_is_residential(result))
+    if _is_archived_thumbnail(recipe.thumbnail_url):
+        return "archived new thumbnail"
+    recipe.thumbnail_url = previous
+    return "archive failed; kept previous thumbnail"
+
+
+def _snapshot(recipe: Recipe) -> dict:
+    return {
+        "title": recipe.title,
+        "servings": recipe.servings,
+        "total_time_minutes": recipe.total_time_minutes,
+        "nutrition": (
+            f"{recipe.kcal_per_serving} kcal, P{recipe.protein_per_serving} "
+            f"F{recipe.fat_per_serving} C{recipe.carbs_per_serving}"
+        ),
+        "issue_codes": list(recipe.issue_codes or []),
+        "components": [
+            f"{component.get('name') or '(unnamed)'}: "
+            f"{len(component.get('ingredients') or [])} ingredient line(s), {len(component.get('steps') or [])} step(s)"
+            for component in recipe.components or []
+        ],
+        "thumbnail": recipe.thumbnail_url,
+    }
+
+
+def _format_preview(recipe_id: uuid.UUID, before: dict, after: dict, thumbnail_decision: str) -> str:
+    lines = [f"Preview {recipe_id}:"]
+    for key in ("title", "servings", "total_time_minutes", "nutrition", "issue_codes"):
+        lines.append(f"  {key}: {before[key]} -> {after[key]}")
+    for label, snapshot in (("before", before), ("after", after)):
+        lines.append(f"  components {label}:")
+        lines.extend(f"    - {item}" for item in snapshot["components"] or ["(none)"])
+    lines.append(f"  thumbnail: {thumbnail_decision} ({before['thumbnail']} -> {after['thumbnail']})")
+    return "\n".join(lines)
+
+
 async def _restore_links_and_spawn(session, recipe: Recipe, previous_links: dict[str, uuid.UUID]) -> None:
     surviving_ids = set(await session.scalars(select(Recipe.id).where(Recipe.id.in_(set(previous_links.values())))))
     surviving_links = {url: recipe_id for url, recipe_id in previous_links.items() if recipe_id in surviving_ids}
@@ -76,7 +134,7 @@ async def _restore_links_and_spawn(session, recipe: Recipe, previous_links: dict
     await allergen_rechecks.enqueue_recipe_allergen_check(session, recipe.id)
 
 
-async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
+async def _reimport_recipe(recipe_id: uuid.UUID, preview: bool = False) -> tuple[bool, bool, str]:
     async with async_session_maker() as session:
         recipe = await session.get(Recipe, recipe_id)
         if recipe is None:
@@ -99,7 +157,14 @@ async def _reimport_recipe(recipe_id: uuid.UUID) -> tuple[bool, bool, str]:
             result = await _extract(source_url, available_tags, allergens)
             preferences = await session.get(UserPreferences, recipe.author_id) if recipe.author_id else None
             previous_links = existing_linked_ids(recipe.components or [])
+            before = _snapshot(recipe)
+            previous_thumbnail = recipe.thumbnail_url
             apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
+            decision = await _settle_thumbnail(recipe, previous_thumbnail, result, archive=not preview)
+            if preview:
+                message = _format_preview(recipe_id, before, _snapshot(recipe), decision)
+                await session.rollback()
+                return True, False, message
             await _restore_links_and_spawn(session, recipe, previous_links)
             await allergen_rechecks.settle_allergen_status(session, recipe)
             await session.merge(RecipeSourceEvidence(
@@ -122,7 +187,10 @@ async def main(
     recipe_ids: set[uuid.UUID],
     retry_delay_seconds: int,
     max_retries: int,
+    preview: bool = False,
 ) -> None:
+    if apply and preview:
+        raise ValueError("--preview cannot be combined with --apply")
     async with async_session_maker() as session:
         statement = select(Recipe.id, Recipe.source_url).where(Recipe.source_url.is_not(None), Recipe.source_url != "")
         if recipe_ids:
@@ -131,7 +199,7 @@ async def main(
             statement = statement.limit(limit)
         recipe_rows = list((await session.execute(statement.order_by(Recipe.created_at))).all())
 
-    if not apply:
+    if not apply and not preview:
         print(f"Would re-import {len(recipe_rows)} URL-backed recipe(s). Run again with --apply to update them.")
         return
 
@@ -157,7 +225,7 @@ async def main(
             await asyncio.sleep(delay)
             continue
 
-        succeeded, retryable, message = await _reimport_recipe(queued_recipe.recipe_id)
+        succeeded, retryable, message = await _reimport_recipe(queued_recipe.recipe_id, preview)
         print(message)
         if succeeded:
             refreshed += 1
@@ -172,7 +240,7 @@ async def main(
         else:
             failed += 1
 
-    print(f"Finished: {refreshed} re-imported, {failed} skipped.")
+    print(f"Finished: {refreshed} {'previewed' if preview else 're-imported'}, {failed} skipped.")
 
 
 if __name__ == "__main__":
@@ -181,11 +249,14 @@ if __name__ == "__main__":
         description="Re-import URL-backed recipes in place using the current extraction model and prompt."
     )
     parser.add_argument("--apply", action="store_true", help="Write refreshed extraction results to the database")
+    parser.add_argument("--preview", action="store_true", help="Run extraction and print a before/after summary; rolls back, no DB or R2 writes")
     parser.add_argument("--limit", type=int, help="Process at most this many recipes")
     parser.add_argument("--recipe-id", action="append", default=[], help="Only re-import this recipe UUID; repeatable")
     parser.add_argument("--retry-delay-seconds", type=int, default=60, help="Cooldown before retrying a rate-limited source (default: 60)")
     parser.add_argument("--max-retries", type=int, default=3, help="Retries for a transient source failure (default: 3)")
     args = parser.parse_args()
+    if args.apply and args.preview:
+        parser.error("--preview cannot be combined with --apply")
     if args.retry_delay_seconds < 1:
         parser.error("--retry-delay-seconds must be at least 1")
     if args.max_retries < 0:
@@ -196,4 +267,5 @@ if __name__ == "__main__":
         {uuid.UUID(value) for value in args.recipe_id},
         args.retry_delay_seconds,
         args.max_retries,
+        args.preview,
     ))

@@ -426,7 +426,7 @@ def test_selection_preserves_all_supported_languages_without_translation(heading
         "components": [{"heading_id": "line:1", "ingredient_line_ids": ["line:2"], "instruction_line_ids": ["line:3"]}],
     }))
 
-    assert recipe.components[0].name == heading
+    assert recipe.components[0].name is None
     assert recipe.components[0].ingredients[0].text == ingredient
     assert recipe.components[0].steps[0].text == step
 

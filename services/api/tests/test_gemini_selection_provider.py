@@ -87,7 +87,7 @@ async def test_audio_evidence_uses_an_async_bounded_request(monkeypatch):
     assert json.loads(args["contents"])["transcript"] == "Cook the onion."
     assert "product/appliance review" in args["config"].system_instruction
     assert args["config"].http_options.retry_options.attempts == 1
-    assert args["config"].http_options.timeout == 10
+    assert 1 <= args["config"].http_options.timeout <= 10
     aio.models.generate_content.assert_awaited_once()
     aio.__aexit__.assert_awaited_once()
 

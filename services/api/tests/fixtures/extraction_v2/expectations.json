@@ -130,7 +130,7 @@
                 ]
               },
               {
-                "name": "Seasoning:",
+                "name": "Seasoning",
                 "ingredients": [
                   {"text": "1-2 tsp Paprika"},
                   {"text": "1/2 tsp Cayenne pepper"},
@@ -139,7 +139,7 @@
                 ]
               },
               {
-                "name": "For the sauce:",
+                "name": "For the sauce",
                 "ingredients": [
                   {"text": "2 tbsp sweet chilli sauce"},
                   {"text": "1 tsp honey"},
@@ -174,7 +174,7 @@
         },
         "components": [
           {
-            "name": "For the Fish Tacos:",
+            "name": "For the Fish Tacos",
             "ingredients": [
               {
                 "text": "1 pound firm white fish like cod, halibut, bass, cut into 1\" cubes"
@@ -206,7 +206,7 @@
             ]
           },
           {
-            "name": "For the Fish Taco Sauce:",
+            "name": "For the Fish Taco Sauce",
             "ingredients": [
               {
                 "text": "1/2 cup plain yogurt, 2%+ fat"
@@ -232,7 +232,7 @@
             ]
           },
           {
-            "name": "For the Toppings:",
+            "name": "For the Toppings",
             "ingredients": [
               {
                 "text": "Red or green cabbage, tomato, avocado, red onion, cilantro, lime"
@@ -2111,7 +2111,7 @@
             ]
           },
           {
-            "name": "Sos z cukinii:",
+            "name": "Sos z cukinii",
             "ingredients": [
               {
                 "text": "wydrążone środki z cukinii"
@@ -2213,7 +2213,7 @@
             ]
           },
           {
-            "name": "Złocista bułka tarta: ",
+            "name": "Złocista bułka tarta",
             "ingredients": [
               {
                 "text": "60 g bułki tartej "
@@ -2227,7 +2227,7 @@
             ]
           },
           {
-            "name": "Do podania:",
+            "name": "Do podania",
             "ingredients": [
               {
                 "text": "250 g kwaśnej śmietany 18% wymieszanej z 2 łyżeczkami cukru i 1 łyżeczką cukru wanilinowego "
@@ -2297,7 +2297,7 @@
         },
         "components": [
           {
-            "name": "Dough:",
+            "name": "Dough",
             "ingredients": [
               {
                 "text": "260ml Lukewarm milk 38-40°C (310ml if you want to skip egg)"
@@ -2345,7 +2345,7 @@
             ]
           },
           {
-            "name": "Syrup ",
+            "name": "Syrup",
             "ingredients": [
               {
                 "text": "40g water"
@@ -2492,7 +2492,7 @@
         },
         "components": [
           {
-            "name": "✨ Składniki:",
+            "name": null,
             "ingredients": [
               {
                 "text": "600 g mąki (u mnie orkiszowa)"
@@ -2772,7 +2772,7 @@
         },
         "components": [
           {
-            "name": "Naleśniki: ",
+            "name": "Naleśniki",
             "ingredients": [
               {
                 "text": "1 szklanka mąki pełnoziarnistej z plaskurki, samopszy, orkiszowej lub jasnej lub pół na pół z pełnoziarnistą (można użyć bezglutenowy miks)"
@@ -2804,7 +2804,7 @@
             ]
           },
           {
-            "name": "Nadzienie serowe:",
+            "name": "Nadzienie serowe",
             "ingredients": [
               {
                 "text": "220 g twarogu najlepiej mielonego"
@@ -2824,7 +2824,7 @@
             ]
           },
           {
-            "name": "Dodatkowo ",
+            "name": "Dodatkowo",
             "ingredients": [
               {
                 "text": "Około 1,5 szklanki jagód "
@@ -2839,7 +2839,7 @@
             ]
           },
           {
-            "name": "Sos :",
+            "name": "Sos",
             "ingredients": [
               {
                 "text": "200 ml śmietanki 30% lub 18%"
@@ -2861,7 +2861,7 @@
             ]
           },
           {
-            "name": "Frużelina jagodowa: ",
+            "name": "Frużelina jagodowa",
             "ingredients": [
               {
                 "text": "Szklanka jagód "
@@ -2998,7 +2998,7 @@
             ]
           },
           {
-            "name": "Sauce:",
+            "name": "Sauce",
             "ingredients": [
               {
                 "text": "1.5tbsp Gochujang "
@@ -3257,7 +3257,7 @@
         },
         "components": [
           {
-            "name": "MARYNATA:",
+            "name": "MARYNATA",
             "ingredients": [
               {
                 "text": "500g mięsa z ud kurczaka,"
@@ -3295,7 +3295,7 @@
             ]
           },
           {
-            "name": "GLAZURA:",
+            "name": "GLAZURA",
             "ingredients": [
               {
                 "text": "sok z połowy cytryny,"
@@ -3380,7 +3380,7 @@
         },
         "components": [
           {
-            "name": "Farsz:",
+            "name": "Farsz",
             "ingredients": [
               {
                 "text": "500 g mięsa mielonego wołowo-wieprzowego albo wieprzowo-drobiowego"
@@ -3433,7 +3433,7 @@
             ]
           },
           {
-            "name": "Dodatkowo:",
+            "name": "Dodatkowo",
             "ingredients": [
               {
                 "text": "papier ryżowy"
@@ -3679,7 +3679,7 @@
         },
         "components": [
           {
-            "name": "SKŁADNIKI:",
+            "name": null,
             "ingredients": [
               {
                 "text": "800g szynki wieprzowej (kulka),"
@@ -3732,7 +3732,7 @@
             ]
           },
           {
-            "name": "PRZYGOTOWANIE:",
+            "name": null,
             "steps": [
               "szynkę kroimy w plastry i przyprawiamy solą, pieprzem i papryką słodką - obtaczamy w mące, odwracamy i robimy to samo,",
               "mięso smażymy na rozgrzanym oleju na brązowy kolor z obu stron i zdejmujemy z patelni,",
@@ -3872,7 +3872,7 @@
         },
         "components": [
           {
-            "name": "Składniki:",
+            "name": null,
             "ingredients": [
               {
                 "text": "500g mąki typ 650 albo 00"
@@ -4042,7 +4042,7 @@
             ]
           },
           {
-            "name": "Sos:",
+            "name": "Sos",
             "ingredients": [
               {
                 "text": "700 ml passaty pomidorowej"
@@ -4118,7 +4118,7 @@
         },
         "components": [
           {
-            "name": "Składniki:",
+            "name": null,
             "ingredients": [
               {
                 "text": "Gotowy spód do pizzy (mój był tym razem XXL)"
@@ -4188,7 +4188,7 @@
         },
         "components": [
           {
-            "name": " Ciasto:",
+            "name": "Ciasto",
             "ingredients": [
               {
                 "text": "350 g mąki"
@@ -4208,7 +4208,7 @@
             ]
           },
           {
-            "name": " Owoce:",
+            "name": "Owoce",
             "ingredients": [
               {
                 "text": "600 g śliwek (dodałam też kilka moreli)"
@@ -4222,7 +4222,7 @@
             ]
           },
           {
-            "name": " Beza:",
+            "name": "Beza",
             "ingredients": [
               {
                 "text": "4 białka"
@@ -4239,7 +4239,7 @@
             ]
           },
           {
-            "name": "Przygotowanie:",
+            "name": null,
             "steps": [
               "Mąkę wymieszaj z proszkiem do pieczenia i cukrem pudrem. Dodaj żółtka oraz miękkie masło.",
               "Wymieszaj składniki, aż powstanie gruba kruszonka. 1/3 odłóż, a resztę wysyp na blachę wyłożoną papierem do pieczenia o wymiarach 22 × 28 cm. Wstaw do lodówki.",
@@ -4375,7 +4375,7 @@
         },
         "components": [
           {
-            "name": "Składniki:",
+            "name": null,
             "ingredients": [
               {
                 "text": "ziemniaki"
@@ -4590,7 +4590,7 @@
             ]
           },
           {
-            "name": "Für die Würzung: ",
+            "name": "Für die Würzung",
             "ingredients": [
               {
                 "text": "1 EL Austernsauce"
@@ -4610,7 +4610,7 @@
             ]
           },
           {
-            "name": "Zubereitung: ",
+            "name": null,
             "steps": [
               "Knoblauch zusammen mit den Chilis im Mörser kleinstampfen oder mit einem Messer kleinhacken. 🌶️ ",
               "⁠Chilis und Knoblauch in einer Pfanne scharf anbraten kurz und ",
@@ -4839,7 +4839,7 @@
             ]
           },
           {
-            "name": "Für die Glasur:",
+            "name": "Für die Glasur",
             "ingredients": [
               {
                 "text": "2 EL Honig"
@@ -4859,7 +4859,7 @@
             ]
           },
           {
-            "name": "Zubereitung:",
+            "name": null,
             "steps": [
               "Hähnchen würfeln, mit Salz, Pfeffer, Paprika & Dinkelmehl vermengen",
               "10 Minuten im Airfryer (Grillfunktion | 230 °C) garen",
@@ -5540,7 +5540,7 @@
         },
         "components": [
           {
-            "name": "RIZ : ",
+            "name": "RIZ",
             "ingredients": [
               {
                 "text": "1 verre de riz basmati → 1,5 verre d’eau"
@@ -5557,7 +5557,7 @@
             ]
           },
           {
-            "name": "Sauce blanche : ",
+            "name": "Sauce blanche",
             "ingredients": [
               {
                 "text": "Cinq cuillères à soupe de crème fraîche épaisse"
@@ -5595,7 +5595,7 @@
             ]
           },
           {
-            "name": "Panure : ",
+            "name": "Panure",
             "ingredients": [
               {
                 "text": "Un filet de poulet"
@@ -5681,7 +5681,7 @@
         },
         "components": [
           {
-            "name": "Pour le gratin :",
+            "name": "Pour le gratin",
             "ingredients": [
               {
                 "text": "50 g de beurre"
@@ -5713,7 +5713,7 @@
             ]
           },
           {
-            "name": "Pour la béchamel :",
+            "name": "Pour la béchamel",
             "ingredients": [
               {
                 "text": "2 cuillères à soupe de beurre"
@@ -5813,7 +5813,7 @@
             ]
           },
           {
-            "name": "La sauce: ",
+            "name": "La sauce",
             "ingredients": [
               {
                 "text": "250 gr de yaourt grecque ou fromage blanc "
@@ -5845,7 +5845,7 @@
             ]
           },
           {
-            "name": "Pour le poulet: ",
+            "name": "Pour le poulet",
             "ingredients": [
               {
                 "text": "350 gr d’escalopes de poulet "
@@ -5884,14 +5884,14 @@
             ]
           },
           {
-            "name": "sauce",
+            "name": "Sauce",
             "steps": [
               "On m&eacute;lange",
               "faut go&ucirc;ter"
             ]
           },
           {
-            "name": "poulet",
+            "name": "Poulet",
             "steps": [
               "on va m&eacute;langer de la farine, de l'œuf et du lait au fur et &agrave; mesure jusqu'&agrave; obtenir une une consistance de p&acirc;te &agrave; cr&ecirc;pe &eacute;paisse",
               "on rajoute nos escalopes de poulet",
@@ -5903,7 +5903,7 @@
             ]
           },
           {
-            "name": "assemblage",
+            "name": "Assemblage",
             "steps": [
               "on met de la sauce",
               "on termine avec des oignons frits, de la sauce sriracha et de la sauce chili, et enfin du persil s&eacute;ch&eacute;"
@@ -6062,7 +6062,7 @@
             ]
           },
           {
-            "name": "per la fonduta ",
+            "name": "Per la fonduta",
             "ingredients": [
               {
                 "text": "100 g pecorino grattugiato "
@@ -6222,7 +6222,7 @@
             ]
           },
           {
-            "name": "✨ Para la salsa",
+            "name": "Para la salsa",
             "ingredients": [
               {
                 "text": "3 dientes de ajo"
@@ -6245,7 +6245,7 @@
             ]
           },
           {
-            "name": "👨‍🍳 Preparación",
+            "name": null,
             "steps": [
               "Sazona el lomo con sal, pimienta, ajo en polvo, paprika, tomillo y romero. Dóralo en una sartén a fuego medio durante 5 minutos por cada lado hasta sellarlo bien. Retira y reserva.",
               "En la misma sartén prepara la salsa con el ajo, la cebolla, el vino blanco (o caldo), la crema de leche y la mostaza. Regresa el lomo y deja que termine de cocinarse junto a la salsa a fuego medio para que absorba todo el sabor."
@@ -6310,7 +6310,7 @@
         },
         "components": [
           {
-            "name": "Ingredientes:",
+            "name": null,
             "ingredients": [
               {
                 "text": "2 pechugas de pollo"
@@ -6351,7 +6351,7 @@
             ]
           },
           {
-            "name": "Paso a paso:",
+            "name": "Paso a paso",
             "steps": [
               "1- Cortar las papas en cubos y hervir en agua con sal hasta que estén tiernas.",
               "2- Condimentar las pechugas con pimentón, pimienta, sal, mix de hierbas y aceite de oliva.",
@@ -6427,7 +6427,7 @@
             ]
           },
           {
-            "name": "Para el curry:",
+            "name": "Para el curry",
             "ingredients": [
               {
                 "text": "1 cebolla grande"
@@ -6465,7 +6465,7 @@
             ]
           },
           {
-            "name": "Preparación:",
+            "name": null,
             "steps": [
               "Empieza caramelizando la cebolla a fuego medio-alto en una olla. Añade un chorrito de agua cada vez que se pegue, hasta que esté bien dorada.",
               "Incorpora la manzana rallada y cocina 2-3 minutos para que pierda humedad.",

@@ -41,9 +41,9 @@ def _fold(value: str) -> str:
 # Supported canonical application IDs. Regexes are applied to accent-folded
 # source text, but name and source_text are returned with their original spelling.
 _ALIASES: dict[str, tuple[str, ...]] = {
-    "cup": (r"cups?", r"c\.?", r"szklank(?:a|i|e|ami|ach)", r"tassen?", r"tasses?", r"tazas?", r"verres?", r"tazz(?:a|e)", r"bicchier[ei]", r"xicaras?", r"chavenas?", r"copos?"),
-    "tbsp": (r"tablespoons?", r"tbsp\.?", r"tbs\.?", r"lyzk(?:a|i|e|ek|ami|ach)", r"essloffel", r"el\.?", r"cuilleres?\s+(?:a\s+)?soupe", r"c\.?\s*a\s*soupe", r"cas?\.?", r"cucharadas?", r"cdas?\.?", r"c\.?\s*sopera", r"cucchiai(?:o)?", r"colher(?:es)?\s+(?:de\s+)?sopa", r"colher(?:es)?\s*\((?:de\s+)?sopa\)", r"c\.?\s*de\s*sopa"),
-    "tsp": (r"teaspoons?", r"tsp\.?", r"ts\.?", r"lyzeczk(?:a|i|e|ek|ami|ach)", r"teeloffel", r"tl\.?", r"cuilleres?\s+(?:a\s+)?cafe", r"c\.?\s*a\s*cafe", r"cac", r"cc\.?", r"cucharaditas?", r"cditas?\.?", r"cdtas?\.?", r"cdt\.?", r"c\.?\s*de\s*cafe", r"cucchiain[oi]", r"colher(?:es)?\s+(?:de\s+)?(?:cha|cafe)", r"colher(?:es)?\s*\((?:de\s+)?(?:cha|cafe)\)", r"c\.?\s*de\s*cha"),
+    "cup": (r"cups?", r"c\.?", r"szklank(?:a|i|e|ami|ach)", r"tassen?", r"tasses?", r"tazas?", r"verres?", r"tazz(?:a|e)", r"xicaras?", r"chavenas?"),
+    "tbsp": (r"tablespoons?", r"tbsp\.?", r"tbs\.?", r"lyzk(?:a|i|e|ek|ami|ach)", r"essloffel", r"el\.?", r"cuilleres?\s+(?:a\s+)?soupe", r"c\.?\s*a\s*soupe", r"c\.\s*a\.\s*s\.?", r"cas?\.?", r"cucharadas?", r"cdas?\.?", r"c\.?\s*sopera", r"cucchiai(?:o)?", r"colher(?:es)?\s+(?:de\s+)?sopa", r"colher(?:es)?\s*\((?:de\s+)?sopa\)", r"c\.?\s*de\s*sopa"),
+    "tsp": (r"teaspoons?", r"tsp\.?", r"ts\.?", r"lyzeczk(?:a|i|e|ek|ami|ach)", r"teeloffel", r"tl\.?", r"cuilleres?\s+(?:a\s+)?cafe", r"c\.?\s*a\s*cafe", r"c\.\s*a\.\s*c\.?", r"cac", r"cc\.?", r"cucharaditas?", r"cditas?\.?", r"cdtas?\.?", r"cdt\.?", r"c\.?\s*de\s*cafe", r"cucchiain[oi]", r"colher(?:es)?\s+(?:de\s+)?(?:cha|cafe)", r"colher(?:es)?\s*\((?:de\s+)?(?:cha|cafe)\)", r"c\.?\s*de\s*cha"),
     "oz": (r"ounces?", r"oz\.?", r"uncj(?:a|e|i)", r"unzen?", r"onces?", r"onzas?"),
     "lb": (r"pounds?", r"lbs?\.?", r"funt(?:y|ow)?", r"pfund(?:e)?", r"livres?", r"libras?"),
     "g": (r"grams?", r"grs?\.?", r"g\.?", r"gram(?:y|ow)?", r"gramm(?:e)?", r"grammes?", r"gramos?", r"grammi?", r"gramas?"),
@@ -70,6 +70,14 @@ _UNIT_PATTERNS = [(re.compile(rf"^(?:{alias})(?=$|[\s,.;:()])", re.I), unit) for
 _EN_TBSP = re.compile(rf"^(?P<a>\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|[{_GLYPH_CHARS}])\s*(?:tablespoons?|tbsp\.?)\s*(?:\+|plus|and)\s*(?P<b>\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|[{_GLYPH_CHARS}])\s*(?:teaspoons?|tsp\.?)\b\s*(?P<name>.*)$", re.I)
 _DESCRIPTORS = re.compile(r"^(?:large|medium|small|extra-large|xl|jumbo|whole|ripe|fresh|raw|boneless|skinless|packed|heaped|level)\b", re.I)
 _UNSUPPORTED_UNITS = re.compile(r"^(?P<unit>etto|etti|hg|bags?|pieces?|sticks?|heads?|packages?|pkg\.?|jars?|bottles?)\b", re.I)
+# Measures that are not a standard cup/volume keep their native unit text instead of a canonical unit:
+# Portuguese "copo" (glass), Italian "bicchiere", Portuguese "xícara (café)" (coffee cup), plus mg/dl.
+_NATIVE_UNITS = re.compile(r"^(?P<unit>copos?\s+americanos?|copos?|bicchier[ei]|xicaras?\s*\(\s*cafe\s*\)|chavenas?\s*\(\s*cafe\s*\)|mg|dl)(?=$|[\s,.;:()])", re.I)
+_NATIVE_CANONICAL = (("copo americano", "copo americano"), ("copo", "copo"), ("bicchier", "bicchiere"), ("xicara", "xícara (café)"), ("chavena", "chávena (café)"))
+# Portuguese half: "meia xícara", "meio copo".
+_HALF = re.compile(r"^(?:meia|meio)\s+", re.I)
+# Tea-cup qualifier after a cup: "xícara (chá) de açúcar", "xícaras de chá de farinha".
+_TEA_QUALIFIER = re.compile(r"^(?:\(\s*ch[aá]\s*\)\s*|de\s+ch[aá]\s+(?=de\s))", re.I)
 _ALTERNATIVE = re.compile(r"\b(?:or|ou|oder|o|oppure|rather than)\b", re.I)
 # Italian/Portuguese measure words are followed by a "di"/"de" connector that is not part of the name.
 _CONNECTOR_UNITS = re.compile(r"^(?:cucchiai|tazz|bicchier|grammi|chil|litri|pizzic|spicchi|colher|xicara|chavena|copo|gramas?|quilo|pitada|dentes?|cucharad|cuill|tasse|taza|pizca|diente|gousse)")
@@ -172,6 +180,7 @@ def parse_ingredient(source_text: str) -> IngredientParse:
     # ingredient on the left while retaining the untouched source_text.
     parse_text = original.split("\u2192", 1)[0].rstrip()
     parse_text = _APPROX.sub("", parse_text, count=1)
+    parse_text = _HALF.sub("1/2 ", parse_text, count=1)
     additive = _EN_TBSP.match(parse_text)
     if additive:
         try:
@@ -225,6 +234,16 @@ def parse_ingredient(source_text: str) -> IngredientParse:
     # Allow a small parenthetical size descriptor before an explicit count unit.
     size_prefix = re.match(r"^(?P<prefix>\([^)]*\)\s*)(?P<tail>.*)$", rest)
     unit_source = size_prefix.group("tail") if size_prefix else rest
+    native = _NATIVE_UNITS.match(_fold(unit_source))
+    if native:
+        consumed = next((i for i in range(1, len(unit_source) + 1) if len(_fold(unit_source[:i])) >= native.end()), 0)
+        folded_unit = re.sub(r"\s+", " ", native.group("unit").casefold())
+        folded_unit = re.sub(r"^copos? americanos?$", "copo americano", folded_unit)
+        unit = next((canonical for prefix, canonical in _NATIVE_CANONICAL if folded_unit.startswith(prefix)), folded_unit)
+        name = re.sub(r"\s+", " ", unit_source[consumed:].strip())
+        name = (_METRIC_CONNECTOR if unit in _METRIC_UNITS else _CONNECTOR).sub("", name, count=1)
+        return IngredientParse(source_text, _normalize_qty(qty, unit), unit, name or None, "partial")
+
     unit_match = _unit_prefix(_fold(unit_source))
     if unit_match:
         found, unit = unit_match
@@ -233,7 +252,9 @@ def parse_ingredient(source_text: str) -> IngredientParse:
         source_unit = _fold(unit_source[:consumed].strip())
         if source_unit.startswith("verre") and re.match(r"^de\s+", name, re.I):
             name = re.sub(r"^de\s+", "", name, count=1, flags=re.I)
-        elif _CONNECTOR_UNITS.match(source_unit):
+        elif _CONNECTOR_UNITS.match(source_unit) or re.match(r"c\.", source_unit):
+            if source_unit.startswith(("xicara", "chavena")):
+                name = _TEA_QUALIFIER.sub("", name, count=1)
             name = _CONNECTOR.sub("", name, count=1)
         elif unit in _METRIC_UNITS:
             name = _METRIC_CONNECTOR.sub("", name, count=1)

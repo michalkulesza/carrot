@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 INGREDIENT_HEADINGS = {
     "składniki", "składniki na",
@@ -52,6 +53,45 @@ def heading_kind(text: str) -> str | None:
     if normalized in NON_RECIPE_HEADINGS or normalized.startswith("nutritional analysis"):
         return "stop"
     return None
+
+
+_DECORATIVE_EDGE_CHARS = set(":-–—•*#|·▪■□●○◆◇▶►✦✧~_=>")
+
+
+def _is_decoration(char: str) -> bool:
+    """Whitespace, edge punctuation, pictographs, symbols, and emoji joiners/selectors."""
+
+    if char.isspace() or char in _DECORATIVE_EDGE_CHARS:
+        return True
+    category = unicodedata.category(char)
+    # So/Sk: emoji and pictographs; Cf: ZWJ/ZWNJ; Mn/Me: variation selectors and keycap marks.
+    return category in {"So", "Sk", "Cf", "Me"} or (category == "Mn" and 0xFE00 <= ord(char) <= 0xFE0F)
+
+
+def clean_component_name(text: str | None) -> str | None:
+    """Clean a heading-derived component name; None for empty or generic section headings.
+
+    Strips emoji/pictographs, decorative symbols, surrounding punctuation and whitespace.
+    A heading that is only a generic ingredients/instructions word in a supported
+    language yields None (an unnamed component). Specific names get a capitalised
+    first letter; the rest of the wording is preserved.
+    """
+
+    if not text:
+        return None
+    start, end = 0, len(text)
+    while start < end and _is_decoration(text[start]):
+        start += 1
+    while end > start and _is_decoration(text[end - 1]):
+        end -= 1
+    # Markdown emphasis wrapped around the label ("**Frosting:**") is consumed by the edge strip;
+    # inner emoji such as "🥕🥕 Sopa" are handled the same way as leading ones.
+    name = re.sub(r"\s+", " ", text[start:end]).strip()
+    if not name or not any(char.isalnum() for char in name):
+        return None
+    if heading_kind(name) in {"ingredients", "instructions"}:
+        return None
+    return name[0].upper() + name[1:]
 
 
 def instruction_group_variant(text: str) -> str | None:
