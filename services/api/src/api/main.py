@@ -119,6 +119,8 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS title_evidence JSON NOT NULL DEFAULT '[]'"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS failure_stage VARCHAR(32)"))
         await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS outcome VARCHAR(20)"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS residential_step VARCHAR(16)"))
+        await conn.execute(text("ALTER TABLE import_jobs ADD COLUMN IF NOT EXISTS residential_outcome VARCHAR(32)"))
         await conn.execute(text("ALTER TABLE households ADD COLUMN IF NOT EXISTS allergens JSONB"))
         await conn.execute(text("ALTER TABLE households ALTER COLUMN allergens TYPE JSONB USING allergens::jsonb"))
         await conn.execute(text("ALTER TABLE user_preferences ADD COLUMN IF NOT EXISTS auto_substitute BOOLEAN NOT NULL DEFAULT FALSE"))

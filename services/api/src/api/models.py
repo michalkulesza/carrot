@@ -855,6 +855,8 @@ class ImportJob(Base):
     )
     failure_stage: Mapped[str | None] = mapped_column(String(32), nullable=True)
     outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    residential_step: Mapped[str | None] = mapped_column(String(16), nullable=True)  # render | raw
+    residential_outcome: Mapped[str | None] = mapped_column(String(32), nullable=True)
     diagnostic_error: Mapped[str | None] = mapped_column(String, nullable=True)
     attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)

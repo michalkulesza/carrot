@@ -74,10 +74,31 @@ _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "ima
 
 
 class ImportPipelineFailure(Exception):
-    def __init__(self, code: str, stage: str = "unknown") -> None:
+    def __init__(self, code: str, stage: str = "unknown", residential: tuple[str, str] | None = None) -> None:
         super().__init__(code)
         self.code = code
         self.stage = stage
+        self.residential = residential  # (step, outcome) of the last residential egress attempt
+
+
+_RESIDENTIAL_STEP_BY_STATUS = {"residential_rendered": "render", "residential_raw_fallback": "raw"}
+
+
+def _residential_attempt(outcome: FailedOutcome) -> tuple[str, str] | None:
+    """Last residential egress (step, outcome) recorded on a failed outcome, if the fallback ran."""
+    for event in outcome.trace:
+        status = event.event.removeprefix("html_")
+        if status in _RESIDENTIAL_STEP_BY_STATUS:  # residential fetch worked, extraction failed later
+            return _RESIDENTIAL_STEP_BY_STATUS[status], "ok"
+        if event.event == "residential_blocked" and event.detail and ":" in event.detail:
+            step, _, result = event.detail.partition(":")
+            return step, result
+    return None
+
+
+def _record_residential(job: ImportJob, attempt: tuple[str, str] | None) -> None:
+    if attempt is not None:
+        job.residential_step, job.residential_outcome = attempt[0][:16], attempt[1][:32]
 
 
 async def _enrich_v2(extracted, tags: list[str], allergens: list[str], usage: gemini_svc.UsageTracker):
@@ -347,7 +368,7 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         else:
             outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
         if isinstance(outcome, FailedOutcome):
-            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value, _residential_attempt(outcome))
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=metadata,
@@ -449,6 +470,7 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
         job = await session.scalar(select(ImportJob).where(ImportJob.id == job_id).with_for_update())
         if job is None or job.status == ImportJobStatus.CANCELLED:
             return
+        _record_residential(job, getattr(error, "residential", None))
         if _is_transient(error) and job.retry_count < _MAX_IMPORT_RETRIES:
             job.status = ImportJobStatus.PENDING
             job.retry_count += 1
@@ -488,6 +510,7 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
                 failure_stage=job.failure_stage,
                 source_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else str(job.kind),
                 error=None if isinstance(error, ImportPipelineFailure) else error,
+                residential_step=error.residential[0] if getattr(error, "residential", None) else None,
             )
         await session.commit()
 
@@ -563,6 +586,8 @@ async def _process_job(job_id: uuid.UUID) -> None:
             current.outcome = result.outcome or "complete"
             current.failure_code = None
             current.failure_stage = None
+            residential_step = _RESIDENTIAL_STEP_BY_STATUS.get(str(result.source_capture.get("render_status")))
+            _record_residential(current, (residential_step, "ok") if residential_step else None)
             current.result_recipe_id = recipe.id
             if current.parent_recipe_id is None:  # a child keeps its URL so a retry can still find the parent's link
                 current.input = {}

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
+from contextlib import contextmanager
 from urllib.parse import urljoin, urlsplit
 from urllib.parse import urlunsplit
 
@@ -31,6 +33,7 @@ from api.services.extraction_v2.sources import (
     BROWSER_HEADERS, GeminiTranscriptionProvider, HttpLinkedPageProvider,
     is_safe_public_destination,
 )
+from api.services.monitoring import log_fetch_attempt, report_residential_failure
 from api.services.scraper import scraper
 from api.services.html_renderer import RendererFailure, render_url
 
@@ -118,34 +121,105 @@ async def _fetch_html(url: str, proxy: str | None = None) -> tuple[str, str]:
 
 
 _residential_gate = asyncio.Semaphore(2)  # home bandwidth and home IP reputation
+_NOT_UNREACHABLE_RENDER_CATEGORIES = {"empty_html", "bot_challenge"}
+
+
+@contextmanager
+def _fetch_attempt(url: str, route: str, step: str, *, fallback: bool):
+    """One structured log line and one Sentry log per page-fetch attempt; the body sets `record["outcome"]`."""
+    record = {"outcome": "error"}
+    started = time.monotonic()
+    try:
+        yield record
+    finally:
+        log_fetch_attempt(
+            log, host=urlsplit(url).hostname or "", route=route, step=step, outcome=record["outcome"],
+            duration_ms=int((time.monotonic() - started) * 1000), fallback=fallback,
+        )
+
+
+def _renderer_outcome(category: str) -> str:
+    return "renderer_" + category.removeprefix("renderer_")
+
+
+def _normal_route() -> str:
+    return "warp" if settings.outbound_proxy_url else "direct"
+
+
+async def _fetch_html_recorded(record: dict, url: str, proxy: str | None = None) -> tuple[str, str]:
+    try:
+        result = await (_fetch_html(url, proxy=proxy) if proxy else _fetch_html(url))
+    except SourceBlocked:
+        record["outcome"] = "challenge"
+        raise
+    except httpx.HTTPStatusError as error:
+        record["outcome"] = f"http_{error.response.status_code}"
+        raise
+    except httpx.TransportError:
+        record["outcome"] = "unavailable"
+        raise
+    record["outcome"] = "ok"
+    return result
+
+
+def _report_unavailable(url: str, step: str, outcome: str, error: str) -> None:
+    host = urlsplit(url).hostname or ""
+    log.warning("event=residential_unavailable host=%s step=%s error=%s", host, step, error)
+    report_residential_failure("unavailable", step=step, outcome=outcome, host=host)
+
+
+def _render_unreachable(category: str) -> bool:
+    return not category.startswith("http_") and category not in _NOT_UNREACHABLE_RENDER_CATEGORIES
 
 
 async def _acquire_residential(url: str) -> tuple[str, str, str]:
     """Fallback after a bot challenge: residential renderer, then residential raw fetch. Raises SourceBlocked."""
+    last_step, last_record, reported_unavailable = "none", {"outcome": "error"}, False
     async with _residential_gate:
         if settings.residential_renderer_url:
+            last_step = "render"
             try:
-                rendered = await render_url(url, renderer_url=settings.residential_renderer_url)
-                if not looks_like_bot_challenge(rendered.html):
+                with _fetch_attempt(url, "residential", "render", fallback=True) as record:
+                    last_record = record
+                    try:
+                        rendered = await render_url(url, renderer_url=settings.residential_renderer_url)
+                    except RendererFailure as error:
+                        record["outcome"] = _renderer_outcome(error.category)
+                        raise
+                    blocked = looks_like_bot_challenge(rendered.html)
+                    record["outcome"] = "challenge" if blocked else "ok"
+                if not blocked:
                     return rendered.html, rendered.final_url, "residential_rendered"
-                log.warning("residential step=render still blocked by bot challenge")
             except RendererFailure as error:
                 if not error.operational:
                     raise
-                log.warning("residential step=render failed (%s)", error.category)
+                if _render_unreachable(error.category):
+                    _report_unavailable(url, "render", last_record["outcome"], error.category)
+                    reported_unavailable = True
         if settings.residential_proxy_url:
+            last_step = "raw"
+            reported_unavailable = False
             try:
-                html, final_url = await _fetch_html(url, proxy=settings.residential_proxy_url)
+                with _fetch_attempt(url, "residential", "raw", fallback=True) as record:
+                    last_record = record
+                    html, final_url = await _fetch_html_recorded(record, url, proxy=settings.residential_proxy_url)
                 return html, final_url, "residential_raw_fallback"
             except SourceBlocked:
-                log.warning("residential step=raw still blocked by bot challenge")
+                pass
             except httpx.HTTPStatusError as error:
                 if error.response.status_code not in _CHALLENGE_STATUSES:
                     raise
-                log.warning("residential step=raw blocked (HTTP %s)", error.response.status_code)
             except httpx.TransportError as error:
-                log.warning("residential step=raw tunnel unavailable (%s)", type(error).__name__)
-        raise SourceBlocked("residential egress blocked or unavailable")
+                _report_unavailable(url, "raw", last_record["outcome"], type(error).__name__)
+                reported_unavailable = True
+        if not reported_unavailable:
+            report_residential_failure(
+                "blocked", step=last_step, outcome=last_record["outcome"], host=urlsplit(url).hostname or "",
+            )
+        blocked_error = SourceBlocked("residential egress blocked or unavailable")
+        blocked_error.residential_step = last_step
+        blocked_error.residential_outcome = last_record["outcome"]
+        raise blocked_error
 
 
 def _failure(url: str, reason: FailureReason, stage: ExtractionStage) -> FailedOutcome:
@@ -196,24 +270,37 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
     renderer_failure = None
     try:
         try:
-            rendered = await render_url(url)
-            html, final_url = rendered.html, rendered.final_url
-            if looks_like_bot_challenge(html):
-                raise RendererFailure("bot_challenge", operational=True)
+            with _fetch_attempt(url, _normal_route(), "render", fallback=False) as record:
+                try:
+                    rendered = await render_url(url)
+                except RendererFailure as error:
+                    record["outcome"] = _renderer_outcome(error.category)
+                    raise
+                html, final_url = rendered.html, rendered.final_url
+                if looks_like_bot_challenge(html):
+                    record["outcome"] = "challenge"
+                    raise RendererFailure("bot_challenge", operational=True)
+                record["outcome"] = "ok"
         except RendererFailure as error:
             if not error.operational:
                 raise
             renderer_failure = error.category
             render_status = "raw_fallback"
-            html, final_url = await _fetch_html(url)
+            with _fetch_attempt(url, _normal_route(), "raw", fallback=True) as record:
+                html, final_url = await _fetch_html_recorded(record, url)
     except SourceBlocked:
         log.warning("source blocked by bot challenge (renderer_failure=%s)", renderer_failure)
         if not (settings.residential_proxy_url or settings.residential_renderer_url):
             return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
         try:
             html, final_url, render_status = await _acquire_residential(url)
-        except SourceBlocked:
-            return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+        except SourceBlocked as blocked:
+            failure = _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT)
+            failure.trace.append(TraceEvent(
+                stage=ExtractionStage.INPUT, event="residential_blocked",
+                detail=f"{getattr(blocked, 'residential_step', '')}:{getattr(blocked, 'residential_outcome', '')}",
+            ))
+            return failure, ImportMetadata(source_url=url), {}
         except Exception:
             return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     except Exception:

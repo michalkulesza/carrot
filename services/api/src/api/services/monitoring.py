@@ -1,4 +1,7 @@
+import logging
+
 import sentry_sdk
+import sentry_sdk.logger as sentry_logger
 from urllib.parse import urlsplit, urlunsplit
 
 from api.config import settings
@@ -20,6 +23,7 @@ def init_sentry() -> None:
             dsn=settings.sentry_dsn,
             environment=settings.sentry_environment,
             traces_sample_rate=0,
+            enable_logs=True,
         )
 
 
@@ -39,6 +43,32 @@ def report_service_failure(
         sentry_sdk.capture_message(f"Service failure: {operation}", level="error")
 
 
+def log_fetch_attempt(
+    logger: logging.Logger, *, host: str, route: str, step: str, outcome: str, duration_ms: int, fallback: bool,
+) -> None:
+    """Mirror one page-fetch attempt to the stdlib log and Sentry Logs (no-op without a DSN)."""
+    logger.info(
+        "fetch_attempt route=%s step=%s outcome=%s host=%s duration_ms=%d fallback=%s",
+        route, step, outcome, host, duration_ms, str(fallback).lower(),
+    )
+    sentry_logger.info(
+        "fetch_attempt route={route} step={step} outcome={outcome} host={host}",
+        route=route, step=step, outcome=outcome, host=host,
+        attributes={"duration_ms": duration_ms, "fallback": fallback},
+    )
+
+
+def report_residential_failure(kind: str, *, step: str, outcome: str, host: str) -> None:
+    """Sentry error for a failed residential request; kind is "unavailable" or "blocked". Hostname only."""
+    with sentry_sdk.new_scope() as scope:
+        scope.set_tag("egress", "residential")
+        scope.set_tag("step", step)
+        scope.set_tag("outcome", outcome)
+        scope.set_tag("host", host)
+        scope.fingerprint = ["residential-egress", kind]
+        sentry_sdk.capture_message(f"Residential egress {kind}", level="error")
+
+
 def report_recipe_import_failure(
     *,
     input_kind: str,
@@ -48,12 +78,16 @@ def report_recipe_import_failure(
     failure_stage: str | None = None,
     source_kind: str | None = None,
     error: Exception | None = None,
+    residential_step: str | None = None,
 ) -> None:
     """Report a terminal import failure without sending pasted recipe contents."""
     with sentry_sdk.new_scope() as scope:
         scope.set_tag("operation", "recipe_import")
         scope.set_tag("input_kind", input_kind)
         scope.set_tag("reason", str(reason))
+        if residential_step:
+            scope.set_tag("egress", "residential")
+            scope.set_tag("residential_step", residential_step)
         scope.set_context("recipe_import", {
             "source_origin": _sanitize_source_url(source_url),
             "input_size": input_size,
