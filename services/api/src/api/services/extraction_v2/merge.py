@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from api.services.extraction_v2.contracts import ExtractedRecipe, NutritionEvidence, RecipeComponentEvidence
+from api.services.extraction_v2.lexicons import clean_component_name
 
 
 _INGREDIENT_NOISE = frozenset({
@@ -16,6 +17,12 @@ _INGREDIENT_NOISE = frozenset({
 
 def _key(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip().casefold()
+
+
+def _component_key(name: str | None) -> str:
+    """Component identity: decoration/case-insensitive; unnamed and generic headings are "main"."""
+
+    return _key(clean_component_name(name) or "main")
 
 
 def has_ingredients(recipe: ExtractedRecipe) -> bool:
@@ -60,15 +67,15 @@ def merge_recipes(left: ExtractedRecipe, right: ExtractedRecipe) -> ExtractedRec
         for component in left.components
         if component.ingredients or component.steps
     ]
-    by_name = {_key(component.name or "main"): component for component in components}
+    by_name = {_component_key(component.name): component for component in components}
     for incoming in right.components:
         if not incoming.ingredients and not incoming.steps:
             continue
-        component = by_name.get(_key(incoming.name or "main"))
+        component = by_name.get(_component_key(incoming.name))
         if component is None:
             component = RecipeComponentEvidence(name=incoming.name)
             components.append(component)
-            by_name[_key(incoming.name or "main")] = component
+            by_name[_component_key(incoming.name)] = component
         existing_ingredients = {_key(item.text): item for item in component.ingredients}
         for ingredient in incoming.ingredients:
             if _transcript_ingredient_is_already_retained(ingredient, component.ingredients):

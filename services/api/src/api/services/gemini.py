@@ -85,6 +85,13 @@ NO_RECIPE_CONTENT, AMBIGUOUS_RECIPE, or UNREADABLE_CONTENT as failure_reason.
 A product/appliance review, advertisement, testimonial, or lifestyle discussion
 is not a recipe merely because it mentions ingredients or gives an incidental
 serving suggestion. Otherwise leave failure_reason null.
+When retained_recipe has more than one component, assign each step you supply to
+the retained component it belongs to, copying that component's name EXACTLY as
+written in retained_recipe (use null for the unnamed main component) and never
+translating it. Return one component per retained component that receives steps;
+do not put all steps into a single unnamed component. Create a component with a
+new name only when the transcript clearly describes a distinct part that is
+absent from retained_recipe.
 """
 
 
@@ -302,7 +309,9 @@ async def extract_audio_recipe_evidence(
             try:
                 response = await aio.models.generate_content(
                     model=model or settings.gemini_extraction_model,
-                    contents=json.dumps({"transcript": transcript, "retained_recipe": retained_recipe}),
+                    # Keep non-ASCII literal: unicode escape sequences make the model
+                    # answer with digit runs ("açúcar" came back as "a343434car").
+                    contents=json.dumps({"transcript": transcript, "retained_recipe": retained_recipe}, ensure_ascii=False),
                     config=types.GenerateContentConfig(
                         system_instruction=_AUDIO_EVIDENCE_SYSTEM,
                         temperature=0,
