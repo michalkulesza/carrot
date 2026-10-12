@@ -148,14 +148,16 @@ def _job(**overrides) -> ImportJob:
     return ImportJob(**values)
 
 
-def test_source_blocked_is_device_capture_eligible_once() -> None:
-    assert imports_routes.is_device_capture_eligible(_job()) is True
-    assert imports_routes.is_device_capture_eligible(_job(input={"url": URL, "device_capture_used": True})) is False
+def test_source_blocked_is_not_device_capture_eligible() -> None:
+    assert imports_routes.is_device_capture_eligible(_job()) is False
+    assert imports_routes.is_device_capture_eligible(_job(failure_code=ImportFailureCode.SOURCE_FETCH_FAILED)) is True
+    assert imports_routes.is_device_capture_eligible(
+        _job(failure_code=ImportFailureCode.SOURCE_FETCH_FAILED, input={"url": URL, "device_capture_used": True})) is False
 
 
 @pytest.mark.asyncio
 async def test_blocked_capture_does_not_become_eligible_again(monkeypatch) -> None:
-    job = _job()
+    job = _job(failure_code=ImportFailureCode.SOURCE_FETCH_FAILED)
     monkeypatch.setattr(imports_routes, "_action_job", AsyncMock(return_value=job))
     monkeypatch.setattr(imports_routes, "_event_for_job", AsyncMock())
     monkeypatch.setattr(imports_routes, "_creator_name", AsyncMock(return_value="Ann"))

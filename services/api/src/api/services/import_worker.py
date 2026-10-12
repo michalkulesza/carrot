@@ -40,6 +40,7 @@ from api.services.embeddings import queue_recipe_embedding
 from api.services.allergen_rechecks import recover_running_jobs, settle_allergen_status, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
 from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields, report_service_failure
+from api.services.extraction_v2.challenge import looks_like_bot_challenge
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import (
     acquire_and_extract_url, extract_captured_html, extract_image_transcript, extract_pasted_text,
@@ -144,7 +145,24 @@ async def _get_tags_and_allergens(
     return [tag.name for tag in tags], allergens
 
 
-async def _archive_thumbnail(recipe: Recipe) -> None:
+def _is_residential(result: ImportResult) -> bool:
+    return str((result.source_capture or {}).get("render_status") or "").startswith("residential_")
+
+
+class _ThumbnailChallenge(Exception):
+    pass
+
+
+async def _download_thumbnail(url: str, proxy: str, *, detect_challenge: bool = False) -> httpx.Response:
+    async with httpx.AsyncClient(follow_redirects=True, timeout=15, proxy=proxy or None) as client:
+        response = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()
+    if detect_challenge and "html" in response.headers.get("content-type", "").casefold() and looks_like_bot_challenge(response.text):
+        raise _ThumbnailChallenge
+    return response
+
+
+async def _archive_thumbnail(recipe: Recipe, *, residential: bool = False) -> None:
     thumbnail_url = recipe.thumbnail_url
     is_r2_url = bool(
         settings.r2_public_url
@@ -155,11 +173,16 @@ async def _archive_thumbnail(recipe: Recipe) -> None:
         return
 
     try:
-        async with httpx.AsyncClient(
-            follow_redirects=True, timeout=15, proxy=settings.outbound_proxy_url or None,
-        ) as client:
-            response = await client.get(thumbnail_url, headers={"User-Agent": "Mozilla/5.0"})
-            response.raise_for_status()
+        retry_via_residential = residential and bool(settings.residential_proxy_url)
+        try:
+            response = await _download_thumbnail(
+                thumbnail_url, settings.outbound_proxy_url, detect_challenge=retry_via_residential,
+            )
+        except (httpx.HTTPStatusError, _ThumbnailChallenge) as error:
+            blocked = isinstance(error, _ThumbnailChallenge) or error.response.status_code in (403, 429, 503)
+            if not (retry_via_residential and blocked):
+                raise
+            response = await _download_thumbnail(thumbnail_url, settings.residential_proxy_url, detect_challenge=True)
 
         archived_url = await asyncio.to_thread(r2_svc.upload_image, response.content, str(recipe.id))
         recipe.thumbnail_url = archived_url
@@ -218,7 +241,7 @@ async def _save_recipe(session, job: ImportJob, result: ImportResult) -> Recipe:
             recipe_id=recipe.id, schema_version=1,
             evidence=result.evidence[:12], trace=result.trace[:200], capture=result.source_capture,
         ))
-    await _archive_thumbnail(recipe)
+    await _archive_thumbnail(recipe, residential=_is_residential(result))
     if job.household_id is not None:
         await _link_recipe_to_household(session, recipe.id, job.household_id)
     await settle_allergen_status(session, recipe)
@@ -249,7 +272,7 @@ async def _replace_recipe(session, job: ImportJob, result: ImportResult) -> Reci
         recipe_id=recipe.id, schema_version=1, evidence=result.evidence[:12],
         trace=result.trace[:200], capture=result.source_capture,
     ))
-    await _archive_thumbnail(recipe)
+    await _archive_thumbnail(recipe, residential=_is_residential(result))
     await queue_recipe_embedding(session, recipe)
     return recipe
 

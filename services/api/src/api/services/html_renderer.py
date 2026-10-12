@@ -26,10 +26,10 @@ class RendererFailure(RuntimeError):
         self.operational = operational
 
 
-async def render_url(url: str) -> RenderedPage:
+async def render_url(url: str, renderer_url: str | None = None) -> RenderedPage:
     try:
         async with _AsyncClient(timeout=settings.renderer_timeout_seconds) as client:
-            response = await client.post(f"{settings.renderer_url.rstrip('/')}/v1/render", json={"url": url})
+            response = await client.post(f"{(renderer_url or settings.renderer_url).rstrip('/')}/v1/render", json={"url": url})
         data = response.json()
     except (httpx.HTTPError, ValueError):
         raise RendererFailure("renderer_unavailable", operational=True) from None

@@ -121,6 +121,6 @@ async def test_save_recipe_archives_thumbnail_before_returning(monkeypatch) -> N
     assert recipe.id == recipe_id
     assert recipe.thumbnail_url == thumbnail_url
     assert recipe.components[0]["name"] == ""
-    archive_thumbnail.assert_awaited_once_with(recipe)
+    archive_thumbnail.assert_awaited_once_with(recipe, residential=False)
     link_recipe.assert_awaited_once_with(session, recipe_id, job.household_id)
     queue_embedding.assert_awaited_once_with(session, recipe)

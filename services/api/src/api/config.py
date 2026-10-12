@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     renderer_url: str = "http://renderer:8080"
     renderer_timeout_seconds: float = 28
     outbound_proxy_url: str = ""
+    residential_proxy_url: str = ""  # fallback egress after a bot challenge, e.g. socks5h://host.docker.internal:40002
+    residential_renderer_url: str = ""  # renderer using the residential egress, e.g. http://renderer-residential:8080
     allowed_origins: str = "http://localhost:5173"
     public_web_url: str = "http://localhost:5173"
     database_url: str = "postgresql+asyncpg://platekeeper:platekeeper@localhost:5432/platekeeper"

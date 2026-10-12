@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from urllib.parse import urljoin, urlsplit
 from urllib.parse import urlunsplit
@@ -78,11 +79,11 @@ def create_production_orchestrator(usage: gemini.UsageTracker) -> ExtractionOrch
     ))
 
 
-async def _fetch_html(url: str) -> tuple[str, str]:
+async def _fetch_html(url: str, proxy: str | None = None) -> tuple[str, str]:
     current = url
     async with httpx.AsyncClient(
         timeout=httpx.Timeout(20, connect=8), follow_redirects=False,
-        headers=BROWSER_HEADERS, proxy=settings.outbound_proxy_url or None,
+        headers=BROWSER_HEADERS, proxy=proxy or settings.outbound_proxy_url or None,
     ) as client:
         for _ in range(_MAX_REDIRECTS + 1):
             if not await is_safe_public_destination(current):
@@ -114,6 +115,37 @@ async def _fetch_html(url: str) -> tuple[str, str]:
                 response.raise_for_status()
                 return text, str(response.url)
     raise ValueError("URL exceeded redirect limit")
+
+
+_residential_gate = asyncio.Semaphore(2)  # home bandwidth and home IP reputation
+
+
+async def _acquire_residential(url: str) -> tuple[str, str, str]:
+    """Fallback after a bot challenge: residential renderer, then residential raw fetch. Raises SourceBlocked."""
+    async with _residential_gate:
+        if settings.residential_renderer_url:
+            try:
+                rendered = await render_url(url, renderer_url=settings.residential_renderer_url)
+                if not looks_like_bot_challenge(rendered.html):
+                    return rendered.html, rendered.final_url, "residential_rendered"
+                log.warning("residential step=render still blocked by bot challenge")
+            except RendererFailure as error:
+                if not error.operational:
+                    raise
+                log.warning("residential step=render failed (%s)", error.category)
+        if settings.residential_proxy_url:
+            try:
+                html, final_url = await _fetch_html(url, proxy=settings.residential_proxy_url)
+                return html, final_url, "residential_raw_fallback"
+            except SourceBlocked:
+                log.warning("residential step=raw still blocked by bot challenge")
+            except httpx.HTTPStatusError as error:
+                if error.response.status_code not in _CHALLENGE_STATUSES:
+                    raise
+                log.warning("residential step=raw blocked (HTTP %s)", error.response.status_code)
+            except httpx.TransportError as error:
+                log.warning("residential step=raw tunnel unavailable (%s)", type(error).__name__)
+        raise SourceBlocked("residential egress blocked or unavailable")
 
 
 def _failure(url: str, reason: FailureReason, stage: ExtractionStage) -> FailedOutcome:
@@ -176,7 +208,14 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
             html, final_url = await _fetch_html(url)
     except SourceBlocked:
         log.warning("source blocked by bot challenge (renderer_failure=%s)", renderer_failure)
-        return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+        if not (settings.residential_proxy_url or settings.residential_renderer_url):
+            return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+        try:
+            html, final_url, render_status = await _acquire_residential(url)
+        except SourceBlocked:
+            return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
+        except Exception:
+            return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     except Exception:
         return _failure(url, FailureReason.SOURCE_FETCH_FAILED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
     return await _extract_html(

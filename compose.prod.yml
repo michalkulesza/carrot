@@ -25,6 +25,8 @@ services:
       R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       RENDERER_URL: http://renderer:8080
       OUTBOUND_PROXY_URL: ${OUTBOUND_PROXY_URL:-}
+      RESIDENTIAL_PROXY_URL: ${RESIDENTIAL_PROXY_URL:-}
+      RESIDENTIAL_RENDERER_URL: ${RESIDENTIAL_RENDERER_URL:-}
     depends_on:
       db:
         condition: service_healthy
@@ -66,6 +68,31 @@ services:
       timeout: 5s
       retries: 5
 
+  renderer-residential:
+    image: ghcr.io/michalkulesza/carrot-renderer:latest
+    environment:
+      RENDERER_MAX_CONCURRENCY: ${RENDERER_MAX_CONCURRENCY:-2}
+      RENDERER_MAX_HTML_BYTES: ${RENDERER_MAX_HTML_BYTES:-2097152}
+      RENDERER_MAX_RESPONSE_BYTES: ${RENDERER_MAX_RESPONSE_BYTES:-8388608}
+      RENDERER_MAX_REQUESTS: ${RENDERER_MAX_REQUESTS:-200}
+      RENDERER_NAVIGATION_TIMEOUT_MS: ${RENDERER_NAVIGATION_TIMEOUT_MS:-15000}
+      RENDERER_TOTAL_TIMEOUT_MS: ${RENDERER_TOTAL_TIMEOUT_MS:-25000}
+      RENDERER_IDLE_MS: ${RENDERER_IDLE_MS:-1200}
+      RENDERER_UPSTREAM_SOCKS: ${RESIDENTIAL_RENDERER_UPSTREAM_SOCKS:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    mem_limit: 1200m
+    cpus: 2
+    pids_limit: 256
+    cap_drop: ["ALL"]
+    cap_add: ["NET_ADMIN", "SETUID", "SETGID"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   worker:
     image: ghcr.io/michalkulesza/carrot-api:latest
     command: ["uv", "run", "--no-sync", "python", "-m", "api.worker"]
@@ -78,6 +105,8 @@ services:
       R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       RENDERER_URL: http://renderer:8080
       OUTBOUND_PROXY_URL: ${OUTBOUND_PROXY_URL:-}
+      RESIDENTIAL_PROXY_URL: ${RESIDENTIAL_PROXY_URL:-}
+      RESIDENTIAL_RENDERER_URL: ${RESIDENTIAL_RENDERER_URL:-}
     depends_on:
       db:
         condition: service_healthy

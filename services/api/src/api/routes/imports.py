@@ -35,9 +35,7 @@ _ACTIVE_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING, ImportJobS
 _MAX_IMAGE_BYTES = 8 * 1024 * 1024
 _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 _MAX_CAPTURED_HTML_BYTES = 3 * 1024 * 1024
-_DEVICE_CAPTURE_FAILURE_CODES = {
-    ImportFailureCode.SOURCE_FETCH_FAILED, ImportFailureCode.USER_ACTION_REQUIRED, ImportFailureCode.SOURCE_BLOCKED,
-}
+_DEVICE_CAPTURE_FAILURE_CODES = {ImportFailureCode.SOURCE_FETCH_FAILED, ImportFailureCode.USER_ACTION_REQUIRED}
 
 
 def _scope_filter(model, household_id: uuid.UUID, user_id: uuid.UUID):
