@@ -2,10 +2,26 @@
 
 from __future__ import annotations
 
+import re
 from enum import StrEnum
 from typing import Annotated, Literal, Protocol
 
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, field_validator, model_validator
+
+_INVISIBLE_CHARS = re.compile("[\u200b\u200c\u200d\u2060\ufeff\u00ad]")
+
+
+def clean_display_text(value: str) -> str:
+    """Trim, drop zero-width characters and collapse whitespace runs (NBSP etc. included).
+
+    Display text only: evidence offsets index the original source content, never this string.
+    """
+
+    return re.sub(r"\s+", " ", _INVISIBLE_CHARS.sub("", value)).strip()
+
+
+def _clean_optional(value: str | None) -> str | None:
+    return None if value is None else clean_display_text(value)
 
 
 class SourceKind(StrEnum):
@@ -170,6 +186,11 @@ class IngredientEvidence(BaseModel):
     references: list[EvidenceReference] = Field(default_factory=list)
     links: list[EvidenceLink] = Field(default_factory=list)
 
+    @field_validator("text")
+    @classmethod
+    def _normalize_text(cls, value: str) -> str:
+        return clean_display_text(value)
+
 
 class StepEvidence(BaseModel):
     text: str
@@ -177,12 +198,22 @@ class StepEvidence(BaseModel):
     locator: str | None = None
     references: list[EvidenceReference] = Field(default_factory=list)
 
+    @field_validator("text")
+    @classmethod
+    def _normalize_text(cls, value: str) -> str:
+        return clean_display_text(value)
+
 
 class RecipeComponentEvidence(BaseModel):
     name: str | None = None
     name_references: list[EvidenceReference] = Field(default_factory=list)
     ingredients: list[IngredientEvidence] = Field(default_factory=list)
     steps: list[StepEvidence] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def _normalize_text(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
 
 
 class NutritionEvidence(BaseModel):
@@ -195,6 +226,18 @@ class NutritionEvidence(BaseModel):
     raw_text: str | None = None
     evidence_ids: list[str] = Field(default_factory=list)
     references: list[EvidenceReference] = Field(default_factory=list)
+
+    @field_validator("calories", "protein", "fat", "carbohydrates")
+    @classmethod
+    def _normalize_text(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
+
+    @field_validator("raw_text")
+    @classmethod
+    def _trim_raw_text(cls, value: str | None) -> str | None:
+        """Raw nutrition blocks keep their line breaks; only edges and invisible characters go."""
+
+        return None if value is None else _INVISIBLE_CHARS.sub("", value).strip()
 
 
 class ExtractedRecipe(BaseModel):
@@ -211,6 +254,11 @@ class ExtractedRecipe(BaseModel):
     total_time_references: list[EvidenceReference] = Field(default_factory=list)
     nutrition: NutritionEvidence = Field(default_factory=NutritionEvidence)
     failure_reason: FailureReason | None = None
+
+    @field_validator("title", "yield_text", "yield_servings", "total_time_text")
+    @classmethod
+    def _normalize_text(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
 
     @model_validator(mode="after")
     def validate_failure_shape(self) -> ExtractedRecipe:

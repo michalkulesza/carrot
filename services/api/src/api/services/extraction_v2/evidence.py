@@ -8,13 +8,13 @@ import re
 
 from bs4 import BeautifulSoup, Tag
 
-from api.services.extraction_v2.contracts import EvidenceReference, EvidenceSpan, ExtractionInput
+from api.services.extraction_v2.contracts import EvidenceReference, EvidenceSpan, ExtractionInput, clean_display_text
 
 
 def normalize_evidence_text(value: str) -> str:
     """The sole normalisation used by extraction and reference validation."""
 
-    normalized = re.sub(r"\s+", " ", html.unescape(value)).strip()
+    normalized = clean_display_text(html.unescape(value))
     return re.sub(r"\s+([,.;:!?])", r"\1", normalized)
 
 
