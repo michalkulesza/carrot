@@ -1,0 +1,81 @@
+{
+  "hero": {
+    "tagline": "La tua libreria personale di ricette"
+  },
+  "showcase": {
+    "headline": "La tua libreria\ndi ricette.",
+    "subtitle": "Importa da qualsiasi fonte, pianifica la settimana, fai la spesa per reparto, insieme alla tua famiglia.",
+    "pass": {
+      "header": "Carrot · Pass demo",
+      "admitOne": "Ingresso singolo",
+      "email": "Email",
+      "password": "Password",
+      "copy": "Copia",
+      "copied": "✓ Copiato",
+      "valid": "Valido",
+      "anytime": "In qualsiasi momento",
+      "resets": "Ripristino",
+      "automatically": "Automatico"
+    },
+    "cta": {
+      "web": "Apri l'app web",
+      "ios": "iOS in arrivo",
+      "android": "Android in arrivo"
+    },
+    "demo": {
+      "tags": {
+        "dessert": "Dolce",
+        "baked": "Al forno",
+        "gluten": "Glutine"
+      },
+      "recipeTitle": "Blondie al cioccolato bianco e frutti di bosco",
+      "butter": "burro",
+      "eggs": "uova",
+      "flour": "farina 00",
+      "shopping": "Spesa · {{count}} da prendere",
+      "produce": "Frutta e verdura",
+      "garlic": "spicchi d'aglio",
+      "lemon": "limone",
+      "timerStep": "Cuoci il riso a fuoco lento"
+    }
+  },
+  "footer": {
+    "privacyPolicy": "Informativa sulla privacy",
+    "support": "Assistenza"
+  },
+  "support": {
+    "back": "← Torna alla home",
+    "title": "Assistenza",
+    "intro": "Hai una domanda, hai trovato un bug o ti serve aiuto con il tuo account? Siamo felici di aiutarti.",
+    "emailLabel": "Scrivici",
+    "email": "kulesza.michal@gmail.com"
+  },
+  "privacyPolicy": {
+    "back": "← Torna alla home",
+    "title": "Informativa sulla privacy",
+    "updated": "Ultimo aggiornamento: luglio 2026",
+    "intro": "Carrot («noi», «nostro») è una libreria personale di ricette. Questa pagina spiega quali informazioni raccogliamo quando usi l'app, come le utilizziamo e come puoi eliminarle.",
+    "sections": [
+      {
+        "heading": "Informazioni che raccogliamo",
+        "body": "Quando crei un account, raccogliamo il tuo indirizzo email e una password protetta da hash sicuro — oppure, se accedi con Google, l'email del tuo account Google. Puoi anche aggiungere un nome visualizzato. Mentre usi l'app memorizziamo le ricette che salvi o importi (compresi eventuali testi o foto che fornisci), la tua appartenenza alla famiglia, i piani pasti, le liste della spesa e le informazioni su allergeni o dieta che inserisci, inclusi tag personalizzati e risultati dell'analisi degli allergeni assistita dall'IA. Memorizziamo anche le tue preferenze su unità di misura, lingua e aspetto, e dati di base su arresti anomali e diagnostica se l'app incontra un errore."
+      },
+      {
+        "heading": "Come usiamo le tue informazioni",
+        "body": "Usiamo queste informazioni solo per offrire le funzioni dell'app: archiviare e organizzare le tue ricette, creare piani pasti e liste della spesa, segnalare gli allergeni che ci hai indicato e sincronizzare i tuoi dati tra i dispositivi collegati al tuo account. Non vendiamo i tuoi dati né li usiamo per la pubblicità. Le segnalazioni sugli allergeni sono stime assistite dall'IA e non sostituiscono la lettura delle etichette complete degli ingredienti."
+      },
+      {
+        "heading": "Servizi di terze parti",
+        "body": "Ci affidiamo a un numero ridotto di terze parti per far funzionare l'app: Google, per l'accesso con Google (verifichiamo il tuo token di identità — non vediamo mai la tua password di Google); Sentry, per la segnalazione di arresti anomali ed errori, che può includere informazioni diagnostiche sul dispositivo e sull'app ma non il contenuto delle tue ricette; e Cloudflare R2, un servizio di archiviazione di oggetti usato per ospitare le foto che carichi. Ciascuno di questi fornitori riceve solo i dati minimi necessari per svolgere il proprio compito."
+      },
+      {
+        "heading": "Conservazione ed eliminazione dei dati",
+        "body": "I tuoi dati vengono conservati finché il tuo account esiste. Puoi eliminare definitivamente il tuo account e tutto ciò che vi è collegato — ricette, piani pasti, liste della spesa, preferenze e foto caricate — in qualsiasi momento da Impostazioni → Elimina account nell'app. L'eliminazione è immediata e non può essere annullata. Se hai effettuato l'accesso con Google, eliminando l'account viene revocato anche l'accesso dell'app al tuo account Google."
+      },
+      {
+        "heading": "Contatti",
+        "body": "Domande su questa informativa o sui tuoi dati? Scrivi a kulesza.michal@gmail.com."
+      }
+    ]
+  }
+}

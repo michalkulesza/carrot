@@ -1,15 +1,13 @@
 import { Platform } from 'react-native'
+import { SUPPORTED_LOCALES } from '@carrot/shared/supportedLocales'
 import type { AppearanceMode } from '../../context/ColorSchemeContext'
 
 export const CARD_RADIUS = Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 26 ? 20 : 10
 
-export const LANGUAGES: { code: string; labelKey: string }[] = [
-  { code: 'en', labelKey: 'languages.en' },
-  { code: 'de', labelKey: 'languages.de' },
-  { code: 'pl', labelKey: 'languages.pl' },
-  { code: 'fr', labelKey: 'languages.fr' },
-  { code: 'es', labelKey: 'languages.es' },
-]
+export const LANGUAGES: { code: string; labelKey: string }[] = SUPPORTED_LOCALES.map(code => ({
+  code,
+  labelKey: `languages.${code}`,
+}))
 
 export const WEEK_START_OPTIONS: { value: number; labelKey: string }[] = [
   { value: 0, labelKey: 'settings.sunday' },

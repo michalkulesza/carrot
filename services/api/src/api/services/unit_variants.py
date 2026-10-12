@@ -17,9 +17,9 @@ _SOURCE_MEASURE = re.compile(
     r"^(?P<prefix>\s*(?:(?:about|approx(?:imately)?|around|roughly|ca\.?)\s+)?)"
     r"(?P<amount>\d+\s+\d+\s*/\s*\d+|\d+\s*/\s*\d+|\d+(?:[.,]\d+)?)"
     r"(?P<space>\s+)(?P<unit>fl\s?oz|fluid\s+ounces?|ounces?|oz|pounds?|lbs?|lb|funt(?:y|ow)?|pfund(?:e)?|livres?|libras?|"
-    r"kilograms?|kg|kilogram(?:y|ow)?|kilogramm(?:e)?|kilogrammes?|kilogramos?|grams?|g|gram(?:y|ow)?|gramm(?:e)?|grammes?|gramos?|"
-    r"millilit(?:er|re)s?|ml|mililitr(?:y|ow)?|mililitros?|centilit(?:er|re)s?|cl|centylitr(?:y|ow)?|zentiliter|centilitros?|"
-    r"lit(?:er|re)s?|l|litr(?:a|y|ow|ze)?|litros?|quarts?|qt|inch(?:es)?|centimeters?|centimetres?|cm)\b",
+    r"kilograms?|kg|kilogram(?:y|ow)?|kilogramm(?:e)?|kilogrammes?|kilogramos?|chilogramm[oi]|chil[oi]|quilogramas?|quilos?|grams?|g|gram(?:y|ow)?|gramm(?:e)?|grammes?|gramos?|grammi|gramas?|"
+    r"millilit(?:er|re)s?|ml|mililitr(?:y|ow)?|mililitros?|millilitr[oi]|centilit(?:er|re)s?|cl|centylitr(?:y|ow)?|zentiliter|centilitros?|centilitr[oi]|"
+    r"lit(?:er|re)s?|l|litr(?:a|y|ow|ze)?|litros?|litr[oi]|quarts?|qt|inch(?:es)?|centimeters?|centimetres?|cm)\b",
     re.I,
 )
 
@@ -70,10 +70,10 @@ def convert_ingredient(source: str, target: str) -> str:
     source_unit = measure_match.group("unit").casefold().replace(" ", "")
     aliases = {
         "ounce": "oz", "ounces": "oz", "oz": "oz", "pound": "lb", "pounds": "lb", "lb": "lb", "lbs": "lb", "funt": "lb", "funty": "lb", "funtow": "lb", "pfund": "lb", "pfunde": "lb", "livre": "lb", "livres": "lb", "libra": "lb", "libras": "lb",
-        "gram": "g", "grams": "g", "gramy": "g", "gramow": "g", "gramm": "g", "gramme": "g", "grammes": "g", "gramos": "g", "g": "g", "kilogram": "kg", "kilograms": "kg", "kilogramy": "kg", "kilogramow": "kg", "kilogramm": "kg", "kilogramme": "kg", "kilogrammes": "kg", "kilogramos": "kg", "kg": "kg",
-        "milliliter": "ml", "milliliters": "ml", "millilitre": "ml", "millilitres": "ml", "mililitr": "ml", "mililitrow": "ml", "mililitros": "ml", "ml": "ml",
-        "centiliter": "cl", "centiliters": "cl", "centilitre": "cl", "centilitres": "cl", "centilitros": "cl", "cl": "cl",
-        "liter": "l", "liters": "l", "litre": "l", "litres": "l", "litros": "l", "l": "l",
+        "gram": "g", "grams": "g", "gramy": "g", "gramow": "g", "gramm": "g", "gramme": "g", "grammes": "g", "gramos": "g", "grammi": "g", "gramas": "g", "g": "g", "kilogram": "kg", "kilograms": "kg", "kilogramy": "kg", "kilogramow": "kg", "kilogramm": "kg", "kilogramme": "kg", "kilogrammes": "kg", "kilogramos": "kg", "chilo": "kg", "chili": "kg", "chilogrammo": "kg", "chilogrammi": "kg", "quilo": "kg", "quilos": "kg", "quilograma": "kg", "quilogramas": "kg", "kg": "kg",
+        "milliliter": "ml", "milliliters": "ml", "millilitre": "ml", "millilitres": "ml", "mililitr": "ml", "mililitrow": "ml", "mililitros": "ml", "millilitro": "ml", "millilitri": "ml", "ml": "ml",
+        "centiliter": "cl", "centiliters": "cl", "centilitre": "cl", "centilitres": "cl", "centilitros": "cl", "centilitro": "cl", "centilitri": "cl", "cl": "cl",
+        "liter": "l", "liters": "l", "litre": "l", "litres": "l", "litros": "l", "litro": "l", "litri": "l", "l": "l",
         "floz": "floz", "fluidounces": "floz", "quart": "qt", "quarts": "qt", "qt": "qt",
         "inch": "in", "inches": "in", "centimeter": "cm", "centimeters": "cm", "centimetre": "cm", "centimetres": "cm", "cm": "cm",
     }

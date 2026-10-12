@@ -1,0 +1,81 @@
+{
+  "hero": {
+    "tagline": "Sua biblioteca pessoal de receitas"
+  },
+  "showcase": {
+    "headline": "Sua biblioteca\npessoal de receitas.",
+    "subtitle": "Importe de qualquer lugar, planeje a semana e faça as compras por corredor, junto com a sua casa.",
+    "pass": {
+      "header": "Carrot · Passe de demonstração",
+      "admitOne": "Entrada individual",
+      "email": "E-mail",
+      "password": "Senha",
+      "copy": "Copiar",
+      "copied": "✓ Copiado",
+      "valid": "Validade",
+      "anytime": "Sem prazo",
+      "resets": "Reinicia",
+      "automatically": "Automaticamente"
+    },
+    "cta": {
+      "web": "Abrir app web",
+      "ios": "iOS em breve",
+      "android": "Android em breve"
+    },
+    "demo": {
+      "tags": {
+        "dessert": "Sobremesa",
+        "baked": "Assado",
+        "gluten": "Glúten"
+      },
+      "recipeTitle": "Blondie de chocolate branco e frutas vermelhas",
+      "butter": "manteiga",
+      "eggs": "ovos",
+      "flour": "farinha de trigo",
+      "shopping": "Compras · {{count}} para comprar",
+      "produce": "Hortifrúti",
+      "garlic": "dentes de alho",
+      "lemon": "limão",
+      "timerStep": "Cozinhe o arroz em fogo baixo"
+    }
+  },
+  "footer": {
+    "privacyPolicy": "Política de Privacidade",
+    "support": "Suporte"
+  },
+  "support": {
+    "back": "← Voltar ao início",
+    "title": "Suporte",
+    "intro": "Tem uma dúvida, encontrou um bug ou precisa de ajuda com a sua conta? Ficamos felizes em ajudar.",
+    "emailLabel": "Envie um e-mail",
+    "email": "kulesza.michal@gmail.com"
+  },
+  "privacyPolicy": {
+    "back": "← Voltar ao início",
+    "title": "Política de Privacidade",
+    "updated": "Última atualização: julho de 2026",
+    "intro": "O Carrot (\"nós\", \"nosso\") é uma biblioteca pessoal de receitas. Esta página explica quais informações coletamos quando você usa o app, como as usamos e como você pode excluí-las.",
+    "sections": [
+      {
+        "heading": "Informações que coletamos",
+        "body": "Quando você cria uma conta, coletamos seu endereço de e-mail e uma senha com hash seguro — ou, se você entrar com o Google, o e-mail da sua conta Google. Você também pode adicionar um nome de exibição. Conforme você usa o app, armazenamos as receitas que você salva ou importa (incluindo qualquer texto ou foto que você fornecer), sua participação em casas, planos de refeições, listas de compras e quaisquer informações sobre alérgenos ou dieta que você inserir, incluindo tags personalizadas e resultados da análise de alérgenos assistida por IA. Também armazenamos suas preferências de unidades, idioma e aparência, além de dados básicos de falhas e diagnóstico caso o app encontre um erro."
+      },
+      {
+        "heading": "Como usamos suas informações",
+        "body": "Usamos estas informações apenas para oferecer os recursos do app: armazenar e organizar suas receitas, criar planos de refeições e listas de compras, sinalizar os alérgenos que você nos informou e sincronizar seus dados entre os dispositivos conectados à sua conta. Não vendemos seus dados nem os usamos para publicidade. Os alertas de alérgenos são estimativas assistidas por IA e não substituem a leitura completa dos rótulos dos ingredientes."
+      },
+      {
+        "heading": "Serviços de terceiros",
+        "body": "Contamos com alguns terceiros para operar o app: o Google, para o login com o Google (verificamos seu token de identidade — nunca vemos sua senha do Google); o Sentry, para relatórios de falhas e erros, que podem incluir informações de diagnóstico do dispositivo e do app, mas não o conteúdo das suas receitas; e o Cloudflare R2, um provedor de armazenamento de objetos usado para hospedar as fotos que você envia. Cada um desses provedores recebe apenas o mínimo de dados necessário para cumprir sua função."
+      },
+      {
+        "heading": "Retenção e exclusão de dados",
+        "body": "Seus dados são mantidos enquanto sua conta existir. Você pode excluir permanentemente sua conta e tudo o que está associado a ela — receitas, planos de refeições, listas de compras, preferências e fotos enviadas — a qualquer momento em Ajustes → Excluir conta no app. A exclusão é imediata e não pode ser desfeita. Se você entrou com o Google, excluir sua conta também revoga o acesso do app à sua conta Google."
+      },
+      {
+        "heading": "Contato",
+        "body": "Dúvidas sobre esta política ou sobre seus dados? Envie um e-mail para kulesza.michal@gmail.com."
+      }
+    ]
+  }
+}

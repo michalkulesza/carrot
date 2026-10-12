@@ -2,15 +2,16 @@ import { AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
 import { Globe } from 'react-feather'
 import { useTranslation } from 'react-i18next'
+import {
+  LOCALE_NATIVE_NAMES,
+  SUPPORTED_LOCALES,
+} from '@carrot/shared/supportedLocales'
 import PopupSurface from './PopupSurface'
 
-const LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'pl', label: 'Polski' },
-  { code: 'fr', label: 'Français' },
-  { code: 'es', label: 'Español' },
-]
+const LANGUAGES = SUPPORTED_LOCALES.map((code) => ({
+  code,
+  label: LOCALE_NATIVE_NAMES[code],
+}))
 
 const getLanguageOptionClassName = (active: boolean) =>
   `w-full text-left px-3 py-2 text-sm transition-colors ${

@@ -5,7 +5,7 @@ from datetime import date as DateType, datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -703,6 +703,15 @@ class UserPreferencesUpdate(BaseModel):
     unit_system: str | None = None
     shopping_categories: list[ShoppingCategory] | None = None
     show_completed_shopping_items: bool | None = None
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, value: str | None) -> str | None:
+        from api.services.extraction_v2.language import SUPPORTED_LANGUAGE_CODES
+
+        if value is not None and value not in SUPPORTED_LANGUAGE_CODES:
+            raise ValueError("Unsupported language")
+        return value
 
     @model_validator(mode="after")
     def normalize_shopping_categories(self) -> "UserPreferencesUpdate":

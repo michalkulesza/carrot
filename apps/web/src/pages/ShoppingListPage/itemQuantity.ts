@@ -10,7 +10,7 @@ const QUANTITY_PATTERN = new RegExp(
 // Match complete unit tokens only. Keep the spelling the user entered;
 // localized labels and ingredient names are never rewritten in stored text.
 const UNIT_PATTERN =
-  /^(?:cuillères?\s+à\s+(?:soupe|café)|cucharadas?\s+soperas?|cucharaditas?\s+de\s+(?:café|té)|łyż(?:ka|ki|ek|kę)|łyżecz(?:ka|ki|ek|kę)|esslöffel|teelöffel|łyż\.|łyżecz\.|c\.?\s*à\s*[sc]\.?|tbsp|tsp|cups?|cloves?|pieces?|sprigs?|leaves|leaf|sheets?|slices?|cans?|bunch(?:es)?|pinch(?:es)?|handfuls?|cuillères?|cucharadas?|cucharaditas?|tazas?|gousses?|feuilles?|grammes?|gramos?|grams?|kilogrammes?|kilogramos?|kilograms?|millilitres?|milliliters?|mililitros?|litres?|liters?|litros?|szklank(?:a|i|ę|ek)|ząb(?:ek|ki|ków)|szt\.?|el|tl|kg|ml|cl|lb|oz|g|l|x)(?=\s|$)/iu
+  /^(?:cuillères?\s+à\s+(?:soupe|café)|cucharadas?\s+soperas?|cucharaditas?\s+de\s+(?:café|té)|łyż(?:ka|ki|ek|kę)|łyżecz(?:ka|ki|ek|kę)|esslöffel|teelöffel|cucchiaio?|cucchiain[oi]|colher(?:es)?\s+de\s+(?:sopa|chá|cha|café|cafe|sobremesa)|colher(?:es)?|xícaras?|xicaras?|chávenas?|chavenas?|tazze?|łyż\.|łyżecz\.|c\.?\s*à\s*[sc]\.?|tbsp|tsp|cups?|cloves?|pieces?|sprigs?|leaves|leaf|sheets?|slices?|cans?|bunch(?:es)?|pinch(?:es)?|handfuls?|cuillères?|cucharadas?|cucharaditas?|tazas?|gousses?|feuilles?|grammes?|gramos?|grams?|kilogrammes?|kilogramos?|kilograms?|millilitres?|milliliters?|mililitros?|litres?|liters?|litros?|szklank(?:a|i|ę|ek)|ząb(?:ek|ki|ków)|szt\.?|el|tl|kg|ml|cl|lb|oz|g|l|x)(?=\s|$)/iu
 
 export const parseItemQuantity = (text: string): StructuredIngredient => {
   const trimmed = text.trim()

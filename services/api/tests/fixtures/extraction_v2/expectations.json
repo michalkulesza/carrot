@@ -6522,6 +6522,232 @@
           "line_ids": []
         }
       }
+    },
+    "html-www-fiordifrolla-it-bolzano-apple-cake.json": {
+      "capture_errors": "",
+      "detected_languages": "it",
+      "outcome": "complete",
+      "issue_codes": [],
+      "recipe": {
+        "title": "Bolzano apple cake",
+        "yield_servings": "8",
+        "total_time_minutes": 75,
+        "nutrition": {
+          "calories": "221",
+          "protein": "2",
+          "fat": "9",
+          "carbohydrates": "34"
+        },
+        "components": [
+          {
+            "name": null,
+            "ingredients": [
+              {
+                "text": "125 g di zucchero"
+              },
+              {
+                "text": "1 tuorlo"
+              },
+              {
+                "text": "1 uovo"
+              },
+              {
+                "text": "1 bustina di vanillina"
+              },
+              {
+                "text": "75 g di burro fuso freddo"
+              },
+              {
+                "text": "55 g di farina"
+              },
+              {
+                "text": "1 cucchiaino di lievito per dolci"
+              },
+              {
+                "text": "90 ml di latte"
+              },
+              {
+                "text": "4 mele granny smith"
+              }
+            ],
+            "steps": [
+              "Fate fondere il burro in un pentolino a fuoco moderato o nel microonde e lasciatelo raffreddare. In una ciotola lavorate l’uovo e il tuorlo, lo zucchero e la vanillina con uno sbattitore elettrico fino a quando il composto sarà gonfio e spumoso. Unite il burro fuso freddo e mescolate bene. Aggiungete il latte, la farina setacciata ed il lievito ed amalgamate con cura il tutto.",
+              "Lavate le mele, asciugatele e sbucciatele. Tagliatele a fettine sottili, io ho utilizzato come suggeriva Cookie una mandolina. Ora aggiungete le mele tagliate al composto ed amalgametele.",
+              "Foderate il fondo di una tortiera a cerchio apribile del diametro di 24 cm con della carta da forno ed incastratevi il cerchio (mi raccomando fatelo perché il composto è piuttosto liquidino e potrebbe uscire dallo stampo… a me è successo, ma fortunatamente sono riuscita a risolvere senza problemi!).",
+              "Imburrate ed infarinate i bordi della tortiera e versatevi all’interno l’impasto livellandolo bene con l’aiuto di un cucchiaio. Cuocete in forno già caldo a 180° per circa 50/55 minuti, fate raffreddare e sformate."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-cookaround-com-ricetta-torta-di-mele-html.json": {
+      "capture_errors": "",
+      "detected_languages": "it",
+      "outcome": "complete",
+      "issue_codes": [],
+      "recipe": {
+        "title": "Torta di mele: ricetta classica facile e soffice",
+        "yield_servings": "8",
+        "total_time_minutes": 80,
+        "components": [
+          {
+            "name": null,
+            "ingredients": [
+              {
+                "text": "Mele grandi - 4"
+              },
+              {
+                "text": "Farina 250 gr"
+              },
+              {
+                "text": "Olio di semi di mais oppure 80 g di burro - 80 ml"
+              },
+              {
+                "text": "Uova 2"
+              },
+              {
+                "text": "Zucchero 150 gr"
+              },
+              {
+                "text": "Lievito per dolci 3 cucchiai da tè"
+              },
+              {
+                "text": "Latte intero 90 ml"
+              },
+              {
+                "text": "Limone non trattato - 1"
+              },
+              {
+                "text": "Granella di zucchero facoltativo - q.b."
+              },
+              {
+                "text": "Sale 1 pizzico"
+              }
+            ],
+            "steps": [
+              "Per realizzare la torta con le mele bisogna separare i tuorli dagli albumi e montare i primi con due cucchiai di acqua e lo zucchero. Setacciare la farina con il lievito. Per preparare questa torta di mele soffice dovrete iniziare sbucciando e rimuovendo il torsolo alle mele.",
+              "Trasferitele, quindi, in una ciotola a irroratele con il succo di mezzo limone.",
+              "A questo punto dedicatevi all'impasto: prendete le uova e dividete i tuorli dagli albumi.",
+              "Fate montare i tuorli, prima un po' da soli aggiungendo giusto un paio di cucchiai d'acqua e successivamente con lo zucchero. Lasciate montare fino a che la massa non diventi chiara e spumosa.",
+              "Nel frattempo setacciate la farina ed il lievito e metteteli da parte.",
+              "Aromatizzate la montata di tuorli con la scorza grattugiata di un limone intero e mescolate.",
+              "Sostituite il gancio dell'impastatrice, cambiate la frusta con il gancio a foglia e iniziate ad incorporare alla montata di tuorli la farina con il lievito, l'olio, metà del latte a disposizione ed un pizzico di sale.",
+              "Verificate la densità dell'impasto e qualora fosse troppo denso, aggiungete la parte rimanente del latte.",
+              "Montate, ora, gli albumi a neve ben ferma ed incorporateli all'impasto mescolando dal basso verso l'alto.",
+              "Rivestite il fondo di uno stampo da 24 cm di diametro con un foglio di carta forno, imburrate e infarinate il tutto.",
+              "Trasferite la pastella nello stampo, affettate le mele messe da parte e disponete le fettine in verticale nella pastella in modo tale che possano toccare il fondo dello stampo.",
+              "Distribuite a piacere dello zucchero semolato prima della cottura, quindi infornate a 190°C in forno statico e lasciate cuocere per circa 40 minuti.",
+              "Una volta cotta, lasciatela intiepidire, quindi estraete la torta di mele dallo stampo e servitela una volta completamente fredda."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-receitasnestle-com-br-receitas-bolo-de-cenoura.json": {
+      "capture_errors": "",
+      "detected_languages": "pt",
+      "outcome": "complete",
+      "issue_codes": [],
+      "recipe": {
+        "title": "Bolo de Cenoura com Nutren Kids Chocolate",
+        "yield_servings": "24",
+        "total_time_minutes": 60,
+        "nutrition": {
+          "calories": "237",
+          "protein": "5",
+          "fat": "8",
+          "carbohydrates": "39"
+        },
+        "components": [
+          {
+            "name": "Massa",
+            "ingredients": [
+              {
+                "text": "2 cenouras grandes, descascadas e cozidas (cerca 250 g)"
+              },
+              {
+                "text": "4 ovos"
+              },
+              {
+                "text": "meia xícara (chá) de óleo"
+              },
+              {
+                "text": "2 xícaras (chá) de açúcar"
+              },
+              {
+                "text": "2 xícaras (chá) de farinha de trigo"
+              },
+              {
+                "text": "1 colher (sopa) de fermento em pó"
+              },
+              {
+                "text": "meia xícara (chá) de Aveia Flocos NESTLÉ®"
+              }
+            ],
+            "steps": []
+          },
+          {
+            "name": "Cobertura",
+            "ingredients": [
+              {
+                "text": "1 colher (sopa) de amido de milho"
+              },
+              {
+                "text": "1 Leite MOÇA® (lata ou caixinha) 395g"
+              },
+              {
+                "text": "meia xícara (chá) de água"
+              },
+              {
+                "text": "meia xícara (chá) de NUTREN® Kids Chocolate"
+              }
+            ],
+            "steps": []
+          },
+          {
+            "name": null,
+            "ingredients": [],
+            "steps": [
+              "Massa — Em um liquidificador, bata as cenouras com os ovos e o óleo.",
+              "Despeje em um recipiente e acrescente o açúcar, a farinha de trigo peneirada com o fermento e a Aveia.",
+              "Coloque em uma forma retangular (20 x 30 cm) untada com óleo e polvilhada com farinha de trigo e leve ao forno médio (180ºC), preaquecido, por cerca de 40 minutos. Quando o bolo estiver quase pronto, prepare a cobertura.",
+              "Cobertura — Em uma panela, misture o amido de milho com o Leite MOÇA e a água.",
+              "Leve ao fogo baixo, mexendo sempre, por cerca de 7 minutos ou até engrossar.",
+              "Desligue o fogo, acrescente o NUTREN Kids e misture. Coloque sobre o bolo e sirva."
+            ]
+          }
+        ]
+      }
+    },
+    "html-www-receitasnestle-com-br-receitas-mousse-de-maracuja.json": {
+      "capture_errors": "",
+      "detected_languages": "pt",
+      "outcome": "complete",
+      "issue_codes": [],
+      "recipe": {
+        "total_time_minutes": 130,
+        "components": [
+          {
+            "ingredients": [
+              {
+                "text": "meio envelope de gelatina em pó sem sabor"
+              },
+              {
+                "text": "meia xícara (chá) de água fria"
+              },
+              {
+                "text": "1 lata de Leite MOÇA®"
+              },
+              {
+                "text": "meia lata de NESTLÉ® Creme de Leite"
+              },
+              {
+                "text": "meia medida (da lata) de suco de maracujá concentrado"
+              }
+            ]
+          }
+        ]
+      }
     }
   }
 }

@@ -66,14 +66,14 @@ export interface ParsedRecipeText {
 
 // Recipe text can be in any supported language, independently of the UI locale.
 const isStepLine = (line: string) =>
-  /^(?:\d+[.)]\s|(?:step|schritt|krok|étape|etape|paso)\s*\d+(?!\d))/iu.test(
+  /^(?:\d+[.)]\s|(?:step|schritt|krok|étape|etape|paso|passaggio|passo|etapa)\s*\d+(?!\d))/iu.test(
     line
   )
 
 const INGREDIENT_AMOUNT_PATTERN =
   /^(?:\d+(?:[.,]\d+|\/\d+)?(?:\s+\d+\/\d+|\s*[½¼¾])?|[½¼¾])(?:\s|(?=[\p{L}]))/u
 const INGREDIENT_CUE_PATTERN =
-  /^(?:(?:(?:a|eine|una|une)\s+)?(?:pinch|prise|szczypta|szczyptę|szczypty|pincée|pincee|pizca))(?!\p{L})|^a\s|^[-•*]/iu
+  /^(?:(?:(?:a|eine|una|une|un|uma)\s+)?(?:pinch|prise|szczypta|szczyptę|szczypty|pincée|pincee|pizca|pizzico|pitada))(?!\p{L})|^a\s|^[-•*]/iu
 
 const isIngredientLine = (line: string) =>
   !isStepLine(line) &&

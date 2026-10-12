@@ -876,7 +876,9 @@
     "de": "Deutsch",
     "pl": "Polski",
     "fr": "Français",
-    "es": "Español"
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
   },
   "units": {
     "ml": "mililitr",
@@ -947,7 +949,9 @@
     "register": "Utwórz darmowe konto",
     "addToLibrary": "Dodaj do biblioteki",
     "minutes_one": "{{count}} minuta",
-    "minutes_other": "{{count}} minut",
+    "minutes_few": "{{count}} minuty",
+    "minutes_many": "{{count}} minut",
+    "minutes_other": "{{count}} minuty",
     "servings": "Porcje",
     "premiumNutrition": "Pełne informacje żywieniowe są funkcją Carrot Premium.",
     "source": "Zobacz źródło",

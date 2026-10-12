@@ -28,7 +28,7 @@ _GLYPHS = {"\u00bc": "1/4", "\u00bd": "1/2", "\u00be": "3/4", "\u2153": "1/3", "
 _GLYPH_CHARS = "".join(_GLYPHS)
 _NUM = rf"(?:\d+\s+\d+\s*/\s*\d+|\d+\s*/\s*\d+|\d+\s*[{_GLYPH_CHARS}]|\d+(?:[.,]\d+)?|[{_GLYPH_CHARS}])"
 _RANGE = r"(?:-|\u2013|\u2014|\bto\b|\ba\b|\b\u00e0\b|\bbis\b|\bdo\b|\bhasta\b)"
-_MIXED = r"(?:\band\b|\bi\b|\bund\b|\bet\b|\by\b|\boraz\b|\+ )"
+_MIXED = r"(?:\band\b|\bi\b|\bund\b|\bet\b|\by\b|\be\b|\boraz\b|\+ )"
 _AMOUNT = re.compile(rf"^\s*(?P<amount>{_NUM}(?:\s*{_RANGE}\s*{_NUM})?(?:\s*(?:\+|{_MIXED})\s*{_NUM})?)\s*(?P<rest>.*)$", re.I)
 _APPROX = re.compile(r"^\s*(?:about|approx(?:imately)?\.?|around|circa|ca\.?|roughly|oko(?:\u0142|l)o|ok\.?|ungef(?:a|\u00e4)hr|etwa|rund|environ(?:ne)?|env\.?|\u00e0 peu pr\u00e8s|a peu pres|mniej wi(?:e|\u0119)cej|mniej wiecej|cerca de|aprox(?:imadamente)?\.?|alrededor de|en torno a)\s+", re.I)
 
@@ -41,23 +41,23 @@ def _fold(value: str) -> str:
 # Supported canonical application IDs. Regexes are applied to accent-folded
 # source text, but name and source_text are returned with their original spelling.
 _ALIASES: dict[str, tuple[str, ...]] = {
-    "cup": (r"cups?", r"c\.?", r"szklank(?:a|i|e|ami|ach)", r"tassen?", r"tasses?", r"tazas?", r"verres?"),
-    "tbsp": (r"tablespoons?", r"tbsp\.?", r"tbs\.?", r"lyzk(?:a|i|e|ek|ami|ach)", r"essloffel", r"el\.?", r"cuilleres?\s+(?:a\s+)?soupe", r"c\.?\s*a\s*soupe", r"cas?\.?", r"cucharadas?", r"cdas?\.?", r"c\.?\s*sopera"),
-    "tsp": (r"teaspoons?", r"tsp\.?", r"ts\.?", r"lyzeczk(?:a|i|e|ek|ami|ach)", r"teeloffel", r"tl\.?", r"cuilleres?\s+(?:a\s+)?cafe", r"c\.?\s*a\s*cafe", r"cac", r"cc\.?", r"cucharaditas?", r"cditas?\.?", r"cdtas?\.?", r"cdt\.?", r"c\.?\s*de\s*cafe"),
+    "cup": (r"cups?", r"c\.?", r"szklank(?:a|i|e|ami|ach)", r"tassen?", r"tasses?", r"tazas?", r"verres?", r"tazz(?:a|e)", r"bicchier[ei]", r"xicaras?", r"chavenas?", r"copos?"),
+    "tbsp": (r"tablespoons?", r"tbsp\.?", r"tbs\.?", r"lyzk(?:a|i|e|ek|ami|ach)", r"essloffel", r"el\.?", r"cuilleres?\s+(?:a\s+)?soupe", r"c\.?\s*a\s*soupe", r"cas?\.?", r"cucharadas?", r"cdas?\.?", r"c\.?\s*sopera", r"cucchiai(?:o)?", r"colher(?:es)?\s+(?:de\s+)?sopa", r"colher(?:es)?\s*\((?:de\s+)?sopa\)", r"c\.?\s*de\s*sopa"),
+    "tsp": (r"teaspoons?", r"tsp\.?", r"ts\.?", r"lyzeczk(?:a|i|e|ek|ami|ach)", r"teeloffel", r"tl\.?", r"cuilleres?\s+(?:a\s+)?cafe", r"c\.?\s*a\s*cafe", r"cac", r"cc\.?", r"cucharaditas?", r"cditas?\.?", r"cdtas?\.?", r"cdt\.?", r"c\.?\s*de\s*cafe", r"cucchiain[oi]", r"colher(?:es)?\s+(?:de\s+)?(?:cha|cafe)", r"colher(?:es)?\s*\((?:de\s+)?(?:cha|cafe)\)", r"c\.?\s*de\s*cha"),
     "oz": (r"ounces?", r"oz\.?", r"uncj(?:a|e|i)", r"unzen?", r"onces?", r"onzas?"),
     "lb": (r"pounds?", r"lbs?\.?", r"funt(?:y|ow)?", r"pfund(?:e)?", r"livres?", r"libras?"),
-    "g": (r"grams?", r"grs?\.?", r"g\.?", r"gram(?:y|ow)?", r"gramm(?:e)?", r"grammes?", r"gramos?", r"grammi?"),
-    "kg": (r"kilograms?", r"kg\.?", r"kilogram(?:y|ow)?", r"kilogramm(?:e)?", r"kilogrammes?", r"kilogramos?"),
-    "ml": (r"millilit(?:er|re)s?", r"ml\.?", r"mililitr(?:y|ow)?", r"millilitres?", r"mililitros?"),
-    "cl": (r"centilit(?:er|re)s?", r"cl\.?", r"centylitr(?:y|ow)?", r"zentiliter", r"centilitres?", r"centilitros?"),
-    "l": (r"lit(?:er|re)s?", r"l\.?", r"litr(?:a|y|ow|ze)?", r"litres?", r"litros?"),
+    "g": (r"grams?", r"grs?\.?", r"g\.?", r"gram(?:y|ow)?", r"gramm(?:e)?", r"grammes?", r"gramos?", r"grammi?", r"gramas?"),
+    "kg": (r"kilograms?", r"kg\.?", r"kilogram(?:y|ow)?", r"kilogramm(?:e)?", r"kilogrammes?", r"kilogramos?", r"chil[oi]", r"chilogramm[oi]", r"quilos?", r"quilogramas?"),
+    "ml": (r"millilit(?:er|re)s?", r"ml\.?", r"mililitr(?:y|ow)?", r"millilitres?", r"mililitros?", r"millilitr[oi]"),
+    "cl": (r"centilit(?:er|re)s?", r"cl\.?", r"centylitr(?:y|ow)?", r"zentiliter", r"centilitres?", r"centilitros?", r"centilitr[oi]"),
+    "l": (r"lit(?:er|re)s?", r"l\.?", r"litr(?:a|y|ow|ze)?", r"litres?", r"litros?", r"litr[oi]"),
     "floz": (r"fl\s?oz", r"fluid\s+ounces?"),
     "qt": (r"quarts?", r"qt\.?"),
     "in": (r"inch(?:es)?",),
     "cm": (r"centimeters?", r"centimetres?", r"cm\.?"),
-    "clove": (r"cloves?", r"zabk(?:i|a|ow|iem)", r"knoblauchzehen?", r"zehen?", r"gousses?", r"dientes?", r"diente\s+de\s+ajo"),
+    "clove": (r"cloves?", r"zabk(?:i|a|ow|iem)", r"knoblauchzehen?", r"zehen?", r"gousses?", r"dientes?", r"diente\s+de\s+ajo", r"spicchi(?:o)?", r"dentes?"),
     "leaf": (r"leaves?", r"lisc(?:ie|mi|a)?", r"blatter?", r"feuilles?", r"hojas?"),
-    "pinch": (r"pinches?", r"szczypt(?:a|y|e)", r"prises?", r"pincees?", r"pizcas?"),
+    "pinch": (r"pinches?", r"szczypt(?:a|y|e)", r"prises?", r"pincees?", r"pizcas?", r"pizzic(?:o|hi)", r"pitadas?"),
     "can": (r"cans?", r"puszk(?:a|i|e)", r"dosen?", r"boites?", r"latas?"),
     "slice": (r"slices?", r"plastr(?:y|ow|a)", r"kromk(?:a|i|e)", r"scheiben?", r"tranches?", r"rodajas?", r"rebanadas?"),
     "sprig": (r"sprigs?", r"galazk(?:a|i|e)", r"zweige?", r"brins?", r"ramitas?"),
@@ -69,8 +69,15 @@ _ALIASES: dict[str, tuple[str, ...]] = {
 _UNIT_PATTERNS = [(re.compile(rf"^(?:{alias})(?=$|[\s,.;:()])", re.I), unit) for unit, aliases in _ALIASES.items() for alias in aliases]
 _EN_TBSP = re.compile(rf"^(?P<a>\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|[{_GLYPH_CHARS}])\s*(?:tablespoons?|tbsp\.?)\s*(?:\+|plus|and)\s*(?P<b>\d+(?:[.,]\d+)?|\d+\s*/\s*\d+|[{_GLYPH_CHARS}])\s*(?:teaspoons?|tsp\.?)\b\s*(?P<name>.*)$", re.I)
 _DESCRIPTORS = re.compile(r"^(?:large|medium|small|extra-large|xl|jumbo|whole|ripe|fresh|raw|boneless|skinless|packed|heaped|level)\b", re.I)
-_UNSUPPORTED_UNITS = re.compile(r"^(?P<unit>bags?|pieces?|sticks?|heads?|packages?|pkg\.?|jars?|bottles?)\b", re.I)
-_ALTERNATIVE = re.compile(r"\b(?:or|ou|oder|o|rather than)\b", re.I)
+_UNSUPPORTED_UNITS = re.compile(r"^(?P<unit>etto|etti|hg|bags?|pieces?|sticks?|heads?|packages?|pkg\.?|jars?|bottles?)\b", re.I)
+_ALTERNATIVE = re.compile(r"\b(?:or|ou|oder|o|oppure|rather than)\b", re.I)
+# Italian/Portuguese measure words are followed by a "di"/"de" connector that is not part of the name.
+_CONNECTOR_UNITS = re.compile(r"^(?:cucchiai|tazz|bicchier|grammi|chil|litri|pizzic|spicchi|colher|xicara|chavena|copo|gramas?|quilo|pitada|dentes?|cucharad|cuill|tasse|taza|pizca|diente|gousse)")
+# Metric units (any language) are followed by the same connector: "500 ml de leite", "200 g des pommes".
+_METRIC_UNITS = frozenset({"g", "kg", "mg", "ml", "cl", "dl", "l"})
+_CONNECTOR = re.compile(r"^(?:d['’]\s*|(?:di|de|des|do|da)\s+(?=\S))", re.I)
+# "da"/"do" are left alone after a bare metric unit: "200 g da vinci pasta" starts with a real name.
+_METRIC_CONNECTOR = re.compile(r"^(?:d['’]\s*|(?:di|de|des|do)\s+(?=\S))", re.I)
 _CONDITIONAL_ALTERNATIVE = re.compile(r"\([^)]*\b(?:if|unless)\b[^)]*\)", re.I)
 
 
@@ -147,7 +154,7 @@ def _fraction_if_exact(value: str) -> str:
 def _normalize_qty(value: str, unit: str | None) -> str:
     value = _fold_glyphs(value.strip())
     value = re.sub(rf"\s*{_RANGE}\s*", "-", value, flags=re.I)
-    value = re.sub(rf"\s*(?:\band\b|\bi\b|\bund\b|\bet\b|\by\b|\boraz\b)\s*(?=\d|[{_GLYPH_CHARS}])", " ", value, flags=re.I)
+    value = re.sub(rf"\s*(?:\band\b|\bi\b|\bund\b|\bet\b|\by\b|\be\b|\boraz\b)\s*(?=\d|[{_GLYPH_CHARS}])", " ", value, flags=re.I)
     value = _decimal_point(value)
     if unit in {"cup", "tbsp", "tsp"}:
         # Fractions in mixed/range expressions are retained; only decimal tokens convert.
@@ -226,6 +233,12 @@ def parse_ingredient(source_text: str) -> IngredientParse:
         source_unit = _fold(unit_source[:consumed].strip())
         if source_unit.startswith("verre") and re.match(r"^de\s+", name, re.I):
             name = re.sub(r"^de\s+", "", name, count=1, flags=re.I)
+        elif _CONNECTOR_UNITS.match(source_unit):
+            name = _CONNECTOR.sub("", name, count=1)
+        elif unit in _METRIC_UNITS:
+            name = _METRIC_CONNECTOR.sub("", name, count=1)
+        elif re.match(r"^(?:di\s+|d['’])", name, re.I):
+            name = _CONNECTOR.sub("", name, count=1)
         status = "uncertain" if has_conditional_alternative or has_multiple_items else "parsed"
         return IngredientParse(source_text, _normalize_qty(qty, unit), unit, name or None, status)
 
@@ -233,6 +246,8 @@ def parse_ingredient(source_text: str) -> IngredientParse:
     if unsupported:
         unit = unsupported.group("unit").casefold().rstrip("s")
         name = re.sub(r"\s+", " ", unit_source[unsupported.end():].strip())
+        if unit in {"etto", "etti", "hg"}:
+            name = _CONNECTOR.sub("", name, count=1)
         return IngredientParse(source_text, _normalize_qty(qty, unit), unit, name or None, "partial")
 
     trailing_unit = _trailing_unit(rest)

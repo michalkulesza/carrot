@@ -10,7 +10,7 @@ from lingua import LanguageDetectorBuilder
 
 from api.services.extraction_v2.contracts import LanguageResult
 
-SUPPORTED_LANGUAGE_CODES = frozenset({"en", "de", "pl", "fr", "es"})
+SUPPORTED_LANGUAGE_CODES = frozenset({"en", "de", "pl", "fr", "es", "it", "pt"})
 MIN_SUBSTANTIVE_CHARACTERS = 20
 # Confidence is distributed across all 75 Lingua languages. Short English recipe
 # text can be correct at roughly 0.35, so use a deliberately low ambiguity gate.

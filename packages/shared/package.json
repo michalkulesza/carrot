@@ -24,6 +24,7 @@
     "./hooks/useLinkedRecipeImport": "./src/hooks/useLinkedRecipeImport.ts",
     "./utils/*": "./src/utils/*.ts",
     "./i18n": "./src/i18n.ts",
+    "./supportedLocales": "./src/supportedLocales.ts",
     "./locales/*": "./src/locales/*.json"
   },
   "scripts": {

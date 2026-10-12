@@ -860,7 +860,9 @@
     "de": "Deutsch",
     "pl": "Polski",
     "fr": "Français",
-    "es": "Español"
+    "es": "Español",
+    "it": "Italiano",
+    "pt": "Português"
   },
   "units": {
     "ml": "Milliliter",

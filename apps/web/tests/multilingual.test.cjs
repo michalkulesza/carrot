@@ -24,6 +24,13 @@ const load = (filename) => {
         path.join(sharedRoot, `${name.slice('@carrot/shared/'.length)}.ts`)
       )
     }
+    if (name.endsWith('.json')) {
+      const json = JSON.parse(
+        readFileSync(path.resolve(path.dirname(filename), name), 'utf8')
+      )
+
+      return { __esModule: true, default: json }
+    }
     if (name.startsWith('.')) {
       return load(path.resolve(path.dirname(filename), `${name}.ts`))
     }
@@ -43,7 +50,11 @@ const aisles = load(path.join(webRoot, 'src/pages/ShoppingListPage/aisles.ts'))
 const imports = load(
   path.join(webRoot, 'src/components/AddRecipeModal/importSources.ts')
 )
-const languages = ['en', 'de', 'pl', 'fr', 'es']
+const { SUPPORTED_LOCALES, resolveSupportedLocale } = load(
+  path.join(sharedRoot, 'supportedLocales.ts')
+)
+const languages = [...SUPPORTED_LOCALES]
+const showcaseRoot = path.resolve(webRoot, '../showcase/src')
 const resources = Object.fromEntries(
   languages.map((language) => [
     language,
@@ -63,6 +74,13 @@ test('shopping previews preserve decimal commas, fractions, and local units', ()
     ['2 łyżki oliwy', '2 łyżki', 'oliwy'],
     ['2 cuillères à soupe de sucre', '2 cuillères à soupe', 'de sucre'],
     ['2 cucharadas de aceite', '2 cucharadas', 'de aceite'],
+    ['2 cucchiai di zucchero', '2 cucchiai', 'di zucchero'],
+    ['1 cucchiaino di sale', '1 cucchiaino', 'di sale'],
+    ['3 tazze di latte', '3 tazze', 'di latte'],
+    ['2 colheres de sopa de açúcar', '2 colheres de sopa', 'de açúcar'],
+    ['1 colher de chá de sal', '1 colher de chá', 'de sal'],
+    ['1 xícara de farinha', '1 xícara', 'de farinha'],
+    ['2 chávenas de leite', '2 chávenas', 'de leite'],
     ['½ kg pommes', '½ kg', 'pommes'],
     ['1 1/2 cups rice', '1 1/2 cups', 'rice'],
     ['500g mince', '500g', 'mince'],
@@ -95,6 +113,30 @@ test('shopping categories handle language collisions and French ligatures', () =
     ['crème glacée', 'fr', 'frozen'],
     ['glace', 'fr', 'frozen'],
     ['mrożone truskawki', 'pl', 'frozen'],
+    ['latte intero', 'it', 'dairy_eggs'],
+    ['parmigiano reggiano', 'it', 'dairy_eggs'],
+    ['petto di pollo', 'it', 'meat_seafood'],
+    ['carne macinata', 'it', 'meat_seafood'],
+    ['tonno in scatola', 'it', 'pantry'],
+    ['pomodori pelati', 'it', 'pantry'],
+    ['pomodorini', 'it', 'produce'],
+    ['fagiolini', 'it', 'produce'],
+    ['spinaci surgelati', 'it', 'frozen'],
+    ['carta igienica', 'it', 'other'],
+    ['latte di cocco', 'it', 'pantry'],
+    ['melassa', 'it', 'other'],
+    ['leite', 'pt', 'dairy_eggs'],
+    ['presunto', 'pt', 'meat_seafood'],
+    ['carne moída', 'pt', 'meat_seafood'],
+    ['ananás', 'pt', 'produce'],
+    ['salsa', 'pt', 'produce'],
+    ['feijão verde', 'pt', 'produce'],
+    ['pimenta do reino', 'pt', 'pantry'],
+    ['leite condensado', 'pt', 'pantry'],
+    ['molho de tomate', 'pt', 'pantry'],
+    ['sorvete de chocolate', 'pt', 'frozen'],
+    ['papel higiénico', 'pt', 'other'],
+    ['batata frita', 'pt', 'pantry'],
   ]) {
     assert.equal(
       aisles.guessCategory(text, language),
@@ -111,6 +153,10 @@ test('import previews recognize recipe cues in every supported language', () => 
     ['Zupa', 'szczypta soli', 'Krok 1: Wymieszaj'],
     ['Soupe', 'pincée de sel', 'Étape 1 : Mélanger'],
     ['Sopa', 'pizca de sal', 'Paso 1: Mezclar'],
+    ['Zuppa', 'pizzico di sale', 'Passaggio 1: Mescolare'],
+    ['Zuppa', 'un pizzico di sale', 'Passo 1: Mescolare'],
+    ['Sopa', 'pitada de sal', 'Passo 1: Misturar'],
+    ['Sopa', 'uma pitada de sal', 'Etapa 1: Misturar'],
   ]) {
     const parsed = imports.parseRecipeText(`${title}\n${ingredient}\n${step}`)
     assert.equal(parsed.title, title)
@@ -168,10 +214,13 @@ test('counts select correct singular and Polish few/many forms', async () => {
   }
   for (const language of languages) {
     await instance.changeLanguage(language)
-    assert.equal(
-      instance.t('recipes.ingredientsForServings', { count: 1 }),
-      singularServings[language]
-    )
+    const singular = instance.t('recipes.ingredientsForServings', { count: 1 })
+    // it/pt wording is owned by the translators; the other five are pinned.
+    if (singularServings[language]) {
+      assert.equal(singular, singularServings[language])
+    } else {
+      assert.match(singular, /\b1\b/, `${language}: singular servings`)
+    }
     for (const count of [1, 2, 5]) {
       for (const key of [
         'shoppingList.aisleLeft',
@@ -210,5 +259,184 @@ test('all fixed plural keys exist in every supported language', () => {
         assert.equal(typeof value, 'string', `${language}: ${key}_${suffix}`)
       }
     }
+  }
+})
+
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/
+const flatten = (object, prefix = '') =>
+  Object.entries(object).flatMap(([key, value]) =>
+    value !== null && typeof value === 'object'
+      ? flatten(value, `${prefix}${key}.`)
+      : [`${prefix}${key}`]
+  )
+const pluralCategories = (language) => {
+  // Categories reachable by whole recipe quantities. "many" in fr/es/it/pt only
+  // applies to compact millions, so it is not required there; pl needs it.
+  const rules = new Intl.PluralRules(language)
+  const used = new Set(['other'])
+  for (let count = 0; count <= 1000; count++) used.add(rules.select(count))
+
+  return { used, allowed: new Set(rules.resolvedOptions().pluralCategories) }
+}
+
+// Compares base keys across languages; plural keys (key_one, key_few, ...) are
+// grouped under their base key and checked against the language's plural rules.
+const assertKeyParity = (label, readLocale) => {
+  const describe = (language) => {
+    const bases = new Set()
+    const plurals = new Map()
+    const keys = flatten(readLocale(language))
+    for (const key of keys) {
+      const match = PLURAL_SUFFIX.exec(key)
+      if (match) {
+        const base = key.slice(0, match.index)
+        plurals.set(base, (plurals.get(base) ?? new Set()).add(match[1]))
+      }
+    }
+    // A plural group is a key with suffix variants; the plain key doubles as
+    // the "other" form (e.g. foundIngredients + foundIngredients_one).
+    for (const key of keys) {
+      if (!PLURAL_SUFFIX.test(key)) {
+        bases.add(key)
+        if (plurals.has(key)) plurals.get(key).add('other')
+      }
+    }
+    for (const base of plurals.keys()) bases.add(base)
+
+    return { bases, plurals }
+  }
+  const reference = describe('en')
+  for (const language of languages) {
+    const { bases, plurals } = describe(language)
+    const { used, allowed } = pluralCategories(language)
+    assert.deepEqual(
+      [...bases].filter((key) => !reference.bases.has(key)),
+      [],
+      `${label} ${language}: keys not in en`
+    )
+    assert.deepEqual(
+      [...reference.bases].filter((key) => !bases.has(key)),
+      [],
+      `${label} ${language}: keys missing`
+    )
+    // Some languages legitimately express a count with a single plain form
+    // (pl "Składniki: {{count}}"), so groups are not required to match en.
+    for (const [base, suffixes] of plurals) {
+      for (const category of used) {
+        assert.ok(suffixes.has(category), `${label} ${language}: ${base}_${category}`)
+      }
+      for (const suffix of suffixes) {
+        assert.ok(
+          allowed.has(suffix),
+          `${label} ${language}: ${base}_${suffix} is not a plural form of ${language}`
+        )
+      }
+    }
+  }
+}
+
+const readJson = (filename) => JSON.parse(readFileSync(filename, 'utf8'))
+
+test('shared locale files have identical key sets in every language', () => {
+  assertKeyParity('shared', (language) =>
+    readJson(path.join(sharedRoot, `locales/${language}.json`))
+  )
+})
+
+test('showcase locale files have identical key sets in every language', () => {
+  assertKeyParity('showcase', (language) =>
+    readJson(path.join(showcaseRoot, `locales/${language}.json`))
+  )
+})
+
+test('every supported language is named in every shared locale', () => {
+  for (const language of languages) {
+    for (const code of languages) {
+      assert.equal(
+        typeof resources[language].translation.languages[code],
+        'string',
+        `${language}: languages.${code}`
+      )
+    }
+  }
+})
+
+test('showcase keeps its own language list in sync with the shared one', () => {
+  const source = readFileSync(path.join(showcaseRoot, 'i18n.ts'), 'utf8')
+  const listed = /SUPPORTED_LNGS\s*=\s*\[([^\]]*)\]/.exec(source)?.[1]
+  assert.ok(listed, 'showcase SUPPORTED_LNGS')
+  assert.deepEqual(
+    [...listed.matchAll(/'([a-z]+)'/g)].map((match) => match[1]).sort(),
+    [...languages].sort()
+  )
+  for (const language of languages) {
+    assert.ok(
+      source.includes(`from './locales/${language}.json'`),
+      `showcase imports ${language}.json`
+    )
+  }
+})
+
+test('regional device locales resolve to a supported base locale', async () => {
+  for (const [code, expected] of [
+    ['pt-BR', 'pt'],
+    ['pt-PT', 'pt'],
+    ['pt_BR', 'pt'],
+    ['it-IT', 'it'],
+    ['it-CH', 'it'],
+    ['de-AT', 'de'],
+    ['en-US', 'en'],
+    ['pt', 'pt'],
+    ['tr-TR', null],
+    ['', null],
+    [null, null],
+  ]) {
+    assert.equal(resolveSupportedLocale(code), expected, String(code))
+  }
+
+  const { i18nBaseConfig } = load(path.join(sharedRoot, 'i18n.ts'))
+  for (const [code, resolved] of [
+    ['pt-BR', 'pt'],
+    ['pt-PT', 'pt'],
+    ['it-IT', 'it'],
+    ['it-CH', 'it'],
+    ['de-AT', 'de'],
+  ]) {
+    const instance = i18next.createInstance()
+    await instance.init({ ...i18nBaseConfig, lng: code })
+    assert.equal(instance.resolvedLanguage, resolved, code)
+    assert.equal(
+      instance.t('settings.language'),
+      resources[resolved].translation.settings.language,
+      `${code}: translations come from ${resolved}`
+    )
+  }
+})
+
+test('the browser language detector maps pt-BR and it-IT to pt and it', async () => {
+  const detectorModule = require('i18next-browser-languagedetector')
+  const LanguageDetector = detectorModule.default ?? detectorModule
+  const { i18nBaseConfig } = load(path.join(sharedRoot, 'i18n.ts'))
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
+  try {
+    for (const [browserLanguages, expected] of [
+      [['pt-BR', 'pt', 'en'], 'pt'],
+      [['pt-PT'], 'pt'],
+      [['it-IT'], 'it'],
+      [['it-CH', 'de-CH'], 'it'],
+      [['tr-TR', 'fr-FR'], 'fr'],
+    ]) {
+      Object.defineProperty(globalThis, 'navigator', {
+        value: { languages: browserLanguages, language: browserLanguages[0] },
+        configurable: true,
+      })
+      const instance = i18next.createInstance()
+      await instance
+        .use(LanguageDetector)
+        .init({ ...i18nBaseConfig, detection: { order: ['navigator'] } })
+      assert.equal(instance.resolvedLanguage, expected, browserLanguages.join(','))
+    }
+  } finally {
+    if (original) Object.defineProperty(globalThis, 'navigator', original)
   }
 })

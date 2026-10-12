@@ -108,7 +108,7 @@ This is the single most demoable moment in the product; show it, don't describe 
 - **Timers that survive** — step timers keep running through reloads and notify you.
 - **Private notes** — per-recipe notes only you see.
 - **Your data, portable** — CSV export/import; delete everything anytime.
-- **5 languages** — EN, PL, DE, FR, ES.
+- **7 languages** — EN, PL, DE, FR, ES, IT, PT.
 - **Dark mode** — native, automatic.
 - **Native iOS app** — real native feel, haptics, share extension.
 
@@ -151,4 +151,4 @@ content (actual photos, real ingredient lists) over lorem-ipsum recipes.
 4. **Social import claims:** copy says "social video" / "social & video links"; the
    actual platforms are communicated with a small icon row in the import section
    instead of naming them in text.
-5. **Localization:** all 5 locales (EN, PL, DE, FR, ES) written from day one.
+5. **Localization:** all 7 locales (EN, PL, DE, FR, ES, IT, PT) written from day one.

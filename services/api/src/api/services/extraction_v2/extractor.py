@@ -20,18 +20,20 @@ MAX_CONTENT_CHARS = 500_000
 MAX_BLOCKS = 5_000
 _YIELD_UNIT = (
     r"(?:servings?|portions?|porcj(?:a|e|i|ę)|portion(?:en)?|porciones?|raciones?|"
-    r"person(?:s|en|as|nes)?|people|osob(?:a|y|ę|om)?|rolls?)"
+    r"person(?:s|en|as|nes)?|people|osob(?:a|y|ę|om)?|rolls?|"
+    r"porzion(?:e|i)|persone|dos(?:e|i)|porç(?:ão|ões)|porcao|porcoes|pessoas?)"
 )
-_TEXT_YIELD_MARKER = re.compile(rf"\b(?:makes?|yield|{_YIELD_UNIT})\b", re.IGNORECASE)
+_TEXT_YIELD_MARKER = re.compile(rf"\b(?:makes?|yield|rende|rendimento|resa|serve|{_YIELD_UNIT})\b", re.IGNORECASE)
 _PER_SERVING = re.compile(
     r"\b(?:per\s+(?:serving|portion)|1\s+porcj(?:ę|e|i)|na\s+(?:1\s+)?porcj(?:ę|e|i)|"
-    r"pro\s+portion|par\s+portion|por\s+(?:porción|ración))\b",
+    r"pro\s+portion|par\s+portion|por\s+(?:porción|ración)|"
+    r"(?:per|a|1)\s+porzione|per\s+persona|por\s+(?:porção|porcao|pessoa)|1\s+porção|cada\s+porção)\b",
     re.IGNORECASE,
 )
-_CALORIE_LABEL = r"\b(?:calories?|kcal|kilocalories?|kalorii|kalorien|calorías?)\b"
-_PROTEIN_LABEL = r"\b(?:protein|białk\w*|eiwei(?:ß|ss)|protéines?|proteínas?)\b"
-_FAT_LABEL = r"\b(?:fat|tłuszcz\w*|fett|lipides?|grasas?)\b"
-_CARBOHYDRATE_LABEL = r"\b(?:carbs?|carbohydrates?|węglowodan\w*|kohlenhydrat\w*|glucides?|carbohidratos?)\b"
+_CALORIE_LABEL = r"\b(?:calories?|kcal|kilocalories?|kalorii|kalorien|calorías?|calorie|calorias?)\b"
+_PROTEIN_LABEL = r"\b(?:protein|białk\w*|eiwei(?:ß|ss)|protéines?|proteínas?|proteine|proteina)\b"
+_FAT_LABEL = r"\b(?:fat|tłuszcz\w*|fett|lipides?|grasas?|grassi|grasso|lipidi|gorduras?)\b"
+_CARBOHYDRATE_LABEL = r"\b(?:carbs?|carbohydrates?|węglowodan\w*|kohlenhydrat\w*|glucides?|carbohidratos?|carboidrat[io]s?|hidratos\s+de\s+carbono)\b"
 
 
 @dataclass(frozen=True)
@@ -264,6 +266,8 @@ def _extract(
             total_time_references=total_time_references or [], nutrition=nutrition or NutritionEvidence(),
         )
     _drop_abbreviated_instruction_groups(instruction_groups)
+    if allow_unheaded is False:
+        _promote_headingless_steps(components)
     extracted_components = [item for item in components if item.ingredients or item.steps or item.name]
     ingredient_components = [item for item in extracted_components if item.ingredients]
     if (
@@ -288,6 +292,30 @@ def _extract(
         total_time_references=total_time_references or [],
         nutrition=nutrition or NutritionEvidence(),
     )
+
+
+def _promote_headingless_steps(components: list[_Component]) -> None:
+    """Move trailing full-sentence paragraphs to steps when a recipe card has no method heading.
+
+    Some recipe cards (e.g. WPRM with the instructions header disabled) list the steps straight after
+    the ingredients. Ingredient lines are short phrases; a trailing run of >=80-character sentences is a method.
+    """
+    if any(item.steps for item in components):
+        return
+    for item in reversed(components):
+        if not item.ingredients:
+            continue
+        start = len(item.ingredients)
+        while start and len(item.ingredients[start - 1].text) >= 80 and item.ingredients[start - 1].text.rstrip().endswith((".", "!", ")")):
+            start -= 1
+        if start == 0 or start == len(item.ingredients):
+            return
+        item.steps = [
+            StepEvidence(text=ingredient.text, evidence_ids=ingredient.evidence_ids, locator=ingredient.locator, references=ingredient.references)
+            for ingredient in item.ingredients[start:]
+        ]
+        del item.ingredients[start:]
+        return
 
 
 def _drop_abbreviated_instruction_groups(groups: list[tuple[str, _Component, int]]) -> None:
@@ -321,6 +349,8 @@ def _is_noise(text: str) -> bool:
         # instruction. The second spelling is the common mojibake form of •.
         or bool(re.fullmatch(r"(?:[•·‣◦▪]|â€¢)+", normalized))
         or bool(re.fullmatch(r"\d+(?:[.,]\d+)?\s+porcj(?:e|i)", normalized))
+        # Italian recipe-card metadata rows (servings, difficulty, times, cost) sit among the ingredients.
+        or bool(re.match(r"(?:dosi\s+per\s+\d|difficolt[àa]\s|(?:preparazione|cottura)\s+\d|costo\s+\w+$|reperibilit[àa]\s)", normalized))
         or (normalized.startswith("last step!") and ("review" in normalized or "rating" in normalized))
         or normalized in {
         "the new york times cooking",
@@ -338,7 +368,7 @@ def _is_recommendation_heading(text: str) -> bool:
 def _without_step_label(text: str) -> str:
     """Remove a presentation-only leading step number from an instruction."""
 
-    stripped = re.sub(r"^\s*step\s*\d+\s*(?:[:.)-]\s*)?", "", text, flags=re.IGNORECASE).strip()
+    stripped = re.sub(r"^\s*(?:step\s*\d+\s*(?:[:.)-]\s*)?|\d{1,2}[.)]\s+)", "", text, flags=re.IGNORECASE).strip()
     return stripped or text
 
 
@@ -362,6 +392,7 @@ def _is_component_label(block: Block) -> bool:
 def _is_non_recipe_ingredient_heading(text: str) -> bool:
     return text.casefold().rstrip(":") in {
         "top tip", "tips", "chef's tip", "chefâ€™s tip", "equipment", "ausrüstung", "zubehör",
+        "attrezzatura", "utensili", "utensílios", "utensílios necessários", "equipamento", "equipamentos", "dica", "dicas", "consiglio", "consigli",
     }
 
 
@@ -649,12 +680,12 @@ def _bbc_good_food_nutrition(values: object, source: ExtractionInput, reference:
 
 
 TOTAL_TIME_LABEL = re.compile(
-    r"\b(?:total\s+time|czas\s+(?:całkowity|calkowity)|gesamt(?:zeit|dauer)|temps\s+total|tiempo\s+total)\b",
+    r"\b(?:total\s+time|czas\s+(?:całkowity|calkowity)|gesamt(?:zeit|dauer)|temps\s+total|tiempo\s+total|tempo\s+(?:totale|complessivo|total))\b|^total(?=\s+\d)",
     re.IGNORECASE,
 )
 TIME_AMOUNT = re.compile(
     r"(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|godzin(?:a|y|ę|e)?|stund(?:e|en)|heures?|horas?|"
-    r"minutes?|mins?|min|m|minut(?:[a-ząćęłńóśźż]+)?)\b",
+    r"ore?|ora|minutes?|mins?|min|m|minut(?:[a-ząćęłńóśźż]+)?)\b",
     re.IGNORECASE,
 )
 
@@ -704,7 +735,7 @@ def _html_metadata(source: ExtractionInput) -> tuple[str | None, list[EvidenceRe
                 if duration is not None:
                     total_time_minutes, total_time_text = duration
                     total_time_references = [_metadata_reference(source, tag, raw)]
-        if nutrition is None and normalized.casefold().startswith(("nutritional analysis", "nutrition facts", "nutrition")):
+        if nutrition is None and normalized.casefold().startswith(("nutritional analysis", "nutrition facts", "nutrition", "valori nutrizionali", "informazioni nutrizionali", "informação nutricional", "informações nutricionais", "informacao nutricional", "valores nutricionais", "tabela nutricional")):
             if (
                 normalized.casefold().startswith("nutrition per serving")
                 and isinstance(structured["nutrition"], NutritionEvidence)
@@ -723,10 +754,10 @@ def _html_metadata(source: ExtractionInput) -> tuple[str | None, list[EvidenceRe
             detail_text = normalize_evidence_text(detail_raw)
             nutrition = NutritionEvidence(
                 raw_text=detail_text,
-                calories=_nutrition_value(detail_text, r"\bcalories?\b"),
-                protein=_nutrition_value(detail_text, r"\bprotein\b"),
-                fat=_nutrition_value(detail_text, r"\bfat\b", exclude=("from", "monounsaturated", "polyunsaturated", "saturated")),
-                carbohydrates=_nutrition_value(detail_text, r"\b(?:carbs?|carbohydrates?)\b"),
+                calories=_nutrition_value(detail_text, r"\b(?:calories?|calorie|calorias?)\b"),
+                protein=_nutrition_value(detail_text, r"\b(?:protein|proteine|proteínas?|proteinas?)\b"),
+                fat=_nutrition_value(detail_text, r"\b(?:fat|grassi|gorduras?)\b", exclude=("from", "monounsaturated", "polyunsaturated", "saturated")),
+                carbohydrates=_nutrition_value(detail_text, r"\b(?:carbs?|carbohydrates?|carboidrat[io]s?)\b"),
                 evidence_ids=[source.evidence_ids[0]], references=[_metadata_reference(source, detail, detail_raw)],
             )
     if yield_text is None:
@@ -842,14 +873,14 @@ def _total_time_parts(value: str) -> tuple[int, str] | None:
         separator = value[selected[-1].end():match.start()]
         # A total time may repeat its unit in adjacent display spans ("1 hour hour 5 minutes").
         # Stop at prose so preparation and instruction durations are never added to total time.
-        if not re.fullmatch(r"\s*(?:,|and|i|et|y)?\s*(?:[a-ząćęłńóśźż]+)?\s*", separator, re.IGNORECASE):
+        if not re.fullmatch(r"\s*(?:,|and|i|et|y|e)?\s*(?:[a-ząćęłńóśźż]+)?\s*", separator, re.IGNORECASE):
             break
         selected.append(match)
 
     total = 0.0
     for match in selected:
         amount, unit = match.groups()
-        multiplier = 60 if unit.casefold().startswith(("h", "godzin", "stund", "heure", "hora")) else 1
+        multiplier = 60 if unit.casefold().startswith(("h", "godzin", "stund", "heure", "hora", "ora", "ore")) else 1
         total += float(amount.replace(",", ".")) * multiplier
     return (round(total), value[selected[0].start():selected[-1].end()]) if total else None
 
@@ -913,7 +944,7 @@ def split_inline_ingredient_group(text: str) -> tuple[str, int, str, int] | None
         or re.match(r"^\d?[¼½¾](?:\s|[a-z])", value, re.IGNORECASE)
     ):
         return None
-    if re.match(r"^\d+(?:[.,]\d+)?\s*(?:seconds?|minutes?|hours?|segundos?|minutos?|horas?)\b", value, re.IGNORECASE):
+    if re.match(r"^\d+(?:[.,]\d+)?\s*(?:seconds?|minutes?|hours?|segundos?|minutos?|horas?|secondi|minuti|ore)\b", value, re.IGNORECASE):
         return None
     value_start = match.start("value") + (len(match.group("value")) - len(match.group("value").lstrip()))
     return match.group("name"), match.start("name"), value, value_start
@@ -922,7 +953,7 @@ def split_inline_ingredient_group(text: str) -> tuple[str, int, str, int] | None
 def parse_yield_servings(value: str | None, *, allow_unlabelled: bool = False) -> str | None:
     if not value:
         return None
-    makes_count = re.match(r"\s*makes?\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
+    makes_count = re.match(r"\s*(?:makes?|porzioni|porções|rende|rendimento|resa|dosi\s+per|serve(?:\s+para)?)\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)
     if makes_count:
         return makes_count.group(1)
     serves_count = re.match(r"\s*serv(?:es|ings?)\s*:?\s*(\d+(?:[.,]\d+)?)\b", value, re.IGNORECASE)

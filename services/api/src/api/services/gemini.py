@@ -149,7 +149,7 @@ async def _with_retry(
 _TRANSCRIPTION_SYSTEM = """\
 You are a precise audio transcription system. Transcribe only the spoken audio
 you can hear. Detect the language automatically; it may be Polish, Spanish,
-German, French, English, or a mixture. Return the transcript in the original
+German, French, Italian, Portuguese, English, or a mixture. Return the transcript in the original
 spoken language and never translate, summarize, explain, or format it as a
 recipe.
 

@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { SUPPORTED_LOCALES } from '@carrot/shared/supportedLocales'
 import { HOUSEHOLD_COLOR_OPTIONS } from '@carrot/shared/utils/householdColors'
 
 export const WEEK_DAY_OPTIONS = [
@@ -9,7 +10,7 @@ export const WEEK_DAY_OPTIONS = [
 
 export const PRESET_COLORS = HOUSEHOLD_COLOR_OPTIONS
 
-export const LANGUAGE_CODES = ['en', 'de', 'pl', 'fr', 'es'] as const
+export const LANGUAGE_CODES = SUPPORTED_LOCALES
 
 export const normalizeAllergenKey = (key: string) => key.replace(/[- ]/g, '_')
 

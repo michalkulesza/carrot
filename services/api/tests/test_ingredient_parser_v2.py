@@ -1,3 +1,5 @@
+import pytest
+
 from api.services.ingredient_parser_v2 import parse_ingredient
 
 
@@ -27,7 +29,7 @@ def test_unicode_source_fraction_and_french_alias() -> None:
     fraction = parse_ingredient("\u00bd cup soy sauce")
     french = parse_ingredient("1 cuill\u00e8re \u00e0 soupe de farine")
     assert (fraction.qty, fraction.unit) == ("1/2", "cup")
-    assert (french.qty, french.unit, french.name) == ("1", "tbsp", "de farine")
+    assert (french.qty, french.unit, french.name) == ("1", "tbsp", "farine")
     french_tsp = parse_ingredient("2 c. \u00e0 caf\u00e9 de tomate")
     assert (french_tsp.unit, french_tsp.name) == ("tsp", "de tomate")
 
@@ -112,3 +114,45 @@ def test_spanish_cditas_alias_and_multi_ingredient_line_is_uncertain() -> None:
         "3 pimientas gordas, 1 trocito de canela y 3 hojas de laurel.",
         "uncertain"
     )
+
+
+@pytest.mark.parametrize(
+    ("source", "qty", "unit", "name"),
+    [
+        ("500 ml de leite", "500", "ml", "leite"),
+        ("200 g de farinha", "200", "g", "farinha"),
+        ("1 kg do queijo", "1", "kg", "queijo"),
+        ("500 ml de leche", "500", "ml", "leche"),
+        ("200 g de harina", "200", "g", "harina"),
+        ("2 l de agua", "2", "l", "agua"),
+        ("200 g de farine", "200", "g", "farine"),
+        ("200 g des pommes", "200", "g", "pommes"),
+        ("50 cl d'eau", "50", "cl", "eau"),
+        ("1 l d’eau", "1", "l", "eau"),
+        ("200 g di farina", "200", "g", "farina"),
+        ("100 ml d'acqua", "100", "ml", "acqua"),
+        ("100 g DE LECHE", "100", "g", "LECHE"),
+        ("2 cucharadas de aceite", "2", "tbsp", "aceite"),
+        ("2 tasses de farine", "2", "cup", "farine"),
+    ],
+)
+def test_connector_is_stripped_after_metric_and_spoon_units(source: str, qty: str, unit: str, name: str) -> None:
+    parsed = parse_ingredient(source)
+    assert (parsed.qty, parsed.unit, parsed.name) == (qty, unit, name)
+
+
+@pytest.mark.parametrize(
+    ("source", "name"),
+    [
+        ("200 g de-boned chicken", "de-boned chicken"),
+        ("200 g dill", "dill"),
+        ("200 g datteri", "datteri"),
+        ("200 g da vinci pasta", "da vinci pasta"),
+        ("200 g Del Monte tomatoes", "Del Monte tomatoes"),
+        ("200 g of flour", "of flour"),
+        ("3 cups de flour", "de flour"),
+        ("200 g de", "de"),
+    ],
+)
+def test_connector_like_names_are_kept(source: str, name: str) -> None:
+    assert parse_ingredient(source).name == name
