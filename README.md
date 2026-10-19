@@ -52,6 +52,55 @@ with ingredients, steps and nutrition. Plan meals and share shopping lists with 
 - **Cook mode:** a step-by-step view built for use in the kitchen.
 - **Five languages:** English, Polski, Deutsch, Français, Español.
 
+## How it works
+
+### Recipe import pipeline
+
+```mermaid
+flowchart LR
+    A[Pasted link] --> B{Source type}
+    B -->|Blog / website| C[Headless Chromium renderer]
+    B -->|Instagram / TikTok| D[Social metadata + video]
+    C -->|bot challenge| E[Retry via residential proxy]
+    E --> F
+    C --> F[Deterministic parsers<br/>JSON-LD · headings · lexicons]
+    D --> G[ffmpeg audio → Gemini transcription]
+    G --> F
+    F --> H[Gemini fills the gaps<br/>nutrition · tags · allergens]
+    H --> I[Validated recipe]
+    I --> J[Live push to household]
+```
+
+1. **Queued, not blocking.** An import becomes a durable job in PostgreSQL. A separate worker container claims jobs with `SELECT … FOR UPDATE SKIP LOCKED`, so imports run in the background and survive restarts.
+2. **Real browser rendering.** Many recipe sites are JavaScript-heavy or sit behind bot protection, so pages are rendered in a sandboxed **Playwright / headless Chromium** service. It caps concurrency, response size and timeouts, and skips images, media and fonts to keep renders fast.
+3. **Proxy fallback.** Requests normally go out through an outbound proxy. When the page looks like a bot challenge, the renderer retries through a **residential SOCKS5 proxy**, so it sees the page as a normal visitor would.
+4. **Deterministic first, AI second.** Structured data (JSON-LD) and hand-written parsers pull out ingredients, steps, yields and section headings, using lexicons for five languages. **Gemini** is only used for what the page doesn't state outright: picking the right text, estimating nutrition, tagging, and detecting allergens. The output is validated against strict Pydantic contracts.
+5. **Video recipes.** For social videos, Carrot downloads the clip, extracts the audio with ffmpeg, transcribes it with Gemini, and then merges the spoken steps with the caption text.
+6. **Everything is traced.** Every extraction records evidence and trace events, and an internal review tool (`tools/extraction-review`) replays captured payloads as regression fixtures.
+
+### Allergens
+
+Each recipe is checked against the allergens configured for the user and their household. Checks are **coalescing and durable**: if a recipe changes many times in a row, the queued requests collapse into a single recheck, and a result is only written if its hash shows it is newer than the stored one. Recipes are flagged on every device as soon as the check finishes.
+
+### Technical highlights
+
+- **Live collaboration:** a pub/sub broadcaster with presence. Shopping list edits appear instantly for everyone in the household, along with who else is viewing the list.
+- **Semantic search:** pgvector and Gemini embeddings, with a feature flag for instant rollback and a resumable backfill.
+- **SSRF-hardened fetching:** before fetching, every outbound URL is resolved and checked against private, loopback and link-local ranges, both in the API and in the renderer.
+- **One codebase, three clients:** web (React + Vite), iOS and Android (Expo) share types and logic through `packages/shared`. The mobile app includes a share-sheet import and push notifications via APNs.
+- **Repeat-tap safe:** user actions are idempotent end to end, so double-taps never create duplicate work.
+- **Media storage:** recipe images are stored in Cloudflare R2.
+
+## Deployment and CI/CD
+
+Every push to `master` triggers a path-filtered GitHub Actions pipeline, separate for each deployable unit (API + worker + renderer, web, showcase):
+
+1. **Test:** pytest for the API, plus the renderer's test suite running inside its hardened container (non-root, all capabilities dropped) on both **x86 and ARM** runners.
+2. **Build:** multi-arch (`amd64` + `arm64`) Docker images built with Buildx, cached between runs, and pushed to GHCR with `latest` and commit-SHA tags.
+3. **Deploy:** an SSH deploy to a VPS pulls the new images, restarts the services with Docker Compose, and **gates on a `/healthz` check**. If the API doesn't come up healthy, the job fails.
+
+In production, Caddy terminates TLS and routes `/api/*` to the API container and everything else to the web container.
+
 ## Repository layout
 
 | Path                                          | What it is                                       |
