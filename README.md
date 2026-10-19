@@ -1,20 +1,45 @@
+<div align="center">
+
+<img src="apps/web/public/icon-512.png" width="112" alt="Carrot logo" />
+
 # Carrot
 
-Carrot turns any link into a clean, cookable recipe and keeps your household's cooking in sync. Paste a link from a food blog or a social video, and Carrot's AI pulls out the ingredients, steps, servings and nutrition. Meal planning and shopping lists are shared across your household.
+### Any recipe. One link away. 🥕
 
-<p align="center">
-  <img src="docs/images/m1.jpg" width="23%" alt="Recipes list on mobile" />
-  <img src="docs/images/m2.jpg" width="23%" alt="Carrot mobile screen" />
-  <img src="docs/images/m3.jpg" width="23%" alt="Carrot mobile screen" />
-  <img src="docs/images/m4.jpg" width="23%" alt="Carrot mobile screen" />
-</p>
+Paste a link from a food blog or a social video, and Carrot's AI turns it into a clean, cookable recipe<br/>
+with ingredients, steps and nutrition. Plan meals and share shopping lists with your whole household, kept in sync live.
 
-<p align="center">
-  <img src="docs/images/d1.png" width="49%" alt="Recipes table on desktop" />
-  <img src="docs/images/d2.png" width="49%" alt="Carrot desktop screen" />
-  <img src="docs/images/d3.png" width="49%" alt="Carrot desktop screen" />
-  <img src="docs/images/d4.png" width="49%" alt="Carrot desktop screen" />
-</p>
+<br/>
+
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Languages](https://img.shields.io/badge/i18n-EN%20·%20PL%20·%20DE%20·%20FR%20·%20ES-F97316?style=for-the-badge)
+
+</div>
+
+<br/>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/m1.jpg" alt="Recipes home screen on mobile" /><br/><sub><b>Recipes</b></sub></td>
+    <td align="center"><img src="docs/images/m2.jpg" alt="Meal plan on mobile" /><br/><sub><b>Meal plan</b></sub></td>
+    <td align="center"><img src="docs/images/m3.jpg" alt="Shopping list on mobile" /><br/><sub><b>Shopping list</b></sub></td>
+    <td align="center"><img src="docs/images/m4.jpg" alt="Allergens on mobile" /><br/><sub><b>Allergens</b></sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/d1.png" alt="Recipes home on desktop" /><br/><sub><b>Recipes</b></sub></td>
+    <td align="center"><img src="docs/images/d2.png" alt="Meal plan on desktop" /><br/><sub><b>Meal plan</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/images/d3.png" alt="Shopping list on desktop" /><br/><sub><b>Shopping list</b></sub></td>
+    <td align="center"><img src="docs/images/d4.png" alt="Recipe detail on desktop" /><br/><sub><b>Recipe detail</b></sub></td>
+  </tr>
+</table>
 
 ## Features
 
@@ -22,7 +47,8 @@ Carrot turns any link into a clean, cookable recipe and keeps your household's c
 - **Recipe library:** filter by meal, protein, carb, cuisine, time and tags, with semantic search.
 - **Nutrition:** shows kcal, protein, fat and carbs for each recipe.
 - **Households:** the recipes, meal plan and shopping list are shared and stay in sync live.
-- **Meal plan and shopping lists**
+- **Meal plan and shopping lists:** shared with your household.
+- **Allergens:** each recipe shows the allergens it contains.
 - **Cook mode:** a step-by-step view built for use in the kitchen.
 - **Five languages:** English, Polski, Deutsch, Français, Español.
 
