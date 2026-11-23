@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { Image, ImageContentFit, ImageProps } from 'expo-image'
 import ImageShimmer from './ImageShimmer'
 import { PLACEHOLDER_URL } from '../api/thumbnailUrl'
+
+type ImageState = { uri: string; loaded: boolean; usingPlaceholder: boolean }
 
 const NetworkImage = ({
   uri,
@@ -11,6 +13,7 @@ const NetworkImage = ({
   cachePolicy = 'memory-disk',
   recyclingKey,
   accessibilityLabel,
+  fallbackToPlaceholder = true,
   onError,
 }: {
   uri: string
@@ -19,35 +22,24 @@ const NetworkImage = ({
   cachePolicy?: ImageProps['cachePolicy']
   recyclingKey?: string | null
   accessibilityLabel?: string
+  fallbackToPlaceholder?: boolean
   onError?: () => void
 }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [displayUri, setDisplayUri] = useState(uri)
-  const [usingPlaceholder, setUsingPlaceholder] = useState(false)
+  const [state, setState] = useState<ImageState>({ uri, loaded: false, usingPlaceholder: false })
+  const current = state.uri === uri ? state : { uri, loaded: false, usingPlaceholder: false }
+  const displayUri = current.usingPlaceholder && PLACEHOLDER_URL ? PLACEHOLDER_URL : uri
 
-  useEffect(() => {
-    setLoaded(false)
-    setDisplayUri(uri)
-    setUsingPlaceholder(false)
-  }, [uri])
-
-  const handleLoad = useCallback(() => setLoaded(true), [])
+  const handleLoad = useCallback(() => setState((prev) => ({ uri, loaded: true, usingPlaceholder: prev.uri === uri && prev.usingPlaceholder })), [uri])
 
   const handleError = useCallback(() => {
-    if (!usingPlaceholder && PLACEHOLDER_URL && displayUri !== PLACEHOLDER_URL) {
-      setLoaded(false)
-      setDisplayUri(PLACEHOLDER_URL)
-      setUsingPlaceholder(true)
-      onError?.()
-      return
-    }
-    setLoaded(true)
+    const canFallBack = fallbackToPlaceholder && !current.usingPlaceholder && PLACEHOLDER_URL && uri !== PLACEHOLDER_URL
+    setState({ uri, loaded: !canFallBack, usingPlaceholder: Boolean(canFallBack) })
     onError?.()
-  }, [displayUri, onError, usingPlaceholder])
+  }, [current.usingPlaceholder, fallbackToPlaceholder, onError, uri])
 
   return (
     <View style={[style, styles.wrapper]}>
-      {!loaded && <ImageShimmer />}
+      {!current.loaded && <ImageShimmer />}
       <Image
         source={{ uri: displayUri }}
         style={StyleSheet.absoluteFill}

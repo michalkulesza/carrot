@@ -1,10 +1,13 @@
+import { useCallback } from 'react'
 import { View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
-import { Feather } from '@expo/vector-icons'
+import { SymbolView } from 'expo-symbols'
 import * as Haptics from 'expo-haptics'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
+
+const SORT_SYMBOL = { ios: 'arrow.up.arrow.down', android: 'swap_vert' } as const
 
 const HeaderRight = ({
   sortByLabel,
@@ -15,9 +18,15 @@ const HeaderRight = ({
   filterMenuActions: MenuAction[]
   onFilterAction: ({ nativeEvent }: NativeActionEvent) => void
 }) => {
-  const triggerLightHaptic = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-  }
+  const triggerLightHaptic = useCallback(() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), [])
+
+  const handlePressAction = useCallback(
+    (event: NativeActionEvent) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+      onFilterAction(event)
+    },
+    [onFilterAction],
+  )
 
   return (
     <View style={styles.headerBtns}>
@@ -25,13 +34,15 @@ const HeaderRight = ({
         title={sortByLabel}
         actions={filterMenuActions}
         onOpenMenu={triggerLightHaptic}
-        onPressAction={(event) => {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-          onFilterAction(event)
-        }}
+        onPressAction={handlePressAction}
       >
         <View style={styles.headerBtn}>
-          <Feather name="sliders" size={22} color={colors.secondaryLabel} />
+          <SymbolView
+            name={SORT_SYMBOL}
+            size={22}
+            tintColor={colors.secondaryLabel}
+            accessibilityLabel={sortByLabel}
+          />
         </View>
       </MenuView>
     </View>

@@ -33,9 +33,9 @@ export default function TabsLayout() {
       )}
 
       {!gated && (
-        <NativeTabs.Trigger name="recipes">
-          <NativeTabs.Trigger.Icon sf="book" md="menu_book" />
-          <NativeTabs.Trigger.Label>{t('nav.recipes')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger name="home">
+          <NativeTabs.Trigger.Icon sf="house" md="home" />
+          <NativeTabs.Trigger.Label>{t('nav.home')}</NativeTabs.Trigger.Label>
         </NativeTabs.Trigger>
       )}
 
@@ -58,6 +58,12 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
         {invitationCount > 0 && <NativeTabs.Trigger.Badge>{String(invitationCount)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
+
+      {!gated && (
+        <NativeTabs.Trigger name="browse" role="search">
+          <NativeTabs.Trigger.Label>{t('nav.browse')}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      )}
     </NativeTabs>
   )
 }

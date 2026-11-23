@@ -224,6 +224,8 @@
   },
   "nav": {
     "recipes": "Recipes",
+    "home": "Home",
+    "browse": "Browse",
     "mealPlan": "Meal Plan",
     "shopping": "Shopping",
     "settings": "Settings",
@@ -926,5 +928,16 @@
     "from": "From {{name}}",
     "sectionTitle": "Invitations",
     "declineFailed": "Failed to decline invitation"
+  },
+  "home": {
+    "recentlyAdded": "Recently added",
+    "favourites": "Favourites",
+    "importsInProgress": "Imports in progress",
+    "seeAll": "See all",
+    "emptyTitle": "Your kitchen is empty",
+    "emptyBody": "Add your first recipe to see it here."
+  },
+  "browse": {
+    "noResults": "No recipes for “{{query}}”"
   }
 }

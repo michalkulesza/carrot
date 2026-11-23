@@ -234,6 +234,8 @@
   },
   "nav": {
     "recipes": "Przepisy",
+    "home": "Start",
+    "browse": "Przeglądaj",
     "mealPlan": "Plan posiłków",
     "shopping": "Zakupy",
     "settings": "Ustawienia",
@@ -954,5 +956,16 @@
     "from": "Od {{name}}",
     "sectionTitle": "Zaproszenia",
     "declineFailed": "Nie udało się odrzucić zaproszenia"
+  },
+  "home": {
+    "recentlyAdded": "Ostatnio dodane",
+    "favourites": "Ulubione",
+    "importsInProgress": "Trwające importy",
+    "seeAll": "Zobacz wszystkie",
+    "emptyTitle": "Twoja kuchnia jest pusta",
+    "emptyBody": "Dodaj pierwszy przepis, aby zobaczyć go tutaj."
+  },
+  "browse": {
+    "noResults": "Brak przepisów dla „{{query}}”"
   }
 }

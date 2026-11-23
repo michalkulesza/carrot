@@ -6,5 +6,5 @@ export default function Index() {
   const { households, isLoadingHouseholds } = useHousehold()
   if (isLoadingHouseholds) return null
   if (households.length === 0) return <GettingStartedScreen />
-  return <Redirect href="/(tabs)/recipes" />
+  return <Redirect href="/(tabs)/home" />
 }

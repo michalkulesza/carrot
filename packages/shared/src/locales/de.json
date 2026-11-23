@@ -224,6 +224,8 @@
   },
   "nav": {
     "recipes": "Rezepte",
+    "home": "Start",
+    "browse": "Entdecken",
     "mealPlan": "Mahlzeitenplan",
     "shopping": "Einkaufen",
     "settings": "Einstellungen",
@@ -926,5 +928,16 @@
     "from": "Von {{name}}",
     "sectionTitle": "Einladungen",
     "declineFailed": "Einladung konnte nicht abgelehnt werden"
+  },
+  "home": {
+    "recentlyAdded": "Zuletzt hinzugefügt",
+    "favourites": "Favoriten",
+    "importsInProgress": "Laufende Importe",
+    "seeAll": "Alle anzeigen",
+    "emptyTitle": "Deine Küche ist leer",
+    "emptyBody": "Füge dein erstes Rezept hinzu, um es hier zu sehen."
+  },
+  "browse": {
+    "noResults": "Keine Rezepte für „{{query}}“"
   }
 }

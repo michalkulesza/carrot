@@ -1,12 +1,13 @@
 import { useCallback, useMemo } from 'react'
-import { Pressable, StyleSheet, Text } from 'react-native'
+import { Text } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import type { Tag, TagCategory } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
-import { colors } from '../../theme/colors'
+import GlassChip from './GlassChip'
+import { styles } from './styles'
 
 const CategoryFilterChip = ({
   category,
@@ -39,6 +40,8 @@ const CategoryFilterChip = ({
     [tags, selectedTagIds, t],
   )
 
+  const handleOpenMenu = useCallback(() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), [])
+
   const handlePressAction = useCallback(
     ({ nativeEvent }: NativeActionEvent) => {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
@@ -51,11 +54,12 @@ const CategoryFilterChip = ({
     <MenuView
       title={t(`tags.category.${category}`)}
       actions={actions}
-      onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
+      onOpenMenu={handleOpenMenu}
       onPressAction={handlePressAction}
     >
-      <Pressable
-        style={({ pressed }) => [styles.chip, isActive && styles.chipActive, pressed && { opacity: 0.7 }]}
+      <GlassChip
+        selected={isActive}
+        style={styles.categoryChip}
         accessibilityLabel={t(`tags.category.${category}`)}
         accessibilityRole="button"
         accessibilityState={{ selected: isActive }}
@@ -63,24 +67,9 @@ const CategoryFilterChip = ({
         <Text style={[styles.chipText, isActive && styles.chipTextSelected]} numberOfLines={1}>
           {label} ▾
         </Text>
-      </Pressable>
+      </GlassChip>
     </MenuView>
   )
 }
 
 export default CategoryFilterChip
-
-const styles = StyleSheet.create({
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    maxWidth: 140,
-    backgroundColor: colors.gray5,
-  },
-  chipActive: { backgroundColor: colors.blue },
-  chipText: { fontSize: 13, color: colors.secondaryLabel },
-  chipTextSelected: { color: '#ffffff', fontWeight: '600' },
-})

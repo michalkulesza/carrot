@@ -226,6 +226,8 @@
   },
   "nav": {
     "recipes": "Receitas",
+    "home": "Início",
+    "browse": "Explorar",
     "mealPlan": "Plano de refeições",
     "shopping": "Compras",
     "settings": "Ajustes",
@@ -929,5 +931,16 @@
     "from": "De {{name}}",
     "sectionTitle": "Convites",
     "declineFailed": "Não foi possível recusar o convite"
+  },
+  "home": {
+    "recentlyAdded": "Adicionadas recentemente",
+    "favourites": "Favoritas",
+    "importsInProgress": "Importações em andamento",
+    "seeAll": "Ver tudo",
+    "emptyTitle": "Sua cozinha está vazia",
+    "emptyBody": "Adicione sua primeira receita para vê-la aqui."
+  },
+  "browse": {
+    "noResults": "Nenhuma receita para “{{query}}”"
   }
 }

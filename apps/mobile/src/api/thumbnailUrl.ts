@@ -16,3 +16,16 @@ export const proxyThumbnailUrl = (url: string | null | undefined): string | null
   if (isR2Url(url)) return url
   return `${API_BASE}/api/proxy/image?url=${encodeURIComponent(url)}`
 }
+
+const SMALL_WIDTH = 400
+const R2_THUMBNAIL_EXTENSION = /^(.*\/thumbnails\/[^?#]*)(\.[A-Za-z0-9]+)([?#].*)?$/
+
+export const smallThumbnailUrl = (url: string | null | undefined): string | null => {
+  if (!url) return PLACEHOLDER_URL || null
+  if (isR2Url(url)) {
+    const match = R2_THUMBNAIL_EXTENSION.exec(url)
+    return match ? `${match[1]}_sm${match[2]}${match[3] ?? ''}` : url
+  }
+  if (url.startsWith(API_BASE)) return url.includes('/api/proxy/image') ? `${url}&w=${SMALL_WIDTH}` : url
+  return `${API_BASE}/api/proxy/image?url=${encodeURIComponent(url)}&w=${SMALL_WIDTH}`
+}

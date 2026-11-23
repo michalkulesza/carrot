@@ -1,11 +1,11 @@
-import { ActivityIndicator, Text, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import type { HouseholdOut } from '@carrot/shared/types'
-import Avatar from '../../components/Avatar'
-import { styles } from './styles'
+import { colors } from '../theme/colors'
+import Avatar from './Avatar'
 
-const HeaderTitle = ({
+const HouseholdHeaderTitle = ({
   title,
   householdMenuActions,
   onHouseholdAction,
@@ -46,4 +46,15 @@ const HeaderTitle = ({
   </View>
 )
 
-export default HeaderTitle
+export default HouseholdHeaderTitle
+
+const styles = StyleSheet.create({
+  headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%' },
+  headerTitleText: {
+    fontSize: 17,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: colors.label,
+  },
+  headerAvatarLoading: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+})

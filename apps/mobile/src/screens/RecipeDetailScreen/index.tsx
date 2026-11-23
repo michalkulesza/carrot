@@ -107,7 +107,7 @@ const RecipeDetailScreen = () => {
     else if (cookModeParam === '1') setCookModeOpen(false)
   }, [cookModeParam, navAtParam, recipe])
   useEffect(() => {
-    if (!isLoading && !error && !recipe) router.replace('/(tabs)/recipes')
+    if (!isLoading && !error && !recipe) router.replace('/(tabs)/home')
   }, [error, isLoading, recipe, router])
   const { selectedServings, setServings } = useRecipeServingPreference(
     recipe?.id,

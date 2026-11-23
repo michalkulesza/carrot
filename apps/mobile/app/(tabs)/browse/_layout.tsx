@@ -7,6 +7,6 @@ const screenOptions = {
   headerTitleAlign: 'left' as const,
 }
 
-export default function RecipesLayout() {
+export default function BrowseLayout() {
   return <Stack screenOptions={screenOptions} />
 }

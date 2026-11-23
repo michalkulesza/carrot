@@ -226,6 +226,8 @@
   },
   "nav": {
     "recipes": "Ricette",
+    "home": "Home",
+    "browse": "Sfoglia",
     "mealPlan": "Piano pasti",
     "shopping": "Spesa",
     "settings": "Impostazioni",
@@ -929,5 +931,16 @@
     "from": "Da {{name}}",
     "sectionTitle": "Inviti",
     "declineFailed": "Impossibile rifiutare l'invito"
+  },
+  "home": {
+    "recentlyAdded": "Aggiunte di recente",
+    "favourites": "Preferite",
+    "importsInProgress": "Importazioni in corso",
+    "seeAll": "Mostra tutto",
+    "emptyTitle": "La tua cucina è vuota",
+    "emptyBody": "Aggiungi la tua prima ricetta per vederla qui."
+  },
+  "browse": {
+    "noResults": "Nessuna ricetta per «{{query}}»"
   }
 }

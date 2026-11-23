@@ -111,7 +111,7 @@ const WebViewImportScreen = () => {
       }
       try {
         await enqueueImport(api, qc, 'text', { text }, user)
-        router.replace('/(tabs)/recipes')
+        router.replace('/(tabs)/home')
       } catch (err) {
         setExtracting(false)
         Alert.alert(t('addRecipe.importFailed'), err instanceof Error ? err.message : t('importJobs.enqueueFailed'))

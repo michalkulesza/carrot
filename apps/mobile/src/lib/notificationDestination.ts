@@ -24,7 +24,7 @@ export const getNotificationDestination = (data: NotificationData | undefined): 
     case 'recipe_imported':
       return typeof data.recipe_id === 'string' ? `/recipe/${data.recipe_id}` : null
     case 'recipe_failed':
-      return '/(tabs)/recipes'
+      return '/(tabs)/home'
     case 'household_invitation':
     case 'member_left':
       return '/(tabs)/settings'

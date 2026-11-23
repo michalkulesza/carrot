@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useNextMealPlanEntry } from '@carrot/shared/hooks/useNextMealPlanEntry'
 import { formatNextMealDate } from '@carrot/shared/utils/dateUtils'
 import { colors } from '../../theme/colors'
-import ThumbnailImage from './ThumbnailImage'
+import ThumbnailImage from '../../components/ThumbnailImage'
 import { styles } from './styles'
 
 interface NextMealCardProps {

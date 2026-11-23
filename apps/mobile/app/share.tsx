@@ -11,7 +11,7 @@ import { useAuth } from '../src/context/AuthContext'
 import { enqueueImport } from '../src/utils/enqueueImport'
 
 type ShareParams = { type?: string; value?: string; mimeType?: string }
-type Destination = { pathname: '/(tabs)/recipes'; params: { openAddRecipe: '1' } }
+type Destination = { pathname: '/(tabs)/home'; params: { openAddRecipe: '1' } }
 type SharedImport = {
   kind: 'url' | 'text' | 'image'
   input: Record<string, string>
@@ -60,21 +60,21 @@ export default function ShareRedirect() {
       try {
         const rawSharedImport = await getSharedImport(params)
         if (!rawSharedImport) {
-          setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
+          setDestination({ pathname: '/(tabs)/home', params: { openAddRecipe: '1' } })
           return
         }
 
         const sharedImport = toSharedImport(rawSharedImport)
         if (sharedImport.kind === 'url' && isUnsupportedImportUrl(sharedImport.input.url)) {
           Alert.alert(t('importSource.unsupportedTitle'), t('importSource.unsupportedMessage'))
-          router.replace('/(tabs)/recipes')
+          router.replace('/(tabs)/home')
           return
         }
 
         await enqueueImport(api, queryClient, sharedImport.kind, sharedImport.input, user)
-        router.replace('/(tabs)/recipes')
+        router.replace('/(tabs)/home')
       } catch {
-        setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
+        setDestination({ pathname: '/(tabs)/home', params: { openAddRecipe: '1' } })
       } finally {
         clearSharedPayloads()
       }

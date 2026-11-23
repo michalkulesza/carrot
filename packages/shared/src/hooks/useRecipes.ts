@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { RecipeOut, RecipeSaveRequest } from '../types'
 
@@ -166,10 +166,11 @@ export const useSemanticRecipeSearch = (query: string, scopeKey: string | null) 
     queryFn: ({ signal }) => api.searchRecipes(debouncedQuery, signal),
     enabled,
     retry: false,
+    placeholderData: keepPreviousData,
   })
 
   return {
-    semanticRecipes: search.data ?? [],
+    semanticRecipes: enabled ? search.data ?? [] : [],
     isSemanticLoading: normalizedQuery.length >= 3 && (normalizedQuery !== debouncedQuery || search.isFetching),
   }
 }
