@@ -127,8 +127,8 @@ const USER_AGENT = buildUserAgent(FALLBACK_CHROME_MAJOR);
 const BROWSER_CHANNEL = process.env.RENDERER_BROWSER_CHANNEL ?? 'chromium';
 const TIMEZONE_ID = process.env.RENDERER_TIMEZONE_ID || 'Europe/Berlin';
 const CHALLENGE_WAIT_MS = 8000;
-const CHALLENGE_TITLE = /just a moment|temporary error|robot challenge screen/i;
-const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt|sgchallenge|sgcaptcha/;
+const CHALLENGE_TITLE = /just a moment|temporary error|robot challenge screen|one moment, please\.\.\./i;
+const CHALLENGE_BODY = /cf-chl-|_cf_chl_opt|sgchallenge|sgcaptcha|wsidchk/;
 const buildStealthInitScript = (major, fullVersion) => `(() => {
   const define = (target, name, getter) => Object.defineProperty(target, name, { get: getter, configurable: true });
   define(Navigator.prototype, 'webdriver', () => undefined);

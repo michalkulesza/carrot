@@ -785,7 +785,7 @@ async def _deliver_pushes() -> None:
             subscriptions = [] if event.job_id in child_job_ids else list((await session.scalars(select(DeviceSubscription).where(DeviceSubscription.user_id == event.user_id))).all())
             for subscription in subscriptions:
                 success = event.type == "import_job.succeeded"
-                requires_user_action = event.payload.get("failure_code") == ImportFailureCode.USER_ACTION_REQUIRED
+                requires_user_action = event.payload.get("failure_code") in (ImportFailureCode.USER_ACTION_REQUIRED, ImportFailureCode.SOURCE_BLOCKED)
                 is_duplicate = event.payload.get("failure_code") == ImportFailureCode.DUPLICATE_RECIPE
                 title = "Recipe added" if success else "Already in your library" if is_duplicate else "Couldn't import automatically" if requires_user_action else "Couldn't add recipe"
                 body = "Tap to view your new recipe." if success else "Tap to review the import." if is_duplicate else "Open the import to continue manually." if requires_user_action else "Tap to see the failed import."

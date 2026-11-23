@@ -27,6 +27,10 @@ SG_PAGE = (
     '<html><head><title>Robot Challenge Screen</title></head><body><script>const sgchallenge="abc"; '
     'const sgsubmit_url="/.well-known/sgcaptcha/?r=%2Fbolzano-apple-cake%2F";</script></body></html>'
 )
+IMUNIFY_PAGE = (
+    '<html><head><title>One moment, please...</title></head><body><p>Please wait while your request is being verified...</p>'
+    '<script>function wsidchk(){var failedChecks=[];}</script></body></html>'
+)
 
 
 @pytest.mark.parametrize("html", [
@@ -38,6 +42,7 @@ SG_PAGE = (
     '<div id="px-captcha"></div>',
     '<script src="/_Incapsula_Resource?SWJIYLWA=1"></script>',
     '<script>sucuri_cloudproxy_js=""</script>',
+    IMUNIFY_PAGE,
 ])
 def test_challenge_pages_are_detected(html) -> None:
     assert looks_like_bot_challenge(html)
@@ -49,6 +54,12 @@ def test_normal_recipe_page_is_not_a_challenge() -> None:
             "<li>3 apples</li></body></html>")
     assert not looks_like_bot_challenge(html)
     assert not looks_like_bot_challenge("")
+
+
+def test_recipe_page_mentioning_one_moment_is_not_a_challenge() -> None:
+    html = ("<html><head><title>Udon soup</title></head><body><h1>Udon soup</h1>"
+            "<p>One moment, please wait while the broth is verified by taste.</p><li>2 noodles</li></body></html>")
+    assert not looks_like_bot_challenge(html)
 
 
 def test_challenge_markers_ignored_on_large_pages() -> None:

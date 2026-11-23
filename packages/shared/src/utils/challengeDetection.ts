@@ -1,5 +1,5 @@
-export const CHALLENGE_TITLE_PATTERN = /just a moment|attention required|temporary error/i;
-export const CHALLENGE_MARKER_PATTERN = /cf-chl-|_cf_chl_opt|challenge-platform/;
+export const CHALLENGE_TITLE_PATTERN = /just a moment|attention required|temporary error|one moment, please\.\.\./i;
+export const CHALLENGE_MARKER_PATTERN = /cf-chl-|_cf_chl_opt|challenge-platform|wsidchk/;
 export const CAPTURE_REJECTED_DETAIL = "import_job_cannot_accept_capture";
 
 export const isChallengePage = (title: string, html: string): boolean =>

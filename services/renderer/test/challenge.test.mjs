@@ -15,3 +15,15 @@ test('still recognises Cloudflare challenges and ignores normal pages', () => {
   assert.equal(CHALLENGE_TITLE.test('Bolzano apple cake'), false);
   assert.equal(CHALLENGE_BODY.test('<html><body><h1>Apple cake</h1></body></html>'), false);
 });
+
+const IMUNIFY_PAGE = '<html><head><title>One moment, please...</title></head><body><script>function wsidchk(){var failedChecks=[];}</script></body></html>';
+
+test('recognises Imunify360 WebShield challenge', () => {
+  assert.ok(CHALLENGE_TITLE.test('One moment, please...'));
+  assert.ok(CHALLENGE_BODY.test(IMUNIFY_PAGE));
+});
+
+test('does not flag recipe pages mentioning one moment', () => {
+  assert.equal(CHALLENGE_TITLE.test('Udon soup'), false);
+  assert.equal(CHALLENGE_BODY.test('<html><body><p>One moment, please wait while the broth simmers.</p></body></html>'), false);
+});

@@ -6,11 +6,11 @@ import re
 
 _SMALL_PAGE_CHARS = 100_000
 _VENDOR_MARKERS = re.compile(
-    r"sgcaptcha|sgchallenge|cf-chl-|_cf_chl_opt|captcha-delivery\.com|px-captcha|_Incapsula_Resource|sucuri_cloudproxy",
+    r"sgcaptcha|sgchallenge|cf-chl-|_cf_chl_opt|captcha-delivery\.com|px-captcha|_Incapsula_Resource|sucuri_cloudproxy|wsidchk",
     re.IGNORECASE,
 )
 _CHALLENGE_TITLES = re.compile(
-    r"<title>\s*(?:Robot Challenge Screen|Just a moment\.\.\.|Attention Required! \| Cloudflare)", re.IGNORECASE,
+    r"<title>\s*(?:Robot Challenge Screen|Just a moment\.\.\.|Attention Required! \| Cloudflare|One moment, please\.\.\.)", re.IGNORECASE,
 )
 
 

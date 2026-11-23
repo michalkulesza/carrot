@@ -775,7 +775,7 @@
       "ambiguous_recipe": "Non è stato possibile separare in modo affidabile il contenuto della ricetta.",
       "unreadable_content": "Non è stato possibile leggere in modo affidabile il contenuto della fonte.",
       "source_fetch_failed": "Impossibile raggiungere la fonte. Riprova.",
-      "source_blocked": "Questo sito ha bloccato l'importazione automatica. Incolla invece il testo della ricetta, oppure riprova più tardi.",
+      "source_blocked": "Questo sito blocca le importazioni automatiche. Aprilo e incolla invece il testo della ricetta.",
       "transcription_failed": "Non è stato possibile trascrivere il video. Riprova.",
       "model_timeout": "La richiesta al modello è scaduta. Riprova.",
       "model_rate_limited": "Il modello è occupato. Riprova a breve.",
