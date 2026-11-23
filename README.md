@@ -129,7 +129,7 @@ In production, Caddy terminates TLS and routes `/api/*` to the API container and
    cd services/api && uv sync && cd ../..
    ```
 
-2. Copy `.env.example` to `.env` (used by Docker Compose). Copy `services/api/.env.example` to `services/api/.env` (used by the local API). Fill in the required values in both files.
+2. Copy `services/api/.env.example` to `services/api/.env` and fill in the required values. The local API and the Docker Compose containers both read it. Copy `apps/mobile/.env.example` to `apps/mobile/.env` for the mobile app.
 
 3. Start the backend together with a client:
 

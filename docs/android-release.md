@@ -26,7 +26,7 @@ rejected by APNs (and pruned as dead).
 - [ ] Create a Firebase project, add an Android app for `com.kulesza.carrot`, download
       `google-services.json` into `apps/mobile/` and set `expo.android.googleServicesFile` in `app.json`.
 - [ ] Create a Firebase service account with the *Firebase Cloud Messaging API* role; add its JSON as a
-      secret (`FCM_SERVICE_ACCOUNT_JSON`) to `services/api/.env`, `.env.example` and the VPS.
+      secret (`FCM_SERVICE_ACCOUNT_JSON`) to `services/api/.env`, `services/api/.env.example` and the VPS.
 - [ ] Add a `platform` column (`ios` | `android`) to `device_subscriptions` (startup DDL in `main.py`)
       and send it from `api.registerDevice` (`Platform.OS`).
 - [ ] New `services/fcm.py` (HTTP v1 API, OAuth token from the service account, cached), returning the

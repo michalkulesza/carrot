@@ -17,14 +17,9 @@ services:
 
   api:
     build: ./services/api
-    env_file: .env
+    env_file: services/api/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://platekeeper:platekeeper@db:5432/platekeeper
-      R2_ENDPOINT_URL: ${R2_ENDPOINT_URL:-}
-      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
-      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
-      R2_BUCKET_NAME: ${R2_BUCKET_NAME:-}
-      R2_PUBLIC_URL: ${R2_PUBLIC_URL:-}
       RENDERER_URL: http://renderer:8080
     depends_on:
       db:
@@ -59,7 +54,7 @@ services:
   worker:
     build: ./services/api
     command: ["uv", "run", "--no-sync", "python", "-m", "api.worker"]
-    env_file: .env
+    env_file: services/api/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://platekeeper:platekeeper@db:5432/platekeeper
       RENDERER_URL: http://renderer:8080
