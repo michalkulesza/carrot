@@ -737,6 +737,7 @@
     "unsupportedMessage": "I link di questo servizio non possono ancora essere importati. Carrot importa siti di ricette, Instagram e TikTok."
   },
   "importJobs": {
+    "openLink": "Apri link",
     "queued": "Importazione della ricetta in coda",
     "pending": "L'importazione inizierà a breve",
     "running": "Importazione di una ricetta…",
