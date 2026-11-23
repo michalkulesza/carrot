@@ -385,31 +385,11 @@
     "keepScreenOn": "Keep screen on for timers",
     "keepScreenOnDesc": "Keeps your screen awake while timers are running",
     "startTimer": "Start timer",
-    "goToRecipe": "Go to recipe"
-  },
-  "bell": {
-    "notifications": "Notifications",
-    "noNotifications": "No notifications",
-    "householdInvitation": "Household invitation",
-    "invitationTitle": "Invitation to join {{name}} household",
-    "acceptInvitationFailed": "Failed to accept invitation",
-    "joinedHousehold": "Joined household",
-    "joinedHouseholdTitle": "Joined {{name}}",
-    "declinedHouseholdTitle": "Declined {{name}}",
-    "invitedBy": "Invited by {{name}}",
-    "memberLeft": "{{name}} left {{household}}",
-    "from": "From {{name}}",
-    "history": "History",
-    "timerDone": "Timer done",
-    "timerDoneTitle": "✓ Done — {{title}}",
-    "timerDoneBody": "Step {{step}} · {{duration}}",
-    "household": "Household",
-    "recipeImporting": "Importing in background…",
-    "recipeImportingBody": "We'll notify you when it's ready.",
-    "recipeImported": "Recipe added",
-    "recipeImportedBody": "Tap to view your new recipe.",
-    "recipeImportFailed": "Import failed",
-    "recipeImportFailedBody": "Tap to retry."
+    "goToRecipe": "Go to recipe",
+    "doneLabel": "Timer done",
+    "doneBody": "Step {{step}} · {{duration}}",
+    "moreCount": "+{{count}} more",
+    "doneShort": "Done"
   },
   "bugReport": {
     "title": "Report an issue",
@@ -936,5 +916,15 @@
     "premiumNutrition": "Full nutrition information is a Carrot Premium feature.",
     "source": "View source",
     "marketing": "Save, organize, and cook recipes with Carrot."
+  },
+  "invitations": {
+    "title": "Invitation to join {{name}} household",
+    "acceptFailed": "Failed to accept invitation",
+    "joinedHousehold": "Joined household",
+    "declinedHouseholdTitle": "Declined {{name}}",
+    "invitedBy": "Invited by {{name}}",
+    "from": "From {{name}}",
+    "sectionTitle": "Invitations",
+    "declineFailed": "Failed to decline invitation"
   }
 }

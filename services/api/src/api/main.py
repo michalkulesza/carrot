@@ -19,7 +19,7 @@ from api.routes.export import router as export_router
 from api.routes.google_auth import router as google_auth_router
 from api.routes.households import router as households_router
 from api.routes.images import router as images_router
-from api.routes.imports import router as imports_router
+from api.routes.imports import devices_router, router as imports_router
 from api.routes.meal_plan import router as meal_plan_router
 from api.routes.preferences import router as preferences_router
 from api.routes.proxy import router as proxy_router
@@ -303,6 +303,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE tags DROP COLUMN IF EXISTS user_id"))
         await conn.execute(text("ALTER TABLE user_preferences DROP COLUMN IF EXISTS share_imports_to_personal"))
         await conn.execute(text("DROP TABLE IF EXISTS recipe_personal_links"))
+        await conn.execute(text("DROP TABLE IF EXISTS household_leave_notifications"))
 
         # One-time orphan sweep. R2 thumbnails for pre-existing orphans are not purged here —
         # that requires the app-layer helper (services/orphan_cleanup.py) and runs going forward
@@ -342,6 +343,7 @@ app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
 app.include_router(images_router, prefix="/api")
 app.include_router(imports_router, prefix="/api")
+app.include_router(devices_router, prefix="/api")
 app.include_router(meal_plan_router, prefix="/api")
 app.include_router(preferences_router, prefix="/api")
 app.include_router(proxy_router, prefix="/api")

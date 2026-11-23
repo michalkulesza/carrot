@@ -428,15 +428,6 @@ export interface InvitationOut {
   created_at: string;
 }
 
-export interface HouseholdLeaveNotificationOut {
-  id: string;
-  household_id: string;
-  household_name: string;
-  left_user_email: string;
-  left_user_nickname: string | null;
-  created_at: string;
-}
-
 export interface AuthUser {
   id: string;
   email: string;

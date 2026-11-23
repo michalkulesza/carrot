@@ -397,31 +397,11 @@
     "timerRunning": "Minutnik działa",
     "timerPaused": "Minutnik wstrzymany",
     "keepScreenOn": "Nie wygaszaj ekranu dla minutników",
-    "keepScreenOnDesc": "Utrzymuje ekran włączony, gdy działają minutniki"
-  },
-  "bell": {
-    "notifications": "Powiadomienia",
-    "noNotifications": "Brak powiadomień",
-    "householdInvitation": "Zaproszenie do gospodarstwa",
-    "invitationTitle": "Zaproszenie do gospodarstwa {{name}}",
-    "acceptInvitationFailed": "Nie udało się zaakceptować zaproszenia",
-    "joinedHousehold": "Dołączono do gospodarstwa",
-    "joinedHouseholdTitle": "Dołączono do {{name}}",
-    "declinedHouseholdTitle": "Odrzucono {{name}}",
-    "invitedBy": "Zaproszenie od {{name}}",
-    "memberLeft": "{{name}} opuścił(a) gospodarstwo {{household}}",
-    "from": "Od {{name}}",
-    "history": "Historia",
-    "timerDone": "Minutnik gotowy",
-    "timerDoneTitle": "✓ Gotowe — {{title}}",
-    "timerDoneBody": "Krok {{step}} · {{duration}}",
-    "household": "Gospodarstwo",
-    "recipeImporting": "Importowanie w tle…",
-    "recipeImportingBody": "Powiadomimy Cię, gdy będzie gotowy.",
-    "recipeImported": "Przepis dodany",
-    "recipeImportedBody": "Kliknij, aby wyświetlić nowy przepis.",
-    "recipeImportFailed": "Import nieudany",
-    "recipeImportFailedBody": "Kliknij, aby spróbować ponownie."
+    "keepScreenOnDesc": "Utrzymuje ekran włączony, gdy działają minutniki",
+    "doneLabel": "Minutnik gotowy",
+    "doneBody": "Krok {{step}} · {{duration}}",
+    "moreCount": "+{{count}} więcej",
+    "doneShort": "Gotowe"
   },
   "bugReport": {
     "title": "Zgłoś problem",
@@ -964,5 +944,15 @@
     "premiumNutrition": "Pełne informacje żywieniowe są funkcją Carrot Premium.",
     "source": "Zobacz źródło",
     "marketing": "Zapisuj, organizuj i gotuj przepisy z Carrot."
+  },
+  "invitations": {
+    "title": "Zaproszenie do gospodarstwa {{name}}",
+    "acceptFailed": "Nie udało się zaakceptować zaproszenia",
+    "joinedHousehold": "Dołączono do gospodarstwa",
+    "declinedHouseholdTitle": "Odrzucono {{name}}",
+    "invitedBy": "Zaproszenie od {{name}}",
+    "from": "Od {{name}}",
+    "sectionTitle": "Zaproszenia",
+    "declineFailed": "Nie udało się odrzucić zaproszenia"
   }
 }

@@ -156,22 +156,6 @@ class HouseholdInvitation(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
-class HouseholdLeaveNotification(Base):
-    __tablename__ = "household_leave_notifications"
-
-    id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    household_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("households.id", ondelete="CASCADE"), nullable=False
-    )
-    recipient_user_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    left_user_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-
-
 class VerificationCode(Base):
     __tablename__ = "verification_codes"
 

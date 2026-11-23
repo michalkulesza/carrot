@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "expo-router";
-import BellMenu from "../../components/BellMenu";
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -45,13 +44,9 @@ import SectionHeader from "./SectionHeader";
 import StatsSection from "./StatsSection";
 import PreferencesSection from "./PreferencesSection";
 import HouseholdsSection from "./HouseholdsSection";
+import InvitationsSection from "./InvitationsSection";
+import { useInvitationActions } from "./useInvitationActions";
 import AllergenSection from "./AllergenSection";
-
-const SettingsHeaderRight = () => (
-  <View style={styles.headerRight}>
-    <BellMenu />
-  </View>
-);
 
 const SettingsHeaderTitle = () => {
   const { t } = useTranslation();
@@ -63,7 +58,6 @@ const renderSettingsHeaderTitle = () => <SettingsHeaderTitle />;
 
 const settingsHeaderOptions = {
   headerTitle: renderSettingsHeaderTitle,
-  headerRight: SettingsHeaderRight,
 };
 
 const SettingsScreen = () => {
@@ -75,8 +69,9 @@ const SettingsScreen = () => {
     useState<AllergenRecheckStatus | null>(null);
   const { preferences, isLoading, error, update } = usePreferences();
   const { showSpinner } = useScreenLoading(isLoading);
-  const { households, activeHouseholdId, activeHousehold, refetchHouseholds } =
+  const { households, activeHouseholdId, activeHousehold, invitations, refetchHouseholds } =
     useHousehold();
+  const { pendingIds: pendingInvitationIds, handleInvitationPress } = useInvitationActions();
   const { create: createHousehold, joinByCode } = useHouseholds();
   const api = useApiClient();
   const queryClient = useQueryClient();
@@ -445,6 +440,17 @@ const SettingsScreen = () => {
           <Text style={styles.logoutText}>{t("settings.logOut")}</Text>
         </Pressable>
       </View>
+
+      {invitations.length > 0 && (
+        <>
+          <SectionHeader label={t("invitations.sectionTitle")} />
+          <InvitationsSection
+            invitations={invitations}
+            pendingIds={pendingInvitationIds}
+            onPress={handleInvitationPress}
+          />
+        </>
+      )}
 
       <SectionHeader label={t("settings.households")} />
       <HouseholdsSection

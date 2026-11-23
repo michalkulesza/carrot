@@ -9,12 +9,12 @@ from datetime import datetime, timedelta
 import httpx
 import sentry_sdk
 from pydantic import ValidationError
-from sqlalchemy import func, select, text, update
+from sqlalchemy import func, or_, select, text, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
 from api.database import async_session_maker
 from api.models import (
-    DeviceSubscription,
     Household,
     HouseholdMember,
     ImportFailureCode,
@@ -35,7 +35,7 @@ from api.models import (
 from api.routes.imports import _event_for_job
 from api.routes.recipes import _link_recipe_to_household
 from api.routes.tags import _tag_filter
-from api.services import apns as apns_svc
+from api.services import push as push_svc
 from api.services import r2 as r2_svc
 from api.services.image_fetch import ImageFetchError, fetch_image
 from api.services.embeddings import queue_recipe_embedding
@@ -741,36 +741,89 @@ async def _embedding_worker_loop() -> None:
         await _process_embedding_job(recipe_id)
 
 
+_PUSH_ALERT_EVENTS = ("import_job.succeeded", "import_job.failed")
+_PUSH_RETRACT_EVENTS = ("import_job.created", "import_job.dismissed", "import_job.cancelled")
+_PUSH_MAX_ATTEMPTS = 3
+_PUSH_RETRY_DELAY = timedelta(seconds=30)
+_PUSH_RETRACT_WINDOW = timedelta(hours=1)
+
+
+def _import_alert_keys(event: ImportJobEvent) -> tuple[str, str]:
+    failure_code = event.payload.get("failure_code")
+    if event.type == "import_job.succeeded":
+        return "import_succeeded_title", "import_succeeded_body"
+    if failure_code == ImportFailureCode.DUPLICATE_RECIPE:
+        return "import_duplicate_title", "import_duplicate_body"
+    if failure_code in (ImportFailureCode.USER_ACTION_REQUIRED, ImportFailureCode.SOURCE_BLOCKED):
+        return "import_user_action_title", "import_user_action_body"
+    return "import_failed_title", "import_failed_body"
+
+
+async def _has_prior_failed_push(session: AsyncSession, event: ImportJobEvent) -> bool:
+    return await session.scalar(
+        select(ImportJobEvent.id).where(
+            ImportJobEvent.job_id == event.job_id,
+            ImportJobEvent.type == "import_job.failed",
+            ImportJobEvent.push_dispatched_at.is_not(None),
+            ImportJobEvent.id < event.id,
+        ).limit(1)
+    ) is not None
+
+
+async def _push_for_event(session: AsyncSession, event: ImportJobEvent, job: ImportJob | None) -> push_svc.DeliveryOutcome:
+    collapse_id = f"import:{event.job_id}"
+    if job is None or job.parent_recipe_id is not None:
+        return push_svc.DeliveryOutcome()
+
+    if event.type in _PUSH_RETRACT_EVENTS:
+        if event.created_at < datetime.utcnow() - _PUSH_RETRACT_WINDOW or not await _has_prior_failed_push(session, event):
+            return push_svc.DeliveryOutcome()
+        return await push_svc.retract(session, event.user_id, collapse_id=collapse_id)
+
+    success = event.type == "import_job.succeeded"
+    if not success and (job.status != ImportJobStatus.FAILED or job.dismissed_at is not None):
+        return push_svc.DeliveryOutcome()
+
+    title_key, body_key = _import_alert_keys(event)
+    return await push_svc.notify_user(
+        session,
+        event.user_id,
+        kind="recipe_imported" if success else "recipe_failed",
+        title_key=title_key,
+        body_key=body_key,
+        data={"job_id": str(event.job_id), "recipe_id": event.payload.get("result_recipe_id")},
+        collapse_id=collapse_id,
+        thread_id="imports",
+    )
+
+
 async def _deliver_pushes() -> None:
+    now = datetime.utcnow()
     async with async_session_maker() as session:
         events = list((await session.scalars(
             select(ImportJobEvent)
             .where(
-                ImportJobEvent.type.in_(("import_job.succeeded", "import_job.failed")),
+                ImportJobEvent.type.in_(_PUSH_ALERT_EVENTS + _PUSH_RETRACT_EVENTS),
                 ImportJobEvent.push_dispatched_at.is_(None),
+                or_(ImportJobEvent.next_push_attempt_at.is_(None), ImportJobEvent.next_push_attempt_at <= now),
             )
+            .order_by(ImportJobEvent.id)
             .with_for_update(skip_locked=True)
             .limit(20)
         )).all())
-        child_job_ids = set((await session.scalars(
-            select(ImportJob.id).where(ImportJob.id.in_({event.job_id for event in events}), ImportJob.parent_recipe_id.is_not(None))
-        )).all())
+        jobs = {
+            job.id: job
+            for job in (await session.scalars(select(ImportJob).where(ImportJob.id.in_({event.job_id for event in events})))).all()
+        }
         for event in events:
-            subscriptions = [] if event.job_id in child_job_ids else list((await session.scalars(select(DeviceSubscription).where(DeviceSubscription.user_id == event.user_id))).all())
-            for subscription in subscriptions:
-                success = event.type == "import_job.succeeded"
-                requires_user_action = event.payload.get("failure_code") in (ImportFailureCode.USER_ACTION_REQUIRED, ImportFailureCode.SOURCE_BLOCKED)
-                is_duplicate = event.payload.get("failure_code") == ImportFailureCode.DUPLICATE_RECIPE
-                title = "Recipe added" if success else "Already in your library" if is_duplicate else "Couldn't import automatically" if requires_user_action else "Couldn't add recipe"
-                body = "Tap to view your new recipe." if success else "Tap to review the import." if is_duplicate else "Open the import to continue manually." if requires_user_action else "Tap to see the failed import."
-                await apns_svc.send_alert(
-                    subscription.token,
-                    title=title,
-                    body=body,
-                    data={"type": "recipe_imported" if success else "recipe_failed", "job_id": str(event.job_id), "recipe_id": event.payload.get("result_recipe_id")},
-                )
-            event.push_dispatched_at = datetime.utcnow()
             event.push_attempt_count += 1
+            outcome = await _push_for_event(session, event, jobs.get(event.job_id))
+            if outcome.should_retry and event.push_attempt_count < _PUSH_MAX_ATTEMPTS:
+                event.next_push_attempt_at = now + _PUSH_RETRY_DELAY * event.push_attempt_count
+                continue
+            event.push_dispatched_at = datetime.utcnow()
+            event.next_push_attempt_at = None
+            await session.flush()
         await session.commit()
 
 

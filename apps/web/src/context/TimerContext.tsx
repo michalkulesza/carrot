@@ -15,10 +15,6 @@ import {
   parseDurationSeconds,
   type DurationMatch,
 } from '@carrot/shared/utils/timerUtils'
-import {
-  useNotificationHistory,
-  type NotificationItem,
-} from './NotificationHistoryContext'
 
 export {
   formatCountdown,
@@ -144,15 +140,6 @@ const fireTimerStart = (t: TimerEntry) => {
   )
 }
 
-const buildTimerDoneNotificationPayload = (
-  t: TimerEntry
-): Omit<NotificationItem, 'id' | 'timestamp'> => ({
-  type: 'timer_done',
-  title: `✓ Done — ${t.recipeTitle}`,
-  body: `Step ${t.stepIndex + 1} · ${formatDurationLabel(t.totalSeconds)}`,
-  url: `/recipe/${t.recipeId}?step=${t.componentIndex}-${t.stepIndex}`,
-})
-
 const saveToStorage = (timers: Map<string, TimerEntry>) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify([...timers.values()]))
 }
@@ -211,7 +198,6 @@ const loadFromStorage = (): {
 }
 
 export const TimerProvider = ({ children }: { children: ReactNode }) => {
-  const { push: pushNotification } = useNotificationHistory()
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(
     () => loadFromStorage().initialTimers
   )
@@ -226,24 +212,16 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
   // Deduplicates StrictMode's double-invocation of the "done" side-effects per timer id
   const processedDoneRef = useRef<Set<string>>(new Set())
 
-  const notifyTimerDone = useCallback(
-    (t: TimerEntry) => {
-      fireTimerDone(t)
-      pushNotification(buildTimerDoneNotificationPayload(t))
-    },
-    [pushNotification]
-  )
-
   const firedExpiredRef = useRef(false)
   useEffect(() => {
     if (firedExpiredRef.current) return
     firedExpiredRef.current = true
 
     if (resumeInfo?.expired.length) {
-      resumeInfo.expired.forEach(notifyTimerDone)
+      resumeInfo.expired.forEach(fireTimerDone)
       setExpiredQueue(resumeInfo.expired)
     }
-  }, [resumeInfo, notifyTimerDone])
+  }, [resumeInfo])
 
   useEffect(() => {
     saveToStorage(timers)
@@ -281,7 +259,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     for (const [id, t] of timers) {
       if (t.status !== 'done' || processedDoneRef.current.has(id)) continue
       processedDoneRef.current.add(id)
-      notifyTimerDone(t)
+      fireTimerDone(t)
       setExpiredQueue((prev) => [...prev, t])
       setTimeout(() => {
         setTimers((m) => {
@@ -293,7 +271,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         processedDoneRef.current.delete(id)
       }, 5000)
     }
-  }, [timers, notifyTimerDone])
+  }, [timers])
 
   const hasRunningTimers = useMemo(
     () => [...timers.values()].some((t) => t.status === 'running'),

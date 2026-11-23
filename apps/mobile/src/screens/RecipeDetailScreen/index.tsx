@@ -49,12 +49,14 @@ const RecipeDetailScreen = () => {
     cookMode: cookModeParam,
     componentIndex: componentIndexParam,
     stepIndex: stepIndexParam,
+    navAt: navAtParam,
   } = useLocalSearchParams<{
     id: string;
     edit?: string;
     cookMode?: string;
     componentIndex?: string;
     stepIndex?: string;
+    navAt?: string;
   }>();
   const navigation = useNavigation();
   const router = useRouter();
@@ -103,7 +105,7 @@ const RecipeDetailScreen = () => {
   useEffect(() => {
     if (cookModeParam === '1' && recipe?.components.some((component) => component.steps.length > 0)) setCookModeOpen(true)
     else if (cookModeParam === '1') setCookModeOpen(false)
-  }, [cookModeParam, recipe])
+  }, [cookModeParam, navAtParam, recipe])
   useEffect(() => {
     if (!isLoading && !error && !recipe) router.replace('/(tabs)/recipes')
   }, [error, isLoading, recipe, router])
@@ -403,6 +405,7 @@ const RecipeDetailScreen = () => {
         colorScheme={colorScheme}
         initialComponentIndex={initialComponentIndex}
         initialStepIndex={initialStepIndex}
+        jumpKey={navAtParam}
         selectedServings={selectedServings}
         unitSystem={preferences?.unit_system ?? "metric"}
       />

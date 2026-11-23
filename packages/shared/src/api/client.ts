@@ -9,7 +9,6 @@ import type {
   HouseholdOut,
   MemberOut,
   InvitationOut,
-  HouseholdLeaveNotificationOut,
   ImportJobEnqueue,
   ImportJobOut,
   ImportJob,
@@ -658,24 +657,6 @@ export const createApiClient = (config: ApiClientConfig) => {
     if (!res.ok) throw new Error("Failed to decline invitation");
   };
 
-  const listHouseholdLeaveNotifications = async (): Promise<
-    HouseholdLeaveNotificationOut[]
-  > => {
-    const res = await apiFetch("/api/household-leave-notifications");
-    if (!res.ok) throw new Error("Failed to load notifications");
-    return res.json() as Promise<HouseholdLeaveNotificationOut[]>;
-  };
-
-  const dismissHouseholdLeaveNotification = async (
-    id: string,
-  ): Promise<void> => {
-    const res = await apiFetch(
-      `/api/household-leave-notifications/${id}/dismiss`,
-      { method: "POST" },
-    );
-    if (!res.ok) throw new Error("Failed to dismiss notification");
-  };
-
   // ── Signup (verify-before-account) ────────────────────────────────────────
 
   const requestSignupCode = async (email: string): Promise<void> => {
@@ -1070,7 +1051,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     installationId: string,
     token: string,
   ): Promise<void> => {
-    const res = await apiFetch("/api/imports/devices", {
+    const res = await apiFetch("/api/devices", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ installation_id: installationId, token }),
@@ -1080,7 +1061,7 @@ export const createApiClient = (config: ApiClientConfig) => {
 
   const unregisterDevice = async (installationId: string): Promise<void> => {
     const res = await apiFetch(
-      `/api/imports/devices/${encodeURIComponent(installationId)}`,
+      `/api/devices/${encodeURIComponent(installationId)}`,
       { method: "DELETE" },
     );
     await throwOnError(res, "Failed to unregister notifications");
@@ -1190,8 +1171,6 @@ export const createApiClient = (config: ApiClientConfig) => {
     listInvitations,
     acceptInvitation,
     declineInvitation,
-    listHouseholdLeaveNotifications,
-    dismissHouseholdLeaveNotification,
     requestSignupCode,
     verifySignupCode,
     completeSignup,

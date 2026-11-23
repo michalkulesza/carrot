@@ -15,7 +15,7 @@ with ingredients, steps and nutrition. Plan meals and share shopping lists with 
 ![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Languages](https://img.shields.io/badge/i18n-EN%20·%20PL%20·%20DE%20·%20FR%20·%20ES-F97316?style=for-the-badge)
+![Languages](https://img.shields.io/badge/i18n-EN%20·%20PL%20·%20DE%20·%20FR%20·%20ES%20·%20IT%20·%20PT-F97316?style=for-the-badge)
 
 </div>
 
@@ -50,7 +50,7 @@ with ingredients, steps and nutrition. Plan meals and share shopping lists with 
 - **Meal plan and shopping lists:** shared with your household.
 - **Allergens:** each recipe shows the allergens it contains.
 - **Cook mode:** a step-by-step view built for use in the kitchen.
-- **Five languages:** English, Polski, Deutsch, Français, Español.
+- **Seven languages:** English, Polski, Deutsch, Français, Español, Italiano, Português.
 
 ## How it works
 
@@ -74,7 +74,7 @@ flowchart LR
 1. **Queued, not blocking.** An import becomes a durable job in PostgreSQL. A separate worker container claims jobs with `SELECT … FOR UPDATE SKIP LOCKED`, so imports run in the background and survive restarts.
 2. **Real browser rendering.** Many recipe sites are JavaScript-heavy or sit behind bot protection, so pages are rendered in a sandboxed **Playwright / headless Chromium** service. It caps concurrency, response size and timeouts, and skips images, media and fonts to keep renders fast.
 3. **Proxy fallback.** Requests normally go out through an outbound proxy. When the page looks like a bot challenge, the renderer retries through a **residential SOCKS5 proxy**, so it sees the page as a normal visitor would.
-4. **Deterministic first, AI second.** Structured data (JSON-LD) and hand-written parsers pull out ingredients, steps, yields and section headings, using lexicons for five languages. **Gemini** is only used for what the page doesn't state outright: picking the right text, estimating nutrition, tagging, and detecting allergens. The output is validated against strict Pydantic contracts.
+4. **Deterministic first, AI second.** Structured data (JSON-LD) and hand-written parsers pull out ingredients, steps, yields and section headings, using lexicons for seven languages. **Gemini** is only used for what the page doesn't state outright: picking the right text, estimating nutrition, tagging, and detecting allergens. The output is validated against strict Pydantic contracts.
 5. **Video recipes.** For social videos, Carrot downloads the clip, extracts the audio with ffmpeg, transcribes it with Gemini, and then merges the spoken steps with the caption text.
 6. **Everything is traced.** Every extraction records evidence and trace events, and an internal review tool (`tools/extraction-review`) replays captured payloads as regression fixtures.
 
@@ -142,6 +142,10 @@ In production, Caddy terminates TLS and routes `/api/*` to the API container and
    Each command starts the Docker Compose services (the database and the import worker) and the local API, then launches the client.
 
 Web app: http://localhost:5173. Local API: http://localhost:8088
+
+## Android
+
+The app builds for Android, but push notifications and live timers are iOS-only so far. See [docs/android-release.md](docs/android-release.md) for what's left before an Android release.
 
 ## Environment variables
 

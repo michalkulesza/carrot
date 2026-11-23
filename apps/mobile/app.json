@@ -13,6 +13,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kulesza.carrot",
+      "appleTeamId": "Q8L6CUF7BC",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSLocalNetworkUsageDescription": "Carrot connects to your local development server while you test the app.",
@@ -29,14 +30,19 @@
               "NSExceptionAllowsInsecureHTTPLoads": true
             }
           }
-        }
+        },
+        "NSSupportsLiveActivities": true,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "buildNumber": "45",
       "entitlements": {
         "com.apple.security.application-groups": [
           "group.com.kulesza.carrot"
         ]
-      }
+      },
+      "appleTeamId": "Q8L6CUF7BC"
     },
     "android": {
       "adaptiveIcon": {
@@ -57,6 +63,7 @@
           "faceIDPermission": false
         }
       ],
+      "@bacons/apple-targets",
       "./plugins/withShareExtensionDisplayName",
       [
         "expo-sharing",
@@ -115,6 +122,7 @@
         }
       ],
       "expo-image",
+      "expo-task-manager",
       [
         "expo-splash-screen",
         {

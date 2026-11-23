@@ -387,31 +387,11 @@
     "keepScreenOn": "Mantieni lo schermo acceso per i timer",
     "keepScreenOnDesc": "Mantiene lo schermo attivo mentre i timer sono in funzione",
     "startTimer": "Avvia timer",
-    "goToRecipe": "Vai alla ricetta"
-  },
-  "bell": {
-    "notifications": "Notifiche",
-    "noNotifications": "Nessuna notifica",
-    "householdInvitation": "Invito a una famiglia",
-    "invitationTitle": "Invito a unirti alla famiglia {{name}}",
-    "acceptInvitationFailed": "Impossibile accettare l'invito",
-    "joinedHousehold": "Ti sei unito alla famiglia",
-    "joinedHouseholdTitle": "Ti sei unito a {{name}}",
-    "declinedHouseholdTitle": "Hai rifiutato {{name}}",
-    "invitedBy": "Invitato da {{name}}",
-    "memberLeft": "{{name}} ha lasciato {{household}}",
-    "from": "Da {{name}}",
-    "history": "Cronologia",
-    "timerDone": "Timer completato",
-    "timerDoneTitle": "✓ Fatto — {{title}}",
-    "timerDoneBody": "Passaggio {{step}} · {{duration}}",
-    "household": "Famiglia",
-    "recipeImporting": "Importazione in background…",
-    "recipeImportingBody": "Ti avviseremo quando sarà pronta.",
-    "recipeImported": "Ricetta aggiunta",
-    "recipeImportedBody": "Tocca per vedere la tua nuova ricetta.",
-    "recipeImportFailed": "Importazione non riuscita",
-    "recipeImportFailedBody": "Tocca per riprovare."
+    "goToRecipe": "Vai alla ricetta",
+    "doneLabel": "Timer completato",
+    "doneBody": "Passaggio {{step}} · {{duration}}",
+    "moreCount": "+{{count}} altri",
+    "doneShort": "Fatto"
   },
   "bugReport": {
     "title": "Segnala un problema",
@@ -939,5 +919,15 @@
     "premiumNutrition": "Le informazioni nutrizionali complete sono una funzione di Carrot Premium.",
     "source": "Vedi fonte",
     "marketing": "Salva, organizza e cucina ricette con Carrot."
+  },
+  "invitations": {
+    "title": "Invito a unirti alla famiglia {{name}}",
+    "acceptFailed": "Impossibile accettare l'invito",
+    "joinedHousehold": "Ti sei unito alla famiglia",
+    "declinedHouseholdTitle": "Hai rifiutato {{name}}",
+    "invitedBy": "Invitato da {{name}}",
+    "from": "Da {{name}}",
+    "sectionTitle": "Inviti",
+    "declineFailed": "Impossibile rifiutare l'invito"
   }
 }

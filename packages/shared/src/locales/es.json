@@ -387,31 +387,11 @@
     "timerRunning": "Temporizador en marcha",
     "timerPaused": "Temporizador en pausa",
     "keepScreenOn": "Mantener la pantalla encendida para los temporizadores",
-    "keepScreenOnDesc": "Mantiene la pantalla activa mientras hay temporizadores en marcha"
-  },
-  "bell": {
-    "notifications": "Notificaciones",
-    "noNotifications": "Sin notificaciones",
-    "householdInvitation": "Invitación al hogar",
-    "invitationTitle": "Invitación para unirte al hogar {{name}}",
-    "acceptInvitationFailed": "No se pudo aceptar la invitación",
-    "joinedHousehold": "Te uniste al hogar",
-    "joinedHouseholdTitle": "Te uniste a {{name}}",
-    "declinedHouseholdTitle": "{{name}} rechazado",
-    "invitedBy": "Invitado por {{name}}",
-    "memberLeft": "{{name}} dejó el hogar {{household}}",
-    "from": "De {{name}}",
-    "history": "Historial",
-    "timerDone": "Temporizador listo",
-    "timerDoneTitle": "✓ Listo — {{title}}",
-    "timerDoneBody": "Paso {{step}} · {{duration}}",
-    "household": "Hogar",
-    "recipeImporting": "Importando en segundo plano…",
-    "recipeImportingBody": "Te notificaremos cuando esté lista.",
-    "recipeImported": "Receta añadida",
-    "recipeImportedBody": "Toca para ver tu nueva receta.",
-    "recipeImportFailed": "Fallo al importar",
-    "recipeImportFailedBody": "Toca para reintentar."
+    "keepScreenOnDesc": "Mantiene la pantalla activa mientras hay temporizadores en marcha",
+    "doneLabel": "Temporizador listo",
+    "doneBody": "Paso {{step}} · {{duration}}",
+    "moreCount": "+{{count}} más",
+    "doneShort": "Listo"
   },
   "bugReport": {
     "title": "Reportar un problema",
@@ -940,5 +920,15 @@
     "premiumNutrition": "La información nutricional completa es una función de Carrot Premium.",
     "source": "Ver fuente",
     "marketing": "Guarda, organiza y cocina recetas con Carrot."
+  },
+  "invitations": {
+    "title": "Invitación para unirte al hogar {{name}}",
+    "acceptFailed": "No se pudo aceptar la invitación",
+    "joinedHousehold": "Te uniste al hogar",
+    "declinedHouseholdTitle": "{{name}} rechazado",
+    "invitedBy": "Invitado por {{name}}",
+    "from": "De {{name}}",
+    "sectionTitle": "Invitaciones",
+    "declineFailed": "No se pudo rechazar la invitación"
   }
 }

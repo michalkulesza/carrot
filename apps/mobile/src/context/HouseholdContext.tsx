@@ -7,10 +7,9 @@ import {
   type ReactNode,
 } from 'react'
 import { useQueryClient as useQC } from '@tanstack/react-query'
-import type { HouseholdOut, InvitationOut, HouseholdLeaveNotificationOut } from '@carrot/shared/types'
+import type { HouseholdOut, InvitationOut } from '@carrot/shared/types'
 import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
 import { useInvitations } from '@carrot/shared/hooks/useInvitations'
-import { useHouseholdLeaveNotifications } from '@carrot/shared/hooks/useHouseholdLeaveNotifications'
 import { useAuth } from './AuthContext'
 import { mobileClient } from '../api/client'
 
@@ -20,8 +19,6 @@ interface HouseholdContextValue {
   activeHouseholdId: string | null
   activeHousehold: HouseholdOut | null
   invitations: InvitationOut[]
-  leaveNotifications: HouseholdLeaveNotificationOut[]
-  dismissLeaveNotification: (id: string) => void
   switchHousehold: (id: string | null) => Promise<void>
   refetchHouseholds: () => void
   refetchInvitations: () => void
@@ -30,7 +27,7 @@ interface HouseholdContextValue {
 const HouseholdContext = createContext<HouseholdContextValue | null>(null)
 
 const GATE_INVITATIONS_POLL_MS = 10_000
-const BELL_INVITATIONS_POLL_MS = 30_000
+const INVITATIONS_POLL_MS = 30_000
 
 export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
   const { user, refreshUser } = useAuth()
@@ -38,10 +35,8 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
 
   const { households, isLoading: isLoadingHouseholds } = useHouseholds()
   const { invitations } = useInvitations(
-    households.length === 0 ? GATE_INVITATIONS_POLL_MS : BELL_INVITATIONS_POLL_MS,
+    households.length === 0 ? GATE_INVITATIONS_POLL_MS : INVITATIONS_POLL_MS,
   )
-  const { notifications: leaveNotifications, dismiss: dismissLeaveNotificationMutation } =
-    useHouseholdLeaveNotifications()
 
   const activeHouseholdId = user?.active_household_id ?? null
   const activeHousehold =
@@ -72,10 +67,6 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
     await refreshUser()
   }, [refreshUser])
 
-  const dismissLeaveNotification = useCallback((id: string) => {
-    dismissLeaveNotificationMutation.mutate(id)
-  }, [dismissLeaveNotificationMutation])
-
   return (
     <HouseholdContext.Provider
       value={{
@@ -84,8 +75,6 @@ export const HouseholdProvider = ({ children }: { children: ReactNode }) => {
         activeHouseholdId,
         activeHousehold,
         invitations,
-        leaveNotifications,
-        dismissLeaveNotification,
         switchHousehold,
         refetchHouseholds,
         refetchInvitations,

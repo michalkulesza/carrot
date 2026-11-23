@@ -26,7 +26,6 @@ import { useAuth } from '../context/AuthContext'
 import { HouseholdProvider } from '../context/HouseholdContext'
 import HouseholdGate from './HouseholdGate'
 import { TimerProvider } from '../context/TimerContext'
-import { NotificationHistoryProvider } from '../context/NotificationHistoryContext'
 import {
   useRecipe,
   useRecipes,
@@ -591,32 +590,30 @@ const AppShell = () => {
   )
 
   return (
-    <NotificationHistoryProvider>
-      <TimerProvider>
-        <HouseholdProvider>
-          <RouteNavigationProvider>
-            <RoutedAppShell
-              recipes={recipes}
-              recipesLoading={recipesLoading}
-              allTags={allTags}
-              preferences={preferences}
-              stats={stats}
-              onRecipeUpdated={handleRecipeUpdated}
-              onRecipeDeleted={handleRecipeDeleted}
-              onStatsRefresh={handleStatsRefresh}
-              onPreferencesChange={handlePreferencesChange}
-              importJobs={importJobs}
-              onRetryImportJob={retryImportJob.mutateAsync}
-              onDismissImportJob={dismissImportJob.mutateAsync}
-              onContinueImportManually={openTextImport}
-              onRecipeSaved={handleRecipeSaved}
-              seedImportJob={seedImportJob}
-              onPublicRecipeAdded={handlePublicRecipeAdded}
-            />
-          </RouteNavigationProvider>
-        </HouseholdProvider>
-      </TimerProvider>
-    </NotificationHistoryProvider>
+    <TimerProvider>
+      <HouseholdProvider>
+        <RouteNavigationProvider>
+          <RoutedAppShell
+            recipes={recipes}
+            recipesLoading={recipesLoading}
+            allTags={allTags}
+            preferences={preferences}
+            stats={stats}
+            onRecipeUpdated={handleRecipeUpdated}
+            onRecipeDeleted={handleRecipeDeleted}
+            onStatsRefresh={handleStatsRefresh}
+            onPreferencesChange={handlePreferencesChange}
+            importJobs={importJobs}
+            onRetryImportJob={retryImportJob.mutateAsync}
+            onDismissImportJob={dismissImportJob.mutateAsync}
+            onContinueImportManually={openTextImport}
+            onRecipeSaved={handleRecipeSaved}
+            seedImportJob={seedImportJob}
+            onPublicRecipeAdded={handlePublicRecipeAdded}
+          />
+        </RouteNavigationProvider>
+      </HouseholdProvider>
+    </TimerProvider>
   )
 }
 

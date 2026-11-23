@@ -23,4 +23,4 @@ as a short debounce/grace period, a request queue or idempotency guard, or a blo
 state; also ensure the backend safely tolerates duplicate requests.
 
 ## Translations
-This project's locale files: en, pl, de, fr, es. Add new keys to all 5 when introducing strings.
+This project's locale files: en, pl, de, fr, es, it, pt (see `packages/shared/src/supportedLocales.ts`). Add new keys to all 7 when introducing strings.

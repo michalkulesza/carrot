@@ -12,7 +12,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 24,
   },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   logo: { width: 64, height: 64, borderRadius: 16, alignSelf: 'center' },
   titleBlock: { alignItems: 'center', gap: 4 },
   title: {

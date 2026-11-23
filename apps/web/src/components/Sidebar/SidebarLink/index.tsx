@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react'
 import { NavLink } from 'react-router-dom'
+import InvitationCountBadge from '../../InvitationCountBadge'
 
 interface SidebarLinkProps {
   to: string
@@ -7,6 +8,8 @@ interface SidebarLinkProps {
   label: string
   Icon: ComponentType<{ size?: number; className?: string }>
   collapsed: boolean
+  badgeCount?: number
+  ariaLabel?: string
 }
 
 const SidebarLink = ({
@@ -15,11 +18,14 @@ const SidebarLink = ({
   label,
   Icon,
   collapsed,
+  badgeCount = 0,
+  ariaLabel,
 }: SidebarLinkProps) => (
   <NavLink
     to={to}
     end={end}
     title={collapsed ? label : undefined}
+    aria-label={ariaLabel}
     className={({ isActive }) =>
       `flex items-center justify-start gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
         isActive
@@ -29,10 +35,25 @@ const SidebarLink = ({
     }
     data-sidebar-nav-link
   >
-    <Icon size={18} className="shrink-0" />
-    <span aria-hidden={collapsed} data-sidebar-label className="max-w-48 overflow-hidden whitespace-nowrap">
+    <span className="relative shrink-0">
+      <Icon size={18} className="shrink-0" />
+      {collapsed && (
+        <InvitationCountBadge
+          count={badgeCount}
+          className="absolute -top-2 -right-2"
+        />
+      )}
+    </span>
+    <span
+      aria-hidden={collapsed}
+      data-sidebar-label
+      className="max-w-48 overflow-hidden whitespace-nowrap"
+    >
       {label}
     </span>
+    {!collapsed && (
+      <InvitationCountBadge count={badgeCount} className="ml-auto" />
+    )}
   </NavLink>
 )
 

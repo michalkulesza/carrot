@@ -385,31 +385,11 @@
     "timerRunning": "Timer läuft",
     "timerPaused": "Timer pausiert",
     "keepScreenOn": "Bildschirm bei Timern eingeschaltet lassen",
-    "keepScreenOnDesc": "Bildschirm bleibt aktiv, während Timer laufen"
-  },
-  "bell": {
-    "notifications": "Benachrichtigungen",
-    "noNotifications": "Keine Benachrichtigungen",
-    "householdInvitation": "Haushaltseinladung",
-    "invitationTitle": "Einladung zum Haushalt {{name}}",
-    "acceptInvitationFailed": "Einladung konnte nicht angenommen werden",
-    "joinedHousehold": "Haushalt beigetreten",
-    "joinedHouseholdTitle": "{{name}} beigetreten",
-    "declinedHouseholdTitle": "{{name}} abgelehnt",
-    "invitedBy": "Eingeladen von {{name}}",
-    "memberLeft": "{{name}} hat den Haushalt {{household}} verlassen",
-    "from": "Von {{name}}",
-    "history": "Verlauf",
-    "timerDone": "Timer fertig",
-    "timerDoneTitle": "✓ Fertig — {{title}}",
-    "timerDoneBody": "Schritt {{step}} · {{duration}}",
-    "household": "Haushalt",
-    "recipeImporting": "Import läuft im Hintergrund…",
-    "recipeImportingBody": "Wir benachrichtigen dich, wenn er fertig ist.",
-    "recipeImported": "Rezept hinzugefügt",
-    "recipeImportedBody": "Tippen, um dein neues Rezept anzuzeigen.",
-    "recipeImportFailed": "Import fehlgeschlagen",
-    "recipeImportFailedBody": "Tippen, um es erneut zu versuchen."
+    "keepScreenOnDesc": "Bildschirm bleibt aktiv, während Timer laufen",
+    "doneLabel": "Timer fertig",
+    "doneBody": "Schritt {{step}} · {{duration}}",
+    "moreCount": "+{{count}} weitere",
+    "doneShort": "Fertig"
   },
   "bugReport": {
     "title": "Problem melden",
@@ -936,5 +916,15 @@
     "premiumNutrition": "Vollständige Nährwertangaben sind eine Carrot-Premiumfunktion.",
     "source": "Quelle ansehen",
     "marketing": "Rezepte mit Carrot speichern, organisieren und kochen."
+  },
+  "invitations": {
+    "title": "Einladung zum Haushalt {{name}}",
+    "acceptFailed": "Einladung konnte nicht angenommen werden",
+    "joinedHousehold": "Haushalt beigetreten",
+    "declinedHouseholdTitle": "{{name}} abgelehnt",
+    "invitedBy": "Eingeladen von {{name}}",
+    "from": "Von {{name}}",
+    "sectionTitle": "Einladungen",
+    "declineFailed": "Einladung konnte nicht abgelehnt werden"
   }
 }

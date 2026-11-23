@@ -24,7 +24,7 @@ const InvitationRow = ({
           {invitation.household_name}
         </Text>
         <Text style={styles.invitationFrom} numberOfLines={1}>
-          {t('bell.from', { name: invitation.invited_by_nickname || invitation.invited_by_email })}
+          {t('invitations.from', { name: invitation.invited_by_nickname || invitation.invited_by_email })}
         </Text>
       </View>
       <Pressable

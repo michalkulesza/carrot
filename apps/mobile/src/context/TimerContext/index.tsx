@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as Notifications from 'expo-notifications'
 import {
   createContext,
   useCallback,
@@ -10,14 +9,14 @@ import {
   type ReactNode,
 } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNotificationHistory } from '../NotificationHistoryContext'
+import { AppState } from 'react-native'
 import {
   cancelNotif,
   formatCountdown,
   formatDurationLabel,
   getTimerDestination,
+  getTimerNotificationId,
   getRemainingSeconds,
-  isExpoGo,
   parseDurationMatch,
   scheduleNotif,
   STORAGE_KEY,
@@ -25,6 +24,12 @@ import {
   type ResumeInfo,
   type TimerEntry,
 } from './helpers'
+import {
+  applyPendingChanges,
+  endAllActivities,
+  readPendingActivityChanges,
+  syncActivity,
+} from './liveActivity'
 
 export { formatCountdown, formatDurationLabel, parseDurationMatch, type DurationMatch }
 export { getRemainingSeconds, getTimerDestination, type ResumeInfo, type TimerEntry }
@@ -54,18 +59,13 @@ export const useTimers = () => {
 }
 
 export const TimerProvider = ({ children }: { children: ReactNode }) => {
-  const { push: pushNotification } = useNotificationHistory()
   const { t: translate } = useTranslation()
   const [timers, setTimers] = useState<Map<string, TimerEntry>>(new Map())
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(null)
   const [expiredQueue, setExpiredQueue] = useState<TimerEntry[]>([])
   const processedDoneRef = useRef<Set<string>>(new Set())
   const loadedRef = useRef(false)
-
-  // Not available in Expo Go SDK 53+
-  useEffect(() => {
-    if (!isExpoGo) void Notifications.requestPermissionsAsync()
-  }, [])
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
     if (loadedRef.current) return
@@ -74,7 +74,8 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY)
         if (!raw) return
-        const arr: TimerEntry[] = JSON.parse(raw) as TimerEntry[]
+        const stored = new Map((JSON.parse(raw) as TimerEntry[]).map((entry) => [entry.id, entry]))
+        const arr = [...applyPendingChanges(stored, readPendingActivityChanges()).values()]
         const now = Date.now()
         const initialTimers = new Map<string, TimerEntry>()
         const interrupted: TimerEntry[] = []
@@ -97,7 +98,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
                 ...t,
                 remainingAtStart: remaining,
                 startedAt: Date.now(),
-                notificationId: undefined,
               }
               initialTimers.set(t.id, running)
               interrupted.push(running)
@@ -108,23 +108,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
-        if (expired.length > 0) {
-          expired.forEach((t) => {
-            pushNotification({
-              type: 'timer_done',
-              title: translate('bell.timerDoneTitle', { title: t.recipeTitle }),
-              body: translate('bell.timerDoneBody', {
-                step: t.stepIndex + 1,
-                duration: formatDurationLabel(t.totalSeconds),
-              }),
-              recipe_id: t.recipeId,
-              component_index: t.componentIndex,
-              step_index: t.stepIndex,
-              timer_source: t.source,
-            })
-          })
-          setExpiredQueue(expired)
-        }
+        if (expired.length > 0) setExpiredQueue(expired)
 
         setTimers(initialTimers)
         const ri =
@@ -134,8 +118,20 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         setResumeInfo(ri)
       } catch {
         // ignore corrupt storage
+      } finally {
+        setHydrated(true)
       }
     })()
+  }, [])
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return
+
+      const changes = readPendingActivityChanges()
+      if (changes.length > 0) setTimers((prev) => applyPendingChanges(prev, changes))
+    })
+    return () => subscription.remove()
   }, [])
 
   useEffect(() => {
@@ -165,18 +161,6 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       if (t.status !== 'done' || processedDoneRef.current.has(id)) continue
       processedDoneRef.current.add(id)
       setExpiredQueue((prev) => [...prev, t])
-      pushNotification({
-        type: 'timer_done',
-        title: translate('bell.timerDoneTitle', { title: t.recipeTitle }),
-        body: translate('bell.timerDoneBody', {
-          step: t.stepIndex + 1,
-          duration: formatDurationLabel(t.totalSeconds),
-        }),
-        recipe_id: t.recipeId,
-        component_index: t.componentIndex,
-        step_index: t.stepIndex,
-        timer_source: t.source,
-      })
       setTimeout(() => {
         setTimers((m) => {
           const n = new Map(m)
@@ -186,7 +170,12 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         processedDoneRef.current.delete(id)
       }, 5000)
     }
-  }, [timers, translate])
+  }, [timers])
+
+  useEffect(() => {
+    if (!hydrated) return
+    void syncActivity([...timers.values()], translate('timers.moreCount'), translate('timers.doneShort'))
+  }, [timers, hydrated, translate])
 
   const hasRunningTimers = [...timers.values()].some((t) => t.status === 'running')
 
@@ -199,6 +188,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
     ) => {
       const entry: TimerEntry = {
         ...params,
+        notificationId: getTimerNotificationId(params),
         remainingAtStart: params.totalSeconds,
         startedAt: Date.now(),
         status: 'running',
@@ -208,16 +198,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
         n.set(entry.id, entry)
         return n
       })
-      void scheduleNotif(entry).then((notificationId) => {
-        if (!notificationId) return
-        setTimers((m) => {
-          const e = m.get(entry.id)
-          if (!e) return m
-          const n = new Map(m)
-          n.set(entry.id, { ...e, notificationId })
-          return n
-        })
-      })
+      void scheduleNotif(entry)
     },
     [],
   )
@@ -227,14 +208,15 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       const t = prev.get(id)
       if (!t || t.status !== 'running') return prev
       cancelNotif(t.notificationId)
-      const next = new Map(prev)
-      next.set(id, {
+      const paused: TimerEntry = {
         ...t,
         status: 'paused',
         remainingAtStart: getRemainingSeconds(t),
         startedAt: null,
-        notificationId: undefined,
-      })
+      }
+
+      const next = new Map(prev)
+      next.set(id, paused)
       return next
     })
   }, [])
@@ -244,16 +226,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       const t = prev.get(id)
       if (!t || t.status !== 'paused') return prev
       const resumed: TimerEntry = { ...t, status: 'running', startedAt: Date.now() }
-      void scheduleNotif(resumed).then((notificationId) => {
-        if (!notificationId) return
-        setTimers((m) => {
-          const e = m.get(id)
-          if (!e || e.status !== 'running') return m
-          const n = new Map(m)
-          n.set(id, { ...e, notificationId })
-          return n
-        })
-      })
+      void scheduleNotif(resumed)
       const next = new Map(prev)
       next.set(id, resumed)
       return next
@@ -279,6 +252,7 @@ export const TimerProvider = ({ children }: { children: ReactNode }) => {
       for (const t of prev.values()) cancelNotif(t.notificationId)
       return new Map()
     })
+    void endAllActivities()
     void AsyncStorage.removeItem(STORAGE_KEY)
     setResumeInfo(null)
     setExpiredQueue([])

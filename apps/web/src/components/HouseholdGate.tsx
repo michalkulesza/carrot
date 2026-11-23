@@ -97,7 +97,7 @@ const GateInvitationRow = ({
           {invitation.household_name}
         </p>
         <p className="text-xs text-zinc-400">
-          {t('bell.from', {
+          {t('invitations.from', {
             name: invitation.invited_by_nickname || invitation.invited_by_email,
           })}
         </p>
@@ -154,10 +154,10 @@ const HouseholdGate = ({ children }: { children: ReactNode }) => {
         await refreshUser()
         refetchInvitations()
         refetchHouseholds()
-        toast.success(t('bell.joinedHousehold'), { timeout: 3000 })
+        toast.success(t('invitations.joinedHousehold'), { timeout: 3000 })
       } catch (e) {
         toast.danger(
-          e instanceof Error ? e.message : t('bell.acceptInvitationFailed'),
+          e instanceof Error ? e.message : t('invitations.acceptFailed'),
           { timeout: 3000 }
         )
       } finally {

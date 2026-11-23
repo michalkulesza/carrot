@@ -9,8 +9,9 @@ import { persistLanguage } from '../../src/i18n'
 export default function TabsLayout() {
   const { t, i18n } = useTranslation()
   const { preferences } = usePreferences()
-  const { households, isLoadingHouseholds } = useHousehold()
+  const { households, isLoadingHouseholds, invitations } = useHousehold()
   const colorScheme = useResolvedColorScheme()
+  const invitationCount = invitations.length
   const gated = !isLoadingHouseholds && households.length === 0
   const nativeTabProps = useMemo(() => ({ colorScheme }), [colorScheme])
 
@@ -55,6 +56,7 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
         <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Badge hidden={invitationCount === 0}>{String(invitationCount)}</NativeTabs.Trigger.Badge>
       </NativeTabs.Trigger>
     </NativeTabs>
   )

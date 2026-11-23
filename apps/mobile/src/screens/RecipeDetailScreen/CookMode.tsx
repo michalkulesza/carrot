@@ -126,6 +126,7 @@ const CookMode = ({
   colorScheme,
   initialComponentIndex,
   initialStepIndex,
+  jumpKey,
   selectedServings,
   unitSystem,
 }: {
@@ -135,6 +136,7 @@ const CookMode = ({
   colorScheme: "light" | "dark";
   initialComponentIndex: number | null;
   initialStepIndex: number | null;
+  jumpKey?: string;
   selectedServings: number | null;
   unitSystem: string;
 }) => {
@@ -200,7 +202,7 @@ const CookMode = ({
       (item) => item.componentIndex === initialComponentIndex && item.stepIndex === initialStepIndex,
     );
     if (targetIndex >= 0) setIndex(targetIndex);
-  }, [hasInitialStep, initialComponentIndex, initialStepIndex, steps, visible]);
+  }, [hasInitialStep, initialComponentIndex, initialStepIndex, jumpKey, steps, visible]);
   const storageKey = `cook-mode:${recipe.id}`;
   const adjustFontScale = useCallback(
     (direction: -1 | 1) => {

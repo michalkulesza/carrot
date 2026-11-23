@@ -31,6 +31,7 @@ from api.services.extraction_v2.production import is_html_source
 from api.users import User, current_active_user
 
 router = APIRouter(prefix="/imports", tags=["imports"])
+devices_router = APIRouter(tags=["devices"])
 _ACTIVE_STATUSES = (ImportJobStatus.PENDING, ImportJobStatus.RUNNING, ImportJobStatus.AWAITING_CHILDREN)
 _MAX_IMAGE_BYTES = 8 * 1024 * 1024
 _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
@@ -394,6 +395,7 @@ async def dismiss_import_job(job_id: uuid.UUID, user: User = Depends(current_act
     await session.commit()
 
 
+@devices_router.put("/devices", status_code=204)
 @router.put("/devices", status_code=204)
 async def register_device_subscription(body: DeviceSubscriptionCreate, user: User = Depends(current_active_user), session: AsyncSession = Depends(get_async_session)) -> None:
     subscription = await session.scalar(select(DeviceSubscription).where(DeviceSubscription.user_id == user.id, DeviceSubscription.installation_id == body.installation_id))
@@ -405,6 +407,7 @@ async def register_device_subscription(body: DeviceSubscriptionCreate, user: Use
     await session.commit()
 
 
+@devices_router.delete("/devices/{installation_id}", status_code=204)
 @router.delete("/devices/{installation_id}", status_code=204)
 async def unregister_device_subscription(installation_id: str, user: User = Depends(current_active_user), session: AsyncSession = Depends(get_async_session)) -> None:
     await session.execute(delete(DeviceSubscription).where(DeviceSubscription.user_id == user.id, DeviceSubscription.installation_id == installation_id))

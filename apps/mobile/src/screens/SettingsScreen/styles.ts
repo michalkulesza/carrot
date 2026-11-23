@@ -5,7 +5,6 @@ import { CARD_RADIUS } from './helpers'
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.secondaryBackground },
   content: { paddingBottom: 48 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -126,6 +125,7 @@ export const styles = StyleSheet.create({
   householdDot: { width: 14, height: 14, borderRadius: 7 },
   householdInfo: { flex: 1 },
   householdName: { fontSize: 16, fontWeight: '500', color: colors.label },
+  invitationFrom: { fontSize: 13, color: colors.secondaryLabel, marginTop: 1 },
   householdActive: { fontSize: 12, color: colors.blue, marginTop: 1 },
   manageBtn: {
     paddingHorizontal: 4,

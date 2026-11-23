@@ -4,7 +4,6 @@ import { Feather } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
-import BellMenu from '../../components/BellMenu'
 import HeaderTitle from '../../components/HeaderTitle'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
@@ -27,7 +26,6 @@ const MealPlanHeaderRight = ({ exporting, onExportPdf }: { exporting: boolean; o
       >
         <Feather name="printer" size={22} color={colors.secondaryLabel} />
       </Pressable>
-      <BellMenu />
     </View>
   )
 }

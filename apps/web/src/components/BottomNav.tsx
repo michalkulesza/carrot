@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Book, Calendar, ShoppingCart, Settings, Plus } from 'react-feather'
 import { useHousehold } from '../context/HouseholdContext'
+import InvitationCountBadge from './InvitationCountBadge'
 
 interface BottomNavProps {
   onAddRecipe: () => void
@@ -21,11 +22,31 @@ interface NavItemProps {
   end?: boolean
   icon: ReactNode
   label: string
+  badgeCount?: number
+  ariaLabel?: string
 }
 
-const NavItem = ({ to, end, icon, label }: NavItemProps) => (
-  <NavLink to={to} end={end} className={getNavLinkClassName}>
-    {icon}
+const NavItem = ({
+  to,
+  end,
+  icon,
+  label,
+  badgeCount = 0,
+  ariaLabel,
+}: NavItemProps) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={getNavLinkClassName}
+    aria-label={ariaLabel}
+  >
+    <span className="relative">
+      {icon}
+      <InvitationCountBadge
+        count={badgeCount}
+        className="absolute -top-1.5 -right-2.5"
+      />
+    </span>
     <span>{label}</span>
   </NavLink>
 )
@@ -50,8 +71,13 @@ const AddRecipeButton = ({ onAddRecipe, label }: AddRecipeButtonProps) => (
 
 const BottomNav = ({ onAddRecipe }: BottomNavProps) => {
   const { t } = useTranslation()
-  const { households } = useHousehold()
+  const { households, invitations } = useHousehold()
   const gated = households.length === 0
+  const invitationCount = invitations.length
+  const settingsAriaLabel =
+    invitationCount > 0
+      ? `${t('nav.settings')}, ${t('invitations.sectionTitle')}: ${invitationCount}`
+      : undefined
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-zinc-100 pb-[env(safe-area-inset-bottom)]">
@@ -84,6 +110,8 @@ const BottomNav = ({ onAddRecipe }: BottomNavProps) => {
           to="/settings"
           icon={<Settings size={22} />}
           label={t('nav.settings')}
+          badgeCount={invitationCount}
+          ariaLabel={settingsAriaLabel}
         />
       </div>
     </nav>

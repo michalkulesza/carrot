@@ -44,7 +44,8 @@ const NAV_ITEMS: NavItem[] = [
 const GATED_VISIBLE_LABEL_KEYS = new Set(['nav.newHousehold', 'nav.settings'])
 
 const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
-  const { households, activeHousehold, isLoadingHouseholds } = useHousehold()
+  const { households, activeHousehold, isLoadingHouseholds, invitations } =
+    useHousehold()
   const { t } = useTranslation()
   const sidebarRef = useRef<HTMLElement>(null)
   const [switcherOpen, setSwitcherOpen] = useState(false)
@@ -66,22 +67,39 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
       const sidebar = sidebarRef.current
       if (sidebar === null) return
 
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      const labels = Array.from(sidebar.querySelectorAll<HTMLElement>('[data-sidebar-label]'))
-      const navLinks = Array.from(sidebar.querySelectorAll<HTMLElement>('[data-sidebar-nav-link]'))
-      const householdButton = sidebar.querySelector<HTMLElement>('[data-sidebar-household]')
+      const reduceMotion = window.matchMedia(
+        '(prefers-reduced-motion: reduce)'
+      ).matches
+      const labels = Array.from(
+        sidebar.querySelectorAll<HTMLElement>('[data-sidebar-label]')
+      )
+      const navLinks = Array.from(
+        sidebar.querySelectorAll<HTMLElement>('[data-sidebar-nav-link]')
+      )
+      const householdButton = sidebar.querySelector<HTMLElement>(
+        '[data-sidebar-household]'
+      )
       const householdTargets = householdButton ? [householdButton] : []
 
       if (reduceMotion) {
-        gsap.set(sidebar, { width: collapsed ? 58 : 290, paddingLeft: 8, paddingRight: 8 })
-        gsap.set(labels, { autoAlpha: collapsed ? 0 : 1, maxWidth: collapsed ? 0 : 192 })
+        gsap.set(sidebar, {
+          width: collapsed ? 58 : 290,
+          paddingLeft: 8,
+          paddingRight: 8,
+        })
+        gsap.set(labels, {
+          autoAlpha: collapsed ? 0 : 1,
+          maxWidth: collapsed ? 0 : 192,
+        })
         gsap.set(navLinks, { columnGap: collapsed ? 0 : 12 })
         gsap.set(householdTargets, { columnGap: collapsed ? 0 : 8 })
 
         return
       }
 
-      const timeline = gsap.timeline({ defaults: { ease: 'power2.inOut', overwrite: 'auto' } })
+      const timeline = gsap.timeline({
+        defaults: { ease: 'power2.inOut', overwrite: 'auto' },
+      })
 
       if (collapsed) {
         timeline
@@ -193,20 +211,34 @@ const Sidebar = ({ hideNextMeal = false }: SidebarProps) => {
       )}
 
       <nav className="flex flex-col gap-0.5 flex-1">
-        {navItems.map(({ to, end, labelKey, Icon }) => (
-          <SidebarLink
-            key={labelKey}
-            to={to}
-            end={end}
-            label={t(labelKey)}
-            Icon={Icon}
-            collapsed={collapsed}
-          />
-        ))}
+        {navItems.map(({ to, end, labelKey, Icon }) => {
+          const badgeCount = to === '/settings' ? invitations.length : 0
+          const label = t(labelKey)
+          const ariaLabel =
+            badgeCount > 0
+              ? `${label}, ${t('invitations.sectionTitle')}: ${badgeCount}`
+              : undefined
+
+          return (
+            <SidebarLink
+              key={labelKey}
+              to={to}
+              end={end}
+              label={label}
+              Icon={Icon}
+              collapsed={collapsed}
+              badgeCount={badgeCount}
+              ariaLabel={ariaLabel}
+            />
+          )
+        })}
       </nav>
 
       {!isLoadingHouseholds && !isGated && (
-        <HouseholdSwitcher isOpen={switcherOpen} onClose={handleSwitcherClose} />
+        <HouseholdSwitcher
+          isOpen={switcherOpen}
+          onClose={handleSwitcherClose}
+        />
       )}
     </aside>
   )

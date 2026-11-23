@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react'
 import { ChevronDown } from 'react-feather'
 import { useTranslation } from 'react-i18next'
-import BellPopover from './BellPopover'
 import HouseholdSwitcher from './HouseholdSwitcher'
 import { useHousehold } from '../context/HouseholdContext'
 
@@ -68,7 +67,6 @@ const PageHeader = ({ title, action, searchSlot }: PageHeaderProps) => {
           className={`flex items-center gap-1 shrink-0 ${searchSlot ? '' : 'md:ml-auto'} ml-2`}
         >
           {action}
-          <BellPopover />
         </div>
       </div>
       {/* HouseholdSwitcher lives in the Sidebar on desktop; kept here for mobile's tap-to-switch header */}

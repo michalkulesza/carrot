@@ -6,18 +6,11 @@ import * as Haptics from 'expo-haptics'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useHouseholds } from '@carrot/shared/hooks/useHouseholds'
-import BellMenu from '../../components/BellMenu'
 import HeaderTitle from '../../components/HeaderTitle'
 import { useAuth } from '../../context/AuthContext'
 import { useHousehold } from '../../context/HouseholdContext'
 import InvitationRow from './InvitationRow'
 import { styles } from './styles'
-
-const GettingStartedHeaderRight = () => (
-  <View style={styles.headerRight}>
-    <BellMenu />
-  </View>
-)
 
 const GettingStartedHeaderTitle = () => {
   const { t } = useTranslation()
@@ -29,7 +22,6 @@ const renderGettingStartedHeaderTitle = () => <GettingStartedHeaderTitle />
 
 const gettingStartedHeaderOptions = {
   headerTitle: renderGettingStartedHeaderTitle,
-  headerRight: GettingStartedHeaderRight,
 }
 
 const GettingStartedScreen = () => {
@@ -51,7 +43,7 @@ const GettingStartedScreen = () => {
         refetchInvitations()
         refetchHouseholds()
       } catch (e) {
-        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('bell.acceptInvitationFailed'))
+        Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('invitations.acceptFailed'))
       } finally {
         setBusyInvitationId(null)
       }

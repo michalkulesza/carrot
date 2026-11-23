@@ -1,4 +1,6 @@
 import '../src/i18n'
+import '../src/lib/notificationHandler'
+import '../src/lib/backgroundNotificationTask'
 import i18n from '../src/i18n'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +10,6 @@ import { DefaultTheme, ThemeProvider, type Theme } from '@react-navigation/nativ
 import * as Sentry from '@sentry/react-native'
 import * as Notifications from 'expo-notifications'
 import { useIsRestoring, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
 import DeviceHtmlCaptureHost from '../src/components/DeviceHtmlCapture'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
@@ -32,16 +33,16 @@ import { ApiClientProvider, useApiClient } from '@carrot/shared/api/context'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { ImportJob } from '@carrot/shared/types'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
-import { useClearImportFailureNotifications } from '../src/hooks/useClearImportFailureNotifications'
-import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
+import { usePushRegistration } from '../src/hooks/usePushRegistration'
+import { useNotificationReconcile } from '../src/hooks/useNotificationReconcile'
+import { dismissPresentedByCollapseId } from '../src/lib/presentedNotifications'
+import { getNotificationDestination } from '../src/lib/notificationDestination'
 import { TimerProvider } from '../src/context/TimerContext'
-import { getTimerDestination, type TimerSource } from '../src/context/TimerContext/helpers'
 import { HouseholdProvider } from '../src/context/HouseholdContext'
 import { ColorSchemeProvider, useAppLaunch } from '../src/context/ColorSchemeContext'
 import { CookingModeProvider } from '../src/context/CookingModeContext'
-import { getToken, mobileClient } from '../src/api/client'
+import { mobileClient } from '../src/api/client'
 import { configureGoogleSignin } from '../src/utils/googleAuth'
-import { createUuid } from '../src/utils/uuid'
 
 configureGoogleSignin()
 
@@ -86,17 +87,18 @@ const renderWebViewImportHeaderTitle = () => <WebViewImportHeaderTitle />
 const authScreenOptions = { headerShown: false }
 const tabsScreenOptions = { headerShown: false }
 const shareScreenOptions = { animation: 'none' as const, headerShown: false }
-const newRecipeScreenOptions = {
-  headerTitle: renderNewRecipeHeaderTitle,
-}
+const newRecipeScreenOptions = { headerTitle: renderNewRecipeHeaderTitle }
 const webViewImportScreenOptions = { headerTitle: renderWebViewImportHeaderTitle }
 const detailScreenOptions = { title: '' }
+
+// Keeps one recipe screen per id, so deep links (Live Activity, notifications) reuse it instead of stacking a copy.
+const getRecipeScreenId = (_name: string, params: Record<string, unknown>) =>
+  typeof params.id === 'string' ? params.id : undefined
 const bugReportScreenOptions = { presentation: 'modal' as const }
 
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })
 // Bump when the cached query data shape changes in a way older persisted caches can't handle.
 const QUERY_CACHE_BUSTER = '1'
-const PUSH_INSTALLATION_ID_KEY = 'push-installation-id'
 const RECIPE_WAIT_TIMEOUT_MS = 3_000
 
 // Everything the app can miss while backgrounded — notably recipes saved by the
@@ -113,21 +115,6 @@ const FOREGROUND_REFRESH_DOMAINS = new Set([
   'preferences',
   'importJobs',
 ])
-
-const getTimerNotificationDestination = (data: Record<string, unknown>): string | null => {
-  if (
-    typeof data.recipeId !== 'string' ||
-    typeof data.componentIndex !== 'number' ||
-    typeof data.stepIndex !== 'number'
-  ) return null
-
-  return getTimerDestination({
-    recipeId: data.recipeId,
-    componentIndex: data.componentIndex,
-    stepIndex: data.stepIndex,
-    source: data.source as TimerSource | undefined,
-  })
-}
 
 const AppStartupGate = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: authLoading } = useAuth()
@@ -200,11 +187,7 @@ function RootLayoutNav() {
   const segments = useSegments()
   const router = useRouter()
   const qc = useQueryClient()
-  const api = useApiClient()
-  const { push: pushNotif } = useNotificationHistory()
-  const clearImportFailureNotifications = useClearImportFailureNotifications()
-  const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
-  const handledTimerNotificationResponseIdsRef = useRef(new Set<string>())
+  const handledNotificationResponseIdsRef = useRef(new Set<string>())
   const colorScheme = useResolvedColorScheme()
   const navigationTheme = useMemo<Theme>(
     () => ({
@@ -225,130 +208,49 @@ function RootLayoutNav() {
     }),
     [colorScheme, t],
   )
-  const notifiedImportJobIdsRef = useRef(new Set<string>())
-  const handleImportJobEvent = useCallback(
-    (event: { type: string; job: ImportJob }) => {
-      const { job } = event
-      if (event.type !== 'import_job.failed') {
-        notifiedImportJobIdsRef.current.delete(job.id)
-        clearImportFailureNotifications(job.id)
-      }
-      const isTerminal = event.type === 'import_job.succeeded' || event.type === 'import_job.failed'
-      if (!isTerminal || job.created_by_user_id !== user?.id) return
-      if (notifiedImportJobIdsRef.current.has(job.id)) return
+  const handleImportSnapshot = useNotificationReconcile(user?.id)
+  const handleImportJobEvent = useCallback((event: { type: string; job: ImportJob }) => {
+    if (event.type === 'import_job.failed') return
 
-      notifiedImportJobIdsRef.current.add(job.id)
-      const succeeded = event.type === 'import_job.succeeded'
-      pushNotif({
-        type: succeeded ? 'recipe_imported' : 'recipe_failed',
-        title: t(succeeded ? 'bell.recipeImported' : 'bell.recipeImportFailed'),
-        body: t(succeeded ? 'bell.recipeImportedBody' : 'bell.recipeImportFailedBody'),
-        recipe_id: job.result_recipe_id ?? undefined,
-        job_id: job.id,
-      })
-    },
-    [clearImportFailureNotifications, pushNotif, t, user?.id],
+    void dismissPresentedByCollapseId(`import:${event.job.id}`)
+  }, [])
+  useImportJobs(
+    user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null,
+    handleImportJobEvent,
+    handleImportSnapshot,
   )
-  useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null, handleImportJobEvent)
+  usePushRegistration(user?.id)
 
   useEffect(() => {
-    if (!user) return
-    let installationId: string | null = null
-    let active = true
-    const register = async () => {
-      const permissions = await Notifications.getPermissionsAsync()
-      if (!permissions.granted) return
-      installationId = await AsyncStorage.getItem(PUSH_INSTALLATION_ID_KEY)
-      if (!installationId) {
-        installationId = createUuid()
-        await AsyncStorage.setItem(PUSH_INSTALLATION_ID_KEY, installationId)
-      }
-      const token = await Notifications.getDevicePushTokenAsync()
-      if (active) await api.registerDevice(installationId, token.data)
-    }
-    void register()
-    return () => {
-      active = false
-      if (installationId && getToken()) void api.unregisterDevice(installationId)
-    }
-  }, [api, user?.id])
+    const handleResponse = (response: Notifications.NotificationResponse) => {
+      const { identifier, content } = response.notification.request
+      if (handledNotificationResponseIdsRef.current.has(identifier)) return
 
-  // Handle APNs pushes from the background import worker
-  useEffect(() => {
-    const handleTimerResponse = (data: Record<string, unknown>, notificationId: string) => {
-      if (handledTimerNotificationResponseIdsRef.current.has(notificationId)) return
-      const destination = getTimerNotificationDestination(data)
+      const destination = getNotificationDestination(content.data as Record<string, unknown> | undefined)
       if (!destination) return
 
-      handledTimerNotificationResponseIdsRef.current.add(notificationId)
+      handledNotificationResponseIdsRef.current.add(identifier)
       router.push(destination)
     }
 
-    // Foreground: add to in-app bell without navigating
     const receivedSub = Notifications.addNotificationReceivedListener((notification) => {
-      const data = notification.request.content.data as Record<string, unknown>
-      const type = data?.type as string | undefined
-      const jobId = data?.job_id as string | undefined
-      const alreadyNotified = Boolean(jobId) && notifiedImportJobIdsRef.current.has(jobId as string)
-      if (alreadyNotified) return
-      if (jobId) notifiedImportJobIdsRef.current.add(jobId)
-      if (type === 'recipe_imported') {
-        pushNotif({
-          type: 'recipe_imported',
-          title: notification.request.content.title ?? t('bell.recipeImported'),
-          body: notification.request.content.body ?? t('bell.recipeImportedBody'),
-          recipe_id: data.recipe_id as string | undefined,
-          job_id: jobId,
-        })
-        qc.invalidateQueries()
-      } else if (type === 'recipe_failed') {
-        pushNotif({
-          type: 'recipe_failed',
-          title: notification.request.content.title ?? t('bell.recipeImportFailed'),
-          body: notification.request.content.body ?? t('bell.recipeImportFailedBody'),
-          job_id: jobId,
-        })
-      }
+      const data = notification.request.content.data as Record<string, unknown> | undefined
+      if (data?.type === 'recipe_imported') void qc.invalidateQueries()
     })
+    const responseSub = Notifications.addNotificationResponseReceivedListener(handleResponse)
 
-    responseListenerRef.current = Notifications.addNotificationResponseReceivedListener((response) => {
-      const data = response.notification.request.content.data as Record<string, unknown>
-      const type = data?.type as string | undefined
-      const jobId = data?.job_id as string | undefined
-      if (type === 'recipe_imported') {
-        pushNotif({
-          type: 'recipe_imported',
-          title: response.notification.request.content.title ?? t('bell.recipeImported'),
-          body: response.notification.request.content.body ?? t('bell.recipeImportedBody'),
-          recipe_id: data.recipe_id as string | undefined,
-          job_id: jobId,
-        })
-        if (data.recipe_id) {
-          router.push(`/recipe/${data.recipe_id as string}`)
-        }
-      } else if (type === 'recipe_failed') {
-        pushNotif({
-          type: 'recipe_failed',
-          title: response.notification.request.content.title ?? t('bell.recipeImportFailed'),
-          body: response.notification.request.content.body ?? t('bell.recipeImportFailedBody'),
-          job_id: jobId,
-        })
-      } else if (type === 'timer_done') {
-        handleTimerResponse(data, response.notification.request.identifier)
-      }
-    })
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (!response) return
-      const data = response.notification.request.content.data as Record<string, unknown>
-      if (data.type !== 'timer_done') return
-      handleTimerResponse(data, response.notification.request.identifier)
+
+      handleResponse(response)
       void Notifications.clearLastNotificationResponseAsync()
     })
+
     return () => {
       receivedSub.remove()
-      responseListenerRef.current?.remove()
+      responseSub.remove()
     }
-  }, [pushNotif, qc, router, t])
+  }, [qc, router])
 
   // Refresh externally-changed data when the app returns to the foreground so it
   // appears without a manual pull-to-refresh.
@@ -407,7 +309,11 @@ function RootLayoutNav() {
         <Stack.Screen name="share" options={shareScreenOptions} />
         <Stack.Screen name="new-recipe" options={newRecipeScreenOptions} />
         <Stack.Screen name="webview-import" options={webViewImportScreenOptions} />
-        <Stack.Screen name="recipe/[id]" options={detailScreenOptions} />
+        <Stack.Screen
+          name="recipe/[id]"
+          options={detailScreenOptions}
+          dangerouslySingular={getRecipeScreenId}
+        />
         <Stack.Screen name="household/[id]" options={detailScreenOptions} />
         <Stack.Screen name="bug-report" options={bugReportScreenOptions} />
       </Stack>
@@ -441,17 +347,15 @@ const AuthenticatedApp = () => {
   }
 
   return (
-    <NotificationHistoryProvider>
-      {user ? (
-        <TimerProvider>
-          <HouseholdProvider>
-            <RootLayoutNav />
-          </HouseholdProvider>
-        </TimerProvider>
-      ) : (
-        <RootLayoutNav />
-      )}
-    </NotificationHistoryProvider>
+    user ? (
+      <TimerProvider>
+        <HouseholdProvider>
+          <RootLayoutNav />
+        </HouseholdProvider>
+      </TimerProvider>
+    ) : (
+      <RootLayoutNav />
+    )
   )
 }
 

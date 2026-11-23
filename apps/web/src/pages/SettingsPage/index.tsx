@@ -23,6 +23,7 @@ import { useCookingMode } from '../../context/CookingModeContext'
 import ProfileSection from './ProfileSection'
 import StatsSection from './StatsSection'
 import HouseholdsSection from './HouseholdsSection'
+import InvitationsSection from './InvitationsSection'
 import MyRecipesSection from './MyRecipesSection'
 import AllergiesSection from './AllergiesSection'
 import AccountSection from './AccountSection'
@@ -199,6 +200,8 @@ const SettingsPage = ({
         <section id="stats" tabIndex={-1}>
           <StatsSection stats={stats} />
         </section>
+
+        <InvitationsSection />
 
         <section id="households" tabIndex={-1}>
           <HouseholdsSection

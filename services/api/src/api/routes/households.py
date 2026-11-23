@@ -3,7 +3,7 @@ import string
 import uuid
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -13,7 +13,6 @@ from api.database import get_async_session
 from api.models import (
     Household,
     HouseholdInvitation,
-    HouseholdLeaveNotification,
     HouseholdMember,
     InvitationStatus,
     Recipe,
@@ -23,6 +22,7 @@ from api.models import (
     user_recipe_favourites_table,
 )
 from api.routes.recipes import _link_recipe_to_household
+from api.services import push as push_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
 from api.users import User, current_active_user
@@ -83,15 +83,6 @@ class InviteRequest(BaseModel):
 
 class JoinRequest(BaseModel):
     code: str
-
-
-class HouseholdLeaveNotificationOut(BaseModel):
-    id: uuid.UUID
-    household_id: uuid.UUID
-    household_name: str
-    left_user_email: str
-    left_user_nickname: str | None
-    created_at: datetime
 
 
 class SwitchHouseholdRequest(BaseModel):
@@ -175,7 +166,7 @@ def _check_join_rate_limit(user_id: uuid.UUID) -> None:
 
 # ── Detach routine (shared by leave and kick) ────────────────────────────────
 
-async def _detach_member(session: AsyncSession, household_id: uuid.UUID, user_id: uuid.UUID) -> None:
+async def _detach_member(session: AsyncSession, household_id: uuid.UUID, user_id: uuid.UUID) -> list[uuid.UUID]:
     authored_result = await session.execute(
         select(Recipe)
         .join(recipe_households_table, recipe_households_table.c.recipe_id == Recipe.id)
@@ -276,13 +267,6 @@ async def _detach_member(session: AsyncSession, household_id: uuid.UUID, user_id
 
         await queue_recipe_embedding(session, copy)
 
-    for recipient in remaining_members:
-        session.add(HouseholdLeaveNotification(
-            household_id=household_id,
-            recipient_user_id=recipient.user_id,
-            left_user_id=user_id,
-        ))
-
     leaving_member = await session.get(HouseholdMember, {"household_id": household_id, "user_id": user_id})
     was_only_admin = leaving_member is not None and leaving_member.role == "admin" and not any(
         m.role == "admin" for m in remaining_members
@@ -309,6 +293,36 @@ async def _detach_member(session: AsyncSession, household_id: uuid.UUID, user_id
         )
         user.active_household_id = next_household.household_id if next_household is not None else None
         session.add(user)
+
+    return remaining_member_ids
+
+
+async def _detach_and_notify(
+    session: AsyncSession,
+    background_tasks: BackgroundTasks,
+    household_id: uuid.UUID,
+    user_id: uuid.UUID,
+) -> None:
+    household = await session.get(Household, household_id)
+    left_user = await session.get(User, user_id)
+    household_name = household.name if household is not None else ""
+    left_name = (left_user.nickname or left_user.email) if left_user is not None else ""
+
+    recipient_ids = await _detach_member(session, household_id, user_id)
+    await session.commit()
+
+    for recipient_id in recipient_ids:
+        background_tasks.add_task(
+            push_svc.notify_user_in_background,
+            recipient_id,
+            kind="member_left",
+            title_key="member_left_title",
+            body_key="member_left_body",
+            params={"name": left_name, "household": household_name},
+            data={"household_id": str(household_id)},
+            collapse_id=f"left:{household_id}:{user_id}",
+            thread_id="household",
+        )
 
 
 # ── Context switch ────────────────────────────────────────────────────────────
@@ -486,6 +500,7 @@ async def list_members(
 async def remove_member(
     household_id: uuid.UUID,
     user_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> None:
@@ -493,8 +508,7 @@ async def remove_member(
     target = await session.get(HouseholdMember, {"household_id": household_id, "user_id": user_id})
     if target is None:
         raise HTTPException(status_code=404, detail="Not a member")
-    await _detach_member(session, household_id, user_id)
-    await session.commit()
+    await _detach_and_notify(session, background_tasks, household_id, user_id)
 
 
 @router.post("/households/{household_id}/members/{user_id}/promote", response_model=MemberOut)
@@ -528,52 +542,14 @@ async def promote_member(
 @router.post("/households/{household_id}/leave", status_code=204)
 async def leave_household(
     household_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> None:
     member = await session.get(HouseholdMember, {"household_id": household_id, "user_id": user.id})
     if member is None:
         raise HTTPException(status_code=404, detail="Not a member")
-    await _detach_member(session, household_id, user.id)
-    await session.commit()
-
-
-@router.get("/household-leave-notifications", response_model=list[HouseholdLeaveNotificationOut])
-async def list_household_leave_notifications(
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session),
-) -> list[HouseholdLeaveNotificationOut]:
-    result = await session.execute(
-        select(HouseholdLeaveNotification, Household, User)
-        .join(Household, Household.id == HouseholdLeaveNotification.household_id)
-        .join(User, User.id == HouseholdLeaveNotification.left_user_id)
-        .where(HouseholdLeaveNotification.recipient_user_id == user.id)
-        .order_by(HouseholdLeaveNotification.created_at.desc())
-    )
-    return [
-        HouseholdLeaveNotificationOut(
-            id=n.id,
-            household_id=n.household_id,
-            household_name=h.name,
-            left_user_email=u.email,
-            left_user_nickname=u.nickname,
-            created_at=n.created_at,
-        )
-        for n, h, u in result.all()
-    ]
-
-
-@router.post("/household-leave-notifications/{notification_id}/dismiss", status_code=204)
-async def dismiss_household_leave_notification(
-    notification_id: uuid.UUID,
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session),
-) -> None:
-    notif = await session.get(HouseholdLeaveNotification, notification_id)
-    if notif is None or notif.recipient_user_id != user.id:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    await session.delete(notif)
-    await session.commit()
+    await _detach_and_notify(session, background_tasks, household_id, user.id)
 
 
 # ── Invitations ───────────────────────────────────────────────────────────────
@@ -582,6 +558,7 @@ async def dismiss_household_leave_notification(
 async def invite_user(
     household_id: uuid.UUID,
     body: InviteRequest,
+    background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
@@ -598,6 +575,9 @@ async def invite_user(
 
     email = body.email.lower().strip()
     inviter_name = user.nickname or user.email
+    household_name = household.name
+    invitation_id: uuid.UUID | None = None
+    target_id: uuid.UUID | None = None
 
     target_result = await session.execute(
         select(User).where(User.email == email)
@@ -627,13 +607,17 @@ async def invite_user(
         if pending.scalar_one_or_none() is not None:
             raise HTTPException(status_code=400, detail="Invitation already pending")
 
-        session.add(HouseholdInvitation(
+        invitation = HouseholdInvitation(
             household_id=household_id,
             invited_user_id=target.id,
             invited_email=email,
             invited_by_user_id=user.id,
             status=InvitationStatus.PENDING,
-        ))
+        )
+        session.add(invitation)
+        await session.flush()
+        invitation_id = invitation.id
+        target_id = target.id
     else:
         pending_email = await session.execute(
             select(HouseholdInvitation).where(
@@ -655,7 +639,19 @@ async def invite_user(
         ))
 
     await session.commit()
-    await send_household_invitation(email, household.name, inviter_name)
+    if invitation_id is not None and target_id is not None:
+        background_tasks.add_task(
+            push_svc.notify_user_in_background,
+            target_id,
+            kind="household_invitation",
+            title_key="household_invitation_title",
+            body_key="household_invitation_body",
+            params={"inviter": inviter_name, "household": household_name},
+            data={"invitation_id": str(invitation_id), "household_id": str(household_id)},
+            collapse_id=f"invite:{invitation_id}",
+            thread_id="household",
+        )
+    await send_household_invitation(email, household_name, inviter_name)
     return {"detail": "Invitation sent"}
 
 
@@ -690,6 +686,7 @@ async def list_my_invitations(
 @router.post("/invitations/{invitation_id}/accept", status_code=200)
 async def accept_invitation(
     invitation_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> dict:
@@ -702,13 +699,16 @@ async def accept_invitation(
     user.active_household_id = inv.household_id
     session.add(user)
 
+    household_id = inv.household_id
     await session.commit()
-    return {"active_household_id": str(inv.household_id)}
+    background_tasks.add_task(push_svc.retract_in_background, user.id, collapse_id=f"invite:{invitation_id}")
+    return {"active_household_id": str(household_id)}
 
 
 @router.post("/invitations/{invitation_id}/decline", status_code=204)
 async def decline_invitation(
     invitation_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
 ) -> None:
@@ -718,3 +718,4 @@ async def decline_invitation(
 
     inv.status = InvitationStatus.DECLINED
     await session.commit()
+    background_tasks.add_task(push_svc.retract_in_background, user.id, collapse_id=f"invite:{invitation_id}")

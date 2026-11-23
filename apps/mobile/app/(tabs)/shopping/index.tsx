@@ -1,7 +1,5 @@
-import { StyleSheet, View } from 'react-native'
 import { Stack } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import BellMenu from '../../../src/components/BellMenu'
 import HeaderTitle from '../../../src/components/HeaderTitle'
 import ShoppingListScreen from '../../../src/screens/ShoppingListScreen'
 
@@ -13,15 +11,8 @@ const ShoppingHeaderTitle = () => {
 
 const renderShoppingHeaderTitle = () => <ShoppingHeaderTitle />
 
-const ShoppingHeaderRight = () => (
-  <View style={styles.headerRight}>
-    <BellMenu />
-  </View>
-)
-
 const shoppingHeaderOptions = {
   headerTitle: renderShoppingHeaderTitle,
-  headerRight: ShoppingHeaderRight,
 }
 
 export default function ShoppingTab() {
@@ -32,7 +23,3 @@ export default function ShoppingTab() {
     </>
   )
 }
-
-const styles = StyleSheet.create({
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-})

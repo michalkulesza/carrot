@@ -16,18 +16,6 @@ export type TimerSource = 'recipe' | 'cook-mode'
 
 export const isExpoGo = Constants.executionEnvironment === 'storeClient'
 
-if (!isExpoGo) {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  })
-}
-
 export interface TimerEntry {
   id: string
   recipeId: string
@@ -53,6 +41,13 @@ export const getTimerDestination = ({ recipeId, componentIndex, stepIndex, sourc
   return `/recipe/${recipeId}?cookMode=1&componentIndex=${componentIndex}&stepIndex=${stepIndex}`
 }
 
+// A fresh navAt makes an already-open recipe screen jump back to the timer's step even when the other params are unchanged.
+export const withNavigationNonce = (path: string) => {
+  if (!path.includes('cookMode=1')) return path
+
+  return `${path}&navAt=${Date.now()}`
+}
+
 export interface ResumeInfo {
   interrupted: TimerEntry[]
   expired: TimerEntry[]
@@ -63,37 +58,39 @@ export const getRemainingSeconds = (t: TimerEntry): number => {
   return Math.max(0, t.remainingAtStart - Math.floor((Date.now() - t.startedAt) / 1000))
 }
 
-export const scheduleNotif = async (t: TimerEntry): Promise<string | null> => {
-  const seconds = getRemainingSeconds(t)
-  if (seconds <= 0) return null
+const truncate = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text)
 
-  const subtitle = t.recipeTitle.length > 50 ? `${t.recipeTitle.slice(0, 47)}…` : t.recipeTitle
-  const body = t.stepText.length > 80 ? `${t.stepText.slice(0, 77)}…` : t.stepText
+export const getTimerNotificationId = (t: Pick<TimerEntry, 'id' | 'notificationId'>) =>
+  t.notificationId ?? `timer-${t.id}`
+
+export const buildTimerNotificationContent = (t: TimerEntry) => ({
+  title: `⏱️ ${i18n.t('timers.doneLabel')}`,
+  subtitle: truncate(t.recipeTitle, 50),
+  body: truncate(t.stepText, 80),
+  data: {
+    type: 'timer_done',
+    timerId: t.id,
+    recipeId: t.recipeId,
+    componentIndex: t.componentIndex,
+    stepIndex: t.stepIndex,
+    source: t.source,
+  },
+})
+
+export const scheduleNotif = async (t: TimerEntry): Promise<void> => {
+  const seconds = getRemainingSeconds(t)
+  if (seconds <= 0) return
 
   try {
-    const id = await Notifications.scheduleNotificationAsync({
-      content: {
-        title: `⏱️ ${i18n.t('bell.timerDone')}`,
-        subtitle,
-        body,
-        data: {
-          type: 'timer_done',
-          timerId: t.id,
-          recipeId: t.recipeId,
-          componentIndex: t.componentIndex,
-          stepIndex: t.stepIndex,
-          source: t.source,
-        },
-      },
+    await Notifications.scheduleNotificationAsync({
+      identifier: getTimerNotificationId(t),
+      content: buildTimerNotificationContent(t),
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds,
       },
     })
-    return id
-  } catch {
-    return null
-  }
+  } catch {}
 }
 
 export const cancelNotif = (notificationId: string | undefined) => {
