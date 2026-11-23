@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { ActionSheetIOS, ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { ActionSheetIOS, ActivityIndicator, Alert, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -10,8 +10,9 @@ import Avatar from '../../components/Avatar'
 import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { PLACEHOLDER_URL } from '../../api/thumbnailUrl'
-import { clearImportImagePreview, getImportImagePreview } from '../../utils/importImagePreviews'
-import { resolveRecipePreview } from '../../utils/recipePreview'
+import { getImportImagePreview } from '../../utils/importImagePreviews'
+import { useImportPreview } from '../../hooks/useImportPreview'
+import NetworkImage from '../../components/NetworkImage'
 import { isOptimisticJobId } from '@carrot/shared/utils/optimisticImportJob'
 import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { useAuth } from '../../context/AuthContext'
@@ -53,7 +54,7 @@ const PendingJobCard = ({
   const isCurrentUserImport = job.created_by_user_id === user?.id
   const importingMemberName = job.created_by_name ?? t('importJobs.someone')
   const imagePreview = getImportImagePreview(job.id)
-  const [resolvedImagePreview, setResolvedImagePreview] = useState<string | null>(null)
+  const resolvedImagePreview = useImportPreview(job.source_url, !imagePreview)
   const imageUri = imagePreview ?? resolvedImagePreview ?? (job.kind === 'text' ? PLACEHOLDER_URL : null)
   const capturingOnDevice = job.status === 'failed' && capturingJobId === job.id
   const title = getCardTitle(job, capturingOnDevice, retryScheduled, t)
@@ -158,7 +159,7 @@ const PendingJobCard = ({
   const cardContent = (
     <>
       <View style={styles.pendingImageWrap}>
-        {imageUri && <Image source={{ uri: imageUri }} style={styles.pendingImage} />}
+        {imageUri && <NetworkImage uri={imageUri} recyclingKey={imageUri} style={styles.pendingImage} />}
         {!isFailedCard && (
           <View style={styles.pendingSpinnerOverlay}>
             <ActivityIndicator size="small" color={colors.tertiaryLabel} />
@@ -195,27 +196,6 @@ const PendingJobCard = ({
       </View>
     </>
   )
-
-  useEffect(() => {
-    let cancelled = false
-
-    if (!job.source_url || imagePreview) {
-      setResolvedImagePreview(null)
-      return () => {
-        cancelled = true
-      }
-    }
-
-    void resolveRecipePreview(job.source_url).then((preview) => {
-      if (!cancelled) setResolvedImagePreview(preview)
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [imagePreview, job.source_url])
-
-  useEffect(() => () => clearImportImagePreview(job.id), [job.id])
 
   return (
     <View style={cardStyle}>

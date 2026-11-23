@@ -39,6 +39,7 @@ import MarqueeText from '../../components/MarqueeText'
 import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { colors } from '../../theme/colors'
+import { clearImportImagePreview } from '../../utils/importImagePreviews'
 import { useClearImportFailureNotifications } from '../../hooks/useClearImportFailureNotifications'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
@@ -432,6 +433,12 @@ const RecipesScreen = () => {
   const { jobs: importJobs, retry, importAnyway, cancel, dismiss } = useImportJobs(
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
   )
+  const previousJobIds = useRef<string[]>([])
+  useEffect(() => {
+    const currentIds = new Set(importJobs.map((job) => job.id))
+    previousJobIds.current.filter((id) => !currentIds.has(id)).forEach(clearImportImagePreview)
+    previousJobIds.current = [...currentIds]
+  }, [importJobs])
   const clearImportFailureNotifications = useClearImportFailureNotifications()
   const clearAfter = useCallback(
     async (action: Promise<unknown>, jobId: string) => {

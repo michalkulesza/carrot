@@ -4,7 +4,7 @@ import type { AuthUser, ImportJob } from '@carrot/shared/types'
 import { buildOptimisticImportJob, buildOptimisticJobId } from '@carrot/shared/utils/optimisticImportJob'
 import { createUuid } from './uuid'
 import { setImportImagePreview } from './importImagePreviews'
-import { resolveRecipePreview } from './recipePreview'
+import { prefetchImportPreview } from '../hooks/useImportPreview'
 
 const queryKey = ['importJobs']
 
@@ -46,11 +46,7 @@ export const enqueueImport = async (
   ])
 
   if (kind === 'url') {
-    void resolveRecipePreview(input.url).then((previewUrl) => {
-      if (!previewUrl) return
-      setImportImagePreview(job.id, previewUrl)
-      qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => [...jobs])
-    })
+    void prefetchImportPreview(qc, input.url)
   }
 
   return job
