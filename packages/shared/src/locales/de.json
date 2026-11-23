@@ -774,6 +774,7 @@
     "retry": "Erneut versuchen",
     "cancel": "Abbrechen",
     "remove": "Entfernen",
+    "cancelImport": "Import abbrechen",
     "enqueueFailed": "Der Import konnte nicht gestartet werden. Bitte versuche es erneut.",
     "someone": "Jemand",
     "capturingOnDevice": "Seite wird auf deinem Gerät geladen…",

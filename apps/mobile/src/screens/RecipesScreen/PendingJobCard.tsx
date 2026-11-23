@@ -105,15 +105,16 @@ const PendingJobCard = ({
   const handleFailedMenu = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     const actions = [
-      { label: t('importJobs.openAndPaste'), run: onContinueManually },
+      ...(canOpenSourceUrl ? [{ label: t('importJobs.openAndPaste'), run: onContinueManually }] : []),
       { label: t('importJobs.retry'), run: handleRetry },
-      { label: t('importJobs.remove'), run: handleDismiss },
+      { label: t('importJobs.cancelImport'), run: handleDismiss },
     ]
     const options = [...actions.map((action) => action.label), t('common.cancel')]
+    const message = canOpenSourceUrl ? t('importJobs.userActionRequired.body') : undefined
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title,
-        message: t('importJobs.userActionRequired.body'),
+        message,
         options,
         destructiveButtonIndex: actions.length - 1,
         cancelButtonIndex: actions.length,
@@ -142,6 +143,10 @@ const PendingJobCard = ({
       { text: t('importJobs.openLink'), onPress: () => void handleOpenSourceUrl() },
     ])
   }
+
+  const handleCardPress = isFailedCard ? (isDuplicate ? handleDuplicateMenu : handleFailedMenu) : undefined
+  const handleCardLongPress = canOpenSourceUrl ? handleSourceUrlMenu : undefined
+  const isCardInteractive = Boolean(handleCardPress || handleCardLongPress)
 
   const cardContent = (
     <>
@@ -211,14 +216,14 @@ const PendingJobCard = ({
 
   return (
     <View style={[styles.pendingCard, isDuplicate && styles.pendingCardDuplicate]}>
-      {canOpenSourceUrl ? (
+      {isCardInteractive ? (
         <Pressable
           style={styles.pendingContent}
-          onPress={isFailedCard ? (isDuplicate ? handleDuplicateMenu : handleFailedMenu) : undefined}
-          onLongPress={handleSourceUrlMenu}
+          onPress={handleCardPress}
+          onLongPress={handleCardLongPress}
           delayLongPress={500}
           accessibilityRole="button"
-          accessibilityLabel={job.source_url ?? ''}
+          accessibilityLabel={job.source_url ?? title}
         >
           {cardContent}
         </Pressable>
@@ -232,8 +237,14 @@ const PendingJobCard = ({
               <Feather name="chevron-right" size={20} color={PlatformColor('secondaryLabel') as unknown as string} />
             </Pressable>
           ) : (
-            <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleRetry} accessibilityLabel={t('importJobs.retry')}>
-              <Feather name="refresh-cw" size={16} color={colors.blue} />
+            <Pressable
+              style={styles.pendingIconAction}
+              disabled={actionPending}
+              onPress={handleFailedMenu}
+              hitSlop={6}
+              accessibilityLabel={title}
+            >
+              <Feather name="alert-circle" size={20} color={colors.orange} />
             </Pressable>
           )}
         </View>

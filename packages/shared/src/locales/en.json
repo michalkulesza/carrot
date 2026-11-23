@@ -735,6 +735,7 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "remove": "Remove",
+    "cancelImport": "Cancel import",
     "enqueueFailed": "Could not start the import. Please try again.",
     "someone": "Someone",
     "capturingOnDevice": "Capturing the page on your device…",

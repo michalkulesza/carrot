@@ -790,6 +790,7 @@
     "retry": "Spróbuj ponownie",
     "cancel": "Anuluj",
     "remove": "Usuń",
+    "cancelImport": "Anuluj import",
     "enqueueFailed": "Nie udało się rozpocząć importu. Spróbuj ponownie.",
     "someone": "Ktoś",
     "capturingOnDevice": "Pobieranie strony na Twoim urządzeniu…",

@@ -778,6 +778,7 @@
     "retry": "Réessayer",
     "cancel": "Annuler",
     "remove": "Supprimer",
+    "cancelImport": "Annuler l'import",
     "enqueueFailed": "Impossible de démarrer l’importation. Réessayez.",
     "someone": "Quelqu’un",
     "capturingOnDevice": "Récupération de la page sur votre appareil…",
