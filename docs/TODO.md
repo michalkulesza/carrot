@@ -43,7 +43,7 @@ Open work only. When an item is completed, move it to the matching category in [
 - [ ] **Verify the no-recipe-content import UI** — Import the "Chocolate Lava Cake" Instagram reel (https://www.instagram.com/reel/DcN5C3VxozV/?stkn=MTkzbGZnOHFmY3JoaA==), which correctly fails extraction v2 with `no_recipe_content`. Confirm web and mobile show the failure clearly in the import queue and notification, with a localized message and a way to dismiss or retry.
 - [ ] **Safari share-extension HTML preprocessing** — Capture the page DOM from the Safari share extension with `NSExtensionJavaScriptPreprocessingFile` and send it as captured HTML, so blocked pages import without the in-app hidden WebView. Follow-up to [device HTML capture](specs/device-html-capture.md).
 - [ ] **Premium lock** — Gate paid capabilities with a clear upgrade flow.
-- [ ] **Home "Most cooked" section** — Needs cook tracking (record each time a recipe is cooked), then show the most-cooked recipes as a Home row. See [Home and Browse tabs](specs/home-and-browse-tabs.md).
+- [ ] **Home "Most cooked" section** — Needs cook tracking (record each time a recipe is cooked), then show the most-cooked recipes as a Home row. See [Home and Browse tabs](specs/completed/home-and-browse-tabs.md).
 - [ ] **Home "Highest rated" section** — Needs recipe ratings, then show the top-rated recipes as a Home row.
 - [ ] **Home social feed** — Grow Home with social sections once the social tab and shareable recipes exist.
 - [ ] **Social tab and shareable recipes** — Add a discovery surface for recipes users choose to publish.

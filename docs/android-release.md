@@ -14,7 +14,7 @@ features only work on iOS so far. This page lists what Android still needs befor
 | Running timers outside the app | ✅ Live Activity | ❌ |
 | Share-sheet import | ✅ | ⚠️ not verified |
 
-Since the in-app bell was removed (see [specs/notifications-to-push.md](specs/notifications-to-push.md)),
+Since the in-app bell was removed (see [specs/completed/notifications-to-push.md](specs/completed/notifications-to-push.md)),
 Android users currently get **no** import or invitation notifications at all.
 
 ## 1. Push notifications via Firebase Cloud Messaging
