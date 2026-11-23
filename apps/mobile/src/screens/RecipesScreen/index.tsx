@@ -39,6 +39,7 @@ import MarqueeText from '../../components/MarqueeText'
 import MarqueeRow from '../../components/MarqueeRow'
 import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { colors } from '../../theme/colors'
+import { useClearImportFailureNotifications } from '../../hooks/useClearImportFailureNotifications'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
@@ -431,6 +432,14 @@ const RecipesScreen = () => {
   const { jobs: importJobs, retry, importAnyway, cancel, dismiss } = useImportJobs(
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
   )
+  const clearImportFailureNotifications = useClearImportFailureNotifications()
+  const clearAfter = useCallback(
+    async (action: Promise<unknown>, jobId: string) => {
+      await action
+      clearImportFailureNotifications(jobId)
+    },
+    [clearImportFailureNotifications],
+  )
   const pendingJobs = useMemo(
     () => importJobs,
     [importJobs],
@@ -731,16 +740,16 @@ const RecipesScreen = () => {
       return (
         <PendingJobCard
           job={item.job}
-          onRetry={() => retry.mutateAsync(item.job.id)}
-          onImportAnyway={() => importAnyway.mutateAsync(item.job.id)}
+          onRetry={() => clearAfter(retry.mutateAsync(item.job.id), item.job.id)}
+          onImportAnyway={() => clearAfter(importAnyway.mutateAsync(item.job.id), item.job.id)}
           onGoToRecipe={handleGoToDuplicateRecipe}
-          onCancel={() => cancel.mutateAsync(item.job.id)}
-          onDismiss={() => dismiss.mutateAsync(item.job.id)}
+          onCancel={() => clearAfter(cancel.mutateAsync(item.job.id), item.job.id)}
+          onDismiss={() => clearAfter(dismiss.mutateAsync(item.job.id), item.job.id)}
           onContinueManually={() => void openAndPaste(item.job.source_url)}
         />
       )
     },
-    [cancel, dismiss, handleGoToDuplicateRecipe, importAnyway, openAndPaste, renderRecipe, retry, t],
+    [cancel, clearAfter, dismiss, handleGoToDuplicateRecipe, importAnyway, openAndPaste, renderRecipe, retry, t],
   )
 
   const favChip = useMemo(

@@ -29,6 +29,7 @@ interface NotificationHistoryContextValue {
   items: NotificationItem[]
   push: (item: Omit<NotificationItem, 'id' | 'timestamp'>) => void
   dismiss: (id: string) => void
+  dismissByJobId: (jobId: string, type?: NotificationItem['type']) => void
   clearAll: () => void
 }
 
@@ -82,12 +83,22 @@ export const NotificationHistoryProvider = ({
     setItems((prev) => prev.filter((i) => i.id !== id))
   }, [])
 
+  const dismissByJobId = useCallback(
+    (jobId: string, type: NotificationItem['type'] = 'recipe_failed') => {
+      setItems((prev) => {
+        const next = prev.filter((i) => !(i.job_id === jobId && i.type === type))
+        return next.length === prev.length ? prev : next
+      })
+    },
+    [],
+  )
+
   const clearAll = useCallback(() => {
     setItems([])
   }, [])
 
   return (
-    <NotificationHistoryContext.Provider value={{ items, push, dismiss, clearAll }}>
+    <NotificationHistoryContext.Provider value={{ items, push, dismiss, dismissByJobId, clearAll }}>
       {children}
     </NotificationHistoryContext.Provider>
   )

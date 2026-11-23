@@ -33,6 +33,7 @@ import { ApiClientProvider, useApiClient } from '@carrot/shared/api/context'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
 import type { ImportJob } from '@carrot/shared/types'
 import { AuthProvider, useAuth } from '../src/context/AuthContext'
+import { useClearImportFailureNotifications } from '../src/hooks/useClearImportFailureNotifications'
 import { NotificationHistoryProvider } from '../src/context/NotificationHistoryContext'
 import { TimerProvider } from '../src/context/TimerContext'
 import { getTimerDestination, type TimerSource } from '../src/context/TimerContext/helpers'
@@ -205,6 +206,7 @@ function RootLayoutNav() {
   const qc = useQueryClient()
   const api = useApiClient()
   const { push: pushNotif } = useNotificationHistory()
+  const clearImportFailureNotifications = useClearImportFailureNotifications()
   const responseListenerRef = useRef<Notifications.EventSubscription | null>(null)
   const handledTimerNotificationResponseIdsRef = useRef(new Set<string>())
   const colorScheme = useResolvedColorScheme()
@@ -231,6 +233,10 @@ function RootLayoutNav() {
   const handleImportJobEvent = useCallback(
     (event: { type: string; job: ImportJob }) => {
       const { job } = event
+      if (event.type !== 'import_job.failed') {
+        notifiedImportJobIdsRef.current.delete(job.id)
+        clearImportFailureNotifications(job.id)
+      }
       const isTerminal = event.type === 'import_job.succeeded' || event.type === 'import_job.failed'
       if (!isTerminal || job.created_by_user_id !== user?.id) return
       if (notifiedImportJobIdsRef.current.has(job.id)) return
@@ -245,7 +251,7 @@ function RootLayoutNav() {
         job_id: job.id,
       })
     },
-    [pushNotif, t, user?.id],
+    [clearImportFailureNotifications, pushNotif, t, user?.id],
   )
   useImportJobs(user ? `${user.id}:${user.active_household_id ?? 'personal'}` : null, handleImportJobEvent)
 
