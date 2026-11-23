@@ -427,9 +427,7 @@
     "title": "Zgłoś problem",
     "descriptionLabel": "Co poszło nie tak?",
     "descriptionPlaceholder": "Opisz problem…",
-    "screenshotNote": "Zrzut ekranu zostanie dołączony automatycznie.",
     "submit": "Wyślij zgłoszenie",
-    "submitting": "Wysyłanie…",
     "success": "Dziękujemy! Zgłoszenie zostało wysłane.",
     "sendFailed": "Nie udało się wysłać — sprawdź połączenie i spróbuj ponownie."
   },
@@ -530,6 +528,8 @@
     "shoppingCategoriesDesc": "Wybierz i uporządkuj kategorie widoczne na liście zakupów",
     "shoppingCategoryRequired": "Inne jest zawsze dostępne",
     "miscellaneous": "Różne",
+    "help": "Pomoc",
+    "reportIssue": "Zgłoś problem",
     "logOut": "Wyloguj się",
     "logOutConfirmTitle": "Czy na pewno chcesz się wylogować?",
     "loggingOut": "Wyloguję…",

@@ -412,12 +412,10 @@
     "recipeImportFailedBody": "Tap to retry."
   },
   "bugReport": {
-    "title": "Report a problem",
+    "title": "Report an issue",
     "descriptionLabel": "What went wrong?",
     "descriptionPlaceholder": "Describe the issue…",
-    "screenshotNote": "A screenshot of the current screen will be attached automatically.",
     "submit": "Send report",
-    "submitting": "Sending…",
     "success": "Thanks! Your report was sent.",
     "sendFailed": "Couldn't send — check your connection and try again."
   },
@@ -516,6 +514,8 @@
     "shoppingCategoriesDesc": "Choose and order the categories shown in your shopping list",
     "shoppingCategoryRequired": "Other is always available",
     "miscellaneous": "Miscellaneous",
+    "help": "Help",
+    "reportIssue": "Report an issue",
     "logOut": "Log out",
     "logOutConfirmTitle": "Are you sure you want to log out?",
     "loggingOut": "Logging out…",

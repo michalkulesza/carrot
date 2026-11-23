@@ -415,9 +415,7 @@
     "title": "Problem melden",
     "descriptionLabel": "Was ist schiefgelaufen?",
     "descriptionPlaceholder": "Beschreibe das Problem…",
-    "screenshotNote": "Ein Screenshot wird automatisch angehängt.",
     "submit": "Bericht senden",
-    "submitting": "Wird gesendet…",
     "success": "Danke! Dein Bericht wurde gesendet.",
     "sendFailed": "Senden fehlgeschlagen — überprüfe deine Verbindung und versuche es erneut."
   },
@@ -516,6 +514,8 @@
     "shoppingCategoriesDesc": "Wähle und ordne die Kategorien deiner Einkaufsliste",
     "shoppingCategoryRequired": "Sonstiges ist immer verfügbar",
     "miscellaneous": "Sonstiges",
+    "help": "Hilfe",
+    "reportIssue": "Problem melden",
     "logOut": "Abmelden",
     "logOutConfirmTitle": "Möchtest du dich wirklich abmelden?",
     "loggingOut": "Abmelden…",

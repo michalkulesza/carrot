@@ -417,9 +417,7 @@
     "title": "Reportar un problema",
     "descriptionLabel": "¿Qué salió mal?",
     "descriptionPlaceholder": "Describe el problema…",
-    "screenshotNote": "Se adjuntará una captura de pantalla automáticamente.",
     "submit": "Enviar reporte",
-    "submitting": "Enviando…",
     "success": "¡Gracias! Tu reporte fue enviado.",
     "sendFailed": "No se pudo enviar — comprueba tu conexión e inténtalo de nuevo."
   },
@@ -518,6 +516,8 @@
     "shoppingCategoriesDesc": "Elige y ordena las categorías de tu lista",
     "shoppingCategoryRequired": "Otros siempre está disponible",
     "miscellaneous": "Varios",
+    "help": "Ayuda",
+    "reportIssue": "Reportar un problema",
     "logOut": "Cerrar sesión",
     "logOutConfirmTitle": "¿Seguro que quieres cerrar sesión?",
     "loggingOut": "Cerrando sesión…",

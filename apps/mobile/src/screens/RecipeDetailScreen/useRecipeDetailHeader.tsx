@@ -5,7 +5,6 @@ import { Feather, Ionicons } from '@expo/vector-icons'
 import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import type { HouseholdOut } from '@carrot/shared/types'
-import BugReportButton from '../../components/BugReportButton'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
 
@@ -30,12 +29,6 @@ const EditHeaderLeft = ({ onCancel }: { onCancel: () => void }) => {
     </Pressable>
   )
 }
-
-const EditHeaderRight = () => (
-  <View style={styles.headerBtns}>
-    <BugReportButton />
-  </View>
-)
 
 const ViewHeaderRight = ({
   addMode,
@@ -135,7 +128,6 @@ const ViewHeaderRight = ({
       >
         <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
       </Pressable>
-      <BugReportButton />
     </View>
   )
 }
@@ -176,7 +168,7 @@ export const useRecipeDetailHeader = ({
         headerTitle: '',
         headerShadowVisible: false,
         headerLeft: () => <EditHeaderLeft onCancel={handleCancelEdit} />,
-        headerRight: () => <EditHeaderRight />,
+        headerRight: undefined,
       })
     } else {
       navigation.setOptions({

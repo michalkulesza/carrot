@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Stack } from "expo-router";
 import BellMenu from "../../components/BellMenu";
-import BugReportButton from "../../components/BugReportButton";
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -50,7 +49,6 @@ import AllergenSection from "./AllergenSection";
 
 const SettingsHeaderRight = () => (
   <View style={styles.headerRight}>
-    <BugReportButton />
     <BellMenu />
   </View>
 );
@@ -86,6 +84,7 @@ const SettingsScreen = () => {
   const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } = useCookingMode();
   const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false);
   const allergenRecheckPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isOpeningReportRef = useRef(false);
   const allergenRecheckRunRef = useRef(0);
   const allergenRecheckCompletedRef = useRef(0);
 
@@ -227,6 +226,17 @@ const SettingsScreen = () => {
   const handleOpenPrivacyPolicy = useCallback(() => {
     void Linking.openURL("https://carrot.xcxz.xyz/privacy-policy");
   }, []);
+
+  const handleReportIssue = useCallback(() => {
+    if (isOpeningReportRef.current) return;
+    isOpeningReportRef.current = true;
+
+    router.push("/bug-report");
+
+    setTimeout(() => {
+      isOpeningReportRef.current = false;
+    }, 500);
+  }, [router]);
 
   const handleDeleteAccountEmailSubmit = useCallback(
     (input?: string) => {
@@ -413,16 +423,6 @@ const SettingsScreen = () => {
           </View>
         )}
         <Pressable
-          style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}
-          onPress={handleOpenPrivacyPolicy}
-          accessibilityLabel={t("settings.privacyPolicy")}
-          accessibilityRole="link"
-        >
-          <Text style={styles.privacyPolicyText}>
-            {t("settings.privacyPolicy")}
-          </Text>
-        </Pressable>
-        <Pressable
           style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
           onPress={() => router.push("/(tabs)/settings/my-recipes")}
           accessibilityLabel={t("settings.myRecipes")}
@@ -551,6 +551,32 @@ const SettingsScreen = () => {
             </View>
           ) : null}
         </View>
+      </View>
+
+      <SectionHeader label={t("settings.help")} />
+      <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={handleOpenPrivacyPolicy}
+          accessibilityLabel={t("settings.privacyPolicy")}
+          accessibilityRole="link"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.privacyPolicy")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={handleReportIssue}
+          accessibilityLabel={t("settings.reportIssue")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.reportIssue")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
       </View>
 
       <SectionHeader label={t("settings.miscellaneous")} />

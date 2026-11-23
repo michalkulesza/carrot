@@ -417,9 +417,7 @@
     "title": "Signaler un problème",
     "descriptionLabel": "Qu'est-ce qui n'a pas fonctionné ?",
     "descriptionPlaceholder": "Décrivez le problème…",
-    "screenshotNote": "Une capture d'écran sera jointe automatiquement.",
     "submit": "Envoyer le rapport",
-    "submitting": "Envoi en cours…",
     "success": "Merci ! Votre rapport a été envoyé.",
     "sendFailed": "Échec de l'envoi — vérifiez votre connexion et réessayez."
   },
@@ -518,6 +516,8 @@
     "shoppingCategoriesDesc": "Choisissez et ordonnez les catégories de votre liste",
     "shoppingCategoryRequired": "Autres est toujours disponible",
     "miscellaneous": "Divers",
+    "help": "Aide",
+    "reportIssue": "Signaler un problème",
     "logOut": "Se déconnecter",
     "logOutConfirmTitle": "Voulez-vous vraiment vous déconnecter ?",
     "loggingOut": "Déconnexion…",

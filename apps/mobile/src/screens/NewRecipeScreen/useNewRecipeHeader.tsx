@@ -3,7 +3,6 @@ import { Alert, PlatformColor, Pressable, Text } from 'react-native'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import { useTranslation } from 'react-i18next'
 import { Feather } from '@expo/vector-icons'
-import BugReportButton from '../../components/BugReportButton'
 import type { EditableRecipe } from './helpers'
 import { isBlankRecipe } from './helpers'
 import { styles } from './styles'
@@ -49,7 +48,6 @@ export const useNewRecipeHeader = ({
           <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
         </Pressable>
       ),
-      headerRight: () => <BugReportButton />,
     })
   }, [navigation, t, handleBackPress])
 }

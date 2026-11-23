@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   Alert,
   KeyboardAvoidingView,
@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
 import * as Haptics from 'expo-haptics'
 import * as Sentry from '@sentry/react-native'
@@ -19,28 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '../src/theme/colors'
 import { useAuth } from '../src/context/AuthContext'
 import { useHousehold } from '../src/context/HouseholdContext'
-import { takeBugReportScreenshot } from '../src/lib/bugReportScreenshot'
 import PrimaryButton from '../src/components/PrimaryButton'
-
-const BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-const base64ToBytes = (base64: string): Uint8Array => {
-  const clean = base64.replace(/[^A-Za-z0-9+/]/g, '')
-  const byteLength = Math.floor((clean.length * 6) / 8)
-  const bytes = new Uint8Array(byteLength)
-  let bitBuffer = 0
-  let bitCount = 0
-  let byteIndex = 0
-  for (let i = 0; i < clean.length; i++) {
-    bitBuffer = (bitBuffer << 6) | BASE64_CHARS.indexOf(clean[i])
-    bitCount += 6
-    if (bitCount >= 8) {
-      bitCount -= 8
-      bytes[byteIndex++] = (bitBuffer >> bitCount) & 0xff
-    }
-  }
-  return bytes
-}
 
 const BugReportScreen = () => {
   const { t } = useTranslation()
@@ -49,32 +28,12 @@ const BugReportScreen = () => {
   const headerHeight = useHeaderHeight()
   const { user } = useAuth()
   const { activeHouseholdId } = useHousehold()
-  const params = useLocalSearchParams<{ route?: string }>()
 
   const [description, setDescription] = useState('')
-  const [shot, setShot] = useState<string | undefined>(undefined)
-  const [capturingShot, setCapturingShot] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const canSubmit = description.trim().length > 0 && !submitting
-
-  useEffect(() => {
-    const pending = takeBugReportScreenshot()
-    if (!pending) {
-      setCapturingShot(false)
-      return
-    }
-    let cancelled = false
-    pending.then((result) => {
-      if (cancelled) return
-      setShot(result)
-      setCapturingShot(false)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   const handleSubmit = useCallback(async () => {
     if (!canSubmit) return
@@ -87,15 +46,11 @@ const BugReportScreen = () => {
         {
           captureContext: {
             tags: {
-              route: params.route ?? '',
               appVersion,
               userId: user?.id ?? '',
               householdId: activeHouseholdId ?? '',
             },
           },
-          attachments: shot
-            ? [{ filename: 'screenshot.jpg', data: base64ToBytes(shot), contentType: 'image/jpeg' }]
-            : [],
         },
       )
       if (!__DEV__) {
@@ -110,7 +65,7 @@ const BugReportScreen = () => {
       setError(t('bugReport.sendFailed'))
       setSubmitting(false)
     }
-  }, [canSubmit, description, params.route, user, activeHouseholdId, shot, router, t])
+  }, [canSubmit, description, user, activeHouseholdId, router, t])
 
   return (
     <>
@@ -140,10 +95,6 @@ const BugReportScreen = () => {
             textAlignVertical="top"
             accessibilityLabel={t('bugReport.descriptionLabel')}
           />
-
-          {(capturingShot || shot) && (
-            <Text style={styles.screenshotNote}>{t('bugReport.screenshotNote')}</Text>
-          )}
 
           <PrimaryButton
             onPress={handleSubmit}
@@ -183,11 +134,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: colors.label,
     backgroundColor: colors.background,
-  },
-  screenshotNote: {
-    fontSize: 13,
-    color: colors.secondaryLabel,
-    marginBottom: 20,
   },
 })
 

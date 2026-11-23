@@ -9,7 +9,6 @@ import * as Sentry from '@sentry/react-native'
 import * as Notifications from 'expo-notifications'
 import { useIsRestoring, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNotificationHistory } from '../src/context/NotificationHistoryContext'
-import BugReportButton from '../src/components/BugReportButton'
 import DeviceHtmlCaptureHost from '../src/components/DeviceHtmlCapture'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
@@ -68,8 +67,6 @@ const navigationThemeColors: Theme['colors'] = {
   notification: colors.red,
 }
 
-const BugReportHeaderRight = () => <BugReportButton />
-
 const NewRecipeHeaderTitle = () => {
   const { t } = useTranslation()
 
@@ -91,10 +88,9 @@ const tabsScreenOptions = { headerShown: false }
 const shareScreenOptions = { animation: 'none' as const, headerShown: false }
 const newRecipeScreenOptions = {
   headerTitle: renderNewRecipeHeaderTitle,
-  headerRight: BugReportHeaderRight,
 }
 const webViewImportScreenOptions = { headerTitle: renderWebViewImportHeaderTitle }
-const detailScreenOptions = { title: '', headerRight: BugReportHeaderRight }
+const detailScreenOptions = { title: '' }
 const bugReportScreenOptions = { presentation: 'modal' as const }
 
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })

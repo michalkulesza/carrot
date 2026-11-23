@@ -5,7 +5,6 @@ import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import BellMenu from '../../components/BellMenu'
-import BugReportButton from '../../components/BugReportButton'
 import HeaderTitle from '../../components/HeaderTitle'
 import { colors } from '../../theme/colors'
 import { styles } from './styles'
@@ -28,7 +27,6 @@ const MealPlanHeaderRight = ({ exporting, onExportPdf }: { exporting: boolean; o
       >
         <Feather name="printer" size={22} color={colors.secondaryLabel} />
       </Pressable>
-      <BugReportButton />
       <BellMenu />
     </View>
   )

@@ -417,9 +417,7 @@
     "title": "Segnala un problema",
     "descriptionLabel": "Cosa è andato storto?",
     "descriptionPlaceholder": "Descrivi il problema…",
-    "screenshotNote": "Verrà allegato automaticamente uno screenshot della schermata attuale.",
     "submit": "Invia segnalazione",
-    "submitting": "Invio…",
     "success": "Grazie! La tua segnalazione è stata inviata.",
     "sendFailed": "Impossibile inviare — controlla la connessione e riprova."
   },
@@ -518,6 +516,8 @@
     "shoppingCategoriesDesc": "Scegli e ordina le categorie mostrate nella tua lista della spesa",
     "shoppingCategoryRequired": "«Altro» è sempre disponibile",
     "miscellaneous": "Varie",
+    "help": "Aiuto",
+    "reportIssue": "Segnala un problema",
     "logOut": "Esci",
     "logOutConfirmTitle": "Vuoi davvero uscire?",
     "loggingOut": "Uscita in corso…",

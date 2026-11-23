@@ -78,7 +78,6 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   logoutText: { color: colors.red, fontSize: 16, fontWeight: '500' },
-  privacyPolicyText: { color: colors.blue, fontSize: 16 },
   loadingRow: { padding: 24, alignItems: 'center' },
   errorText: { color: colors.red, fontSize: 16, padding: 16 },
   switchLabel: {
