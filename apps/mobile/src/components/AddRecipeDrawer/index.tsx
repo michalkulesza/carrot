@@ -13,6 +13,7 @@ import { useApiClient } from '@carrot/shared/api/context'
 import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
 import { isUnsupportedImportUrl } from '@carrot/shared/utils/importSource'
 import { useHousehold } from '../../context/HouseholdContext'
+import { useAuth } from '../../context/AuthContext'
 import { enqueueImport } from '../../utils/enqueueImport'
 import { normalizeHttpUrl, type AddRecipeMethod, type AddRecipeSubview } from './helpers'
 import MethodPickerView from './MethodPickerView'
@@ -41,6 +42,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const insets = useSafeAreaInsets()
   const api = useApiClient()
   const qc = useQueryClient()
+  const { user } = useAuth()
   const { activeHouseholdId } = useHousehold()
   const { data: myRecipes = [], isLoading: isLoadingPersonalRecipes } = useMyRecipes()
   const personalRecipes = myRecipes.filter(
@@ -111,7 +113,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     setLoading(true)
     setError(null)
     try {
-      await enqueueImport(api, qc, kind, input)
+      await enqueueImport(api, qc, kind, input, user)
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       sheetRef.current?.dismiss()
     } catch (err) {
@@ -120,7 +122,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
     } finally {
       setLoading(false)
     }
-  }, [api, qc, t])
+  }, [api, qc, t, user])
 
   const handleImportUrl = useCallback(async () => {
     if (!canImport || !normalizedUrl) return

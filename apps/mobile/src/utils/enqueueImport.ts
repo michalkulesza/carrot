@@ -1,29 +1,55 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { ApiClient } from '@carrot/shared/api/client'
-import type { ImportJob } from '@carrot/shared/types'
+import type { AuthUser, ImportJob } from '@carrot/shared/types'
+import { buildOptimisticImportJob, buildOptimisticJobId } from '@carrot/shared/utils/optimisticImportJob'
 import { createUuid } from './uuid'
 import { setImportImagePreview } from './importImagePreviews'
 import { resolveRecipePreview } from './recipePreview'
+
+const queryKey = ['importJobs']
 
 export const enqueueImport = async (
   api: ApiClient,
   qc: QueryClient,
   kind: 'url' | 'text' | 'image',
   input: Record<string, string>,
+  author?: AuthUser | null,
 ): Promise<ImportJob> => {
-  const job = await api.enqueueImportJob({ kind, input, idempotency_key: createUuid() })
+  const idempotencyKey = createUuid()
+  const placeholderId = buildOptimisticJobId(idempotencyKey)
+  const imagePreviewUri = kind === 'image' && input.image_base64
+    ? `data:${input.mime_type ?? 'image/jpeg'};base64,${input.image_base64}`
+    : null
+  const placeholder = buildOptimisticImportJob({
+    id: placeholderId,
+    kind,
+    sourceUrl: kind === 'url' ? input.url ?? null : null,
+    userId: author?.id ?? '',
+    userName: author?.nickname ?? null,
+  })
 
-  if (kind === 'image' && input.image_base64) {
-    setImportImagePreview(job.id, `data:${input.mime_type ?? 'image/jpeg'};base64,${input.image_base64}`)
+  if (imagePreviewUri) setImportImagePreview(placeholderId, imagePreviewUri)
+  qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => [...jobs, placeholder])
+
+  let job: ImportJob
+  try {
+    job = await api.enqueueImportJob({ kind, input, idempotency_key: idempotencyKey })
+  } catch (error) {
+    qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => jobs.filter((item) => item.id !== placeholderId))
+    throw error
   }
 
-  qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs.filter((item) => item.id !== job.id), job])
+  if (imagePreviewUri) setImportImagePreview(job.id, imagePreviewUri)
+  qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => [
+    ...jobs.filter((item) => item.id !== placeholderId && item.id !== job.id),
+    job,
+  ])
 
   if (kind === 'url') {
     void resolveRecipePreview(input.url).then((previewUrl) => {
       if (!previewUrl) return
       setImportImagePreview(job.id, previewUrl)
-      qc.setQueryData<ImportJob[]>(['importJobs'], (jobs = []) => [...jobs])
+      qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => [...jobs])
     })
   }
 

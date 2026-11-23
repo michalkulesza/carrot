@@ -9,6 +9,7 @@ import { useApiClient } from '@carrot/shared/api/context'
 import type { CapturedHtmlPayload, ImportJob } from '@carrot/shared/types'
 import { CAPTURE_REJECTED_DETAIL } from '@carrot/shared/utils/challengeDetection'
 import { VISIBLE_CAPTURE_SCRIPT, parseCapturedMessage } from '../components/DeviceHtmlCapture/helpers'
+import { useAuth } from '../context/AuthContext'
 import { enqueueImport } from '../utils/enqueueImport'
 
 // Keep well under the backend's extraction cap so the page text doesn't blow up route params.
@@ -55,6 +56,7 @@ const WebViewImportScreen = () => {
   const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
+  const { user } = useAuth()
   const api = useApiClient()
   const qc = useQueryClient()
   const webViewRef = useRef<WebView>(null)
@@ -108,14 +110,14 @@ const WebViewImportScreen = () => {
         return
       }
       try {
-        await enqueueImport(api, qc, 'text', { text })
+        await enqueueImport(api, qc, 'text', { text }, user)
         router.replace('/(tabs)/recipes')
       } catch (err) {
         setExtracting(false)
         Alert.alert(t('addRecipe.importFailed'), err instanceof Error ? err.message : t('importJobs.enqueueFailed'))
       }
     },
-    [api, qc, router, t, jobId, handleCaptureMessage]
+    [api, qc, router, t, jobId, handleCaptureMessage, user]
   )
 
   useLayoutEffect(() => {

@@ -7,6 +7,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useApiClient } from '@carrot/shared/api/context'
 import { extractSingleUrl, isUnsupportedImportUrl } from '@carrot/shared/utils/importSource'
+import { useAuth } from '../src/context/AuthContext'
 import { enqueueImport } from '../src/utils/enqueueImport'
 
 type ShareParams = { type?: string; value?: string; mimeType?: string }
@@ -44,6 +45,7 @@ const getSharedImport = async (params: ShareParams): Promise<SharedImport | null
 export default function ShareRedirect() {
   const params = useLocalSearchParams<ShareParams>()
   const { t } = useTranslation()
+  const { user } = useAuth()
   const api = useApiClient()
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -69,7 +71,7 @@ export default function ShareRedirect() {
           return
         }
 
-        await enqueueImport(api, queryClient, sharedImport.kind, sharedImport.input)
+        await enqueueImport(api, queryClient, sharedImport.kind, sharedImport.input, user)
         router.replace('/(tabs)/recipes')
       } catch {
         setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
@@ -79,7 +81,7 @@ export default function ShareRedirect() {
     }
 
     void enqueueSharedImport()
-  }, [api, params, queryClient, router, t])
+  }, [api, params, queryClient, router, t, user])
 
   if (!destination) {
     return (

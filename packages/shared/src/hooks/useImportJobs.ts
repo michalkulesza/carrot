@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import type { ImportJob, RecipeOut } from '../types'
+import { isOptimisticJobId, isPlaceholderFor } from '../utils/optimisticImportJob'
 
 const queryKey = ['importJobs'] as const
 
@@ -10,7 +11,11 @@ const applyJob = (jobs: ImportJob[], type: string, job: ImportJob): ImportJob[] 
     return jobs.filter((item) => item.id !== job.id)
   }
   const existing = jobs.findIndex((item) => item.id === job.id)
-  if (existing === -1) return [...jobs, job]
+  if (existing === -1) {
+    const placeholderIndex = isOptimisticJobId(job.id) ? -1 : jobs.findIndex((item) => isPlaceholderFor(item, job))
+    if (placeholderIndex === -1) return [...jobs, job]
+    return [...jobs.filter((_, index) => index !== placeholderIndex), job]
+  }
   return jobs.map((item) => (item.id === job.id ? job : item))
 }
 
@@ -99,19 +104,21 @@ export const useImportJobs = (scopeKey: string | null, onJobEvent?: (event: { ty
 
   const retry = useMutation(requeueMutationOptions(api.retryImportJob))
   const importAnyway = useMutation(requeueMutationOptions(api.importJobAnyway))
-  const cancel = useMutation({ mutationFn: api.cancelImportJob })
-  const dismiss = useMutation({
-    mutationFn: api.dismissImportJob,
-    onMutate: async (jobId) => {
+  const removeJobMutationOptions = (mutationFn: (jobId: string) => Promise<unknown>) => ({
+    mutationFn,
+    onMutate: async (jobId: string) => {
       await qc.cancelQueries({ queryKey })
       const previousJobs = qc.getQueryData<ImportJob[]>(queryKey)
       qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => jobs.filter((job) => job.id !== jobId))
       return { previousJobs }
     },
-    onError: (_error, _jobId, context) => {
+    onError: (_error: unknown, _jobId: string, context: { previousJobs?: ImportJob[] } | undefined) => {
       if (context?.previousJobs) qc.setQueryData(queryKey, context.previousJobs)
     },
   })
+
+  const cancel = useMutation(removeJobMutationOptions(api.cancelImportJob))
+  const dismiss = useMutation(removeJobMutationOptions(api.dismissImportJob))
 
   return { jobs: query.data ?? [], seed, retry, importAnyway, cancel, dismiss, completedRecipeIds }
 }

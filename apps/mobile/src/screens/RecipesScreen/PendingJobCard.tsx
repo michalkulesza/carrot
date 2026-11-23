@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { ActionSheetIOS, ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { ActivityIndicator, Alert, Image, Linking, PlatformColor, Pressable, Text, View, type StyleProp, type ViewStyle } from 'react-native'
+import { MenuView } from '@react-native-menu/menu'
+import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
@@ -12,6 +14,7 @@ import { MarqueeSyncSlots } from '../../components/MarqueeSync'
 import { PLACEHOLDER_URL } from '../../api/thumbnailUrl'
 import { clearImportImagePreview, getImportImagePreview } from '../../utils/importImagePreviews'
 import { resolveRecipePreview } from '../../utils/recipePreview'
+import { isOptimisticJobId } from '@carrot/shared/utils/optimisticImportJob'
 import { PERSONAL_LIBRARY_COLOR } from '@carrot/shared/utils/householdColors'
 import { useAuth } from '../../context/AuthContext'
 import { deviceCaptureStore, useDeviceCaptureState } from '../../components/DeviceHtmlCapture/store'
@@ -83,45 +86,6 @@ const PendingJobCard = ({
   const handleGoToRecipe = () => {
     if (job.duplicate_recipe_id) onGoToRecipe(job.duplicate_recipe_id)
   }
-  const handleDuplicateMenu = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    const actions = [
-      { label: t('importJobs.duplicate.importAnyway'), run: handleImportAnyway },
-      ...(job.duplicate_recipe_id ? [{ label: t('importJobs.duplicate.goToRecipe'), run: handleGoToRecipe }] : []),
-      { label: t('importJobs.duplicate.dontImport'), run: handleDismiss },
-    ]
-    const options = [...actions.map((action) => action.label), t('common.cancel')]
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title,
-        message: t('importJobs.duplicate.message'),
-        options,
-        destructiveButtonIndex: actions.length - 1,
-        cancelButtonIndex: actions.length,
-      },
-      (index) => actions[index]?.run(),
-    )
-  }
-  const handleFailedMenu = () => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    const actions = [
-      ...(canOpenSourceUrl ? [{ label: t('importJobs.openAndPaste'), run: onContinueManually }] : []),
-      { label: t('importJobs.retry'), run: handleRetry },
-      { label: t('importJobs.cancelImport'), run: handleDismiss },
-    ]
-    const options = [...actions.map((action) => action.label), t('common.cancel')]
-    const message = canOpenSourceUrl ? t('importJobs.userActionRequired.body') : undefined
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title,
-        message,
-        options,
-        destructiveButtonIndex: actions.length - 1,
-        cancelButtonIndex: actions.length,
-      },
-      (index) => actions[index]?.run(),
-    )
-  }
   const handleOpenSourceUrl = async () => {
     if (!job.source_url || sourceUrlOpening.current) return
 
@@ -144,9 +108,60 @@ const PendingJobCard = ({
     ])
   }
 
-  const handleCardPress = isFailedCard ? (isDuplicate ? handleDuplicateMenu : handleFailedMenu) : undefined
-  const handleCardLongPress = canOpenSourceUrl ? handleSourceUrlMenu : undefined
-  const isCardInteractive = Boolean(handleCardPress || handleCardLongPress)
+  const menuActions = useMemo<MenuAction[]>(() => {
+    const openLinkAction: MenuAction[] = canOpenSourceUrl
+      ? [{ id: 'openLink', title: t('importJobs.openLink'), image: 'safari' }]
+      : []
+
+    if (isDuplicate) {
+      const goToRecipeAction: MenuAction[] = job.duplicate_recipe_id
+        ? [{ id: 'goToRecipe', title: t('importJobs.duplicate.goToRecipe'), image: 'book' }]
+        : []
+      return [
+        { id: 'importAnyway', title: t('importJobs.duplicate.importAnyway'), image: 'square.and.arrow.down' },
+        ...goToRecipeAction,
+        ...openLinkAction,
+        { id: 'dismiss', title: t('importJobs.duplicate.dontImport'), image: 'xmark', attributes: { destructive: true } },
+      ]
+    }
+
+    const openAndPasteAction: MenuAction[] = canOpenSourceUrl
+      ? [{ id: 'openAndPaste', title: t('importJobs.openAndPaste'), image: 'doc.on.clipboard' }]
+      : []
+    return [
+      ...openAndPasteAction,
+      { id: 'retry', title: t('importJobs.retry'), image: 'arrow.clockwise' },
+      ...openLinkAction,
+      { id: 'dismiss', title: t('importJobs.cancelImport'), image: 'xmark', attributes: { destructive: true } },
+    ]
+  }, [canOpenSourceUrl, isDuplicate, job.duplicate_recipe_id, t])
+
+  const handleMenuAction = ({ nativeEvent }: NativeActionEvent) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    switch (nativeEvent.event) {
+      case 'importAnyway':
+        handleImportAnyway()
+        break
+      case 'goToRecipe':
+        handleGoToRecipe()
+        break
+      case 'openAndPaste':
+        onContinueManually()
+        break
+      case 'retry':
+        handleRetry()
+        break
+      case 'openLink':
+        void handleOpenSourceUrl()
+        break
+      case 'dismiss':
+        handleDismiss()
+        break
+    }
+  }
+
+  const handleCardLongPress = canOpenSourceUrl && !isFailedCard ? handleSourceUrlMenu : undefined
+  const isOptimistic = isOptimisticJobId(job.id)
 
   const cardStyle = [styles.pendingCard, isFailedCard && styles.pendingCardAttention]
   const titleStyle = [styles.pendingTitle, isFailedCard && styles.pendingTitleAttention]
@@ -215,12 +230,37 @@ const PendingJobCard = ({
 
   useEffect(() => () => clearImportImagePreview(job.id), [job.id])
 
+  const renderMenu = (children: ReactNode, style?: StyleProp<ViewStyle>) => (
+    <MenuView
+      title={title}
+      actions={menuActions}
+      shouldOpenOnLongPress={false}
+      style={style}
+      onPressAction={handleMenuAction}
+    >
+      {children}
+    </MenuView>
+  )
+
+  const iconName = isDuplicate ? 'chevron-right' : 'alert-circle'
+  const attentionButton = (
+    <View style={styles.pendingIconAction} accessibilityRole="button" accessibilityLabel={title}>
+      <Feather name={iconName} size={20} color="#ffffff" />
+    </View>
+  )
+
   return (
     <View style={cardStyle}>
-      {isCardInteractive ? (
+      {isFailedCard ? (
+        renderMenu(
+          <View style={styles.pendingContent} accessibilityRole="button" accessibilityLabel={job.source_url ?? title}>
+            {cardContent}
+          </View>,
+          styles.pendingContent,
+        )
+      ) : handleCardLongPress ? (
         <Pressable
           style={styles.pendingContent}
-          onPress={handleCardPress}
           onLongPress={handleCardLongPress}
           delayLongPress={500}
           accessibilityRole="button"
@@ -232,26 +272,15 @@ const PendingJobCard = ({
         <View style={styles.pendingContent}>{cardContent}</View>
       )}
       {capturingOnDevice ? null : job.status === 'failed' ? (
-        <View style={styles.pendingCancelWrap}>
-          {isDuplicate ? (
-            <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDuplicateMenu} accessibilityLabel={title}>
-              <Feather name="chevron-right" size={20} color="#ffffff" />
-            </Pressable>
-          ) : (
-            <Pressable
-              style={styles.pendingIconAction}
-              disabled={actionPending}
-              onPress={handleFailedMenu}
-              hitSlop={6}
-              accessibilityLabel={title}
-            >
-              <Feather name="alert-circle" size={20} color="#ffffff" />
-            </Pressable>
-          )}
-        </View>
+        <View style={styles.pendingCancelWrap}>{renderMenu(attentionButton)}</View>
       ) : (
         <View style={styles.pendingCancelWrap}>
-          <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleCancel} accessibilityLabel={t('importJobs.cancel')}>
+          <Pressable
+            style={styles.pendingIconAction}
+            disabled={actionPending || isOptimistic}
+            onPress={handleCancel}
+            accessibilityLabel={t('importJobs.cancel')}
+          >
             <Feather name="x" size={18} color={PlatformColor('secondaryLabel') as unknown as string} />
           </Pressable>
         </View>
