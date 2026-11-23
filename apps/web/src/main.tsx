@@ -6,7 +6,10 @@ import './i18n'
 import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 
+const sentryEnvironment = import.meta.env.DEV ? 'development' : 'production'
+
 const sentryOptions: Sentry.BrowserOptions = {
+  environment: sentryEnvironment,
   dsn: 'https://c99c9d4ee4dcc9a6b30e23963716751d@o4511350064611328.ingest.de.sentry.io/4511571143295056',
   tracesSampleRate: 1.0,
   integrations: [

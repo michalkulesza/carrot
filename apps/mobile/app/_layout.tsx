@@ -15,12 +15,13 @@ import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
 import { useResolvedColorScheme } from '../src/context/ColorSchemeContext'
 
-if (!__DEV__) {
-  Sentry.init({
-    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-    tracesSampleRate: 1.0,
-  })
-}
+const sentryEnvironment = __DEV__ ? 'development' : 'production'
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  environment: sentryEnvironment,
+  tracesSampleRate: 1.0,
+})
 import { QueryClient } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister'
