@@ -127,3 +127,21 @@ def test_cleaner_strips_data_uri_images() -> None:
     assert "data:" not in cleaned
     assert "https://x.test/a.jpg" in cleaned
     assert "1 onion" in cleaned
+
+
+def test_cleaner_keeps_recipe_card_inside_wrapper_with_noise_class() -> None:
+    html = """
+    <html><body><article>
+      <div class="post-content-wrap has-share-float">
+        <div class="wprm-recipe-container"><div class="wprm-recipe">
+          <ul><li class="wprm-recipe-ingredient"><span class="wprm-recipe-ingredient-name">udon noodles</span></li></ul>
+        </div></div>
+      </div>
+      <div class="share-buttons">Share on Facebook</div>
+    </article></body></html>
+    """
+
+    cleaned = clean_html_body(html)
+
+    assert "udon noodles" in cleaned
+    assert "Share on Facebook" not in cleaned

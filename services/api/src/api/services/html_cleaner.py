@@ -34,16 +34,20 @@ def _is_structural_container(element: Tag) -> bool:
     )
 
 
+def _contains_recipe_card(element: Tag) -> bool:
+    return element.find(class_="wprm-recipe-container") is not None or element.select_one('[itemtype*="Recipe"]') is not None
+
+
 def _is_noise_element(element: Tag) -> bool:
-    if _is_structural_container(element):
-        return False
     attributes = " ".join([
         " ".join(element.get("class") or []),
         element.get("id") or "",
         element.get("role") or "",
     ]).lower()
+    if not any(token in attributes for token in NOISE_ATTRIBUTE_TOKENS):
+        return False
 
-    return any(token in attributes for token in NOISE_ATTRIBUTE_TOKENS)
+    return not (_is_structural_container(element) or _contains_recipe_card(element))
 
 
 def _is_recipe_servings_control(element: Tag) -> bool:
