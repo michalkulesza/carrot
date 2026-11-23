@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import httpx
+import sentry_sdk
 from pydantic import ValidationError
 from sqlalchemy import func, select, text, update
 
@@ -39,7 +40,7 @@ from api.services import r2 as r2_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.allergen_rechecks import recover_running_jobs, settle_allergen_status, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
-from api.services.monitoring import report_recipe_import_failure, report_missing_critical_fields, report_service_failure
+from api.services.monitoring import apply_job_identity, job_sentry_scope, report_recipe_import_failure, report_missing_critical_fields, report_service_failure
 from api.services.extraction_v2.challenge import looks_like_bot_challenge
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import (
@@ -74,10 +75,14 @@ _IMAGE_MIME_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "ima
 
 
 class ImportPipelineFailure(Exception):
-    def __init__(self, code: str, stage: str = "unknown", residential: tuple[str, str] | None = None) -> None:
+    def __init__(
+        self, code: str, stage: str = "unknown", residential: tuple[str, str] | None = None,
+        summary: dict | None = None,
+    ) -> None:
         super().__init__(code)
         self.code = code
         self.stage = stage
+        self.summary = summary or {}
         self.residential = residential  # (step, outcome) of the last residential egress attempt
 
 
@@ -94,6 +99,10 @@ def _residential_attempt(outcome: FailedOutcome) -> tuple[str, str] | None:
             step, _, result = event.detail.partition(":")
             return step, result
     return None
+
+
+def _failure_summary(outcome: FailedOutcome) -> dict:
+    return {"trace": [f"{event.stage.value}:{event.event}" for event in outcome.trace]}
 
 
 def _record_residential(job: ImportJob, attempt: tuple[str, str] | None) -> None:
@@ -368,7 +377,7 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         else:
             outcome, metadata, source_capture = await acquire_and_extract_url(job.input["url"], usage)
         if isinstance(outcome, FailedOutcome):
-            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value, _residential_attempt(outcome))
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value, _residential_attempt(outcome), _failure_summary(outcome))
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=metadata,
@@ -381,7 +390,7 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
         usage = gemini_svc.UsageTracker()
         outcome = await extract_pasted_text(job.input["text"], usage)
         if isinstance(outcome, FailedOutcome):
-            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value, summary=_failure_summary(outcome))
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=ImportMetadata(),
@@ -417,7 +426,7 @@ async def _run_pipeline(job: ImportJob, available_tags: list[str], allergens: li
             raise ImportPipelineFailure(FailureReason.INVALID_INPUT.value.lower(), "transcript")
         outcome = await extract_image_transcript(transcript, usage)
         if isinstance(outcome, FailedOutcome):
-            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value)
+            raise ImportPipelineFailure(outcome.reason.value.lower(), outcome.failed_stage.value, summary=_failure_summary(outcome))
         recipe = await _enrich_v2(outcome.recipe, available_tags, allergens, usage)
         return ImportResult(
             stage="transcript", recipe=recipe, metadata=ImportMetadata(),
@@ -511,16 +520,28 @@ async def _fail_or_retry(job_id: uuid.UUID, error: Exception) -> None:
                 source_kind=("html" if _source_host_is_html(job.input.get("url")) else "social") if job.kind == ImportJobKind.URL else str(job.kind),
                 error=None if isinstance(error, ImportPipelineFailure) else error,
                 residential_step=error.residential[0] if getattr(error, "residential", None) else None,
+                job_id=job.id,
+                job_kind=str(job.kind),
+                user_id=job.user_id,
+                summary=getattr(error, "summary", None),
+                retry_count=job.retry_count,
+                diagnostic_error=job.diagnostic_error,
             )
         await session.commit()
 
 
 async def _process_job(job_id: uuid.UUID) -> None:
+    with job_sentry_scope("recipe_import", job_id=job_id):
+        await _process_job_in_scope(job_id)
+
+
+async def _process_job_in_scope(job_id: uuid.UUID) -> None:
     try:
         async with async_session_maker() as session:
             job = await session.get(ImportJob, job_id)
             if job is None or job.status != ImportJobStatus.RUNNING:
                 return
+            apply_job_identity(sentry_sdk.get_isolation_scope(), job_id=job_id, job_kind=str(job.kind), user_id=job.user_id)
             if not await _is_member(session, job):
                 job.status = ImportJobStatus.FAILED
                 job.failure_code = ImportFailureCode.HOUSEHOLD_ACCESS_CHANGED
@@ -610,6 +631,9 @@ async def _process_job(job_id: uuid.UUID) -> None:
                 failure_stage=result.stage,
                 renderer_status=renderer_status,
                 fallback_status=fallback_status,
+                job_id=job_id,
+                job_kind=str(current.kind),
+                user_id=current.user_id,
             )
     except Exception as error:
         log.warning("Import job %s failed (%s)", job_id, type(error).__name__)
@@ -685,6 +709,11 @@ async def _retry_embedding_job(recipe_id: uuid.UUID, error: Exception) -> None:
 
 
 async def _process_embedding_job(recipe_id: uuid.UUID) -> None:
+    with job_sentry_scope("recipe_embedding"):
+        await _process_embedding_job_in_scope(recipe_id)
+
+
+async def _process_embedding_job_in_scope(recipe_id: uuid.UUID) -> None:
     try:
         async with async_session_maker() as session:
             recipe = await session.scalar(select(Recipe).where(Recipe.id == recipe_id))
@@ -782,23 +811,25 @@ async def _worker_loop() -> None:
 
 async def _push_loop() -> None:
     while True:
-        try:
-            await _deliver_pushes()
-        except Exception as error:
-            log.warning("Import push relay failed: %s", type(error).__name__)
-            report_service_failure("import_push_relay", error=error)
+        with job_sentry_scope("import_push_relay"):
+            try:
+                await _deliver_pushes()
+            except Exception as error:
+                log.warning("Import push relay failed: %s", type(error).__name__)
+                report_service_failure("import_push_relay", error=error)
         await asyncio.sleep(_POLL_INTERVAL_SECONDS)
 
 
 async def _awaiting_children_loop() -> None:
     while True:
-        try:
-            async with async_session_maker() as session:
-                if await finalize_overdue_parents(session):
-                    await session.commit()
-        except Exception as error:
-            log.warning("Awaiting-children sweep failed: %s", type(error).__name__)
-            report_service_failure("import_awaiting_children", error=error)
+        with job_sentry_scope("import_awaiting_children"):
+            try:
+                async with async_session_maker() as session:
+                    if await finalize_overdue_parents(session):
+                        await session.commit()
+            except Exception as error:
+                log.warning("Awaiting-children sweep failed: %s", type(error).__name__)
+                report_service_failure("import_awaiting_children", error=error)
         await asyncio.sleep(_AWAITING_CHILDREN_SWEEP_SECONDS)
 
 

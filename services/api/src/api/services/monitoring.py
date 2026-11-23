@@ -1,4 +1,7 @@
 import logging
+import uuid
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import sentry_sdk
 import sentry_sdk.logger as sentry_logger
@@ -14,6 +17,72 @@ def _sanitize_source_url(source_url: str | None) -> str | None:
     host = parsed.hostname or ""
     port = f":{parsed.port}" if parsed.port else ""
     return urlunsplit((parsed.scheme, f"{host}{port}", "", "", ""))
+
+
+def _sanitize_source_path_url(source_url: str | None) -> str | None:
+    if not source_url:
+        return None
+    parsed = urlsplit(source_url)
+    host = parsed.hostname or ""
+    port = f":{parsed.port}" if parsed.port else ""
+    return urlunsplit((parsed.scheme, f"{host}{port}", parsed.path, "", ""))
+
+
+_MAX_TRACE_NAMES = 30
+
+
+def apply_job_identity(scope, *, job_id: uuid.UUID | None, job_kind: str | None, user_id: uuid.UUID | None) -> None:
+    if job_id is not None:
+        scope.set_tag("job_id", str(job_id))
+    if job_kind:
+        scope.set_tag("job_kind", str(job_kind))
+    if user_id is not None:
+        scope.set_user({"id": str(user_id)})
+
+
+@contextmanager
+def job_sentry_scope(
+    transaction_name: str, *, job_id: uuid.UUID | None = None, job_kind: str | None = None, user_id: uuid.UUID | None = None,
+) -> Iterator[None]:
+    """Give one queue item its own breadcrumbs, tags, user, trace id and transaction name."""
+    with sentry_sdk.isolation_scope() as scope:
+        scope.clear_breadcrumbs()
+        scope.set_new_propagation_context()
+        scope.set_transaction_name(transaction_name)
+        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
+        yield
+
+
+def build_import_failure_context(
+    *,
+    input_kind: str,
+    reason: str,
+    source_url: str | None = None,
+    input_size: int | None = None,
+    failure_stage: str | None = None,
+    source_kind: str | None = None,
+    summary: dict | None = None,
+    retry_count: int | None = None,
+    diagnostic_error: str | None = None,
+) -> dict:
+    """Names, counts and statuses only; callers pass source_url solely for URL jobs. diagnostic_error is a failure code or exception type name."""
+    summary = summary or {}
+    trace_names = [str(name) for name in summary.get("trace", [])][:_MAX_TRACE_NAMES]
+    context = {
+        "source_origin": _sanitize_source_url(source_url),
+        "input_size": input_size,
+        "reason": str(reason),
+        "failure_stage": failure_stage,
+        "source_kind": source_kind or input_kind,
+        "trace": trace_names,
+        "retry_count": retry_count,
+        "source_url": _sanitize_source_path_url(source_url),
+        "diagnostic_error": diagnostic_error,
+    }
+    for key in ("ingredient_count", "step_count", "renderer_status", "fallback_status"):
+        if summary.get(key) is not None:
+            context[key] = summary[key]
+    return context
 
 
 def init_sentry() -> None:
@@ -79,22 +148,27 @@ def report_recipe_import_failure(
     source_kind: str | None = None,
     error: Exception | None = None,
     residential_step: str | None = None,
+    job_id: uuid.UUID | None = None,
+    job_kind: str | None = None,
+    user_id: uuid.UUID | None = None,
+    summary: dict | None = None,
+    retry_count: int | None = None,
+    diagnostic_error: str | None = None,
 ) -> None:
     """Report a terminal import failure without sending pasted recipe contents."""
     with sentry_sdk.new_scope() as scope:
+        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
         scope.set_tag("operation", "recipe_import")
         scope.set_tag("input_kind", input_kind)
         scope.set_tag("reason", str(reason))
         if residential_step:
             scope.set_tag("egress", "residential")
             scope.set_tag("residential_step", residential_step)
-        scope.set_context("recipe_import", {
-            "source_origin": _sanitize_source_url(source_url),
-            "input_size": input_size,
-            "reason": str(reason),
-            "failure_stage": failure_stage,
-            "source_kind": source_kind or input_kind,
-        })
+        scope.set_context("recipe_import", build_import_failure_context(
+            input_kind=input_kind, reason=reason, source_url=source_url, input_size=input_size,
+            failure_stage=failure_stage, source_kind=source_kind, summary=summary,
+            retry_count=retry_count, diagnostic_error=diagnostic_error,
+        ))
         scope.fingerprint = ["recipe_import_failure", str(reason)]
         if error is not None:
             sentry_sdk.capture_exception(error)
@@ -107,12 +181,16 @@ def report_missing_critical_fields(
     final_outcome: str | None = None, failure_stage: str | None = None,
     renderer_status: str | None = None, fallback_status: str | None = None,
     source_kind: str | None = None,
+    job_id: uuid.UUID | None = None,
+    job_kind: str | None = None,
+    user_id: uuid.UUID | None = None,
 ) -> None:
     """Report final recipe gaps using only bounded, allowlisted import metadata."""
     missing = sorted({code for code in issue_codes if code in {"MISSING_INGREDIENTS", "MISSING_INSTRUCTIONS"}})
     if not missing:
         return
     with sentry_sdk.new_scope() as scope:
+        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
         scope.set_tag("event_type", "recipe_import_missing_critical_fields")
         scope.set_tag("input_kind", input_kind)
         scope.set_tag("issue_code", ",".join(missing))
@@ -124,6 +202,7 @@ def report_missing_critical_fields(
             "input_kind": input_kind,
             "source_kind": source_kind or input_kind,
             "source_origin": _sanitize_source_url(source_url),
+            "source_url": _sanitize_source_path_url(source_url),
             "final_outcome": final_outcome,
             "failure_stage": failure_stage,
             "renderer_status": renderer_status if renderer_status in {"rendered", "raw_fallback", "not_applicable", "failed", "partial"} else None,

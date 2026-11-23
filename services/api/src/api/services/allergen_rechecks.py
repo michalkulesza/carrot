@@ -24,7 +24,7 @@ from api.models import (
 from api.routes.context import get_scope_key
 from api.services import gemini as gemini_svc
 from api.services import linked_recipes
-from api.services.monitoring import report_service_failure
+from api.services.monitoring import job_sentry_scope, report_service_failure
 
 log = logging.getLogger(__name__)
 
@@ -237,7 +237,8 @@ async def worker_loop(poll_interval_seconds: float) -> None:
         if claimed is None:
             await asyncio.sleep(poll_interval_seconds)
             continue
-        await _process(*claimed)
+        with job_sentry_scope("allergen_recheck"):
+            await _process(*claimed)
 
 
 async def recover_running_jobs() -> None:
