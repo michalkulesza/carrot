@@ -56,7 +56,7 @@ export default function TabsLayout() {
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon sf="gearshape" md="settings" />
         <NativeTabs.Trigger.Label>{t('nav.settings')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Badge hidden={invitationCount === 0}>{String(invitationCount)}</NativeTabs.Trigger.Badge>
+        {invitationCount > 0 && <NativeTabs.Trigger.Badge>{String(invitationCount)}</NativeTabs.Trigger.Badge>}
       </NativeTabs.Trigger>
     </NativeTabs>
   )

@@ -10,8 +10,10 @@ struct TimerActivityBundle: WidgetBundle {
   }
 }
 
-private let expandedRowLimit = 3
-private let lockScreenRowLimit = 4
+// iOS caps a Live Activity at ~160pt, which fits two stacked rows.
+private let expandedRowLimit = 2
+private let lockScreenRowLimit = 2
+private let lockScreenBackground = Color(red: 0xC2 / 255, green: 0x41 / 255, blue: 0x0C / 255)
 
 private func formatRemaining(_ seconds: Int) -> String {
   let clamped = max(0, seconds)
@@ -33,7 +35,6 @@ private struct TimerCountdownText: View {
   var body: some View {
     if item.isDone(at: Date()) {
       Label(doneLabel, systemImage: "checkmark")
-        .foregroundStyle(.green)
     } else if item.isRunning, let endDate = item.endDate {
       Text(timerInterval: Date()...endDate, countsDown: true)
         .monospacedDigit()
@@ -46,6 +47,7 @@ private struct TimerCountdownText: View {
 
 private struct TimerControls: View {
   let item: TimerItem
+  let accent: Color
 
   var body: some View {
     if #available(iOS 17.0, *) {
@@ -64,7 +66,7 @@ private struct TimerControls: View {
         }
       }
       .buttonStyle(.bordered)
-      .tint(.orange)
+      .tint(accent)
     }
   }
 }
@@ -77,7 +79,8 @@ private struct TimerRowLabel: View {
       Text(item.recipeTitle)
         .font(.subheadline)
         .fontWeight(.semibold)
-        .lineLimit(1)
+        .foregroundStyle(.primary)
+        .lineLimit(2)
       Text(item.stepLabel)
         .font(.caption)
         .foregroundStyle(.secondary)
@@ -89,22 +92,26 @@ private struct TimerRowLabel: View {
 private struct TimerRow: View {
   let item: TimerItem
   let doneLabel: String
+  let accent: Color
 
   var body: some View {
-    HStack(spacing: 8) {
+    VStack(alignment: .leading, spacing: 4) {
       if let url = deepLinkURL(item) {
         Link(destination: url) { TimerRowLabel(item: item) }
-          .tint(.primary)
       } else {
         TimerRowLabel(item: item)
       }
-      Spacer(minLength: 4)
-      TimerCountdownText(item: item, doneLabel: doneLabel)
-        .font(.title3)
-        .fontWeight(.semibold)
-        .foregroundStyle(item.isRunning ? Color.primary : Color.secondary)
-      TimerControls(item: item)
+      HStack(spacing: 8) {
+        TimerCountdownText(item: item, doneLabel: doneLabel)
+          .font(.title3)
+          .fontWeight(.semibold)
+          .foregroundStyle(item.isRunning ? HierarchicalShapeStyle.primary : HierarchicalShapeStyle.secondary)
+          .multilineTextAlignment(.leading)
+          .frame(maxWidth: .infinity, alignment: .leading)
+        TimerControls(item: item, accent: accent)
+      }
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
   }
 }
 
@@ -113,6 +120,7 @@ private struct TimerList: View {
   let moreFormat: String
   let doneLabel: String
   let limit: Int
+  let accent: Color
 
   var body: some View {
     let visible = Array(timers.prefix(limit))
@@ -120,7 +128,7 @@ private struct TimerList: View {
 
     VStack(alignment: .leading, spacing: 8) {
       ForEach(visible) { item in
-        TimerRow(item: item, doneLabel: doneLabel)
+        TimerRow(item: item, doneLabel: doneLabel, accent: accent)
       }
       if hidden > 0 {
         Text(moreFormat.replacingOccurrences(of: "{{count}}", with: "\(hidden)"))
@@ -149,13 +157,19 @@ private struct HeadlineCountdown: View {
 struct TimerActivityWidget: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: TimerAttributes.self) { context in
-      TimerList(timers: context.state.timers, moreFormat: context.state.moreFormat, doneLabel: context.state.doneLabel, limit: lockScreenRowLimit)
+      TimerList(timers: context.state.timers, moreFormat: context.state.moreFormat, doneLabel: context.state.doneLabel, limit: lockScreenRowLimit, accent: .white)
         .padding(16)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .foregroundStyle(.white)
+        // The tint alone is drawn slightly translucent; the solid fill keeps the card opaque.
+        .background(lockScreenBackground)
+        .activityBackgroundTint(lockScreenBackground)
+        .activitySystemActionForegroundColor(.white)
         .widgetURL(deepLinkURL(context.state.headline(at: Date())))
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.bottom) {
-          TimerList(timers: context.state.timers, moreFormat: context.state.moreFormat, doneLabel: context.state.doneLabel, limit: expandedRowLimit)
+          TimerList(timers: context.state.timers, moreFormat: context.state.moreFormat, doneLabel: context.state.doneLabel, limit: expandedRowLimit, accent: .orange)
         }
       } compactLeading: {
         Image(systemName: "timer")
