@@ -27,3 +27,10 @@ test('does not flag recipe pages mentioning one moment', () => {
   assert.equal(CHALLENGE_TITLE.test('Udon soup'), false);
   assert.equal(CHALLENGE_BODY.test('<html><body><p>One moment, please wait while the broth simmers.</p></body></html>'), false);
 });
+
+test('hasBodyContent rejects documents cut off before the body', async () => {
+  const { hasBodyContent } = await import('../server.mjs');
+  assert.equal(hasBodyContent('<html><head><title>Chicken Udon</title></head></html>'), false);
+  assert.equal(hasBodyContent('<html><head></head><body> </body></html>'), false);
+  assert.equal(hasBodyContent('<html><head></head><body class="x"><div>recipe</div></body></html>'), true);
+});

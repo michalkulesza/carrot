@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import httpx
+from bs4 import BeautifulSoup
 
 from api.config import settings
 
@@ -26,6 +27,11 @@ class RendererFailure(RuntimeError):
         self.operational = operational
 
 
+def _has_body_content(html: str) -> bool:
+    body = BeautifulSoup(html, "html.parser").find("body")
+    return body is not None and (body.find(True) is not None or bool(body.get_text(strip=True)))
+
+
 async def render_url(url: str, renderer_url: str | None = None) -> RenderedPage:
     try:
         async with _AsyncClient(timeout=settings.renderer_timeout_seconds) as client:
@@ -39,7 +45,7 @@ async def render_url(url: str, renderer_url: str | None = None) -> RenderedPage:
         raise RendererFailure(str(category), operational=operational)
     if not all(isinstance(data.get(key), str) for key in ("requested_url", "final_url", "html")):
         raise RendererFailure("invalid_renderer_response", operational=True)
-    if not data["html"].strip():
+    if not data["html"].strip() or not _has_body_content(data["html"]):
         raise RendererFailure("empty_html", operational=True)
     response_status = data.get("response_status")
     if isinstance(response_status, int) and not isinstance(response_status, bool):

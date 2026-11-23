@@ -16,7 +16,7 @@ def _render_with(monkeypatch, body: dict) -> None:
 
 
 def _body(**extra) -> dict:
-    return {"ok": True, "requested_url": "https://a.test", "final_url": "https://a.test", "html": "<p>x</p>", **extra}
+    return {"ok": True, "requested_url": "https://a.test", "final_url": "https://a.test", "html": "<html><body><p>x</p></body></html>", **extra}
 
 
 @pytest.mark.asyncio
@@ -42,3 +42,18 @@ async def test_missing_status_is_accepted(monkeypatch) -> None:
     _render_with(monkeypatch, _body())
 
     assert (await render_url("https://a.test")).response_status is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("html", [
+    "<html><head><title>Chicken Udon</title></head></html>",
+    "<html><head></head><body></body></html>",
+])
+async def test_document_without_body_content_is_an_empty_html_failure(monkeypatch, html) -> None:
+    _render_with(monkeypatch, _body(html=html))
+
+    with pytest.raises(RendererFailure) as error:
+        await render_url("https://a.test")
+
+    assert error.value.category == "empty_html"
+    assert error.value.operational is True

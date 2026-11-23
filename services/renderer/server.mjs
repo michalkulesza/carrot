@@ -187,14 +187,27 @@ function getBrowser() {
 
 async function looksLikeChallenge(page) {
   try { return CHALLENGE_TITLE.test(await page.title()) || CHALLENGE_BODY.test(await page.content()); }
-  catch { return false; }
+  catch { return true; }
+}
+
+const hasBodyContent = html => /<body[\s>]/i.test(html) && !/<body[^>]*>\s*<\/body>/i.test(html);
+export { hasBodyContent };
+
+async function waitForNewDocument(page, started) {
+  const remaining = () => Math.max(0, started + TOTAL_TIMEOUT_MS - 1000 - Date.now());
+  await page.waitForLoadState('domcontentloaded', { timeout: remaining() }).catch(() => {});
+  await page.waitForFunction(
+    () => document.readyState !== 'loading' && document.body && document.body.childElementCount > 0,
+    undefined, { timeout: remaining() },
+  ).catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: Math.min(IDLE_MS, remaining()) }).catch(() => {});
 }
 
 async function waitOutChallenge(page, started) {
   const deadline = Math.min(Date.now() + CHALLENGE_WAIT_MS, started + TOTAL_TIMEOUT_MS - 1000);
   if (!await looksLikeChallenge(page)) return;
   while (Date.now() < deadline && await looksLikeChallenge(page)) await page.waitForTimeout(500);
-  await page.waitForLoadState('networkidle', { timeout: IDLE_MS }).catch(() => {});
+  await waitForNewDocument(page, started);
 }
 function failure(reason, status = 422) {
   return { status, body: JSON.stringify({ ok: false, failure: reason }) };
@@ -261,7 +274,7 @@ async function render(requestedUrl) {
       if (requestLimitHit) return failure('request_limit');
       const html = await page.locator('html').evaluate(node => node.outerHTML);
       const bytes = Buffer.byteLength(html, 'utf8');
-      if (!html.trim()) return failure('empty_html');
+      if (!html.trim() || !hasBodyContent(html)) return failure('empty_html');
       if (bytes > MAX_HTML_BYTES) return failure('html_too_large', 413);
       return { status: 200, body: JSON.stringify({ ok: true, requested_url: requestedUrl, final_url: finalUrl, html, duration_ms: Date.now() - started, response_status: documentStatus ?? response?.status() ?? null }) };
     } catch (error) {
