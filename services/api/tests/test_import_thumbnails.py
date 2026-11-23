@@ -9,13 +9,6 @@ from api.models import ImportMetadata, ImportResult, ImportStage, RecipeComponen
 from api.services import import_worker
 
 
-class FakeResponse:
-    content = b"thumbnail-bytes"
-
-    def raise_for_status(self) -> None:
-        return None
-
-
 class FakeClient:
     def __init__(self, get: AsyncMock) -> None:
         self.get = get
@@ -39,7 +32,7 @@ async def test_archive_thumbnail_copies_external_image_to_r2(monkeypatch) -> Non
     _configure_r2(monkeypatch)
     recipe_id = uuid4()
     recipe = SimpleNamespace(id=recipe_id, thumbnail_url="https://cdn.instagram.com/signed.jpg")
-    get = AsyncMock(return_value=FakeResponse())
+    get = AsyncMock(return_value=httpx.Response(200, headers={"content-type": "image/jpeg"}, content=b"thumbnail-bytes", request=httpx.Request("GET", "https://cdn.instagram.com/signed.jpg")))
     client = FakeClient(get)
     upload_image = Mock(return_value=f"https://images.example/thumbnails/{recipe_id}/stable.jpg")
     monkeypatch.setattr(import_worker.httpx, "AsyncClient", lambda **_kwargs: client)
@@ -121,6 +114,6 @@ async def test_save_recipe_archives_thumbnail_before_returning(monkeypatch) -> N
     assert recipe.id == recipe_id
     assert recipe.thumbnail_url == thumbnail_url
     assert recipe.components[0]["name"] == ""
-    archive_thumbnail.assert_awaited_once_with(recipe, residential=False)
+    archive_thumbnail.assert_awaited_once_with(recipe)
     link_recipe.assert_awaited_once_with(session, recipe_id, job.household_id)
     queue_embedding.assert_awaited_once_with(session, recipe)

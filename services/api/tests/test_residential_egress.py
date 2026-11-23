@@ -7,10 +7,11 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from fastapi import HTTPException
 
 from api.config import settings
-from api.models import ImportMetadata, ImportResult, ImportStage
-from api.services import gemini, import_worker
+from api.routes import proxy as proxy_route
+from api.services import gemini, image_fetch, import_worker
 from api.services.extraction_v2 import production
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.html_renderer import RenderedPage, RendererFailure
@@ -236,21 +237,43 @@ def _img(status=200, ctype="image/jpeg", body=b"img"):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("first", [_img(403), _img(429), _img(503), _img(200, "text/html", BLOCKED_PAGE.encode())])
+@pytest.mark.parametrize("first", [
+    _img(403), _img(429), _img(503), _img(200, "text/html", BLOCKED_PAGE.encode()), _img(200, "application/octet-stream", b"<html>"),
+])
 async def test_thumbnail_retries_via_residential_when_blocked(monkeypatch, first) -> None:
     proxies, upload = _archive_env(monkeypatch, [first, _img()])
     recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
-    await import_worker._archive_thumbnail(recipe, residential=True)
+    await import_worker._archive_thumbnail(recipe)
     assert proxies == ["socks5://warp:1080", RES_PROXY]
-    upload.assert_called_once() and recipe.thumbnail_url == "https://images.example/t.jpg"
+    upload.assert_called_once_with(b"img", str(recipe.id))
+    assert recipe.thumbnail_url == "https://images.example/t.jpg"
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("residential,first", [(False, _img(403)), (True, _img(404))])
-async def test_thumbnail_no_retry_when_not_residential_or_not_blocked(monkeypatch, residential, first) -> None:
-    proxies, upload = _archive_env(monkeypatch, [first, _img()])
+async def test_thumbnail_challenge_page_without_residential_proxy_skips_upload(monkeypatch, caplog) -> None:
+    proxies, upload = _archive_env(monkeypatch, [_img(200, "text/html", BLOCKED_PAGE.encode())])
+    monkeypatch.setattr(import_worker.settings, "residential_proxy_url", "")
     recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
-    await import_worker._archive_thumbnail(recipe, residential=residential)
+    await import_worker._archive_thumbnail(recipe)
+    assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url == "https://cdn.example/a.jpg"
+    upload.assert_not_called()
+    assert "not an image" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_thumbnail_image_does_not_touch_residential(monkeypatch) -> None:
+    proxies, upload = _archive_env(monkeypatch, [_img(), _img()])
+    recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
+    await import_worker._archive_thumbnail(recipe)
+    assert proxies == ["socks5://warp:1080"]
+    upload.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_thumbnail_no_retry_when_not_blocked(monkeypatch) -> None:
+    proxies, upload = _archive_env(monkeypatch, [_img(404), _img()])
+    recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
+    await import_worker._archive_thumbnail(recipe)
     assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url == "https://cdn.example/a.jpg"
     upload.assert_not_called()
 
@@ -259,18 +282,78 @@ async def test_thumbnail_no_retry_when_not_residential_or_not_blocked(monkeypatc
 async def test_thumbnail_retries_at_most_once(monkeypatch) -> None:
     proxies, upload = _archive_env(monkeypatch, [_img(403), _img(403), _img()])
     recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
-    await import_worker._archive_thumbnail(recipe, residential=True)
+    await import_worker._archive_thumbnail(recipe)
     assert len(proxies) == 2
     upload.assert_not_called()
 
 
-@pytest.mark.parametrize("capture,expected", [
-    ({"render_status": "residential_rendered"}, True), ({"render_status": "residential_raw_fallback"}, True),
-    ({"render_status": "rendered"}, False), ({}, False), (None, False),
-])
-def test_is_residential(capture, expected) -> None:
-    assert import_worker._is_residential(ImportResult(
-        stage=ImportStage.DESCRIPTION, metadata=ImportMetadata(), source_capture=capture or {})) is expected
+@pytest.fixture
+def proxy_env(monkeypatch):
+    monkeypatch.setattr(settings, "outbound_proxy_url", "socks5://warp:1080")
+    monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
+    calls = []
+    real = httpx.AsyncClient
+
+    def install(head_responses, stream_body=b"jpegdata"):
+        def factory(**kw):
+            calls.append(kw["proxy"])
+            index = len(calls) - 1
+            if index < len(head_responses):
+                response = head_responses[index]
+            else:
+                response = _img(body=stream_body)
+            return real(transport=httpx.MockTransport(lambda _r: response), **{**kw, "proxy": None})
+
+        monkeypatch.setattr(image_fetch.httpx, "AsyncClient", factory)
+        return calls
+
+    return install
+
+
+async def _stream_image(url="https://cdn.example/a.jpg"):
+    response = await proxy_route.proxy_image(url)
+    return response, b"".join([chunk async for chunk in response.body_iterator])
+
+
+@pytest.mark.asyncio
+async def test_proxy_image_uses_residential_when_challenged(proxy_env) -> None:
+    calls = proxy_env([_img(200, "text/html", BLOCKED_PAGE.encode()), _img()])
+    response, body = await _stream_image()
+    assert body == b"jpegdata" and response.media_type == "image/jpeg"
+    assert calls == ["socks5://warp:1080", RES_PROXY, RES_PROXY]
+
+
+@pytest.mark.asyncio
+async def test_proxy_image_rejects_non_image_without_residential_proxy(proxy_env, monkeypatch) -> None:
+    monkeypatch.setattr(settings, "residential_proxy_url", "")
+    calls = proxy_env([_img(200, "text/html", BLOCKED_PAGE.encode())])
+    with pytest.raises(HTTPException) as raised:
+        await proxy_route.proxy_image("https://cdn.example/a.jpg")
+    assert raised.value.status_code == 400 and raised.value.detail == "URL is not an image"
+    assert calls == ["socks5://warp:1080"]
+
+
+@pytest.mark.asyncio
+async def test_proxy_image_rejects_when_residential_also_non_image(proxy_env) -> None:
+    proxy_env([_img(403), _img(200, "text/html", BLOCKED_PAGE.encode())])
+    with pytest.raises(HTTPException) as raised:
+        await proxy_route.proxy_image("https://cdn.example/a.jpg")
+    assert raised.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_proxy_image_skips_residential_for_image(proxy_env) -> None:
+    calls = proxy_env([_img()])
+    await _stream_image()
+    assert calls == ["socks5://warp:1080", "socks5://warp:1080"]
+
+
+@pytest.mark.asyncio
+async def test_proxy_image_still_blocks_private_urls(proxy_env) -> None:
+    calls = proxy_env([])
+    with pytest.raises(HTTPException) as raised:
+        await proxy_route.proxy_image("http://127.0.0.1/a.jpg")
+    assert raised.value.status_code == 403 and calls == []
 
 
 # --- observability ---

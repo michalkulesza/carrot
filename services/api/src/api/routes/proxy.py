@@ -4,7 +4,7 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from api.config import settings
+from api.services.image_fetch import USER_AGENT, ImageFetchError, probe_image
 
 router = APIRouter(prefix="/proxy", tags=["proxy"])
 
@@ -29,22 +29,20 @@ async def proxy_image(url: str) -> StreamingResponse:
     if not _allowed(url):
         raise HTTPException(status_code=403, detail="URL not allowed")
 
-    async with httpx.AsyncClient(timeout=10, follow_redirects=True, proxy=settings.outbound_proxy_url or None) as client:
-        head = await client.head(url, headers={"User-Agent": "Mozilla/5.0"})
-        content_type = head.headers.get("content-type", "image/jpeg")
-
-    if not content_type.startswith("image/"):
+    try:
+        probe = await probe_image(url)
+    except ImageFetchError:
         raise HTTPException(status_code=400, detail="URL is not an image")
 
     async def stream():
-        async with httpx.AsyncClient(timeout=15, follow_redirects=True, proxy=settings.outbound_proxy_url or None) as client:
-            async with client.stream("GET", url, headers={"User-Agent": "Mozilla/5.0"}) as r:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True, proxy=probe.proxy or None) as client:
+            async with client.stream("GET", url, headers=USER_AGENT) as r:
                 r.raise_for_status()
                 async for chunk in r.aiter_bytes(8192):
                     yield chunk
 
     return StreamingResponse(
         stream(),
-        media_type=content_type,
+        media_type=probe.content_type,
         headers={"Cache-Control": "public, max-age=31536000, immutable"},
     )

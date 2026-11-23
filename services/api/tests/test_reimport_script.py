@@ -42,7 +42,7 @@ async def test_archived_thumbnail_is_kept_and_never_downloaded(monkeypatch) -> N
     monkeypatch.setattr(reimport, "_archive_thumbnail", archive)
     recipe = _recipe(CDN)
 
-    decision = await reimport._settle_thumbnail(recipe, ARCHIVED, _result(), archive=True)
+    decision = await reimport._settle_thumbnail(recipe, ARCHIVED, archive=True)
 
     assert recipe.thumbnail_url == ARCHIVED
     assert "kept archived" in decision
@@ -51,15 +51,14 @@ async def test_archived_thumbnail_is_kept_and_never_downloaded(monkeypatch) -> N
 
 @pytest.mark.asyncio
 async def test_remote_thumbnail_is_archived_with_the_worker_helper(monkeypatch) -> None:
-    async def fake_archive(recipe, *, residential=False):
-        assert residential is True
+    async def fake_archive(recipe):
         recipe.thumbnail_url = ARCHIVED
 
     archive = AsyncMock(side_effect=fake_archive)
     monkeypatch.setattr(reimport, "_archive_thumbnail", archive)
     recipe = _recipe(CDN)
 
-    decision = await reimport._settle_thumbnail(recipe, "https://old.cdn/x.jpg", _result(), archive=True)
+    decision = await reimport._settle_thumbnail(recipe, "https://old.cdn/x.jpg", archive=True)
 
     assert recipe.thumbnail_url == ARCHIVED
     assert decision == "archived new thumbnail"
@@ -70,7 +69,7 @@ async def test_archive_failure_keeps_the_old_value(monkeypatch) -> None:
     monkeypatch.setattr(reimport, "_archive_thumbnail", AsyncMock())  # helper swallows errors, leaves URL remote
     recipe = _recipe(CDN)
 
-    decision = await reimport._settle_thumbnail(recipe, "https://old.cdn/x.jpg", _result(), archive=True)
+    decision = await reimport._settle_thumbnail(recipe, "https://old.cdn/x.jpg", archive=True)
 
     assert recipe.thumbnail_url == "https://old.cdn/x.jpg"
     assert "kept previous" in decision

@@ -16,7 +16,7 @@ from api.models import (
 )
 from api.services import allergen_rechecks
 from api.config import settings
-from api.services.import_worker import _archive_thumbnail, _get_tags_and_allergens, _is_residential
+from api.services.import_worker import _archive_thumbnail, _get_tags_and_allergens
 from api.services.linked_recipes import (
     existing_linked_ids,
     is_component_recipe,
@@ -62,7 +62,7 @@ def _is_archived_thumbnail(url: str | None) -> bool:
 
 
 async def _settle_thumbnail(
-    recipe: Recipe, previous: str | None, result: ImportResult, *, archive: bool,
+    recipe: Recipe, previous: str | None, *, archive: bool,
 ) -> str:
     """Run after apply_extraction: never let an expiring remote URL replace an archived thumbnail.
 
@@ -77,7 +77,7 @@ async def _settle_thumbnail(
         return "unchanged"
     if not archive:
         return "would archive new remote thumbnail"
-    await _archive_thumbnail(recipe, residential=_is_residential(result))
+    await _archive_thumbnail(recipe)
     if _is_archived_thumbnail(recipe.thumbnail_url):
         return "archived new thumbnail"
     recipe.thumbnail_url = previous
@@ -160,7 +160,7 @@ async def _reimport_recipe(recipe_id: uuid.UUID, preview: bool = False) -> tuple
             before = _snapshot(recipe)
             previous_thumbnail = recipe.thumbnail_url
             apply_extraction(recipe, result, bool(preferences and preferences.auto_substitute))
-            decision = await _settle_thumbnail(recipe, previous_thumbnail, result, archive=not preview)
+            decision = await _settle_thumbnail(recipe, previous_thumbnail, archive=not preview)
             if preview:
                 message = _format_preview(recipe_id, before, _snapshot(recipe), decision)
                 await session.rollback()

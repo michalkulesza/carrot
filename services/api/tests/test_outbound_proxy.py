@@ -16,6 +16,7 @@ class ClientCreated(Exception):
 
 
 class FakeStream:
+    status_code = 200
     headers = {"content-type": "image/png"}
 
     async def __aenter__(self):
