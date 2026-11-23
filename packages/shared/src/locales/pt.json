@@ -661,6 +661,8 @@
     "discardChangesTitle": "Descartar alterações?",
     "discardChangesMessage": "Suas alterações serão perdidas.",
     "import": "Importar",
+    "importFromUrl": "Importar de URL",
+    "unsupportedUrl": "Este link ainda não é suportado. O Carrot importa sites de receitas, Instagram e TikTok.",
     "failedToSave": "Falha ao salvar a receita",
     "saveError": "Não foi possível salvar suas alterações. Tente novamente.",
     "recipeAddedToHousehold": "Receita adicionada à casa",
@@ -729,6 +731,10 @@
     "hintMissing": "Faltam algumas partes? Faremos o possível para completá-las",
     "foundIngredients_one": "1 ingrediente",
     "foundSteps_one": "1 passo"
+  },
+  "importSource": {
+    "unsupportedTitle": "Não suportado",
+    "unsupportedMessage": "Os links deste serviço ainda não podem ser importados. O Carrot importa sites de receitas, Instagram e TikTok."
   },
   "importJobs": {
     "queued": "Importação de receita na fila",

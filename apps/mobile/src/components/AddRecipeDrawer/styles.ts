@@ -113,6 +113,11 @@ export const styles = StyleSheet.create({
     color: PlatformColor('secondaryLabel') as unknown as string,
     fontWeight: '500',
   },
+  unsupportedUrlText: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: PlatformColor('secondaryLabel') as unknown as string,
+  },
   urlPasteButtonInvalid: { backgroundColor: colors.orange, borderColor: colors.orange },
   urlPasteButtonInvalidText: { color: '#ffffff' },
 

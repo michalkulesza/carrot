@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     opacity: 0.85,
   },
-  pendingCardDuplicate: { backgroundColor: colors.brandLight },
+  pendingCardAttention: { backgroundColor: colors.orange, opacity: 1 },
   pendingContent: { flex: 1, flexDirection: 'row', minWidth: 0 },
   pendingImageWrap: {
     width: 100,
@@ -227,11 +227,6 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pendingImage: { width: '100%', height: '100%' },
-  pendingFailureOverlay: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   pendingSpinnerOverlay: {
     ...StyleSheet.absoluteFill,
     alignItems: 'center',
@@ -240,6 +235,9 @@ export const styles = StyleSheet.create({
   },
   pendingBody: { flex: 1, padding: 12, justifyContent: 'center' },
   pendingTitle: { fontSize: 14, lineHeight: 18, fontWeight: '600', color: colors.label, marginBottom: 4 },
+  pendingTitleAttention: { color: '#ffffff' },
+  pendingUrlPillAttention: { backgroundColor: 'rgba(255,255,255,0.2)' },
+  pendingUrlPillTextAttention: { color: '#ffffff' },
   pendingUrlRow: { marginBottom: 2 },
   pendingMetaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pendingCancelWrap: { width: 44, alignItems: 'center', justifyContent: 'center' },

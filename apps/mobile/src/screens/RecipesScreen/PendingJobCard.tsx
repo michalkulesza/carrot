@@ -148,22 +148,23 @@ const PendingJobCard = ({
   const handleCardLongPress = canOpenSourceUrl ? handleSourceUrlMenu : undefined
   const isCardInteractive = Boolean(handleCardPress || handleCardLongPress)
 
+  const cardStyle = [styles.pendingCard, isFailedCard && styles.pendingCardAttention]
+  const titleStyle = [styles.pendingTitle, isFailedCard && styles.pendingTitleAttention]
+  const urlPillStyle = [styles.cardTagPill, isFailedCard && styles.pendingUrlPillAttention]
+  const urlPillTextStyle = [styles.cardTagPillText, isFailedCard && styles.pendingUrlPillTextAttention]
+
   const cardContent = (
     <>
       <View style={styles.pendingImageWrap}>
         {imageUri && <Image source={{ uri: imageUri }} style={styles.pendingImage} />}
-        {job.status === 'failed' && !capturingOnDevice ? (
-          <View style={styles.pendingFailureOverlay}>
-            <Feather name="alert-circle" size={28} color={PlatformColor('secondaryLabel') as unknown as string} />
-          </View>
-        ) : (
+        {!isFailedCard && (
           <View style={styles.pendingSpinnerOverlay}>
             <ActivityIndicator size="small" color={colors.tertiaryLabel} />
           </View>
         )}
       </View>
       <View style={styles.pendingBody}>
-        <Text style={styles.pendingTitle}>{title}</Text>
+        <Text style={titleStyle}>{title}</Text>
         {job.source_url && (
           <MarqueeSyncSlots>
             {({ tags: tagsTurn }) => (
@@ -174,8 +175,8 @@ const PendingJobCard = ({
                 onOverflowChange={tagsTurn.onOverflowChange}
                 onDone={tagsTurn.onDone}
               >
-                <View style={styles.cardTagPill}>
-                  <Text style={styles.cardTagPillText} numberOfLines={1}>{job.source_url}</Text>
+                <View style={urlPillStyle}>
+                  <Text style={urlPillTextStyle} numberOfLines={1}>{job.source_url}</Text>
                 </View>
               </MarqueeRow>
             )}
@@ -215,7 +216,7 @@ const PendingJobCard = ({
   useEffect(() => () => clearImportImagePreview(job.id), [job.id])
 
   return (
-    <View style={[styles.pendingCard, isDuplicate && styles.pendingCardDuplicate]}>
+    <View style={cardStyle}>
       {isCardInteractive ? (
         <Pressable
           style={styles.pendingContent}
@@ -234,7 +235,7 @@ const PendingJobCard = ({
         <View style={styles.pendingCancelWrap}>
           {isDuplicate ? (
             <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDuplicateMenu} accessibilityLabel={title}>
-              <Feather name="chevron-right" size={20} color={PlatformColor('secondaryLabel') as unknown as string} />
+              <Feather name="chevron-right" size={20} color="#ffffff" />
             </Pressable>
           ) : (
             <Pressable
@@ -244,7 +245,7 @@ const PendingJobCard = ({
               hitSlop={6}
               accessibilityLabel={title}
             >
-              <Feather name="alert-circle" size={20} color={colors.orange} />
+              <Feather name="alert-circle" size={20} color="#ffffff" />
             </Pressable>
           )}
         </View>

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { File } from 'expo-file-system'
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router'
-import { ActivityIndicator, PlatformColor, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Alert, PlatformColor, StyleSheet, View } from 'react-native'
 import { clearSharedPayloads, getSharedPayloads } from 'expo-sharing'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useApiClient } from '@carrot/shared/api/context'
+import { extractSingleUrl, isUnsupportedImportUrl } from '@carrot/shared/utils/importSource'
 import { enqueueImport } from '../src/utils/enqueueImport'
 
 type ShareParams = { type?: string; value?: string; mimeType?: string }
@@ -12,6 +14,14 @@ type Destination = { pathname: '/(tabs)/recipes'; params: { openAddRecipe: '1' }
 type SharedImport = {
   kind: 'url' | 'text' | 'image'
   input: Record<string, string>
+}
+
+const toSharedImport = (sharedImport: SharedImport): SharedImport => {
+  if (sharedImport.kind !== 'text') return sharedImport
+
+  const url = extractSingleUrl(sharedImport.input.text)
+
+  return url ? { kind: 'url', input: { url } } : sharedImport
 }
 
 const getSharedImport = async (params: ShareParams): Promise<SharedImport | null> => {
@@ -33,6 +43,7 @@ const getSharedImport = async (params: ShareParams): Promise<SharedImport | null
 
 export default function ShareRedirect() {
   const params = useLocalSearchParams<ShareParams>()
+  const { t } = useTranslation()
   const api = useApiClient()
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -45,9 +56,16 @@ export default function ShareRedirect() {
 
     const enqueueSharedImport = async () => {
       try {
-        const sharedImport = await getSharedImport(params)
-        if (!sharedImport) {
+        const rawSharedImport = await getSharedImport(params)
+        if (!rawSharedImport) {
           setDestination({ pathname: '/(tabs)/recipes', params: { openAddRecipe: '1' } })
+          return
+        }
+
+        const sharedImport = toSharedImport(rawSharedImport)
+        if (sharedImport.kind === 'url' && isUnsupportedImportUrl(sharedImport.input.url)) {
+          Alert.alert(t('importSource.unsupportedTitle'), t('importSource.unsupportedMessage'))
+          router.replace('/(tabs)/recipes')
           return
         }
 
@@ -61,7 +79,7 @@ export default function ShareRedirect() {
     }
 
     void enqueueSharedImport()
-  }, [api, params, queryClient, router])
+  }, [api, params, queryClient, router, t])
 
   if (!destination) {
     return (

@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Alert, Linking, PlatformColor, Pressable, Text, View } from 'react-native'
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { useTranslation } from 'react-i18next'
@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
+import { isUnsupportedImportUrl } from '@carrot/shared/utils/importSource'
 import { useHousehold } from '../../context/HouseholdContext'
 import { enqueueImport } from '../../utils/enqueueImport'
 import { normalizeHttpUrl, type AddRecipeMethod, type AddRecipeSubview } from './helpers'
@@ -53,6 +54,10 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [linkingRecipeId, setLinkingRecipeId] = useState<string | null>(null)
+
+  const normalizedUrl = useMemo(() => normalizeHttpUrl(url), [url])
+  const isUnsupported = useMemo(() => normalizedUrl !== null && isUnsupportedImportUrl(normalizedUrl), [normalizedUrl])
+  const canImport = normalizedUrl !== null && !isUnsupported
 
   const reset = useCallback(() => {
     setSubview('picker')
@@ -118,12 +123,11 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
   }, [api, qc, t])
 
   const handleImportUrl = useCallback(async () => {
-    const normalizedUrl = normalizeHttpUrl(url)
-    if (normalizedUrl) {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      await runEnqueue('url', { url: normalizedUrl })
-    }
-  }, [runEnqueue, url])
+    if (!canImport || !normalizedUrl) return
+
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    await runEnqueue('url', { url: normalizedUrl })
+  }, [canImport, normalizedUrl, runEnqueue])
 
   const handleExtractText = useCallback(async () => {
     if (pastedText.trim()) {
@@ -272,7 +276,8 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
                 onPaste={handlePasteUrl}
                 onImport={handleImportUrl}
                 loading={loading}
-                canImport={normalizeHttpUrl(url) !== null}
+                canImport={canImport}
+                isUnsupported={isUnsupported}
               />
               <MethodPickerView
                 showPersonalLibrary={personalRecipes.length > 0}

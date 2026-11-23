@@ -661,6 +661,8 @@
     "discardChangesTitle": "Abandonner les modifications ?",
     "discardChangesMessage": "Vos modifications seront perdues.",
     "import": "Importer",
+    "importFromUrl": "Importer depuis l'URL",
+    "unsupportedUrl": "Ce lien n'est pas encore pris en charge. Carrot importe les sites de recettes, Instagram et TikTok.",
     "failedToSave": "Impossible d'enregistrer la recette",
     "saveError": "Impossible d'enregistrer vos modifications. Veuillez réessayer.",
     "recipeAddedToHousehold": "Recette ajoutée au foyer",
@@ -769,6 +771,10 @@
     "dropHere": "Déposer ici",
     "showCompleted": "Afficher les terminés",
     "hideCompleted": "Masquer les terminés"
+  },
+  "importSource": {
+    "unsupportedTitle": "Non pris en charge",
+    "unsupportedMessage": "Les liens de ce service ne peuvent pas encore être importés. Carrot importe les sites de recettes, Instagram et TikTok."
   },
   "importJobs": {
     "queued": "Importation de recette mise en file d’attente",

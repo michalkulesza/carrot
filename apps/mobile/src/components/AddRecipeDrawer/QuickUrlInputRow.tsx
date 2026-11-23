@@ -12,6 +12,7 @@ const QuickUrlInputRow = ({
   onImport,
   loading,
   canImport,
+  isUnsupported,
 }: {
   url: string
   onUrlChange: (v: string) => void
@@ -19,6 +20,7 @@ const QuickUrlInputRow = ({
   onImport: () => void
   loading: boolean
   canImport: boolean
+  isUnsupported: boolean
 }) => {
   const { t } = useTranslation()
 
@@ -54,14 +56,15 @@ const QuickUrlInputRow = ({
           </Text>
         </Pressable>
       </View>
+      {isUnsupported && <Text style={styles.unsupportedUrlText}>{t('addRecipe.unsupportedUrl')}</Text>}
       <PrimaryButton
         onPress={onImport}
         disabled={!canImport || loading}
         loading={loading}
-        label={t('addRecipe.import')}
-        accessibilityLabel={t('addRecipe.import')}
+        label={t('addRecipe.importFromUrl')}
+        accessibilityLabel={t('addRecipe.importFromUrl')}
         tintColor={colors.orange}
-        disabledTintColor={colors.secondaryBackground}
+        disabledTintColor="transparent"
         disabledTextColor={colors.secondaryLabel}
         disabledBorderColor={colors.opaqueSeparator}
       />
