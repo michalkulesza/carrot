@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
 from api.database import get_async_session
+from api.import_event_notifier import import_event_notifier
 from api.routes.context import get_active_household_id, get_scope_key
 from api.routes.imports import import_jobs_snapshot, poll_import_events, resume_cursor
 from api.routes.shopping_list import shopping_list_scope, shopping_list_snapshot
@@ -35,11 +36,12 @@ async def _forward_broadcast(channel: str, scope: str, out: asyncio.Queue) -> No
 
 async def _poll_import_jobs(household_id: uuid.UUID, user_id: uuid.UUID, cursor: int, out: asyncio.Queue) -> None:
     while True:
+        generation = import_event_notifier.generation
         cursor, events = await poll_import_events(household_id, user_id, cursor)
         for event_id, event_type, payload in events:
             await out.put(_frame("importJobs", {**payload, "event": event_type}, event_id))
         if not events:
-            await asyncio.sleep(IMPORT_POLL_SECONDS)
+            await import_event_notifier.wait(generation, timeout=IMPORT_POLL_SECONDS)
 
 
 @router.get("/events")

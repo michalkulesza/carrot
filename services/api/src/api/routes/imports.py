@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import binascii
 import json
@@ -8,11 +7,12 @@ from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, delete, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import async_session_maker, get_async_session
+from api.import_event_notifier import IMPORT_EVENTS_CHANNEL, import_event_notifier
 from api.models import (
     CapturedHtmlSubmit,
     ImportFailureCode,
@@ -135,6 +135,7 @@ async def _event_for_job(session: AsyncSession, job: ImportJob, event_type: str)
         payload=payload,
     )
     session.add(event)
+    await session.execute(text("SELECT pg_notify(:channel, '')"), {"channel": IMPORT_EVENTS_CHANNEL})
     return event
 
 
@@ -293,13 +294,14 @@ async def import_job_events(
         nonlocal cursor
         yield f"id: {watermark}\nevent: import_jobs.snapshot\ndata: {json.dumps({'jobs': snapshot})}\n\n"
         while True:
+            generation = import_event_notifier.generation
             cursor, events = await poll_import_events(household_id, user.id, cursor)
             if events:
                 for event_id, event_type, payload in events:
                     yield f"id: {event_id}\nevent: {event_type}\ndata: {json.dumps(payload, default=str)}\n\n"
                 continue
             yield ": heartbeat\n\n"
-            await asyncio.sleep(15)
+            await import_event_notifier.wait(generation, timeout=15.0)
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 

@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import settings
 from api.database import Base, async_session_maker, engine, get_async_session, initialize_vector_schema
+from api.import_event_notifier import import_event_notifier
 from api.models import Recipe, Tag
 from api.services.monitoring import init_sentry
 from api.services.orphan_cleanup import delete_orphan_recipes
@@ -318,7 +319,9 @@ async def lifespan(app: FastAPI):
     await _seed_default_tags()
     await showcase.ensure_showcase_user()
     showcase_task = asyncio.create_task(showcase.run())
+    import_event_notifier.start()
     yield
+    await import_event_notifier.stop()
     showcase_task.cancel()
     for task in (showcase_task,):
         try:
