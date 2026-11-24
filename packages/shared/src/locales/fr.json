@@ -783,6 +783,7 @@
     "someone": "Quelqu’un",
     "capturingOnDevice": "Récupération de la page sur votre appareil…",
     "openAndPaste": "Ouvrir et coller",
+    "openLinkFailed": "Impossible d'ouvrir le lien de la recette.",
     "captureFailed": "Impossible de récupérer la page. Réessayez.",
     "userActionRequired": {
       "title": "Importation automatique impossible",

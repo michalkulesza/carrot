@@ -783,6 +783,7 @@
     "someone": "Alguien",
     "capturingOnDevice": "Obteniendo la página en tu dispositivo…",
     "openAndPaste": "Abrir y pegar",
+    "openLinkFailed": "No se pudo abrir el enlace de la receta.",
     "captureFailed": "No se pudo obtener la página. Inténtalo de nuevo.",
     "userActionRequired": {
       "title": "No se pudo importar automáticamente",

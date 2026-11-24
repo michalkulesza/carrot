@@ -740,6 +740,7 @@
     "someone": "Someone",
     "capturingOnDevice": "Capturing the page on your device…",
     "openAndPaste": "Open & paste",
+    "openLinkFailed": "Couldn't open the recipe link.",
     "captureFailed": "Couldn't capture the page. Try again.",
     "userActionRequired": {
       "title": "Couldn't import automatically",

@@ -795,6 +795,7 @@
     "someone": "Ktoś",
     "capturingOnDevice": "Pobieranie strony na Twoim urządzeniu…",
     "openAndPaste": "Otwórz i wklej",
+    "openLinkFailed": "Nie udało się otworzyć linku do przepisu.",
     "captureFailed": "Nie udało się pobrać strony. Spróbuj ponownie.",
     "userActionRequired": {
       "title": "Nie udało się zaimportować automatycznie",

@@ -215,21 +215,15 @@ const PendingJobCard = ({
       )}
       {capturingOnDevice ? null : job.status === 'failed' ? (
         <View style={styles.pendingCancelWrap}>
-          {isDuplicate ? (
-            <Pressable style={styles.pendingIconAction} disabled={actionPending} onPress={handleDuplicateMenu} accessibilityLabel={title}>
-              <Feather name="chevron-right" size={20} color="#ffffff" />
-            </Pressable>
-          ) : (
-            <Pressable
-              style={styles.pendingIconAction}
-              disabled={actionPending}
-              onPress={handleFailedMenu}
-              hitSlop={6}
-              accessibilityLabel={title}
-            >
-              <Feather name="alert-circle" size={20} color="#ffffff" />
-            </Pressable>
-          )}
+          <Pressable
+            style={styles.pendingIconAction}
+            disabled={actionPending}
+            onPress={handleCardPress}
+            hitSlop={6}
+            accessibilityLabel={title}
+          >
+            <Feather name="alert-circle" size={20} color="#ffffff" />
+          </Pressable>
         </View>
       ) : (
         <View style={styles.pendingCancelWrap}>

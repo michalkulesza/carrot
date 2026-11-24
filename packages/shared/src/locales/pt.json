@@ -742,6 +742,7 @@
     "someone": "Alguém",
     "capturingOnDevice": "Capturando a página no seu dispositivo…",
     "openAndPaste": "Abrir e colar",
+    "openLinkFailed": "Não foi possível abrir o link da receita.",
     "captureFailed": "Não foi possível capturar a página. Tente novamente.",
     "userActionRequired": {
       "title": "Não foi possível importar automaticamente",

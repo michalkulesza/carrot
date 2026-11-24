@@ -117,10 +117,6 @@ const HomeScreen = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     addRecipeSheetRef.current?.present()
   }, [])
-  const handleContinueManually = useCallback(
-    (sourceUrl: string | null) => void openAndPaste(sourceUrl),
-    [openAndPaste],
-  )
 
   const recentlyAdded = useMemo(() => getRecentlyAdded(recipes), [recipes])
   const favourites = useMemo(() => getFavourites(recipes), [recipes])
@@ -153,7 +149,7 @@ const HomeScreen = () => {
           cancel={cancel}
           dismiss={dismiss}
           onGoToRecipe={handleGoToDuplicateRecipe}
-          onContinueManually={handleContinueManually}
+          onContinueManually={openAndPaste}
         />
         {recentlyAdded.length > 0 && <RecipeShelf title={t('home.recentlyAdded')} recipes={recentlyAdded} preset="recent" />}
         {favourites.length > 0 && <RecipeShelf title={t('home.favourites')} recipes={favourites} preset="favourites" />}

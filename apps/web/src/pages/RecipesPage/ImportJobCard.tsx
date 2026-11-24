@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'react-feather'
+import { AlertCircle } from 'react-feather'
 import { Button } from '@heroui/react'
 import type { ImportJob } from '@carrot/shared/types'
 import { getImportJobMessageKey, importJobNeedsAttention } from './helpers'
@@ -64,7 +64,7 @@ const ImportJobCard = ({
           onClick={handleOpenAttention}
           aria-label={t('importJobs.userActionRequired.continue')}
         >
-          <ChevronRight size={20} />
+          <AlertCircle size={20} />
         </button>
       ) : job.status === 'failed' ? (
         <div className="flex gap-2">

@@ -779,6 +779,7 @@
     "someone": "Jemand",
     "capturingOnDevice": "Seite wird auf deinem Gerät geladen…",
     "openAndPaste": "Öffnen & einfügen",
+    "openLinkFailed": "Der Rezeptlink konnte nicht geöffnet werden.",
     "captureFailed": "Die Seite konnte nicht erfasst werden. Versuche es erneut.",
     "userActionRequired": {
       "title": "Import nicht automatisch möglich",
