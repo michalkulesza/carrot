@@ -1,89 +1,81 @@
-import { useCallback, useDeferredValue, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, type LayoutChangeEvent, Text, View } from 'react-native'
-import { FlashList, type FlashListRef, type ListRenderItemInfo } from '@shopify/flash-list'
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, type FlatList, type LayoutChangeEvent, type ListRenderItemInfo, View } from 'react-native'
+import Animated, { LayoutAnimationConfig } from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
-import { useNavigation, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { useHeaderHeight } from 'expo-router/react-navigation'
-import type { NativeActionEvent } from '@react-native-menu/menu'
 import { useRecipes, useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import type { RecipeOut } from '@carrot/shared/types'
 import { groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
-import { MarqueeSyncProvider } from '../../components/MarqueeSync'
-import HouseholdHeaderTitle from '../../components/HouseholdHeaderTitle'
+import { AppText, RecipeRow } from '../../components/ui'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
-import { useHouseholdMenu } from '../../hooks/useHouseholdMenu'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
+import { useMotion } from '../../theme'
 import BrowseEmpty from './BrowseEmpty'
+import CountLine from './CountLine'
 import FilterBar from './FilterBar'
-import HeaderRight from './HeaderRight'
-import RecipeCard from './RecipeCard'
+import { NoResults, SemanticHeader, SemanticLoading } from './ListStates'
 import {
+  COUNT_LINE_HEIGHT,
   SORT_OPTIONS,
   applyFavouriteOverrides,
   buildBrowseItems,
-  buildHouseholdAvatars,
+  buildItemLayouts,
   buildRecipeIndex,
+  countRemovedRecipes,
   getBrowseItemKey,
-  getBrowseItemType,
   normalizeText,
   sortRecipes,
   type BrowseListItem,
-  type HouseholdAvatar,
 } from './helpers'
 import { styles } from './styles'
 import { useBrowseFilters } from './useBrowseFilters'
+import { useBrowseHeader } from './useBrowseHeader'
 import { useRecipeActions } from './useRecipeActions'
 
-const NO_AVATARS: HouseholdAvatar[] = []
-const ESTIMATED_FILTER_BAR_HEIGHT = 44
-
-const SemanticHeader = ({ label }: { label: string }) => <Text style={styles.semanticHeader}>{label}</Text>
-
-const SemanticLoading = ({ label }: { label: string }) => (
-  <View style={styles.searchLoading} accessibilityLiveRegion="polite">
-    <ActivityIndicator accessibilityLabel={label} />
-    <Text style={styles.searchLoadingText}>{label}</Text>
-  </View>
-)
-
-const NoResults = ({ query }: { query: string }) => {
-  const { t } = useTranslation()
-
-  return (
-    <View style={styles.noResults}>
-      <Text style={styles.emptyText}>{t('browse.noResults', { query })}</Text>
-    </View>
-  )
-}
+const ESTIMATED_FILTER_BAR_HEIGHT = 54
+const SKIP_EXIT_ANIMATION_THRESHOLD = 20
 
 const BrowseScreen = () => {
-  const navigation = useNavigation()
   const router = useRouter()
   const { t } = useTranslation()
+  const motion = useMotion()
   const { user, loading: authLoading } = useAuth()
-  const { households, isLoadingHouseholds, activeHouseholdId, activeHousehold } = useHousehold()
+  const { isLoadingHouseholds, activeHouseholdId } = useHousehold()
   const dataQueriesEnabled = !authLoading && user !== null && !isLoadingHouseholds && activeHouseholdId != null
   const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
-  const { householdMenuActions, handleHouseholdAction, handleHouseholdMenuOpen, switchingHousehold } =
-    useHouseholdMenu(isFetching)
-  const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { tags } = useTags()
 
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
   const headerHeight = useHeaderHeight()
   const [filterBarHeight, setFilterBarHeight] = useState(ESTIMATED_FILTER_BAR_HEIGHT)
-  const listRef = useRef<FlashListRef<BrowseListItem>>(null)
+  const listRef = useRef<FlatList<BrowseListItem>>(null)
   // The list is inset below the transparent header, so its resting offset is negative.
   const scrollToTop = useCallback(
     () => listRef.current?.scrollToOffset({ offset: -headerHeight, animated: false }),
     [headerHeight],
   )
-  const { filters, setSort, toggleTag, toggleFavourites, clearFilters } = useBrowseFilters(scrollToTop)
+  const { filters, setSort, toggleTag, toggleFavourites, clearTags, clearFilters } = useBrowseFilters(scrollToTop)
   const { sort, tagIds: selectedTagIds, favouritesOnly: filterFavourites } = filters
+
+  const handleSearchChangeText = useCallback((e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text), [])
+  const handleSearchCancel = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    setQuery('')
+  }, [])
+
+  const { switchingHousehold } = useBrowseHeader({
+    isFetching,
+    sort,
+    onSortChange: setSort,
+    onSearchChangeText: handleSearchChangeText,
+    onSearchCancel: handleSearchCancel,
+  })
+  const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
 
   const trimmedQuery = deferredQuery.trim()
   const searchActive = trimmedQuery.length > 0
@@ -96,20 +88,11 @@ const BrowseScreen = () => {
 
   const recipeLookupRef = useRef(new Map<string, RecipeOut>())
   const getRecipe = useCallback((id: string) => recipeLookupRef.current.get(id), [])
-  const { favouriteOverrides, handleRecipePress, handleRecipeLongPress, handleToggleFavourite } =
-    useRecipeActions(getRecipe)
+  const { favouriteOverrides, handleRecipeLongPress, handleToggleFavourite } = useRecipeActions(getRecipe)
 
-  const seenIdsRef = useRef<Set<string>>(new Set())
-  const initialLoadDoneRef = useRef(false)
-
-  // Runs during render so rows rendered right after the first load already count as seen and don't animate in.
-  if (!isLoading && !initialLoadDoneRef.current) {
-    initialLoadDoneRef.current = true
-    recipes.forEach((r) => seenIdsRef.current.add(r.id))
-  }
+  const previousIdsRef = useRef<Set<string> | null>(null)
 
   const recipeIndex = useMemo(() => buildRecipeIndex(recipes), [recipes])
-  const householdAvatars = useMemo(() => buildHouseholdAvatars(recipes, households), [recipes, households])
   const recipesWithOverrides = useMemo(
     () => applyFavouriteOverrides(recipes, favouriteOverrides),
     [recipes, favouriteOverrides],
@@ -151,8 +134,25 @@ const BrowseScreen = () => {
       }),
     [literalRecipes, similarRecipes, searchActive, isSemanticLoading],
   )
-  const listTopInset = searchActive ? 0 : filterBarHeight
-  const listContentStyle = useMemo(() => [styles.listContent, { paddingTop: listTopInset }], [listTopInset])
+
+  const skipExiting = useMemo(
+    () =>
+      previousIdsRef.current !== null &&
+      countRemovedRecipes(previousIdsRef.current, items) > SKIP_EXIT_ANIMATION_THRESHOLD,
+    [items],
+  )
+
+  useEffect(() => {
+    if (busy) return
+
+    const ids = new Set<string>()
+    for (const item of items) if (item.type === 'recipe') ids.add(item.recipe.id)
+    previousIdsRef.current = ids
+  }, [busy, items])
+
+  const listHeaderHeight = searchActive ? 0 : filterBarHeight + COUNT_LINE_HEIGHT
+  const itemLayouts = useMemo(() => buildItemLayouts(items, listHeaderHeight), [items, listHeaderHeight])
+  const getItemLayout = useCallback((_: ArrayLike<BrowseListItem> | null | undefined, index: number) => itemLayouts[index], [itemLayouts])
 
   const handleFilterBarLayout = useCallback(
     (event: LayoutChangeEvent) => setFilterBarHeight(event.nativeEvent.layout.height),
@@ -167,30 +167,6 @@ const BrowseScreen = () => {
     return lookup
   }, [recipesWithOverrides, semanticWithOverrides])
 
-  const filterMenuActions = useMemo(
-    () =>
-      SORT_OPTIONS.map((o) => ({
-        id: o.key,
-        title: t(o.labelKey),
-        state: (sort === o.key ? 'on' : 'off') as 'on' | 'off',
-      })),
-    [sort, t],
-  )
-
-  const handleFilterAction = useCallback(
-    ({ nativeEvent }: NativeActionEvent) => {
-      const sortOption = SORT_OPTIONS.find((o) => o.key === nativeEvent.event)
-      if (sortOption) setSort(sortOption.key)
-    },
-    [setSort],
-  )
-
-  const handleSearchChangeText = useCallback((e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text), [])
-  const handleSearchCancel = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setQuery('')
-  }, [])
-
   const handleClearFilters = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
     clearFilters()
@@ -200,85 +176,26 @@ const BrowseScreen = () => {
     router.navigate({ pathname: '/(tabs)/home', params: { openAddRecipe: '1' } })
   }, [router])
 
-  const browseTitle = t('nav.browse')
-  const switchContextLabel = t('households.switchContext')
-  const sortByLabel = t('recipes.sortBy')
-  const searchPlaceholder = t('recipes.searchPlaceholder')
+  const sortLabel = t(SORT_OPTIONS.find((option) => option.key === sort)?.labelKey ?? SORT_OPTIONS[0].labelKey)
   const semanticLoadingLabel = t('recipes.semanticSearchLoading')
   const semanticHeaderLabel = t('recipes.sectionSuggested')
 
-  const renderHeaderTitle = useCallback(
-    () => (
-      <HouseholdHeaderTitle
-        title={browseTitle}
-        householdMenuActions={householdMenuActions}
-        onHouseholdAction={handleHouseholdAction}
-        onHouseholdMenuOpen={handleHouseholdMenuOpen}
-        activeHousehold={activeHousehold}
-        switchContextLabel={switchContextLabel}
-        isLoadingHouseholds={isLoadingHouseholds}
-      />
-    ),
-    [
-      activeHousehold,
-      browseTitle,
-      handleHouseholdAction,
-      handleHouseholdMenuOpen,
-      householdMenuActions,
-      isLoadingHouseholds,
-      switchContextLabel,
-    ],
-  )
-  const renderHeaderRight = useCallback(
-    () => (
-      <HeaderRight sortByLabel={sortByLabel} filterMenuActions={filterMenuActions} onFilterAction={handleFilterAction} />
-    ),
-    [filterMenuActions, handleFilterAction, sortByLabel],
-  )
-
-  useLayoutEffect(() => {
-    const headerOptions = {
-      title: browseTitle,
-      headerTitle: renderHeaderTitle,
-      headerRight: renderHeaderRight,
-      headerSearchBarOptions: {
-        placeholder: searchPlaceholder,
-        onChangeText: handleSearchChangeText,
-        onCancelButtonPress: handleSearchCancel,
-        hideWhenScrolling: false,
-        hideNavigationBar: false,
-        autoCapitalize: 'none' as const,
-      },
-    }
-
-    navigation.setOptions(headerOptions)
-  }, [
-    browseTitle,
-    handleSearchCancel,
-    handleSearchChangeText,
-    navigation,
-    renderHeaderRight,
-    renderHeaderTitle,
-    searchPlaceholder,
-  ])
-
   const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<BrowseListItem>) => {
+    ({ item, index }: ListRenderItemInfo<BrowseListItem>) => {
       if (item.type === 'semantic-header') return <SemanticHeader label={semanticHeaderLabel} />
       if (item.type === 'semantic-loading') return <SemanticLoading label={semanticLoadingLabel} />
       if (item.type === 'no-results') return <NoResults query={trimmedQuery} />
 
       const { recipe } = item
-      const isNew = !searchActive && initialLoadDoneRef.current && !seenIdsRef.current.has(recipe.id)
-      seenIdsRef.current.add(recipe.id)
+      const isNew = !searchActive && previousIdsRef.current !== null && !previousIdsRef.current.has(recipe.id)
+      const showDivider = items[index + 1]?.type === 'recipe'
 
       return (
-        <RecipeCard
+        <RecipeRow
           recipe={recipe}
-          householdAvatars={householdAvatars.get(recipe.id) ?? NO_AVATARS}
-          plain={searchActive}
-          isNew={isNew}
-          onPress={handleRecipePress}
+          entering={isNew ? motion.fade : undefined}
+          exiting={motion.exiting}
+          showDivider={showDivider}
           onLongPress={handleRecipeLongPress}
           onToggleFavourite={handleToggleFavourite}
         />
@@ -286,9 +203,10 @@ const BrowseScreen = () => {
     },
     [
       handleRecipeLongPress,
-      handleRecipePress,
       handleToggleFavourite,
-      householdAvatars,
+      items,
+      motion.exiting,
+      motion.fade,
       searchActive,
       semanticHeaderLabel,
       semanticLoadingLabel,
@@ -296,11 +214,20 @@ const BrowseScreen = () => {
     ],
   )
 
+  const listHeader = useMemo(
+    () =>
+      searchActive ? null : (
+        <View style={{ paddingTop: filterBarHeight }}>
+          <CountLine count={literalRecipes.length} sortLabel={sortLabel} />
+        </View>
+      ),
+    [searchActive, filterBarHeight, literalRecipes.length, sortLabel],
+  )
+
   const listEmpty = useMemo(
     () => (
       <BrowseEmpty
-        filterFavourites={filterFavourites}
-        selectedTagCount={selectedTagIds.size}
+        hasActiveFilters={selectedTagIds.size > 0 || filterFavourites}
         onClearFilters={handleClearFilters}
         onAddRecipe={handleAddRecipe}
       />
@@ -319,33 +246,42 @@ const BrowseScreen = () => {
   if (error && !isFetching) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>{error.message}</Text>
+        <AppText tone="error" style={styles.errorText}>
+          {error.message}
+        </AppText>
       </View>
     )
   }
 
   return (
     <View style={styles.screen}>
-      <MarqueeSyncProvider>
-        <FlashList
+      <LayoutAnimationConfig skipExiting={skipExiting}>
+        <Animated.FlatList
           ref={listRef}
           data={items}
           keyExtractor={getBrowseItemKey}
           renderItem={renderItem}
-          getItemType={getBrowseItemType}
+          getItemLayout={getItemLayout}
+          itemLayoutAnimation={motion.layout}
           contentInsetAdjustmentBehavior="automatic"
-          contentContainerStyle={listContentStyle}
+          contentContainerStyle={styles.listContent}
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={listHeader}
           ListEmptyComponent={listEmpty}
+          removeClippedSubviews
+          windowSize={7}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
         />
-      </MarqueeSyncProvider>
+      </LayoutAnimationConfig>
       {!searchActive && (
         <FilterBar
           groupedTags={groupedFilterTags}
           selectedTagIds={selectedTagIds}
           filterFavourites={filterFavourites}
           onToggleTag={toggleTag}
+          onClearCategory={clearTags}
           onToggleFavourites={toggleFavourites}
           top={headerHeight}
           onLayout={handleFilterBarLayout}

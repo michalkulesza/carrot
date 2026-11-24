@@ -1,34 +1,29 @@
-import { useCallback, useMemo } from 'react'
-import { Text } from 'react-native'
+import { memo, useCallback, useMemo, type ReactElement } from 'react'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import type { Tag, TagCategory } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
-import GlassChip from './GlassChip'
-import { styles } from './styles'
+import { FilterPill } from '../../components/ui'
 
-const CategoryFilterChip = ({
-  category,
-  tags,
-  selectedTagIds,
-  onToggle,
-}: {
+interface CategoryFilterChipProps {
   category: TagCategory
   tags: Tag[]
   selectedTagIds: Set<string>
   onToggle: (tagId: string) => void
-}) => {
+  onClearCategory: (tagIds: string[]) => void
+}
+
+const CategoryFilterChip = ({ category, tags, selectedTagIds, onToggle, onClearCategory }: CategoryFilterChipProps) => {
   const { t } = useTranslation()
 
-  const selectedTags = tags.filter((tag) => selectedTagIds.has(tag.id))
+  const categoryLabel = t(`tags.category.${category}`)
+  const selectedTags = useMemo(() => tags.filter((tag) => selectedTagIds.has(tag.id)), [tags, selectedTagIds])
   const isActive = selectedTags.length > 0
-  const label = isActive
-    ? selectedTags.length > 1
-      ? `${tTag(selectedTags[0].name, t)} +${selectedTags.length - 1}`
-      : tTag(selectedTags[0].name, t)
-    : t(`tags.category.${category}`)
+  const extraCount = selectedTags.length - 1
+  const activeLabel = isActive ? tTag(selectedTags[0].name, t) : categoryLabel
+  const label = extraCount > 0 ? `${activeLabel} +${extraCount}` : activeLabel
 
   const actions = useMemo<MenuAction[]>(
     () =>
@@ -50,26 +45,31 @@ const CategoryFilterChip = ({
     [onToggle],
   )
 
+  const handleClear = useCallback(
+    () => onClearCategory(selectedTags.map((tag) => tag.id)),
+    [onClearCategory, selectedTags],
+  )
+
+  const wrapLabel = useCallback(
+    (content: ReactElement) => (
+      <MenuView title={categoryLabel} actions={actions} onOpenMenu={handleOpenMenu} onPressAction={handlePressAction}>
+        {content}
+      </MenuView>
+    ),
+    [actions, categoryLabel, handleOpenMenu, handlePressAction],
+  )
+
   return (
-    <MenuView
-      title={t(`tags.category.${category}`)}
-      actions={actions}
-      onOpenMenu={handleOpenMenu}
-      onPressAction={handlePressAction}
-    >
-      <GlassChip
-        selected={isActive}
-        style={styles.categoryChip}
-        accessibilityLabel={t(`tags.category.${category}`)}
-        accessibilityRole="button"
-        accessibilityState={{ selected: isActive }}
-      >
-        <Text style={[styles.chipText, isActive && styles.chipTextSelected]} numberOfLines={1}>
-          {label} ▾
-        </Text>
-      </GlassChip>
-    </MenuView>
+    <FilterPill
+      label={label}
+      active={isActive}
+      trailing={isActive ? 'clear' : 'chevron'}
+      onClear={handleClear}
+      clearLabel={t('browse.clearCategory', { name: categoryLabel })}
+      accessibilityLabel={categoryLabel}
+      wrapLabel={wrapLabel}
+    />
   )
 }
 
-export default CategoryFilterChip
+export default memo(CategoryFilterChip)

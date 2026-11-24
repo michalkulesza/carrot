@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { ActionSheetIOS, Alert } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
@@ -18,6 +18,7 @@ export const useRecipeActions = (getRecipe: (id: string) => RecipeOut | undefine
   const { user } = useAuth()
   const { households, activeHouseholdId, activeHousehold } = useHousehold()
   const [favouriteOverrides, setFavouriteOverrides] = useState<Map<string, boolean>>(new Map())
+  const pendingFavourites = useRef(new Set<string>())
 
   const removeFromCache = useCallback(
     async (recipeId: string) => {
@@ -81,8 +82,9 @@ export const useRecipeActions = (getRecipe: (id: string) => RecipeOut | undefine
   const handleToggleFavourite = useCallback(
     async (recipeId: string) => {
       const recipe = getRecipe(recipeId)
-      if (!recipe) return
+      if (!recipe || pendingFavourites.current.has(recipeId)) return
 
+      pendingFavourites.current.add(recipeId)
       const current = recipe.is_favourite
       setFavouriteOverrides((prev) => new Map(prev).set(recipeId, !current))
 
@@ -92,18 +94,11 @@ export const useRecipeActions = (getRecipe: (id: string) => RecipeOut | undefine
         await qc.invalidateQueries({ queryKey: ['recipes'] })
       } catch {
         setFavouriteOverrides((prev) => new Map(prev).set(recipeId, current))
+      } finally {
+        pendingFavourites.current.delete(recipeId)
       }
     },
     [api, getRecipe, qc],
-  )
-
-  const handleRecipePress = useCallback(
-    (recipeId: string) => {
-      const recipe = getRecipe(recipeId)
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      router.push({ pathname: '/recipe/[id]', params: { id: recipeId, title: recipe?.title } })
-    },
-    [getRecipe, router],
   )
 
   const handleShareAction = useCallback(
@@ -166,5 +161,5 @@ export const useRecipeActions = (getRecipe: (id: string) => RecipeOut | undefine
     [getRecipe, households, handleToggleFavourite, router, handleDelete, handleShareAction, t],
   )
 
-  return { favouriteOverrides, handleRecipePress, handleRecipeLongPress, handleToggleFavourite }
+  return { favouriteOverrides, handleRecipeLongPress, handleToggleFavourite }
 }

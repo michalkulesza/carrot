@@ -104,7 +104,12 @@ const FilterPill = ({
   return (
     <Animated.View layout={motion.layout} style={CONTAINER_STYLE}>
       <View style={styles.clip}>
-        {glassAvailable ? <GlassViewSafe style={StyleSheet.absoluteFill} glassEffectStyle="regular" isInteractive /> : null}
+        {glassAvailable ? <GlassViewSafe
+            style={StyleSheet.absoluteFill}
+            glassEffectStyle="regular"
+            tintColor={palette.glassTint}
+            isInteractive
+          /> : null}
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.activeFill, fillStyle]} />
         {wrapLabel ? wrapLabel(segment) : pressableSegment}
         {showClear ? (
@@ -126,15 +131,14 @@ const FilterPill = ({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    height: HEIGHT,
-    borderRadius: radius.control,
+  container: { height: HEIGHT, borderRadius: radius.control },
+  fallback: {
+    backgroundColor: palette.glassFill,
     shadowColor: palette.shadowSoft,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 1,
     shadowRadius: 12,
   },
-  fallbackFill: { backgroundColor: palette.glassFill },
   clip: { flex: 1, flexDirection: 'row', alignItems: 'center', borderRadius: radius.control, overflow: 'hidden' },
   activeFill: { backgroundColor: palette.action },
   segment: { height: HEIGHT, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
@@ -144,6 +148,6 @@ const styles = StyleSheet.create({
   clear: { width: CLEAR_WIDTH, height: HEIGHT, alignItems: 'center', justifyContent: 'center', marginLeft: -8 },
 })
 
-const CONTAINER_STYLE = glassAvailable ? styles.container : [styles.container, styles.fallbackFill]
+const CONTAINER_STYLE = glassAvailable ? styles.container : [styles.container, styles.fallback]
 
 export default memo(FilterPill)

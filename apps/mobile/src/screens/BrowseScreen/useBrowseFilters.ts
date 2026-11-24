@@ -56,6 +56,17 @@ export const useBrowseFilters = (onPresetApplied: () => void) => {
     [updateFilters],
   )
 
+  const clearTags = useCallback(
+    (tagIds: string[]) =>
+      updateFilters((current) => {
+        const next = new Set(current.tagIds)
+        tagIds.forEach((id) => next.delete(id))
+
+        return { ...current, tagIds: next }
+      }),
+    [updateFilters],
+  )
+
   const clearFilters = useCallback(
     () => updateFilters((current) => ({ ...current, tagIds: new Set(), favouritesOnly: false })),
     [updateFilters],
@@ -66,6 +77,7 @@ export const useBrowseFilters = (onPresetApplied: () => void) => {
     setSort,
     toggleTag,
     toggleFavourites,
+    clearTags,
     clearFilters,
   }
 }

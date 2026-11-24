@@ -63,6 +63,7 @@ export const paletteTones = {
   dividerCard: ['#E6DFD6', '#3A332C'],
   track: ['#E8E2DB', '#3A332C'],
   dividerStrong: ['#D6CEC5', '#4A4037'],
+  ring: ['#CFC7BE', '#4A4037'],
   action: ['#CF6528', '#E8894A'],
   actionDisabled: ['#E8C4AA', '#5A3A24'],
   actionText: ['#A9521D', '#F0A06A'],
@@ -81,6 +82,7 @@ export const paletteTones = {
   onAction: ['#FFFFFF', '#1A0F08'],
   popoverSurface: ['#FFFFFF', '#26211C'],
   glassFill: ['rgba(255,255,255,0.82)', 'rgba(38,33,28,0.82)'],
+  glassTint: ['rgba(60,45,30,0.07)', 'rgba(0,0,0,0.15)'],
   shadowSoft: ['rgba(40,30,20,0.12)', 'rgba(0,0,0,0.4)'],
 } satisfies Record<string, readonly [string, string]>
 

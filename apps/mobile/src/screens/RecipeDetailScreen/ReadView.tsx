@@ -11,6 +11,7 @@ import {
   type NativeSyntheticEvent,
   type TextLayoutEventData,
 } from "react-native";
+import { Link } from "expo-router";
 import NetworkImage from "../../components/NetworkImage";
 import { useTranslation } from "react-i18next";
 import { useHousehold } from "../../context/HouseholdContext";
@@ -179,13 +180,15 @@ const ReadView = ({
         onTouchStart={Keyboard.dismiss}
       >
         {hasImage && !heroImageErrored ? (
-          <NetworkImage
-            uri={heroThumbnailUrl!}
-            style={styles.heroImage}
-            accessibilityLabel={recipe.title}
-            recyclingKey={heroThumbnailUrl}
-            onError={() => setHeroImageErrored(true)}
-          />
+          <Link.AppleZoomTarget>
+            <NetworkImage
+              uri={heroThumbnailUrl!}
+              style={styles.heroImage}
+              accessibilityLabel={recipe.title}
+              recyclingKey={heroThumbnailUrl}
+              onError={() => setHeroImageErrored(true)}
+            />
+          </Link.AppleZoomTarget>
         ) : hasImage && heroImageErrored && PLACEHOLDER_URL ? (
           <NetworkImage
             uri={PLACEHOLDER_URL}

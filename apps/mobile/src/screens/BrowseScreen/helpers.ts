@@ -1,4 +1,5 @@
-import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
+import type { RecipeOut } from '@carrot/shared/types'
+import { RECIPE_ROW_HEIGHT } from '../../components/ui'
 
 export type SortMode = 'newest' | 'oldest' | 'title_asc' | 'title_desc' | 'edited_newest' | 'edited_oldest'
 
@@ -23,13 +24,10 @@ export const SORT_OPTIONS: { key: SortMode; labelKey: string }[] = [
   { key: 'title_desc', labelKey: 'recipes.sortTitleZA' },
 ]
 
-export const CARD_HEIGHT = 100
-export const CARD_GAP = 8
 export const SEMANTIC_HEADER_HEIGHT = 38
 export const SEMANTIC_LOADING_HEIGHT = 72
 export const NO_RESULTS_HEIGHT = 120
-
-export type HouseholdAvatar = { key: string; name: string; color: string }
+export const COUNT_LINE_HEIGHT = 23
 
 export type BrowseListItem =
   | { type: 'recipe'; recipe: RecipeOut }
@@ -84,22 +82,6 @@ export const applyFavouriteOverrides = (recipes: RecipeOut[], overrides: Map<str
   })
 }
 
-export const buildHouseholdAvatars = (recipes: RecipeOut[], households: HouseholdOut[]) => {
-  const householdsById = new Map(households.map((household) => [household.id, household]))
-  const avatarsByRecipeId = new Map<string, HouseholdAvatar[]>()
-
-  for (const recipe of recipes) {
-    const avatars: HouseholdAvatar[] = []
-    for (const id of recipe.household_ids) {
-      const household = householdsById.get(id)
-      if (household) avatars.push({ key: household.id, name: household.name, color: household.color })
-    }
-    avatarsByRecipeId.set(recipe.id, avatars)
-  }
-
-  return avatarsByRecipeId
-}
-
 export const getBrowseItemKey = (item: BrowseListItem) => (item.type === 'recipe' ? item.recipe.id : item.type)
 
 export const buildBrowseItems = ({
@@ -130,4 +112,33 @@ export const buildBrowseItems = ({
   return items
 }
 
-export const getBrowseItemType = (item: BrowseListItem) => item.type
+const ITEM_HEIGHTS: Record<BrowseListItem['type'], number> = {
+  recipe: RECIPE_ROW_HEIGHT,
+  'semantic-header': SEMANTIC_HEADER_HEIGHT,
+  'semantic-loading': SEMANTIC_LOADING_HEIGHT,
+  'no-results': NO_RESULTS_HEIGHT,
+}
+
+export const buildItemLayouts = (items: BrowseListItem[], headerHeight: number) => {
+  const layouts: { length: number; offset: number; index: number }[] = []
+  let offset = headerHeight
+
+  items.forEach((item, index) => {
+    const length = ITEM_HEIGHTS[item.type]
+    layouts.push({ length, offset, index })
+    offset += length
+  })
+
+  return layouts
+}
+
+export const countRemovedRecipes = (previousIds: Set<string>, items: BrowseListItem[]) => {
+  const nextIds = new Set<string>()
+  for (const item of items) if (item.type === 'recipe') nextIds.add(item.recipe.id)
+  let removed = 0
+  previousIds.forEach((id) => {
+    if (!nextIds.has(id)) removed += 1
+  })
+
+  return removed
+}

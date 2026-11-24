@@ -968,6 +968,13 @@
     }
   },
   "browse": {
+    "recipeCount_one": "{{count}} recipe",
+    "recipeCount_other": "{{count}} recipes",
+    "minutes": "{{count}} min",
+    "kcal": "{{count}} kcal",
+    "noRecipesMatch": "No recipes match",
+    "clearFilters": "Clear filters",
+    "clearCategory": "Clear {{name}}",
     "noResults": "No recipes for “{{query}}”"
   },
   "addMenu": {

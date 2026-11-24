@@ -1000,6 +1000,15 @@
     }
   },
   "browse": {
+    "recipeCount_one": "{{count}} przepis",
+    "recipeCount_few": "{{count}} przepisy",
+    "recipeCount_many": "{{count}} przepisów",
+    "recipeCount_other": "{{count}} przepisu",
+    "minutes": "{{count}} min",
+    "kcal": "{{count}} kcal",
+    "noRecipesMatch": "Brak pasujących przepisów",
+    "clearFilters": "Wyczyść filtry",
+    "clearCategory": "Wyczyść: {{name}}",
     "noResults": "Brak przepisów dla „{{query}}”"
   },
   "addMenu": {

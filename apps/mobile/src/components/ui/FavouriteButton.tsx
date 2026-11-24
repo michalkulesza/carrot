@@ -46,7 +46,7 @@ const FavouriteButton = ({ favourite, onToggle, accessibilityLabel }: FavouriteB
         <SymbolView
           name={favourite ? 'star.fill' : 'star'}
           size={SYMBOL_SIZE}
-          tintColor={favourite ? palette.action : palette.placeholder}
+          tintColor={favourite ? palette.action : palette.ring}
         />
       </Animated.View>
     </Pressable>

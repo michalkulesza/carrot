@@ -7,7 +7,7 @@ import type { RecipeOut } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import AppText from './AppText'
 import FavouriteButton from './FavouriteButton'
-import Pill from './Pill'
+import PillRow from './PillRow'
 import Thumbnail from './Thumbnail'
 import { lightHaptic } from './haptics'
 import { palette, space, screenGutter, usePressScale } from '../../theme'
@@ -16,16 +16,24 @@ interface RecipeRowProps {
   recipe: RecipeOut
   entering?: EntryOrExitLayoutType
   exiting?: EntryOrExitLayoutType
+  showDivider?: boolean
   onLongPress: (recipeId: string) => void
   onToggleFavourite: (recipeId: string) => void
 }
 
 const THUMBNAIL_SIZE = 88
-const MAX_VISIBLE_TAGS = 2
+const DIVIDER_WIDTH = 0.5
 
-export const RECIPE_ROW_HEIGHT = THUMBNAIL_SIZE + space.md * 2 + StyleSheet.hairlineWidth
+export const RECIPE_ROW_HEIGHT = THUMBNAIL_SIZE + space.md * 2 + DIVIDER_WIDTH
 
-const RecipeRow = ({ recipe, entering, exiting, onLongPress, onToggleFavourite }: RecipeRowProps) => {
+const RecipeRow = ({
+  recipe,
+  entering,
+  exiting,
+  showDivider = true,
+  onLongPress,
+  onToggleFavourite,
+}: RecipeRowProps) => {
   const { t } = useTranslation()
   const { animatedStyle, onPressIn, onPressOut } = usePressScale()
   const { id, title, tags, total_time_minutes: minutes, kcal_per_serving: kcal, is_favourite: favourite } = recipe
@@ -33,8 +41,8 @@ const RecipeRow = ({ recipe, entering, exiting, onLongPress, onToggleFavourite }
   const meta = [minutes ? t('browse.minutes', { count: minutes }) : null, kcal ? t('browse.kcal', { count: kcal }) : null]
     .filter(Boolean)
     .join(' · ')
-  const visibleTags = tags.slice(0, MAX_VISIBLE_TAGS)
-  const hiddenTagCount = tags.length - visibleTags.length
+  const tagItems = useMemo(() => tags.map((tag) => ({ key: tag.id, label: tTag(tag.name, t) })), [tags, t])
+  const tagItemsKey = tagItems.map((item) => item.label).join('|')
   const favouriteLabel = favourite ? t('recipes.removeFromFavourites') : t('recipes.addToFavourites')
 
   const href = useMemo(() => ({ pathname: '/recipe/[id]' as const, params: { id, title } }), [id, title])
@@ -65,20 +73,14 @@ const RecipeRow = ({ recipe, entering, exiting, onLongPress, onToggleFavourite }
                   {meta}
                 </AppText>
               ) : null}
-              {tags.length > 0 ? (
-                <View style={styles.tags}>
-                  {visibleTags.map((tag) => (
-                    <Pill key={tag.id} label={tTag(tag.name, t)} />
-                  ))}
-                  {hiddenTagCount > 0 ? <Pill label={`+${hiddenTagCount}`} tone="neutral" /> : null}
-                </View>
-              ) : null}
+              {tagItems.length > 0 ? <PillRow key={tagItemsKey} items={tagItems} /> : null}
             </View>
             <FavouriteButton
               favourite={favourite}
               onToggle={handleToggleFavourite}
               accessibilityLabel={favouriteLabel}
             />
+            {showDivider ? <View style={styles.divider} /> : null}
           </Animated.View>
         </Pressable>
       </Link>
@@ -93,11 +95,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space.md,
     paddingHorizontal: screenGutter,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: palette.dividerCard,
   },
   body: { flex: 1, gap: space.xs },
-  tags: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  divider: {
+    position: 'absolute',
+    left: screenGutter,
+    right: screenGutter,
+    bottom: 0,
+    height: DIVIDER_WIDTH,
+    backgroundColor: palette.dividerCard,
+  },
 })
 
 export default memo(RecipeRow)
