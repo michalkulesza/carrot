@@ -20,7 +20,7 @@ const keyExtractor = (job: ImportJob) => job.id
 
 const ImportsCard = ({ jobs, recipes, actions }: ImportsCardProps) => {
   const { t } = useTranslation()
-  const { entering } = useMotion()
+  const { entering, fade, rowExiting, rowLayout } = useMotion()
   const [expanded, setExpanded] = useState(false)
   const previousNeedYou = useRef(0)
 
@@ -48,18 +48,22 @@ const ImportsCard = ({ jobs, recipes, actions }: ImportsCardProps) => {
 
   const header = (
     <View style={styles.importsHeader}>
-      <IconCircle count={jobs.length} />
+      <Animated.View key={jobs.length} entering={fade}>
+        <IconCircle count={jobs.length} />
+      </Animated.View>
       <View style={styles.flexFill}>
         <AppText variant="rowTitle">{t('home.imports.title')}</AppText>
-        <AppText variant="meta" tone="textSecondary" numberOfLines={1}>
-          {summary}
-        </AppText>
+        <Animated.View key={summary} entering={fade}>
+          <AppText variant="meta" tone="textSecondary" numberOfLines={1}>
+            {summary}
+          </AppText>
+        </Animated.View>
       </View>
     </View>
   )
 
   return (
-    <Animated.View entering={entering} style={styles.importsSection}>
+    <Animated.View entering={entering} exiting={rowExiting} layout={rowLayout} style={styles.importsSection}>
       <Card style={styles.importsCard}>
         <Expandable
           header={header}

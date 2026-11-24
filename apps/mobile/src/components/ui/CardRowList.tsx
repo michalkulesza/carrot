@@ -10,17 +10,17 @@ interface CardRowListProps<T> {
 }
 
 const CardRowList = <T,>({ items, keyExtractor, renderItem }: CardRowListProps<T>) => {
-  const { entering, exiting, layout } = useMotion()
+  const { rowEntering, rowExiting, rowLayout } = useMotion()
 
   const rows = useMemo(
     () =>
       items.map((item, index) => (
-        <Animated.View key={keyExtractor(item, index)} entering={entering} exiting={exiting} layout={layout}>
+        <Animated.View key={keyExtractor(item, index)} entering={rowEntering} exiting={rowExiting} layout={rowLayout}>
           {index > 0 ? <Animated.View style={styles.divider} /> : null}
           {renderItem(item, index)}
         </Animated.View>
       )),
-    [items, keyExtractor, renderItem, entering, exiting, layout],
+    [items, keyExtractor, renderItem, rowEntering, rowExiting, rowLayout],
   )
 
   return <Fragment>{rows}</Fragment>

@@ -10,12 +10,20 @@ interface ExpandableProps {
   expanded: boolean
   onToggle: () => void
   accessibilityLabel?: string
+  unclipWhenExpanded?: boolean
   children?: ReactNode
 }
 
 const CHEVRON_SIZE = 14
 
-const Expandable = ({ header, expanded, onToggle, accessibilityLabel, children }: ExpandableProps) => {
+const Expandable = ({
+  header,
+  expanded,
+  onToggle,
+  accessibilityLabel,
+  unclipWhenExpanded = false,
+  children,
+}: ExpandableProps) => {
   const reduceMotion = useReducedMotion()
   const progress = useSharedValue(expanded ? 1 : 0)
   const contentHeight = useSharedValue(0)
@@ -30,13 +38,18 @@ const Expandable = ({ header, expanded, onToggle, accessibilityLabel, children }
   const bodyStyle = useAnimatedStyle(() => ({
     height: progress.value * contentHeight.value,
     opacity: progress.value,
+    overflow: unclipWhenExpanded && progress.value === 1 ? 'visible' : 'hidden',
   }))
 
   const handleContentLayout = useCallback(
     (event: LayoutChangeEvent) => {
-      contentHeight.value = event.nativeEvent.layout.height
+      const nextHeight = event.nativeEvent.layout.height
+      const isFirstMeasure = contentHeight.value === 0
+
+      // Content is absolutely positioned, so rows added or removed would otherwise snap the clip height.
+      contentHeight.value = isFirstMeasure || reduceMotion ? nextHeight : withTiming(nextHeight, expandTiming)
     },
-    [contentHeight],
+    [contentHeight, reduceMotion],
   )
 
   const handleToggle = () => {
