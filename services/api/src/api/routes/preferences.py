@@ -101,8 +101,10 @@ async def update_recipe_serving_preference(
         prefs = _new_preferences(user.id)
         session.add(prefs)
 
+    # A brand-new row hasn't been flushed yet, so its column default ({}) isn't applied.
+    existing_overrides = prefs.recipe_serving_overrides or {}
     prefs.recipe_serving_overrides = {
-        **prefs.recipe_serving_overrides,
+        **existing_overrides,
         recipe_id: body.servings,
     }
     await session.commit()
