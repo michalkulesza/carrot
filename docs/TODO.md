@@ -36,6 +36,7 @@ Open work only. When an item is completed, move it to the matching category in [
   - [ ] Revisit the new recipe popup's step cards once ingredients can be assigned to steps (if feasible): show the "uses" ingredient chips under each step, as in the Recipe Popup Final design.
   - [ ] Show a way to set a base serving count for recipes imported without one before offering ingredient scaling on web and mobile.
 - [ ] **iOS Universal Links for recipe URLs** — Configure the Associated Domains entitlement and `apple-app-site-association` hosting so supported Carrot web recipe links can open the native app, with authenticated scope handling and browser fallback.
+- [ ] **Step titles** — Recipe steps have no title in the data model, so Cook Mode shows "Step N" in the title slot. Add an optional title per step to the extractor, API and editors, then show it in Cook Mode and the recipe step list. Plan: [Cook Mode redesign](specs/completed/mobile-cook-mode-redesign.md).
 
 ## Quality, release, and growth
 

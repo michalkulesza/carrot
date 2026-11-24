@@ -1,21 +1,24 @@
 import { useCallback, useMemo } from 'react'
-import { Pressable, StyleSheet } from 'react-native'
+import { Pressable, StyleSheet, Text } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { SymbolView, SFSymbol } from 'expo-symbols'
 import GlassViewSafe, { glassAvailable } from '../GlassViewSafe'
-import { palette, radius, usePressScale } from '../../theme'
+import { palette, PaletteKey, radius, typography, usePressScale } from '../../theme'
 import { lightHaptic } from './haptics'
 
 export type IconButtonVariant = 'primary' | 'control' | 'glass'
 export type IconButtonSize = 40 | 44
 
 interface IconButtonProps {
-  icon: SFSymbol
+  icon?: SFSymbol
+  label?: string
   onPress?: () => void | Promise<unknown>
   accessibilityLabel: string
   variant?: IconButtonVariant
   size?: IconButtonSize
   disabled?: boolean
+  iconTone?: PaletteKey
+  selected?: boolean
 }
 
 const ICON_SIZE = 18
@@ -35,11 +38,14 @@ const FOREGROUNDS = {
 
 const IconButton = ({
   icon,
+  label,
   onPress,
   accessibilityLabel,
   variant = 'control',
   size = 40,
   disabled,
+  iconTone,
+  selected,
 }: IconButtonProps) => {
   const { animatedStyle: pressStyle, onPressIn, onPressOut } = usePressScale()
   const hitSlopInset = (44 - size) / 2
@@ -54,6 +60,7 @@ const IconButton = ({
     [hitSlopInset],
   )
 
+  const foreground = iconTone ? palette[iconTone] : FOREGROUNDS[variant]
   const useGlass = variant === 'glass' && glassAvailable
   const background = variant === 'glass' ? GLASS_FALLBACK : BACKGROUNDS[variant]
   const circleStyle = useMemo(
@@ -69,7 +76,8 @@ const IconButton = ({
   const circle = (
     <Animated.View style={circleStyle}>
       {useGlass ? <GlassViewSafe style={StyleSheet.absoluteFill} /> : null}
-      <SymbolView name={icon} size={ICON_SIZE} weight="semibold" tintColor={FOREGROUNDS[variant]} />
+      {icon ? <SymbolView name={icon} size={ICON_SIZE} weight="semibold" tintColor={foreground} /> : null}
+      {label ? <Text style={[typography.button, { color: foreground }]}>{label}</Text> : null}
     </Animated.View>
   )
 
@@ -90,7 +98,7 @@ const IconButton = ({
       hitSlop={hitSlop}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled, selected }}
     >
       {circle}
     </Pressable>

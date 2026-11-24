@@ -17,6 +17,7 @@ interface ProgressBarProps {
 const HEIGHT = 4
 const SEGMENT_RATIO = 0.35
 const LOOP_MS = 1100
+const FILL_MS = 250
 
 const ProgressBar = ({ value }: ProgressBarProps) => {
   const reduceMotion = useReducedMotion()
@@ -42,7 +43,14 @@ const ProgressBar = ({ value }: ProgressBarProps) => {
     transform: [{ translateX: -segmentWidth + progress.value * (width + segmentWidth) }],
   }))
 
-  const determinateStyle = { width: `${Math.round(Math.min(1, Math.max(0, value ?? 0)) * 100)}%` as const }
+  const clampedValue = Math.min(1, Math.max(0, value ?? 0))
+  const fillProgress = useSharedValue(clampedValue)
+
+  useEffect(() => {
+    fillProgress.value = reduceMotion ? clampedValue : withTiming(clampedValue, { duration: FILL_MS })
+  }, [clampedValue, fillProgress, reduceMotion])
+
+  const determinateStyle = useAnimatedStyle(() => ({ width: `${fillProgress.value * 100}%` }))
 
   if (indeterminate && reduceMotion) {
     return (
@@ -59,7 +67,7 @@ const ProgressBar = ({ value }: ProgressBarProps) => {
       accessibilityRole="progressbar"
       accessibilityValue={indeterminate ? undefined : { min: 0, max: 100, now: Math.round((value ?? 0) * 100) }}
     >
-      {indeterminate ? <Animated.View style={[styles.fill, segmentStyle]} /> : <View style={[styles.fill, determinateStyle]} />}
+      {indeterminate ? <Animated.View style={[styles.fill, segmentStyle]} /> : <Animated.View style={[styles.fill, determinateStyle]} />}
     </View>
   )
 }

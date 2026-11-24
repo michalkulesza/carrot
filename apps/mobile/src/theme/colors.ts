@@ -68,6 +68,7 @@ export const paletteTones = {
   actionDisabled: ['#E8C4AA', '#5A3A24'],
   actionText: ['#A9521D', '#F0A06A'],
   tint: ['#FCEBDD', '#3A2618'],
+  anchorLine: ['#F3C9AC', '#6B4326'],
   tintText: ['#7E3C14', '#F5B98C'],
   note: ['#FFF7E8', '#33281A'],
   noteText: ['#7A4E00', '#F0C77A'],

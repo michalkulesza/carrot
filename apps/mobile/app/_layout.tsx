@@ -94,6 +94,7 @@ const detailScreenOptions = { title: '' }
 // Keeps one recipe screen per id, so deep links (Live Activity, notifications) reuse it instead of stacking a copy.
 const getRecipeScreenId = (_name: string, params: Record<string, unknown>) =>
   typeof params.id === 'string' ? params.id : undefined
+const cookScreenOptions = { presentation: 'fullScreenModal' as const, headerShown: false }
 const bugReportScreenOptions = { presentation: 'modal' as const }
 
 const asyncStoragePersister = createAsyncStoragePersister({ storage: AsyncStorage })
@@ -312,6 +313,11 @@ function RootLayoutNav() {
         <Stack.Screen
           name="recipe/[id]"
           options={detailScreenOptions}
+          dangerouslySingular={getRecipeScreenId}
+        />
+        <Stack.Screen
+          name="recipe/[id]/cook"
+          options={cookScreenOptions}
           dangerouslySingular={getRecipeScreenId}
         />
         <Stack.Screen name="household/[id]" options={detailScreenOptions} />

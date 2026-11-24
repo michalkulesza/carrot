@@ -13,7 +13,6 @@ import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
 import { useAuth } from "../../context/AuthContext";
 import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import { useHousehold } from "../../context/HouseholdContext";
-import { useResolvedColorScheme } from "../../context/ColorSchemeContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
 import type { AddIngredientToShoppingListSheetHandle } from "../../components/AddIngredientToShoppingListSheet";
 import { styles } from "./styles";
@@ -25,7 +24,6 @@ import {
 } from "./useRecipeDetailHeader";
 import EditView from "./EditView";
 import ReadView from "./ReadView";
-import CookMode from "./CookMode";
 import { createMobilePublicShare } from '../../api/client'
 
 const showPublicShareSheet = async (title: string, url: string): Promise<void> => {
@@ -77,11 +75,9 @@ const RecipeDetailScreen = () => {
   const { preferences } = usePreferences();
   const { households, activeHouseholdId, activeHousehold } = useHousehold();
   const { user } = useAuth();
-  const colorScheme = useResolvedColorScheme();
   const [heroImageErrored, setHeroImageErrored] = useState(false);
   const [addMode, setAddMode] = useState(false);
   const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set());
-  const [cookModeOpen, setCookModeOpen] = useState(cookModeParam === '1');
   const insets = useSafeAreaInsets();
   const mealPlanSheetRef = useRef<AddToMealPlanSheetHandle>(null);
   const addIngredientSheetRef =
@@ -97,21 +93,26 @@ const RecipeDetailScreen = () => {
   const { setLastViewed } = useRecentActivityWriters();
 
   const displayPrefs = useDisplayPrefs();
-  const initialComponentIndex = Number.isInteger(Number(componentIndexParam))
-    ? Number(componentIndexParam)
-    : null
-  const initialStepIndex = Number.isInteger(Number(stepIndexParam))
-    ? Number(stepIndexParam)
-    : null
 
   const recipe: RecipeOut | undefined = useMemo(
     () => recipes.find((r) => r.id === recipeId),
     [recipes, recipeId],
   );
+  const hasSteps = recipe?.components.some((component) => component.steps.length > 0) ?? false
+  const forwardedCookKeyRef = useRef<string | null>(null)
+
   useEffect(() => {
-    if (cookModeParam === '1' && recipe?.components.some((component) => component.steps.length > 0)) setCookModeOpen(true)
-    else if (cookModeParam === '1') setCookModeOpen(false)
-  }, [cookModeParam, navAtParam, recipe])
+    if (cookModeParam !== '1' || !hasSteps) return
+
+    const forwardKey = `${componentIndexParam}|${stepIndexParam}|${navAtParam}`
+    if (forwardedCookKeyRef.current === forwardKey) return
+
+    forwardedCookKeyRef.current = forwardKey
+    router.push({
+      pathname: '/recipe/[id]/cook',
+      params: { id: recipeId, componentIndex: componentIndexParam, stepIndex: stepIndexParam, navAt: navAtParam },
+    })
+  }, [cookModeParam, hasSteps, componentIndexParam, stepIndexParam, navAtParam, recipeId, router])
   const handleRecipeRemoved = useCallback(() => {
     if (recipeRemovedAlertShownRef.current) return
     recipeRemovedAlertShownRef.current = true
@@ -244,10 +245,10 @@ const RecipeDetailScreen = () => {
   }, [recipe, user, activeHouseholdId, activeHousehold, handleRemoveFromHousehold, handleDeleteEverywhere, handleCloseDeletePrompt, t])
 
   const handleOpenCookMode = useCallback(() => {
-    if (!recipe?.components.some((component) => component.steps.length > 0)) return
+    if (!hasSteps) return
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-    setCookModeOpen(true)
-  }, [recipe])
+    router.push({ pathname: '/recipe/[id]/cook', params: { id: recipeId } })
+  }, [hasSteps, recipeId, router])
 
   const handleDecreaseServings = useCallback(() => {
     if (selectedServings !== null) setServings(Math.max(1, selectedServings - 1));
@@ -330,7 +331,6 @@ const RecipeDetailScreen = () => {
   useRecipeDetailHeader({
     navigation,
     editing: editDraft.editing,
-    cooking: cookModeOpen,
     addMode,
     recipe: recipe ?? { household_ids: [] },
     onToggleAddMode: handleToggleAddMode,
@@ -433,17 +433,6 @@ const RecipeDetailScreen = () => {
         onDeleteRecipe={handleDeleteRecipe}
         mealPlanSheetRef={mealPlanSheetRef}
         addIngredientSheetRef={addIngredientSheetRef}
-      />
-      <CookMode
-        recipe={recipe}
-        visible={cookModeOpen && recipe.components.some((component) => component.steps.length > 0)}
-        onClose={() => setCookModeOpen(false)}
-        colorScheme={colorScheme}
-        initialComponentIndex={initialComponentIndex}
-        initialStepIndex={initialStepIndex}
-        jumpKey={navAtParam}
-        selectedServings={selectedServings}
-        unitSystem={preferences?.unit_system ?? "metric"}
       />
     </>
   );

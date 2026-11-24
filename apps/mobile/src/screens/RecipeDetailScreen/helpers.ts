@@ -10,7 +10,6 @@ import type { DurationMatch } from '../../context/TimerContext'
 
 export const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
 export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
-export const RAIL_VISIBLE_STORAGE_KEY = 'cook-mode-ingredient-rail'
 
 export const FONT_SIZES = [13, 16, 17, 20, 22] as const
 export const LINE_HEIGHTS = [18, 21, 22, 25, 28] as const
@@ -147,73 +146,27 @@ export const buildEditRecipeSaveRequest = (
   tag_ids: recipe.tags.map((tag) => tag.id),
 })
 
-export interface RailRow {
-  key: string
-  kind: 'header' | 'ingredient'
-  text: string
-}
-
-export const showRailComponentHeaders = (components: SaveComponent[]): boolean => components.length > 1
-
-const railVariantIngredients = (component: SaveComponent, unitSystem: string): string[] =>
+export const getVariantIngredients = (component: SaveComponent, unitSystem: string): string[] =>
   unitSystem === 'imperial'
     ? component.imperial_ingredients ?? component.ingredients
     : component.metric_ingredients ?? component.ingredients
 
-export const buildIngredientRailRows = (
-  components: SaveComponent[],
-  unitSystem: string,
-  servingScale: number,
+export const splitIngredient = (
+  ingredient: string,
   translateUnit: (unit: string, qty: string) => string,
-): RailRow[] => {
-  const showHeaders = showRailComponentHeaders(components)
-  const rows: RailRow[] = []
-  components.forEach((component, componentIndex) => {
-    if (showHeaders) {
-      rows.push({ key: `h${componentIndex}`, kind: 'header', text: component.name ?? '' })
-    }
-    railVariantIngredients(component, unitSystem).forEach((ingredient, ingredientIndex) => {
-      rows.push({
-        key: `${componentIndex}-${ingredientIndex}`,
-        kind: 'ingredient',
-        text: displayIngredientWithLocalizedUnit(
-          scaleIngredientQuantity(ingredient, servingScale),
-          translateUnit,
-        ),
-      })
-    })
-  })
-  return rows
-}
+): { quantity: string; name: string } => {
+  const trimmed = (ingredient ?? '').trim()
+  const range = trimmed.match(/^(\d+(?:[.,]\d+)?\s*[–—-]\s*\d+(?:[.,]\d+)?)\s+(.+)$/)
+  const rangeParsed = range ? parseIngredient(`1 ${range[2]}`) : null
 
-export const railFlatIndex = (
-  components: SaveComponent[],
-  showHeaders: boolean,
-  componentIndex: number,
-  ingredientIndex: number,
-): number => {
-  let rows = 0
-  for (let i = 0; i < componentIndex; i++) {
-    rows += (showHeaders ? 1 : 0) + components[i].ingredients.length
+  if (range && rangeParsed?.unit) {
+    return { quantity: `${range[1]} ${translateUnit(rangeParsed.unit, range[1])}`, name: rangeParsed.name }
   }
-  return rows + (showHeaders ? 1 : 0) + ingredientIndex
-}
 
-export const resolveRailTargets = (components: SaveComponent[]): number[] => {
-  const showHeaders = showRailComponentHeaders(components)
-  const targets: number[] = []
-  let lastTarget = 0
-  components.forEach((component, componentIndex) => {
-    const lines = component.step_ingredient_line ?? []
-    component.steps.forEach((_, stepIndex) => {
-      const line = lines[stepIndex]
-      if (line != null) {
-        lastTarget = railFlatIndex(components, showHeaders, componentIndex, line)
-      }
-      targets.push(lastTarget)
-    })
-  })
-  return targets
+  const parsed = parseIngredient(ingredient)
+  const unit = parsed.unit ? translateUnit(parsed.unit, parsed.qty) : ''
+
+  return { quantity: [parsed.qty, unit].filter(Boolean).join(' '), name: parsed.name }
 }
 
 export type Segment =

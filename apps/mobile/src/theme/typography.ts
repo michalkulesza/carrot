@@ -33,6 +33,11 @@ export const typography = StyleSheet.create({
   tileMeta: { fontSize: 13, lineHeight: 18, fontWeight: '400' },
   button: { fontSize: 15, lineHeight: 20, fontWeight: '600' },
   buttonLarge: { fontSize: 17, lineHeight: 22, fontWeight: '600' },
+  badge: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  cookTitle: { fontSize: 32, lineHeight: 35, fontWeight: '700', letterSpacing: em(32, -0.02) },
+  cookBody: { fontSize: 23, lineHeight: 32, fontWeight: '400' },
+  timerValue: { fontSize: 22, lineHeight: 26, fontWeight: '700' },
+  microBadge: { fontSize: 11, lineHeight: 14, fontWeight: '700', letterSpacing: em(11, 0.06) },
   tabularNums: { fontVariant: ['tabular-nums'] },
 })
 
