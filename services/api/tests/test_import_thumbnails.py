@@ -63,10 +63,9 @@ async def test_archive_thumbnail_skips_missing_and_r2_images(monkeypatch, thumbn
 
 
 @pytest.mark.asyncio
-async def test_archive_thumbnail_keeps_external_url_when_download_fails(monkeypatch) -> None:
+async def test_archive_thumbnail_clears_external_url_when_download_fails(monkeypatch) -> None:
     _configure_r2(monkeypatch)
-    thumbnail_url = "https://cdn.instagram.com/expired.jpg"
-    recipe = SimpleNamespace(id=uuid4(), thumbnail_url=thumbnail_url)
+    recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.instagram.com/expired.jpg")
     get = AsyncMock(side_effect=httpx.HTTPError("download failed"))
     client = FakeClient(get)
     upload_image = Mock()
@@ -75,7 +74,7 @@ async def test_archive_thumbnail_keeps_external_url_when_download_fails(monkeypa
 
     await import_worker._archive_thumbnail(recipe)
 
-    assert recipe.thumbnail_url == thumbnail_url
+    assert recipe.thumbnail_url is None
     upload_image.assert_not_called()
 
 

@@ -190,6 +190,8 @@ async def _archive_thumbnail(recipe: Recipe) -> None:
         archived_url = await asyncio.to_thread(r2_svc.upload_image, response.content, str(recipe.id))
         recipe.thumbnail_url = archived_url
     except Exception as error:
+        # Social CDN URLs are signed and expire; clients render a placeholder for a missing thumbnail.
+        recipe.thumbnail_url = None
         reason = str(error) if isinstance(error, ImageFetchError) else type(error).__name__
         log.warning("Thumbnail R2 upload failed for recipe %s: %s", recipe.id, reason)
         report_service_failure("thumbnail_archive", error=error)
