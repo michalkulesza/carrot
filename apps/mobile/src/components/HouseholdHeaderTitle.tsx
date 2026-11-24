@@ -2,7 +2,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { MenuView } from '@react-native-menu/menu'
 import type { MenuAction, NativeActionEvent } from '@react-native-menu/menu'
 import type { HouseholdOut } from '@carrot/shared/types'
+import { SymbolView } from 'expo-symbols'
 import { colors } from '../theme/colors'
+import { palette, typography } from '../theme'
 import Avatar from './Avatar'
 
 const HouseholdHeaderTitle = ({
@@ -13,6 +15,7 @@ const HouseholdHeaderTitle = ({
   activeHousehold,
   switchContextLabel,
   isLoadingHouseholds,
+  prominent = false,
 }: {
   title: string
   householdMenuActions: MenuAction[]
@@ -21,6 +24,7 @@ const HouseholdHeaderTitle = ({
   activeHousehold: HouseholdOut | null
   switchContextLabel: string
   isLoadingHouseholds: boolean
+  prominent?: boolean
 }) => (
   // width: '100%' on headerTitleWrap stops iOS from centering this custom
   // headerTitle view when the nav bar has extra room (e.g. iPhone Pro Max).
@@ -37,10 +41,15 @@ const HouseholdHeaderTitle = ({
         onOpenMenu={onHouseholdMenuOpen}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Avatar name={activeHousehold?.name ?? ''} color={activeHousehold?.color} size={28} />
+        <View style={styles.avatarRow}>
+          <Avatar name={activeHousehold?.name ?? ''} color={activeHousehold?.color} size={prominent ? 40 : 28} />
+          {prominent ? (
+            <SymbolView name="chevron.down" size={CARET_SIZE} weight="semibold" tintColor={palette.textTertiary} />
+          ) : null}
+        </View>
       </MenuView>
     )}
-    <Text style={styles.headerTitleText} numberOfLines={1}>
+    <Text style={prominent ? styles.prominentTitleText : styles.headerTitleText} numberOfLines={1}>
       {title}
     </Text>
   </View>
@@ -48,7 +57,11 @@ const HouseholdHeaderTitle = ({
 
 export default HouseholdHeaderTitle
 
+const CARET_SIZE = 12
+
 const styles = StyleSheet.create({
+  avatarRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  prominentTitleText: { ...typography.screenTitle, color: palette.ink },
   headerTitleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, width: '100%' },
   headerTitleText: {
     fontSize: 17,

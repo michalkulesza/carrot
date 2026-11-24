@@ -27,6 +27,7 @@ import {
   useTimers,
 } from "../../context/TimerContext";
 import { useIsAppActive } from "../../hooks/useIsAppActive";
+import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import IngredientRail from "./IngredientRail";
 import { buildIngredientRailRows, RAIL_VISIBLE_STORAGE_KEY, resolveRailTargets } from "./helpers";
 import { colors } from "../../theme/colors";
@@ -122,7 +123,7 @@ const CookModeBackButton = ({ onClose, tintColor, closeLabel }: { onClose: () =>
 const CookMode = ({
   recipe,
   visible,
-  onClose,
+  onClose: onCloseCookMode,
   colorScheme,
   initialComponentIndex,
   initialStepIndex,
@@ -183,6 +184,7 @@ const CookMode = ({
   const instructionAreaHeightRef = useRef(0);
   const fontScaleRef = useRef(1);
   const { timers, startTimer, pauseTimer, resumeTimer } = useTimers();
+  const { setCookSession, clearCookSession } = useRecentActivityWriters();
   const step = steps[index];
   const durations = useMemo(() => {
     const uniqueDurations = new Set<number>();
@@ -204,6 +206,11 @@ const CookMode = ({
     if (targetIndex >= 0) setIndex(targetIndex);
   }, [hasInitialStep, initialComponentIndex, initialStepIndex, jumpKey, steps, visible]);
   const storageKey = `cook-mode:${recipe.id}`;
+  const isLastStep = index === steps.length - 1;
+  const onClose = useCallback(() => {
+    if (isLastStep) void clearCookSession(recipe.id);
+    onCloseCookMode();
+  }, [clearCookSession, isLastStep, onCloseCookMode, recipe.id]);
   const adjustFontScale = useCallback(
     (direction: -1 | 1) => {
       const currentIndex = getFontScaleIndex(fontScaleRef.current);
@@ -274,9 +281,18 @@ const CookMode = ({
     });
   }, []);
   useEffect(() => {
-    if (visible)
-      void AsyncStorage.setItem(storageKey, JSON.stringify({ index }));
-  }, [visible, storageKey, index]);
+    if (!visible) return;
+
+    void AsyncStorage.setItem(storageKey, JSON.stringify({ index }));
+    if (steps.length > 0) {
+      void setCookSession({
+        recipeId: recipe.id,
+        stepIndex: index,
+        totalSteps: steps.length,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [visible, storageKey, index, recipe.id, steps.length, setCookSession]);
   useEffect(() => {
     if (!visible || ![...timers.values()].some((timer) => timer.status === "running")) return;
     const timer = setInterval(() => setTimerTick((tick) => tick + 1), 1000);

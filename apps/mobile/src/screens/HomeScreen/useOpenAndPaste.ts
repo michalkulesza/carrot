@@ -7,7 +7,7 @@ const PRESENT_DELAY_MS = 0
 // Lets the bottom sheet finish presenting before the browser backgrounds the app.
 const OPEN_LINK_DELAY_MS = 300
 
-export const useOpenAndPaste = (presentTextImport: () => void) => {
+export const useOpenAndPaste = (presentTextSheet: () => void) => {
   const { t } = useTranslation()
   const inFlightRef = useRef(false)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
@@ -34,7 +34,7 @@ export const useOpenAndPaste = (presentTextImport: () => void) => {
       inFlightRef.current = true
 
       schedule(() => {
-        presentTextImport()
+        presentTextSheet()
 
         if (!sourceUrl) {
           inFlightRef.current = false
@@ -44,6 +44,6 @@ export const useOpenAndPaste = (presentTextImport: () => void) => {
         schedule(() => void openLink(sourceUrl), OPEN_LINK_DELAY_MS)
       }, PRESENT_DELAY_MS)
     },
-    [schedule, presentTextImport, openLink],
+    [schedule, presentTextSheet, openLink],
   )
 }

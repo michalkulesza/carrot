@@ -600,7 +600,6 @@
     "dragHint": "Tocca due volte e tieni premuto, poi trascina per spostare questo piatto in un altro giorno."
   },
   "households": {
-    "you": "Tu",
     "switchContext": "Cambia famiglia",
     "personal": "Personale",
     "personalHousehold": "Famiglia personale",
@@ -641,9 +640,7 @@
     "addRecipe": "Aggiungi ricetta",
     "fromPersonalLibrary": "Dalla libreria personale",
     "fromMyRecipes": "Aggiungi dalle mie ricette",
-    "fromPersonalLibraryDesc": "Scegli una ricetta da aggiungere a questa famiglia",
     "addPersonalRecipe": "Aggiungi {{title}} alla famiglia",
-    "orImportFromUrl": "oppure importa da URL",
     "recipeUrl": "URL della ricetta",
     "paste": "Incolla",
     "importFailed": "Importazione non riuscita",
@@ -654,7 +651,6 @@
     "discardChangesTitle": "Scartare le modifiche?",
     "discardChangesMessage": "Le tue modifiche andranno perse.",
     "import": "Importa",
-    "importFromUrl": "Importa da URL",
     "unsupportedUrl": "Questo link non è ancora supportato. Carrot importa siti di ricette, Instagram e TikTok.",
     "failedToSave": "Impossibile salvare la ricetta",
     "saveError": "Impossibile salvare le modifiche. Riprova.",
@@ -665,17 +661,8 @@
     "removeIngredient": "Rimuovi ingrediente",
     "ingredientName": "Nome dell'ingrediente",
     "removeStep": "Rimuovi passaggio",
-    "methodCamera": "Scatta una foto",
-    "methodCameraDesc": "Fotografa una ricetta o una pagina di un libro di cucina",
-    "methodGallery": "Carica immagine",
-    "methodGalleryDesc": "Dalla tua libreria foto",
     "methodText": "Incolla testo",
-    "methodTextDesc": "Copia e incolla il testo di qualsiasi ricetta",
-    "shareTip": "💡 Lo sapevi? In Safari, Instagram o qualsiasi altra app — tocca Condividi e scegli Carrot per importare subito.",
-    "methodScratch": "Crea da zero",
-    "methodScratchDesc": "Crea una ricetta manualmente",
     "pasteTextPlaceholder": "Incolla qui una ricetta…",
-    "extractRecipe": "Estrai ricetta",
     "openInBrowser": "Accedi e apri la pagina",
     "webviewTitle": "Accedi",
     "webviewHint": "Accedi se la pagina lo richiede, poi tocca ✓ per estrarre la ricetta.",
@@ -723,7 +710,15 @@
     "hintReady": "Tutto a posto, pronto da importare",
     "hintMissing": "Manca qualcosa? Faremo del nostro meglio per completare",
     "foundIngredients_one": "1 ingrediente",
-    "foundSteps_one": "1 passaggio"
+    "foundSteps_one": "1 passaggio",
+    "importFromLink": "Importa da link",
+    "sourcePreview": "Estrarremo titolo, foto, ingredienti e passaggi",
+    "backgroundHint": "Le importazioni proseguono in background: vedrai i progressi in Home.",
+    "textPlaceholder": "Incolla una ricetta: titolo, ingredienti e passaggi. Ci pensiamo noi.",
+    "source": {
+      "instagram": "Reel di Instagram",
+      "tiktok": "Video TikTok"
+    }
   },
   "importSource": {
     "unsupportedTitle": "Non supportato",
@@ -947,12 +942,53 @@
   "home": {
     "recentlyAdded": "Aggiunte di recente",
     "favourites": "Preferite",
-    "importsInProgress": "Importazioni in corso",
     "seeAll": "Mostra tutto",
     "emptyTitle": "La tua cucina è vuota",
-    "emptyBody": "Aggiungi la tua prima ricetta per vederla qui."
+    "emptyBody": "Aggiungi la tua prima ricetta per vederla qui.",
+    "tonight": "Stasera",
+    "tomorrow": "Domani",
+    "nothingPlanned": "Ancora niente in programma",
+    "planTonight": "Pianifica stasera",
+    "openMealPlan": "Apri piano dei pasti",
+    "addedToday": "Aggiunta oggi",
+    "yesterday": "Ieri",
+    "minutesShort": "{{count}} min",
+    "jumpBackIn": "Riprendi",
+    "cookModeKicker": "Modalità cucina",
+    "lastViewed": "Visto di recente",
+    "resume": "Riprendi",
+    "open": "Apri",
+    "imports": {
+      "title": "Importazioni",
+      "inProgress_one": "{{count}} in corso",
+      "inProgress_other": "{{count}} in corso",
+      "needYou_one": "{{count}} richiede attenzione",
+      "needYou_other": "{{count}} richiedono attenzione",
+      "allDone": "Tutto fatto",
+      "importing": "Importazione…",
+      "needsAttention": "Richiede attenzione",
+      "showOptions": "Mostra le opzioni per questa importazione"
+    }
   },
   "browse": {
     "noResults": "Nessuna ricetta per «{{query}}»"
+  },
+  "addMenu": {
+    "label": "Aggiungi ricetta",
+    "tip": "Suggerimento: in Safari o Instagram, tocca Condividi → Carrot per importare subito.",
+    "importLink": "Importa da link",
+    "importLinkSubtitle": "Instagram, TikTok o qualsiasi sito di ricette",
+    "takePhoto": "Scatta una foto",
+    "takePhotoSubtitle": "Pagina di libro di cucina o ricetta scritta a mano",
+    "fromPhotos": "Dalle foto",
+    "fromPhotosSubtitle": "Screenshot e immagini salvate",
+    "pasteText": "Incolla testo",
+    "pasteTextSubtitle": "Qualsiasi testo di ricetta",
+    "writeScratch": "Scrivi da zero",
+    "writeScratchSubtitle": "Apre una ricetta vuota in modifica",
+    "clipboardKicker": "Link negli appunti",
+    "clipboardSubtitle": "Tocca Importa per aggiungerlo",
+    "clipboardImport": "Importa",
+    "close": "Chiudi menu"
   }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -24,13 +24,14 @@ import { useMoveMealPlanEntry } from '@carrot/shared/hooks/useMoveMealPlanEntry'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { toYYYYMM, toISODate } from '@carrot/shared/utils/dateUtils'
 import { colors } from '../../theme/colors'
+import RecipePicker from '../../components/RecipePicker'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
+import { usePlanMealForDate } from '../../hooks/usePlanMealForDate'
 import { buildListItems, DAY_ROW_HEIGHT, MONTH_HEADER_HEIGHT, type ListItem } from './helpers'
 import { styles } from './styles'
 import DayRow from './DayRow'
 import DragPreviewCard from './DragPreviewCard'
 import DropTargetHighlight from './DropTargetHighlight'
-import RecipePicker, { type RecipePickerHandle } from './RecipePicker'
 import { useExportMealPlanPdf } from './useExportMealPlanPdf'
 import { useMealPlanHeader } from './useMealPlanHeader'
 import { useCenterOnToday } from './useCenterOnToday'
@@ -40,8 +41,7 @@ const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
   const navigation = useNavigation()
   const router = useRouter()
-  const { focusToday } = useLocalSearchParams<{ focusToday?: string }>()
-  const [pickerDate, setPickerDate] = useState<Date | null>(null)
+  const { focusToday, planToday } = useLocalSearchParams<{ focusToday?: string; planToday?: string }>()
   const api = useApiClient()
   const qc = useQueryClient()
   const { recipes } = useRecipes()
@@ -85,23 +85,6 @@ const MealPlanScreen = () => {
   const isLoading = queries.some((q) => q.isLoading)
   // Gate our own spinner on auth being ready so it doesn't stack with the root loadingOverlay.
   const { showSpinner } = useScreenLoading(isLoading)
-
-  const setEntry = useMutation({
-    mutationFn: ({ date, recipeId, text }: { date: string; recipeId?: string; text?: string }) =>
-      api.setMealPlanEntry(date, { recipeId, text }),
-    onSuccess: (entry) => {
-      // The recipes tab stays mounted while navigating to the meal plan. Update its
-      // empty next-meal cache immediately, then revalidate in case another date is
-      // earlier than the one just assigned.
-      if (entry.date >= todayIso) {
-        qc.setQueryData<MealPlanEntry | null>(['mealPlan', 'next', todayIso], (current) => {
-          if (current === null || current === undefined || entry.date <= current.date) return entry
-          return current
-        })
-      }
-      void qc.invalidateQueries({ queryKey: ['mealPlan'] })
-    },
-  })
 
   const deleteEntry = useMutation({
     mutationFn: api.deleteMealPlanEntry,
@@ -151,7 +134,7 @@ const MealPlanScreen = () => {
     [items, offsets],
   )
 
-  const pickerRef = useRef<RecipePickerHandle>(null)
+  const { pickerRef, openForDate, handlePick, handleAddText, handleRemove, handleClose } = usePlanMealForDate()
 
   const handleDayPress = useCallback((date: Date) => {
     const isoDate = toISODate(date)
@@ -161,8 +144,7 @@ const MealPlanScreen = () => {
       const changeMealAction = {
         text: existing.recipe ? t('mealPlan.changeRecipe') : t('mealPlan.changeMeal'),
         onPress: () => {
-          setPickerDate(date)
-          pickerRef.current?.present()
+          openForDate(date)
         },
       }
       const removeMealAction = {
@@ -187,42 +169,9 @@ const MealPlanScreen = () => {
       ])
     } else {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      setPickerDate(date)
-      pickerRef.current?.present()
+      openForDate(date)
     }
-  }, [entriesByDate, t, router, deleteEntry])
-
-  const handlePickRecipe = useCallback(
-    (recipeId: string) => {
-      if (!pickerDate) return
-      setEntry.mutate({ date: toISODate(pickerDate), recipeId })
-      setPickerDate(null)
-      pickerRef.current?.dismiss()
-    },
-    [pickerDate, setEntry],
-  )
-
-  const handleAddText = useCallback(
-    (text: string) => {
-      if (!pickerDate) return
-
-      setEntry.mutate({ date: toISODate(pickerDate), text })
-      setPickerDate(null)
-      pickerRef.current?.dismiss()
-    },
-    [pickerDate, setEntry],
-  )
-
-  const handleRemoveEntry = useCallback(() => {
-    if (!pickerDate) return
-    deleteEntry.mutate(toISODate(pickerDate))
-    setPickerDate(null)
-    pickerRef.current?.dismiss()
-  }, [pickerDate, deleteEntry])
-
-  const handleClosePicker = useCallback(() => {
-    setPickerDate(null)
-  }, [])
+  }, [entriesByDate, t, router, deleteEntry, openForDate])
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<ListItem>) => {
@@ -259,6 +208,16 @@ const MealPlanScreen = () => {
   useEffect(() => {
     if (focusToday) handleScrollToToday()
   }, [focusToday, handleScrollToToday])
+
+  const handledPlanTodayRef = useRef<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!planToday || !isFocused || handledPlanTodayRef.current === planToday) return
+
+    handledPlanTodayRef.current = planToday
+    handleScrollToToday()
+    openForDate(today)
+  }, [planToday, isFocused, handleScrollToToday, openForDate, today])
 
   const draggingEntry = previewIsoDate ? entriesByDate.get(previewIsoDate) : undefined
   const visibleFrameStyle = useMemo(() => ({ paddingTop: headerHeight }), [headerHeight])
@@ -329,9 +288,9 @@ const MealPlanScreen = () => {
         currentRecipeId={null}
         recipes={recipes}
         onAddText={handleAddText}
-        onPick={handlePickRecipe}
-        onRemove={handleRemoveEntry}
-        onClose={handleClosePicker}
+        onPick={handlePick}
+        onRemove={handleRemove}
+        onClose={handleClose}
       />
     </View>
   )

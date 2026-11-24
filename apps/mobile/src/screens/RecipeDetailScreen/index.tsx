@@ -11,6 +11,7 @@ import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks
 import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
 import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
 import { useAuth } from "../../context/AuthContext";
+import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import { useHousehold } from "../../context/HouseholdContext";
 import { useResolvedColorScheme } from "../../context/ColorSchemeContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
@@ -93,6 +94,8 @@ const RecipeDetailScreen = () => {
   const recipeSeenRef = useRef(false);
   const recipeRemovedAlertShownRef = useRef(false);
 
+  const { setLastViewed } = useRecentActivityWriters();
+
   const displayPrefs = useDisplayPrefs();
   const initialComponentIndex = Number.isInteger(Number(componentIndexParam))
     ? Number(componentIndexParam)
@@ -115,6 +118,11 @@ const RecipeDetailScreen = () => {
     Alert.alert(t('recipes.recipeRemovedTitle'), t('recipes.recipeRemovedMessage'))
     navigation.goBack()
   }, [navigation, t])
+
+  const recipeFound = recipe !== undefined
+  useEffect(() => {
+    if (recipeFound) void setLastViewed(recipeId)
+  }, [recipeFound, recipeId, setLastViewed])
 
   useEffect(() => {
     if (recipe) {

@@ -598,7 +598,6 @@
     "dragHint": "Double tap and hold, then drag to move this dish to another day."
   },
   "households": {
-    "you": "You",
     "switchContext": "Switch household",
     "personal": "Personal",
     "personalHousehold": "Personal Household",
@@ -639,9 +638,7 @@
     "addRecipe": "Add Recipe",
     "fromPersonalLibrary": "From Personal Library",
     "fromMyRecipes": "Add from my recipes",
-    "fromPersonalLibraryDesc": "Choose a recipe to add to this household",
     "addPersonalRecipe": "Add {{title}} to household",
-    "orImportFromUrl": "or import from URL",
     "recipeUrl": "Recipe URL",
     "paste": "Paste",
     "importFailed": "Import failed",
@@ -652,7 +649,6 @@
     "discardChangesTitle": "Discard changes?",
     "discardChangesMessage": "Your changes will be lost.",
     "import": "Import",
-    "importFromUrl": "Import from URL",
     "unsupportedUrl": "This link isn't supported yet. Carrot imports recipe websites, Instagram and TikTok.",
     "failedToSave": "Failed to save recipe",
     "saveError": "Couldn't save your changes. Please try again.",
@@ -663,17 +659,8 @@
     "removeIngredient": "Remove ingredient",
     "ingredientName": "Ingredient name",
     "removeStep": "Remove step",
-    "methodCamera": "Take Photo",
-    "methodCameraDesc": "Photograph a recipe or cookbook page",
-    "methodGallery": "Upload Image",
-    "methodGalleryDesc": "From your photo library",
     "methodText": "Paste Text",
-    "methodTextDesc": "Copy and paste any recipe text",
-    "shareTip": "💡 Did you know? In Safari, Instagram, or any app — tap Share and choose Carrot to import instantly.",
-    "methodScratch": "Build from Scratch",
-    "methodScratchDesc": "Create a recipe manually",
     "pasteTextPlaceholder": "Paste a recipe here…",
-    "extractRecipe": "Extract Recipe",
     "openInBrowser": "Log in & open page",
     "webviewTitle": "Log In",
     "webviewHint": "Log in if the page requires it, then tap ✓ to extract the recipe.",
@@ -720,7 +707,15 @@
     "hintReady": "Looks good, ready to import",
     "hintMissing": "Missing bits? We'll do our best to fill them in",
     "foundIngredients_one": "1 ingredient",
-    "foundSteps_one": "1 step"
+    "foundSteps_one": "1 step",
+    "importFromLink": "Import from link",
+    "sourcePreview": "We'll pull the title, photo, ingredients and steps",
+    "backgroundHint": "Imports keep going in the background — you'll see progress on Home.",
+    "textPlaceholder": "Paste a recipe — title, ingredients and steps. We'll sort it out.",
+    "source": {
+      "instagram": "Instagram reel",
+      "tiktok": "TikTok video"
+    }
   },
   "importSource": {
     "unsupportedTitle": "Not supported",
@@ -944,12 +939,53 @@
   "home": {
     "recentlyAdded": "Recently added",
     "favourites": "Favourites",
-    "importsInProgress": "Imports in progress",
     "seeAll": "See all",
     "emptyTitle": "Your kitchen is empty",
-    "emptyBody": "Add your first recipe to see it here."
+    "emptyBody": "Add your first recipe to see it here.",
+    "tonight": "Tonight",
+    "tomorrow": "Tomorrow",
+    "nothingPlanned": "Nothing planned yet",
+    "planTonight": "Plan tonight",
+    "openMealPlan": "Open meal plan",
+    "addedToday": "Added today",
+    "yesterday": "Yesterday",
+    "minutesShort": "{{count}} min",
+    "jumpBackIn": "Jump back in",
+    "cookModeKicker": "Cook mode",
+    "lastViewed": "Last viewed",
+    "resume": "Resume",
+    "open": "Open",
+    "imports": {
+      "title": "Imports",
+      "inProgress_one": "{{count}} in progress",
+      "inProgress_other": "{{count}} in progress",
+      "needYou_one": "{{count}} needs you",
+      "needYou_other": "{{count}} need you",
+      "allDone": "All done",
+      "importing": "Importing…",
+      "needsAttention": "Needs attention",
+      "showOptions": "Shows options for this import"
+    }
   },
   "browse": {
     "noResults": "No recipes for “{{query}}”"
+  },
+  "addMenu": {
+    "label": "Add recipe",
+    "tip": "Tip: in Safari or Instagram, tap Share → Carrot to import straight away.",
+    "importLink": "Import from link",
+    "importLinkSubtitle": "Instagram, TikTok or any recipe site",
+    "takePhoto": "Take photo",
+    "takePhotoSubtitle": "Cookbook page or handwritten card",
+    "fromPhotos": "From photos",
+    "fromPhotosSubtitle": "Screenshots and saved images",
+    "pasteText": "Paste text",
+    "pasteTextSubtitle": "Any recipe text",
+    "writeScratch": "Write from scratch",
+    "writeScratchSubtitle": "Opens an empty recipe in edit",
+    "clipboardKicker": "Link on your clipboard",
+    "clipboardSubtitle": "Tap Import to add it",
+    "clipboardImport": "Import",
+    "close": "Close menu"
   }
 }

@@ -1,88 +1,81 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import {
-  ActivityIndicator,
-  PlatformColor,
-  Pressable,
-  Text,
-  View,
-  type ListRenderItemInfo,
-} from 'react-native'
+import { useCallback, useMemo, useState } from 'react'
+import { ActivityIndicator, Pressable, View, type ListRenderItemInfo } from 'react-native'
 import { BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { Feather } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RecipeOut } from '@carrot/shared/types'
-import NetworkImage from '../NetworkImage'
+import { AppText, Thumbnail } from '../ui'
+import { palette, space } from '../../theme'
 import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { styles } from './styles'
 
-const PersonalRecipeRow = ({
-  recipe,
-  isLinking,
-  onSelect,
-}: {
+interface PersonalRecipeRowProps {
   recipe: RecipeOut
   isLinking: boolean
+  isBusy: boolean
   onSelect: (id: string) => void
-}) => {
+}
+
+const PersonalRecipeRow = ({ recipe, isLinking, isBusy, onSelect }: PersonalRecipeRowProps) => {
   const { t } = useTranslation()
   const thumbnailUrl = proxyThumbnailUrl(recipe.thumbnail_url)
   const handlePress = useCallback(() => onSelect(recipe.id), [onSelect, recipe.id])
 
+  const getRowStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [styles.personalRow, pressed && styles.personalRowPressed],
+    [],
+  )
+
   return (
     <Pressable
-      style={({ pressed }) => [styles.personalRecipeRow, pressed && styles.personalRecipeRowPressed]}
+      style={getRowStyle}
       onPress={handlePress}
-      disabled={isLinking}
+      disabled={isBusy}
       accessibilityLabel={t('addRecipe.addPersonalRecipe', { title: recipe.title })}
       accessibilityRole="button"
     >
-      <View style={styles.personalRecipeThumbnail}>
-        {thumbnailUrl ? (
-          <NetworkImage uri={thumbnailUrl} style={styles.personalRecipeThumbnail} recyclingKey={recipe.id} />
-        ) : (
-          <Feather name="book-open" size={20} color={PlatformColor('secondaryLabel') as unknown as string} />
-        )}
-      </View>
-      <Text style={styles.personalRecipeTitle} numberOfLines={2}>{recipe.title}</Text>
+      <Thumbnail url={thumbnailUrl} size="xs" glyph="book" />
+      <AppText variant="bodyLarge" style={styles.personalTitle} numberOfLines={2}>
+        {recipe.title}
+      </AppText>
       {isLinking ? (
-        <ActivityIndicator color={PlatformColor('systemBlue') as unknown as string} />
+        <ActivityIndicator color={palette.action} />
       ) : (
-        <Text style={styles.personalRecipeAdd}>{t('common.add')}</Text>
+        <AppText variant="button" tone="actionText">
+          {t('common.add')}
+        </AppText>
       )}
     </Pressable>
   )
 }
 
-const PersonalRecipeSeparator = () => <View style={styles.personalRecipeSeparator} />
+const PersonalRecipeSeparator = () => <View style={styles.personalSeparator} />
 
-const PersonalRecipePickerView = ({
-  recipes,
-  isLoading,
-  linkingRecipeId,
-  onSelect,
-  header,
-  error,
-}: {
+interface PersonalRecipePickerViewProps {
   recipes: RecipeOut[]
   isLoading: boolean
   linkingRecipeId: string | null
   onSelect: (id: string) => void
-  header?: ReactNode
-  error?: ReactNode
-}) => {
+}
+
+const PersonalRecipePickerView = ({ recipes, isLoading, linkingRecipeId, onSelect }: PersonalRecipePickerViewProps) => {
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   const [search, setSearch] = useState('')
+
   const filteredRecipes = useMemo(() => {
     const normalizedSearch = search.trim().toLocaleLowerCase()
     if (!normalizedSearch) return recipes
 
     return recipes.filter((recipe) => recipe.title.toLocaleLowerCase().includes(normalizedSearch))
   }, [recipes, search])
+
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<RecipeOut>) => (
       <PersonalRecipeRow
         recipe={item}
-        isLinking={linkingRecipeId !== null}
+        isLinking={linkingRecipeId === item.id}
+        isBusy={linkingRecipeId !== null}
         onSelect={onSelect}
       />
     ),
@@ -91,48 +84,49 @@ const PersonalRecipePickerView = ({
   const keyExtractor = useCallback((recipe: RecipeOut) => recipe.id, [])
 
   const emptyLabel = search.trim() ? t('mealPlan.noRecipesMatch') : t('mealPlan.noRecipesYet')
+  const contentStyle = useMemo(
+    () => [styles.personalList, { paddingBottom: Math.max(insets.bottom, space.lg) }],
+    [insets.bottom],
+  )
 
   const listHeader = (
-    <>
-      {header}
-      {error}
+    <View style={styles.personalHeader}>
+      <AppText variant="bodyLarge" style={styles.sheetTitle}>
+        {t('addRecipe.fromPersonalLibrary')}
+      </AppText>
       <BottomSheetTextInput
         value={search}
         onChangeText={setSearch}
         placeholder={t('recipes.searchPlaceholder')}
-        placeholderTextColor={PlatformColor('tertiaryLabel') as unknown as string}
-        style={styles.personalRecipeSearch}
+        placeholderTextColor={palette.placeholder}
+        style={styles.personalSearch}
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
         accessibilityLabel={t('recipes.searchPlaceholder')}
       />
-    </>
+    </View>
   )
 
-  if (isLoading) {
-    return (
-      <View style={styles.personalRecipePicker}>
-        {listHeader}
-        <ActivityIndicator style={styles.personalRecipeLoading} size="large" />
-      </View>
-    )
-  }
-
-  // The header (back button), error box, and search input all live inside the list's
-  // own header rather than as siblings around it — that keeps BottomSheetFlatList as the
-  // sheet's single direct scrollable child, which is what lets it fill the fixed sheet
-  // height and lets the sheet auto-scroll the search input above the keyboard when focused.
+  // Header lives inside the list so BottomSheetFlatList stays the sheet's single scrollable child.
   return (
     <BottomSheetFlatList
-      contentContainerStyle={styles.personalRecipePicker}
-      data={filteredRecipes}
+      contentContainerStyle={contentStyle}
+      data={isLoading ? [] : filteredRecipes}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       keyboardShouldPersistTaps="handled"
       ListHeaderComponent={listHeader}
       ItemSeparatorComponent={PersonalRecipeSeparator}
-      ListEmptyComponent={<Text style={styles.personalRecipeEmpty}>{emptyLabel}</Text>}
+      ListEmptyComponent={
+        isLoading ? (
+          <ActivityIndicator style={styles.personalLoading} size="large" />
+        ) : (
+          <AppText variant="body" tone="textSecondary" style={styles.personalEmpty}>
+            {emptyLabel}
+          </AppText>
+        )
+      }
     />
   )
 }

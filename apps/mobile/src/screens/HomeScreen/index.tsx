@@ -1,41 +1,74 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
-import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
+import { useIsFocused, useLocalSearchParams, useRouter } from 'expo-router'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useImportJobs } from '@carrot/shared/hooks/useImportJobs'
-import HouseholdHeaderTitle from '../../components/HouseholdHeaderTitle'
-import AddRecipeDrawer, { type AddRecipeDrawerHandle } from '../../components/AddRecipeDrawer'
-import { clearImportImagePreview } from '../../utils/importImagePreviews'
+import AddRecipeDrawer, { type AddRecipeDrawerHandle, type AddRecipeSheet } from '../../components/AddRecipeDrawer'
+import { AppText, Button, Card, Thumbnail } from '../../components/ui'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
-import { useHouseholdMenu } from '../../hooks/useHouseholdMenu'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
-import FloatingAddButton from './FloatingAddButton'
-import ImportJobsSection from './ImportJobsSection'
-import NextMealCard from './NextMealCard'
+import { useMotion } from '../../theme'
+import AddMenuPopover from './AddMenuPopover'
+import ImportsCard from './ImportsCard'
+import JumpBackInCard from './JumpBackInCard'
 import RecipeShelf from './RecipeShelf'
+import TonightCard from './TonightCard'
 import { getFavourites, getRecentlyAdded } from './helpers'
 import { styles } from './styles'
+import { useHomeHeader } from './useHomeHeader'
+import type { ImportJobActions } from './useImportJobActions'
 import { useOpenAndPaste } from './useOpenAndPaste'
 
+interface EmptyLibraryCardProps {
+  onAdd: () => void
+}
+
+const EmptyLibraryCard = ({ onAdd }: EmptyLibraryCardProps) => {
+  const { t } = useTranslation()
+  const { entering } = useMotion()
+
+  return (
+    <Animated.View entering={entering} style={styles.emptySection}>
+      <Card style={styles.emptyCard}>
+        <Thumbnail url={null} size="xs" radiusKey="control" glyph="book.closed" tone="plain" />
+        <View style={styles.emptyText}>
+          <AppText variant="cardTitle" style={styles.emptyCentered}>
+            {t('home.emptyTitle')}
+          </AppText>
+          <AppText variant="meta" tone="textSecondary" style={styles.emptyCentered}>
+            {t('home.emptyBody')}
+          </AppText>
+        </View>
+        <Button label={t('recipes.addARecipe')} size="lg" fullWidth onPress={onAdd} />
+      </Card>
+    </Animated.View>
+  )
+}
+
 const HomeScreen = () => {
-  const navigation = useNavigation()
   const router = useRouter()
   const isFocused = useIsFocused()
   const { t } = useTranslation()
   const { openAddRecipe } = useLocalSearchParams<{ openAddRecipe?: string }>()
   const addRecipeSheetRef = useRef<AddRecipeDrawerHandle>(null)
-  const presentTextImport = useCallback(() => addRecipeSheetRef.current?.presentTextImport(), [])
-  const openAndPaste = useOpenAndPaste(presentTextImport)
+
+  const handleOpenSheet = useCallback((sheet: AddRecipeSheet) => addRecipeSheetRef.current?.present(sheet), [])
+  const [addMenuVisible, setAddMenuVisible] = useState(false)
+  const openAddMenu = useCallback(() => setAddMenuVisible(true), [])
+  const closeAddMenu = useCallback(() => setAddMenuVisible(false), [])
+  const handleOpenLinkSheet = useCallback(() => handleOpenSheet('link'), [handleOpenSheet])
+  const presentTextSheet = useCallback(() => handleOpenSheet('text'), [handleOpenSheet])
+  const openAndPaste = useOpenAndPaste(presentTextSheet)
 
   const { user, loading: authLoading } = useAuth()
-  const { isLoadingHouseholds, activeHouseholdId, activeHousehold } = useHousehold()
+  const { isLoadingHouseholds, activeHouseholdId } = useHousehold()
   const dataQueriesEnabled = !authLoading && user !== null && !isLoadingHouseholds && activeHouseholdId != null
   const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
-  const { householdMenuActions, handleHouseholdAction, handleHouseholdMenuOpen, switchingHousehold } =
-    useHouseholdMenu(isFetching)
+  const { switchingHousehold } = useHomeHeader({ isFetching, onAddPress: openAddMenu })
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { jobs: importJobs, retry, importAnyway, cancel, dismiss } = useImportJobs(
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
@@ -43,13 +76,12 @@ const HomeScreen = () => {
 
   const knownRecipeIdsRef = useRef<Set<string>>(new Set())
   const recipeIdsInitializedRef = useRef(false)
-  const previousJobIds = useRef<string[]>([])
 
   useEffect(() => {
     if (openAddRecipe !== '1') return
-    addRecipeSheetRef.current?.present()
+    handleOpenSheet('link')
     router.setParams({ openAddRecipe: undefined })
-  }, [openAddRecipe, router])
+  }, [handleOpenSheet, openAddRecipe, router])
 
   useEffect(() => {
     if (isLoading) return
@@ -71,52 +103,29 @@ const HomeScreen = () => {
     }
   }, [isFocused, isLoading, recipes, switchingHousehold])
 
-  useEffect(() => {
-    const currentIds = new Set(importJobs.map((job) => job.id))
-    previousJobIds.current.filter((id) => !currentIds.has(id)).forEach(clearImportImagePreview)
-    previousJobIds.current = [...currentIds]
-  }, [importJobs])
-
-  const homeTitle = t('nav.home')
-  const switchContextLabel = t('households.switchContext')
-
-  const renderHeaderTitle = useCallback(
-    () => (
-      <HouseholdHeaderTitle
-        title={homeTitle}
-        householdMenuActions={householdMenuActions}
-        onHouseholdAction={handleHouseholdAction}
-        onHouseholdMenuOpen={handleHouseholdMenuOpen}
-        activeHousehold={activeHousehold}
-        switchContextLabel={switchContextLabel}
-        isLoadingHouseholds={isLoadingHouseholds}
-      />
-    ),
-    [
-      activeHousehold,
-      handleHouseholdAction,
-      handleHouseholdMenuOpen,
-      homeTitle,
-      householdMenuActions,
-      isLoadingHouseholds,
-      switchContextLabel,
-    ],
-  )
-
-  useLayoutEffect(() => {
-    const headerOptions = { title: homeTitle, headerTitle: renderHeaderTitle }
-
-    navigation.setOptions(headerOptions)
-  }, [homeTitle, navigation, renderHeaderTitle])
-
   const handleGoToDuplicateRecipe = useCallback(
     (recipeId: string) => router.push({ pathname: '/recipe/[id]', params: { id: recipeId } }),
     [router],
   )
-  const handleOpenDrawer = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    addRecipeSheetRef.current?.present()
-  }, [])
+
+  const importJobActions: ImportJobActions = useMemo(
+    () => ({
+      retry: retry.mutateAsync,
+      importAnyway: importAnyway.mutateAsync,
+      cancel: cancel.mutateAsync,
+      dismiss: dismiss.mutateAsync,
+      onGoToRecipe: handleGoToDuplicateRecipe,
+      onContinueManually: openAndPaste,
+    }),
+    [
+      cancel.mutateAsync,
+      dismiss.mutateAsync,
+      handleGoToDuplicateRecipe,
+      importAnyway.mutateAsync,
+      openAndPaste,
+      retry.mutateAsync,
+    ],
+  )
 
   const recentlyAdded = useMemo(() => getRecentlyAdded(recipes), [recipes])
   const favourites = useMemo(() => getFavourites(recipes), [recipes])
@@ -141,34 +150,18 @@ const HomeScreen = () => {
   return (
     <View style={styles.screen}>
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
-        <NextMealCard enabled={dataQueriesEnabled} />
-        <ImportJobsSection
-          jobs={importJobs}
-          retry={retry}
-          importAnyway={importAnyway}
-          cancel={cancel}
-          dismiss={dismiss}
-          onGoToRecipe={handleGoToDuplicateRecipe}
-          onContinueManually={openAndPaste}
-        />
-        {recentlyAdded.length > 0 && <RecipeShelf title={t('home.recentlyAdded')} recipes={recentlyAdded} preset="recent" />}
-        {favourites.length > 0 && <RecipeShelf title={t('home.favourites')} recipes={favourites} preset="favourites" />}
-        {isLibraryEmpty && (
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>{t('home.emptyTitle')}</Text>
-            <Text style={styles.emptyBody}>{t('home.emptyBody')}</Text>
-            <Pressable
-              onPress={handleOpenDrawer}
-              style={styles.addRecipeButton}
-              accessibilityLabel={t('recipes.addARecipe')}
-              accessibilityRole="button"
-            >
-              <Text style={styles.addRecipeButtonText}>{t('recipes.addARecipe')}</Text>
-            </Pressable>
-          </View>
-        )}
+        <TonightCard enabled={dataQueriesEnabled} />
+        {importJobs.length > 0 ? <ImportsCard jobs={importJobs} recipes={recipes} actions={importJobActions} /> : null}
+        <JumpBackInCard recipes={recipes} />
+        {recentlyAdded.length > 0 ? (
+          <RecipeShelf title={t('home.recentlyAdded')} recipes={recentlyAdded} preset="recent" />
+        ) : null}
+        {favourites.length > 0 ? (
+          <RecipeShelf title={t('home.favourites')} recipes={favourites} preset="favourites" />
+        ) : null}
+        {isLibraryEmpty ? <EmptyLibraryCard onAdd={handleOpenLinkSheet} /> : null}
       </ScrollView>
-      <FloatingAddButton accessibilityLabel={t('nav.addRecipe')} sheetRef={addRecipeSheetRef} />
+      <AddMenuPopover visible={addMenuVisible} onClose={closeAddMenu} onOpenSheet={handleOpenSheet} />
       <AddRecipeDrawer ref={addRecipeSheetRef} />
     </View>
   )

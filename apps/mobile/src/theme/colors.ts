@@ -47,3 +47,54 @@ export const colors = {
     : '#f8e9e3') as unknown as string,
   brandText,
 }
+
+const dynamic = (light: string, dark: string): string =>
+  (Platform.OS === 'ios' ? DynamicColorIOS({ light, dark }) : light) as unknown as string
+
+export const paletteTones = {
+  ink: ['#1C1C1E', '#F3EEE6'],
+  textSecondary: ['#6B625B', '#B8AEA3'],
+  textTertiary: ['#7D746D', '#A39A90'],
+  placeholder: ['#A39A92', '#7D746D'],
+  bodyOnCard: ['#3A332E', '#DDD5CA'],
+  background: ['#FFFFFF', '#14110E'],
+  card: ['#F7F5F2', '#26211C'],
+  control: ['#EFEBE6', '#332C26'],
+  dividerCard: ['#E6DFD6', '#3A332C'],
+  track: ['#E8E2DB', '#3A332C'],
+  dividerStrong: ['#D6CEC5', '#4A4037'],
+  action: ['#CF6528', '#E8894A'],
+  actionDisabled: ['#E8C4AA', '#5A3A24'],
+  actionText: ['#A9521D', '#F0A06A'],
+  tint: ['#FCEBDD', '#3A2618'],
+  tintText: ['#7E3C14', '#F5B98C'],
+  note: ['#FFF7E8', '#33281A'],
+  noteText: ['#7A4E00', '#F0C77A'],
+  allergen: ['#FFF2D1', '#3D3016'],
+  allergenText: ['#7A4E00', '#F0C77A'],
+  error: ['#B3261E', '#F2877F'],
+  errorBg: ['#FBE4E1', '#3F1F1C'],
+  success: ['#1F7A3A', '#6FD08A'],
+  successBg: ['#E3F5E7', '#1C3023'],
+  successCheck: ['#34A853', '#4CBF6A'],
+  avatarHousehold: ['#E0439A', '#E0439A'],
+  onAction: ['#FFFFFF', '#1A0F08'],
+  popoverSurface: ['#FFFFFF', '#26211C'],
+  glassFill: ['rgba(255,255,255,0.82)', 'rgba(38,33,28,0.82)'],
+  shadowSoft: ['rgba(40,30,20,0.12)', 'rgba(0,0,0,0.4)'],
+} satisfies Record<string, readonly [string, string]>
+
+type ToneKey = keyof typeof paletteTones
+
+const dynamicTones = Object.fromEntries(
+  Object.entries(paletteTones).map(([key, [light, dark]]) => [key, dynamic(light, dark)]),
+) as Record<ToneKey, string>
+
+export const palette = {
+  ...dynamicTones,
+  onImage: '#FFFFFF',
+  onImageText: '#1C1C1E',
+  backdrop: 'rgba(20,15,10,0.32)',
+}
+
+export type PaletteKey = keyof typeof palette

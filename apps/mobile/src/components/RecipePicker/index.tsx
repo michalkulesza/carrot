@@ -6,7 +6,7 @@ import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { RecipeOut } from '@carrot/shared/types'
-import NetworkImage from '../../components/NetworkImage'
+import NetworkImage from '../NetworkImage'
 import { PLACEHOLDER_URL, proxyThumbnailUrl } from '../../api/thumbnailUrl'
 import { styles } from './styles'
 
