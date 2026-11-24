@@ -26,8 +26,8 @@ Source of truth: `Mobile Screens.dc.html`. Other canvases hold explorations and 
 | Orange text (links, labels on tint) | `#A9521D` |
 | Orange tint (tags, chips, link chips) | `#FCEBDD` |
 | Dark orange text on tint | `#7E3C14` |
-| Note card | `#FFF7E8`, label `#7A4E00` |
-| Allergen badge | `#FFF2D1`, text `#7A4E00` |
+| Note card | `#FCEBDD`, label `#7E3C14` (carrot tint, same as allergen) |
+| Allergen badge / note | `#FCEBDD`, text `#7E3C14` (carrot tint) |
 | Error | `#B3261E` on `#FBE4E1` |
 | Success | `#1F7A3A` on `#E3F5E7`, done check `#34A853` |
 | Household avatar | `#E0439A` |
@@ -84,7 +84,7 @@ Use tabular numerals for quantities, timers and counts.
 
 **Step timeline:** a 34px dark number circle with a 2px `#E8E2DB` line down to the next step. Title 18/700, text 17 on plain white (no card). Timer chips sit on `#FCEBDD`, turn solid orange while running and green when done. Tapping the number marks the step done (green check, step collapses).
 
-**Notes:** a "Your note" card on `#FFF7E8`; "From the recipe" notes below, with small numbered orange badges.
+**Notes:** a "Your note" card on `#FCEBDD`; "From the recipe" notes below, with small numbered orange badges.
 
 **Related recipes:** a horizontal row of 140px square photo tiles with a 2-line title and time. Edit adds a × on each tile and a dashed "Link recipe" tile.
 

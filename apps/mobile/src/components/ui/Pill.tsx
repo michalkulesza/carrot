@@ -1,6 +1,8 @@
-import { memo, useMemo } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
-import { palette, radius, typography } from '../../theme'
+import { memo, useCallback, useMemo } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
+import { palette, radius, typography, usePressScale } from '../../theme'
+import { lightHaptic } from './haptics'
 
 export type PillTone = 'tint' | 'neutral'
 export type PillSize = 'sm' | 'md'
@@ -9,6 +11,8 @@ interface PillProps {
   label: string
   tone?: PillTone
   size?: PillSize
+  onPress?: () => void
+  accessibilityLabel?: string
 }
 
 const BACKGROUNDS: Record<PillTone, string> = {
@@ -23,29 +27,60 @@ const FOREGROUNDS: Record<PillTone, string> = {
 
 const SIZE_BOXES = StyleSheet.create({
   sm: { borderRadius: radius.input, paddingVertical: 3, paddingHorizontal: 9 },
-  md: { borderRadius: radius.control, paddingVertical: 4, paddingHorizontal: 12 },
+  md: { borderRadius: radius.control, paddingVertical: 5, paddingHorizontal: 11 },
 })
 
 const SIZE_TEXTS = { sm: typography.pillSmall, md: typography.pillMedium }
 
-const Pill = ({ label, tone = 'tint', size = 'sm' }: PillProps) => {
+const HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 }
+
+const Pill = ({ label, tone = 'tint', size = 'sm', onPress, accessibilityLabel }: PillProps) => {
+  const { animatedStyle, onPressIn, onPressOut } = usePressScale()
+
   const containerStyle = useMemo(
     () => [styles.container, SIZE_BOXES[size], { backgroundColor: BACKGROUNDS[tone] }],
     [size, tone],
   )
+  const pressableContainerStyle = useMemo(() => [containerStyle, animatedStyle], [containerStyle, animatedStyle])
   const textStyle = useMemo(() => [SIZE_TEXTS[size], { color: FOREGROUNDS[tone] }], [size, tone])
 
+  const handlePress = useCallback(() => {
+    lightHaptic()
+    onPress?.()
+  }, [onPress])
+
+  if (!onPress) {
+    return (
+      <View style={containerStyle}>
+        <Text style={textStyle} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+    )
+  }
+
   return (
-    <View style={containerStyle}>
-      <Text style={textStyle} numberOfLines={1}>
-        {label}
-      </Text>
-    </View>
+    <Pressable
+      onPress={handlePress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      hitSlop={HIT_SLOP}
+      style={styles.pressable}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+    >
+      <Animated.View style={pressableContainerStyle}>
+        <Text style={textStyle} numberOfLines={1}>
+          {label}
+        </Text>
+      </Animated.View>
+    </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flexShrink: 1, alignSelf: 'flex-start' },
+  pressable: { flexShrink: 1, alignSelf: 'flex-start' },
 })
 
 export default memo(Pill)

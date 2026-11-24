@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { StyleSheet, View } from 'react-native'
 import AppText from './AppText'
 import Button from './Button'
@@ -7,17 +8,30 @@ interface SectionHeaderProps {
   title: string
   actionLabel?: string
   onAction?: () => void
+  actionDisabled?: boolean
+  count?: string
+  topGap?: number
 }
 
-const SectionHeader = ({ title, actionLabel, onAction }: SectionHeaderProps) => {
+const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, count, topGap = sectionGap }: SectionHeaderProps) => {
   const showAction = Boolean(actionLabel && onAction)
+  const rowStyle = useMemo(() => [styles.row, { paddingTop: topGap }], [topGap])
 
   return (
-    <View style={styles.row}>
+    <View style={rowStyle}>
       <AppText variant="sectionHeading" accessibilityRole="header" style={styles.title}>
         {title}
       </AppText>
-      {showAction && actionLabel && onAction ? <Button variant="text" size="sm" label={actionLabel} onPress={onAction} /> : null}
+      <View style={styles.trailing}>
+        {count ? (
+          <AppText variant="meta" tone="textTertiary">
+            {count}
+          </AppText>
+        ) : null}
+        {showAction && actionLabel && onAction ? (
+          <Button variant="text" size="sm" label={actionLabel} onPress={onAction} disabled={actionDisabled} />
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -27,11 +41,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: sectionGap,
     paddingHorizontal: screenGutter,
     paddingBottom: space.md,
   },
   title: { flexShrink: 1 },
+  trailing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 })
 
 export default SectionHeader

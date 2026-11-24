@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native'
 import { colors } from '../theme/colors'
+import { palette } from '../theme'
 
 export interface NutritionBoxGridItem {
   label: string
@@ -208,13 +209,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '100%',
     marginTop: 8,
-    backgroundColor: colors.tertiaryBackground,
+    backgroundColor: palette.popoverSurface,
     borderRadius: 10,
     padding: 12,
     width: 220,
-    shadowColor: '#000',
+    shadowColor: palette.shadowSoft,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 1,
     shadowRadius: 6,
     zIndex: 20,
   },
@@ -223,16 +224,16 @@ const styles = StyleSheet.create({
   popoverAlignRight: { right: 0 },
   popoverHeader: {
     alignSelf: 'stretch',
-    backgroundColor: '#fef3c7',
-    borderColor: '#fde68a',
+    backgroundColor: palette.allergen,
+    borderColor: palette.dividerCard,
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     marginBottom: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  popoverHeaderText: { color: '#92400e', fontSize: 12, lineHeight: 16, fontWeight: '600' },
-  popoverText: { fontSize: 13, lineHeight: 18, color: colors.label },
+  popoverHeaderText: { color: palette.allergenText, fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  popoverText: { fontSize: 13, lineHeight: 18, color: palette.ink },
 })
 
 export default NutritionBoxGrid

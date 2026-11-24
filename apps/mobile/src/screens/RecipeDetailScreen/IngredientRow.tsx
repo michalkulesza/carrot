@@ -1,198 +1,147 @@
-import { useCallback, useState } from 'react'
-import { ActionSheetIOS, Alert, Linking, Pressable, Text, View } from 'react-native'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
-import * as Haptics from 'expo-haptics'
-import type { AllergenFlag, IngredientLinkKind, LinkedRecipeImportResult } from '@carrot/shared/types'
-import { useLinkedRecipeImport } from '@carrot/shared/hooks/useLinkedRecipeImport'
-import {
-  displayIngredientWithLocalizedUnit,
-  getIngredientQuantityCount,
-} from '@carrot/shared/utils/ingredientUtils'
+import type { RecipeOut } from '@carrot/shared/types'
+import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
-import { TooltipPopover } from '../../components/NutritionBoxGrid'
-import { colors } from '../../theme/colors'
-import { matchesActiveAllergen } from './helpers'
+import { AppText, LinkChip } from '../../components/ui'
+import AddToListButton from './AddToListButton'
+import AllergenBadge from './AllergenBadge'
+import { getSourceHost, matchesActiveAllergen, splitIngredient, type IngredientEntry, type ReadingMetrics } from './helpers'
 import { styles } from './styles'
+import { useIngredientLink } from './useIngredientLink'
+
+type LinkedRecipePreview = Pick<RecipeOut, 'title' | 'thumbnail_url'>
+
+interface IngredientRowProps {
+  recipeId: string
+  entry: IngredientEntry
+  linkedRecipe: LinkedRecipePreview | undefined
+  isLast: boolean
+  addMode: boolean
+  isAdded: boolean
+  onAdd: (key: string, shoppingListValue: string, shoppingCategory: IngredientEntry['shoppingCategory']) => void
+  activeAllergens: string[]
+  metrics: ReadingMetrics
+  onTooltipOpenChange: (open: boolean) => void
+}
+
+const COUNTABLE_UNITS = ['cl', 'piece', 'sprig', 'leaf', 'sheet']
 
 const IngredientRow = ({
   recipeId,
-  ingredient,
-  cupHint = '',
-  addMode = false,
-  isAdded = false,
+  entry,
+  linkedRecipe,
+  isLast,
+  addMode,
+  isAdded,
   onAdd,
-  allergenFlag,
-  activeAllergens = [],
-  fontSize = 17,
-  lineHeight = 22,
-  linkedRecipeUrl,
-  linkedRecipeId,
-  linkedRecipeKind,
-  linkedAllergens,
-}: {
-  recipeId: string
-  ingredient: string
-  cupHint?: string
-  addMode?: boolean
-  isAdded?: boolean
-  onAdd?: () => void
-  allergenFlag?: AllergenFlag | null
-  activeAllergens?: string[]
-  fontSize?: number
-  lineHeight?: number
-  linkedRecipeUrl?: string | null
-  linkedRecipeId?: string | null
-  linkedRecipeKind?: IngredientLinkKind | null
-  linkedAllergens?: string[] | null
-}) => {
+  activeAllergens,
+  metrics,
+  onTooltipOpenChange,
+}: IngredientRowProps) => {
   const { t } = useTranslation()
-  const router = useRouter()
-  const [isAllergenTooltipOpen, setIsAllergenTooltipOpen] = useState(false)
-  const displayValue = displayIngredientWithLocalizedUnit(ingredient, (unit, qty) =>
-    t(`units.${unit}`, {
-      count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
-      defaultValue: unit,
-    }),
+  const [tooltipOpen, setTooltipOpen] = useState(false)
+
+  const { key, ingredient, cupHint, shoppingListValue, shoppingCategory, allergenFlag, linkedAllergens } = entry
+  const { fontSize, ingredientLineHeight } = metrics
+
+  const { quantity, name } = useMemo(
+    () =>
+      splitIngredient(ingredient, (unit, qty) =>
+        t(`units.${unit}`, {
+          count: COUNTABLE_UNITS.includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+          defaultValue: unit,
+        }),
+      ),
+    [ingredient, t],
   )
-  const hasMatchedAllergen = matchesActiveAllergen(
-    allergenFlag?.allergen ?? null,
-    activeAllergens,
-  )
+
+  const link = useIngredientLink({
+    recipeId,
+    url: entry.linkedRecipeUrl,
+    kind: entry.linkedRecipeKind,
+    linkedRecipeId: entry.linkedRecipeId,
+  })
+
+  const hasMatchedAllergen = matchesActiveAllergen(allergenFlag?.allergen ?? null, activeAllergens)
+  const allergenName = allergenFlag?.allergen
+    ? t(`allergens.${normalizeAllergenKey(allergenFlag.allergen)}`, { defaultValue: allergenFlag.allergen })
+    : ''
+  const substitute = allergenFlag?.substitute ?? null
+  const allergenLabel = substitute ? t('recipes.allergenSwap', { allergen: allergenName, substitute }) : allergenName
+  const allergenTooltip = substitute
+    ? `${t('recipes.suggestedSubstitute')} ${substitute}`
+    : t('recipes.noSubstituteAvailable')
+
   const linkedAllergenLabels = (linkedAllergens ?? [])
     .filter((allergen) => matchesActiveAllergen(allergen, activeAllergens))
-    .map((allergen) =>
-      t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }),
-    )
-  const linkedRecipeImport = useLinkedRecipeImport(recipeId)
-  const [isLinkedImportQueued, setIsLinkedImportQueued] = useState(false)
-  const isLinkedImportBusy = linkedRecipeImport.isPending || isLinkedImportQueued
+    .map((allergen) => t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }))
+  const linkedAllergenText = `${t('recipes.fromLinkedRecipe')}: ${linkedAllergenLabels.join(', ')}`
 
-  const handleLinkedImportSuccess = useCallback(
-    (result: LinkedRecipeImportResult) => {
-      if (result.recipe_id) {
-        router.navigate(`/recipe/${result.recipe_id}`)
-        return
-      }
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      setIsLinkedImportQueued(true)
+  const rowStyle = useMemo(
+    () => [styles.ingredientRow, !isLast && styles.ingredientRowDivider, tooltipOpen && styles.raised],
+    [isLast, tooltipOpen],
+  )
+  const quantityStyle = useMemo(
+    () => [styles.ingredientQuantity, { fontSize, lineHeight: ingredientLineHeight }],
+    [fontSize, ingredientLineHeight],
+  )
+  const nameStyle = useMemo(() => [styles.ingredientName, { fontSize, lineHeight: ingredientLineHeight }], [fontSize, ingredientLineHeight])
+
+  const handleTooltipOpenChange = useCallback(
+    (open: boolean) => {
+      setTooltipOpen(open)
+      onTooltipOpenChange(open)
     },
-    [router],
+    [onTooltipOpenChange],
   )
 
-  const handleLinkedImportError = useCallback(() => {
-    Alert.alert(t('recipes.linkedImportFailed'))
-  }, [t])
+  const handleAdd = useCallback(() => onAdd(key, shoppingListValue, shoppingCategory), [onAdd, key, shoppingListValue, shoppingCategory])
 
-  const handleImportLinkedRecipe = useCallback(() => {
-    if (!linkedRecipeUrl || isLinkedImportBusy) return
-    linkedRecipeImport.mutate(linkedRecipeUrl, {
-      onSuccess: handleLinkedImportSuccess,
-      onError: handleLinkedImportError,
-    })
-  }, [linkedRecipeUrl, isLinkedImportBusy, linkedRecipeImport, handleLinkedImportSuccess, handleLinkedImportError])
+  const hasLink = Boolean(entry.linkedRecipeUrl)
+  const isWebLink = link.isExternal
+  const linkHost = isWebLink ? getSourceHost(entry.linkedRecipeUrl) : null
+  const linkLabel = isWebLink ? linkHost ?? link.fallbackLabel : linkedRecipe?.title ?? link.fallbackLabel
 
-  const handleLinkedActionSheetSelect = useCallback(
-    (selectedIndex: number) => {
-      if (selectedIndex === 0) handleImportLinkedRecipe()
-      else if (selectedIndex === 1 && linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
-    },
-    [handleImportLinkedRecipe, linkedRecipeUrl],
-  )
-
-  const isExternalLink = linkedRecipeKind === 'external'
-
-  const handleOpenLinkedRecipe = () => {
-    if (isExternalLink) {
-      if (linkedRecipeUrl) void Linking.openURL(linkedRecipeUrl)
-      return
-    }
-    if (linkedRecipeId) {
-      router.navigate(`/recipe/${linkedRecipeId}`)
-      return
-    }
-    if (!linkedRecipeUrl || isLinkedImportBusy) return
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [t('recipes.importLinkedRecipe'), t('recipes.openLinkedWebsite'), t('common.cancel')],
-        cancelButtonIndex: 2,
-      },
-      handleLinkedActionSheetSelect,
-    )
-  }
-  const linkedRecipeLabel = isExternalLink
-    ? t('recipes.openLink')
-    : isLinkedImportBusy
-      ? t('recipes.linkedImportQueued')
-      : t('recipes.openLinkedRecipe')
-  const allergenTooltip = allergenFlag?.substitute
-    ? `${t('recipes.suggestedSubstitute')} ${allergenFlag.substitute}`
-    : t('recipes.noSubstituteAvailable')
-  const allergenLabel = allergenFlag?.allergen
-    ? t(`allergens.${normalizeAllergenKey(allergenFlag.allergen)}`, {
-        defaultValue: allergenFlag.allergen,
-      })
-    : ''
   return (
-    <View style={styles.ingredientRow}>
-      <Text style={styles.bullet}>{'•'}</Text>
-      <Text style={[styles.ingredientText, { fontSize, lineHeight }]}>
-        {displayValue}
-        {cupHint}
+    <View style={rowStyle}>
+      <Text style={quantityStyle} numberOfLines={3}>
+        {quantity}
       </Text>
-      {linkedRecipeUrl && (
-        <Pressable
-          onPress={handleOpenLinkedRecipe}
-          disabled={!isExternalLink && isLinkedImportBusy}
-          accessibilityRole="link"
-          accessibilityLabel={linkedRecipeLabel}
-        >
-          <Text style={styles.linkedRecipeText}>{linkedRecipeLabel}</Text>
-        </Pressable>
-      )}
-      {linkedAllergenLabels.length > 0 && (
-        <Text
-          style={styles.linkedAllergenText}
-          accessibilityLabel={`${t('recipes.fromLinkedRecipe')}: ${linkedAllergenLabels.join(', ')}`}
-        >
-          {`⚠ ${linkedAllergenLabels.join(', ')}`}
-        </Text>
-      )}
-      {addMode && (
-        <Pressable
-          onPress={isAdded ? undefined : onAdd}
-          hitSlop={8}
-          style={styles.addIngredientBtn}
-          accessibilityLabel={isAdded ? t('shoppingList.addedToList') : t('shoppingList.addToList')}
-        >
-          <Feather name={isAdded ? 'check' : 'plus'} size={18} color={isAdded ? colors.green : colors.blue} />
-        </Pressable>
-      )}
-      {hasMatchedAllergen && (
-        <View style={styles.allergenWarningWrapper}>
-          <Pressable
-            onPress={() => setIsAllergenTooltipOpen((open) => !open)}
-            hitSlop={8}
-            style={styles.allergenWarningButton}
-            accessibilityRole="button"
-            accessibilityLabel={`${t('recipes.contains')}: ${allergenLabel}`}
-            accessibilityState={{ expanded: isAllergenTooltipOpen }}
-          >
-            <Feather name="alert-triangle" size={18} color={colors.orange} />
-          </Pressable>
-          {isAllergenTooltipOpen && (
-            <TooltipPopover
-              text={allergenTooltip}
-              header={allergenLabel}
-              alignRight
-              onDismiss={() => setIsAllergenTooltipOpen(false)}
-            />
-          )}
-        </View>
-      )}
+      <View style={styles.ingredientBody}>
+        <Text style={nameStyle}>{name}</Text>
+        {cupHint ? (
+          <AppText variant="meta" tone="textTertiary">
+            {`(${cupHint})`}
+          </AppText>
+        ) : null}
+        {hasLink ? (
+          <LinkChip
+            variant={isWebLink ? 'web' : 'recipe'}
+            label={linkLabel}
+            imageUrl={linkedRecipe?.thumbnail_url ?? null}
+            onPress={link.handlePress}
+            disabled={!isWebLink && link.isBusy}
+            accessibilityLabel={link.fallbackLabel}
+          />
+        ) : null}
+        {linkedAllergenLabels.length > 0 ? (
+          <AllergenBadge label={linkedAllergenText} accessibilityLabel={linkedAllergenText} />
+        ) : null}
+        {hasMatchedAllergen ? (
+          <AllergenBadge
+            label={allergenLabel}
+            accessibilityLabel={`${t('recipes.contains')}: ${allergenName}`}
+            tooltipHeader={allergenName}
+            tooltipText={allergenTooltip}
+            onTooltipOpenChange={handleTooltipOpenChange}
+          />
+        ) : null}
+      </View>
+      {addMode ? <AddToListButton added={isAdded} onAdd={handleAdd} /> : null}
     </View>
   )
 }
 
-export default IngredientRow
+export default memo(IngredientRow)

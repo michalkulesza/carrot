@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated'
 import { palette, PaletteKey, radius, space, SpaceKey, usePressScale } from '../../theme'
 import { lightHaptic } from './haptics'
 
-export type CardTone = 'default' | 'note' | 'error' | 'attention' | 'plain'
+export type CardTone = 'default' | 'note' | 'error' | 'attention' | 'allergen' | 'plain'
 
 interface CardProps {
   tone?: CardTone
@@ -20,6 +20,7 @@ const TONE_BACKGROUNDS: Record<CardTone, PaletteKey | null> = {
   note: 'note',
   error: 'errorBg',
   attention: 'tint',
+  allergen: 'allergen',
   plain: null,
 }
 

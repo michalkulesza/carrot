@@ -1,4 +1,13 @@
-import type { RecipeOut, RecipeSaveRequest, SaveComponent, ShoppingCategory } from '@carrot/shared/types'
+import type {
+  AllergenFlag,
+  IngredientLinkKind,
+  RecipeOut,
+  RecipeSaveRequest,
+  SaveComponent,
+  ShoppingCategory,
+} from '@carrot/shared/types'
+import { getImperialCupQty } from '@carrot/shared/utils/ingredientScaling'
+import { effectiveAllergenFlag } from '@carrot/shared/utils/allergenKeys'
 import {
   displayIngredientWithLocalizedUnit,
   parseIngredient,
@@ -6,13 +15,11 @@ import {
   type StructuredIngredient,
 } from '@carrot/shared/utils/ingredientUtils'
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
-import type { DurationMatch } from '../../context/TimerContext'
 
 export const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
 export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
 
 export const FONT_SIZES = [13, 16, 17, 20, 22] as const
-export const LINE_HEIGHTS = [18, 21, 22, 25, 28] as const
 
 export const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -146,10 +153,100 @@ export const buildEditRecipeSaveRequest = (
   tag_ids: recipe.tags.map((tag) => tag.id),
 })
 
+export const getReadingMetrics = (fontSizeIndex: number) => {
+  const fontSize = FONT_SIZES[fontSizeIndex]
+
+  return {
+    fontSize,
+    ingredientLineHeight: Math.round(fontSize * 1.35),
+    stepLineHeight: Math.round(fontSize * 1.5),
+    noteLineHeight: Math.round(fontSize * 1.45),
+  }
+}
+
+export type ReadingMetrics = ReturnType<typeof getReadingMetrics>
+
+export const formatCookingTime = (minutes: number | null, t: (key: string) => string) => {
+  if (minutes === null) return null
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (hours === 0) return `${minutes}${t('recipes.minutesShort')}`
+  if (remainingMinutes === 0) return `${hours}${t('recipes.hoursShort')}`
+
+  return `${hours}${t('recipes.hoursShort')}${remainingMinutes}${t('recipes.minutesShort')}`
+}
+
+export const getSourceHost = (sourceUrl: string | null) => {
+  if (!sourceUrl) return null
+
+  try {
+    return new URL(sourceUrl).host.replace(/^www\./, '')
+  } catch {
+    return null
+  }
+}
+
+export interface IngredientEntry {
+  key: string
+  ingredient: string
+  cupHint: string
+  shoppingListValue: string
+  shoppingCategory: ShoppingCategory
+  allergenFlag: AllergenFlag | null
+  linkedRecipeUrl: string | null
+  linkedRecipeKind: IngredientLinkKind | null
+  linkedRecipeId: string | null
+  linkedAllergens: string[] | null
+}
+
+export interface IngredientGroup {
+  key: string
+  name: string | null
+  entries: IngredientEntry[]
+}
+
 export const getVariantIngredients = (component: SaveComponent, unitSystem: string): string[] =>
   unitSystem === 'imperial'
     ? component.imperial_ingredients ?? component.ingredients
     : component.metric_ingredients ?? component.ingredients
+
+export const getVariantSteps = (component: SaveComponent, unitSystem: string): string[] =>
+  unitSystem === 'imperial' ? component.imperial_steps ?? component.steps : component.metric_steps ?? component.steps
+
+export const buildIngredientGroups = (
+  components: SaveComponent[],
+  unitSystem: string,
+  servingScale: number,
+  cupUnit: string,
+): IngredientGroup[] =>
+  components
+    .map((component, componentIndex) => {
+      const entries = getVariantIngredients(component, unitSystem).map((value, ingredientIndex): IngredientEntry => {
+        const ingredient = scaleIngredientQuantity(value, servingScale)
+        const originalValue = component.shopping_list_ingredients?.[ingredientIndex]
+        const cupQty =
+          unitSystem === 'imperial'
+            ? null
+            : getImperialCupQty(component.imperial_ingredients?.[ingredientIndex], servingScale, value)
+        const flag = component.ingredient_flags?.[ingredientIndex]
+
+        return {
+          key: `${componentIndex}-${ingredientIndex}`,
+          ingredient,
+          cupHint: cupQty ? `${cupQty} ${cupUnit}` : '',
+          shoppingListValue: servingScale === 1 && originalValue ? originalValue : ingredient,
+          shoppingCategory: component.shopping_list_categories?.[ingredientIndex] ?? 'other',
+          allergenFlag: effectiveAllergenFlag(flag) ?? null,
+          linkedRecipeUrl: component.ingredient_links?.[ingredientIndex] ?? null,
+          linkedRecipeKind: component.ingredient_link_kinds?.[ingredientIndex] ?? null,
+          linkedRecipeId: component.linked_recipe_ids?.[ingredientIndex] ?? null,
+          linkedAllergens: flag?.linked_allergens ?? null,
+        }
+      })
+
+      return { key: `group-${componentIndex}`, name: component.name || null, entries }
+    })
+    .filter((group) => group.entries.length > 0)
 
 export const splitIngredient = (
   ingredient: string,
@@ -167,22 +264,4 @@ export const splitIngredient = (
   const unit = parsed.unit ? translateUnit(parsed.unit, parsed.qty) : ''
 
   return { quantity: [parsed.qty, unit].filter(Boolean).join(' '), name: parsed.name }
-}
-
-export type Segment =
-  | { type: 'text'; text: string }
-  | { type: 'timer'; seconds: number }
-
-export const buildSegments = (
-  step: string,
-  durationMatch: DurationMatch | null,
-): Segment[] => {
-  if (!durationMatch) return [{ type: 'text', text: step }]
-
-  const segments: Segment[] = []
-  if (durationMatch.start > 0) segments.push({ type: 'text', text: step.slice(0, durationMatch.start) })
-  segments.push({ type: 'timer', seconds: durationMatch.seconds })
-  if (durationMatch.end < step.length) segments.push({ type: 'text', text: step.slice(durationMatch.end) })
-
-  return segments
 }

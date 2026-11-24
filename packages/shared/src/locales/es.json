@@ -66,7 +66,8 @@
     "timerTapToStart": "Toca para empezar",
     "timerPaused": "En pausa · toca para reanudar",
     "timerDone": "Listo",
-    "aboutHere": "Estás más o menos aquí"
+    "aboutHere": "Estás más o menos aquí",
+    "cook": "Cocinar"
   },
   "recipes": {
     "editLockedTitle": "{{name}} está editando esta receta",
@@ -243,7 +244,10 @@
     "ingredientsCount_one": "{{count}} ingrediente",
     "ingredientsCount_other": "{{count}} ingredientes",
     "stepsCount_one": "{{count}} paso",
-    "stepsCount_other": "{{count}} pasos"
+    "stepsCount_other": "{{count}} pasos",
+    "addAllToList": "Añadir a la lista",
+    "yourNote": "Tu nota",
+    "allergenSwap": "{{allergen}} · cambiar por {{substitute}}"
   },
   "nav": {
     "recipes": "Recetas",

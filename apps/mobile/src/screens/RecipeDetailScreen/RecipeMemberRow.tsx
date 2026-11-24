@@ -1,17 +1,20 @@
-import { useCallback, useMemo } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { memo, useCallback, useMemo } from 'react'
+import { View } from 'react-native'
 import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
 import Avatar from '../../components/Avatar'
+import { AppText } from '../../components/ui'
 import { styles } from './styles'
 
-type RecipeMember = {
+export type RecipeMember = {
   id: string
   name: string
   label?: string
   color?: string
 }
+
+const AVATAR_SIZE = 20
 
 const RecipeMemberRow = ({ members, onDeleteRecipe }: { members: RecipeMember[]; onDeleteRecipe: () => void }) => {
   const { t } = useTranslation()
@@ -27,27 +30,29 @@ const RecipeMemberRow = ({ members, onDeleteRecipe }: { members: RecipeMember[];
     [onDeleteRecipe],
   )
 
+  const handleOpenMenu = useCallback(() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), [])
+
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.memberScroll}>
-      <View style={styles.memberRow}>
-        {members.map((member) => (
-          <MenuView
-            key={member.id}
-            title={t('recipes.recipeActions')}
-            actions={actions}
-            shouldOpenOnLongPress
-            onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-            onPressAction={handleMenuAction}
-          >
-            <View style={styles.memberChip} accessible accessibilityLabel={member.name}>
-              <Avatar name={member.name} label={member.label} color={member.color} size={28} />
-              <Text numberOfLines={1} style={styles.memberName}>{member.name}</Text>
-            </View>
-          </MenuView>
-        ))}
-      </View>
-    </ScrollView>
+    <>
+      {members.map((member) => (
+        <MenuView
+          key={member.id}
+          title={t('recipes.recipeActions')}
+          actions={actions}
+          shouldOpenOnLongPress
+          onOpenMenu={handleOpenMenu}
+          onPressAction={handleMenuAction}
+        >
+          <View style={styles.memberChip} accessible accessibilityLabel={member.name}>
+            <Avatar name={member.name} label={member.label} color={member.color} size={AVATAR_SIZE} />
+            <AppText variant="subtitle" tone="textSecondary" numberOfLines={1}>
+              {member.name}
+            </AppText>
+          </View>
+        </MenuView>
+      ))}
+    </>
   )
 }
 
-export default RecipeMemberRow
+export default memo(RecipeMemberRow)

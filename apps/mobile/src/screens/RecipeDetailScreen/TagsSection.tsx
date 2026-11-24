@@ -1,11 +1,12 @@
-import { useCallback, useMemo, useState } from 'react'
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import { memo, useCallback, useMemo, useState } from 'react'
+import { Alert, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import type { RecipeOut, Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
 import { TagPickerModal } from '../../components/RecipeFieldEditors'
+import { Pill } from '../../components/ui'
 import { styles } from './styles'
 
 const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
@@ -53,29 +54,23 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
   )
   const handleTagCreate = useCallback(async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name), [createTagMutation])
 
+  const handleOpenPicker = useCallback(() => setShowTagPicker(true), [])
+  const handleClosePicker = useCallback(() => setShowTagPicker(false), [])
+
   return (
     <>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
-        <View style={styles.tagRow}>
-          {recipe.tags.map((tag) => (
-            <Pressable
-              key={tag.id}
-              style={({ pressed }) => [styles.tag, pressed && { opacity: 0.7 }]}
-              onPress={() => handleTagRemove(tag.id)}
-              accessibilityLabel={`${tag.name}, tap to remove`}
-            >
-              <Text style={styles.tagText}>{tTag(tag.name, t)} ×</Text>
-            </Pressable>
-          ))}
-          <Pressable
-            style={({ pressed }) => [styles.addTagBtn, pressed && { opacity: 0.7 }]}
-            onPress={() => setShowTagPicker(true)}
-            accessibilityLabel={t('tags.addTag')}
-          >
-            <Text style={styles.addTagBtnText}>+ {t('tags.addTag')}</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+      <View style={styles.tagRow}>
+        {recipe.tags.map((tag) => (
+          <Pill key={tag.id} label={tTag(tag.name, t)} size="md" />
+        ))}
+        <Pill
+          label={`+ ${t('tags.addTag')}`}
+          tone="neutral"
+          size="md"
+          onPress={handleOpenPicker}
+          accessibilityLabel={t('tags.addTag')}
+        />
+      </View>
       <TagPickerModal
         visible={showTagPicker}
         allTags={allTags}
@@ -83,10 +78,10 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
         onAdd={handleTagAdd}
         onRemove={handleTagRemove}
         onCreate={handleTagCreate}
-        onClose={() => setShowTagPicker(false)}
+        onClose={handleClosePicker}
       />
     </>
   )
 }
 
-export default TagsSection
+export default memo(TagsSection)

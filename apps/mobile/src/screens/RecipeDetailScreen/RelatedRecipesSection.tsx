@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, Image, PlatformColor, Pressable, ScrollView, Text, View } from 'react-native'
-import { Feather } from '@expo/vector-icons'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { BottomSheetBackdrop, BottomSheetFlatList, BottomSheetModal, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
 import { useRouter } from 'expo-router'
 import * as Haptics from 'expo-haptics'
@@ -10,44 +10,37 @@ import { useApiClient } from '@carrot/shared/api/context'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { useRelatedRecipes } from '@carrot/shared/hooks/useRelatedRecipes'
 import type { RecipeOut } from '@carrot/shared/types'
-import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
 import CheckboxIcon from '../../components/CheckboxIcon'
-import MarqueeText from '../../components/MarqueeText'
-import { MarqueeSyncProvider, MarqueeSyncSlots } from '../../components/MarqueeSync'
+import { RecipeTile, SectionHeader } from '../../components/ui'
+import { useMotion } from '../../theme'
 import { styles } from './styles'
 
-const RelatedRecipeCard = ({
-  recipe,
-  onPress,
-}: {
-  recipe: RecipeOut
-  onPress: () => void
-}) => {
-  const uri = proxyThumbnailUrl(recipe.thumbnail_url) || PLACEHOLDER_URL
+const TILE_SIZE = 140
+const SECTION_TOP_GAP = 32
+
+const RelatedTile = memo(({ recipe, onPress }: { recipe: RecipeOut; onPress: (id: string) => void }) => {
+  const { t } = useTranslation()
+  const { entering, exiting, layout } = useMotion()
+
+  const meta = useMemo(
+    () =>
+      [
+        recipe.total_time_minutes ? t('browse.minutes', { count: recipe.total_time_minutes }) : null,
+        recipe.kcal_per_serving ? t('browse.kcal', { count: recipe.kcal_per_serving }) : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    [recipe.total_time_minutes, recipe.kcal_per_serving, t],
+  )
+
+  const handlePress = useCallback(() => onPress(recipe.id), [onPress, recipe.id])
 
   return (
-    <Pressable
-      style={styles.relatedRecipeCard}
-      onPress={onPress}
-      accessibilityLabel={recipe.title}
-      accessibilityRole="link"
-    >
-      {uri ? <Image source={{ uri }} style={styles.relatedRecipeImage} /> : <View style={styles.relatedRecipeImage} />}
-      <MarqueeSyncSlots>
-        {({ title: titleTurn }) => (
-          <MarqueeText
-            text={recipe.title}
-            style={styles.relatedRecipeTitle}
-            containerStyle={styles.relatedRecipeTitleContainer}
-            turn={titleTurn.turn}
-            onOverflowChange={titleTurn.onOverflowChange}
-            onDone={titleTurn.onDone}
-          />
-        )}
-      </MarqueeSyncSlots>
-    </Pressable>
+    <Animated.View entering={entering} exiting={exiting} layout={layout}>
+      <RecipeTile title={recipe.title} meta={meta} imageUrl={recipe.thumbnail_url} size={TILE_SIZE} onPress={handlePress} />
+    </Animated.View>
   )
-}
+})
 
 const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
   const { t } = useTranslation()
@@ -170,23 +163,19 @@ const RelatedRecipesSection = ({ recipeId }: { recipeId: string }) => {
   }, [router])
 
   return (
-    <View style={styles.section}>
-      <Text style={styles.sectionLabel}>{t('relatedRecipes.title')}</Text>
-      <MarqueeSyncProvider>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
-          {displayedRelatedRecipes.map((recipe) => (
-            <RelatedRecipeCard
-              key={recipe.id}
-              recipe={recipe}
-              onPress={() => handleRelatedRecipePress(recipe.id)}
-            />
-          ))}
-          <Pressable style={styles.relatedRecipeAdd} onPress={openPicker} accessibilityLabel={t('common.edit')} accessibilityRole="button">
-            <Feather name="edit-2" size={16} color={PlatformColor('systemBlue') as unknown as string} />
-            <Text style={styles.relatedRecipeAddText}>{t('common.edit')}</Text>
-          </Pressable>
-        </ScrollView>
-      </MarqueeSyncProvider>
+    <View>
+      <SectionHeader
+        title={t('relatedRecipes.title')}
+        topGap={SECTION_TOP_GAP}
+        count={displayedRelatedRecipes.length > 0 ? String(displayedRelatedRecipes.length) : undefined}
+        actionLabel={t('common.edit')}
+        onAction={openPicker}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
+        {displayedRelatedRecipes.map((recipe) => (
+          <RelatedTile key={recipe.id} recipe={recipe} onPress={handleRelatedRecipePress} />
+        ))}
+      </ScrollView>
       <BottomSheetModal
         ref={pickerRef}
         snapPoints={['72%']}
