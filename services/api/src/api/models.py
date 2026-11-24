@@ -337,6 +337,7 @@ class RecipeComponent(BaseModel):
     imperial_steps: list[str] = []
     shopping_list_categories: list[ShoppingCategory] = []
     step_ingredient_line: list[int | None] = []
+    step_ingredient_component: list[int | None] = []
     ingredient_links: list[str | None] = []
     ingredient_evidence: list[dict[str, Any]] = []
     step_evidence: list[dict[str, Any]] = []
@@ -477,6 +478,7 @@ class SaveComponent(BaseModel):
     imperial_steps: list[str] | None = None
     ingredient_flags: list[AllergenFlag] | None = None
     step_ingredient_line: list[int | None] | None = None
+    step_ingredient_component: list[int | None] | None = None
     ingredient_links: list[str | None] = []
     linked_recipe_ids: list[str | None] = []
     ingredient_link_kinds: list[str | None] = []

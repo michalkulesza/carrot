@@ -36,6 +36,7 @@ export interface EditComponent {
   shopping_list_categories: ShoppingCategory[]
   steps: string[]
   step_ingredient_line: (number | null)[] | null
+  step_ingredient_component: (number | null)[] | null
 }
 export interface EditDraft {
   title: string
@@ -74,6 +75,7 @@ export const buildDraft = (recipe: RecipeOut): EditDraft => ({
       ),
       steps: component.steps,
       step_ingredient_line: component.step_ingredient_line ?? null,
+      step_ingredient_component: component.step_ingredient_component ?? null,
     }
   }),
 })
@@ -139,6 +141,7 @@ export const buildEditRecipeSaveRequest = (
       imperial_steps: stored?.imperial_steps ?? null,
       ingredient_flags: [],
       step_ingredient_line: component.step_ingredient_line,
+      step_ingredient_component: component.step_ingredient_component,
     }
   }),
   tag_ids: recipe.tags.map((tag) => tag.id),

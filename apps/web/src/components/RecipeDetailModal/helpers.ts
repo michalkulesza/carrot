@@ -11,6 +11,7 @@ import {
 import { UNITS } from '../../api/client'
 import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 import { flagAllergens } from '@carrot/shared/utils/allergenKeys'
+import { resolveStepAnchors } from '@carrot/shared/utils/stepAnchors'
 
 export const TEXT_SIZE_CLASSES = [
   'text-sm',
@@ -346,23 +347,8 @@ export const railFlatIndex = (
 
 export const resolveRailTargets = (components: SaveComponent[]): number[] => {
   const showHeaders = showRailComponentHeaders(components)
-  const targets: number[] = []
-  let lastTarget = 0
-  components.forEach((component, componentIndex) => {
-    const lines = component.step_ingredient_line ?? []
-    component.steps.forEach((_, stepIndex) => {
-      const line = lines[stepIndex]
-      if (line != null) {
-        lastTarget = railFlatIndex(
-          components,
-          showHeaders,
-          componentIndex,
-          line
-        )
-      }
-      targets.push(lastTarget)
-    })
-  })
 
-  return targets
+  return resolveStepAnchors(components).map((anchor) =>
+    anchor ? railFlatIndex(components, showHeaders, anchor.componentIndex, anchor.ingredientIndex) : 0
+  )
 }

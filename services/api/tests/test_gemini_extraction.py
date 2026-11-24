@@ -42,7 +42,7 @@ def _onion_step_match_payload() -> dict:
             {
                 "component_index": 0,
                 "step_index": step_index,
-                "references": [{"ingredient_index": 0, "evidence": "onion"}],
+                "references": [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}],
             }
             for step_index in range(2)
         ],
@@ -71,18 +71,18 @@ async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_un
             {
                 "component_index": 0,
                 "step_index": 0,
-                "references": [{"ingredient_index": 0, "evidence": "onion"}],
+                "references": [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}],
             },
             {
                 "component_index": 0,
                 "step_index": 1,
-                "references": [{"ingredient_index": 1, "evidence": "chicken"}],
+                "references": [{"component_index": 0, "ingredient_index": 1, "evidence": "chicken"}],
             },
         ]}),
         _response({"matches": [{
             "component_index": 0,
             "step_index": 0,
-            "references": [{"ingredient_index": 2, "evidence": "onion"}],
+            "references": [{"component_index": 0, "ingredient_index": 2, "evidence": "onion"}],
         }]}),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
@@ -96,19 +96,22 @@ async def test_step_ingredient_line_matcher_uses_numbered_choices_and_rejects_un
     assert lines == [2, 1]
     call = generate_content.call_args_list[0]
     assert call.kwargs["model"] == "gemini-3.1-flash-lite"
-    assert json.loads(call.kwargs["contents"])["components"][0]["ingredients"] == [
-        {"index": 0, "text": "1 tsp cayenne pepper"},
-        {"index": 1, "text": "5 chicken thighs"},
-        {"index": 2, "text": "1 small onion"},
+    assert [
+        (item["component_index"], item["ingredient_index"], item["text"])
+        for item in json.loads(call.kwargs["contents"])["ingredients"]
+    ] == [
+        (0, 0, "1 tsp cayenne pepper"),
+        (0, 1, "5 chicken thighs"),
+        (0, 2, "1 small onion"),
     ]
 
 
 @pytest.mark.asyncio
 async def test_step_matcher_computes_lower_middle_from_grounded_references(monkeypatch) -> None:
     generate_content = Mock(return_value=_response({"matches": [_match(0, 0, [
-        {"ingredient_index": 2, "evidence": "chicken"},
-        {"ingredient_index": 3, "evidence": "oil"},
-        {"ingredient_index": 4, "evidence": "potatoes"},
+        {"component_index": 0, "ingredient_index": 2, "evidence": "chicken"},
+        {"component_index": 0, "ingredient_index": 3, "evidence": "oil"},
+        {"component_index": 0, "ingredient_index": 4, "evidence": "potatoes"},
     ])]}))
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -125,8 +128,8 @@ async def test_step_matcher_computes_lower_middle_from_grounded_references(monke
 @pytest.mark.asyncio
 async def test_step_matcher_accepts_inflected_polish_and_german_evidence(monkeypatch) -> None:
     generate_content = Mock(return_value=_response({"matches": [
-        _match(0, 0, [{"ingredient_index": 0, "evidence": "kurczakiem"}]),
-        _match(0, 1, [{"ingredient_index": 1, "evidence": "Zwiebeln"}]),
+        _match(0, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "kurczakiem"}]),
+        _match(0, 1, [{"component_index": 0, "ingredient_index": 1, "evidence": "Zwiebeln"}]),
     ]}))
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -144,10 +147,10 @@ async def test_step_matcher_accepts_inflected_polish_and_german_evidence(monkeyp
 async def test_step_matcher_retries_only_missing_or_ungrounded_steps(monkeypatch) -> None:
     generate_content = Mock(side_effect=[
         _response({"matches": [
-            _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+            _match(0, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}]),
         ]}),
         _response({"matches": [
-            _match(0, 1, [{"ingredient_index": 1, "evidence": "chicken"}]),
+            _match(0, 1, [{"component_index": 0, "ingredient_index": 1, "evidence": "chicken"}]),
         ]}),
     ])
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
@@ -169,8 +172,8 @@ async def test_step_matcher_retries_only_missing_or_ungrounded_steps(monkeypatch
 @pytest.mark.asyncio
 async def test_step_matcher_returns_null_when_retry_is_still_invalid(monkeypatch) -> None:
     duplicate_matches = {"matches": [
-        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
-        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
+        _match(0, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}]),
+        _match(0, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}]),
     ]}
     generate_content = Mock(side_effect=[
         _response(duplicate_matches),
@@ -191,8 +194,8 @@ async def test_step_matcher_returns_null_when_retry_is_still_invalid(monkeypatch
 @pytest.mark.asyncio
 async def test_step_matcher_batches_all_recipe_components_in_one_request(monkeypatch) -> None:
     generate_content = Mock(return_value=_response({"matches": [
-        _match(0, 0, [{"ingredient_index": 0, "evidence": "onion"}]),
-        _match(1, 0, [{"ingredient_index": 0, "evidence": "chicken"}]),
+        _match(0, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "onion"}]),
+        _match(1, 0, [{"component_index": 1, "ingredient_index": 0, "evidence": "chicken"}]),
     ]}))
     client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
     monkeypatch.setattr(gemini, "_build_client", lambda: client)
@@ -203,7 +206,8 @@ async def test_step_matcher_batches_all_recipe_components_in_one_request(monkeyp
     ])
 
     prompt = json.loads(generate_content.call_args.kwargs["contents"])
-    assert lines == [[0], [0]]
+    assert lines.lines == [[0], [0]]
+    assert lines.components == [[0], [1]]
     assert generate_content.call_count == 1
     assert generate_content.call_args.kwargs["model"] == "gemini-3.1-flash-lite"
     assert [component["component_index"] for component in prompt["components"]] == [0, 1]
@@ -229,7 +233,73 @@ async def test_step_matcher_failure_does_not_fail_recipe_import(monkeypatch) -> 
         usage=None,
     )
 
-    assert lines == [[None]]
+    assert lines.lines == [[None]]
+    assert lines.components == [[None]]
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_anchors_steps_only_component_into_ingredient_components(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"matches": [
+        _match(2, 0, [{"component_index": 1, "ingredient_index": 1, "evidence": "marinade"}]),
+        _match(2, 1, [{"component_index": 0, "ingredient_index": 0, "evidence": "chicken"}]),
+    ]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    anchors = await gemini.match_recipe_step_ingredient_lines([
+        {"name": "Main", "steps": [], "ingredients": ["1 kg chicken"]},
+        {"name": "Marinade", "steps": [], "ingredients": ["1 tsp salt", "2 tbsp marinade paste"]},
+        {"name": None, "steps": ["Rub with the marinade.", "Grill the chicken."], "ingredients": []},
+    ])
+
+    prompt = json.loads(generate_content.call_args.kwargs["contents"])
+    assert anchors.lines == [[], [], [1, 0]]
+    assert anchors.components == [[], [], [1, 0]]
+    assert [(i["component_index"], i["component_name"]) for i in prompt["ingredients"]] == [
+        (0, "Main"), (1, "Marinade"), (1, "Marinade"),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_prefers_own_component_over_other_components(monkeypatch) -> None:
+    generate_content = Mock(return_value=_response({"matches": [
+        _match(1, 0, [
+            {"component_index": 0, "ingredient_index": 0, "evidence": "onion"},
+            {"component_index": 1, "ingredient_index": 0, "evidence": "onion"},
+        ]),
+    ]}))
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    anchors = await gemini.match_recipe_step_ingredient_lines([
+        {"steps": [], "ingredients": ["1 onion"]},
+        {"steps": ["Chop the onion."], "ingredients": ["2 onions"]},
+    ])
+
+    assert anchors.lines == [[], [0]]
+    assert anchors.components == [[], [1]]
+
+
+@pytest.mark.asyncio
+async def test_step_matcher_rejects_ungrounded_cross_component_references(monkeypatch) -> None:
+    ungrounded = _response({"matches": [
+        _match(1, 0, [{"component_index": 0, "ingredient_index": 0, "evidence": "marinade"}]),
+    ]})
+    out_of_range = _response({"matches": [
+        _match(1, 0, [{"component_index": 5, "ingredient_index": 0, "evidence": "chicken"}]),
+    ]})
+    generate_content = Mock(side_effect=[ungrounded, out_of_range])
+    client = SimpleNamespace(models=SimpleNamespace(generate_content=generate_content))
+    monkeypatch.setattr(gemini, "_build_client", lambda: client)
+
+    anchors = await gemini.match_recipe_step_ingredient_lines([
+        {"steps": [], "ingredients": ["1 kg chicken"]},
+        {"steps": ["Grill the chicken with marinade."], "ingredients": []},
+    ])
+
+    assert anchors.lines == [[], [None]]
+    assert anchors.components == [[], [None]]
+    assert generate_content.call_count == 2
 
 
 def test_step_matcher_does_not_accept_numeric_quantity_as_grounding() -> None:
@@ -345,7 +415,7 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
     source = _one_component_source()
     enrichment = _matching_enrichment(tags=["soup"])
 
-    assembled = gemini.assemble_recipe(source, enrichment, [[0, 0]])
+    assembled = gemini.assemble_recipe(source, enrichment, gemini.StepAnchors([[0, 0]], [[0, 0]]))
 
     assert assembled.title == "Onion Soup"
     assert assembled.servings == 4
@@ -364,7 +434,7 @@ def test_assembled_recipe_retains_source_fields_exactly() -> None:
 
 def test_source_total_time_overrides_enrichment_estimate() -> None:
     source = _one_component_source().model_copy(update={"total_time_minutes": 65})
-    assembled = gemini.assemble_recipe(source, _matching_enrichment(total_time_minutes=110), [[0, 0]])
+    assembled = gemini.assemble_recipe(source, _matching_enrichment(total_time_minutes=110), gemini.StepAnchors([[0, 0]], [[0, 0]]))
 
     assert source.total_time_minutes == 65
     assert assembled.total_time_minutes == 65

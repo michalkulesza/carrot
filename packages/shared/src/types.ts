@@ -94,6 +94,7 @@ export interface RecipeComponent {
   imperial_steps: string[];
   shopping_list_categories?: ShoppingCategory[] | null;
   step_ingredient_line?: (number | null)[] | null;
+  step_ingredient_component?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
   linked_recipe_ids?: (string | null)[];
   ingredient_link_kinds?: (IngredientLinkKind | null)[];
@@ -259,6 +260,7 @@ export interface SaveComponent {
   imperial_steps?: string[] | null;
   ingredient_flags?: AllergenFlag[];
   step_ingredient_line?: (number | null)[] | null;
+  step_ingredient_component?: (number | null)[] | null;
   ingredient_links?: (string | null)[];
   linked_recipe_ids?: (string | null)[];
   ingredient_link_kinds?: (IngredientLinkKind | null)[];

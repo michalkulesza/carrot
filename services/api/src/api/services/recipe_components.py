@@ -24,6 +24,7 @@ def serialize_components(extraction: RecipeExtraction, auto_substitute: bool) ->
             "imperial_steps": component.imperial_steps or component.steps,
             "ingredient_flags": [],
             "step_ingredient_line": component.step_ingredient_line,
+            "step_ingredient_component": component.step_ingredient_component,
             "ingredient_links": component.ingredient_links,
             "linked_recipe_ids": [None] * len(component.ingredient_links),
             "ingredient_evidence": component.ingredient_evidence,

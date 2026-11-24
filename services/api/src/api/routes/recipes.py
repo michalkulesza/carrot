@@ -151,6 +151,33 @@ async def _link_recipe_to_household(session: AsyncSession, recipe_id: uuid.UUID,
     )
 
 
+def _step_anchor_targets(component: SaveComponent, own_index: int) -> set[int]:
+    return {target for target in component.step_ingredient_component or [] if target is not None and target != own_index}
+
+
+def _step_anchors_still_valid(
+    index: int,
+    component: SaveComponent,
+    stored_components: list[dict],
+    new_components: list[SaveComponent],
+) -> bool:
+    ingredients_unchanged = component.ingredients == stored_components[index].get("ingredients", [])
+    steps_unchanged = component.steps == stored_components[index].get("steps", [])
+    if not ingredients_unchanged or not steps_unchanged:
+        return False
+
+    targets = _step_anchor_targets(component, index)
+    if not targets:
+        return True
+    if len(new_components) != len(stored_components):
+        return False
+    return all(
+        target < len(new_components)
+        and new_components[target].ingredients == stored_components[target].get("ingredients", [])
+        for target in targets
+    )
+
+
 def _reconcile_component_derivatives(
     stored_components: list[dict],
     new_components: list[SaveComponent],
@@ -159,7 +186,7 @@ def _reconcile_component_derivatives(
     for index, component in enumerate(new_components):
         stored = stored_components[index] if index < len(stored_components) else None
         if stored is None:
-            result.append(component.model_copy(update={"step_ingredient_line": None}))
+            result.append(component.model_copy(update={"step_ingredient_line": None, "step_ingredient_component": None}))
             continue
 
         ingredients_unchanged = component.ingredients == stored.get("ingredients", [])
@@ -174,8 +201,9 @@ def _reconcile_component_derivatives(
             incoming = getattr(component, field)
             updates[field] = (incoming or stored.get(field)) if steps_unchanged else None
 
-        if not ingredients_unchanged or not steps_unchanged:
+        if not _step_anchors_still_valid(index, component, stored_components, new_components):
             updates["step_ingredient_line"] = None
+            updates["step_ingredient_component"] = None
 
         result.append(component.model_copy(update=updates))
     return result

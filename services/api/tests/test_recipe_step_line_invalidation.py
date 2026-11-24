@@ -74,3 +74,67 @@ def test_only_variants_with_changed_source_content_are_invalidated() -> None:
     assert result[0].imperial_ingredients is None
     assert result[0].metric_steps == ["Bake at 200°C."]
     assert result[0].imperial_steps == ["Bake at 400°F."]
+
+
+def _anchored_recipe() -> tuple[list[dict], list[SaveComponent]]:
+    stored = [
+        {"ingredients": ["1 onion"], "steps": []},
+        {"ingredients": [], "steps": ["Chop the onion."]},
+    ]
+    components = [
+        SaveComponent(name="a", yield_note="", ingredients=["1 onion"], steps=[]),
+        SaveComponent(
+            name="b", yield_note="", ingredients=[], steps=["Chop the onion."],
+            step_ingredient_line=[0], step_ingredient_component=[0],
+        ),
+    ]
+    return stored, components
+
+
+def test_cross_component_anchors_survive_an_unrelated_edit() -> None:
+    stored, components = _anchored_recipe()
+
+    result = _reconcile_component_derivatives(stored, components)
+
+    assert result[1].step_ingredient_line == [0]
+    assert result[1].step_ingredient_component == [0]
+
+
+def test_cross_component_anchors_are_invalidated_when_target_ingredients_change() -> None:
+    stored, components = _anchored_recipe()
+    components[0] = components[0].model_copy(update={"ingredients": ["1 onion", "1 leek"]})
+
+    result = _reconcile_component_derivatives(stored, components)
+
+    assert result[1].step_ingredient_line is None
+    assert result[1].step_ingredient_component is None
+
+
+def test_cross_component_anchors_are_invalidated_when_components_are_added_or_removed() -> None:
+    stored, components = _anchored_recipe()
+    added = [*components, SaveComponent(name="c", yield_note="", ingredients=[], steps=[])]
+    removed = components[:1]
+
+    added_result = _reconcile_component_derivatives(stored, added)
+
+    assert added_result[1].step_ingredient_component is None
+    assert _reconcile_component_derivatives(stored, removed)[0].step_ingredient_component is None
+
+
+def test_cross_component_anchors_are_invalidated_when_components_are_reordered() -> None:
+    stored, components = _anchored_recipe()
+    reordered = [components[1], components[0]]
+
+    result = _reconcile_component_derivatives(stored, reordered)
+
+    assert all(component.step_ingredient_line is None for component in result)
+    assert all(component.step_ingredient_component is None for component in result)
+
+
+def test_new_component_has_no_anchors() -> None:
+    stored, components = _anchored_recipe()
+
+    result = _reconcile_component_derivatives([], components)
+
+    assert result[1].step_ingredient_line is None
+    assert result[1].step_ingredient_component is None

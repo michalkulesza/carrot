@@ -5,7 +5,7 @@ import json
 import logging
 import re
 import time
-from typing import Any, Callable, TypeVar
+from typing import Any, Callable, NamedTuple, TypeVar
 
 from google import genai
 from google.genai import types
@@ -178,8 +178,12 @@ in anything that is not audible.
 _STEP_INGREDIENT_MATCH_INSTRUCTION = """\
 Match recipe steps to the ingredients they reference. Return exactly one match
 object for every provided step, identified by its authoritative component_index
-and step_index. For each reference, copy the authoritative ingredient_index and
+and step_index. The ingredients list covers every component of the recipe: a step
+may reference an ingredient from its own component or from any other component
+(steps are often grouped apart from the ingredients they use). For each reference,
+copy the authoritative component_index and ingredient_index of the ingredient and
 quote the shortest exact phrase from the step that identifies it as evidence.
+Prefer an ingredient of the step's own component when the step names one.
 
 Recognise full names, key nouns, plurals, abbreviations, and grammatical case or
 number variants in every language. Include every referenced ingredient, not just
@@ -541,7 +545,7 @@ async def _enrich_recipe(
 def assemble_recipe(
     source: RecipeSourceExtraction,
     enrichment: RecipeEnrichment,
-    step_ingredient_lines: list[list[int | None]] | None = None,
+    step_anchors: StepAnchors | None = None,
 ) -> RecipeExtraction:
     if len(enrichment.components) != len(source.components):
         raise ValueError(
@@ -549,11 +553,11 @@ def assemble_recipe(
             f"expected {len(source.components)}"
         )
 
-    if step_ingredient_lines is None:
-        step_ingredient_lines = [[None] * len(component.steps) for component in source.components]
-    if len(step_ingredient_lines) != len(source.components):
+    if step_anchors is None:
+        step_anchors = _empty_step_anchors([len(component.steps) for component in source.components])
+    if len(step_anchors.lines) != len(source.components) or len(step_anchors.components) != len(source.components):
         raise ValueError(
-            f"Step matching returned {len(step_ingredient_lines)} components, "
+            f"Step matching returned {len(step_anchors.lines)} components, "
             f"expected {len(source.components)}"
         )
 
@@ -568,8 +572,9 @@ def assemble_recipe(
                 f"expected {ingredient_count}"
             )
 
-        component_step_lines = step_ingredient_lines[index]
-        if len(component_step_lines) != step_count:
+        component_step_lines = step_anchors.lines[index]
+        component_step_components = step_anchors.components[index]
+        if len(component_step_lines) != step_count or len(component_step_components) != step_count:
             raise ValueError(
                 f"Component {index}: step_ingredient_line has {len(component_step_lines)} entries, "
                 f"expected {step_count}"
@@ -614,6 +619,7 @@ def assemble_recipe(
             ),
             shopping_list_categories=shopping_categories,
             step_ingredient_line=component_step_lines,
+            step_ingredient_component=component_step_components,
         ))
 
     return RecipeExtraction(
@@ -794,6 +800,7 @@ async def transcribe_image_text(
 
 
 class _StepIngredientReference(BaseModel):
+    component_index: int
     ingredient_index: int
     evidence: str
 
@@ -808,9 +815,22 @@ class _StepIngredientMatchResult(BaseModel):
     matches: list[_StepIngredientMatch]
 
 
+class StepAnchors(NamedTuple):
+    lines: list[list[int | None]]
+    components: list[list[int | None]]
+
+
+def _empty_step_anchors(step_counts: list[int]) -> StepAnchors:
+    return StepAnchors(
+        lines=[[None] * count for count in step_counts],
+        components=[[None] * count for count in step_counts],
+    )
+
+
 def _source_step_match_components(source: RecipeSourceExtraction) -> list[dict[str, Any]]:
     return [
         {
+            "name": component.name,
             "steps": component.steps,
             "ingredients": [_source_ingredient_display(ingredient) for ingredient in component.ingredients],
         }
@@ -822,13 +842,13 @@ async def _match_source_step_ingredient_lines_safely(
     source: RecipeSourceExtraction,
     generous: bool,
     usage: UsageTracker | None,
-) -> list[list[int | None]]:
+) -> StepAnchors:
     components = _source_step_match_components(source)
     try:
         return await match_recipe_step_ingredient_lines(components, generous=generous, usage=usage)
     except Exception:
         log.exception("Step ingredient matching failed; continuing without rail targets")
-        return [[None] * len(component.steps) for component in source.components]
+        return _empty_step_anchors([len(component.steps) for component in source.components])
 
 
 def _step_match_keys(components: list[dict[str, Any]]) -> set[tuple[int, int]]:
@@ -845,25 +865,27 @@ def _step_match_prompt(
     retry_reason: str | None = None,
 ) -> dict[str, Any]:
     prompt_components = []
+    ingredients = []
     for component_index, component in enumerate(components):
+        name = component.get("name") or None
         steps = [
             {"index": step_index, "text": step}
             for step_index, step in enumerate(component.get("steps") or [])
             if (component_index, step_index) in keys
         ]
-        if not steps:
-            continue
-        ingredients = [
-            {"index": ingredient_index, "text": ingredient}
+        if steps:
+            prompt_components.append({"component_index": component_index, "name": name, "steps": steps})
+        ingredients.extend(
+            {
+                "component_index": component_index,
+                "component_name": name,
+                "ingredient_index": ingredient_index,
+                "text": ingredient,
+            }
             for ingredient_index, ingredient in enumerate(component.get("ingredients") or [])
-        ]
-        prompt_components.append({
-            "component_index": component_index,
-            "steps": steps,
-            "ingredients": ingredients,
-        })
+        )
 
-    prompt: dict[str, Any] = {"components": prompt_components}
+    prompt: dict[str, Any] = {"components": prompt_components, "ingredients": ingredients}
     if retry_reason:
         prompt["retry_reason"] = retry_reason
     return prompt
@@ -915,11 +937,17 @@ def _has_grounded_candidate(step: str, ingredients: list[str]) -> bool:
     )
 
 
+def _pick_anchor(references: list[tuple[int, int]], own_component: int) -> tuple[int, int]:
+    own = [reference for reference in references if reference[0] == own_component]
+    candidates = sorted(own or references)
+    return candidates[(len(candidates) - 1) // 2]
+
+
 def _validate_step_matches(
     result: _StepIngredientMatchResult,
     components: list[dict[str, Any]],
     expected_keys: set[tuple[int, int]],
-) -> tuple[dict[tuple[int, int], int | None], set[tuple[int, int]]]:
+) -> tuple[dict[tuple[int, int], tuple[int, int] | None], set[tuple[int, int]]]:
     matches_by_key: dict[tuple[int, int], _StepIngredientMatch] = {}
     invalid_keys: set[tuple[int, int]] = set()
     for match in result.matches:
@@ -930,7 +958,12 @@ def _validate_step_matches(
             continue
         matches_by_key[key] = match
 
-    lines: dict[tuple[int, int], int | None] = {}
+    all_ingredients = [
+        ingredient
+        for component in components
+        for ingredient in component.get("ingredients") or []
+    ]
+    anchors: dict[tuple[int, int], tuple[int, int] | None] = {}
     for key in expected_keys:
         if key in invalid_keys:
             continue
@@ -941,33 +974,33 @@ def _validate_step_matches(
             invalid_keys.add(key)
             continue
 
-        component = components[component_index]
-        step = (component.get("steps") or [])[step_index]
-        ingredients = component.get("ingredients") or []
+        step = (components[component_index].get("steps") or [])[step_index]
         if not match.references:
-            lines[key] = None
-            if _has_grounded_candidate(step, ingredients):
+            anchors[key] = None
+            if _has_grounded_candidate(step, all_ingredients):
                 invalid_keys.add(key)
             continue
 
-        ingredient_indices = [reference.ingredient_index for reference in match.references]
-        references_valid = len(set(ingredient_indices)) == len(ingredient_indices)
+        pairs = [(reference.component_index, reference.ingredient_index) for reference in match.references]
+        references_valid = len(set(pairs)) == len(pairs)
         for reference in match.references:
+            if not (0 <= reference.component_index < len(components)):
+                references_valid = False
+                break
+            ingredients = components[reference.component_index].get("ingredients") or []
             if not (0 <= reference.ingredient_index < len(ingredients)):
                 references_valid = False
                 break
-            ingredient = ingredients[reference.ingredient_index]
-            if not _reference_is_grounded(step, ingredient, reference.evidence):
+            if not _reference_is_grounded(step, ingredients[reference.ingredient_index], reference.evidence):
                 references_valid = False
                 break
         if not references_valid:
             invalid_keys.add(key)
             continue
 
-        sorted_indices = sorted(ingredient_indices)
-        lines[key] = sorted_indices[(len(sorted_indices) - 1) // 2]
+        anchors[key] = _pick_anchor(pairs, component_index)
 
-    return lines, invalid_keys
+    return anchors, invalid_keys
 
 
 async def _request_step_matches(
@@ -1003,17 +1036,14 @@ async def match_recipe_step_ingredient_lines(
     model: str = _STEP_INGREDIENT_MATCH_MODEL,
     generous: bool = False,
     usage: UsageTracker | None = None,
-) -> list[list[int | None]]:
+) -> StepAnchors:
     keys = _step_match_keys(components)
-    lines_by_component = [
-        [None] * len(component.get("steps") or [])
-        for component in components
-    ]
+    anchors = _empty_step_anchors([len(component.get("steps") or []) for component in components])
     if not keys:
-        return lines_by_component
+        return anchors
 
     result = await _request_step_matches(components, keys, model, generous, usage)
-    lines, invalid_keys = _validate_step_matches(result, components, keys)
+    matched, invalid_keys = _validate_step_matches(result, components, keys)
     if invalid_keys:
         retry_result = await _request_step_matches(
             components,
@@ -1023,16 +1053,20 @@ async def match_recipe_step_ingredient_lines(
             usage,
             "Some previous matches were missing, duplicated, or not grounded in exact step text. Re-evaluate them.",
         )
-        retry_lines, still_invalid = _validate_step_matches(retry_result, components, invalid_keys)
-        lines.update(retry_lines)
+        retry_matched, still_invalid = _validate_step_matches(retry_result, components, invalid_keys)
+        matched.update(retry_matched)
         if still_invalid:
             for key in still_invalid:
-                lines[key] = None
+                matched[key] = None
             log.warning("Step ingredient matching left these steps unmatched after retry: %s", sorted(still_invalid))
 
-    for (component_index, step_index), line in lines.items():
-        lines_by_component[component_index][step_index] = line
-    return lines_by_component
+    for (component_index, step_index), anchor in matched.items():
+        if anchor is None:
+            continue
+        anchor_component, anchor_ingredient = anchor
+        anchors.lines[component_index][step_index] = anchor_ingredient
+        anchors.components[component_index][step_index] = anchor_component
+    return anchors
 
 
 async def match_step_ingredient_lines(
@@ -1040,11 +1074,11 @@ async def match_step_ingredient_lines(
     ingredient_names: list[str],
     model: str = _STEP_INGREDIENT_MATCH_MODEL,
 ) -> list[int | None]:
-    lines_by_component = await match_recipe_step_ingredient_lines(
+    anchors = await match_recipe_step_ingredient_lines(
         [{"steps": steps, "ingredients": ingredient_names}],
         model=model,
     )
-    return lines_by_component[0]
+    return anchors.lines[0]
 
 
 class _IngredientFlag(BaseModel):
