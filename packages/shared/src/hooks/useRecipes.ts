@@ -1,26 +1,95 @@
 import { useEffect, useState } from 'react'
-import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
+import { getErrorStatus } from '../api/errors'
 import type { RecipeOut, RecipeSaveRequest } from '../types'
+import { mealPlanDataReferencesRecipe, removeRecipeById, upsertRecipe } from '../utils/recipeCache'
 
 type RecipeStreamApi = {
-  subscribeRecipes: (onChange: () => void) => () => void
+  subscribeRecipes: (onChange: (recipeId: string | null) => void) => () => void
+  fetchRecipe: (id: string) => Promise<RecipeOut>
 }
 
-const recipeChangeListeners = new Set<() => void>()
-let stopRecipeStream: (() => void) | null = null
+const COALESCE_DELAY_MS = 300
+const COALESCE_MAX_WAIT_MS = 2000
+const MAX_PATCHED_IDS = 10
 
-const subscribeToRecipeChanges = (api: RecipeStreamApi, listener: () => void) => {
-  recipeChangeListeners.add(listener)
-  if (!stopRecipeStream) {
-    stopRecipeStream = api.subscribeRecipes(() => {
-      recipeChangeListeners.forEach((onChange) => onChange())
+let recipeStreamSubscribers = 0
+let stopRecipeStream: (() => void) | null = null
+let pendingIds = new Set<string>()
+let pendingHasIdlessEvent = false
+let firstPendingAt = 0
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+
+const recipeDetailFilter = (id: string) => ({
+  queryKey: ['recipes', 'detail'],
+  predicate: (query: { queryKey: readonly unknown[] }) => query.queryKey[3] === id,
+})
+
+const patchRecipeList = async (api: RecipeStreamApi, qc: QueryClient, ids: string[]) => {
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const recipe = await api.fetchRecipe(id)
+        qc.setQueryData<RecipeOut[]>(['recipes'], (old) => upsertRecipe(old, recipe))
+        qc.setQueriesData<RecipeOut>(recipeDetailFilter(id), recipe)
+      } catch (error) {
+        if (getErrorStatus(error) !== 404) throw error
+        qc.setQueryData<RecipeOut[]>(['recipes'], (old) => removeRecipeById(old, id))
+        void qc.invalidateQueries(recipeDetailFilter(id))
+      }
     })
+  )
+}
+
+const flushRecipeChanges = async (api: RecipeStreamApi, qc: QueryClient) => {
+  const ids = pendingIds
+  const hasIdlessEvent = pendingHasIdlessEvent
+  pendingIds = new Set()
+  pendingHasIdlessEvent = false
+  firstPendingAt = 0
+  flushTimer = null
+
+  const needsFullRefetch = hasIdlessEvent || ids.size > MAX_PATCHED_IDS
+  if (needsFullRefetch) {
+    void qc.invalidateQueries({ queryKey: ['recipes'] })
+  } else {
+    try {
+      await patchRecipeList(api, qc, [...ids])
+    } catch {
+      void qc.invalidateQueries({ queryKey: ['recipes'] })
+    }
+  }
+
+  const mealPlanAffected = qc
+    .getQueriesData({ queryKey: ['mealPlan'] })
+    .some(([, data]) => mealPlanDataReferencesRecipe(data, ids))
+  if (hasIdlessEvent || mealPlanAffected) {
+    void qc.invalidateQueries({ queryKey: ['mealPlan'] })
+  }
+}
+
+const enqueueRecipeChange = (api: RecipeStreamApi, qc: QueryClient, recipeId: string | null) => {
+  if (recipeId) pendingIds.add(recipeId)
+  else pendingHasIdlessEvent = true
+
+  const now = Date.now()
+  if (!firstPendingAt) firstPendingAt = now
+  if (flushTimer) clearTimeout(flushTimer)
+
+  const delay = Math.min(COALESCE_DELAY_MS, firstPendingAt + COALESCE_MAX_WAIT_MS - now)
+  flushTimer = setTimeout(() => void flushRecipeChanges(api, qc), Math.max(0, delay))
+}
+
+const subscribeToRecipeChanges = (api: RecipeStreamApi, qc: QueryClient) => {
+  recipeStreamSubscribers += 1
+  if (!stopRecipeStream) {
+    stopRecipeStream = api.subscribeRecipes((recipeId) => enqueueRecipeChange(api, qc, recipeId))
   }
 
   return () => {
-    recipeChangeListeners.delete(listener)
-    if (recipeChangeListeners.size === 0) {
+    recipeStreamSubscribers -= 1
+    if (recipeStreamSubscribers === 0) {
       stopRecipeStream?.()
       stopRecipeStream = null
     }
@@ -33,7 +102,7 @@ export const useRecipes = (enabled = true) => {
 
   useEffect(() => {
     if (!enabled) return
-    return subscribeToRecipeChanges(api, () => void qc.invalidateQueries({ queryKey: ['recipes'] }))
+    return subscribeToRecipeChanges(api, qc)
   }, [api, qc, enabled])
 
   const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled })

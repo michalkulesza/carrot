@@ -22,9 +22,6 @@ const applyJob = (jobs: ImportJob[], type: string, job: ImportJob): ImportJob[] 
 export const useImportJobs = (scopeKey: string | null, onJobEvent?: (event: { type: string; job: ImportJob }) => void, onSnapshot?: (jobs: ImportJob[]) => void) => {
   const api = useApiClient()
   const qc = useQueryClient()
-  const lastEventId = useRef(0)
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const attempt = useRef(0)
   const onJobEventRef = useRef(onJobEvent)
   onJobEventRef.current = onJobEvent
   const onSnapshotRef = useRef(onSnapshot)
@@ -37,53 +34,38 @@ export const useImportJobs = (scopeKey: string | null, onJobEvent?: (event: { ty
   }, [qc])
 
   useEffect(() => {
-    lastEventId.current = 0
-    attempt.current = 0
     qc.setQueryData<ImportJob[]>(queryKey, [])
     if (!scopeKey) return
     let closed = false
-    let unsubscribe: (() => void) | undefined
-    const connect = () => {
-      unsubscribe = api.subscribeImportJobs(
-        (snapshot) => {
-          qc.setQueryData(queryKey, snapshot.jobs)
-          onSnapshotRef.current?.(snapshot.jobs)
-        },
-        (event) => {
-          lastEventId.current = Math.max(lastEventId.current, event.id)
-          onJobEventRef.current?.(event)
-          if (event.type === 'import_job.succeeded') {
-            if (event.job.result_recipe_id) completedRecipeIds.current.add(event.job.result_recipe_id)
-            void api.listRecipes()
-              .then((recipes) => {
-                if (closed) return
-                qc.setQueryData<RecipeOut[]>(['recipes'], recipes)
-                qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
-                void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
-              })
-              .catch(() => {
-                if (closed) return
-                qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
-                void qc.invalidateQueries({ queryKey: ['recipes'] })
-              })
-            return
-          }
-          qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
-        },
-        lastEventId.current || undefined,
-        () => {
-          const delay = Math.min(30_000, 1_000 * 2 ** attempt.current++)
-          reconnectTimer.current = setTimeout(() => {
-            if (!closed) connect()
-          }, delay)
-        },
-      )
-    }
-    connect()
+    const unsubscribe = api.subscribeImportJobs(
+      (snapshot) => {
+        qc.setQueryData(queryKey, snapshot.jobs)
+        onSnapshotRef.current?.(snapshot.jobs)
+      },
+      (event) => {
+        onJobEventRef.current?.(event)
+        if (event.type === 'import_job.succeeded') {
+          if (event.job.result_recipe_id) completedRecipeIds.current.add(event.job.result_recipe_id)
+          void api.listRecipes()
+            .then((recipes) => {
+              if (closed) return
+              qc.setQueryData<RecipeOut[]>(['recipes'], recipes)
+              qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
+              void qc.invalidateQueries({ queryKey: ['recipes', 'stats'] })
+            })
+            .catch(() => {
+              if (closed) return
+              qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
+              void qc.invalidateQueries({ queryKey: ['recipes'] })
+            })
+          return
+        }
+        qc.setQueryData<ImportJob[]>(queryKey, (jobs = []) => applyJob(jobs, event.type, event.job))
+      },
+    )
     return () => {
       closed = true
-      unsubscribe?.()
-      if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
+      unsubscribe()
     }
   }, [api, qc, scopeKey])
 

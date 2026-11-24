@@ -1,11 +1,12 @@
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { PlatformColor, Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Feather, Ionicons } from '@expo/vector-icons'
+import { Ionicons } from '@expo/vector-icons'
 import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import type { HouseholdOut } from '@carrot/shared/types'
 import { colors } from '../../theme/colors'
+import HeaderIconButton from './HeaderIconButton'
 import { styles } from './styles'
 
 export const TOGGLE_HOUSEHOLD_PREFIX = 'toggle-household-'
@@ -39,6 +40,7 @@ const ViewHeaderRight = ({
   onPressRecipeAction,
   onSharePublicly,
   onEdit,
+  editPending,
 }: {
   addMode: boolean
   recipe: { household_ids: string[] }
@@ -48,6 +50,7 @@ const ViewHeaderRight = ({
   onPressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
   onSharePublicly: () => void
   onEdit: () => void
+  editPending: boolean
 }) => {
   const { t } = useTranslation()
   const publicShareSelectedRef = useRef(false)
@@ -78,6 +81,8 @@ const ViewHeaderRight = ({
     onPressRecipeAction({ nativeEvent })
   }, [onPressRecipeAction])
 
+  const cartColor = addMode ? colors.blue : colors.secondaryLabel
+
   const handleMenuClose = useCallback(() => {
     if (!publicShareSelectedRef.current) return
     publicShareSelectedRef.current = false
@@ -86,23 +91,17 @@ const ViewHeaderRight = ({
 
   return (
     <View style={styles.headerBtns}>
-      <Pressable
+      <HeaderIconButton
+        icon="shopping-cart"
+        color={cartColor}
         onPress={onToggleAddMode}
-        style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t('shoppingList.addToList')}
-        accessibilityRole="button"
-      >
-        <Feather name="shopping-cart" size={20} color={addMode ? colors.blue : colors.secondaryLabel} />
-      </Pressable>
-      <Pressable
+      />
+      <HeaderIconButton
+        icon="calendar"
         onPress={onOpenMealPlanSheet}
-        style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
         accessibilityLabel={t('mealPlan.addToMealPlan')}
-        accessibilityRole="button"
-        hitSlop={8}
-      >
-        <Feather name="calendar" size={20} color={colors.secondaryLabel} />
-      </Pressable>
+      />
       {recipeActions.length > 0 && (
         <MenuView
           title={t('recipes.recipeActions')}
@@ -110,24 +109,16 @@ const ViewHeaderRight = ({
           onPressAction={handleMenuAction}
           onCloseMenu={handleMenuClose}
         >
-          <Pressable
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
-            accessibilityLabel={t('recipes.recipeActions')}
-            accessibilityRole="button"
-            hitSlop={8}
-          >
-            <Feather name="share" size={20} color={colors.secondaryLabel} />
-          </Pressable>
+          <HeaderIconButton icon="share" accessibilityLabel={t('recipes.recipeActions')} />
         </MenuView>
       )}
-      <Pressable
+      <HeaderIconButton
+        icon="edit-2"
+        size={22}
         onPress={onEdit}
-        style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
+        pending={editPending}
         accessibilityLabel={t('common.edit')}
-        accessibilityRole="button"
-      >
-        <Feather name="edit-2" size={22} color={colors.secondaryLabel} />
-      </Pressable>
+      />
     </View>
   )
 }
@@ -140,6 +131,7 @@ export const useRecipeDetailHeader = ({
   recipe,
   onToggleAddMode,
   handleEdit,
+  editPending,
   handleCancelEdit,
   handleOpenMealPlanSheet,
   households,
@@ -153,6 +145,7 @@ export const useRecipeDetailHeader = ({
   recipe: { household_ids: string[] }
   onToggleAddMode: () => void
   handleEdit: () => void
+  editPending: boolean
   handleCancelEdit: () => void
   handleOpenMealPlanSheet: () => void
   households: HouseholdOut[]
@@ -187,6 +180,7 @@ export const useRecipeDetailHeader = ({
             onPressRecipeAction={handlePressRecipeAction}
             onSharePublicly={handleSharePublicly}
             onEdit={handleEdit}
+            editPending={editPending}
           />
         ),
       })
@@ -196,6 +190,7 @@ export const useRecipeDetailHeader = ({
     editing,
     cooking,
     handleEdit,
+    editPending,
     handleCancelEdit,
     handleOpenMealPlanSheet,
     households,

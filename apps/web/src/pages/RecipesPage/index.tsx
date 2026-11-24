@@ -36,6 +36,7 @@ interface RecipesPageProps {
   onRecipeDeleted: (id: string) => void
   importJobs: ImportJob[]
   onRetryImportJob: (jobId: string) => Promise<unknown>
+  onImportAnywayImportJob: (jobId: string) => Promise<unknown>
   onDismissImportJob: (jobId: string) => Promise<unknown>
   onContinueImportManually: (sourceUrl: string | null) => void
   onAddRecipe: () => void
@@ -49,6 +50,7 @@ const RecipesPage = ({
   onRecipeDeleted,
   importJobs,
   onRetryImportJob,
+  onImportAnywayImportJob,
   onDismissImportJob,
   onContinueImportManually,
   onAddRecipe,
@@ -210,6 +212,8 @@ const RecipesPage = ({
           <ImportJobCards
             jobs={importJobs}
             onRetry={onRetryImportJob}
+            onImportAnyway={onImportAnywayImportJob}
+            onOpenRecipe={openRecipe}
             onDismiss={onDismissImportJob}
             onContinueManually={onContinueImportManually}
           />

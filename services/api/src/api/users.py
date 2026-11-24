@@ -28,6 +28,10 @@ class User(SQLAlchemyBaseUserTableUUID, Base):
     google_account: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
 
+def presence_nickname(user: User) -> str:
+    return user.nickname or user.email.split("@")[0]
+
+
 class UserRead(schemas.BaseUser[uuid.UUID]):
     nickname: str | None = None
     active_household_id: uuid.UUID | None = None

@@ -89,6 +89,9 @@ const RecipeDetailScreen = () => {
   const publicSharePendingRef = useRef(false);
   const deletePendingRef = useRef(false);
   const deletePromptOpenRef = useRef(false);
+  const deletedByMeRef = useRef(false);
+  const recipeSeenRef = useRef(false);
+  const recipeRemovedAlertShownRef = useRef(false);
 
   const displayPrefs = useDisplayPrefs();
   const initialComponentIndex = Number.isInteger(Number(componentIndexParam))
@@ -106,9 +109,24 @@ const RecipeDetailScreen = () => {
     if (cookModeParam === '1' && recipe?.components.some((component) => component.steps.length > 0)) setCookModeOpen(true)
     else if (cookModeParam === '1') setCookModeOpen(false)
   }, [cookModeParam, navAtParam, recipe])
+  const handleRecipeRemoved = useCallback(() => {
+    if (recipeRemovedAlertShownRef.current) return
+    recipeRemovedAlertShownRef.current = true
+    Alert.alert(t('recipes.recipeRemovedTitle'), t('recipes.recipeRemovedMessage'))
+    navigation.goBack()
+  }, [navigation, t])
+
   useEffect(() => {
-    if (!isLoading && !error && !recipe) router.replace('/(tabs)/home')
-  }, [error, isLoading, recipe, router])
+    if (recipe) {
+      recipeSeenRef.current = true
+      return
+    }
+    if (isLoading || error) return
+
+    const removedByOthers = recipeSeenRef.current && !deletedByMeRef.current
+    if (removedByOthers) handleRecipeRemoved()
+    else router.replace('/(tabs)/home')
+  }, [error, isLoading, recipe, router, handleRecipeRemoved])
   const { selectedServings, setServings } = useRecipeServingPreference(
     recipe?.id,
     recipe?.servings ?? null,
@@ -125,6 +143,7 @@ const RecipeDetailScreen = () => {
     api,
     t,
     onSaveSuccess: handleEditSaveSuccess,
+    onRecipeRemoved: handleRecipeRemoved,
   });
 
   const handleOpenMealPlanSheet = useCallback(() => {
@@ -146,9 +165,13 @@ const RecipeDetailScreen = () => {
   const handleDeleteEverywhere = useCallback(() => {
     if (!recipe || deletePendingRef.current) return
     deletePendingRef.current = true
+    deletedByMeRef.current = true
     void remove.mutateAsync(recipe.id)
       .then(() => navigation.goBack())
-      .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
+      .catch(() => {
+        deletedByMeRef.current = false
+        Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete'))
+      })
       .finally(() => {
         deletePendingRef.current = false
         deletePromptOpenRef.current = false
@@ -158,9 +181,13 @@ const RecipeDetailScreen = () => {
   const handleRemoveFromHousehold = useCallback(() => {
     if (!recipe || !activeHouseholdId || deletePendingRef.current) return
     deletePendingRef.current = true
+    deletedByMeRef.current = true
     void removeFromHousehold.mutateAsync({ id: recipe.id, householdId: activeHouseholdId })
       .then(() => navigation.goBack())
-      .catch(() => Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete')))
+      .catch(() => {
+        deletedByMeRef.current = false
+        Alert.alert(t('common.somethingWentWrong'), t('recipes.failedToDelete'))
+      })
       .finally(() => {
         deletePendingRef.current = false
         deletePromptOpenRef.current = false
@@ -300,6 +327,7 @@ const RecipeDetailScreen = () => {
     recipe: recipe ?? { household_ids: [] },
     onToggleAddMode: handleToggleAddMode,
     handleEdit: editDraft.handleEdit,
+    editPending: editDraft.editPending,
     handleCancelEdit: editDraft.handleCancelEdit,
     handleOpenMealPlanSheet,
     households,

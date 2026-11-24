@@ -226,19 +226,14 @@ async def enqueue_import_job(
     return _job_out(job, user.nickname)
 
 
-@router.get("/jobs/events")
-async def import_job_events(
-    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
-    user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session),
-    household_id: uuid.UUID = Depends(get_active_household_id),
-) -> StreamingResponse:
-    event_scope = _scope_filter(ImportJobEvent, household_id, user.id)
-    watermark = await session.scalar(select(func.max(ImportJobEvent.id)).where(event_scope)) or 0
+async def import_jobs_snapshot(
+    session: AsyncSession, household_id: uuid.UUID, user_id: uuid.UUID,
+) -> tuple[int, list[dict]]:
+    watermark = await session.scalar(select(func.max(ImportJobEvent.id)).where(_scope_filter(ImportJobEvent, household_id, user_id))) or 0
     jobs = list((await session.scalars(
         select(ImportJob)
         .where(
-            _scope_filter(ImportJob, household_id, user.id),
+            _scope_filter(ImportJob, household_id, user_id),
             ImportJob.dismissed_at.is_(None),
             ImportJob.status.in_((*_ACTIVE_STATUSES, ImportJobStatus.FAILED)),
         )
@@ -249,38 +244,59 @@ async def import_job_events(
         _job_out(job, await _creator_name(session, job.user_id)).model_dump(mode="json")
         for job in jobs if job.id not in hidden
     ]
+    return watermark, snapshot
+
+
+def resume_cursor(last_event_id: str | None, watermark: int) -> int:
+    try:
+        return max(int(last_event_id or "0"), watermark)
+    except ValueError:
+        return watermark
+
+
+async def poll_import_events(
+    household_id: uuid.UUID, user_id: uuid.UUID, cursor: int,
+) -> tuple[int, list[tuple[int, str, dict]]]:
+    async with async_session_maker() as event_session:
+        rows = list((await event_session.scalars(
+            select(ImportJobEvent)
+            .where(_scope_filter(ImportJobEvent, household_id, user_id), ImportJobEvent.id > cursor)
+            .order_by(ImportJobEvent.id)
+            .limit(100)
+        )).all())
+    if not rows:
+        return cursor, []
+    async with async_session_maker() as hidden_session:
+        event_jobs = list((await hidden_session.scalars(
+            select(ImportJob).where(ImportJob.id.in_({row.job_id for row in rows}))
+        )).all())
+        event_times = {row.job_id: row.created_at for row in rows}
+        hidden = await _hidden_child_job_ids(hidden_session, event_jobs, event_times)
+    visible = [(row.id, row.type, row.payload) for row in rows if row.job_id not in hidden]
+    return rows[-1].id, visible
+
+
+@router.get("/jobs/events")
+async def import_job_events(
+    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> StreamingResponse:
+    watermark, snapshot = await import_jobs_snapshot(session, household_id, user.id)
     await session.commit()
     await session.close()
 
-    try:
-        cursor = max(int(last_event_id or "0"), watermark)
-    except ValueError:
-        cursor = watermark
+    cursor = resume_cursor(last_event_id, watermark)
 
     async def generate():
         nonlocal cursor
         yield f"id: {watermark}\nevent: import_jobs.snapshot\ndata: {json.dumps({'jobs': snapshot})}\n\n"
         while True:
-            async with async_session_maker() as event_session:
-                rows = list((await event_session.scalars(
-                    select(ImportJobEvent)
-                    .where(_scope_filter(ImportJobEvent, household_id, user.id), ImportJobEvent.id > cursor)
-                    .order_by(ImportJobEvent.id)
-                    .limit(100)
-                )).all())
-            if rows:
-                async with async_session_maker() as hidden_session:
-                    event_jobs = list((await hidden_session.scalars(
-                        select(ImportJob).where(ImportJob.id.in_({row.job_id for row in rows}))
-                    )).all())
-                    event_times = {row.job_id: row.created_at for row in rows}
-                    hidden = await _hidden_child_job_ids(hidden_session, event_jobs, event_times)
-                for row in rows:
-                    cursor = row.id
-                    if row.job_id in hidden:
-                        continue
-                    data = json.dumps(row.payload, default=str)
-                    yield f"id: {row.id}\nevent: {row.type}\ndata: {data}\n\n"
+            cursor, events = await poll_import_events(household_id, user.id, cursor)
+            if events:
+                for event_id, event_type, payload in events:
+                    yield f"id: {event_id}\nevent: {event_type}\ndata: {json.dumps(payload, default=str)}\n\n"
                 continue
             yield ": heartbeat\n\n"
             await asyncio.sleep(15)

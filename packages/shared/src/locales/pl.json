@@ -59,6 +59,17 @@
     "stepProgress": "Krok {{current}} z {{total}}"
   },
   "recipes": {
+    "editLockedTitle": "{{name}} edytuje ten przepis",
+    "editLockedMessage": "Spróbuj ponownie za chwilę.",
+    "editLockedOwnDeviceTitle": "Edytujesz to na innym urządzeniu",
+    "editLockedOwnDeviceMessage": "Najpierw zakończ lub anuluj edycję tam.",
+    "editLockCheckFailedTitle": "Nie udało się rozpocząć edycji",
+    "editLockCheckFailedMessage": "Sprawdzanie, czy ktoś inny edytuje ten przepis, trwało zbyt długo. Spróbuj ponownie.",
+    "recipeChangedTitle": "Przepis został zmieniony",
+    "recipeChangedMessage": "Ktoś inny zmienił ten przepis w trakcie edycji. Wczytaj ponownie, aby zobaczyć najnowszą wersję, lub zachowaj swoją wersję roboczą.",
+    "reload": "Wczytaj ponownie",
+    "recipeRemovedTitle": "Przepis jest niedostępny",
+    "recipeRemovedMessage": "Ten przepis został usunięty lub usunięty z Twojego gospodarstwa.",
     "searchPlaceholder": "Wyszukaj",
     "noResults": "Brak wyników",
     "sectionRecipes": "Przepisy",

@@ -413,6 +413,7 @@ async def attach_child_to_parent(session: AsyncSession, parent_id: uuid.UUID, ch
     if not matched:
         return
     parent.components = components
+    parent.edit_version += 1
     await add_related_recipes(session, parent.id, [child.id])
     await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
 
@@ -435,6 +436,7 @@ async def mark_link_external(session: AsyncSession, parent_id: uuid.UUID, url: s
     if not changed:
         return
     parent.components = components
+    parent.edit_version += 1
     await allergen_rechecks.enqueue_recipe_allergen_check(session, parent.id)
 
 

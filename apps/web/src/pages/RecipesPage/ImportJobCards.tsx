@@ -1,33 +1,31 @@
 import { useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { ChevronRight } from 'react-feather'
-import {
-  Button,
-  ModalBody,
-  ModalContainer,
-  ModalDialog,
-  ModalFooter,
-  ModalHeader,
-} from '@heroui/react'
 import { useApiClient } from '@carrot/shared/api/context'
 import type { ImportJob } from '@carrot/shared/types'
-import Modal from '../../components/AnimatedModal'
+import ImportDuplicateModal from './ImportDuplicateModal'
+import ImportJobCard from './ImportJobCard'
+import ImportManualActionModal from './ImportManualActionModal'
+import { isDuplicateImportFailure } from './helpers'
+
+interface ImportJobCardsProps {
+  jobs: ImportJob[]
+  onRetry: (jobId: string) => Promise<unknown>
+  onImportAnyway: (jobId: string) => Promise<unknown>
+  onDismiss: (jobId: string) => Promise<unknown>
+  onContinueManually: (sourceUrl: string | null) => void
+  onOpenRecipe: (recipeId: string) => void
+}
 
 const ImportJobCards = ({
   jobs,
   onRetry,
+  onImportAnyway,
   onDismiss,
   onContinueManually,
-}: {
-  jobs: ImportJob[]
-  onRetry: (jobId: string) => Promise<unknown>
-  onDismiss: (jobId: string) => Promise<unknown>
-  onContinueManually: (sourceUrl: string | null) => void
-}) => {
-  const { t } = useTranslation()
+  onOpenRecipe,
+}: ImportJobCardsProps) => {
   const api = useApiClient()
   const [actionJobId, setActionJobId] = useState<string | null>(null)
-  const [manualActionJob, setManualActionJob] = useState<ImportJob | null>(null)
+  const [attentionJob, setAttentionJob] = useState<ImportJob | null>(null)
   const actionInProgress = useRef(false)
 
   const runAction = async (jobId: string, action: () => Promise<unknown>) => {
@@ -44,150 +42,72 @@ const ImportJobCards = ({
     }
   }
 
+  const closeAttentionModal = () => setAttentionJob(null)
+
+  const handleRetry = (jobId: string) =>
+    void runAction(jobId, () => onRetry(jobId))
+  const handleDismiss = (jobId: string) =>
+    void runAction(jobId, () => onDismiss(jobId))
+  const handleCancel = (jobId: string) =>
+    void runAction(jobId, () => api.cancelImportJob(jobId))
+
+  const handleRemoveJob = () => {
+    if (attentionJob) handleDismiss(attentionJob.id)
+    closeAttentionModal()
+  }
+
+  const handleManualContinue = () => {
+    if (attentionJob) onContinueManually(attentionJob.source_url)
+    closeAttentionModal()
+  }
+
+  const handleDuplicateImportAnyway = () => {
+    if (attentionJob)
+      void runAction(attentionJob.id, () => onImportAnyway(attentionJob.id))
+    closeAttentionModal()
+  }
+
+  const handleDuplicateGoToRecipe = () => {
+    if (attentionJob?.duplicate_recipe_id)
+      onOpenRecipe(attentionJob.duplicate_recipe_id)
+    closeAttentionModal()
+  }
+
+  const hasJobs = jobs.length > 0
+  const isDuplicateOpen =
+    hasJobs && attentionJob !== null && isDuplicateImportFailure(attentionJob)
+  const isManualOpen =
+    hasJobs && attentionJob !== null && !isDuplicateImportFailure(attentionJob)
+
   return (
     <>
       <div className="mx-4 mt-4 md:mb-4 flex flex-col gap-2">
-        {jobs.map((job) => {
-          const actionPending = actionJobId === job.id
-          const requiresUserAction =
-            job.status === 'failed' &&
-            (job.failure_code === 'user_action_required' ||
-              [
-                'unsupported_source',
-                'unsupported_language',
-                'language_undetermined',
-                'no_recipe_content',
-                'ambiguous_recipe',
-                'unreadable_content',
-                'source_blocked',
-              ].includes(job.failure_code ?? ''))
-          const retryScheduled = job.status === 'pending' && job.retry_count > 0
-          const message =
-            job.status === 'running'
-              ? t('importJobs.running')
-              : job.status === 'failed'
-                ? t(`importJobs.failure.${job.failure_code ?? 'unexpected'}`)
-                : retryScheduled
-                  ? t('importJobs.takingLonger')
-                  : t('importJobs.pending')
-
-          return (
-            <div
-              key={job.id}
-              className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${requiresUserAction ? 'cursor-pointer border-warning-400 bg-warning-100' : 'border-zinc-200 bg-zinc-50'}`}
-              onClick={
-                requiresUserAction ? () => setManualActionJob(job) : undefined
-              }
-            >
-              {job.status !== 'failed' && (
-                <span className="size-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="font-medium text-sm">{message}</p>
-                <p className="truncate text-xs text-zinc-500">
-                  {job.kind === 'url' && job.source_url ? (
-                    <a
-                      href={job.source_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      {job.source_url}
-                    </a>
-                  ) : (
-                    t(`recipes.extractingFrom_${job.kind}`)
-                  )}{' '}
-                  · {job.created_by_name ?? t('importJobs.someone')}
-                </p>
-              </div>
-              {requiresUserAction ? (
-                <button
-                  type="button"
-                  className="p-2 text-warning-700"
-                  onClick={() => setManualActionJob(job)}
-                  aria-label={t('importJobs.userActionRequired.continue')}
-                >
-                  <ChevronRight size={20} />
-                </button>
-              ) : job.status === 'failed' ? (
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    isDisabled={actionPending}
-                    onPress={() =>
-                      void runAction(job.id, () => onRetry(job.id))
-                    }
-                  >
-                    {t('importJobs.retry')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    isDisabled={actionPending}
-                    onPress={() =>
-                      void runAction(job.id, () => onDismiss(job.id))
-                    }
-                  >
-                    {t('importJobs.remove')}
-                  </Button>
-                </div>
-              ) : (
-                <div>
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    isDisabled={actionPending}
-                    onPress={() =>
-                      void runAction(job.id, () => api.cancelImportJob(job.id))
-                    }
-                  >
-                    {t('importJobs.cancel')}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )
-        })}
+        {jobs.map((job) => (
+          <ImportJobCard
+            key={job.id}
+            job={job}
+            actionPending={actionJobId === job.id}
+            onOpenAttention={setAttentionJob}
+            onRetry={handleRetry}
+            onDismiss={handleDismiss}
+            onCancel={handleCancel}
+          />
+        ))}
       </div>
-      <Modal
-        isOpen={manualActionJob !== null && jobs.length > 0}
-        onOpenChange={(open) => !open && setManualActionJob(null)}
-      >
-        <ModalContainer size="sm">
-          <ModalDialog>
-            <ModalHeader>
-              {t('importJobs.userActionRequired.title')}
-            </ModalHeader>
-            <ModalBody>{t('importJobs.userActionRequired.body')}</ModalBody>
-            <ModalFooter>
-              <Button
-                variant="tertiary"
-                onPress={() => {
-                  if (manualActionJob)
-                    void runAction(manualActionJob.id, () =>
-                      onDismiss(manualActionJob.id)
-                    )
-                  setManualActionJob(null)
-                }}
-              >
-                {t('importJobs.remove')}
-              </Button>
-              <Button
-                variant="primary"
-                onPress={() => {
-                  if (manualActionJob)
-                    onContinueManually(manualActionJob.source_url)
-                  setManualActionJob(null)
-                }}
-              >
-                {t('importJobs.userActionRequired.continue')}
-              </Button>
-            </ModalFooter>
-          </ModalDialog>
-        </ModalContainer>
-      </Modal>
+      <ImportManualActionModal
+        isOpen={isManualOpen}
+        onClose={closeAttentionModal}
+        onRemove={handleRemoveJob}
+        onContinue={handleManualContinue}
+      />
+      <ImportDuplicateModal
+        isOpen={isDuplicateOpen}
+        canGoToRecipe={Boolean(attentionJob?.duplicate_recipe_id)}
+        onClose={closeAttentionModal}
+        onDontImport={handleRemoveJob}
+        onGoToRecipe={handleDuplicateGoToRecipe}
+        onImportAnyway={handleDuplicateImportAnyway}
+      />
     </>
   )
 }

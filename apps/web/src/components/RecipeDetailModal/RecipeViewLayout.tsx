@@ -47,6 +47,7 @@ interface RecipeViewLayoutProps {
   onAddAllIngredients: () => void
   onToggleFavourite: () => void
   onEdit: () => void
+  editPending: boolean
   onOpenMealPlan: () => void
   onOpenCookMode: () => void
   onClose: () => void
@@ -97,6 +98,7 @@ const RecipeViewLayout = ({
   onAddAllIngredients,
   onToggleFavourite,
   onEdit,
+  editPending,
   onOpenMealPlan,
   onOpenCookMode,
   onClose,
@@ -222,6 +224,7 @@ const RecipeViewLayout = ({
         onShare={() => setShareOpen(true)}
         onOpenMealPlan={onOpenMealPlan}
         onEdit={onEdit}
+        editPending={editPending}
         desktop={desktop}
       />
       <RecipeSpecSheet

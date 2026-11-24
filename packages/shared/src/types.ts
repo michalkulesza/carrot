@@ -281,6 +281,7 @@ export interface RecipeSaveRequest {
   notes?: string | null;
   components: SaveComponent[];
   tag_ids: string[];
+  expected_edit_version?: number;
 }
 
 export interface RecipeOut {
@@ -320,6 +321,7 @@ export interface RecipeOut {
   author_id: string | null;
   added_by: string | null;
   is_favourite: boolean;
+  edit_version: number;
 }
 
 export interface RecipeSourceEvidence {

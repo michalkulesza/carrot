@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
+import { useMealPlanStream } from './useMealPlanStream'
 import { toISODate } from '../utils/dateUtils'
 
 const millisecondsUntilLocalMidnight = (): number => {
@@ -12,6 +13,8 @@ const millisecondsUntilLocalMidnight = (): number => {
 
 export const useNextMealPlanEntry = (enabled = true) => {
   const api = useApiClient()
+  useMealPlanStream(enabled)
+
   const [todayIso, setTodayIso] = useState(() => toISODate(new Date()))
 
   useEffect(() => {

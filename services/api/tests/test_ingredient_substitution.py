@@ -80,7 +80,7 @@ def test_reimport_uses_the_same_substitution_serialization():
     spec = importlib.util.spec_from_file_location("reimport_script", Path(__file__).parents[1] / "scripts/reimport_recipes.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    recipe = Recipe(title="Original")
+    recipe = Recipe(title="Original", edit_version=1)
     module.apply_extraction(recipe, ImportResult(stage="transcript", recipe=extraction(), metadata=ImportMetadata()), True)
     assert recipe.components == with_link_kinds(serialize_components(extraction(), True), None)
 

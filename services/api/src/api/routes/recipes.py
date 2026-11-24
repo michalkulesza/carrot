@@ -4,11 +4,13 @@ import io
 import json
 import logging
 import uuid
+from typing import Literal
 from datetime import datetime, timedelta
 import secrets
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy import and_, delete, exists, insert, or_, select, text
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -41,6 +43,7 @@ from api.models import (
 from api.routes.context import get_active_household_id, get_scope_key
 from api.services.embeddings import _vector_literal, generate_embedding, queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
+from api.services.recipe_edit_locks import recipe_edit_locks
 from api.services.related_recipes import add_related_recipes
 from api.services.monitoring import report_service_failure
 from api.services.allergen_rechecks import enqueue_recipe_allergen_check, household_recheck_status
@@ -53,7 +56,7 @@ from api.services.linked_recipes import (
     without_self_links,
 )
 from api.services.text_sanitizing import sanitize_recipe
-from api.users import User, current_active_user
+from api.users import User, current_active_user, presence_nickname
 
 router = APIRouter(prefix="/recipes", tags=["recipes"])
 log = logging.getLogger(__name__)
@@ -90,6 +93,19 @@ def _not_awaiting_children():
 
 def _recipe_write_filter(household_id: uuid.UUID, recipe_id: uuid.UUID):
     return and_(Recipe.id == recipe_id, _recipe_filter(household_id))
+
+
+def _raise_if_locked_by_other(recipe_id: uuid.UUID, user: User, client_id: str | None) -> None:
+    holder = recipe_edit_locks.holder_other_than(recipe_id, user.id, client_id)
+    if holder is not None:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "recipe_locked",
+                "editor": holder.nickname,
+                "same_user": holder.user_id == user.id,
+            },
+        )
 
 
 def _public_share_token() -> str:
@@ -383,14 +399,44 @@ async def search_recipes(
         return []
 
 
+class EditLockBody(BaseModel):
+    action: Literal["start", "keepalive", "stop"]
+
+
+@router.post("/{recipe_id}/edit-lock", status_code=204)
+async def update_edit_lock(
+    recipe_id: uuid.UUID,
+    body: EditLockBody,
+    client_id: str | None = Header(default=None, alias="X-Carrot-Client-Id"),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> None:
+    result = await session.execute(
+        select(Recipe.id).where(_recipe_write_filter(household_id, recipe_id))
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Recipe not found")
+
+    if body.action == "stop":
+        recipe_edit_locks.release(recipe_id, user.id, client_id)
+        return
+
+    _raise_if_locked_by_other(recipe_id, user, client_id)
+    recipe_edit_locks.acquire(recipe_id, user.id, client_id, presence_nickname(user))
+
+
 # NOTE: /stream must be defined before /{recipe_id}
 @router.get("/stream")
 async def stream_recipes(
     request: Request,
     user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     scope = get_scope_key("recipes", user.id, household_id)
+    # Long-lived SSE: return the DB connection now, or open streams exhaust the pool.
+    await session.close()
 
     async def event_gen():
         q = await broadcaster.subscribe(scope)
@@ -534,6 +580,7 @@ async def create_public_share(
 async def update_recipe(
     recipe_id: uuid.UUID,
     body: RecipeSaveRequest,
+    client_id: str | None = Header(default=None, alias="X-Carrot-Client-Id"),
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
@@ -544,6 +591,10 @@ async def update_recipe(
     recipe = result.scalar_one_or_none()
     if recipe is None:
         raise HTTPException(status_code=404, detail="Recipe not found")
+
+    _raise_if_locked_by_other(recipe_id, user, client_id)
+    if body.expected_edit_version is not None and body.expected_edit_version != recipe.edit_version:
+        raise HTTPException(status_code=409, detail={"code": "recipe_changed"})
 
     old_thumbnail_url = recipe.thumbnail_url
     provenance = dict(recipe.nutrition_provenance or {})
@@ -568,6 +619,7 @@ async def update_recipe(
     recipe.creator_handle = body.creator_handle
     recipe.source_url = body.source_url
     recipe.notes = body.notes
+    recipe.edit_version = recipe.edit_version + 1
     components = _reconcile_component_derivatives(recipe.components or [], body.components)
     stored_components = recipe.components or []
     ingredients_changed = len(components) != len(stored_components)

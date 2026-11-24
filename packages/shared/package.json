@@ -7,6 +7,7 @@
     "./types": "./src/types.ts",
     "./api/client": "./src/api/client.ts",
     "./api/context": "./src/api/context.ts",
+    "./api/errors": "./src/api/errors.ts",
     "./hooks/useRecipes": "./src/hooks/useRecipes.ts",
     "./hooks/useTags": "./src/hooks/useTags.ts",
     "./hooks/useMealPlan": "./src/hooks/useMealPlan.ts",

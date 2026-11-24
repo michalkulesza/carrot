@@ -59,6 +59,17 @@
     "stepProgress": "Schritt {{current}} von {{total}}"
   },
   "recipes": {
+    "editLockedTitle": "{{name}} bearbeitet dieses Rezept gerade",
+    "editLockedMessage": "Bitte versuche es gleich noch einmal.",
+    "editLockedOwnDeviceTitle": "Du bearbeitest dies auf einem anderen Gerät",
+    "editLockedOwnDeviceMessage": "Beende oder verwirf die Bearbeitung dort zuerst.",
+    "editLockCheckFailedTitle": "Bearbeiten konnte nicht gestartet werden",
+    "editLockCheckFailedMessage": "Die Prüfung, ob jemand anderes gerade bearbeitet, hat zu lange gedauert. Versuche es erneut.",
+    "recipeChangedTitle": "Rezept wurde geändert",
+    "recipeChangedMessage": "Jemand anderes hat dieses Rezept während deiner Bearbeitung geändert. Lade neu, um die aktuelle Version zu sehen, oder behalte deinen Entwurf.",
+    "reload": "Neu laden",
+    "recipeRemovedTitle": "Rezept nicht mehr verfügbar",
+    "recipeRemovedMessage": "Dieses Rezept wurde gelöscht oder aus deinem Haushalt entfernt.",
     "searchPlaceholder": "Rezepte suchen…",
     "noResults": "Keine Ergebnisse",
     "sectionRecipes": "Rezepte",

@@ -24,6 +24,8 @@ import type {
   ShoppingListItemInput,
   ShoppingCategoryOrders,
 } from "../types";
+import { ApiError } from "./errors";
+import { createLiveEventHub, type LiveEvent } from "../utils/liveEventHub";
 
 export interface StreamFetchInit {
   headers: Record<string, string>;
@@ -55,6 +57,8 @@ const GENERIC_NETWORK_ERROR =
 /** iOS's own default is 60s per attempt, which — multiplied by React Query's
  * retries — leaves the app hanging for minutes on an unreachable API. */
 const REQUEST_TIMEOUT_MS = 20_000;
+/** The server heartbeats every 15 s, so silence this long means a half-open connection. */
+const STREAM_IDLE_TIMEOUT_MS = 35_000;
 /** A CSV of every recipe is parsed server-side before it responds. */
 const IMPORT_TIMEOUT_MS = 120_000;
 
@@ -62,7 +66,14 @@ interface ApiFetchInit extends RequestInit {
   timeoutMs?: number;
 }
 
+const CLIENT_ID_HEADER = "X-Carrot-Client-Id";
+
+const createClientId = (): string =>
+  `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}${Math.random().toString(36).slice(2, 12)}`;
+
 export const createApiClient = (config: ApiClientConfig) => {
+  const clientId = createClientId();
+
   const {
     baseUrl,
     getAuthHeaders,
@@ -122,6 +133,7 @@ export const createApiClient = (config: ApiClientConfig) => {
         ...requestInit,
         headers: {
           ...authHeaders,
+          [CLIENT_ID_HEADER]: clientId,
           ...(requestInit.headers as Record<string, string> | undefined),
         },
       },
@@ -141,7 +153,11 @@ export const createApiClient = (config: ApiClientConfig) => {
   ): Promise<Response> => {
     const response = await streamFetch(`${baseUrl}${path}`, {
       credentials,
-      headers: { ...getAuthHeaders(), ...headers },
+      headers: {
+        ...getAuthHeaders(),
+        [CLIENT_ID_HEADER]: clientId,
+        ...headers,
+      },
       signal,
     });
 
@@ -156,7 +172,24 @@ export const createApiClient = (config: ApiClientConfig) => {
   ): Promise<void> => {
     if (!res.ok) {
       const err = (await res.json().catch(() => ({}))) as { detail?: unknown };
-      throw new Error(typeof err.detail === "string" ? err.detail : fallback);
+      const detail = err.detail;
+      if (typeof detail === "string") throw new ApiError(detail, res.status);
+
+      const structured =
+        detail && typeof detail === "object"
+          ? (detail as {
+            code?: unknown;
+            editor?: unknown;
+            same_user?: unknown;
+          })
+          : {};
+      throw new ApiError(
+        fallback,
+        res.status,
+        typeof structured.code === "string" ? structured.code : null,
+        typeof structured.editor === "string" ? structured.editor : null,
+        structured.same_user === true,
+      );
     }
   };
 
@@ -183,6 +216,22 @@ export const createApiClient = (config: ApiClientConfig) => {
     });
     await throwOnError(res, "Failed to update recipe");
     return res.json() as Promise<RecipeOut>;
+  };
+
+  const setRecipeEditLock = async (
+    id: string,
+    action: "start" | "keepalive" | "stop",
+    options: { keepalive?: boolean } = {},
+  ): Promise<void> => {
+    // React Native's fetch drops the body when `keepalive` is present at all, so only web's pagehide sets it.
+    const keepaliveInit = options.keepalive ? { keepalive: true } : {};
+    const res = await apiFetch(`/api/recipes/${encodeURIComponent(id)}/edit-lock`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+      ...keepaliveInit,
+    });
+    await throwOnError(res, "Failed to update recipe edit lock");
   };
 
   const dismissRecipeIssue = async (
@@ -866,16 +915,32 @@ export const createApiClient = (config: ApiClientConfig) => {
    * stream was down are gone for good, so streams that emit deltas rather than
    * full snapshots must revalidate from scratch at that point.
    */
-  const subscribeStream = <TEvent extends { type: string }>(
+  const subscribeStream = <TEvent>(
     path: string,
-    onEvent: (event: TEvent) => void,
+    onEvent: (event: TEvent, id?: number) => void,
     context: string,
     onResubscribe?: () => void,
+    getHeaders?: () => Record<string, string>,
   ): (() => void) => {
     let stopped = false;
     let attempt = 0;
     let controller = new AbortController();
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    let watchdogFired = false;
+
+    const clearIdleTimer = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = null;
+    };
+
+    const resetIdleTimer = () => {
+      clearIdleTimer();
+      idleTimer = setTimeout(() => {
+        watchdogFired = true;
+        controller.abort();
+      }, STREAM_IDLE_TIMEOUT_MS);
+    };
 
     const scheduleReconnect = () => {
       if (stopped) return;
@@ -886,7 +951,9 @@ export const createApiClient = (config: ApiClientConfig) => {
     function connect(): void {
       if (stopped) return;
       controller = new AbortController();
-      apiStreamFetch(path, controller.signal)
+      watchdogFired = false;
+      resetIdleTimer();
+      apiStreamFetch(path, controller.signal, getHeaders?.())
         .then(async (res) => {
           // The session is gone; onUnauthorized has already fired and retrying
           // would just spin against a login wall.
@@ -906,14 +973,16 @@ export const createApiClient = (config: ApiClientConfig) => {
           while (!stopped) {
             const { done, value } = await reader.read();
             if (done) break;
+            resetIdleTimer();
             buffer += decoder.decode(value, { stream: true });
             const chunks = buffer.split("\n\n");
             buffer = chunks.pop() ?? "";
             for (const chunk of chunks) {
-              const line = chunk.trim();
-              if (!line.startsWith("data: ")) continue;
+              const data = chunk.match(/^data: (.+)$/m)?.[1];
+              if (!data) continue;
+              const rawId = chunk.match(/^id: (.+)$/m)?.[1];
               try {
-                onEvent(JSON.parse(line.slice(6)) as TEvent);
+                onEvent(JSON.parse(data) as TEvent, rawId ? Number(rawId) : undefined);
               } catch {
                 /* ignore malformed events */
               }
@@ -921,9 +990,13 @@ export const createApiClient = (config: ApiClientConfig) => {
           }
         })
         .catch((err: unknown) => {
-          if (!stopped) reportError?.(err, context);
+          if (stopped || watchdogFired) return;
+          reportError?.(err, context);
         })
-        .finally(scheduleReconnect);
+        .finally(() => {
+          clearIdleTimer();
+          scheduleReconnect();
+        });
     }
 
     connect();
@@ -931,48 +1004,55 @@ export const createApiClient = (config: ApiClientConfig) => {
     return () => {
       stopped = true;
       if (reconnectTimer) clearTimeout(reconnectTimer);
+      clearIdleTimer();
       controller.abort();
     };
   };
+
+  const getLiveEventsHeaders = (lastEventId: number | undefined): Record<string, string> =>
+    lastEventId ? { "Last-Event-ID": String(lastEventId) } : {};
+
+  const liveEvents = createLiveEventHub({
+    open: (handlers, getLastEventId) =>
+      subscribeStream<LiveEvent>(
+        "/api/events",
+        handlers.onEvent,
+        "subscribeLiveEvents",
+        handlers.onResubscribe,
+        () => getLiveEventsHeaders(getLastEventId()),
+      ),
+  });
 
   const subscribeShoppingList = (
     onList: (items: ShoppingListItem[]) => void,
     onPresence: (users: PresenceUser[]) => void,
   ): (() => void) =>
-    subscribeStream<{
-      type: string;
-      items?: ShoppingListItem[];
-      users?: PresenceUser[];
-    }>(
-      "/api/shopping-list/stream",
-      (event) => {
-        if (event.type === "list_snapshot" && event.items) onList(event.items);
-        else if (event.type === "presence" && event.users)
-          onPresence(event.users);
-      },
-      // No onResubscribe: the endpoint opens every connection with a full
-      // list_snapshot, so a reconnect already resyncs.
-      "subscribeShoppingList",
-    );
+    liveEvents.subscribe("shoppingList", (event) => {
+      if (event.type === "list_snapshot" && event.items)
+        onList(event.items as ShoppingListItem[]);
+      else if (event.type === "presence" && event.users)
+        onPresence(event.users as PresenceUser[]);
+    });
 
   const subscribeMealPlan = (onChange: () => void): (() => void) =>
-    subscribeStream<{ type: string }>(
-      "/api/meal-plan/stream",
+    liveEvents.subscribe(
+      "mealPlan",
       (event) => {
         if (event.type === "meal_plan_changed") onChange();
       },
-      "subscribeMealPlan",
       onChange,
     );
 
-  const subscribeRecipes = (onChange: () => void): (() => void) =>
-    subscribeStream<{ type: string }>(
-      "/api/recipes/stream",
+  const subscribeRecipes = (
+    onChange: (recipeId: string | null) => void,
+  ): (() => void) =>
+    liveEvents.subscribe(
+      "recipes",
       (event) => {
-        if (event.type === "recipe_changed") onChange();
+        if (event.type === "recipe_changed")
+          onChange((event.id as string | null | undefined) ?? null);
       },
-      "subscribeRecipes",
-      onChange,
+      () => onChange(null),
     );
 
   const postPresence = async (
@@ -1070,57 +1150,19 @@ export const createApiClient = (config: ApiClientConfig) => {
   const subscribeImportJobs = (
     onSnapshot: (snapshot: ImportJobsSnapshot) => void,
     onEvent: (event: { id: number; type: string; job: ImportJob }) => void,
-    lastEventId?: number,
-    onDisconnect?: () => void,
-  ): (() => void) => {
-    const controller = new AbortController();
-    let stopped = false;
-    void apiStreamFetch(
-      "/api/imports/jobs/events",
-      controller.signal,
-      lastEventId ? { "Last-Event-ID": String(lastEventId) } : {},
-    )
-      .then(async (res) => {
-        if (!res.ok || !res.body) return;
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-        while (!stopped) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const messages = buffer.split("\n\n");
-          buffer = messages.pop() ?? "";
-          for (const message of messages) {
-            const type = message.match(/^event: (.+)$/m)?.[1];
-            const id = Number(message.match(/^id: (.+)$/m)?.[1] ?? 0);
-            const data = message.match(/^data: (.+)$/m)?.[1];
-            if (!type || !data) continue;
-            try {
-              if (type === "import_jobs.snapshot")
-                onSnapshot(JSON.parse(data) as ImportJobsSnapshot);
-              else onEvent({ id, type, job: JSON.parse(data) as ImportJob });
-            } catch {
-              // Ignore malformed messages and retain the current authoritative cache.
-            }
-          }
-        }
-      })
-      .catch((error: unknown) => {
-        if (!stopped) reportError?.(error, "subscribeImportJobs");
-      })
-      .finally(() => {
-        if (!stopped) onDisconnect?.();
-      });
-    return () => {
-      stopped = true;
-      controller.abort();
-    };
-  };
+  ): (() => void) =>
+    liveEvents.subscribe("importJobs", (event, id) => {
+      const { channel: _channel, event: type, ...payload } = event;
+      if (!type) return;
+      if (type === "import_jobs.snapshot")
+        onSnapshot(payload as unknown as ImportJobsSnapshot);
+      else onEvent({ id: id ?? 0, type, job: payload as unknown as ImportJob });
+    });
 
   return {
     saveRecipe,
     updateRecipe,
+    setRecipeEditLock,
     dismissRecipeIssue,
     fetchRecipeSourceEvidence,
     createPublicShare,

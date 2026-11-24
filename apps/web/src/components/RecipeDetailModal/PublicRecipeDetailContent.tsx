@@ -30,6 +30,7 @@ const toRecipe = (recipe: PublicRecipeOut, token: string): RecipeOut => ({
   author_id: null,
   added_by: null,
   is_favourite: false,
+  edit_version: 1,
   tags: recipe.tags.map(
     (tag, index): Tag => ({
       ...tag,

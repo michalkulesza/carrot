@@ -264,6 +264,7 @@ interface RoutedAppShellProps {
   onPreferencesChange: (preferences: UserPreferences) => void
   importJobs: ImportJob[]
   onRetryImportJob: (id: string) => Promise<unknown>
+  onImportAnywayImportJob: (id: string) => Promise<unknown>
   onDismissImportJob: (id: string) => Promise<unknown>
   onContinueImportManually: (url: string | null) => void
   onRecipeSaved: () => void
@@ -283,6 +284,7 @@ const RoutedAppShell = ({
   onPreferencesChange,
   importJobs,
   onRetryImportJob,
+  onImportAnywayImportJob,
   onDismissImportJob,
   onContinueImportManually,
   onRecipeSaved,
@@ -352,6 +354,7 @@ const RoutedAppShell = ({
       onRecipeDeleted={onRecipeDeleted}
       importJobs={importJobs}
       onRetryImportJob={onRetryImportJob}
+      onImportAnywayImportJob={onImportAnywayImportJob}
       onDismissImportJob={onDismissImportJob}
       onContinueImportManually={onContinueImportManually}
       onAddRecipe={() => openAddRecipe()}
@@ -398,6 +401,7 @@ const RoutedAppShell = ({
                     onRecipeDeleted={onRecipeDeleted}
                     importJobs={importJobs}
                     onRetryImportJob={onRetryImportJob}
+                    onImportAnywayImportJob={onImportAnywayImportJob}
                     onDismissImportJob={onDismissImportJob}
                     onContinueImportManually={onContinueImportManually}
                     onAddRecipe={() => openAddRecipe()}
@@ -516,6 +520,7 @@ const AppShell = () => {
     jobs: importJobs,
     seed: seedImportJob,
     retry: retryImportJob,
+    importAnyway: importAnywayImportJob,
     dismiss: dismissImportJob,
   } = useImportJobs(
     hasHousehold && user
@@ -605,6 +610,7 @@ const AppShell = () => {
             onPreferencesChange={handlePreferencesChange}
             importJobs={importJobs}
             onRetryImportJob={retryImportJob.mutateAsync}
+            onImportAnywayImportJob={importAnywayImportJob.mutateAsync}
             onDismissImportJob={dismissImportJob.mutateAsync}
             onContinueImportManually={openTextImport}
             onRecipeSaved={handleRecipeSaved}

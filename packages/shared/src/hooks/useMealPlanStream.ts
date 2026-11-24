@@ -26,11 +26,12 @@ const subscribeToMealPlanChanges = (api: MealPlanStreamApi, listener: () => void
   }
 }
 
-export const useMealPlanStream = () => {
+export const useMealPlanStream = (enabled = true) => {
   const api = useApiClient()
   const qc = useQueryClient()
 
   useEffect(() => {
+    if (!enabled) return
     return subscribeToMealPlanChanges(api, () => void qc.invalidateQueries({ queryKey: ['mealPlan'] }))
-  }, [api, qc])
+  }, [api, qc, enabled])
 }

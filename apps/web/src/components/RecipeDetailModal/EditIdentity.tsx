@@ -86,7 +86,7 @@ const EditIdentity = ({
     <>
       <div
         ref={photoRef}
-        className="relative h-[190px] shrink-0 overflow-hidden rounded-[18px] bg-[#EDE7E0] lg:h-[200px] lg:rounded-[14px]"
+        className="relative h-[190px] shrink-0 overflow-hidden rounded-[18px] bg-[#EDE7E0] lg:-mx-2.5 lg:h-[200px] lg:rounded-[14px]"
       >
         {thumbnail && (
           <NetworkImage

@@ -59,6 +59,17 @@
     "stepProgress": "Passo {{current}} de {{total}}"
   },
   "recipes": {
+    "editLockedTitle": "{{name}} está editando esta receita",
+    "editLockedMessage": "Tente novamente em instantes.",
+    "editLockedOwnDeviceTitle": "Você está editando isto em outro dispositivo",
+    "editLockedOwnDeviceMessage": "Conclua ou cancele primeiro a edição lá.",
+    "editLockCheckFailedTitle": "Não foi possível começar a editar",
+    "editLockCheckFailedMessage": "Verificar se outra pessoa está a editar demorou demasiado. Tenta novamente.",
+    "recipeChangedTitle": "A receita foi alterada",
+    "recipeChangedMessage": "Outra pessoa alterou esta receita enquanto você editava. Recarregue para ver a versão mais recente ou mantenha seu rascunho.",
+    "reload": "Recarregar",
+    "recipeRemovedTitle": "Receita indisponível",
+    "recipeRemovedMessage": "Esta receita foi excluída ou removida da sua casa.",
     "searchPlaceholder": "Buscar receitas…",
     "noResults": "Nenhum resultado",
     "sectionRecipes": "Receitas",

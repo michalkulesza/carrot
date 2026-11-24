@@ -59,6 +59,17 @@
     "stepProgress": "Step {{current}} of {{total}}"
   },
   "recipes": {
+    "editLockedTitle": "{{name}} is editing this recipe",
+    "editLockedMessage": "Please try again in a moment.",
+    "editLockedOwnDeviceTitle": "You're editing this on another device",
+    "editLockedOwnDeviceMessage": "Finish or cancel editing there first.",
+    "editLockCheckFailedTitle": "Couldn't start editing",
+    "editLockCheckFailedMessage": "Checking whether someone else is editing took too long. Try again.",
+    "recipeChangedTitle": "Recipe was changed",
+    "recipeChangedMessage": "Someone else changed this recipe while you were editing. Reload to see the latest version, or keep your draft.",
+    "reload": "Reload",
+    "recipeRemovedTitle": "Recipe no longer available",
+    "recipeRemovedMessage": "This recipe was deleted or removed from your household.",
     "searchPlaceholder": "Search recipes…",
     "noResults": "No results",
     "sectionRecipes": "Recipes",

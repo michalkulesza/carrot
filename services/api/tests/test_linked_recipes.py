@@ -22,7 +22,7 @@ class FakeSession:
 def _recipe(allergen_status="analyzed", components=None, source_url=None, recipe_id=None):
     return SimpleNamespace(
         id=recipe_id or uuid4(), allergen_status=allergen_status, components=components or [],
-        source_url=source_url,
+        source_url=source_url, edit_version=1,
     )
 
 
@@ -252,6 +252,7 @@ async def test_attach_links_parent_and_rechecks_it(spawn_mocks) -> None:
     await linked_recipes.attach_child_to_parent(session, parent.id, child, "https://a.test/x")
 
     assert parent.components[0]["linked_recipe_ids"] == [str(child.id)]
+    assert parent.edit_version == 2
     spawn_mocks.related.assert_awaited_once_with(session, parent.id, [child.id])
     spawn_mocks.enqueue.assert_awaited_once_with(session, parent.id)
 
@@ -684,6 +685,7 @@ async def test_mark_link_external_updates_parent_and_rechecks(spawn_mocks) -> No
     await linked_recipes.mark_link_external(session, parent.id, "https://a.test/x")
 
     assert parent.components[0]["ingredient_link_kinds"] == ["external", "recipe"]
+    assert parent.edit_version == 2
     spawn_mocks.enqueue.assert_awaited_once_with(session, parent.id)
 
 

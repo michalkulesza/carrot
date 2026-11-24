@@ -21,7 +21,7 @@ from api.models import (
     ShoppingCategory,
 )
 from api.routes.context import get_active_household_id, get_scope_key
-from api.users import User, current_active_user
+from api.users import presence_nickname, User, current_active_user
 
 router = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
 
@@ -30,11 +30,11 @@ def _scope_filter(user_id: uuid.UUID, household_id: uuid.UUID):
     return ShoppingListItem.household_id == household_id
 
 
-def _scope_key(user_id: uuid.UUID, household_id: uuid.UUID) -> str:
+def shopping_list_scope(user_id: uuid.UUID, household_id: uuid.UUID) -> str:
     return get_scope_key("shopping-list", user_id, household_id)
 
 
-async def _snapshot(
+async def shopping_list_snapshot(
     session: AsyncSession, user_id: uuid.UUID, household_id: uuid.UUID
 ) -> list[dict]:
     result = await session.execute(
@@ -83,8 +83,8 @@ async def stream_shopping_list(
     session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
-    scope = _scope_key(user.id, household_id)
-    initial_items = await _snapshot(session, user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
+    initial_items = await shopping_list_snapshot(session, user.id, household_id)
     initial_presence = broadcaster.get_presence(scope)
     # This is a long-lived SSE connection — release the DB connection back to
     # the pool now instead of holding it for the stream's entire lifetime
@@ -182,8 +182,8 @@ async def add_items(
     for item in new_items:
         await session.refresh(item)
 
-    scope = _scope_key(user.id, household_id)
-    items_snap = await _snapshot(session, user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
+    items_snap = await shopping_list_snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
 
     return [ShoppingListItemOut.model_validate(i) for i in returned_items]
@@ -196,8 +196,8 @@ async def update_presence(
     user: User = Depends(current_active_user),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> None:
-    scope = _scope_key(user.id, household_id)
-    nickname = user.nickname or user.email.split("@")[0]
+    scope = shopping_list_scope(user.id, household_id)
+    nickname = presence_nickname(user)
 
     if body.action == "stop":
         broadcaster.clear_presence(scope, user.id)
@@ -244,8 +244,8 @@ async def reorder_items(
 
     await session.commit()
 
-    scope = _scope_key(user.id, household_id)
-    items_snap = await _snapshot(session, user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
+    items_snap = await shopping_list_snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
 
     return {}
@@ -268,7 +268,7 @@ async def update_item(
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    scope = _scope_key(user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
 
     # 409 backstop: reject text edits while another user holds the edit lock
     if body.text is not None and broadcaster.is_locked_by_other(scope, item_id, user.id):
@@ -293,7 +293,7 @@ async def update_item(
     await session.commit()
     await session.refresh(item)
 
-    items_snap = await _snapshot(session, user.id, household_id)
+    items_snap = await shopping_list_snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
 
     return ShoppingListItemOut.model_validate(item)
@@ -315,8 +315,8 @@ async def clear_completed(
         await session.delete(item)
     await session.commit()
 
-    scope = _scope_key(user.id, household_id)
-    items_snap = await _snapshot(session, user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
+    items_snap = await shopping_list_snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})
 
 
@@ -336,7 +336,7 @@ async def delete_item(
     if item is None:
         raise HTTPException(status_code=404, detail="Item not found")
 
-    scope = _scope_key(user.id, household_id)
+    scope = shopping_list_scope(user.id, household_id)
 
     # 409 backstop: reject delete while another user is actively editing
     if broadcaster.is_locked_by_other(scope, item_id, user.id):
@@ -345,5 +345,5 @@ async def delete_item(
     await session.delete(item)
     await session.commit()
 
-    items_snap = await _snapshot(session, user.id, household_id)
+    items_snap = await shopping_list_snapshot(session, user.id, household_id)
     await broadcaster.publish(scope, {"type": "list_snapshot", "items": items_snap})

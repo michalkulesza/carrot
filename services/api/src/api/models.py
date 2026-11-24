@@ -220,6 +220,7 @@ class Recipe(Base):
     nutrition_status: Mapped[str] = mapped_column(String(20), default="unknown", nullable=False)
     total_time_provenance: Mapped[dict[str, Any]] = mapped_column(JSON, default=lambda: {"status": "unknown"}, nullable=False)
     allergen_status: Mapped[str] = mapped_column(String(20), default="unknown", nullable=False)
+    edit_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
     overview: Mapped[str | None] = mapped_column(String, nullable=True)
     title_evidence: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
@@ -499,6 +500,7 @@ class RecipeSaveRequest(BaseModel):
     notes: str | None = None
     components: list[SaveComponent]
     tag_ids: list[uuid.UUID] = []
+    expected_edit_version: int | None = None
 
 
 class RecipeOut(BaseModel):
@@ -522,6 +524,7 @@ class RecipeOut(BaseModel):
     nutrition_status: str = "unknown"
     total_time_provenance: dict[str, Any] = {"status": "unknown"}
     allergen_status: str = "unknown"
+    edit_version: int = 1
     overview: str | None = None
     title_evidence: list[dict[str, Any]] = []
     components: list[Any]

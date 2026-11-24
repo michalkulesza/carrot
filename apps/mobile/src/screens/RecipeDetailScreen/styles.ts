@@ -26,6 +26,9 @@ export const styles = StyleSheet.create({
   errorText: { color: colors.red, fontSize: 16, textAlign: "center" },
   headerBtns: { flexDirection: "row", alignItems: "center" },
   headerBtn: { paddingHorizontal: 4, paddingVertical: 4, marginRight: 4 },
+  headerBtnPressed: { opacity: 0.7 },
+  headerBtnContentHidden: { opacity: 0 },
+  headerBtnSpinner: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, alignItems: "center", justifyContent: "center" },
   titleRow: {
     flexDirection: "row",
     alignItems: "flex-start",

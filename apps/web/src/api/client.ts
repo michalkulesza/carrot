@@ -38,6 +38,7 @@ export const webClient = createApiClient({
 export const {
   saveRecipe,
   updateRecipe,
+  setRecipeEditLock,
   dismissRecipeIssue,
   fetchRecipeSourceEvidence,
   createPublicShare,

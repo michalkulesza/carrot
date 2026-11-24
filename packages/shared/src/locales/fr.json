@@ -59,6 +59,17 @@
     "stepProgress": "Étape {{current}} sur {{total}}"
   },
   "recipes": {
+    "editLockedTitle": "{{name}} modifie cette recette",
+    "editLockedMessage": "Réessaie dans un instant.",
+    "editLockedOwnDeviceTitle": "Vous modifiez ceci sur un autre appareil",
+    "editLockedOwnDeviceMessage": "Terminez ou annulez d'abord la modification là-bas.",
+    "editLockCheckFailedTitle": "Impossible de commencer la modification",
+    "editLockCheckFailedMessage": "La vérification qu'aucune autre personne ne modifie la recette a pris trop de temps. Réessaie.",
+    "recipeChangedTitle": "La recette a été modifiée",
+    "recipeChangedMessage": "Quelqu'un d'autre a modifié cette recette pendant que tu la modifiais. Recharge pour voir la dernière version, ou garde ton brouillon.",
+    "reload": "Recharger",
+    "recipeRemovedTitle": "Recette indisponible",
+    "recipeRemovedMessage": "Cette recette a été supprimée ou retirée de ton foyer.",
     "searchPlaceholder": "Chercher des recettes…",
     "noResults": "Aucun résultat",
     "sectionRecipes": "Recettes",

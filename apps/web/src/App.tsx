@@ -50,7 +50,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ApiClientProvider client={webClient}>
       <BrowserRouter>
-        <ToastProvider placement="bottom" />
+        <ToastProvider placement="bottom" className="z-[200]" />
         <CookingModeProvider>
           <AuthProvider>
             <Routes>

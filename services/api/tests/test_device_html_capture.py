@@ -258,7 +258,7 @@ def _replace_session(recipe, in_household=True):
 async def test_replace_updates_recipe_in_place_and_keeps_links(monkeypatch) -> None:
     child_id = uuid4()
     recipe = SimpleNamespace(
-        id=uuid4(), title="Old", source_title="Old", source_url=URL, thumbnail_url=None, creator_handle=None, notes=None,
+        id=uuid4(), title="Old", source_title="Old", source_url=URL, thumbnail_url=None, creator_handle=None, notes=None, edit_version=1,
         components=[{"ingredient_links": ["https://recipes.example/sauce/"], "linked_recipe_ids": [str(child_id)]}],
     )
     new_components = [{"ingredient_links": ["https://recipes.example/sauce"], "ingredients": ["sauce"]}]
@@ -283,7 +283,7 @@ async def test_replace_updates_authors_personal_recipe_outside_household(monkeyp
     job = _job(input={"url": URL})
     recipe = SimpleNamespace(
         id=uuid4(), author_id=job.user_id, title="Old", source_title="Old", source_url=URL, thumbnail_url=None,
-        creator_handle=None, notes=None, components=[],
+        creator_handle=None, notes=None, components=[], edit_version=1,
     )
     job.input["replaces_recipe_id"] = str(recipe.id)
     monkeypatch.setattr(recipe_reextraction, "serialize_components", lambda *_: [])

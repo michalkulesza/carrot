@@ -1,5 +1,6 @@
 import type {
   HouseholdOut,
+  ImportJob,
   RecipeOut,
   Tag,
   UserPreferences,
@@ -69,4 +70,35 @@ export const searchIngredientMatches = (
   }
 
   return matches
+}
+
+const USER_ACTION_FAILURE_CODES = new Set([
+  'user_action_required',
+  'unsupported_source',
+  'unsupported_language',
+  'language_undetermined',
+  'no_recipe_content',
+  'ambiguous_recipe',
+  'unreadable_content',
+  'source_blocked',
+])
+
+export const isDuplicateImportFailure = (job: ImportJob): boolean =>
+  job.status === 'failed' && job.failure_code === 'duplicate_recipe'
+
+export const importJobRequiresUserAction = (job: ImportJob): boolean =>
+  job.status === 'failed' &&
+  USER_ACTION_FAILURE_CODES.has(job.failure_code ?? '')
+
+export const importJobNeedsAttention = (job: ImportJob): boolean =>
+  importJobRequiresUserAction(job) || isDuplicateImportFailure(job)
+
+export const getImportJobMessageKey = (job: ImportJob): string => {
+  if (job.status === 'running') return 'importJobs.running'
+  if (job.status === 'failed')
+    return `importJobs.failure.${job.failure_code ?? 'unexpected'}`
+  if (job.status === 'pending' && job.retry_count > 0)
+    return 'importJobs.takingLonger'
+
+  return 'importJobs.pending'
 }

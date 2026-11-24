@@ -7,10 +7,12 @@ import {
 import { ModalBody, ModalContainer, ModalDialog, toast } from '@heroui/react'
 import type { RecipeOut, SaveComponent, Tag } from '@carrot/shared/types'
 import {
+  setRecipeEditLock,
   toggleFavourite,
   updateRecipe,
   uploadThumbnail,
 } from '../../api/client'
+import { getConflictInfo } from '@carrot/shared/api/errors'
 import { useAuth } from '../../context/AuthContext'
 import { useHousehold } from '../../context/HouseholdContext'
 import AssignToMealPlanModal from '../AssignToMealPlanModal'
@@ -24,6 +26,12 @@ import {
 } from './helpers'
 import { useRecipeDeletion } from './useRecipeDeletion'
 import { useRecipeDraft } from './useRecipeDraft'
+import {
+  acquireRecipeEditLock,
+  MIN_EDIT_PENDING_MS,
+} from '@carrot/shared/utils/recipeEditLock'
+import { withMinimumDuration } from '@carrot/shared/utils/withMinimumDuration'
+import { useRecipeEditLock, type RecipeLockedConflict } from './useRecipeEditLock'
 import { useRecipeNotes } from './useRecipeNotes'
 import { useRecipeTags } from './useRecipeTags'
 import { useScreenWakeLock } from './useScreenWakeLock'
@@ -72,6 +80,8 @@ const RecipeDetailModal = ({
   const { user } = useAuth()
   const { households, activeHouseholdId } = useHousehold()
   const [mode, setMode] = useState<Mode>('view')
+  const [editPending, setEditPending] = useState(false)
+  const editPendingRef = useRef(false)
   // Shown straight away on tap; cleared once the recipe itself catches up.
   const [localFavourite, setLocalFavourite] = useState<boolean | null>(null)
   const favouritePendingRef = useRef(false)
@@ -101,6 +111,8 @@ const RecipeDetailModal = ({
   const { setThumbnailUrl } = draftActions
   const tags = useRecipeTags(recipe, allTags)
   const notes = useRecipeNotes(recipe, tags.localTags, onUpdated)
+  const { setLocalTags } = tags
+  const { resetNotes } = notes
   const shopping = useShoppingListActions(recipe, unitSystem, servingScale)
   const deletion = useRecipeDeletion({
     recipe,
@@ -117,6 +129,48 @@ const RecipeDetailModal = ({
     },
   })
 
+  const recipeRef = useRef(recipe)
+  recipeRef.current = recipe
+
+  const discardDraft = useCallback(() => {
+    const latest = recipeRef.current
+    if (!latest) return
+    setDraft(toEditState(latest))
+    setLocalTags(latest.tags ?? [])
+    resetNotes(latest.notes ?? '')
+    setMode('view')
+    setError(null)
+  }, [setDraft, setLocalTags, resetNotes])
+
+  const handleLocked = useCallback(
+    ({ editor, sameUser }: RecipeLockedConflict) => {
+      const title = sameUser
+        ? t('recipes.editLockedOwnDeviceTitle')
+        : t('recipes.editLockedTitle', { name: editor })
+      const description = sameUser
+        ? t('recipes.editLockedOwnDeviceMessage')
+        : t('recipes.editLockedMessage')
+      toast.danger(title, { description, timeout: 5000 })
+      discardDraft()
+    },
+    [t, discardDraft]
+  )
+
+  const handleRecipeChanged = useCallback(() => {
+    toast.danger(t('recipes.recipeChangedTitle'), {
+      description: t('recipes.recipeChangedMessage'),
+      timeout: 0,
+      actionProps: { children: t('recipes.reload'), onPress: discardDraft },
+    })
+  }, [t, discardDraft])
+
+  const { expectedVersionRef } = useRecipeEditLock({
+    recipeId: recipe?.id,
+    editVersion: recipe?.edit_version,
+    active: Boolean(recipe) && mode !== 'view',
+    onLocked: handleLocked,
+  })
+
   const dirty = useMemo(
     () =>
       Boolean(recipe && draft) &&
@@ -124,8 +178,6 @@ const RecipeDetailModal = ({
     [draft, recipe]
   )
 
-  const { setLocalTags } = tags
-  const { resetNotes } = notes
   const { resetSessionAdded } = shopping
 
   useEffect(() => {
@@ -196,21 +248,25 @@ const RecipeDetailModal = ({
     setBusy(true)
     setError(null)
     try {
-      const updated = await updateRecipe(
-        r.id,
-        buildRecipeUpdateFromDraft(
+      const updated = await updateRecipe(r.id, {
+        ...buildRecipeUpdateFromDraft(
           draft,
           r,
           notes.localNotes,
           tags.localTags.map((tag) => tag.id)
-        )
-      )
+        ),
+        expected_edit_version: expectedVersionRef.current,
+      })
       toast.success(t('recipes.recipeUpdated'), { timeout: 3000 })
       onUpdated?.(updated)
       if (updated.servings !== null) setServings(updated.servings)
       setMode('view')
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('recipes.failedToSave'))
+      const conflict = getConflictInfo(err)
+      if (conflict?.code === 'recipe_locked') handleLocked(conflict)
+      else if (conflict?.code === 'recipe_changed') handleRecipeChanged()
+      else
+        setError(err instanceof Error ? err.message : t('recipes.failedToSave'))
     } finally {
       setBusy(false)
     }
@@ -309,7 +365,33 @@ const RecipeDetailModal = ({
 
   const openCookMode = onOpenCookMode ?? (() => {})
   const openMealPlan = () => setMealPlanOpen(true)
-  const enterEditMode = () => setMode('editing')
+  const enterEditMode = async () => {
+    if (editPendingRef.current) return
+    editPendingRef.current = true
+    setEditPending(true)
+
+    const lockApi = { setRecipeEditLock }
+    const result = await withMinimumDuration(
+      acquireRecipeEditLock(lockApi, r.id),
+      MIN_EDIT_PENDING_MS
+    )
+
+    editPendingRef.current = false
+    setEditPending(false)
+
+    if (result.status === 'acquired') {
+      setMode('editing')
+      return
+    }
+    if (result.status === 'locked') {
+      handleLocked(result.conflict)
+      return
+    }
+    toast.danger(t('recipes.editLockCheckFailedTitle'), {
+      description: t('recipes.editLockCheckFailedMessage'),
+      timeout: 5000,
+    })
+  }
 
   const viewLayout = mode === 'view'
   const viewContent = (
@@ -335,6 +417,7 @@ const RecipeDetailModal = ({
       onAddIngredient={shopping.handleAddIngredient}
       onToggleFavourite={handleToggleFavourite}
       onEdit={enterEditMode}
+      editPending={editPending}
       onOpenMealPlan={openMealPlan}
       onOpenCookMode={openCookMode}
       onClose={handleClose}

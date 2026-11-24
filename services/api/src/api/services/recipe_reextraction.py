@@ -24,6 +24,7 @@ def apply_extraction(recipe: Recipe, result: ImportResult, auto_substitute: bool
     recipe.allergen_status = extraction.allergen_status
     recipe.overview = extraction.overview
     recipe.title_evidence = extraction.title_evidence
+    recipe.edit_version = recipe.edit_version + 1
     previous_external = external_urls(recipe.components or [])
 
     if result.metadata.thumbnail_url:

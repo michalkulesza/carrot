@@ -5,6 +5,7 @@ import * as ImagePicker from 'expo-image-picker'
 import type { TFunction } from 'i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ApiClient } from '@carrot/shared/api/client'
+import { getConflictInfo, getErrorStatus } from '@carrot/shared/api/errors'
 import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
 import { serializeIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import { uploadThumbnailImage } from '../../api/uploadThumbnail'
@@ -14,6 +15,7 @@ import {
   type EditComponent,
   type EditDraft,
 } from './helpers'
+import { useRecipeEditLock } from './useRecipeEditLock'
 
 export const useEditDraft = ({
   recipe,
@@ -22,6 +24,7 @@ export const useEditDraft = ({
   api,
   t,
   onSaveSuccess,
+  onRecipeRemoved,
 }: {
   recipe: RecipeOut | undefined
   recipeId: string
@@ -29,31 +32,49 @@ export const useEditDraft = ({
   api: ApiClient
   t: TFunction
   onSaveSuccess: (updated: RecipeOut) => void
+  onRecipeRemoved: () => void
 }) => {
   const qc = useQueryClient()
 
   const [editing, setEditing] = useState(false)
+  const [editPending, setEditPending] = useState(false)
   const [draft, setDraft] = useState<EditDraft | null>(null)
   const [saving, setSaving] = useState(false)
   const [qtyUnitPickerTarget, setQtyUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
   const [uploadingThumb, setUploadingThumb] = useState(false)
   const [thumbErrored, setThumbErrored] = useState(false)
   const savedDraftRef = useRef<EditDraft | null>(null)
+  const enterPendingRef = useRef(false)
+  const lock = useRecipeEditLock({ api, recipeId, editing, t })
 
-  const handleEdit = useCallback(() => {
-    if (!recipe) return
+  const handleEdit = useCallback(async () => {
+    if (!recipe || editing || enterPendingRef.current) return
+    enterPendingRef.current = true
+    setEditPending(true)
+
+    const acquired = await lock.acquire(recipe.edit_version)
+
+    enterPendingRef.current = false
+    setEditPending(false)
+    if (!acquired) return
+
     const initial = buildDraft(recipe)
     setDraft(initial)
     savedDraftRef.current = initial
     setThumbErrored(false)
     setEditing(true)
-  }, [recipe])
+  }, [recipe, editing, lock])
+
+  const exitEditing = useCallback(() => {
+    setEditing(false)
+    lock.release()
+  }, [lock])
 
   const autoEditAppliedRef = useRef(false)
   useEffect(() => {
     if (autoEditParam === '1' && recipe && !autoEditAppliedRef.current) {
       autoEditAppliedRef.current = true
-      handleEdit()
+      void handleEdit()
     }
   }, [autoEditParam, recipe, handleEdit])
 
@@ -64,14 +85,14 @@ export const useEditDraft = ({
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditDirty()) {
-      setEditing(false)
+      exitEditing()
       return
     }
     Alert.alert(t('addRecipe.discardChangesTitle'), t('addRecipe.discardChangesMessage'), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('addRecipe.discard'), style: 'destructive', onPress: () => setEditing(false) },
+      { text: t('addRecipe.discard'), style: 'destructive', onPress: exitEditing },
     ])
-  }, [isEditDirty, t])
+  }, [isEditDirty, exitEditing, t])
 
   const updateComp = useCallback((ci: number, patch: Partial<EditComponent>) => {
     setDraft((prev) => prev && { ...prev, components: prev.components.map((c, i) => (i === ci ? { ...c, ...patch } : c)) })
@@ -217,24 +238,58 @@ export const useEditDraft = ({
     }
   }, [recipeId, t])
 
+  const handleReloadAfterConflict = useCallback(() => {
+    void qc.invalidateQueries({ queryKey: ['recipes'] })
+    exitEditing()
+  }, [qc, exitEditing])
+
+  const handleSaveError = useCallback((error: unknown) => {
+    const conflict = getConflictInfo(error)
+
+    if (conflict?.code === 'recipe_locked') {
+      lock.showLockedAlert(conflict)
+      return
+    }
+
+    if (conflict?.code === 'recipe_changed') {
+      Alert.alert(t('recipes.recipeChangedTitle'), t('recipes.recipeChangedMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('recipes.reload'), style: 'destructive', onPress: handleReloadAfterConflict },
+      ])
+      return
+    }
+
+    if (getErrorStatus(error) === 404) {
+      onRecipeRemoved()
+      return
+    }
+
+    lock.reportUnexpectedError(error, 'updateRecipe')
+    Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
+  }, [lock, t, handleReloadAfterConflict, onRecipeRemoved])
+
   const handleSaveEdit = useCallback(async () => {
-    if (!draft || !recipe) return
+    if (!draft || !recipe || saving) return
     setSaving(true)
     try {
-      const payload = buildEditRecipeSaveRequest(recipe, draft)
+      const payload = {
+        ...buildEditRecipeSaveRequest(recipe, draft),
+        expected_edit_version: lock.expectedVersionRef.current ?? undefined,
+      }
       const updated = await api.updateRecipe(recipeId, payload)
+      lock.expectedVersionRef.current = updated.edit_version
       qc.setQueryData<RecipeOut[]>(['recipes'], (prev) =>
         prev ? prev.map((r) => (r.id === updated.id ? updated : r)) : prev,
       )
       void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
       onSaveSuccess(updated)
-      setEditing(false)
-    } catch {
-      Alert.alert(t('common.somethingWentWrong'), t('addRecipe.saveError'))
+      exitEditing()
+    } catch (error) {
+      handleSaveError(error)
     } finally {
       setSaving(false)
     }
-  }, [draft, recipe, api, recipeId, qc, t, onSaveSuccess])
+  }, [draft, recipe, saving, api, recipeId, qc, lock, onSaveSuccess, exitEditing, handleSaveError])
 
   return {
     editing,
@@ -249,6 +304,7 @@ export const useEditDraft = ({
     currentQty,
     currentUnit,
     handleEdit,
+    editPending,
     handleCancelEdit,
     handleQtyUnitChange,
     handleNutritionChange,

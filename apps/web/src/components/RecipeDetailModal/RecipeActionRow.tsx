@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { EditIcon, PlanIcon, ShareIcon, StarIcon } from './PopupIcons'
+import RecipeActionButton from './RecipeActionButton'
 
 interface RecipeActionRowProps {
   isFavourite: boolean
@@ -7,6 +8,7 @@ interface RecipeActionRowProps {
   onShare: () => void
   onOpenMealPlan: () => void
   onEdit: () => void
+  editPending: boolean
   desktop: boolean
 }
 
@@ -16,75 +18,52 @@ const RecipeActionRow = ({
   onShare,
   onOpenMealPlan,
   onEdit,
+  editPending,
   desktop,
 }: RecipeActionRowProps) => {
   const { t } = useTranslation()
-  const item = desktop
-    ? 'flex items-center gap-1.5'
-    : 'flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-xl text-xs active:bg-[#F4F3F7]'
-  const favColor = isFavourite ? 'text-[#E8894A]' : 'text-[#4A4858]'
-  const actions = [
-    {
-      key: 'save',
-      label: t('recipes.favouriteShort'),
-      ariaLabel: isFavourite
-        ? t('recipes.removeFromFavourites')
-        : t('recipes.addToFavourites'),
-      icon: (
-        <StarIcon
-          size={desktop ? 17 : 17}
-          fill={isFavourite ? '#E8894A' : 'none'}
-        />
-      ),
-      onClick: onToggleFavourite,
-      color: favColor,
-    },
-    {
-      key: 'share',
-      label: t('publicShare.share'),
-      ariaLabel: t('publicShare.open'),
-      icon: <ShareIcon />,
-      onClick: onShare,
-      color: 'text-[#4A4858]',
-    },
-    {
-      key: 'plan',
-      label: t('recipes.planShort'),
-      ariaLabel: t('mealPlan.addToMealPlan'),
-      icon: <PlanIcon />,
-      onClick: onOpenMealPlan,
-      color: 'text-[#4A4858]',
-    },
-    {
-      key: 'edit',
-      label: t('common.edit'),
-      ariaLabel: t('common.edit'),
-      icon: <EditIcon />,
-      onClick: onEdit,
-      color: 'text-[#4A4858]',
-    },
-  ]
+
+  const favouriteAriaLabel = isFavourite
+    ? t('recipes.removeFromFavourites')
+    : t('recipes.addToFavourites')
+  const favouriteColor = isFavourite ? 'text-[#E8894A]' : 'text-[#4A4858]'
+  const favouriteFill = isFavourite ? '#E8894A' : 'none'
+  const rowClassName = desktop
+    ? 'flex flex-wrap gap-4 text-sm font-bold'
+    : 'flex gap-1 border-y border-[#ECEAF0] py-1 text-xs font-bold'
 
   return (
-    <div
-      className={
-        desktop
-          ? 'flex flex-wrap gap-4 text-sm font-bold'
-          : 'flex gap-1 border-y border-[#ECEAF0] py-1 text-xs font-bold'
-      }
-    >
-      {actions.map((action) => (
-        <button
-          key={action.key}
-          type="button"
-          onClick={action.onClick}
-          aria-label={action.ariaLabel}
-          className={`${item} ${action.color}`}
-        >
-          {action.icon}
-          {action.label}
-        </button>
-      ))}
+    <div className={rowClassName}>
+      <RecipeActionButton
+        icon={<StarIcon size={17} fill={favouriteFill} />}
+        label={t('recipes.favouriteShort')}
+        ariaLabel={favouriteAriaLabel}
+        onClick={onToggleFavourite}
+        colorClassName={favouriteColor}
+        desktop={desktop}
+      />
+      <RecipeActionButton
+        icon={<ShareIcon />}
+        label={t('publicShare.share')}
+        ariaLabel={t('publicShare.open')}
+        onClick={onShare}
+        desktop={desktop}
+      />
+      <RecipeActionButton
+        icon={<PlanIcon />}
+        label={t('recipes.planShort')}
+        ariaLabel={t('mealPlan.addToMealPlan')}
+        onClick={onOpenMealPlan}
+        desktop={desktop}
+      />
+      <RecipeActionButton
+        icon={<EditIcon />}
+        label={t('common.edit')}
+        ariaLabel={t('common.edit')}
+        onClick={onEdit}
+        pending={editPending}
+        desktop={desktop}
+      />
     </div>
   )
 }

@@ -115,9 +115,12 @@ async def get_next_meal_plan_entry(
 async def stream_meal_plan(
     request: Request,
     user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> StreamingResponse:
     scope = get_scope_key("meal-plan", user.id, household_id)
+    # Long-lived SSE: return the DB connection now, or open streams exhaust the pool.
+    await session.close()
 
     async def event_gen():
         q = await broadcaster.subscribe(scope)

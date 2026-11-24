@@ -15,6 +15,7 @@ from api.models import Recipe, Tag
 from api.services.monitoring import init_sentry
 from api.services.orphan_cleanup import delete_orphan_recipes
 from api.routes.auth import router as auth_verify_router
+from api.routes.events import router as events_router
 from api.routes.export import router as export_router
 from api.routes.google_auth import router as google_auth_router
 from api.routes.households import router as households_router
@@ -168,6 +169,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("ALTER TABLE import_jobs ALTER COLUMN model DROP DEFAULT"))
         await conn.execute(text("ALTER TABLE meal_plan_entries ALTER COLUMN recipe_id DROP NOT NULL"))
         await conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN IF NOT EXISTS text VARCHAR(200)"))
+        await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS edit_version INTEGER NOT NULL DEFAULT 1"))
         await conn.execute(text(
             "CREATE TABLE IF NOT EXISTS recipe_related_recipes ("
             "recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE, "
@@ -339,6 +341,7 @@ app.add_middleware(
 app.include_router(auth_verify_router, prefix="/api/auth", tags=["auth"])
 app.include_router(signup_router, prefix="/api/auth", tags=["auth"])
 app.include_router(google_auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(events_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
 app.include_router(households_router, prefix="/api")
 app.include_router(images_router, prefix="/api")
