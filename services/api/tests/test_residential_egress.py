@@ -255,7 +255,7 @@ async def test_thumbnail_challenge_page_without_residential_proxy_skips_upload(m
     monkeypatch.setattr(import_worker.settings, "residential_proxy_url", "")
     recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
     await import_worker._archive_thumbnail(recipe)
-    assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url == "https://cdn.example/a.jpg"
+    assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url is None
     upload.assert_not_called()
     assert "not an image" in caplog.text
 
@@ -274,7 +274,7 @@ async def test_thumbnail_no_retry_when_not_blocked(monkeypatch) -> None:
     proxies, upload = _archive_env(monkeypatch, [_img(404), _img()])
     recipe = SimpleNamespace(id=uuid4(), thumbnail_url="https://cdn.example/a.jpg")
     await import_worker._archive_thumbnail(recipe)
-    assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url == "https://cdn.example/a.jpg"
+    assert proxies == ["socks5://warp:1080"] and recipe.thumbnail_url is None
     upload.assert_not_called()
 
 
