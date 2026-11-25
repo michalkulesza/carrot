@@ -1,20 +1,20 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { Pressable, View } from 'react-native'
+import { LayoutChangeEvent, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
-import { TooltipPopover } from '../../components/NutritionBoxGrid'
-import { MacroStrip, type MacroStripItem } from '../../components/ui'
+import { MACRO_STRIP_PADDING_X, MacroStrip, type MacroStripItem } from '../../components/ui'
+import AiEstimatePopover from './AiEstimatePopover'
 import { formatCookingTime } from './helpers'
 import { styles } from './styles'
 
-const ESTIMATED_MARKER = '≈'
 const MISSING_VALUE = '–'
 
 const withUnit = (value: number | null, unit: string) => (value === null ? null : `${value}${unit}`)
 
 const NutritionStrip = ({ recipe }: { recipe: RecipeOut }) => {
   const { t } = useTranslation()
-  const [tooltipOpen, setTooltipOpen] = useState(false)
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const [stripWidth, setStripWidth] = useState(0)
 
   const {
     total_time_minutes: totalTime,
@@ -42,46 +42,25 @@ const NutritionStrip = ({ recipe }: { recipe: RecipeOut }) => {
     [t, totalTime, timeProvenance, kcal, protein, fat, carbs, provenance],
   )
 
-  const hasEstimate = items.some((item) => item.estimated && item.value)
+  const handleEstimatePress = useCallback((index: number) => {
+    setOpenIndex((current) => (current === index ? null : index))
+  }, [])
+  const handleDismiss = useCallback(() => setOpenIndex(null), [])
+  const handleLayout = useCallback((event: LayoutChangeEvent) => setStripWidth(event.nativeEvent.layout.width), [])
 
-  const accessibilityLabel = useMemo(
-    () =>
-      items
-        .map((item) => {
-          const estimate = item.estimated && item.value ? ` (${t('recipes.valueAi')})` : ''
-
-          return `${item.label}: ${item.value ?? MISSING_VALUE}${estimate}`
-        })
-        .join(', '),
-    [items, t],
-  )
-
-  const handleToggle = useCallback(() => setTooltipOpen((open) => !open), [])
-  const handleDismiss = useCallback(() => setTooltipOpen(false), [])
-
-  const strip = <MacroStrip items={items} estimatedMarker={ESTIMATED_MARKER} missingValue={MISSING_VALUE} />
-
-  if (!hasEstimate) {
-    return (
-      <View accessible accessibilityLabel={accessibilityLabel}>
-        {strip}
-      </View>
-    )
-  }
+  const cellWidth = (stripWidth - MACRO_STRIP_PADDING_X * 2) / items.length
+  const caretCenterX = openIndex === null ? 0 : MACRO_STRIP_PADDING_X + cellWidth * (openIndex + 0.5)
 
   return (
-    <View style={tooltipOpen ? styles.raised : undefined}>
-      <Pressable
-        onPress={handleToggle}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityHint={t('recipes.nutritionEstimateDisclaimer')}
-      >
-        {strip}
-      </Pressable>
-      {tooltipOpen ? (
-        <TooltipPopover text={t('recipes.nutritionEstimateDisclaimer')} alignRight={false} onDismiss={handleDismiss} />
-      ) : null}
+    <View style={openIndex !== null ? styles.raised : undefined}>
+      <MacroStrip
+        items={items}
+        missingValue={MISSING_VALUE}
+        estimateAccessibilityLabel={t('recipes.aiEstimateShowDetails')}
+        onEstimatePress={handleEstimatePress}
+        onLayout={handleLayout}
+      />
+      {openIndex !== null ? <AiEstimatePopover caretCenterX={caretCenterX} onDismiss={handleDismiss} /> : null}
     </View>
   )
 }

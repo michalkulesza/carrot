@@ -1,14 +1,16 @@
 import { memo, useCallback, useEffect, useMemo } from 'react'
-import { LayoutChangeEvent, Pressable, Text, View } from 'react-native'
+import { LayoutChangeEvent, PixelRatio, Pressable, Text, View } from 'react-native'
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
-import { Checkbox } from '../../components/ui'
+import { CHECKBOX_SIZE, Checkbox } from '../../components/ui'
 import { scaleTextStyle, type CookIngredient } from './helpers'
 import { styles } from './styles'
 
 const CHECK_MS = 180
 const CHECKED_OPACITY = 0.45
 const QUANTITY_WIDTH = 78
+// Glyphs sit high in their line box, so pure line-height centring looks too high next to the checkbox.
+const OPTICAL_TEXT_NUDGE = 1.5
 
 interface GroupHeaderProps {
   title: string
@@ -18,15 +20,17 @@ interface GroupHeaderProps {
 }
 
 export const GroupHeader = memo(({ title, done, count, first }: GroupHeaderProps) => {
-  const wrapperStyle = useMemo(() => [styles.cardTop, first && styles.cardTopFirst], [first])
+  const wrapperStyle = useMemo(() => [styles.stickyHeader, first && styles.stickyHeaderFirst], [first])
 
   return (
     <View style={wrapperStyle}>
-      <View style={styles.groupHeader}>
-        <Text style={styles.groupTitle} numberOfLines={1}>
-          {title}
-        </Text>
-        <Text style={styles.groupCount}>{`${done}/${count}`}</Text>
+      <View style={styles.cardTop}>
+        <View style={styles.groupHeader}>
+          <Text style={styles.groupTitle} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.groupCount}>{`${done}/${count}`}</Text>
+        </View>
       </View>
     </View>
   )
@@ -59,10 +63,11 @@ interface IngredientRowProps {
   ingredient: CookIngredient
   checked: boolean
   fontScale: number
+  last: boolean
   onToggle: (key: string) => void
 }
 
-export const IngredientRow = memo(({ ingredient, checked, fontScale, onToggle }: IngredientRowProps) => {
+export const IngredientRow = memo(({ ingredient, checked, fontScale, last, onToggle }: IngredientRowProps) => {
   const reduceMotion = useReducedMotion()
   const dim = useSharedValue(checked ? 1 : 0)
 
@@ -72,8 +77,18 @@ export const IngredientRow = memo(({ ingredient, checked, fontScale, onToggle }:
 
   const handleToggle = useCallback(() => onToggle(ingredient.key), [onToggle, ingredient.key])
 
+  const firstLineOffset = useMemo(() => {
+    const { lineHeight } = scaleTextStyle(styles.ingredientName, fontScale)
+
+    return PixelRatio.roundToNearestPixel((CHECKBOX_SIZE - lineHeight) / 2 + OPTICAL_TEXT_NUDGE)
+  }, [fontScale])
+
   const textsStyle = useAnimatedStyle(() => ({ opacity: 1 - dim.value * (1 - CHECKED_OPACITY) }))
-  const textsStyles = useMemo(() => [styles.ingredientTexts, textsStyle], [textsStyle])
+  const textsStyles = useMemo(
+    () => [styles.ingredientTexts, { paddingTop: Math.max(0, firstLineOffset) }, textsStyle],
+    [firstLineOffset, textsStyle],
+  )
+  const checkboxStyle = useMemo(() => ({ marginTop: Math.max(0, -firstLineOffset) }), [firstLineOffset])
   const quantityStyle = useMemo(
     () => [
       styles.ingredientQuantity,
@@ -87,12 +102,15 @@ export const IngredientRow = memo(({ ingredient, checked, fontScale, onToggle }:
     () => [styles.ingredientName, scaleTextStyle(styles.ingredientName, fontScale), checked && styles.struck],
     [checked, fontScale],
   )
+  const rowStyle = useMemo(() => [styles.ingredientRow, last && styles.ingredientRowLast], [last])
   const accessibilityLabel = `${ingredient.quantity} ${ingredient.name}`.trim()
 
   return (
     <View style={styles.cardMiddle}>
-      <Pressable style={styles.ingredientRow} onPress={handleToggle} accessible={false}>
-        <Checkbox checked={checked} onToggle={handleToggle} accessibilityLabel={accessibilityLabel} />
+      <Pressable style={rowStyle} onPress={handleToggle} accessible={false}>
+        <View style={checkboxStyle}>
+          <Checkbox checked={checked} onToggle={handleToggle} accessibilityLabel={accessibilityLabel} />
+        </View>
         <Animated.View style={textsStyles}>
           <Text style={quantityStyle}>{ingredient.quantity}</Text>
           <Text style={nameStyle}>{ingredient.name}</Text>

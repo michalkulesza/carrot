@@ -10,6 +10,7 @@ import FadeSection from './FadeSection'
 import HeroImage from './HeroImage'
 import IngredientsSection from './IngredientsSection'
 import NotesSection from './NotesSection'
+import AllergenSummaryBox from './AllergenSummaryBox'
 import NutritionStrip from './NutritionStrip'
 import ReadingPrefsCard from './ReadingPrefsCard'
 import RecipeIssueBanner from './RecipeIssueBanner'
@@ -18,7 +19,6 @@ import ServesCookRow from './ServesCookRow'
 import StepsSection from './StepsSection'
 import TagsSection from './TagsSection'
 import TitleBlock from './TitleBlock'
-import UncertainAllergensNote from './UncertainAllergensNote'
 import { styles } from './styles'
 
 interface ReadViewProps {
@@ -101,7 +101,11 @@ const ReadView = ({
           <TitleBlock recipe={recipe} onToggleFavourite={handleToggleFavourite} onDeleteRecipe={onDeleteRecipe} />
           <TagsSection recipe={recipe} />
           <RecipeIssueBanner issueCodes={recipe.issue_codes ?? []} sourceUrl={recipe.source_url} onDismiss={onDismissIssue} />
-          {recipe.allergen_status === 'uncertain' ? <UncertainAllergensNote /> : null}
+          <AllergenSummaryBox
+            components={recipe.components}
+            activeAllergens={activeAllergens}
+            uncertain={recipe.allergen_status === 'uncertain'}
+          />
           <NutritionStrip recipe={recipe} />
           <ServesCookRow
             servings={visibleServings}

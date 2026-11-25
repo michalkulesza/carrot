@@ -87,7 +87,14 @@ const CookModeContent = ({ recipe, initialComponentIndex, initialStepIndex, jump
   })
   const { fontScale, cycle: cycleFontScale } = useCookFontScale()
   const { checked, toggle: toggleIngredient } = useCheckedIngredients(recipe.id)
-  const { tab, progress, selectTab, gesture } = useTabPager(pageWidth)
+  const { tab, progress, selectTab, gesture, isSwiping } = useTabPager(pageWidth)
+
+  const handleIngredientToggle = useCallback(
+    (key: string) => {
+      if (!isSwiping()) toggleIngredient(key)
+    },
+    [isSwiping, toggleIngredient],
+  )
 
   useEffect(() => {
     if (!isAppActive) return
@@ -142,7 +149,7 @@ const CookModeContent = ({ recipe, initialComponentIndex, initialStepIndex, jump
       stepNumber={index + 1}
       active={tab === 'ingredients'}
       fallbackGroupTitle={t('cookMode.ingredients')}
-      onToggle={toggleIngredient}
+      onToggle={handleIngredientToggle}
     />
   )
 

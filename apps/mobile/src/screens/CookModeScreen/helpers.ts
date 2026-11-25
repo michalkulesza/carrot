@@ -1,5 +1,4 @@
 import type { SaveComponent } from '@carrot/shared/types'
-import { displayIngredientWithLocalizedUnit } from '@carrot/shared/utils/ingredientUtils'
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 import { parseDurationMatches, type DurationMatch } from '@carrot/shared/utils/timerUtils'
 import { resolveStepAnchors } from '@carrot/shared/utils/stepAnchors'
@@ -79,7 +78,7 @@ export const buildCookIngredientGroups = (
       key: `group-${componentIndex}`,
       name: component.name || null,
       ingredients: getVariantIngredients(component, unitSystem).map((ingredient, ingredientIndex) => {
-        const scaled = displayIngredientWithLocalizedUnit(scaleIngredientQuantity(ingredient, servingScale), translateUnit)
+        const scaled = scaleIngredientQuantity(ingredient, servingScale)
 
         return { key: getIngredientKey(componentIndex, ingredientIndex), ...splitIngredient(scaled, translateUnit) }
       }),

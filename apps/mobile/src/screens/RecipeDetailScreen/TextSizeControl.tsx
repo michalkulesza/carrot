@@ -1,9 +1,6 @@
-import { memo, useCallback } from 'react'
-import { Pressable, View } from 'react-native'
-import { SymbolView } from 'expo-symbols'
+import { memo, useCallback, useMemo } from 'react'
+import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { palette } from '../../theme'
-import { FONT_SIZES } from './helpers'
 import { styles } from './styles'
 
 interface TextSizeControlProps {
@@ -11,22 +8,37 @@ interface TextSizeControlProps {
   onChange: (index: number) => void
 }
 
-const GLYPH_SIZE = 14
-const LARGE_GLYPH_SIZE = 20
+const OPTIONS = [
+  { labelKey: 'recipes.textSizeSmall', glyphSize: 13 },
+  { labelKey: 'recipes.textSizeDefault', glyphSize: 16 },
+  { labelKey: 'recipes.textSizeLarge', glyphSize: 20 },
+] as const
 
-const TextSizeDot = memo(({ index, active, label, onSelect }: { index: number; active: boolean; label: string; onSelect: (index: number) => void }) => {
+interface TextSizeOptionProps {
+  index: number
+  active: boolean
+  label: string
+  glyphSize: number
+  onSelect: (index: number) => void
+}
+
+const TextSizeOption = memo(({ index, active, label, glyphSize, onSelect }: TextSizeOptionProps) => {
   const handlePress = useCallback(() => onSelect(index), [index, onSelect])
+  const optionStyle = useMemo(() => [styles.textSizeOption, active && styles.textSizeOptionActive], [active])
+  const glyphStyle = useMemo(() => [styles.textSizeGlyph, { fontSize: glyphSize, lineHeight: glyphSize + 4 }], [glyphSize])
+  const accessibilityState = useMemo(() => ({ selected: active }), [active])
 
   return (
     <Pressable
       onPress={handlePress}
-      hitSlop={10}
-      style={styles.textSizeDotWrapper}
+      style={optionStyle}
       accessibilityRole="radio"
       accessibilityLabel={label}
-      accessibilityState={{ selected: active }}
+      accessibilityState={accessibilityState}
     >
-      <View style={[styles.textSizeDot, active && styles.textSizeDotActive]} />
+      <Text style={glyphStyle} allowFontScaling={false}>
+        A
+      </Text>
     </Pressable>
   )
 })
@@ -35,21 +47,17 @@ const TextSizeControl = ({ fontSizeIndex, onChange }: TextSizeControlProps) => {
   const { t } = useTranslation()
 
   return (
-    <View style={styles.textSizeControl}>
-      <SymbolView name="textformat.size.smaller" size={GLYPH_SIZE} tintColor={palette.textSecondary} />
-      <View style={styles.textSizeTrack}>
-        <View style={styles.textSizeTrackLine} />
-        {FONT_SIZES.map((_, index) => (
-          <TextSizeDot
-            key={index}
-            index={index}
-            active={fontSizeIndex === index}
-            label={`${t('settings.textSize')} ${index + 1}`}
-            onSelect={onChange}
-          />
-        ))}
-      </View>
-      <SymbolView name="textformat.size.larger" size={LARGE_GLYPH_SIZE} tintColor={palette.textSecondary} />
+    <View style={styles.textSizeGroup} accessibilityRole="radiogroup" accessibilityLabel={t('settings.textSize')}>
+      {OPTIONS.map(({ labelKey, glyphSize }, index) => (
+        <TextSizeOption
+          key={labelKey}
+          index={index}
+          active={fontSizeIndex === index}
+          label={t(labelKey)}
+          glyphSize={glyphSize}
+          onSelect={onChange}
+        />
+      ))}
     </View>
   )
 }

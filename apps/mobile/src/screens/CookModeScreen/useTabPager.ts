@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Gesture } from 'react-native-gesture-handler'
 import { clamp, runOnJS, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 
@@ -8,6 +8,8 @@ const SNAP_MS = 200
 const ACTIVATE_OFFSET_X = 12
 const FAIL_OFFSET_Y = 14
 const VELOCITY_PROJECTION = 0.15
+// Pressable's onPress fires on the same touch-up that ends a swipe, so ignore taps just after one.
+const SWIPE_TAP_GRACE_MS = 250
 
 const useTabPager = (pageWidth: number) => {
   const reduceMotion = useReducedMotion()
@@ -15,6 +17,24 @@ const useTabPager = (pageWidth: number) => {
   const progress = useSharedValue(0)
   const dragStart = useSharedValue(0)
   const snapMs = reduceMotion ? 0 : SNAP_MS
+  const swipingRef = useRef(false)
+  const swipeEndedAtRef = useRef(0)
+
+  const markSwipeStart = useCallback(() => {
+    swipingRef.current = true
+  }, [])
+
+  const markSwipeEnd = useCallback(() => {
+    if (!swipingRef.current) return
+
+    swipingRef.current = false
+    swipeEndedAtRef.current = Date.now()
+  }, [])
+
+  const isSwiping = useCallback(
+    () => swipingRef.current || Date.now() - swipeEndedAtRef.current < SWIPE_TAP_GRACE_MS,
+    [],
+  )
 
   const settle = useCallback((target: number) => {
     setTab(target === 1 ? 'ingredients' : 'steps')
@@ -38,6 +58,9 @@ const useTabPager = (pageWidth: number) => {
         .onBegin(() => {
           dragStart.value = progress.value
         })
+        .onStart(() => {
+          runOnJS(markSwipeStart)()
+        })
         .onUpdate((event) => {
           if (pageWidth === 0) return
 
@@ -51,11 +74,14 @@ const useTabPager = (pageWidth: number) => {
 
           runOnJS(settle)(target)
           progress.value = withTiming(target, { duration: snapMs })
+        })
+        .onFinalize(() => {
+          runOnJS(markSwipeEnd)()
         }),
-    [dragStart, pageWidth, progress, settle, snapMs],
+    [dragStart, markSwipeEnd, markSwipeStart, pageWidth, progress, settle, snapMs],
   )
 
-  return { tab, progress, selectTab, gesture }
+  return { tab, progress, selectTab, gesture, isSwiping }
 }
 
 export default useTabPager

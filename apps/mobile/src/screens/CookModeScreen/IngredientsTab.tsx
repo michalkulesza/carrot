@@ -1,12 +1,10 @@
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
-import { LayoutChangeEvent, ScrollView, Text, View } from 'react-native'
+import { LayoutChangeEvent, PixelRatio, ScrollView, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { ProgressBar } from '../../components/ui'
 import { countGathered, type CookIngredientGroup } from './helpers'
 import { AnchorMarker, GroupFooter, GroupHeader, IngredientRow } from './IngredientParts'
 import { styles } from './styles'
-
-const ANCHOR_SCROLL_OFFSET = 90
 
 interface IngredientsTabProps {
   groups: CookIngredientGroup[]
@@ -33,13 +31,18 @@ const IngredientsTab = ({
   const scrollRef = useRef<ScrollView>(null)
   const anchorLayoutRef = useRef<{ key: string | undefined; y: number } | null>(null)
   const hasScrolledRef = useRef(false)
+  const viewportHeightRef = useRef(0)
 
   const total = useMemo(() => groups.reduce((sum, group) => sum + group.ingredients.length, 0), [groups])
   const gathered = countGathered(groups, checked)
   const progress = total === 0 ? 0 : gathered / total
 
   const scrollToAnchor = useCallback((y: number) => {
-    scrollRef.current?.scrollTo({ y: Math.max(0, y - ANCHOR_SCROLL_OFFSET), animated: hasScrolledRef.current })
+    if (viewportHeightRef.current === 0) return
+
+    const centeredY = PixelRatio.roundToNearestPixel(y - viewportHeightRef.current / 2)
+
+    scrollRef.current?.scrollTo({ y: Math.max(0, centeredY), animated: hasScrolledRef.current })
     hasScrolledRef.current = true
   }, [])
 
@@ -55,6 +58,17 @@ const IngredientsTab = ({
 
       anchorLayoutRef.current = { key: anchorKey, y }
       if (active && isNewAnchor) scrollToAnchor(y)
+    },
+    [active, anchorKey, scrollToAnchor],
+  )
+
+  const handleScrollLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const isFirstLayout = viewportHeightRef.current === 0
+      const layout = anchorLayoutRef.current
+
+      viewportHeightRef.current = event.nativeEvent.layout.height
+      if (isFirstLayout && active && layout && layout.key === anchorKey) scrollToAnchor(layout.y)
     },
     [active, anchorKey, scrollToAnchor],
   )
@@ -77,7 +91,7 @@ const IngredientsTab = ({
         />,
       )
 
-      group.ingredients.forEach((ingredient) => {
+      group.ingredients.forEach((ingredient, ingredientIndex) => {
         if (ingredient.key === anchorKey) {
           nodes.push(<AnchorMarker key={`${ingredient.key}-anchor`} stepNumber={stepNumber} onLayout={handleAnchorLayout} />)
         }
@@ -88,6 +102,7 @@ const IngredientsTab = ({
             ingredient={ingredient}
             checked={checked.has(ingredient.key)}
             fontScale={fontScale}
+            last={ingredientIndex === group.ingredients.length - 1}
             onToggle={onToggle}
           />,
         )
@@ -114,6 +129,7 @@ const IngredientsTab = ({
         contentContainerStyle={styles.ingredientsContent}
         stickyHeaderIndices={stickyIndices}
         showsVerticalScrollIndicator={false}
+        onLayout={handleScrollLayout}
       >
         {rows}
       </ScrollView>

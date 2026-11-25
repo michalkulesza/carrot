@@ -17,9 +17,17 @@ import {
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 
 export const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
-export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index'
+// v2: the picker went from 5 sizes to 3, so old saved indices no longer map.
+export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index-v2'
 
-export const FONT_SIZES = [13, 16, 17, 20, 22] as const
+export const FONT_SIZES = [15, 17, 20] as const
+export const DEFAULT_FONT_SIZE_INDEX = 1
+
+export const parseFontSizeIndex = (value: string | null) => {
+  const index = Number(value)
+
+  return Number.isInteger(index) && index >= 0 && index < FONT_SIZES.length ? index : DEFAULT_FONT_SIZE_INDEX
+}
 
 export const capitalizeFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -33,6 +41,15 @@ export const matchesActiveAllergen = (
     const active = activeAllergen.toLowerCase()
     return flagged === active || flagged.includes(active) || active.includes(flagged)
   })
+
+export const collectMatchedAllergens = (components: SaveComponent[], activeAllergens: string[]) => {
+  const flagged = components.flatMap((component) =>
+    (component.ingredient_flags ?? []).flatMap((flag) => [flag?.allergen ?? null, ...(flag?.linked_allergens ?? [])]),
+  )
+  const matched = flagged.filter((allergen): allergen is string => matchesActiveAllergen(allergen, activeAllergens))
+
+  return [...new Map(matched.map((allergen) => [allergen.toLowerCase(), allergen])).values()]
+}
 
 export interface EditComponent {
   name: string
@@ -248,6 +265,15 @@ export const buildIngredientGroups = (
     })
     .filter((group) => group.entries.length > 0)
 
+const ROUND_ABOVE = 50
+
+const roundLargeQuantities = (quantity: string) =>
+  quantity.replace(/\d+[.,]\d+/g, (number) => {
+    const value = Number(number.replace(',', '.'))
+
+    return value > ROUND_ABOVE ? String(Math.round(value)) : number
+  })
+
 export const splitIngredient = (
   ingredient: string,
   translateUnit: (unit: string, qty: string) => string,
@@ -257,11 +283,14 @@ export const splitIngredient = (
   const rangeParsed = range ? parseIngredient(`1 ${range[2]}`) : null
 
   if (range && rangeParsed?.unit) {
-    return { quantity: `${range[1]} ${translateUnit(rangeParsed.unit, range[1])}`, name: rangeParsed.name }
+    const rangeQuantity = roundLargeQuantities(range[1])
+
+    return { quantity: `${rangeQuantity} ${translateUnit(rangeParsed.unit, rangeQuantity)}`, name: rangeParsed.name }
   }
 
   const parsed = parseIngredient(ingredient)
-  const unit = parsed.unit ? translateUnit(parsed.unit, parsed.qty) : ''
+  const qty = roundLargeQuantities(parsed.qty)
+  const unit = parsed.unit ? translateUnit(parsed.unit, qty) : ''
 
-  return { quantity: [parsed.qty, unit].filter(Boolean).join(' '), name: parsed.name }
+  return { quantity: [qty, unit].filter(Boolean).join(' '), name: parsed.name }
 }

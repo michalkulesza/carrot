@@ -4,7 +4,6 @@ import { palette, radius, screenGutter, space, typography } from '../../theme'
 const CARD_PADDING = 16
 const TIMER_HEIGHT = 60
 const NAV_SIZE = 60
-const ROW_BORDER = 0.5
 
 export const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.background },
@@ -44,17 +43,17 @@ export const styles = StyleSheet.create({
   toGoText: { ...typography.meta, color: palette.textTertiary },
   ingredientsScroll: { flex: 1 },
   ingredientsContent: { paddingHorizontal: screenGutter, paddingBottom: space.md },
+  stickyHeader: { backgroundColor: palette.background, paddingTop: CARD_PADDING },
+  stickyHeaderFirst: { paddingTop: 0 },
   cardTop: {
     backgroundColor: palette.card,
     borderTopLeftRadius: radius.card,
     borderTopRightRadius: radius.card,
     paddingHorizontal: CARD_PADDING,
-    marginTop: CARD_PADDING,
   },
-  cardTopFirst: { marginTop: 0 },
   cardMiddle: { backgroundColor: palette.card, paddingHorizontal: CARD_PADDING },
   cardBottom: {
-    height: 6,
+    height: radius.card,
     backgroundColor: palette.card,
     borderBottomLeftRadius: radius.card,
     borderBottomRightRadius: radius.card,
@@ -86,9 +85,10 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 14,
     paddingVertical: space.md,
-    borderBottomWidth: ROW_BORDER,
+    borderBottomWidth: 1,
     borderBottomColor: palette.dividerCard,
   },
+  ingredientRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
   ingredientTexts: { flex: 1, flexDirection: 'row', gap: space.md },
   ingredientQuantity: { ...typography.bodyLarge, ...typography.tabularNums, fontWeight: '600', color: palette.ink },
   ingredientName: { ...typography.bodyLarge, flex: 1, color: palette.ink },

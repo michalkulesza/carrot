@@ -16,7 +16,7 @@ interface CheckboxProps {
   accessibilityLabel: string
 }
 
-const SIZE = 26
+export const CHECKBOX_SIZE = 26
 const TICK_SIZE = 13
 const TOGGLE_MS = 180
 const RING_WIDTH = 1.5
@@ -58,9 +58,9 @@ const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
 
 const styles = StyleSheet.create({
   circle: {
-    width: SIZE,
-    height: SIZE,
-    borderRadius: SIZE / 2,
+    width: CHECKBOX_SIZE,
+    height: CHECKBOX_SIZE,
+    borderRadius: CHECKBOX_SIZE / 2,
     borderWidth: RING_WIDTH,
     borderColor: palette.ring,
     alignItems: 'center',
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   fill: {
     ...StyleSheet.absoluteFill,
     margin: -RING_WIDTH,
-    borderRadius: SIZE / 2,
+    borderRadius: CHECKBOX_SIZE / 2,
     backgroundColor: palette.action,
     alignItems: 'center',
     justifyContent: 'center',

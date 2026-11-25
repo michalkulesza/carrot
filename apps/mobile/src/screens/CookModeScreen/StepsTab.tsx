@@ -73,7 +73,6 @@ const StepsTab = ({ recipe, steps, index, fontScale }: StepsTabProps) => {
   }))
 
   const durations = useMemo(() => (step ? getUniqueDurations(step.text) : []), [step])
-  const titleStyle = useMemo(() => [styles.stepTitle, scaleTextStyle(styles.stepTitle, fontScale)], [fontScale])
   const bodyStyle = useMemo(() => [styles.stepBody, scaleTextStyle(styles.stepBody, fontScale)], [fontScale])
   const containerStyle = useMemo(() => [styles.stepScroll, contentStyle], [contentStyle])
 
@@ -85,7 +84,7 @@ const StepsTab = ({ recipe, steps, index, fontScale }: StepsTabProps) => {
       <Animated.View style={containerStyle}>
         <ScrollView ref={scrollRef} contentContainerStyle={styles.stepContent} showsVerticalScrollIndicator={false}>
           {step.componentName ? <Text style={styles.kicker}>{step.componentName}</Text> : null}
-          <Text style={titleStyle}>{t('cookMode.stepTitle', { number: shownIndex + 1 })}</Text>
+          <Text style={styles.stepTitle}>{t('cookMode.stepTitle', { number: shownIndex + 1 })}</Text>
           <Text style={bodyStyle}>{step.text}</Text>
           {durations.length > 0 ? (
             <View style={styles.timers}>

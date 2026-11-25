@@ -36,7 +36,10 @@ const IngredientGroupCard = ({
   const [tooltipOpen, setTooltipOpen] = useState(false)
   const [expanded, setExpanded] = useState(defaultExpanded)
 
-  const cardStyle = useMemo(() => [styles.groupCard, tooltipOpen && styles.raised], [tooltipOpen])
+  const cardStyle = useMemo(
+    () => [styles.groupCard, !expanded && styles.groupCardCollapsed, tooltipOpen && styles.raised],
+    [expanded, tooltipOpen],
+  )
   const lastIndex = group.entries.length - 1
 
   const countLabel = t('recipes.ingredientsCount', { count: group.entries.length })
