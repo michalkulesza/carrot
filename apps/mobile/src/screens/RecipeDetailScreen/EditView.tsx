@@ -1,52 +1,28 @@
-import { useCallback } from 'react'
-import { ActionSheetIOS, ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
-import NetworkImage from '../../components/NetworkImage'
-import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
+import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import type { EdgeInsets } from 'react-native-safe-area-context'
-import { SHOPPING_CATEGORIES, type RecipeOut } from '@carrot/shared/types'
-import { colors } from '../../theme/colors'
-import { IngredientEditor } from '../../components/RecipeFieldEditors'
-import { QuantityUnitPickerModal } from '../../components/QuantityUnitPickerModal'
-import NutritionBoxGrid from '../../components/NutritionBoxGrid'
-import { proxyThumbnailUrl } from '../../api/thumbnailUrl'
-import { styles } from './styles'
-import type { EditComponent, EditDraft } from './helpers'
-import type { useEditDraft } from './useEditDraft'
+import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
+import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
+import DeleteRecipeButton from './DeleteRecipeButton'
+import EditHero from './EditHero'
+import EditIngredientsSection from './EditIngredientsSection'
+import EditStatsGrid from './EditStatsGrid'
+import EditStepsSection from './EditStepsSection'
+import EditTitleBlock from './EditTitleBlock'
+import { isIngredientEmpty, type EditDraft } from './helpers'
+import IngredientEditSheet from './IngredientEditSheet'
 import NotesSection from './NotesSection'
+import RelatedRecipesSection from './RelatedRecipesSection'
+import ServesCookRow, { MAX_SERVINGS, MIN_SERVINGS } from './ServesCookRow'
+import StepEditSheet from './StepEditSheet'
 import TagsSection from './TagsSection'
+import { styles } from './styles'
+import type { useEditDraft } from './useEditDraft'
+import { useItemSheetTarget } from './useItemSheetTarget'
 
 type EditDraftState = ReturnType<typeof useEditDraft>
 
-const EditView = ({
-  recipe,
-  draft,
-  saving,
-  insets,
-  fontSizeIndex,
-  handlePickThumbnail,
-  handleCancelEdit,
-  handleSaveEdit,
-  handleQtyUnitChange,
-  handleNutritionChange,
-  updateComp,
-  setIngredient,
-  setIngredientCategory,
-  addIngredient,
-  removeIngredient,
-  setStep,
-  addStep,
-  removeStep,
-  setDraft,
-  setThumbErrored,
-  setQtyUnitPickerTarget,
-  uploadingThumb,
-  thumbErrored,
-  qtyUnitPickerTarget,
-  currentQty,
-  currentUnit,
-  onDeleteRecipe,
-}: {
+type EditViewProps = {
   recipe: RecipeOut
   draft: EditDraft
   saving: boolean
@@ -56,10 +32,8 @@ const EditView = ({
 } & Pick<
   EditDraftState,
   | 'handlePickThumbnail'
-  | 'handleCancelEdit'
-  | 'handleSaveEdit'
-  | 'handleQtyUnitChange'
   | 'handleNutritionChange'
+  | 'handleServingsChange'
   | 'updateComp'
   | 'setIngredient'
   | 'addIngredient'
@@ -70,290 +44,202 @@ const EditView = ({
   | 'removeStep'
   | 'setDraft'
   | 'setThumbErrored'
-  | 'setQtyUnitPickerTarget'
   | 'uploadingThumb'
   | 'thumbErrored'
-  | 'qtyUnitPickerTarget'
-  | 'currentQty'
-  | 'currentUnit'
->) => {
-  const { t } = useTranslation()
-  const getDeleteRecipeButtonStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [
-      styles.deleteRecipeBtn,
-      saving && styles.btnDisabled,
-      pressed && { opacity: 0.7 },
-    ],
-    [saving],
-  )
+>
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}
-        contentInsetAdjustmentBehavior="never"
-        keyboardShouldPersistTaps="never"
-        onTouchStart={Keyboard.dismiss}
-      >
-        {draft.thumbnail_url && !thumbErrored ? (
-          <View>
-            <NetworkImage
-              uri={proxyThumbnailUrl(draft.thumbnail_url)!}
-              style={styles.heroImage}
-              accessibilityLabel={draft.title}
-              recyclingKey={draft.thumbnail_url}
-              onError={() => setThumbErrored(true)}
-            />
-            <Pressable
-              style={({ pressed }) => [styles.heroEditBtn, pressed && { opacity: 0.7 }]}
-              onPress={handlePickThumbnail}
-              disabled={uploadingThumb}
-              accessibilityLabel={t('common.changePhoto')}
-            >
-              {uploadingThumb ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Feather name="camera" size={14} color="#ffffff" />
-              )}
-              <Text style={styles.heroEditText}>
-                {uploadingThumb ? t('common.uploading') : t('common.changePhoto')}
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable
-            style={({ pressed }) => [styles.heroImage, styles.heroPlaceholder, pressed && { opacity: 0.7 }]}
-            onPress={handlePickThumbnail}
-            disabled={uploadingThumb}
-            accessibilityLabel={t('common.addPhoto')}
-          >
-            {uploadingThumb ? (
-              <ActivityIndicator size="small" />
-            ) : (
-              <>
-                <Feather name="camera" size={28} color={colors.secondaryLabel} />
-                <Text style={styles.heroPlaceholderText}>{t('common.addPhoto')}</Text>
-              </>
-            )}
-          </Pressable>
-        )}
+const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : 'height'
 
-        <View style={styles.card}>
-          <TextInput
-            style={[styles.title, styles.titleInput]}
-            value={draft.title}
-            onChangeText={(v) => setDraft((prev) => prev && { ...prev, title: v })}
-            multiline
-            accessibilityLabel={t('recipes.colTitle')}
-          />
-
-          <TagsSection recipe={recipe} />
-
-          <NutritionBoxGrid
-            editing
-            items={[
-              { label: t('recipes.totalTimeMinutes'), value: draft.totalTimeMinutes, accessibilityLabel: t('recipes.totalTime') },
-              { label: t('recipes.serves'), value: draft.servings, accessibilityLabel: t('recipes.serves') },
-              { label: t('recipes.colKcal'), value: draft.kcal, accessibilityLabel: t('recipes.kcalPerServing') },
-              { label: t('recipes.protein'), value: draft.protein, accessibilityLabel: t('recipes.proteinPerServing'), unit: 'g' },
-              { label: t('recipes.fat'), value: draft.fat, accessibilityLabel: t('recipes.fatPerServing'), unit: 'g' },
-              { label: t('recipes.carbs'), value: draft.carbs, accessibilityLabel: t('recipes.carbsPerServing'), unit: 'g' },
-            ]}
-            onChangeValue={handleNutritionChange}
-          />
-
-          <QuantityUnitPickerModal
-            visible={qtyUnitPickerTarget != null}
-            qty={currentQty}
-            unit={currentUnit}
-            onChange={handleQtyUnitChange}
-            onClose={() => setQtyUnitPickerTarget(null)}
-          />
-
-          <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
-
-          {draft.components.map((comp, ci) => (
-            <EditComponentBlock
-              key={ci}
-              comp={comp}
-              ci={ci}
-              multiComponent={draft.components.length > 1}
-              updateComp={updateComp}
-              setIngredient={setIngredient}
-              addIngredient={addIngredient}
-              setIngredientCategory={setIngredientCategory}
-              removeIngredient={removeIngredient}
-              setStep={setStep}
-              addStep={addStep}
-              removeStep={removeStep}
-              setQtyUnitPickerTarget={setQtyUnitPickerTarget}
-            />
-          ))}
-
-          <Pressable
-            style={getDeleteRecipeButtonStyle}
-            onPress={onDeleteRecipe}
-            disabled={saving}
-            accessibilityLabel={t('recipes.deleteRecipe')}
-            accessibilityRole="button"
-          >
-            <Feather name="trash-2" size={18} color={colors.red} />
-            <Text style={styles.deleteRecipeBtnText}>
-              {t('recipes.deleteRecipe')}
-            </Text>
-          </Pressable>
-        </View>
-      </ScrollView>
-
-      <View style={[styles.actionBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Pressable
-          style={({ pressed }) => [styles.secondaryBtn, styles.flex, pressed && { opacity: 0.7 }]}
-          onPress={handleCancelEdit}
-          disabled={saving}
-          accessibilityLabel={t('common.cancel')}
-        >
-          <Text style={styles.secondaryBtnText}>{t('common.cancel')}</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.primaryBtn, styles.flex, saving && styles.btnDisabled, pressed && { opacity: 0.7 }]}
-          onPress={handleSaveEdit}
-          disabled={saving}
-          accessibilityLabel={t('common.save')}
-        >
-          {saving ? (
-            <ActivityIndicator color="#ffffff" size="small" />
-          ) : (
-            <Text style={styles.primaryBtnText}>{t('common.save')}</Text>
-          )}
-        </Pressable>
-      </View>
-    </KeyboardAvoidingView>
-  )
-}
-
-const EditComponentBlock = ({
-  comp,
-  ci,
-  multiComponent,
+const EditView = ({
+  recipe,
+  draft,
+  saving,
+  insets,
+  fontSizeIndex,
+  onDeleteRecipe,
+  handlePickThumbnail,
+  handleNutritionChange,
+  handleServingsChange,
   updateComp,
   setIngredient,
+  setIngredientCategory,
   addIngredient,
   removeIngredient,
   setStep,
   addStep,
   removeStep,
-  setQtyUnitPickerTarget,
-  setIngredientCategory,
-}: {
-  comp: EditComponent
-  ci: number
-  multiComponent: boolean
-} & Pick<
-  EditDraftState,
-  | 'updateComp'
-  | 'setIngredient'
-  | 'addIngredient'
-  | 'removeIngredient'
-  | 'setStep'
-  | 'addStep'
-  | 'removeStep'
-  | 'setIngredientCategory'
-  | 'setQtyUnitPickerTarget'
->) => {
-  const { t } = useTranslation()
+  setDraft,
+  setThumbErrored,
+  uploadingThumb,
+  thumbErrored,
+}: EditViewProps) => {
+  const draftRef = useRef(draft)
 
-  const handleIngredientCategoryPress = (ii: number) => {
-    const categoryLabels = SHOPPING_CATEGORIES.map((category) => t(`shoppingList.categories.${category}`))
-    const cancelButtonIndex = categoryLabels.length
+  useLayoutEffect(() => {
+    draftRef.current = draft
+  }, [draft])
 
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [...categoryLabels, t('common.cancel')],
-        cancelButtonIndex,
-        title: t('shoppingList.category'),
-      },
-      (selectedIndex) => {
-        if (selectedIndex !== undefined && selectedIndex !== cancelButtonIndex) {
-          setIngredientCategory(ci, ii, SHOPPING_CATEGORIES[selectedIndex])
-        }
-      }
-    )
-  }
+  const getIngredientCount = useCallback((ci: number) => draftRef.current.components[ci].ingredients.length, [])
+  const isIngredientBlank = useCallback((ci: number, ii: number) => {
+    const ingredient = draftRef.current.components[ci]?.ingredients[ii]
+
+    return !!ingredient && isIngredientEmpty(ingredient)
+  }, [])
+
+  const getStepCount = useCallback((ci: number) => draftRef.current.components[ci].steps.length, [])
+  const isStepBlank = useCallback((ci: number, si: number) => {
+    const step = draftRef.current.components[ci]?.steps[si]
+
+    return step !== undefined && step.trim() === ''
+  }, [])
+
+  const ingredientSheet = useItemSheetTarget({
+    getCount: getIngredientCount,
+    isEmpty: isIngredientBlank,
+    add: addIngredient,
+    remove: removeIngredient,
+  })
+  const stepSheet = useItemSheetTarget({
+    getCount: getStepCount,
+    isEmpty: isStepBlank,
+    add: addStep,
+    remove: removeStep,
+  })
+
+  const ingredientTarget = ingredientSheet.target
+  const ingredientComponent = ingredientTarget ? draft.components[ingredientTarget.ci] : undefined
+  const sheetIngredient = ingredientTarget ? ingredientComponent?.ingredients[ingredientTarget.ii] ?? null : null
+  const sheetCategory = ingredientTarget
+    ? ingredientComponent?.shopping_list_categories[ingredientTarget.ii] ?? 'other'
+    : 'other'
+  const canRemoveIngredient = (ingredientComponent?.ingredients.length ?? 0) > 1
+
+  const stepTarget = stepSheet.target
+  const stepComponent = stepTarget ? draft.components[stepTarget.ci] : undefined
+  const sheetStep = stepTarget ? stepComponent?.steps[stepTarget.ii] ?? null : null
+  const canRemoveStep = (stepComponent?.steps.length ?? 0) > 1
+
+  const servings = Number(draft.servings) || 0
+  const { totalTimeMinutes, kcal, protein, fat, carbs } = draft
+  const nutritionValues = useMemo(
+    () => ({ totalTimeMinutes, kcal, protein, fat, carbs }),
+    [totalTimeMinutes, kcal, protein, fat, carbs],
+  )
+
+  const handleTitleChange = useCallback(
+    (title: string) => setDraft((prev) => prev && { ...prev, title }),
+    [setDraft],
+  )
+
+  const handleGroupNameChange = useCallback(
+    (ci: number, name: string) => updateComp(ci, { name }),
+    [updateComp],
+  )
+
+  const handleDecreaseServings = useCallback(
+    () => handleServingsChange(Math.max(MIN_SERVINGS, servings - 1)),
+    [handleServingsChange, servings],
+  )
+  const handleIncreaseServings = useCallback(
+    () => handleServingsChange(Math.min(MAX_SERVINGS, servings + 1)),
+    [handleServingsChange, servings],
+  )
+
+  const handleSheetIngredientChange = useCallback(
+    (ingredient: StructuredIngredient) => {
+      if (ingredientTarget) setIngredient(ingredientTarget.ci, ingredientTarget.ii, ingredient)
+    },
+    [ingredientTarget, setIngredient],
+  )
+
+  const handleSheetCategoryChange = useCallback(
+    (category: ShoppingCategory) => {
+      if (ingredientTarget) setIngredientCategory(ingredientTarget.ci, ingredientTarget.ii, category)
+    },
+    [ingredientTarget, setIngredientCategory],
+  )
+
+  const handleSheetStepChange = useCallback(
+    (value: string) => {
+      if (stepTarget) setStep(stepTarget.ci, stepTarget.ii, value)
+    },
+    [stepTarget, setStep],
+  )
+
+  const scrollContentStyle = { paddingBottom: 40 + insets.bottom }
 
   return (
-    <View style={styles.componentBlock}>
-      {multiComponent && (
-        <TextInput
-          style={[styles.componentName, styles.componentNameInput]}
-          value={comp.name}
-          onChangeText={(v) => updateComp(ci, { name: v })}
-          accessibilityLabel={t('settings.nameLabel')}
+    <KeyboardAvoidingView style={styles.container} behavior={KEYBOARD_BEHAVIOR}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={scrollContentStyle}
+        contentInsetAdjustmentBehavior="never"
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+      >
+        <EditHero
+          title={draft.title}
+          thumbnailUrl={draft.thumbnail_url}
+          topInset={insets.top}
+          errored={thumbErrored}
+          uploading={uploadingThumb}
+          onError={setThumbErrored}
+          onPickThumbnail={handlePickThumbnail}
         />
-      )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('recipes.sectionIngredients')}</Text>
-        {comp.ingredients.map((ing, ii) => (
-          <IngredientEditor
-            key={ii}
-            value={ing}
-            flag={null}
-            activeAllergens={[]}
-            onChange={(v) => setIngredient(ci, ii, v)}
-            onQtyUnitPress={() => setQtyUnitPickerTarget({ ci, ii })}
-            onReplace={() => {}}
-            onRestore={() => {}}
-            onRemove={comp.ingredients.length > 1 ? () => removeIngredient(ci, ii) : undefined}
-            categoryLabel={t(`shoppingList.categories.${comp.shopping_list_categories[ii]}`)}
-            onCategoryPress={() => handleIngredientCategoryPress(ii)}
+        <View style={styles.titleBlock}>
+          <EditTitleBlock
+            recipe={recipe}
+            title={draft.title}
+            onTitleChange={handleTitleChange}
+            onDeleteRecipe={onDeleteRecipe}
           />
-        ))}
-        <Pressable
-          style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
-          onPress={() => addIngredient(ci)}
-          accessibilityLabel={t('addRecipe.addIngredient')}
-        >
-          <Text style={styles.addRowBtnText}>+ {t('addRecipe.addIngredient')}</Text>
-        </Pressable>
-      </View>
+          <TagsSection recipe={recipe} editing />
+          <EditStatsGrid values={nutritionValues} onChange={handleNutritionChange} />
+          <ServesCookRow
+            servings={servings}
+            onDecreaseServings={handleDecreaseServings}
+            onIncreaseServings={handleIncreaseServings}
+          />
+        </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionLabel}>{t('recipes.steps')}</Text>
-        {comp.steps.map((step, si) => (
-          <View key={si} style={styles.stepEditRow}>
-            <Text style={styles.stepNum}>{si + 1}.</Text>
-            <TextInput
-              style={styles.stepInput}
-              value={step}
-              onChangeText={(v) => setStep(ci, si, v)}
-              multiline
-              accessibilityLabel={`${t('common.step')} ${si + 1}`}
-            />
-            {comp.steps.length > 1 && (
-              <Pressable
-                style={({ pressed }) => [styles.stepRemoveBtn, pressed && { opacity: 0.6 }]}
-                onPress={() => removeStep(ci, si)}
-                hitSlop={8}
-                accessibilityLabel={t('addRecipe.removeStep')}
-              >
-                <Text style={styles.stepRemoveText}>−</Text>
-              </Pressable>
-            )}
-          </View>
-        ))}
-        <Pressable
-          style={({ pressed }) => [styles.addRowBtn, pressed && { opacity: 0.7 }]}
-          onPress={() => addStep(ci)}
-          accessibilityLabel={t('addRecipe.addStep')}
-        >
-          <Text style={styles.addRowBtnText}>+ {t('addRecipe.addStep')}</Text>
-        </Pressable>
-      </View>
-    </View>
+        <EditIngredientsSection
+          components={draft.components}
+          onNameChange={handleGroupNameChange}
+          onOpenIngredient={ingredientSheet.open}
+          onAddIngredient={ingredientSheet.addAndOpen}
+        />
+        <EditStepsSection
+          components={draft.components}
+          onOpenStep={stepSheet.open}
+          onAddStep={stepSheet.addAndOpen}
+        />
+        <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
+        <RelatedRecipesSection recipeId={recipe.id} editing />
+        <View style={styles.editFooter}>
+          <DeleteRecipeButton disabled={saving} onPress={onDeleteRecipe} />
+        </View>
+      </ScrollView>
+
+      <IngredientEditSheet
+        visible={ingredientTarget !== null}
+        ingredient={sheetIngredient}
+        category={sheetCategory}
+        canRemove={canRemoveIngredient}
+        onChange={handleSheetIngredientChange}
+        onCategoryChange={handleSheetCategoryChange}
+        onRemove={ingredientSheet.handleRemove}
+        onDismiss={ingredientSheet.handleDismiss}
+      />
+      <StepEditSheet
+        visible={stepTarget !== null}
+        step={sheetStep}
+        canRemove={canRemoveStep}
+        onChange={handleSheetStepChange}
+        onRemove={stepSheet.handleRemove}
+        onDismiss={stepSheet.handleDismiss}
+      />
+    </KeyboardAvoidingView>
   )
 }
 

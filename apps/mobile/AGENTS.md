@@ -5,7 +5,8 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before 
 ## Bottom sheets
 
 - Use `@gorhom/bottom-sheet`'s `BottomSheetModal` for every bottom card/sheet. Do not build a bespoke React Native `Modal` bottom sheet.
-- Match the Add Recipe drawer: `enablePanDownToClose`, a `BottomSheetBackdrop` that dismisses on tap, the standard handle indicator, and `secondarySystemBackground` as the sheet surface.
+- Every sheet uses `enablePanDownToClose` and the shared look from `src/components/ui/sheet.tsx`: `backdropComponent={renderSheetBackdrop}`, `backgroundStyle={sheetStyles.background}`, `handleIndicatorStyle={sheetStyles.handle}`. Don't define per-sheet background, handle or backdrop styles.
+- Content-sized sheets (`enableDynamicSizing`) need a minimum height of half the window.
 - Do not add close, done, or cancel buttons solely to dismiss a bottom sheet. A sheet must close by tapping the backdrop or pulling it down. Keep action buttons only when they perform a real domain action.
 
 ## Full-screen cooking UI

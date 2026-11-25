@@ -6,18 +6,18 @@ import { styles } from './styles'
 
 interface ServesCookRowProps {
   servings: number | null
-  hasSteps: boolean
+  hasSteps?: boolean
   onDecreaseServings: () => void
   onIncreaseServings: () => void
-  onOpenCookMode: () => void
+  onOpenCookMode?: () => void
 }
 
-const MIN_SERVINGS = 1
-const MAX_SERVINGS = 99
+export const MIN_SERVINGS = 1
+export const MAX_SERVINGS = 99
 
 const ServesCookRow = ({
   servings,
-  hasSteps,
+  hasSteps = true,
   onDecreaseServings,
   onIncreaseServings,
   onOpenCookMode,
@@ -40,17 +40,19 @@ const ServesCookRow = ({
             valueLabel={t('recipes.servings', { count: servings })}
           />
         ) : null}
-        <Button
-          label={t('cookMode.cook')}
-          accessibilityLabel={t('cookMode.start')}
-          icon="play.fill"
-          size="xl"
-          fullWidth={servings === null}
-          disabled={!hasSteps}
-          onPress={onOpenCookMode}
-        />
+        {onOpenCookMode ? (
+          <Button
+            label={t('cookMode.cook')}
+            accessibilityLabel={t('cookMode.start')}
+            icon="play.fill"
+            size="xl"
+            fullWidth={servings === null}
+            disabled={!hasSteps}
+            onPress={onOpenCookMode}
+          />
+        ) : null}
       </View>
-      {!hasSteps ? (
+      {onOpenCookMode && !hasSteps ? (
         <AppText variant="meta" tone="textSecondary">
           {t('recipes.cookModeUnavailable')}
         </AppText>

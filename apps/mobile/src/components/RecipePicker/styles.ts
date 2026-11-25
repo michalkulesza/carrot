@@ -2,8 +2,6 @@ import { PlatformColor, StyleSheet } from 'react-native'
 import { colors } from '../../theme/colors'
 
 export const styles = StyleSheet.create({
-  sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
-  sheetHandle: { backgroundColor: PlatformColor('systemGray3') as unknown as string },
   plainTextEntry: {
     flexDirection: 'row',
     gap: 8,

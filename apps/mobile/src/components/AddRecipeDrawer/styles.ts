@@ -2,18 +2,10 @@ import { StyleSheet } from 'react-native'
 import { palette, radius, space, typography } from '../../theme'
 
 const INPUT_HEIGHT = 44
-const HANDLE_WIDTH = 40
-const HANDLE_HEIGHT = 5
 const SOURCE_TILE = 44
 const PERSONAL_SEARCH_HEIGHT = 44
 
 export const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: palette.background,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
-  },
-  sheetHandle: { width: HANDLE_WIDTH, height: HANDLE_HEIGHT, backgroundColor: palette.dividerStrong },
   sheetBody: { flex: 1, paddingHorizontal: space.xl, paddingTop: space.sm, gap: space.lg },
   sheetTitle: { textAlign: 'center', fontWeight: '700' },
 

@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
-import { PlatformColor, Pressable, StyleSheet, Text, View } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { renderSheetBackdrop, sheetStyles } from './ui/sheet'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
@@ -130,12 +131,6 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
       dismiss: () => sheetRef.current?.dismiss(),
     }))
 
-    const renderBackdrop = useCallback(
-      (props: BottomSheetBackdropProps) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-      ),
-      [],
-    )
 
     const getMonthNavButtonStyle = useCallback(
       ({ pressed }: { pressed: boolean }) => [styles.monthNavBtn, pressed && { opacity: 0.6 }],
@@ -188,9 +183,9 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
         snapPoints={SNAP_POINTS}
         enableDynamicSizing={false}
         enablePanDownToClose
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.sheetHandle}
+        backdropComponent={renderSheetBackdrop}
+        backgroundStyle={sheetStyles.background}
+        handleIndicatorStyle={sheetStyles.handle}
       >
         <View style={styles.container}>
           <Text style={styles.title}>{t('mealPlan.addToMealPlan')}</Text>
@@ -257,8 +252,6 @@ AddToMealPlanSheet.displayName = 'AddToMealPlanSheet'
 export default AddToMealPlanSheet
 
 const styles = StyleSheet.create({
-  sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
-  sheetHandle: { backgroundColor: PlatformColor('systemGray3') as unknown as string },
   container: { flex: 1, paddingHorizontal: 20, paddingTop: 4 },
   title: {
     fontSize: 20,

@@ -184,7 +184,8 @@
     "inHouseholds": "Nelle famiglie",
     "addToHousehold": "Aggiungi alla famiglia",
     "deleteFromHousehold": "Elimina da {{name}}",
-    "deleteEverywhere": "Elimina ovunque",
+    "deleteFromHouseholdAndLibrary": "Elimina da {{name}} e dalla mia libreria",
+    "deleteFromLibrary": "Elimina dalla mia libreria",
     "missingIngredientsIssue": "Mancano gli ingredienti in questa ricetta.",
     "missingInstructionsIssue": "Mancano le istruzioni in questa ricetta.",
     "dismissExtractionIssue": "Chiudi questo avviso",
@@ -257,7 +258,12 @@
     "textSizeLarge": "Testo grande",
     "allergenSummaryContains": "Contiene {{allergens}}",
     "allergenSummaryIncompleteTitle": "Le informazioni sugli allergeni potrebbero essere incomplete",
-    "allergenSummaryIncomplete": "Potrebbe essere incompleto: una ricetta collegata non ha l’elenco degli ingredienti."
+    "allergenSummaryIncomplete": "Potrebbe essere incompleto: una ricetta collegata non ha l’elenco degli ingredienti.",
+    "noChanges": "Nessuna modifica",
+    "editIngredient": "Modifica ingrediente",
+    "editStep": "Modifica passaggio",
+    "qtyPlaceholder": "Qtà",
+    "shoppingAisle": "Reparto"
   },
   "nav": {
     "recipes": "Ricette",
@@ -656,7 +662,13 @@
       "cuisine": "Cucina",
       "time": "Tempo",
       "other": "Altro"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Cerca o crea un tag",
+    "createTagLabel": "Crea tag",
+    "noMatchingTags": "Nessun tag corrispondente",
+    "selectedCount": "{{count}} selezionati",
+    "clearSearch": "Cancella ricerca"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok o URL di qualsiasi pagina di ricette",
@@ -921,11 +933,16 @@
     "sprig_other": "rametti",
     "handful": "manciata",
     "qtyLabel": "qtà",
-    "unitLabel": "unità"
+    "unitLabel": "unità",
+    "none": "Nessuna"
   },
   "relatedRecipes": {
     "title": "Ricette correlate",
-    "add": "Modifica ricette correlate"
+    "linkRecipe": "Collega ricetta",
+    "searchPlaceholder": "Cerca nelle tue ricette",
+    "noMatches": "Nessuna ricetta corrispondente",
+    "selectedCount": "{{count}} selezionate",
+    "removeLink": "Scollega {{title}}"
   },
   "ads": {
     "advertisement": "Pubblicità",

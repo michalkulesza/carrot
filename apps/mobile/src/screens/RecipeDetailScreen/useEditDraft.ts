@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import * as ImagePicker from 'expo-image-picker'
@@ -14,6 +14,7 @@ import {
   buildEditRecipeSaveRequest,
   type EditComponent,
   type EditDraft,
+  type NutritionField,
 } from './helpers'
 import { useRecipeEditLock } from './useRecipeEditLock'
 
@@ -40,10 +41,9 @@ export const useEditDraft = ({
   const [editPending, setEditPending] = useState(false)
   const [draft, setDraft] = useState<EditDraft | null>(null)
   const [saving, setSaving] = useState(false)
-  const [qtyUnitPickerTarget, setQtyUnitPickerTarget] = useState<{ ci: number; ii: number } | null>(null)
   const [uploadingThumb, setUploadingThumb] = useState(false)
   const [thumbErrored, setThumbErrored] = useState(false)
-  const savedDraftRef = useRef<EditDraft | null>(null)
+  const savedSnapshotRef = useRef('')
   const enterPendingRef = useRef(false)
   const lock = useRecipeEditLock({ api, recipeId, editing, t })
 
@@ -60,7 +60,7 @@ export const useEditDraft = ({
 
     const initial = buildDraft(recipe)
     setDraft(initial)
-    savedDraftRef.current = initial
+    savedSnapshotRef.current = JSON.stringify(initial)
     setThumbErrored(false)
     setEditing(true)
   }, [recipe, editing, lock])
@@ -78,13 +78,14 @@ export const useEditDraft = ({
     }
   }, [autoEditParam, recipe, handleEdit])
 
-  const isEditDirty = useCallback(
-    () => JSON.stringify(draft) !== JSON.stringify(savedDraftRef.current),
+  const isDirty = useMemo(
+    () => draft !== null && JSON.stringify(draft) !== savedSnapshotRef.current,
     [draft],
   )
 
   const handleCancelEdit = useCallback(() => {
-    if (!isEditDirty()) {
+    if (saving) return
+    if (!isDirty) {
       exitEditing()
       return
     }
@@ -92,7 +93,7 @@ export const useEditDraft = ({
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('addRecipe.discard'), style: 'destructive', onPress: exitEditing },
     ])
-  }, [isEditDirty, exitEditing, t])
+  }, [saving, isDirty, exitEditing, t])
 
   const updateComp = useCallback((ci: number, patch: Partial<EditComponent>) => {
     setDraft((prev) => prev && { ...prev, components: prev.components.map((c, i) => (i === ci ? { ...c, ...patch } : c)) })
@@ -196,24 +197,12 @@ export const useEditDraft = ({
     })
   }, [])
 
-  const currentQtyUnitIngredient = qtyUnitPickerTarget != null
-    ? draft?.components[qtyUnitPickerTarget.ci]?.ingredients[qtyUnitPickerTarget.ii]
-    : null
-  const currentQty = currentQtyUnitIngredient?.qty ?? ''
-  const currentUnit = currentQtyUnitIngredient?.unit ?? ''
+  const handleNutritionChange = useCallback((field: NutritionField, value: string) => {
+    setDraft((prev) => prev && { ...prev, [field]: value })
+  }, [])
 
-  const handleQtyUnitChange = useCallback((qty: string, unit: string) => {
-    if (qtyUnitPickerTarget == null || !draft) return
-    setIngredient(qtyUnitPickerTarget.ci, qtyUnitPickerTarget.ii, {
-      ...draft.components[qtyUnitPickerTarget.ci].ingredients[qtyUnitPickerTarget.ii],
-      qty,
-      unit,
-    })
-  }, [qtyUnitPickerTarget, draft, setIngredient])
-
-  const handleNutritionChange = useCallback((index: number, value: string) => {
-    const key = (['totalTimeMinutes', 'servings', 'kcal', 'protein', 'fat', 'carbs'] as const)[index]
-    setDraft((prev) => prev && { ...prev, [key]: value })
+  const handleServingsChange = useCallback((servings: number) => {
+    setDraft((prev) => prev && { ...prev, servings: String(servings) })
   }, [])
 
   const handlePickThumbnail = useCallback(async () => {
@@ -296,18 +285,15 @@ export const useEditDraft = ({
     draft,
     setDraft,
     saving,
-    qtyUnitPickerTarget,
-    setQtyUnitPickerTarget,
+    isDirty,
     uploadingThumb,
     thumbErrored,
     setThumbErrored,
-    currentQty,
-    currentUnit,
     handleEdit,
     editPending,
     handleCancelEdit,
-    handleQtyUnitChange,
     handleNutritionChange,
+    handleServingsChange,
     updateComp,
     setIngredientCategory,
     setIngredient,

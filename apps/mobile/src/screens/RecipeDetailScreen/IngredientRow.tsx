@@ -2,12 +2,11 @@ import { memo, useCallback, useMemo, useState } from 'react'
 import { Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
-import { getIngredientQuantityCount } from '@carrot/shared/utils/ingredientUtils'
 import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
 import { AppText, LinkChip } from '../../components/ui'
 import AddToListButton from './AddToListButton'
 import AllergenBadge from './AllergenBadge'
-import { getSourceHost, matchesActiveAllergen, splitIngredient, type IngredientEntry, type ReadingMetrics } from './helpers'
+import { createUnitTranslator, getSourceHost, matchesActiveAllergen, splitIngredient, type IngredientEntry, type ReadingMetrics } from './helpers'
 import { styles } from './styles'
 import { useIngredientLink } from './useIngredientLink'
 
@@ -25,8 +24,6 @@ interface IngredientRowProps {
   metrics: ReadingMetrics
   onTooltipOpenChange: (open: boolean) => void
 }
-
-const COUNTABLE_UNITS = ['cl', 'piece', 'sprig', 'leaf', 'sheet']
 
 const IngredientRow = ({
   recipeId,
@@ -47,13 +44,7 @@ const IngredientRow = ({
   const { fontSize, ingredientLineHeight } = metrics
 
   const { quantity, name } = useMemo(
-    () =>
-      splitIngredient(ingredient, (unit, qty) =>
-        t(`units.${unit}`, {
-          count: COUNTABLE_UNITS.includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
-          defaultValue: unit,
-        }),
-      ),
+    () => splitIngredient(ingredient, createUnitTranslator(t)),
     [ingredient, t],
   )
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import {
   Alert,
   PlatformColor,
@@ -8,165 +8,10 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView, BottomSheetTextInput, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
-import { Ionicons } from '@expo/vector-icons'
 import { useTranslation } from 'react-i18next'
-import type { AllergenFlag, Tag } from '@carrot/shared/types'
+import type { AllergenFlag } from '@carrot/shared/types'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
-import { tTag } from '@carrot/shared/utils/tagUtils'
-import { TAG_CATEGORIES, groupTagsByCategory } from '@carrot/shared/utils/tagFilters'
 import { colors } from '../theme/colors'
-import CheckboxIcon from './CheckboxIcon'
-
-// Shared editing controls used by both the import flow and in-place recipe editing.
-
-export const TagPickerModal = ({
-  visible,
-  allTags,
-  selectedIds,
-  onAdd,
-  onRemove,
-  onCreate,
-  onClose,
-}: {
-  visible: boolean
-  allTags: Tag[]
-  selectedIds: Set<string>
-  onAdd: (tag: Tag) => void
-  onRemove: (tagId: string) => void
-  onCreate: (name: string) => Promise<Tag>
-  onClose: () => void
-}) => {
-  const { t } = useTranslation()
-  const [query, setQuery] = useState('')
-  const [creating, setCreating] = useState(false)
-  const sheetRef = useRef<BottomSheetModal>(null)
-  const wasPresentedRef = useRef(false)
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    return allTags.filter((tag) => !q || tag.name.toLowerCase().includes(q))
-  }, [allTags, query])
-
-  const groupedSections = useMemo(() => {
-    const grouped = groupTagsByCategory(filtered)
-    const selectedFirst = (tags: Tag[]) =>
-      [...tags].sort((a, b) => Number(selectedIds.has(b.id)) - Number(selectedIds.has(a.id)))
-    return [
-      ...TAG_CATEGORIES.map((category) => ({
-        key: category,
-        title: t(`tags.category.${category}`),
-        tags: selectedFirst(grouped[category]),
-      })),
-      { key: 'other', title: t('tags.category.other'), tags: selectedFirst(grouped.other) },
-    ].filter((section) => section.tags.length > 0)
-  }, [filtered, t, selectedIds])
-  const trimmedQuery = query.trim()
-  const canCreate = trimmedQuery.length > 0 && !allTags.some((tag) => tag.name.toLowerCase() === trimmedQuery.toLowerCase())
-  const handleCreate = useCallback(async () => { setCreating(true); try { const tag = await onCreate(trimmedQuery); onAdd(tag); setQuery('') } finally { setCreating(false) } }, [onAdd, onCreate, trimmedQuery])
-
-  const handleTagRowPress = useCallback(
-    (tag: Tag) => {
-      if (selectedIds.has(tag.id)) {
-        onRemove(tag.id)
-        return
-      }
-
-      onAdd(tag)
-    },
-    [selectedIds, onAdd, onRemove],
-  )
-
-  const getTagListRowStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [styles.tagListRow, pressed && styles.pressedLight],
-    [],
-  )
-  useEffect(() => {
-    if (visible) {
-      wasPresentedRef.current = true
-      sheetRef.current?.present()
-    } else if (wasPresentedRef.current) {
-      sheetRef.current?.dismiss()
-    }
-  }, [visible])
-
-  const handleDismiss = useCallback(() => {
-    wasPresentedRef.current = false
-    onClose()
-  }, [onClose])
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />
-    ),
-    [],
-  )
-
-  return (
-    <BottomSheetModal
-      ref={sheetRef}
-      snapPoints={['72%']}
-      enableDynamicSizing={false}
-      enablePanDownToClose
-      onDismiss={handleDismiss}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.sheetHandle}
-      keyboardBehavior="interactive"
-      keyboardBlurBehavior="restore"
-    >
-      <View style={styles.tagModal}>
-          <View style={styles.tagModalHeader}>
-            <Text style={styles.tagModalTitle}>{t('tags.editTags')}</Text>
-          </View>
-          <View style={styles.tagSearchContainer}>
-            <Ionicons name="search" size={16} color={PlatformColor('secondaryLabel') as unknown as string} />
-            <BottomSheetTextInput
-              style={styles.tagSearchInput}
-              placeholder={t('common.search')}
-              placeholderTextColor={PlatformColor('placeholderText') as unknown as string}
-              value={query}
-              onChangeText={setQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="default"
-              returnKeyType="search"
-              textContentType="none"
-              clearButtonMode="while-editing"
-              accessibilityLabel={t('common.search')}
-            />
-          </View>
-          <BottomSheetScrollView style={styles.tagScrollList} keyboardShouldPersistTaps="handled">
-            {canCreate && <Pressable style={styles.tagListRow} onPress={handleCreate} disabled={creating}><Text style={styles.tagListText}>{creating ? t('tags.creating') : t('tags.createTag', { name: trimmedQuery })}</Text></Pressable>}
-            {groupedSections.map((section) => (
-              <View key={section.key}>
-                <Text style={styles.tagSectionHeader}>{section.title}</Text>
-                {section.tags.map((tag) => {
-                  const isSelected = selectedIds.has(tag.id)
-                  return (
-                    <Pressable
-                      key={tag.id}
-                      style={getTagListRowStyle}
-                      onPress={() => handleTagRowPress(tag)}
-                      accessibilityLabel={tag.name}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: isSelected }}
-                    >
-                      <Text style={styles.tagListText}>{tTag(tag.name, t)}</Text>
-                      <CheckboxIcon checked={isSelected} />
-                    </Pressable>
-                  )
-                })}
-              </View>
-            ))}
-            {filtered.length === 0 && !canCreate && (
-              <Text style={styles.tagEmpty}>{t('tags.noTagsAvailable')}</Text>
-            )}
-          </BottomSheetScrollView>
-      </View>
-    </BottomSheetModal>
-  )
-}
 
 export const IngredientEditor = ({
   value,
@@ -310,55 +155,6 @@ export const IngredientEditor = ({
 const styles = StyleSheet.create({
   pressedLight: { opacity: 0.7 },
   pressedMedium: { opacity: 0.6 },
-
-  sheetBackground: { backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string },
-  tagModal: { flex: 1,
-    paddingTop: 8,
-  },
-  tagModalHeader: { alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8 },
-  tagModalTitle: { fontSize: 17, lineHeight: 22, fontWeight: '600', color: PlatformColor('label') as unknown as string },
-  tagSearchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    height: 36,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    backgroundColor: PlatformColor('systemGray6') as unknown as string,
-  },
-  tagSearchInput: { flex: 1, paddingVertical: 0, fontSize: 16, color: PlatformColor('label') as unknown as string },
-  tagScrollList: { flex: 1 },
-  tagSectionHeader: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-    color: PlatformColor('label') as unknown as string,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
-  },
-  tagListRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: PlatformColor('separator') as unknown as string,
-  },
-  tagListText: { fontSize: 16, color: PlatformColor('secondaryLabel') as unknown as string },
-  tagEmpty: { padding: 16, fontSize: 13, lineHeight: 18, color: PlatformColor('tertiaryLabel') as unknown as string, textAlign: 'center' },
-
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 2,
-  },
 
   ingEditor: {
     paddingVertical: 8,

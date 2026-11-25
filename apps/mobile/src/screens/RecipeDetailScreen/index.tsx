@@ -10,6 +10,7 @@ import { useShoppingList } from "@carrot/shared/hooks/useShoppingList";
 import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks/usePreferences";
 import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
 import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
+import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 import { useAuth } from "../../context/AuthContext";
 import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import { useHousehold } from "../../context/HouseholdContext";
@@ -230,7 +231,7 @@ const RecipeDetailScreen = () => {
     }
     if (isAuthor) {
       buttons.push({
-        text: t('recipes.deleteEverywhere'),
+        text: getFullDeleteLabel(t, linkedToActiveHousehold ? activeHousehold?.name : null),
         style: 'destructive',
         onPress: handleDeleteEverywhere,
       })
@@ -337,6 +338,9 @@ const RecipeDetailScreen = () => {
     handleEdit: editDraft.handleEdit,
     editPending: editDraft.editPending,
     handleCancelEdit: editDraft.handleCancelEdit,
+    handleSaveEdit: editDraft.handleSaveEdit,
+    editDirty: editDraft.isDirty,
+    editSaving: editDraft.saving,
     handleOpenMealPlanSheet,
     households,
     handlePressRecipeAction,
@@ -379,10 +383,8 @@ const RecipeDetailScreen = () => {
         insets={insets}
         fontSizeIndex={displayPrefs.fontSizeIndex}
         handlePickThumbnail={editDraft.handlePickThumbnail}
-        handleCancelEdit={editDraft.handleCancelEdit}
-        handleSaveEdit={editDraft.handleSaveEdit}
-        handleQtyUnitChange={editDraft.handleQtyUnitChange}
         handleNutritionChange={editDraft.handleNutritionChange}
+        handleServingsChange={editDraft.handleServingsChange}
         updateComp={editDraft.updateComp}
         setIngredient={editDraft.setIngredient}
         setIngredientCategory={editDraft.setIngredientCategory}
@@ -393,12 +395,8 @@ const RecipeDetailScreen = () => {
         removeStep={editDraft.removeStep}
         setDraft={editDraft.setDraft}
         setThumbErrored={editDraft.setThumbErrored}
-        setQtyUnitPickerTarget={editDraft.setQtyUnitPickerTarget}
         uploadingThumb={editDraft.uploadingThumb}
         thumbErrored={editDraft.thumbErrored}
-        qtyUnitPickerTarget={editDraft.qtyUnitPickerTarget}
-        currentQty={editDraft.currentQty}
-        currentUnit={editDraft.currentUnit}
         onDeleteRecipe={handleDeleteRecipe}
       />
     );

@@ -22,7 +22,7 @@ const TOGGLE_MS = 180
 const RING_WIDTH = 1.5
 const HIT_SLOP = { top: 9, bottom: 9, left: 9, right: 9 }
 
-const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
+export const CheckboxCircle = memo(({ checked }: { checked: boolean }) => {
   const reduceMotion = useReducedMotion()
   const progress = useSharedValue(checked ? 1 : 0)
 
@@ -30,13 +30,24 @@ const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
     progress.value = reduceMotion ? Number(checked) : withTiming(Number(checked), { duration: TOGGLE_MS })
   }, [checked, progress, reduceMotion])
 
+  const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }))
+  const fillStyles = useMemo(() => [styles.fill, fillStyle], [fillStyle])
+
+  return (
+    <View style={styles.circle}>
+      <Animated.View style={fillStyles}>
+        <SymbolView name="checkmark" size={TICK_SIZE} weight="bold" tintColor={palette.onImage} />
+      </Animated.View>
+    </View>
+  )
+})
+
+const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
   const handlePress = useCallback(() => {
     selectionHaptic()
     onToggle()
   }, [onToggle])
 
-  const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }))
-  const fillStyles = useMemo(() => [styles.fill, fillStyle], [fillStyle])
   const accessibilityState = useMemo(() => ({ checked }), [checked])
 
   return (
@@ -47,11 +58,7 @@ const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
     >
-      <View style={styles.circle}>
-        <Animated.View style={fillStyles}>
-          <SymbolView name="checkmark" size={TICK_SIZE} weight="bold" tintColor={palette.onImage} />
-        </Animated.View>
-      </View>
+      <CheckboxCircle checked={checked} />
     </Pressable>
   )
 }

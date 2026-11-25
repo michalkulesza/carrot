@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { ListRenderItemInfo, PlatformColor, Pressable, Text, View } from 'react-native'
-import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput, BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { BottomSheetModal, BottomSheetFlatList, BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { renderSheetBackdrop, sheetStyles } from '../ui/sheet'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { useTranslation } from 'react-i18next'
@@ -45,12 +46,6 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
     dismiss: () => sheetRef.current?.dismiss(),
   }))
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-    ),
-    [],
-  )
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -145,9 +140,9 @@ const RecipePicker = forwardRef<RecipePickerHandle, RecipePickerProps>(({
       enablePanDownToClose
       topInset={insets.top}
       onDismiss={handleClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.sheetHandle}
+      backdropComponent={renderSheetBackdrop}
+      backgroundStyle={sheetStyles.background}
+      handleIndicatorStyle={sheetStyles.handle}
     >
       <View style={styles.plainTextEntry}>
         <BottomSheetTextInput

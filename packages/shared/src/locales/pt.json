@@ -184,7 +184,8 @@
     "inHouseholds": "Nas casas",
     "addToHousehold": "Adicionar à casa",
     "deleteFromHousehold": "Excluir de {{name}}",
-    "deleteEverywhere": "Excluir de todos os lugares",
+    "deleteFromHouseholdAndLibrary": "Excluir de {{name}} e da minha biblioteca",
+    "deleteFromLibrary": "Excluir da minha biblioteca",
     "missingIngredientsIssue": "Faltam ingredientes nesta receita.",
     "missingInstructionsIssue": "Faltam instruções nesta receita.",
     "dismissExtractionIssue": "Dispensar este aviso",
@@ -257,7 +258,12 @@
     "textSizeLarge": "Texto grande",
     "allergenSummaryContains": "Contém {{allergens}}",
     "allergenSummaryIncompleteTitle": "As informações sobre alergênicos podem estar incompletas",
-    "allergenSummaryIncomplete": "Pode estar incompleto: uma receita vinculada não tem lista de ingredientes."
+    "allergenSummaryIncomplete": "Pode estar incompleto: uma receita vinculada não tem lista de ingredientes.",
+    "noChanges": "Sem alterações",
+    "editIngredient": "Editar ingrediente",
+    "editStep": "Editar passo",
+    "qtyPlaceholder": "Qtd.",
+    "shoppingAisle": "Corredor"
   },
   "nav": {
     "recipes": "Receitas",
@@ -656,7 +662,13 @@
       "cuisine": "Culinária",
       "time": "Tempo",
       "other": "Outros"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Pesquisar ou criar uma tag",
+    "createTagLabel": "Criar tag",
+    "noMatchingTags": "Nenhuma tag correspondente",
+    "selectedCount": "{{count}} selecionadas",
+    "clearSearch": "Limpar pesquisa"
   },
   "addRecipe": {
     "urlPlaceholder": "URL do Instagram, TikTok ou de qualquer página de receita",
@@ -921,11 +933,16 @@
     "sprig_other": "ramos",
     "handful": "punhado",
     "qtyLabel": "qtd.",
-    "unitLabel": "unid."
+    "unitLabel": "unid.",
+    "none": "Nenhuma"
   },
   "relatedRecipes": {
     "title": "Receitas relacionadas",
-    "add": "Editar receitas relacionadas"
+    "linkRecipe": "Vincular receita",
+    "searchPlaceholder": "Pesquisar nas suas receitas",
+    "noMatches": "Nenhuma receita corresponde",
+    "selectedCount": "{{count}} selecionadas",
+    "removeLink": "Desvincular {{title}}"
   },
   "ads": {
     "advertisement": "Publicidade",

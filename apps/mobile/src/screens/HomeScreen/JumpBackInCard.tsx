@@ -1,13 +1,11 @@
 import { memo, useCallback, useMemo } from 'react'
 import { Pressable, View } from 'react-native'
-import Animated from 'react-native-reanimated'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import { AppText, Button, Card, CardRowList, ProgressBar, SectionHeader, Thumbnail } from '../../components/ui'
 import { lightHaptic } from '../../components/ui/haptics'
 import { useRecentActivity } from '../../hooks/useRecentActivity'
-import { useMotion } from '../../theme'
 import { buildJumpBackRows, type JumpBackRowData } from './helpers'
 import { styles } from './styles'
 
@@ -61,7 +59,6 @@ const JumpBackRow = ({ row, onOpen, onOpenRecipe }: JumpBackRowProps) => {
 const JumpBackInCard = ({ recipes }: { recipes: RecipeOut[] }) => {
   const { t } = useTranslation()
   const router = useRouter()
-  const { entering } = useMotion()
   const { activity } = useRecentActivity()
 
   const recipesById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, recipe])), [recipes])
@@ -89,14 +86,14 @@ const JumpBackInCard = ({ recipes }: { recipes: RecipeOut[] }) => {
   if (rows.length === 0) return null
 
   return (
-    <Animated.View entering={entering}>
+    <View>
       <SectionHeader title={t('home.jumpBackIn')} />
       <View style={styles.jumpSection}>
         <Card style={styles.jumpCard}>
           <CardRowList items={rows} keyExtractor={keyExtractor} renderItem={renderRow} />
         </Card>
       </View>
-    </Animated.View>
+    </View>
   )
 }
 

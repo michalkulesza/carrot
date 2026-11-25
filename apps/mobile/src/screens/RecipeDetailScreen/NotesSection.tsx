@@ -52,7 +52,7 @@ const NotesSection = ({ recipe, fontSizeIndex }: { recipe: RecipeOut; fontSizeIn
       <View style={styles.noteWrapper}>
         <Card tone="note" style={styles.noteCard}>
           <View style={styles.noteHeader}>
-            <AppText variant="badge" tone="noteText" style={styles.noteLabel}>
+            <AppText variant="pillSmall" tone="noteText" style={styles.noteLabel}>
               {t('recipes.yourNote')}
             </AppText>
             <Pressable
@@ -61,7 +61,7 @@ const NotesSection = ({ recipe, fontSizeIndex }: { recipe: RecipeOut; fontSizeIn
               accessibilityRole="button"
               accessibilityLabel={editing ? t('common.done') : t('common.edit')}
             >
-              <AppText variant="badge" tone="noteText">
+              <AppText variant="pillSmall" tone="noteText">
                 {editing ? t('common.done') : t('common.edit')}
               </AppText>
             </Pressable>

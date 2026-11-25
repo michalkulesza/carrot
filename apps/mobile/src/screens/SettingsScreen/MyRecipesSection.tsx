@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics'
 import { useApiClient } from '@carrot/shared/api/context'
 import { useMyRecipes } from '@carrot/shared/hooks/useRecipes'
 import type { HouseholdOut, RecipeOut } from '@carrot/shared/types'
+import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 import Avatar from '../../components/Avatar'
 import { colors } from '../../theme/colors'
 
@@ -76,7 +77,7 @@ const MyRecipeRow = ({ recipe, households, activeHouseholdId, onDeleted }: MyRec
       })
     }
     buttons.push({
-      text: t('recipes.deleteEverywhere'),
+      text: getFullDeleteLabel(t, linkedToActiveHousehold ? activeHousehold?.name : null),
       style: 'destructive',
       onPress: () => void handleDeleteEverywhere(),
     })

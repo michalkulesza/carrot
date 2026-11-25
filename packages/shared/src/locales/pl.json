@@ -186,7 +186,8 @@
     "inHouseholds": "W gospodarstwach",
     "addToHousehold": "Dodaj do gospodarstwa",
     "deleteFromHousehold": "Usuń z {{name}}",
-    "deleteEverywhere": "Usuń wszędzie",
+    "deleteFromHouseholdAndLibrary": "Usuń z {{name}} i mojej biblioteki",
+    "deleteFromLibrary": "Usuń z mojej biblioteki",
     "missingIngredientsIssue": "W przepisie brakuje sk?adnik?w.",
     "missingInstructionsIssue": "W przepisie brakuje instrukcji.",
     "dismissExtractionIssue": "Ukryj to powiadomienie",
@@ -265,7 +266,12 @@
     "textSizeLarge": "Duży tekst",
     "allergenSummaryContains": "Zawiera: {{allergens}}",
     "allergenSummaryIncompleteTitle": "Informacje o alergenach mogą być niepełne",
-    "allergenSummaryIncomplete": "Może być niepełne: powiązany przepis nie ma listy składników."
+    "allergenSummaryIncomplete": "Może być niepełne: powiązany przepis nie ma listy składników.",
+    "noChanges": "Brak zmian",
+    "editIngredient": "Edytuj składnik",
+    "editStep": "Edytuj krok",
+    "qtyPlaceholder": "Ilość",
+    "shoppingAisle": "Dział w sklepie"
   },
   "nav": {
     "recipes": "Przepisy",
@@ -668,7 +674,13 @@
       "cuisine": "Kuchnia",
       "time": "Czas",
       "other": "Inne"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Szukaj lub utwórz tag",
+    "createTagLabel": "Utwórz tag",
+    "noMatchingTags": "Brak pasujących tagów",
+    "selectedCount": "Wybrano: {{count}}",
+    "clearSearch": "Wyczyść wyszukiwanie"
   },
   "addRecipe": {
     "urlPlaceholder": "URL z Instagrama, TikToka lub dowolnej strony z przepisami",
@@ -944,11 +956,16 @@
     "sprig_other": "gałązki",
     "handful": "garść",
     "qtyLabel": "ilość",
-    "unitLabel": "jednostka"
+    "unitLabel": "jednostka",
+    "none": "Brak"
   },
   "relatedRecipes": {
     "title": "Powiązane przepisy",
-    "add": "Edytuj powiązane przepisy"
+    "linkRecipe": "Powiąż przepis",
+    "searchPlaceholder": "Szukaj w swoich przepisach",
+    "noMatches": "Brak pasujących przepisów",
+    "selectedCount": "Wybrano: {{count}}",
+    "removeLink": "Odłącz: {{title}}"
   },
   "ads": {
     "advertisement": "Reklama",

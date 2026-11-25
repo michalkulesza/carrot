@@ -5,7 +5,7 @@ import { SymbolView, SFSymbol } from 'expo-symbols'
 import { palette, PaletteKey, radius, space, typography, usePressScale } from '../../theme'
 import { lightHaptic } from './haptics'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'text' | 'onImage' | 'dark'
+export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'danger' | 'text' | 'onImage' | 'dark'
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'xl'
 
 interface ButtonProps {
@@ -27,6 +27,7 @@ const BACKGROUNDS: Record<ButtonVariant, string> = {
   primary: palette.action,
   secondary: palette.control,
   destructive: palette.errorBg,
+  danger: palette.error,
   text: 'transparent',
   onImage: palette.onImage,
   dark: palette.ink,
@@ -36,6 +37,7 @@ const FOREGROUNDS: Record<ButtonVariant, string> = {
   primary: palette.onAction,
   secondary: palette.ink,
   destructive: palette.error,
+  danger: palette.onAction,
   text: palette.actionText,
   onImage: palette.onImageText,
   dark: palette.background,

@@ -1,11 +1,13 @@
-import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import { PlatformColor, Pressable, Text, View } from 'react-native'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Ionicons } from '@expo/vector-icons'
 import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
+import type { NativeStackHeaderItemButton } from '@react-navigation/native-stack'
 import type { HouseholdOut } from '@carrot/shared/types'
 import { colors } from '../../theme/colors'
+import { palette } from '../../theme'
+import { EditHeaderTitle } from './EditHeader'
 import HeaderIconButton from './HeaderIconButton'
 import { styles } from './styles'
 
@@ -14,21 +16,6 @@ export const SHARE_PUBLICLY = 'share-publicly'
 
 type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
   getState(): NavigationState | undefined
-}
-
-const EditHeaderLeft = ({ onCancel }: { onCancel: () => void }) => {
-  const { t } = useTranslation()
-  return (
-    <Pressable
-      onPress={onCancel}
-      hitSlop={8}
-      style={({ pressed }) => [styles.headerBackBtn, pressed && { opacity: 0.5 }]}
-      accessibilityLabel={t('common.back')}
-    >
-      <Ionicons name="chevron-back" size={28} color={PlatformColor('label') as unknown as string} />
-      <Text style={styles.headerBackText}>{t('common.back')}</Text>
-    </Pressable>
-  )
 }
 
 const ViewHeaderRight = ({
@@ -132,6 +119,9 @@ export const useRecipeDetailHeader = ({
   handleEdit,
   editPending,
   handleCancelEdit,
+  handleSaveEdit,
+  editDirty,
+  editSaving,
   handleOpenMealPlanSheet,
   households,
   handlePressRecipeAction,
@@ -145,21 +135,55 @@ export const useRecipeDetailHeader = ({
   handleEdit: () => void
   editPending: boolean
   handleCancelEdit: () => void
+  handleSaveEdit: () => void
+  editDirty: boolean
+  editSaving: boolean
   handleOpenMealPlanSheet: () => void
   households: HouseholdOut[]
   handlePressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
   handleSharePublicly: () => void
 }) => {
+  const { t } = useTranslation()
+  const cancelRef = useRef(handleCancelEdit)
+  const saveRef = useRef(handleSaveEdit)
+
+  useEffect(() => {
+    cancelRef.current = handleCancelEdit
+    saveRef.current = handleSaveEdit
+  }, [handleCancelEdit, handleSaveEdit])
+
+  const handleCancelPress = useCallback(() => cancelRef.current(), [])
+  const handleSavePress = useCallback(() => saveRef.current(), [])
+
   useLayoutEffect(() => {
     if (editing) {
-      navigation.setOptions({
+      const cancelItem: NativeStackHeaderItemButton = {
+        type: 'button',
+        label: t('common.cancel'),
+        accessibilityLabel: t('common.cancel'),
+        onPress: handleCancelPress,
+      }
+      const saveItem: NativeStackHeaderItemButton = {
+        type: 'button',
+        label: t('common.save'),
+        variant: 'prominent',
+        tintColor: palette.action,
+        disabled: !editDirty || editSaving,
+        accessibilityLabel: t('common.save'),
+        onPress: handleSavePress,
+      }
+      const editHeaderOptions = {
         gestureEnabled: false,
         headerTransparent: true,
-        headerTitle: '',
         headerShadowVisible: false,
-        headerLeft: () => <EditHeaderLeft onCancel={handleCancelEdit} />,
+        headerLeft: undefined,
         headerRight: undefined,
-      })
+        headerTitle: () => <EditHeaderTitle dirty={editDirty} />,
+        unstable_headerLeftItems: () => [cancelItem],
+        unstable_headerRightItems: () => [saveItem],
+      }
+
+      navigation.setOptions(editHeaderOptions)
     } else {
       navigation.setOptions({
         gestureEnabled: true,
@@ -167,6 +191,8 @@ export const useRecipeDetailHeader = ({
         headerTitle: '',
         headerShadowVisible: false,
         headerLeft: undefined,
+        unstable_headerLeftItems: undefined,
+        unstable_headerRightItems: undefined,
         headerRight: () => (
           <ViewHeaderRight
             addMode={addMode}
@@ -187,7 +213,11 @@ export const useRecipeDetailHeader = ({
     editing,
     handleEdit,
     editPending,
-    handleCancelEdit,
+    editDirty,
+    editSaving,
+    handleCancelPress,
+    handleSavePress,
+    t,
     handleOpenMealPlanSheet,
     households,
     handlePressRecipeAction,

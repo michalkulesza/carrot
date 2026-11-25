@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import PopupSurface from '../../components/PopupSurface'
+import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 
 interface MyRecipeRowMenuProps {
   busy: boolean
@@ -112,7 +113,7 @@ const MyRecipeRowMenu = ({
                 className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-danger-50 transition-colors cursor-pointer"
                 onClick={handleDeleteEverywhereClick}
               >
-                {t('recipes.deleteEverywhere')}
+                {getFullDeleteLabel(t, showDeleteFromHousehold ? householdName : null)}
               </button>
             </PopupSurface>
           )}

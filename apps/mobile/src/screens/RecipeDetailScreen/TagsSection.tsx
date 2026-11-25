@@ -5,11 +5,40 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import type { RecipeOut, Tag } from '@carrot/shared/types'
 import { tTag } from '@carrot/shared/utils/tagUtils'
-import { TagPickerModal } from '../../components/RecipeFieldEditors'
+import { TagPickerModal } from '../../components/TagPickerModal'
 import { Pill } from '../../components/ui'
 import { styles } from './styles'
 
-const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
+interface TagItemProps {
+  tag: Tag
+  editing: boolean
+  onRemove: (tagId: string) => void
+}
+
+const TagItem = ({ tag, editing, onRemove }: TagItemProps) => {
+  const { t } = useTranslation()
+
+  const handleRemove = useCallback(() => onRemove(tag.id), [onRemove, tag.id])
+  const label = tTag(tag.name, t)
+
+  if (!editing) return <Pill label={label} size="md" />
+
+  return (
+    <Pill
+      label={label}
+      size="md"
+      onRemove={handleRemove}
+      removeAccessibilityLabel={t('tags.removeTag', { name: label })}
+    />
+  )
+}
+
+interface TagsSectionProps {
+  recipe: RecipeOut
+  editing?: boolean
+}
+
+const TagsSection = ({ recipe, editing = false }: TagsSectionProps) => {
   const { t } = useTranslation()
   const qc = useQueryClient()
   const { tags: allTags, create: createTagMutation, addToRecipe, removeFromRecipe } = useTags()
@@ -57,14 +86,16 @@ const TagsSection = ({ recipe }: { recipe: RecipeOut }) => {
   const handleOpenPicker = useCallback(() => setShowTagPicker(true), [])
   const handleClosePicker = useCallback(() => setShowTagPicker(false), [])
 
+  const addTagLabel = editing ? t('tags.addTagShort') : t('tags.addTag')
+
   return (
     <>
       <View style={styles.tagRow}>
         {recipe.tags.map((tag) => (
-          <Pill key={tag.id} label={tTag(tag.name, t)} size="md" />
+          <TagItem key={tag.id} tag={tag} editing={editing} onRemove={handleTagRemove} />
         ))}
         <Pill
-          label={`+ ${t('tags.addTag')}`}
+          label={`+ ${addTagLabel}`}
           tone="neutral"
           size="md"
           onPress={handleOpenPicker}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { PlatformColor, StyleSheet, View } from 'react-native'
-import { BottomSheetBackdrop, BottomSheetModal, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { StyleSheet, View } from 'react-native'
+import { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { renderSheetBackdrop, sheetStyles } from './ui/sheet'
 import { Picker } from '@react-native-picker/picker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
@@ -56,12 +57,6 @@ export const QuantityUnitPickerModal = ({
     else sheetRef.current?.dismiss()
   }, [visible])
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} appearsOnIndex={0} disappearsOnIndex={-1} />
-    ),
-    [],
-  )
 
   return (
     <BottomSheetModal
@@ -70,9 +65,9 @@ export const QuantityUnitPickerModal = ({
       enableDynamicSizing={false}
       enablePanDownToClose
       onDismiss={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.sheetHandle}
+      backdropComponent={renderSheetBackdrop}
+      backgroundStyle={sheetStyles.background}
+      handleIndicatorStyle={sheetStyles.handle}
     >
       <View style={sheetStyle}>
         <View style={styles.wheelRow}>
@@ -119,16 +114,6 @@ export const QuantityUnitPickerModal = ({
 
 const styles = StyleSheet.create({
   sheet: {},
-  sheetBackground: {
-    backgroundColor: PlatformColor('secondarySystemBackground') as unknown as string,
-  },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: PlatformColor('opaqueSeparator') as unknown as string,
-    borderRadius: 2,
-    alignSelf: 'center',
-  },
   wheelRow: { flexDirection: 'row', height: 280 },
   wheel: { flex: 1 },
 })

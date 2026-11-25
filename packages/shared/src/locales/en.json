@@ -184,7 +184,8 @@
     "inHouseholds": "In households",
     "addToHousehold": "Add to household",
     "deleteFromHousehold": "Delete from {{name}}",
-    "deleteEverywhere": "Delete from everywhere",
+    "deleteFromHouseholdAndLibrary": "Delete from {{name}} and my library",
+    "deleteFromLibrary": "Delete from my library",
     "missingIngredientsIssue": "Ingredients are missing from this recipe.",
     "missingInstructionsIssue": "Instructions are missing from this recipe.",
     "dismissExtractionIssue": "Dismiss this notice",
@@ -255,7 +256,12 @@
     "textSizeLarge": "Large text",
     "allergenSummaryContains": "Contains {{allergens}}",
     "allergenSummaryIncompleteTitle": "Allergen info may be incomplete",
-    "allergenSummaryIncomplete": "May be incomplete: a linked recipe has no ingredient list."
+    "allergenSummaryIncomplete": "May be incomplete: a linked recipe has no ingredient list.",
+    "noChanges": "No changes",
+    "editIngredient": "Edit ingredient",
+    "editStep": "Edit step",
+    "qtyPlaceholder": "Qty",
+    "shoppingAisle": "Shopping aisle"
   },
   "nav": {
     "recipes": "Recipes",
@@ -654,7 +660,13 @@
       "cuisine": "Cuisine",
       "time": "Time",
       "other": "Other"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Search or create a tag",
+    "createTagLabel": "Create tag",
+    "noMatchingTags": "No matching tags",
+    "selectedCount": "{{count}} selected",
+    "clearSearch": "Clear search"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok, or any recipe page URL",
@@ -918,11 +930,16 @@
     "sprig_other": "sprigs",
     "handful": "handful",
     "qtyLabel": "qty",
-    "unitLabel": "unit"
+    "unitLabel": "unit",
+    "none": "None"
   },
   "relatedRecipes": {
     "title": "Related recipes",
-    "add": "Edit related recipes"
+    "linkRecipe": "Link recipe",
+    "searchPlaceholder": "Search your recipes",
+    "noMatches": "No recipes match",
+    "selectedCount": "{{count}} selected",
+    "removeLink": "Unlink {{title}}"
   },
   "ads": {
     "advertisement": "Advertisement",

@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useApiClient } from '@carrot/shared/api/context'
 import type { RecipeOut } from '@carrot/shared/types'
+import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 import { useAuth } from '../../context/AuthContext'
 import { useHousehold } from '../../context/HouseholdContext'
 import { TOGGLE_HOUSEHOLD_PREFIX } from '../RecipeDetailScreen/useRecipeDetailHeader'
@@ -68,7 +69,7 @@ export const useRecipeActions = (getRecipe: (id: string) => RecipeOut | undefine
       }
       if (isAuthor) {
         buttons.push({
-          text: t('recipes.deleteEverywhere'),
+          text: getFullDeleteLabel(t, linkedToActiveHousehold ? activeHousehold?.name : null),
           style: 'destructive',
           onPress: () => handleConfirmDelete(recipe),
         })

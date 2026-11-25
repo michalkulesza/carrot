@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 
 interface EditDeleteZoneProps {
   confirming: boolean
@@ -54,7 +55,7 @@ const EditDeleteZone = ({
                 disabled={busy}
                 className={`${CONFIRM_BUTTON} bg-[#C53030] text-white`}
               >
-                {t('recipes.deleteEverywhere')}
+                {getFullDeleteLabel(t, householdName)}
               </button>
             )}
             <button

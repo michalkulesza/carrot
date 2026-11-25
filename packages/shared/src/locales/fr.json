@@ -184,7 +184,8 @@
     "inHouseholds": "Dans les foyers",
     "addToHousehold": "Ajouter au foyer",
     "deleteFromHousehold": "Supprimer de {{name}}",
-    "deleteEverywhere": "Supprimer partout",
+    "deleteFromHouseholdAndLibrary": "Supprimer de {{name}} et de ma bibliothèque",
+    "deleteFromLibrary": "Supprimer de ma bibliothèque",
     "missingIngredientsIssue": "Il manque des ingr?dients dans cette recette.",
     "missingInstructionsIssue": "Il manque des instructions dans cette recette.",
     "dismissExtractionIssue": "Masquer cet avis",
@@ -257,7 +258,12 @@
     "textSizeLarge": "Grand texte",
     "allergenSummaryContains": "Contient : {{allergens}}",
     "allergenSummaryIncompleteTitle": "Informations sur les allergènes peut-être incomplètes",
-    "allergenSummaryIncomplete": "Peut-être incomplet : une recette liée n’a pas de liste d’ingrédients."
+    "allergenSummaryIncomplete": "Peut-être incomplet : une recette liée n’a pas de liste d’ingrédients.",
+    "noChanges": "Aucune modification",
+    "editIngredient": "Modifier l’ingrédient",
+    "editStep": "Modifier l’étape",
+    "qtyPlaceholder": "Qté",
+    "shoppingAisle": "Rayon"
   },
   "nav": {
     "recipes": "Recettes",
@@ -656,7 +662,13 @@
       "cuisine": "Cuisine",
       "time": "Temps",
       "other": "Autre"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Rechercher ou créer un tag",
+    "createTagLabel": "Créer le tag",
+    "noMatchingTags": "Aucun tag correspondant",
+    "selectedCount": "{{count}} sélectionné(s)",
+    "clearSearch": "Effacer la recherche"
   },
   "addRecipe": {
     "urlPlaceholder": "URL Instagram, TikTok ou toute page de recette",
@@ -922,11 +934,16 @@
     "sprig_other": "brins",
     "handful": "poignée",
     "qtyLabel": "qté",
-    "unitLabel": "unité"
+    "unitLabel": "unité",
+    "none": "Aucune"
   },
   "relatedRecipes": {
     "title": "Recettes associées",
-    "add": "Modifier les recettes associées"
+    "linkRecipe": "Lier une recette",
+    "searchPlaceholder": "Rechercher dans vos recettes",
+    "noMatches": "Aucune recette correspondante",
+    "selectedCount": "{{count}} sélectionnée(s)",
+    "removeLink": "Dissocier {{title}}"
   },
   "ads": {
     "advertisement": "Publicité",

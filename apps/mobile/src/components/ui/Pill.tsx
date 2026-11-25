@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { SymbolView } from 'expo-symbols'
 import Animated from 'react-native-reanimated'
 import { palette, radius, typography, usePressScale } from '../../theme'
 import { lightHaptic } from './haptics'
@@ -12,6 +13,8 @@ interface PillProps {
   tone?: PillTone
   size?: PillSize
   onPress?: () => void
+  onRemove?: () => void
+  removeAccessibilityLabel?: string
   accessibilityLabel?: string
 }
 
@@ -33,8 +36,10 @@ const SIZE_BOXES = StyleSheet.create({
 const SIZE_TEXTS = { sm: typography.pillSmall, md: typography.pillMedium }
 
 const HIT_SLOP = { top: 6, bottom: 6, left: 4, right: 4 }
+const REMOVE_HIT_SLOP = { top: 12, bottom: 12, left: 8, right: 10 }
+const REMOVE_ICON_SIZE = 10
 
-const Pill = ({ label, tone = 'tint', size = 'sm', onPress, accessibilityLabel }: PillProps) => {
+const Pill = ({ label, tone = 'tint', size = 'sm', onPress, onRemove, removeAccessibilityLabel, accessibilityLabel }: PillProps) => {
   const { animatedStyle, onPressIn, onPressOut } = usePressScale()
 
   const containerStyle = useMemo(
@@ -48,6 +53,29 @@ const Pill = ({ label, tone = 'tint', size = 'sm', onPress, accessibilityLabel }
     lightHaptic()
     onPress?.()
   }, [onPress])
+
+  const handleRemove = useCallback(() => {
+    lightHaptic()
+    onRemove?.()
+  }, [onRemove])
+
+  if (onRemove) {
+    return (
+      <View style={[containerStyle, styles.removable]}>
+        <Text style={textStyle} numberOfLines={1}>
+          {label}
+        </Text>
+        <Pressable
+          onPress={handleRemove}
+          hitSlop={REMOVE_HIT_SLOP}
+          accessibilityRole="button"
+          accessibilityLabel={removeAccessibilityLabel ?? label}
+        >
+          <SymbolView name="xmark" size={REMOVE_ICON_SIZE} weight="bold" tintColor={FOREGROUNDS[tone]} />
+        </Pressable>
+      </View>
+    )
+  }
 
   if (!onPress) {
     return (
@@ -81,6 +109,7 @@ const Pill = ({ label, tone = 'tint', size = 'sm', onPress, accessibilityLabel }
 const styles = StyleSheet.create({
   container: { flexShrink: 1, alignSelf: 'flex-start' },
   pressable: { flexShrink: 1, alignSelf: 'flex-start' },
+  removable: { flexDirection: 'row', alignItems: 'center', gap: 6 },
 })
 
 export default memo(Pill)

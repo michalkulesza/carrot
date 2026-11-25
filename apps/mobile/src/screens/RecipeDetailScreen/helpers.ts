@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next'
 import type {
   AllergenFlag,
   IngredientLinkKind,
@@ -9,7 +10,7 @@ import type {
 import { getImperialCupQty } from '@carrot/shared/utils/ingredientScaling'
 import { effectiveAllergenFlag } from '@carrot/shared/utils/allergenKeys'
 import {
-  displayIngredientWithLocalizedUnit,
+  getIngredientQuantityCount,
   parseIngredient,
   serializeIngredient,
   type StructuredIngredient,
@@ -293,4 +294,37 @@ export const splitIngredient = (
   const unit = parsed.unit ? translateUnit(parsed.unit, qty) : ''
 
   return { quantity: [qty, unit].filter(Boolean).join(' '), name: parsed.name }
+}
+
+const COUNTABLE_UNITS = ['cl', 'piece', 'sprig', 'leaf', 'sheet']
+
+export const createUnitTranslator = (t: TFunction) => (unit: string, qty: string) =>
+  t(`units.${unit}`, {
+    count: COUNTABLE_UNITS.includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
+    defaultValue: unit,
+  })
+
+export const formatEditIngredientQuantity = (ingredient: StructuredIngredient, t: TFunction) =>
+  splitIngredient(serializeIngredient(ingredient), createUnitTranslator(t)).quantity
+
+export const isIngredientEmpty = (ingredient: StructuredIngredient) =>
+  !ingredient.qty.trim() && !ingredient.unit.trim() && !ingredient.name.trim()
+
+export type NutritionField = 'totalTimeMinutes' | 'kcal' | 'protein' | 'fat' | 'carbs'
+
+export const formatRecipeMeta = (
+  recipe: Pick<RecipeOut, 'total_time_minutes' | 'kcal_per_serving'>,
+  t: TFunction,
+) =>
+  [
+    recipe.total_time_minutes ? t('browse.minutes', { count: recipe.total_time_minutes }) : null,
+    recipe.kcal_per_serving ? t('browse.kcal', { count: recipe.kcal_per_serving }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+export const sanitizeNumber = (text: string) => {
+  const [whole, ...decimals] = text.replace(',', '.').replace(/[^\d.]/g, '').split('.')
+
+  return decimals.length > 0 ? `${whole}.${decimals.join('')}` : whole
 }

@@ -184,7 +184,8 @@
     "inHouseholds": "In Haushalten",
     "addToHousehold": "Zu Haushalt hinzufügen",
     "deleteFromHousehold": "Aus {{name}} entfernen",
-    "deleteEverywhere": "Überall löschen",
+    "deleteFromHouseholdAndLibrary": "Aus {{name}} und meiner Bibliothek löschen",
+    "deleteFromLibrary": "Aus meiner Bibliothek löschen",
     "missingIngredientsIssue": "In diesem Rezept fehlen Zutaten.",
     "missingInstructionsIssue": "In diesem Rezept fehlen Anweisungen.",
     "dismissExtractionIssue": "Hinweis ausblenden",
@@ -255,7 +256,12 @@
     "textSizeLarge": "Großer Text",
     "allergenSummaryContains": "Enthält {{allergens}}",
     "allergenSummaryIncompleteTitle": "Allergenangaben eventuell unvollständig",
-    "allergenSummaryIncomplete": "Eventuell unvollständig: Ein verknüpftes Rezept hat keine Zutatenliste."
+    "allergenSummaryIncomplete": "Eventuell unvollständig: Ein verknüpftes Rezept hat keine Zutatenliste.",
+    "noChanges": "Keine Änderungen",
+    "editIngredient": "Zutat bearbeiten",
+    "editStep": "Schritt bearbeiten",
+    "qtyPlaceholder": "Menge",
+    "shoppingAisle": "Supermarktabteilung"
   },
   "nav": {
     "recipes": "Rezepte",
@@ -654,7 +660,13 @@
       "cuisine": "Küche",
       "time": "Zeit",
       "other": "Sonstiges"
-    }
+    },
+    "addTagShort": "Tag",
+    "searchOrCreateTag": "Tag suchen oder erstellen",
+    "createTagLabel": "Tag erstellen",
+    "noMatchingTags": "Keine passenden Tags",
+    "selectedCount": "{{count}} ausgewählt",
+    "clearSearch": "Suche löschen"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok oder eine beliebige Rezept-URL",
@@ -918,11 +930,16 @@
     "sprig_other": "Zweige",
     "handful": "Handvoll",
     "qtyLabel": "Menge",
-    "unitLabel": "Einheit"
+    "unitLabel": "Einheit",
+    "none": "Keine"
   },
   "relatedRecipes": {
     "title": "Ähnliche Rezepte",
-    "add": "Ähnliche Rezepte bearbeiten"
+    "linkRecipe": "Rezept verknüpfen",
+    "searchPlaceholder": "Eigene Rezepte durchsuchen",
+    "noMatches": "Keine passenden Rezepte",
+    "selectedCount": "{{count}} ausgewählt",
+    "removeLink": "Verknüpfung zu {{title}} entfernen"
   },
   "ads": {
     "advertisement": "Werbung",
