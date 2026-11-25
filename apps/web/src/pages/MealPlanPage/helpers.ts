@@ -34,14 +34,19 @@ export const exportMealPlan = async (year: number, month: number) => {
   URL.revokeObjectURL(url)
 }
 
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 const buildWeekRows = (
   entries: MealPlanEntry[],
   year: number,
   month: number
 ): (string | null)[][] => {
-  const byDate = new Map(
-    entries.map((e) => [e.date, e.recipe?.title ?? e.text ?? ''])
-  )
+  const byDate = new Map<string, string[]>()
+  for (const entry of entries) {
+    const title = entry.recipe?.title ?? entry.text ?? ''
+    byDate.set(entry.date, [...(byDate.get(entry.date) ?? []), title])
+  }
   const firstDay = new Date(year, month - 1, 1)
   const lastDay = new Date(year, month, 0)
 
@@ -66,7 +71,8 @@ const buildWeekRows = (
       if (monday) {
         const d = new Date(monday)
         d.setDate(d.getDate() + i)
-        row.push(byDate.get(toISODate(d)) ?? null)
+        const titles = byDate.get(toISODate(d))
+        row.push(titles ? titles.map(escapeHtml).join('<br>') : null)
       } else {
         row.push(null)
       }

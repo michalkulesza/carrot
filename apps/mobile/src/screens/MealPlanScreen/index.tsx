@@ -1,213 +1,112 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import {
-  ActivityIndicator,
-  Alert,
-  Animated,
-  ListRenderItemInfo,
-  Modal,
-  Pressable,
-  Text,
-  View,
-} from 'react-native'
-import { useTranslation } from 'react-i18next'
-import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
-import { useHeaderHeight } from 'expo-router/react-navigation'
-import { useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
-import * as Haptics from 'expo-haptics'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ActivityIndicator, Modal, Text, View } from 'react-native'
+import { useIsFocused, useLocalSearchParams } from 'expo-router'
 import { GestureDetector } from 'react-native-gesture-handler'
-import ReanimatedAnimated from 'react-native-reanimated'
-import { SafeAreaView } from 'react-native-screens/experimental'
-import { useRecipes } from '@carrot/shared/hooks/useRecipes'
-import { useApiClient } from '@carrot/shared/api/context'
-import { useMealPlanStream } from '@carrot/shared/hooks/useMealPlanStream'
-import { useMoveMealPlanEntry } from '@carrot/shared/hooks/useMoveMealPlanEntry'
+import Animated, { useAnimatedRef } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 import type { MealPlanEntry } from '@carrot/shared/types'
-import { toYYYYMM, toISODate } from '@carrot/shared/utils/dateUtils'
-import { colors } from '../../theme/colors'
-import RecipePicker from '../../components/RecipePicker'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
+import { toISODate, toYYYYMM, parseISODateLocal } from '@carrot/shared/utils/dateUtils'
+import { palette } from '../../theme'
+import TabHeader from '../../components/TabHeader'
+import { IconButton } from '../../components/ui'
+import { useTabHeaderHeight } from '../../hooks/useTabHeaderHeight'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
-import { usePlanMealForDate } from '../../hooks/usePlanMealForDate'
-import { buildListItems, DAY_ROW_HEIGHT, MONTH_HEADER_HEIGHT, type ListItem } from './helpers'
+import DayCard from './DayCard'
+import DishDrawer from './DishDrawer'
+import DragPreview from './DragPreview'
+import LoadWeekButton from './LoadWeekButton'
+import ThisWeekCard from './ThisWeekCard'
 import { styles } from './styles'
-import DayRow from './DayRow'
-import DragPreviewCard from './DragPreviewCard'
-import DropTargetHighlight from './DropTargetHighlight'
-import { useExportMealPlanPdf } from './useExportMealPlanPdf'
-import { useMealPlanHeader } from './useMealPlanHeader'
-import { useCenterOnToday } from './useCenterOnToday'
+import { useDishActions } from './useDishActions'
 import { useDragToMove } from './useDragToMove'
+import { useExportMealPlanPdf } from './useExportMealPlanPdf'
+import { useMealPlanWeeks } from './useMealPlanWeeks'
+import { useScrollToCurrentWeek } from './useScrollToCurrentWeek'
+
+const DEFAULT_WEEK_START_DAY = 1
+const NO_ENTRIES: MealPlanEntry[] = []
+const TAB_BAR_HEIGHT = 49
 
 const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
-  const navigation = useNavigation()
-  const router = useRouter()
+  const isFocused = useIsFocused()
+  const { top: topSafeArea, bottom: bottomSafeArea } = useSafeAreaInsets()
+  const { headerHeight, scrollPaddingTop, handleHeaderLayout } = useTabHeaderHeight()
   const { focusToday, planToday } = useLocalSearchParams<{ focusToday?: string; planToday?: string }>()
-  const api = useApiClient()
-  const qc = useQueryClient()
-  const { recipes } = useRecipes()
+  const { preferences } = usePreferences()
 
-  useMealPlanStream()
+  const locale = i18n.language
+  const weekStartDay = preferences?.week_start_day ?? DEFAULT_WEEK_START_DAY
 
-  const today = useMemo(() => {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    return d
-  }, [])
+  const todayIso = useMemo(() => toISODate(new Date()), [isFocused])
 
-  const todayIso = useMemo(() => toISODate(today), [today])
-  const currentMonth = useMemo(() => toYYYYMM(today), [today])
+  const { weeks, currentWeekStartIso, entriesByDate, isLoading, loadPreviousWeek, loadNextWeek, resetWeeks } =
+    useMealPlanWeeks({ todayIso, weekStartDay, locale })
 
-  const { exporting, handleExportPdf } = useExportMealPlanPdf(currentMonth)
-  useMealPlanHeader({ navigation, exporting, onExportPdf: handleExportPdf })
-
-  const { items, offsets, todayIndex, months, contentHeight } = useMemo(
-    () => buildListItems(today, todayIso, i18n.language),
-    [today, todayIso, i18n.language],
+  const currentWeekDays = useMemo(() => weeks.find((week) => week.isCurrent)?.days ?? [], [weeks])
+  const allDays = useMemo(() => weeks.flatMap((week) => week.days), [weeks])
+  const plannedCount = useMemo(() => currentWeekDays.filter((day) => day.entries.length > 0).length, [currentWeekDays])
+  const nextFreeDay = useMemo(
+    () => currentWeekDays.find((day) => !day.isPast && day.entries.length === 0) ?? null,
+    [currentWeekDays],
   )
 
-  const queries = useQueries({
-    queries: months.map((month) => ({
-      queryKey: ['mealPlan', month],
-      queryFn: () => api.listMealPlan(month),
-    })),
-  })
-
-  const entriesByDate = useMemo(() => {
-    const map = new Map<string, MealPlanEntry>()
-    for (const q of queries) {
-      for (const entry of (q.data ?? [])) {
-        map.set(entry.date, entry)
-      }
-    }
-    return map
-  }, [queries])
-
-  const isLoading = queries.some((q) => q.isLoading)
-  // Gate our own spinner on auth being ready so it doesn't stack with the root loadingOverlay.
+  const { exporting, handleExportPdf } = useExportMealPlanPdf(toYYYYMM(parseISODateLocal(currentWeekStartIso)))
   const { showSpinner } = useScreenLoading(isLoading)
 
-  const deleteEntry = useMutation({
-    mutationFn: api.deleteMealPlanEntry,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['mealPlan'] }),
+  const [dishDrawerDate, setDishDrawerDate] = useState<string | null>(null)
+  const dishDrawerEntries = (dishDrawerDate ? entriesByDate.get(dishDrawerDate) : undefined) ?? NO_ENTRIES
+  const closeDishDrawer = useCallback(() => setDishDrawerDate(null), [])
+  const { handleDishPress, handleMove } = useDishActions({ weekStartDay, locale })
+
+  const scrollRef = useAnimatedRef<Animated.ScrollView>()
+  const drag = useDragToMove({
+    scrollRef,
+    contentInsetTop: topSafeArea,
+    contentInsetBottom: bottomSafeArea + TAB_BAR_HEIGHT,
+    topInset: headerHeight,
+    onDrop: handleMove,
+  })
+  const { handleDaysLayout: handleDragDaysLayout, pruneDayLayouts } = drag
+
+  const draggingEntry = useMemo(() => {
+    if (!drag.dragging) return null
+
+    return allDays.flatMap((day) => day.entries).find((entry) => entry.id === drag.dragging?.entryId) ?? null
+  }, [allDays, drag.dragging])
+
+  const highlightedIso = drag.hoverIso && drag.hoverIso !== drag.dragging?.fromIso ? drag.hoverIso : null
+
+  const { handleDaysLayout, handleCurrentWeekLayout, scrollToCurrentWeek, releasePin } = useScrollToCurrentWeek({
+    scrollRef,
+    ready: !isLoading,
+    minOffset: -topSafeArea,
+    topOffset: headerHeight,
+    onDaysLayout: handleDragDaysLayout,
   })
 
-  const moveEntry = useMoveMealPlanEntry()
+  useEffect(() => {
+    pruneDayLayouts(allDays.map((day) => day.iso))
+  }, [allDays, pruneDayLayouts])
 
-  const headerHeight = useHeaderHeight()
-  const isFocused = useIsFocused()
-  const {
-    listRef,
-    listOpacity,
-    handleListLayout,
-    handleScrollBeginDrag,
-    handleScrollToToday,
-  } = useCenterOnToday({ todayIndex, isFocused })
+  const handleLoadPreviousWeek = useCallback(() => {
+    releasePin()
+    loadPreviousWeek()
+  }, [releasePin, loadPreviousWeek])
 
-  const handleDrop = useCallback(
-    (from: string, to: string) => {
-      moveEntry.mutate(
-        { from, to },
-        {
-          onError: () => Alert.alert(t('mealPlan.moveFailed')),
-        },
-      )
-    },
-    [moveEntry, t],
-  )
-
-  const {
-    draggingIsoDate,
-    previewIsoDate,
-    gesture,
-    scrollHandler,
-    handleContainerLayout,
-    previewCardStyle,
-    highlightStyle,
-  } = useDragToMove({ listRef, items, offsets, contentHeight, entriesByDate, onDrop: handleDrop })
-
-  const getItemLayout = useCallback(
-    (_: unknown, index: number) => ({
-      length: items[index]?.type === 'month' ? MONTH_HEADER_HEIGHT : DAY_ROW_HEIGHT,
-      offset: offsets[index] ?? 0,
-      index,
-    }),
-    [items, offsets],
-  )
-
-  const { pickerRef, openForDate, handlePick, handleAddText, handleRemove, handleClose } = usePlanMealForDate()
-
-  const handleDayPress = useCallback((date: Date) => {
-    const isoDate = toISODate(date)
-    const existing = entriesByDate.get(isoDate)
-
-    if (existing) {
-      const changeMealAction = {
-        text: existing.recipe ? t('mealPlan.changeRecipe') : t('mealPlan.changeMeal'),
-        onPress: () => {
-          openForDate(date)
-        },
-      }
-      const removeMealAction = {
-        text: t('mealPlan.removeFromPlan'),
-        style: 'destructive' as const,
-        onPress: () => deleteEntry.mutate(isoDate),
-      }
-      const actions = existing.recipe
-        ? [
-            {
-              text: t('common.view'),
-              onPress: () => router.push({ pathname: '/recipe/[id]', params: { id: existing.recipe!.id, title: existing.recipe!.title } }),
-            },
-            changeMealAction,
-            removeMealAction,
-          ]
-        : [changeMealAction, removeMealAction]
-
-      Alert.alert(existing.recipe?.title ?? existing.text ?? '', undefined, [
-        ...actions,
-        { text: t('common.cancel'), style: 'cancel' },
-      ])
-    } else {
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      openForDate(date)
-    }
-  }, [entriesByDate, t, router, deleteEntry, openForDate])
-
-  const renderItem = useCallback(
-    ({ item }: ListRenderItemInfo<ListItem>) => {
-      if (item.type === 'month') {
-        return (
-          <View style={styles.monthRow}>
-            <Text style={styles.monthRowLabel}>{item.label}</Text>
-          </View>
-        )
-      }
-      return (
-        <DayRow
-          date={item.date}
-          entry={entriesByDate.get(item.isoDate)}
-          isToday={item.isoDate === todayIso}
-          onPress={handleDayPress}
-          isDraggingSource={item.isoDate === draggingIsoDate}
-        />
-      )
-    },
-    [entriesByDate, todayIso, handleDayPress, draggingIsoDate],
-  )
-
-  const getTodayBtnStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [styles.todayBtn, pressed && { opacity: 0.8 }],
-    [],
-  )
-
-  const handleTodayPress = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    handleScrollToToday()
-  }, [handleScrollToToday])
+  const handleLoadNextWeek = useCallback(() => {
+    releasePin()
+    loadNextWeek()
+  }, [releasePin, loadNextWeek])
 
   useEffect(() => {
-    if (focusToday) handleScrollToToday()
-  }, [focusToday, handleScrollToToday])
+    if (!focusToday) return
+
+    resetWeeks()
+    scrollToCurrentWeek()
+  }, [focusToday, resetWeeks, scrollToCurrentWeek])
 
   const handledPlanTodayRef = useRef<string | undefined>(undefined)
 
@@ -215,83 +114,90 @@ const MealPlanScreen = () => {
     if (!planToday || !isFocused || handledPlanTodayRef.current === planToday) return
 
     handledPlanTodayRef.current = planToday
-    handleScrollToToday()
-    openForDate(today)
-  }, [planToday, isFocused, handleScrollToToday, openForDate, today])
-
-  const draggingEntry = previewIsoDate ? entriesByDate.get(previewIsoDate) : undefined
-  const visibleFrameStyle = useMemo(() => ({ paddingTop: headerHeight }), [headerHeight])
-
-  const handleListContainerLayout = useCallback(
-    (e: Parameters<typeof handleListLayout>[0]) => {
-      handleListLayout(e)
-      handleContainerLayout(e)
-    },
-    [handleListLayout, handleContainerLayout],
-  )
+    scrollToCurrentWeek()
+    setDishDrawerDate(todayIso)
+  }, [planToday, isFocused, todayIso, scrollToCurrentWeek])
 
   return (
-    <View style={styles.container}>
-      <SafeAreaView edges={{ bottom: true }} style={styles.safeArea}>
-        <View style={[styles.visibleFrame, visibleFrameStyle]}>
-          <Animated.View style={[styles.list, { opacity: listOpacity }]}>
-            <GestureDetector gesture={gesture}>
-              <View style={styles.list} onLayout={handleListContainerLayout}>
-                <ReanimatedAnimated.FlatList
-                  ref={listRef}
-                  data={items}
-                  keyExtractor={(item: ListItem) => item.key}
-                  renderItem={renderItem}
-                  getItemLayout={getItemLayout}
-                  initialScrollIndex={todayIndex}
-                  onScroll={scrollHandler}
-                  onScrollBeginDrag={handleScrollBeginDrag}
-                  style={styles.list}
-                  contentContainerStyle={styles.listContent}
-                  contentInsetAdjustmentBehavior="never"
-                  showsVerticalScrollIndicator={false}
-                  windowSize={5}
-                  maxToRenderPerBatch={20}
-                  initialNumToRender={14}
-                />
-                <DropTargetHighlight style={highlightStyle} />
-                <DragPreviewCard entry={draggingEntry} style={previewCardStyle} />
-              </View>
-            </GestureDetector>
-            <Pressable
-              style={getTodayBtnStyle}
-              onPress={handleTodayPress}
-              accessibilityLabel={t('mealPlan.today')}
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.todayBtnText}>{t('mealPlan.today')}</Text>
-            </Pressable>
-          </Animated.View>
-        </View>
-      </SafeAreaView>
+    <View ref={drag.containerRef} style={styles.container} collapsable={false} onLayout={drag.handleContainerLayout}>
+      <GestureDetector gesture={drag.scrollGesture}>
+        <Animated.ScrollView
+          ref={scrollRef}
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: scrollPaddingTop }]}
+          scrollIndicatorInsets={{ top: scrollPaddingTop }}
+          contentInsetAdjustmentBehavior="automatic"
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={drag.scrollHandler}
+          onScrollBeginDrag={releasePin}
+          onContentSizeChange={drag.handleContentSizeChange}
+        >
+          <View style={styles.days} onLayout={handleDaysLayout}>
+            <LoadWeekButton label={t('mealPlan.showPreviousWeek')} direction="up" onPress={handleLoadPreviousWeek} />
+            {weeks.map((week) => (
+              <Fragment key={week.startIso}>
+                <Text
+                  style={styles.weekHeader}
+                  accessibilityRole="header"
+                  onLayout={week.isCurrent ? handleCurrentWeekLayout : undefined}
+                >
+                  {week.label}
+                </Text>
+                {week.days.map((day) => (
+                  <DayCard
+                    key={day.iso}
+                    day={day}
+                    isDropTarget={day.iso === highlightedIso}
+                    draggingEntryId={drag.dragging?.entryId ?? null}
+                    createGesture={drag.createGesture}
+                    onAdd={setDishDrawerDate}
+                    onDishPress={handleDishPress}
+                    onDayLayout={drag.registerDayLayout}
+                  />
+                ))}
+              </Fragment>
+            ))}
+            <LoadWeekButton label={t('mealPlan.showNextWeek')} direction="down" onPress={handleLoadNextWeek} />
+          </View>
+        </Animated.ScrollView>
+      </GestureDetector>
+      <TabHeader
+        title={t('nav.mealPlan')}
+        actions={
+          <IconButton
+            variant="glass"
+            icon="printer"
+            accessibilityLabel={t('shoppingList.exportPdf')}
+            onPress={handleExportPdf}
+            disabled={exporting}
+          />
+        }
+        onLayout={handleHeaderLayout}
+      >
+        <ThisWeekCard
+          days={currentWeekDays}
+          plannedCount={plannedCount}
+          nextFreeDay={nextFreeDay}
+          onPlan={setDishDrawerDate}
+          style={styles.weekCardInHeader}
+        />
+      </TabHeader>
+      <DragPreview entry={draggingEntry} animatedStyle={drag.previewStyle} />
 
       {showSpinner && (
         <View style={styles.loadingOverlay} pointerEvents="none">
-          <ActivityIndicator size="small" color={colors.brand} />
+          <ActivityIndicator size="small" color={palette.action} />
         </View>
       )}
 
       <Modal visible={exporting} transparent animationType="none" statusBarTranslucent>
         <View style={styles.exportOverlay}>
-          <ActivityIndicator size="large" color={colors.brand} />
+          <ActivityIndicator size="large" color={palette.action} />
         </View>
       </Modal>
 
-      <RecipePicker
-        ref={pickerRef}
-        currentRecipeId={null}
-        recipes={recipes}
-        onAddText={handleAddText}
-        onPick={handlePick}
-        onRemove={handleRemove}
-        onClose={handleClose}
-      />
+      <DishDrawer dateIso={dishDrawerDate} existingEntries={dishDrawerEntries} onClose={closeDishDrawer} />
     </View>
   )
 }

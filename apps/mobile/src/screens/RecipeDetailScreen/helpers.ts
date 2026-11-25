@@ -312,17 +312,6 @@ export const isIngredientEmpty = (ingredient: StructuredIngredient) =>
 
 export type NutritionField = 'totalTimeMinutes' | 'kcal' | 'protein' | 'fat' | 'carbs'
 
-export const formatRecipeMeta = (
-  recipe: Pick<RecipeOut, 'total_time_minutes' | 'kcal_per_serving'>,
-  t: TFunction,
-) =>
-  [
-    recipe.total_time_minutes ? t('browse.minutes', { count: recipe.total_time_minutes }) : null,
-    recipe.kcal_per_serving ? t('browse.kcal', { count: recipe.kcal_per_serving }) : null,
-  ]
-    .filter(Boolean)
-    .join(' · ')
-
 export const sanitizeNumber = (text: string) => {
   const [whole, ...decimals] = text.replace(',', '.').replace(/[^\d.]/g, '').split('.')
 

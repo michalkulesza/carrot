@@ -625,7 +625,28 @@
     "moveToDay": "Move to another day",
     "moveTo": "Move to…",
     "moveFailed": "Couldn't move the dish. Please try again.",
-    "dragHint": "Double tap and hold, then drag to move this dish to another day."
+    "dragHint": "Double tap and hold, then drag to move this dish to another day.",
+    "addToDay": "Add to {{day}}",
+    "dishSearchPlaceholder": "Search recipes or type a quick meal",
+    "addQuickMeal": "Add “{{text}}”",
+    "quickMealHint": "Quick meal · no recipe needed",
+    "quickMeal": "Quick meal",
+    "alreadyOnDay": "Already on this day",
+    "thisWeek": "This week",
+    "plannedCount": "{{count}} of 7 planned",
+    "dayIsFree": "{{day}} is still free",
+    "pickRecipeOrQuick": "Pick a recipe or a quick meal",
+    "planIt": "Plan it",
+    "addAnotherDish": "Add another dish to {{day}}",
+    "addDishTo": "Add a dish on {{day}}",
+    "nextWeekEllipsis": "Next week…",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "removeFailed": "Couldn’t remove the dish. Please try again.",
+    "addFailed": "Couldn’t add the dishes. Please try again.",
+    "removeDishChip": "Remove {{title}}",
+    "showPreviousWeek": "Show previous week",
+    "showNextWeek": "Show next week"
   },
   "households": {
     "switchContext": "Switch household",
@@ -664,9 +685,7 @@
     "addTagShort": "Tag",
     "searchOrCreateTag": "Search or create a tag",
     "createTagLabel": "Create tag",
-    "noMatchingTags": "No matching tags",
-    "selectedCount": "{{count}} selected",
-    "clearSearch": "Clear search"
+    "noMatchingTags": "No matching tags"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok, or any recipe page URL",
@@ -938,7 +957,6 @@
     "linkRecipe": "Link recipe",
     "searchPlaceholder": "Search your recipes",
     "noMatches": "No recipes match",
-    "selectedCount": "{{count}} selected",
     "removeLink": "Unlink {{title}}"
   },
   "ads": {
@@ -1036,5 +1054,10 @@
     "clipboardSubtitle": "Tap Import to add it",
     "clipboardImport": "Import",
     "close": "Close menu"
+  },
+  "selectionDrawer": {
+    "selectedCount": "{{count}} selected",
+    "clearSearch": "Clear search",
+    "allRecipes": "All recipes"
   }
 }

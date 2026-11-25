@@ -1,76 +1,79 @@
-import { toYYYYMM, toISODate, formatMonthYear } from '@carrot/shared/utils/dateUtils'
+import type { MealPlanEntry } from '@carrot/shared/types'
+import { getWeekDates } from '@carrot/shared/hooks/useMealPlanDays'
+import { parseISODateLocal, toISODate } from '@carrot/shared/utils/dateUtils'
 
-export const DAYS_BEFORE = 60
-export const DAYS_AFTER = 180
-export const DAY_ROW_HEIGHT = 72
-export const MONTH_HEADER_HEIGHT = 36
-// Width of the drag-handle hit zone at the right edge of the list, used both by
-// DayRow's visible handle icon and the drag gesture's hitSlop so only that zone
-// can start a drag — everything else (thumbnail, text, the row's own tap) is untouched.
-export const DRAG_HANDLE_ZONE_WIDTH = 56
+export const DAYS_IN_WEEK = 7
 
-export type ListItem =
-  | { type: 'month'; key: string; label: string }
-  | { type: 'day'; key: string; date: Date; isoDate: string }
+export interface WeekDay {
+  iso: string
+  date: Date
+  dayNumber: number
+  weekdayShort: string
+  weekdayLong: string
+  isToday: boolean
+  isPast: boolean
+  entries: MealPlanEntry[]
+}
 
-export const buildListItems = (today: Date, todayIso: string, language: string) => {
-  const items: ListItem[] = []
-  const offsets: number[] = []
-  const monthSet = new Set<string>()
-  let offset = 0
-  let todayIndex = 0
-  let prevMonth = ''
+export const getWeekStartIso = (date: Date, weekStartDay: number): string => {
+  const offset = (date.getDay() - weekStartDay + DAYS_IN_WEEK) % DAYS_IN_WEEK
 
-  const d = new Date(today)
-  d.setDate(d.getDate() - DAYS_BEFORE)
+  return toISODate(new Date(date.getFullYear(), date.getMonth(), date.getDate() - offset))
+}
 
-  for (let i = 0; i < DAYS_BEFORE + DAYS_AFTER + 1; i++) {
-    const monthKey = toYYYYMM(d)
-    monthSet.add(monthKey)
+export const shiftWeek = (weekStartIso: string, weeks: number): string => {
+  const start = parseISODateLocal(weekStartIso)
 
-    if (monthKey !== prevMonth) {
-      prevMonth = monthKey
-      offsets.push(offset)
-      items.push({
-        type: 'month',
-        key: `month-${monthKey}`,
-        label: formatMonthYear(d, language),
-      })
-      offset += MONTH_HEADER_HEIGHT
+  return toISODate(new Date(start.getFullYear(), start.getMonth(), start.getDate() + weeks * DAYS_IN_WEEK))
+}
+
+export const formatWeekRange = (weekStartIso: string, locale: string): string => {
+  const [startIso, , , , , , endIso] = getWeekDates(weekStartIso)
+  const start = parseISODateLocal(startIso)
+  const end = parseISODateLocal(endIso)
+
+  const dayMonth = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' })
+  const sameMonth = start.getMonth() === end.getMonth()
+
+  if (sameMonth) return `${start.getDate()} – ${dayMonth.format(end)}`
+
+  return `${dayMonth.format(start)} – ${dayMonth.format(end)}`
+}
+
+export const formatDayMonth = (iso: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(parseISODateLocal(iso))
+
+export const formatWeekdayLong = (iso: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(parseISODateLocal(iso))
+
+export const formatWeekdayDayMonth = (iso: string, locale: string): string =>
+  new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }).format(
+    parseISODateLocal(iso),
+  )
+
+export const buildWeekDays = (
+  weekStartIso: string,
+  entriesByDate: Map<string, MealPlanEntry[]>,
+  todayIso: string,
+  locale: string,
+): WeekDay[] => {
+  const weekday = (date: Date, style: 'short' | 'long') =>
+    new Intl.DateTimeFormat(locale, { weekday: style }).format(date)
+
+  return getWeekDates(weekStartIso).map((iso) => {
+    const date = parseISODateLocal(iso)
+
+    return {
+      iso,
+      date,
+      dayNumber: date.getDate(),
+      weekdayShort: weekday(date, 'short'),
+      weekdayLong: weekday(date, 'long'),
+      isToday: iso === todayIso,
+      isPast: iso < todayIso,
+      entries: entriesByDate.get(iso) ?? [],
     }
-
-    const iso = toISODate(d)
-    if (iso === todayIso) todayIndex = items.length
-
-    offsets.push(offset)
-    items.push({ type: 'day', key: iso, date: new Date(d), isoDate: iso })
-    offset += DAY_ROW_HEIGHT
-
-    d.setDate(d.getDate() + 1)
-  }
-
-  const lastItem = items[items.length - 1]
-  const lastHeight = lastItem?.type === 'month' ? MONTH_HEADER_HEIGHT : DAY_ROW_HEIGHT
-  const contentHeight = (offsets.at(-1) ?? 0) + lastHeight
-
-  return { items, offsets, todayIndex, months: Array.from(monthSet), contentHeight }
+  })
 }
 
-export const findDayIndexAtContentY = (offsets: number[], items: ListItem[], contentY: number): number => {
-  'worklet'
-  if (offsets.length === 0 || contentY < offsets[0]) return -1
-
-  let lo = 0
-  let hi = offsets.length - 1
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi + 1) / 2)
-    if (offsets[mid] <= contentY) lo = mid
-    else hi = mid - 1
-  }
-
-  const item = items[lo]
-  if (!item) return -1
-  const height = item.type === 'month' ? MONTH_HEADER_HEIGHT : DAY_ROW_HEIGHT
-  if (contentY >= offsets[lo] + height) return -1
-  return item.type === 'day' ? lo : -1
-}
+export const getEntryTitle = (entry: MealPlanEntry): string => entry.recipe?.title ?? entry.text ?? ''

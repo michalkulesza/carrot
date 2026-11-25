@@ -627,7 +627,28 @@
     "moveToDay": "Mover a otro día",
     "moveTo": "Mover a…",
     "moveFailed": "No se pudo mover el plato. Inténtalo de nuevo.",
-    "dragHint": "Toca dos veces y mantén presionado, luego arrastra para mover este plato a otro día."
+    "dragHint": "Toca dos veces y mantén presionado, luego arrastra para mover este plato a otro día.",
+    "addToDay": "Añadir a {{day}}",
+    "dishSearchPlaceholder": "Busca recetas o escribe una comida rápida",
+    "addQuickMeal": "Añadir «{{text}}»",
+    "quickMealHint": "Comida rápida · sin receta",
+    "quickMeal": "Comida rápida",
+    "alreadyOnDay": "Ya está en este día",
+    "thisWeek": "Esta semana",
+    "plannedCount": "{{count}} de 7 planificados",
+    "dayIsFree": "{{day}} sigue libre",
+    "pickRecipeOrQuick": "Elige una receta o una comida rápida",
+    "planIt": "Planificar",
+    "addAnotherDish": "Añadir otro plato el {{day}}",
+    "addDishTo": "Añadir un plato el {{day}}",
+    "nextWeekEllipsis": "Semana siguiente…",
+    "prevWeek": "Semana anterior",
+    "nextWeek": "Semana siguiente",
+    "removeFailed": "No se pudo quitar el plato. Inténtalo de nuevo.",
+    "addFailed": "No se pudieron añadir los platos. Inténtalo de nuevo.",
+    "removeDishChip": "Quitar {{title}}",
+    "showPreviousWeek": "Mostrar la semana anterior",
+    "showNextWeek": "Mostrar la semana siguiente"
   },
   "households": {
     "switchContext": "Cambiar de hogar",
@@ -666,9 +687,7 @@
     "addTagShort": "Etiqueta",
     "searchOrCreateTag": "Buscar o crear una etiqueta",
     "createTagLabel": "Crear etiqueta",
-    "noMatchingTags": "No hay etiquetas coincidentes",
-    "selectedCount": "{{count}} seleccionadas",
-    "clearSearch": "Borrar búsqueda"
+    "noMatchingTags": "No hay etiquetas coincidentes"
   },
   "addRecipe": {
     "urlPlaceholder": "URL de Instagram, TikTok o cualquier página de recetas",
@@ -942,7 +961,6 @@
     "linkRecipe": "Vincular receta",
     "searchPlaceholder": "Buscar en tus recetas",
     "noMatches": "Ninguna receta coincide",
-    "selectedCount": "{{count}} seleccionadas",
     "removeLink": "Desvincular {{title}}"
   },
   "ads": {
@@ -1040,5 +1058,10 @@
     "clipboardSubtitle": "Toca Importar para añadirlo",
     "clipboardImport": "Importar",
     "close": "Cerrar menú"
+  },
+  "selectionDrawer": {
+    "selectedCount": "{{count}} seleccionadas",
+    "clearSearch": "Borrar búsqueda",
+    "allRecipes": "Todas las recetas"
   }
 }

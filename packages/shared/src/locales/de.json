@@ -625,7 +625,28 @@
     "moveToDay": "Auf einen anderen Tag verschieben",
     "moveTo": "Verschieben nach…",
     "moveFailed": "Das Gericht konnte nicht verschoben werden. Bitte versuche es erneut.",
-    "dragHint": "Doppeltippen und halten, dann ziehen, um dieses Gericht auf einen anderen Tag zu verschieben."
+    "dragHint": "Doppeltippen und halten, dann ziehen, um dieses Gericht auf einen anderen Tag zu verschieben.",
+    "addToDay": "Zu {{day}} hinzufügen",
+    "dishSearchPlaceholder": "Rezepte suchen oder schnelle Mahlzeit eingeben",
+    "addQuickMeal": "„{{text}}“ hinzufügen",
+    "quickMealHint": "Schnelle Mahlzeit · kein Rezept nötig",
+    "quickMeal": "Schnelle Mahlzeit",
+    "alreadyOnDay": "Bereits an diesem Tag",
+    "thisWeek": "Diese Woche",
+    "plannedCount": "{{count}} von 7 geplant",
+    "dayIsFree": "{{day}} ist noch frei",
+    "pickRecipeOrQuick": "Wähle ein Rezept oder eine schnelle Mahlzeit",
+    "planIt": "Planen",
+    "addAnotherDish": "Weiteres Gericht für {{day}} hinzufügen",
+    "addDishTo": "Gericht für {{day}} hinzufügen",
+    "nextWeekEllipsis": "Nächste Woche…",
+    "prevWeek": "Vorherige Woche",
+    "nextWeek": "Nächste Woche",
+    "removeFailed": "Das Gericht konnte nicht entfernt werden. Bitte versuche es erneut.",
+    "addFailed": "Die Gerichte konnten nicht hinzugefügt werden. Bitte versuche es erneut.",
+    "removeDishChip": "{{title}} entfernen",
+    "showPreviousWeek": "Vorherige Woche anzeigen",
+    "showNextWeek": "Nächste Woche anzeigen"
   },
   "households": {
     "switchContext": "Haushalt wechseln",
@@ -664,9 +685,7 @@
     "addTagShort": "Tag",
     "searchOrCreateTag": "Tag suchen oder erstellen",
     "createTagLabel": "Tag erstellen",
-    "noMatchingTags": "Keine passenden Tags",
-    "selectedCount": "{{count}} ausgewählt",
-    "clearSearch": "Suche löschen"
+    "noMatchingTags": "Keine passenden Tags"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok oder eine beliebige Rezept-URL",
@@ -938,7 +957,6 @@
     "linkRecipe": "Rezept verknüpfen",
     "searchPlaceholder": "Eigene Rezepte durchsuchen",
     "noMatches": "Keine passenden Rezepte",
-    "selectedCount": "{{count}} ausgewählt",
     "removeLink": "Verknüpfung zu {{title}} entfernen"
   },
   "ads": {
@@ -1036,5 +1054,10 @@
     "clipboardSubtitle": "Tippe auf Importieren, um ihn hinzuzufügen",
     "clipboardImport": "Importieren",
     "close": "Menü schließen"
+  },
+  "selectionDrawer": {
+    "selectedCount": "{{count}} ausgewählt",
+    "clearSearch": "Suche löschen",
+    "allRecipes": "Alle Rezepte"
   }
 }

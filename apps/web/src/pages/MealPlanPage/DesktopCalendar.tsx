@@ -11,19 +11,22 @@ import {
 import { buildCalendarCells } from './helpers'
 import CalendarDayCell from './CalendarDayCell'
 
+const NO_ENTRIES: MealPlanEntry[] = []
+
 interface DesktopCalendarProps {
   viewYear: number
   viewMonth: number
   locale: string
-  entriesByDate: Map<string, MealPlanEntry>
+  entriesByDate: Map<string, MealPlanEntry[]>
   loading: boolean
   todayDate: CalendarDate
   weekStart: number
   onPrev: () => void
   onNext: () => void
   onToday: () => void
-  onCellClick: (dateStr: string, entry?: MealPlanEntry) => void
-  onMoveEntry: (from: string, to: string) => void
+  onCellClick: (dateStr: string) => void
+  onEntryClick: (entry: MealPlanEntry) => void
+  onMoveEntry: (id: string, to: string) => void
 }
 
 const DesktopCalendar = ({
@@ -38,10 +41,11 @@ const DesktopCalendar = ({
   onNext,
   onToday,
   onCellClick,
+  onEntryClick,
   onMoveEntry,
 }: DesktopCalendarProps) => {
   const { t } = useTranslation()
-  const [dragSourceDate, setDragSourceDate] = useState<string | null>(null)
+  const [dragSource, setDragSource] = useState<MealPlanEntry | null>(null)
   const [dragOverDate, setDragOverDate] = useState<string | null>(null)
 
   const dayHeaders = useMemo(
@@ -58,17 +62,16 @@ const DesktopCalendar = ({
   )
 
   const getCellClickHandler = useCallback(
-    (dateStr: string, entry?: MealPlanEntry) => () =>
-      onCellClick(dateStr, entry),
+    (dateStr: string) => () => onCellClick(dateStr),
     [onCellClick]
   )
 
-  const handleChipDragStart = useCallback((dateStr: string) => {
-    setDragSourceDate(dateStr)
+  const handleChipDragStart = useCallback((entry: MealPlanEntry) => {
+    setDragSource(entry)
   }, [])
 
   const handleChipDragEnd = useCallback(() => {
-    setDragSourceDate(null)
+    setDragSource(null)
     setDragOverDate(null)
   }, [])
 
@@ -82,13 +85,13 @@ const DesktopCalendar = ({
 
   const handleCellDrop = useCallback(
     (dateStr: string) => {
-      if (dragSourceDate && dragSourceDate !== dateStr) {
-        onMoveEntry(dragSourceDate, dateStr)
+      if (dragSource && dragSource.date !== dateStr) {
+        onMoveEntry(dragSource.id, dateStr)
       }
-      setDragSourceDate(null)
+      setDragSource(null)
       setDragOverDate(null)
     },
-    [dragSourceDate, onMoveEntry]
+    [dragSource, onMoveEntry]
   )
 
   return (
@@ -142,14 +145,12 @@ const DesktopCalendar = ({
             <CalendarDayCell
               key={cell.dateStr}
               cell={cell}
-              entry={entriesByDate.get(cell.dateStr)}
-              onClick={getCellClickHandler(
-                cell.dateStr,
-                entriesByDate.get(cell.dateStr)
-              )}
-              isDragging={dragSourceDate === cell.dateStr}
+              entries={entriesByDate.get(cell.dateStr) ?? NO_ENTRIES}
+              onClick={getCellClickHandler(cell.dateStr)}
+              onEntryClick={onEntryClick}
+              draggingEntryId={dragSource?.id ?? null}
               isDropTarget={dragOverDate === cell.dateStr}
-              onChipDragStart={() => handleChipDragStart(cell.dateStr)}
+              onChipDragStart={handleChipDragStart}
               onChipDragEnd={handleChipDragEnd}
               onCellDragOver={() => handleCellDragOver(cell.dateStr)}
               onCellDragLeave={() => handleCellDragLeave(cell.dateStr)}

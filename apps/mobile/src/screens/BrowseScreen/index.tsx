@@ -1,22 +1,25 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
-import { ActivityIndicator, type FlatList, type LayoutChangeEvent, type ListRenderItemInfo, View } from 'react-native'
+import { ActivityIndicator, type FlatList, type ListRenderItemInfo, View } from 'react-native'
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { useRouter } from 'expo-router'
-import { useHeaderHeight } from 'expo-router/react-navigation'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRecipes, useSemanticRecipeSearch } from '@carrot/shared/hooks/useRecipes'
 import { useTags } from '@carrot/shared/hooks/useTags'
 import type { RecipeOut } from '@carrot/shared/types'
 import { groupTagsByCategory, matchesTagFilters } from '@carrot/shared/utils/tagFilters'
-import { AppText, RecipeRow } from '../../components/ui'
+import { AppText, RecipeRow, SearchField } from '../../components/ui'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
+import { useTabHeaderHeight } from '../../hooks/useTabHeaderHeight'
+import TabHeader from '../../components/TabHeader'
 import { useHousehold } from '../../context/HouseholdContext'
 import { useAuth } from '../../context/AuthContext'
 import { useMotion } from '../../theme'
 import BrowseEmpty from './BrowseEmpty'
 import CountLine from './CountLine'
 import FilterBar from './FilterBar'
+import SortMenuButton from './SortMenuButton'
 import { NoResults, SemanticHeader, SemanticLoading } from './ListStates'
 import {
   COUNT_LINE_HEIGHT,
@@ -33,10 +36,9 @@ import {
 } from './helpers'
 import { styles } from './styles'
 import { useBrowseFilters } from './useBrowseFilters'
-import { useBrowseHeader } from './useBrowseHeader'
+import { useFocusSearchOnTabPress } from './useFocusSearchOnTabPress'
 import { useRecipeActions } from './useRecipeActions'
 
-const ESTIMATED_FILTER_BAR_HEIGHT = 54
 const SKIP_EXIT_ANIMATION_THRESHOLD = 20
 
 const BrowseScreen = () => {
@@ -51,31 +53,20 @@ const BrowseScreen = () => {
 
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
-  const headerHeight = useHeaderHeight()
-  const [filterBarHeight, setFilterBarHeight] = useState(ESTIMATED_FILTER_BAR_HEIGHT)
+  const { top: topSafeArea } = useSafeAreaInsets()
+  const { scrollPaddingTop, handleHeaderLayout } = useTabHeaderHeight()
   const listRef = useRef<FlatList<BrowseListItem>>(null)
-  // The list is inset below the transparent header, so its resting offset is negative.
+  // iOS insets the list below the status bar, so its resting offset is negative.
   const scrollToTop = useCallback(
-    () => listRef.current?.scrollToOffset({ offset: -headerHeight, animated: false }),
-    [headerHeight],
+    () => listRef.current?.scrollToOffset({ offset: -topSafeArea, animated: false }),
+    [topSafeArea],
   )
   const { filters, setSort, toggleTag, toggleFavourites, clearTags, clearFilters } = useBrowseFilters(scrollToTop)
   const { sort, tagIds: selectedTagIds, favouritesOnly: filterFavourites } = filters
 
-  const handleSearchChangeText = useCallback((e: { nativeEvent: { text: string } }) => setQuery(e.nativeEvent.text), [])
-  const handleSearchCancel = useCallback(() => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    setQuery('')
-  }, [])
+  const searchInputRef = useFocusSearchOnTabPress()
 
-  const { switchingHousehold } = useBrowseHeader({
-    isFetching,
-    sort,
-    onSortChange: setSort,
-    onSearchChangeText: handleSearchChangeText,
-    onSearchCancel: handleSearchCancel,
-  })
-  const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
+  const { busy, showSpinner } = useScreenLoading(isLoading)
 
   const trimmedQuery = deferredQuery.trim()
   const searchActive = trimmedQuery.length > 0
@@ -150,14 +141,10 @@ const BrowseScreen = () => {
     previousIdsRef.current = ids
   }, [busy, items])
 
-  const listHeaderHeight = searchActive ? 0 : filterBarHeight + COUNT_LINE_HEIGHT
+  const listHeaderHeight = scrollPaddingTop + (searchActive ? 0 : COUNT_LINE_HEIGHT)
   const itemLayouts = useMemo(() => buildItemLayouts(items, listHeaderHeight), [items, listHeaderHeight])
   const getItemLayout = useCallback((_: ArrayLike<BrowseListItem> | null | undefined, index: number) => itemLayouts[index], [itemLayouts])
 
-  const handleFilterBarLayout = useCallback(
-    (event: LayoutChangeEvent) => setFilterBarHeight(event.nativeEvent.layout.height),
-    [],
-  )
   const groupedFilterTags = useMemo(() => groupTagsByCategory(tags), [tags])
 
   recipeLookupRef.current = useMemo(() => {
@@ -215,13 +202,12 @@ const BrowseScreen = () => {
   )
 
   const listHeader = useMemo(
-    () =>
-      searchActive ? null : (
-        <View style={{ paddingTop: filterBarHeight }}>
-          <CountLine count={literalRecipes.length} sortLabel={sortLabel} />
-        </View>
-      ),
-    [searchActive, filterBarHeight, literalRecipes.length, sortLabel],
+    () => (
+      <View style={{ paddingTop: scrollPaddingTop }}>
+        {searchActive ? null : <CountLine count={literalRecipes.length} sortLabel={sortLabel} />}
+      </View>
+    ),
+    [searchActive, scrollPaddingTop, literalRecipes.length, sortLabel],
   )
 
   const listEmpty = useMemo(
@@ -275,18 +261,30 @@ const BrowseScreen = () => {
           maxToRenderPerBatch={10}
         />
       </LayoutAnimationConfig>
-      {!searchActive && (
-        <FilterBar
-          groupedTags={groupedFilterTags}
-          selectedTagIds={selectedTagIds}
-          filterFavourites={filterFavourites}
-          onToggleTag={toggleTag}
-          onClearCategory={clearTags}
-          onToggleFavourites={toggleFavourites}
-          top={headerHeight}
-          onLayout={handleFilterBarLayout}
-        />
-      )}
+      <TabHeader
+        title={t('nav.browse')}
+        actions={<SortMenuButton sort={sort} onSortChange={setSort} />}
+        onLayout={handleHeaderLayout}
+      >
+        <View style={styles.searchField}>
+          <SearchField
+            value={query}
+            onChange={setQuery}
+            placeholder={t('recipes.searchPlaceholder')}
+            inputRef={searchInputRef}
+          />
+        </View>
+        {searchActive ? null : (
+          <FilterBar
+            groupedTags={groupedFilterTags}
+            selectedTagIds={selectedTagIds}
+            filterFavourites={filterFavourites}
+            onToggleTag={toggleTag}
+            onClearCategory={clearTags}
+            onToggleFavourites={toggleFavourites}
+          />
+        )}
+      </TabHeader>
     </View>
   )
 }

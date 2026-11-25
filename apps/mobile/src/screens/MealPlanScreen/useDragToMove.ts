@@ -1,65 +1,148 @@
-import { useCallback, useMemo, useState, type ComponentType, type RefObject } from 'react'
-import type { LayoutChangeEvent } from 'react-native'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { View, type LayoutChangeEvent } from 'react-native'
 import * as Haptics from 'expo-haptics'
 import { Gesture } from 'react-native-gesture-handler'
-import Animated, {
-  scrollTo,
+import {
   runOnJS,
-  useAnimatedRef,
+  scrollTo,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
-  withSpring,
-  withTiming,
+  type AnimatedRef,
 } from 'react-native-reanimated'
-import type { MealPlanEntry } from '@carrot/shared/types'
-import { DRAG_HANDLE_ZONE_WIDTH, findDayIndexAtContentY, type ListItem } from './helpers'
+import type Animated from 'react-native-reanimated'
 
+const LONG_PRESS_MS = 300
 const AUTO_SCROLL_EDGE = 80
 const AUTO_SCROLL_MAX_SPEED = 12
+export const PREVIEW_HEIGHT = 64
 
-const triggerLightImpact = () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-const triggerSelection = () => void Haptics.selectionAsync()
-const triggerSuccess = () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+interface DayLayout {
+  iso: string
+  top: number
+  height: number
+}
+
+export interface DraggingState {
+  entryId: string
+  fromIso: string
+}
+
+const triggerLift = () => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+const triggerHover = () => void Haptics.selectionAsync()
+const triggerDrop = () => void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+
+const findHoveredIso = (layouts: DayLayout[], contentY: number): string => {
+  'worklet'
+  for (const layout of layouts) {
+    if (contentY >= layout.top && contentY <= layout.top + layout.height) return layout.iso
+  }
+
+  return ''
+}
 
 export const useDragToMove = ({
-  listRef,
-  items,
-  offsets,
-  contentHeight,
-  entriesByDate,
+  scrollRef,
+  contentInsetTop,
+  contentInsetBottom,
+  topInset,
   onDrop,
 }: {
-  listRef: ReturnType<typeof useAnimatedRef<Animated.FlatList<ListItem>>>
-  items: ListItem[]
-  offsets: number[]
-  contentHeight: number
-  entriesByDate: Map<string, MealPlanEntry>
-  onDrop: (from: string, to: string) => void
+  scrollRef: AnimatedRef<Animated.ScrollView>
+  contentInsetTop: number
+  contentInsetBottom: number
+  topInset: number
+  onDrop: (entryId: string, toIso: string) => void
 }) => {
-  const [draggingIsoDate, setDraggingIsoDate] = useState<string | null>(null)
-  // Set as soon as the finger touches down (before the long-press activates), purely so
-  // DragPreviewCard's NetworkImage can start loading while the card is still invisible.
-  // draggingIsoDate (which also ghosts the source row) only flips once the drag is real.
-  const [previewIsoDate, setPreviewIsoDate] = useState<string | null>(null)
+  const [dragging, setDragging] = useState<DraggingState | null>(null)
+  const [hoverIso, setHoverIso] = useState<string | null>(null)
+
+  const containerRef = useRef<View>(null)
+  const layoutsRef = useRef(new Map<string, DayLayout>())
+  const daysTopRef = useRef(0)
+
+  const scrollGesture = useMemo(() => Gesture.Native(), [])
 
   const scrollY = useSharedValue(0)
+  const containerTop = useSharedValue(0)
   const containerHeight = useSharedValue(0)
-  const dragY = useSharedValue(0)
-  const dragTranslate = useSharedValue(0)
-  const hoveredIndex = useSharedValue(-1)
-  const sourceIndex = useSharedValue(-1)
-  const sourceOffset = useSharedValue(0)
+  const contentHeight = useSharedValue(0)
+  const pointerY = useSharedValue(0)
   const isDragging = useSharedValue(false)
+  const hovered = useSharedValue('')
+  const layouts = useSharedValue<DayLayout[]>([])
+  const coveredTop = useSharedValue(topInset)
+  const minScroll = useSharedValue(-contentInsetTop)
+  const bottomInset = useSharedValue(contentInsetBottom)
 
-  const isoDateAt = useMemo(
-    () => items.map((item) => (item.type === 'day' ? item.isoDate : null)),
-    [items],
+  useEffect(() => {
+    coveredTop.value = topInset
+  }, [coveredTop, topInset])
+
+  // iOS starts an inset-adjusted scroll view at -inset, but no scroll event reports it until the user scrolls.
+  useEffect(() => {
+    if (scrollY.value === 0 || scrollY.value === minScroll.value) scrollY.value = -contentInsetTop
+    minScroll.value = -contentInsetTop
+  }, [contentInsetTop, minScroll, scrollY])
+
+  useEffect(() => {
+    bottomInset.value = contentInsetBottom
+  }, [bottomInset, contentInsetBottom])
+
+  const publishLayouts = useCallback(() => {
+    layouts.value = Array.from(layoutsRef.current.values()).map((layout) => ({
+      ...layout,
+      top: layout.top + daysTopRef.current,
+    }))
+  }, [layouts])
+
+  const registerDayLayout = useCallback(
+    (iso: string, top: number, height: number) => {
+      layoutsRef.current.set(iso, { iso, top, height })
+      publishLayouts()
+    },
+    [publishLayouts],
   )
-  const hasEntryAt = useMemo(
-    () => items.map((item) => item.type === 'day' && entriesByDate.has(item.isoDate)),
-    [items, entriesByDate],
+
+  const handleDaysLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      daysTopRef.current = e.nativeEvent.layout.y
+      publishLayouts()
+    },
+    [publishLayouts],
+  )
+
+  const pruneDayLayouts = useCallback(
+    (visibleIsos: string[]) => {
+      const visible = new Set(visibleIsos)
+      for (const iso of layoutsRef.current.keys()) {
+        if (!visible.has(iso)) layoutsRef.current.delete(iso)
+      }
+      publishLayouts()
+    },
+    [publishLayouts],
+  )
+
+  const measureContainer = useCallback(() => {
+    containerRef.current?.measureInWindow((_x, y) => {
+      containerTop.value = y
+    })
+  }, [containerTop])
+
+  const handleContainerLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      containerHeight.value = e.nativeEvent.layout.height
+      measureContainer()
+    },
+    [containerHeight, measureContainer],
+  )
+
+  const handleContentSizeChange = useCallback(
+    (_width: number, height: number) => {
+      contentHeight.value = height
+    },
+    [contentHeight],
   )
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -68,153 +151,116 @@ export const useDragToMove = ({
     },
   })
 
-  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
-    containerHeight.value = e.nativeEvent.layout.height
-  }, [containerHeight])
+  const handleLift = useCallback(
+    (entryId: string, fromIso: string) => {
+      measureContainer()
+      setDragging({ entryId, fromIso })
+    },
+    [measureContainer],
+  )
+
+  const handleHoverChange = useCallback((iso: string) => setHoverIso(iso || null), [])
 
   const handleDrop = useCallback(
-    (from: string, to: string) => {
-      onDrop(from, to)
+    (entryId: string, toIso: string) => {
+      triggerDrop()
+      onDrop(entryId, toIso)
     },
     [onDrop],
   )
+
+  const handleEnd = useCallback(() => {
+    setDragging(null)
+    setHoverIso(null)
+  }, [])
+
+  const updateHover = useCallback(() => {
+    'worklet'
+    const viewportY = pointerY.value - containerTop.value
+    const iso = viewportY < coveredTop.value ? '' : findHoveredIso(layouts.value, viewportY + scrollY.value)
+    if (iso === hovered.value) return
+
+    hovered.value = iso
+    runOnJS(handleHoverChange)(iso)
+    if (iso) runOnJS(triggerHover)()
+  }, [pointerY, containerTop, scrollY, layouts, coveredTop, hovered, handleHoverChange])
 
   useFrameCallback(() => {
     'worklet'
     if (!isDragging.value) return
 
-    const top = dragY.value
-    const bottom = containerHeight.value - dragY.value
+    const y = pointerY.value - containerTop.value
+    const distanceToTop = y - coveredTop.value
+    const distanceToBottom = containerHeight.value - bottomInset.value - y
     let delta = 0
-    if (top < AUTO_SCROLL_EDGE) {
-      delta = -AUTO_SCROLL_MAX_SPEED * (1 - top / AUTO_SCROLL_EDGE)
-    } else if (bottom < AUTO_SCROLL_EDGE) {
-      delta = AUTO_SCROLL_MAX_SPEED * (1 - bottom / AUTO_SCROLL_EDGE)
+    if (distanceToTop < AUTO_SCROLL_EDGE) {
+      delta = -AUTO_SCROLL_MAX_SPEED * (1 - Math.max(distanceToTop, 0) / AUTO_SCROLL_EDGE)
+    } else if (distanceToBottom < AUTO_SCROLL_EDGE) {
+      delta = AUTO_SCROLL_MAX_SPEED * (1 - Math.max(distanceToBottom, 0) / AUTO_SCROLL_EDGE)
     }
     if (delta === 0) return
 
-    const maxScroll = Math.max(0, contentHeight - containerHeight.value)
-    const next = Math.min(Math.max(scrollY.value + delta, 0), maxScroll)
+    const maxScroll = Math.max(minScroll.value, contentHeight.value - containerHeight.value + bottomInset.value)
+    const next = Math.min(Math.max(scrollY.value + delta, minScroll.value), maxScroll)
     scrollY.value = next
-    scrollTo(listRef, 0, next, false)
-
-    const contentY = dragY.value + next
-    const idx = findDayIndexAtContentY(offsets, items, contentY)
-    if (idx >= 0 && isoDateAt[idx] != null && idx !== hoveredIndex.value) {
-      hoveredIndex.value = idx
-    }
+    scrollTo(scrollRef, 0, next, false)
+    updateHover()
   })
 
-  const gesture = useMemo(
-    () =>
+  const createGesture = useCallback(
+    (entryId: string, fromIso: string) =>
       Gesture.Pan()
-        .activateAfterLongPress(300)
-        // Only the drag-handle strip at the right edge of each row can start a drag —
-        // this shrinks the gesture's own touch-recognition area so everything else
-        // (thumbnail, title, the row's own tap-to-open-actions) is left completely alone.
-        .hitSlop({ right: 0, width: DRAG_HANDLE_ZONE_WIDTH })
-        .blocksExternalGesture(listRef as unknown as RefObject<ComponentType<object> | null | undefined>)
-        .onBegin((e) => {
-          dragY.value = e.y
-
-          const contentY = e.y + scrollY.value
-          const idx = findDayIndexAtContentY(offsets, items, contentY)
-          if (idx >= 0 && hasEntryAt[idx]) {
-            runOnJS(setPreviewIsoDate)(isoDateAt[idx])
-          }
-        })
+        .activateAfterLongPress(LONG_PRESS_MS)
+        .blocksExternalGesture(scrollGesture)
         .onStart((e) => {
-          const contentY = e.y + scrollY.value
-          const idx = findDayIndexAtContentY(offsets, items, contentY)
-          if (idx < 0 || !hasEntryAt[idx]) return
-
-          sourceIndex.value = idx
-          sourceOffset.value = offsets[idx]
-          hoveredIndex.value = idx
+          pointerY.value = e.absoluteY
+          hovered.value = ''
           isDragging.value = true
-          dragTranslate.value = 0
-          runOnJS(triggerLightImpact)()
-          runOnJS(setDraggingIsoDate)(isoDateAt[idx])
+          runOnJS(triggerLift)()
+          runOnJS(handleLift)(entryId, fromIso)
+          updateHover()
         })
         .onUpdate((e) => {
-          dragY.value = e.y
-          if (!isDragging.value) return
-
-          dragTranslate.value = e.translationY
-
-          const contentY = e.y + scrollY.value
-          const idx = findDayIndexAtContentY(offsets, items, contentY)
-          const isValidDay = idx >= 0 && isoDateAt[idx] != null
-
-          if (isValidDay && idx !== hoveredIndex.value) {
-            hoveredIndex.value = idx
-            runOnJS(triggerSelection)()
-          } else if (!isValidDay && hoveredIndex.value !== -1) {
-            hoveredIndex.value = -1
-          }
+          pointerY.value = e.absoluteY
+          updateHover()
         })
-        .onEnd(() => {
-          if (!isDragging.value) return
-
-          const srcIdx = sourceIndex.value
-          const targetIdx = hoveredIndex.value
-          const fromIso = isoDateAt[srcIdx]
-          const toIso = targetIdx >= 0 ? isoDateAt[targetIdx] : null
-
-          if (fromIso != null && toIso != null && toIso !== fromIso) {
-            dragTranslate.value = withTiming(offsets[targetIdx] - sourceOffset.value, { duration: 150 })
-            runOnJS(triggerSuccess)()
-            runOnJS(handleDrop)(fromIso, toIso)
-          } else {
-            dragTranslate.value = withSpring(0)
-          }
+        .onEnd((_e, success) => {
+          const toIso = hovered.value
+          if (success && toIso && toIso !== fromIso) runOnJS(handleDrop)(entryId, toIso)
         })
         .onFinalize(() => {
+          if (!isDragging.value) return
+
           isDragging.value = false
-          hoveredIndex.value = -1
-          sourceIndex.value = -1
-          runOnJS(setDraggingIsoDate)(null)
-          runOnJS(setPreviewIsoDate)(null)
+          hovered.value = ''
+          runOnJS(handleEnd)()
         }),
-    [
-      listRef,
-      offsets,
-      items,
-      isoDateAt,
-      hasEntryAt,
-      dragY,
-      dragTranslate,
-      hoveredIndex,
-      sourceIndex,
-      sourceOffset,
-      isDragging,
-      scrollY,
-      handleDrop,
-    ],
+    [scrollGesture, pointerY, hovered, isDragging, handleLift, updateHover, handleDrop, handleEnd],
   )
 
-  const previewCardStyle = useAnimatedStyle(() => ({
+  const previewStyle = useAnimatedStyle(() => ({
     opacity: isDragging.value ? 1 : 0,
     transform: [
-      { translateY: sourceOffset.value - scrollY.value + dragTranslate.value },
+      { translateY: pointerY.value - containerTop.value - PREVIEW_HEIGHT / 2 },
       { scale: isDragging.value ? 1.03 : 1 },
     ],
   }))
 
-  const highlightStyle = useAnimatedStyle(() => ({
-    opacity: hoveredIndex.value >= 0 && isDragging.value ? 1 : 0,
-    transform: [
-      { translateY: (offsets[hoveredIndex.value] ?? 0) - scrollY.value },
-    ],
-  }))
-
   return {
-    draggingIsoDate,
-    previewIsoDate,
-    gesture,
-    scrollHandler,
+    scrollY,
+    dragging,
+    hoverIso,
+    containerRef,
+    scrollGesture,
+    previewStyle,
+    createGesture,
+    registerDayLayout,
+    pruneDayLayouts,
+    handleDaysLayout,
     handleContainerLayout,
-    previewCardStyle,
-    highlightStyle,
+    handleContentSizeChange,
+    scrollHandler,
   }
 }
+
+export type DragToMove = ReturnType<typeof useDragToMove>

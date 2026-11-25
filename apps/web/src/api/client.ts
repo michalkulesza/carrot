@@ -61,8 +61,6 @@ export const {
   addTagToRecipe,
   removeTagFromRecipe,
   listMealPlan,
-  setMealPlanEntry,
-  deleteMealPlanEntry,
   getPreferences,
   updatePreferences,
   updateHouseholdAllergens,

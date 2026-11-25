@@ -20,6 +20,9 @@ import TonightCard from './TonightCard'
 import { getFavourites, getRecentlyAdded } from './helpers'
 import { styles } from './styles'
 import { useHomeHeader } from './useHomeHeader'
+import TabHeader from '../../components/TabHeader'
+import { IconButton } from '../../components/ui'
+import { useTabHeaderHeight } from '../../hooks/useTabHeaderHeight'
 import type { ImportJobActions } from './useImportJobActions'
 import { useOpenAndPaste } from './useOpenAndPaste'
 
@@ -68,7 +71,8 @@ const HomeScreen = () => {
   const { isLoadingHouseholds, activeHouseholdId } = useHousehold()
   const dataQueriesEnabled = !authLoading && user !== null && !isLoadingHouseholds && activeHouseholdId != null
   const { recipes, isLoading, isFetching, error } = useRecipes(dataQueriesEnabled)
-  const { switchingHousehold } = useHomeHeader({ isFetching, onAddPress: openAddMenu })
+  const { homeTitle, householdTitle, switchingHousehold } = useHomeHeader(isFetching)
+  const { headerHeight, scrollPaddingTop, handleHeaderLayout } = useTabHeaderHeight()
   const { busy, showSpinner } = useScreenLoading(isLoading || switchingHousehold)
   const { jobs: importJobs, retry, importAnyway, cancel, dismiss } = useImportJobs(
     user ? `${user.id}:${activeHouseholdId ?? 'personal'}` : null,
@@ -149,7 +153,11 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={[styles.content, { paddingTop: scrollPaddingTop }]}
+        scrollIndicatorInsets={{ top: scrollPaddingTop }}
+      >
         <TonightCard enabled={dataQueriesEnabled} />
         {importJobs.length > 0 ? <ImportsCard jobs={importJobs} recipes={recipes} actions={importJobActions} /> : null}
         <JumpBackInCard recipes={recipes} />
@@ -161,7 +169,20 @@ const HomeScreen = () => {
         ) : null}
         {isLibraryEmpty ? <EmptyLibraryCard onAdd={handleOpenLinkSheet} /> : null}
       </ScrollView>
-      <AddMenuPopover visible={addMenuVisible} onClose={closeAddMenu} onOpenSheet={handleOpenSheet} />
+      <TabHeader
+        title={homeTitle}
+        titleContent={householdTitle}
+        actions={
+          <IconButton variant="primary" icon="plus" accessibilityLabel={t('addMenu.label')} onPress={openAddMenu} />
+        }
+        onLayout={handleHeaderLayout}
+      />
+      <AddMenuPopover
+        visible={addMenuVisible}
+        anchorTop={headerHeight}
+        onClose={closeAddMenu}
+        onOpenSheet={handleOpenSheet}
+      />
       <AddRecipeDrawer ref={addRecipeSheetRef} />
     </View>
   )

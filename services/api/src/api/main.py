@@ -109,6 +109,8 @@ async def lifespan(app: FastAPI):
         await initialize_vector_schema(conn)
         await conn.execute(text("ALTER TABLE recipe_embeddings ADD COLUMN IF NOT EXISTS dimensions INTEGER NOT NULL DEFAULT 768"))
         await conn.execute(text("ALTER TABLE recipe_embeddings ADD COLUMN IF NOT EXISTS document_version VARCHAR(30) NOT NULL DEFAULT 'v1'"))
+        await conn.execute(text("ALTER TABLE meal_plan_entries ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_meal_plan_household_date ON meal_plan_entries (household_id, date)"))
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS position INTEGER"))
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS total_time_minutes INTEGER"))
         await conn.execute(text("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS issue_codes JSON NOT NULL DEFAULT '[]'"))
@@ -271,9 +273,6 @@ async def lifespan(app: FastAPI):
 
         await conn.execute(text("DELETE FROM meal_plan_entries WHERE household_id IS NULL"))
         await conn.execute(text("ALTER TABLE meal_plan_entries ALTER COLUMN household_id SET NOT NULL"))
-        # Previous releases used partial unique indexes for personal and household
-        # entries.  The current model uses a named unique constraint instead; its
-        # backing index is owned by PostgreSQL and must not be dropped directly.
         await conn.execute(text(
             "DO $$ BEGIN "
             "IF EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'meal_plan_entries'::regclass "
@@ -283,15 +282,8 @@ async def lifespan(app: FastAPI):
             "END $$;"
         ))
         await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_personal"))
-        await conn.execute(text(
-            "DO $$ BEGIN "
-            "IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = 'meal_plan_entries'::regclass "
-            "AND conname = 'uq_meal_plan_household') THEN "
-            "DROP INDEX IF EXISTS uq_meal_plan_household; "
-            "ALTER TABLE meal_plan_entries ADD CONSTRAINT uq_meal_plan_household UNIQUE (household_id, date); "
-            "END IF; "
-            "END $$;"
-        ))
+        await conn.execute(text("ALTER TABLE meal_plan_entries DROP CONSTRAINT IF EXISTS uq_meal_plan_household"))
+        await conn.execute(text("DROP INDEX IF EXISTS uq_meal_plan_household"))
 
         await conn.execute(text("DELETE FROM shopping_list_items WHERE household_id IS NULL"))
         await conn.execute(text("ALTER TABLE shopping_list_items ALTER COLUMN household_id SET NOT NULL"))

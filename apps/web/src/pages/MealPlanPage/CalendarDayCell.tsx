@@ -7,22 +7,76 @@ import type { CalendarCell } from './helpers'
 
 interface CalendarDayCellProps {
   cell: CalendarCell
-  entry?: MealPlanEntry
+  entries: MealPlanEntry[]
   onClick: () => void
-  isDragging?: boolean
+  onEntryClick: (entry: MealPlanEntry) => void
+  draggingEntryId?: string | null
   isDropTarget?: boolean
-  onChipDragStart?: () => void
+  onChipDragStart?: (entry: MealPlanEntry) => void
   onChipDragEnd?: () => void
   onCellDragOver?: () => void
   onCellDragLeave?: () => void
   onCellDrop?: () => void
 }
 
+interface CalendarEntryChipProps {
+  entry: MealPlanEntry
+  isDragging: boolean
+  onClick: (entry: MealPlanEntry) => void
+  onDragStart?: (entry: MealPlanEntry) => void
+  onDragEnd?: () => void
+}
+
+const CalendarEntryChip = ({
+  entry,
+  isDragging,
+  onClick,
+  onDragStart,
+  onDragEnd,
+}: CalendarEntryChipProps) => {
+  const entryTitle = entry.recipe?.title ?? entry.text
+  const thumb = entry.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
+  const chipClassName = `mt-1.5 flex items-center gap-1.5 rounded-md bg-primary/10 px-1.5 py-1 overflow-hidden transition-opacity ${
+    isDragging ? 'opacity-40' : ''
+  }`
+
+  const handleClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    onClick(entry)
+  }
+
+  const handleDragStart = (event: React.DragEvent) => {
+    event.dataTransfer.setData('text/plain', entry.id)
+    event.dataTransfer.effectAllowed = 'move'
+    onDragStart?.(entry)
+  }
+
+  return (
+    <div
+      className={chipClassName}
+      draggable
+      onClick={handleClick}
+      onDragStart={handleDragStart}
+      onDragEnd={onDragEnd}
+    >
+      <RecipeThumb
+        src={thumb}
+        alt={entryTitle ?? ''}
+        className="w-5 h-5 rounded shrink-0"
+      />
+      <span className="text-xs font-medium text-primary truncate">
+        {entryTitle}
+      </span>
+    </div>
+  )
+}
+
 const CalendarDayCell = ({
   cell,
-  entry,
+  entries,
   onClick,
-  isDragging = false,
+  onEntryClick,
+  draggingEntryId = null,
   isDropTarget = false,
   onChipDragStart,
   onChipDragEnd,
@@ -31,9 +85,7 @@ const CalendarDayCell = ({
   onCellDrop,
 }: CalendarDayCellProps) => {
   const { t } = useTranslation()
-  const { day, isCurrentMonth, isToday, dateStr } = cell
-  const entryTitle = entry?.recipe?.title ?? entry?.text
-  const thumb = entry?.recipe ? proxyUrl(entry.recipe.thumbnail_url) : null
+  const { day, isCurrentMonth, isToday } = cell
   const canBeDropTarget = isCurrentMonth
   const cellClassName = `border-r border-b p-2 text-left min-h-[110px] transition-colors group ${
     isDropTarget && canBeDropTarget
@@ -46,9 +98,6 @@ const CalendarDayCell = ({
       : isCurrentMonth
         ? 'text-zinc-700'
         : 'text-zinc-300'
-  }`
-  const chipClassName = `mt-1.5 flex items-center gap-1.5 rounded-md bg-primary/10 px-1.5 py-1 overflow-hidden transition-opacity ${
-    isDragging ? 'opacity-40' : ''
   }`
 
   const handleDragOver = (event: React.DragEvent<HTMLButtonElement>) => {
@@ -72,33 +121,21 @@ const CalendarDayCell = ({
       onDrop={handleDrop}
     >
       <span className={dayNumberClassName}>{day}</span>
-      {entry ? (
-        <div
-          className={chipClassName}
-          draggable
-          onDragStart={(event) => {
-            event.dataTransfer.setData('text/plain', dateStr)
-            event.dataTransfer.effectAllowed = 'move'
-            onChipDragStart?.()
-          }}
+      {entries.map((entry) => (
+        <CalendarEntryChip
+          key={entry.id}
+          entry={entry}
+          isDragging={draggingEntryId === entry.id}
+          onClick={onEntryClick}
+          onDragStart={onChipDragStart}
           onDragEnd={onChipDragEnd}
-        >
-          <RecipeThumb
-            src={thumb}
-            alt={entryTitle ?? ''}
-            className="w-5 h-5 rounded shrink-0"
-          />
-          <span className="text-xs font-medium text-primary truncate">
-            {entryTitle}
-          </span>
+        />
+      ))}
+      {entries.length === 0 && isCurrentMonth && (
+        <div className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-zinc-300 text-xs">
+          <Plus className="w-3 h-3 shrink-0" />
+          {t('common.add')}
         </div>
-      ) : (
-        isCurrentMonth && (
-          <div className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 text-zinc-300 text-xs">
-            <Plus className="w-3 h-3 shrink-0" />
-            {t('common.add')}
-          </div>
-        )
       )}
     </button>
   )

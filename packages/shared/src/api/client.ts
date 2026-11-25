@@ -5,6 +5,7 @@ import type {
   AllergenRecheckStatus,
   Tag,
   MealPlanEntry,
+  MealPlanItemInput,
   UserPreferences,
   HouseholdOut,
   MemberOut,
@@ -496,35 +497,41 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<MealPlanEntry | null>;
   };
 
-  const setMealPlanEntry = async (
+  const addMealPlanEntries = async (
     date: string,
-    entry: { recipeId?: string; text?: string },
-  ): Promise<MealPlanEntry> => {
-    const res = await apiFetch(`/api/meal-plan/${date}`, {
-      method: "PUT",
+    items: MealPlanItemInput[],
+  ): Promise<MealPlanEntry[]> => {
+    const res = await apiFetch(`/api/meal-plan/${date}/entries`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ recipe_id: entry.recipeId, text: entry.text }),
+      body: JSON.stringify({
+        items: items.map((item) =>
+          "recipeId" in item ? { recipe_id: item.recipeId } : { text: item.text },
+        ),
+      }),
     });
-    if (!res.ok) throw new Error("Failed to set meal plan entry");
-    return res.json() as Promise<MealPlanEntry>;
+    if (!res.ok) throw new Error("Failed to add meal plan entries");
+    return res.json() as Promise<MealPlanEntry[]>;
   };
 
-  const deleteMealPlanEntry = async (date: string): Promise<void> => {
-    const res = await apiFetch(`/api/meal-plan/${date}`, { method: "DELETE" });
+  const deleteMealPlanEntryById = async (id: string): Promise<void> => {
+    const res = await apiFetch(`/api/meal-plan/entries/${id}`, {
+      method: "DELETE",
+    });
     if (!res.ok) throw new Error("Failed to delete meal plan entry");
   };
 
-  const moveMealPlanEntry = async (
-    from: string,
+  const moveMealPlanEntryById = async (
+    id: string,
     to: string,
-  ): Promise<MealPlanEntry[]> => {
-    const res = await apiFetch(`/api/meal-plan/${from}/move`, {
+  ): Promise<MealPlanEntry> => {
+    const res = await apiFetch(`/api/meal-plan/entries/${id}/move`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ to }),
     });
     if (!res.ok) throw new Error("Failed to move meal plan entry");
-    return res.json() as Promise<MealPlanEntry[]>;
+    return res.json() as Promise<MealPlanEntry>;
   };
 
   // ── Preferences ────────────────────────────────────────────────────────────
@@ -1191,9 +1198,9 @@ export const createApiClient = (config: ApiClientConfig) => {
     removeTagFromRecipe,
     listMealPlan,
     getNextMealPlanEntry,
-    setMealPlanEntry,
-    deleteMealPlanEntry,
-    moveMealPlanEntry,
+    addMealPlanEntries,
+    deleteMealPlanEntryById,
+    moveMealPlanEntryById,
     subscribeMealPlan,
     getPreferences,
     updatePreferences,

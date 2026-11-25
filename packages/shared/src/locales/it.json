@@ -627,7 +627,28 @@
     "moveToDay": "Sposta in un altro giorno",
     "moveTo": "Sposta in…",
     "moveFailed": "Impossibile spostare il piatto. Riprova.",
-    "dragHint": "Tocca due volte e tieni premuto, poi trascina per spostare questo piatto in un altro giorno."
+    "dragHint": "Tocca due volte e tieni premuto, poi trascina per spostare questo piatto in un altro giorno.",
+    "addToDay": "Aggiungi a {{day}}",
+    "dishSearchPlaceholder": "Cerca ricette o scrivi un pasto veloce",
+    "addQuickMeal": "Aggiungi «{{text}}»",
+    "quickMealHint": "Pasto veloce · senza ricetta",
+    "quickMeal": "Pasto veloce",
+    "alreadyOnDay": "Già in questo giorno",
+    "thisWeek": "Questa settimana",
+    "plannedCount": "{{count}} su 7 pianificati",
+    "dayIsFree": "{{day}} è ancora libero",
+    "pickRecipeOrQuick": "Scegli una ricetta o un pasto veloce",
+    "planIt": "Pianifica",
+    "addAnotherDish": "Aggiungi un altro piatto per {{day}}",
+    "addDishTo": "Aggiungi un piatto per {{day}}",
+    "nextWeekEllipsis": "Settimana successiva…",
+    "prevWeek": "Settimana precedente",
+    "nextWeek": "Settimana successiva",
+    "removeFailed": "Impossibile rimuovere il piatto. Riprova.",
+    "addFailed": "Impossibile aggiungere i piatti. Riprova.",
+    "removeDishChip": "Rimuovi {{title}}",
+    "showPreviousWeek": "Mostra la settimana precedente",
+    "showNextWeek": "Mostra la settimana successiva"
   },
   "households": {
     "switchContext": "Cambia famiglia",
@@ -666,9 +687,7 @@
     "addTagShort": "Tag",
     "searchOrCreateTag": "Cerca o crea un tag",
     "createTagLabel": "Crea tag",
-    "noMatchingTags": "Nessun tag corrispondente",
-    "selectedCount": "{{count}} selezionati",
-    "clearSearch": "Cancella ricerca"
+    "noMatchingTags": "Nessun tag corrispondente"
   },
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok o URL di qualsiasi pagina di ricette",
@@ -808,7 +827,8 @@
       "model_rate_limited": "Il modello è occupato. Riprova a breve.",
       "invalid_model_response": "La risposta dell'estrazione non era valida.",
       "unknown_error": "L'importazione è fallita in modo imprevisto. Riprova."
-    }
+    },
+    "cancelImport": "Annulla importazione"
   },
   "defaultTags": {
     "Vegetarian": "Vegetariano",
@@ -941,7 +961,6 @@
     "linkRecipe": "Collega ricetta",
     "searchPlaceholder": "Cerca nelle tue ricette",
     "noMatches": "Nessuna ricetta corrispondente",
-    "selectedCount": "{{count}} selezionate",
     "removeLink": "Scollega {{title}}"
   },
   "ads": {
@@ -1039,5 +1058,10 @@
     "clipboardSubtitle": "Tocca Importa per aggiungerlo",
     "clipboardImport": "Importa",
     "close": "Chiudi menu"
+  },
+  "selectionDrawer": {
+    "selectedCount": "{{count}} selezionati",
+    "clearSearch": "Cancella ricerca",
+    "allRecipes": "Tutte le ricette"
   }
 }

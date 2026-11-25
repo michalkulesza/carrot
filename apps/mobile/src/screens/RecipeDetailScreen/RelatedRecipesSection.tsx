@@ -13,7 +13,7 @@ import type { RecipeOut } from '@carrot/shared/types'
 import { RecipeTile, SectionHeader } from '../../components/ui'
 import { lightHaptic } from '../../components/ui/haptics'
 import { palette, useMotion } from '../../theme'
-import { formatRecipeMeta } from './helpers'
+import { formatRecipeMeta } from '@carrot/shared/utils/recipeMeta'
 import RelatedRecipesPicker from './RelatedRecipesPicker'
 import { styles } from './styles'
 

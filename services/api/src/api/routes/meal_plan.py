@@ -3,7 +3,7 @@ import calendar as cal
 import json
 import re
 import uuid
-from datetime import date as DateType
+from datetime import date as DateType, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.broadcaster import broadcaster
 from api.database import get_async_session
 from api.models import (
+    MealPlanAddRequest,
     MealPlanEntry,
     MealPlanEntryOut,
     MealPlanMoveRequest,
@@ -48,25 +49,84 @@ def _recipe_access_filter(household_id: uuid.UUID, recipe_id: uuid.UUID):
     return and_(Recipe.id == recipe_id, _recipe_filter(household_id))
 
 
+def _entry_order():
+    return (MealPlanEntry.date, MealPlanEntry.created_at, MealPlanEntry.id)
+
+
 def _next_entry_statement(household_id: uuid.UUID, from_date: DateType):
     where = and_(
         MealPlanEntry.household_id == household_id,
         MealPlanEntry.date >= from_date,
     )
-    return select(MealPlanEntry).where(where).order_by(MealPlanEntry.date.asc()).limit(1)
+    return select(MealPlanEntry).where(where).order_by(*_entry_order()).limit(1)
 
 
-def _apply_move(
-    source: MealPlanEntry, target: MealPlanEntry | None, to_date: DateType
+def _dish_key(recipe_id: uuid.UUID | None, text: str | None) -> tuple[str, object]:
+    if recipe_id is not None:
+        return ("recipe", recipe_id)
+    return ("text", (text or "").strip().lower())
+
+
+def _entry_key(entry: MealPlanEntry) -> tuple[str, object]:
+    return _dish_key(entry.recipe_id, entry.text)
+
+
+async def _entries_on(
+    session: AsyncSession, household_id: uuid.UUID, date: DateType
 ) -> list[MealPlanEntry]:
-    if target is None:
-        source.date = to_date
-        return [source]
+    result = await session.execute(
+        select(MealPlanEntry)
+        .where(_entry_filter(household_id, date))
+        .order_by(*_entry_order())
+    )
+    return list(result.scalars().all())
 
-    source.recipe_id, target.recipe_id = target.recipe_id, source.recipe_id
-    source.recipe, target.recipe = target.recipe, source.recipe
-    source.text, target.text = target.text, source.text
-    return [source, target]
+
+async def _require_accessible_recipes(
+    session: AsyncSession, household_id: uuid.UUID, recipe_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, Recipe]:
+    if not recipe_ids:
+        return {}
+    result = await session.execute(
+        select(Recipe).where(Recipe.id.in_(recipe_ids), _recipe_filter(household_id))
+    )
+    recipes = {recipe.id: recipe for recipe in result.scalars().all()}
+    if len(recipes) != len(recipe_ids):
+        raise HTTPException(status_code=404, detail="Recipe not found")
+    return recipes
+
+
+async def _move_entries(
+    session: AsyncSession,
+    household_id: uuid.UUID,
+    sources: list[MealPlanEntry],
+    to_date: DateType,
+) -> list[MealPlanEntry]:
+    target_by_key = {_entry_key(entry): entry for entry in await _entries_on(session, household_id, to_date)}
+
+    resulting: list[MealPlanEntry] = []
+    for source in sources:
+        key = _entry_key(source)
+        existing = target_by_key.get(key)
+        if existing is not None:
+            await session.delete(source)
+            resulting.append(existing)
+            continue
+        source.date = to_date
+        target_by_key[key] = source
+        resulting.append(source)
+
+    return resulting
+
+
+async def _publish_change(
+    user: User, household_id: uuid.UUID, date_str: str, to: str | None = None
+) -> None:
+    scope = get_scope_key("meal-plan", user.id, household_id)
+    event: dict[str, str] = {"type": "meal_plan_changed", "date": date_str}
+    if to is not None:
+        event["to"] = to
+    await broadcaster.publish(scope, event)
 
 
 @router.get("", response_model=list[MealPlanEntryOut])
@@ -91,7 +151,9 @@ async def list_meal_plan(
         MealPlanEntry.date <= end,
     )
 
-    result = await session.execute(select(MealPlanEntry).where(where))
+    result = await session.execute(
+        select(MealPlanEntry).where(where).order_by(*_entry_order())
+    )
     return [MealPlanEntryOut.model_validate(e) for e in result.scalars().all()]
 
 
@@ -143,6 +205,103 @@ async def stream_meal_plan(
     )
 
 
+@router.post("/{date_str}/entries", response_model=list[MealPlanEntryOut])
+async def add_meal_plan_entries(
+    date_str: str,
+    body: MealPlanAddRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> list[MealPlanEntryOut]:
+    date = _parse_date(date_str)
+    recipe_ids = {item.recipe_id for item in body.items if item.recipe_id is not None}
+    recipes = await _require_accessible_recipes(session, household_id, recipe_ids)
+
+    existing = await _entries_on(session, household_id, date)
+    seen = {_entry_key(entry) for entry in existing}
+
+    base = datetime.now(timezone.utc)
+    added = 0
+    for item in body.items:
+        key = _dish_key(item.recipe_id, item.text)
+        if key in seen:
+            continue
+        seen.add(key)
+        session.add(
+            MealPlanEntry(
+                user_id=user.id,
+                household_id=household_id,
+                date=date,
+                recipe_id=item.recipe_id,
+                recipe=recipes.get(item.recipe_id) if item.recipe_id is not None else None,
+                text=item.text,
+                created_at=base + timedelta(microseconds=added),
+            )
+        )
+        added += 1
+
+    if added:
+        await session.commit()
+        await _publish_change(user, household_id, date_str)
+
+    entries = await _entries_on(session, household_id, date)
+    return [MealPlanEntryOut.model_validate(entry) for entry in entries]
+
+
+@router.delete("/entries/{entry_id}", status_code=204)
+async def delete_meal_plan_entry_by_id(
+    entry_id: uuid.UUID,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> None:
+    result = await session.execute(
+        select(MealPlanEntry).where(
+            MealPlanEntry.id == entry_id, MealPlanEntry.household_id == household_id
+        )
+    )
+    entry = result.scalar_one_or_none()
+    if entry is None:
+        return
+
+    date_str = entry.date.isoformat()
+    await session.delete(entry)
+    await session.commit()
+
+    await _publish_change(user, household_id, date_str)
+
+
+@router.post("/entries/{entry_id}/move", response_model=MealPlanEntryOut)
+async def move_meal_plan_entry_by_id(
+    entry_id: uuid.UUID,
+    body: MealPlanMoveRequest,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> MealPlanEntryOut:
+    to_date = _parse_date(body.to)
+
+    result = await session.execute(
+        select(MealPlanEntry).where(
+            MealPlanEntry.id == entry_id, MealPlanEntry.household_id == household_id
+        )
+    )
+    source = result.scalar_one_or_none()
+    if source is None:
+        raise HTTPException(status_code=404, detail="Entry not found")
+    if source.date == to_date:
+        return MealPlanEntryOut.model_validate(source)
+
+    from_str = source.date.isoformat()
+    [moved] = await _move_entries(session, household_id, [source], to_date)
+    await session.commit()
+    await session.refresh(moved)
+
+    await _publish_change(user, household_id, from_str, body.to)
+
+    return MealPlanEntryOut.model_validate(moved)
+
+
 @router.put("/{date_str}", response_model=MealPlanEntryOut)
 async def set_meal_plan_entry(
     date_str: str,
@@ -152,20 +311,13 @@ async def set_meal_plan_entry(
     household_id: uuid.UUID = Depends(get_active_household_id),
 ) -> MealPlanEntryOut:
     date = _parse_date(date_str)
-    recipe = None
-    if body.recipe_id is not None:
-        recipe_result = await session.execute(
-            select(Recipe).where(_recipe_access_filter(household_id, body.recipe_id))
-        )
-        recipe = recipe_result.scalar_one_or_none()
-        if recipe is None:
-            raise HTTPException(status_code=404, detail="Recipe not found")
-
-    result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(household_id, date))
+    recipes = await _require_accessible_recipes(
+        session, household_id, {body.recipe_id} if body.recipe_id is not None else set()
     )
-    entry = result.scalar_one_or_none()
-    if entry is None:
+    recipe = recipes.get(body.recipe_id) if body.recipe_id is not None else None
+
+    existing = await _entries_on(session, household_id, date)
+    if not existing:
         entry = MealPlanEntry(
             user_id=user.id,
             household_id=household_id,
@@ -176,15 +328,17 @@ async def set_meal_plan_entry(
         )
         session.add(entry)
     else:
+        entry = existing[0]
         entry.recipe_id = body.recipe_id
         entry.recipe = recipe
         entry.text = body.text
+        for extra in existing[1:]:
+            await session.delete(extra)
 
     await session.commit()
     await session.refresh(entry)
 
-    scope = get_scope_key("meal-plan", user.id, household_id)
-    await broadcaster.publish(scope, {"type": "meal_plan_changed", "date": date_str})
+    await _publish_change(user, household_id, date_str)
 
     return MealPlanEntryOut.model_validate(entry)
 
@@ -198,17 +352,14 @@ async def delete_meal_plan_entry(
 ) -> None:
     date = _parse_date(date_str)
 
-    result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(household_id, date))
-    )
-    entry = result.scalar_one_or_none()
-    if entry is None:
+    entries = await _entries_on(session, household_id, date)
+    if not entries:
         raise HTTPException(status_code=404, detail="Entry not found")
-    await session.delete(entry)
+    for entry in entries:
+        await session.delete(entry)
     await session.commit()
 
-    scope = get_scope_key("meal-plan", user.id, household_id)
-    await broadcaster.publish(scope, {"type": "meal_plan_changed", "date": date_str})
+    await _publish_change(user, household_id, date_str)
 
 
 @router.post("/{date_str}/move", response_model=list[MealPlanEntryOut])
@@ -224,27 +375,15 @@ async def move_meal_plan_entry(
     if from_date == to_date:
         raise HTTPException(status_code=400, detail="Source and target dates are the same")
 
-    result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(household_id, from_date))
-    )
-    source = result.scalar_one_or_none()
-    if source is None:
+    sources = await _entries_on(session, household_id, from_date)
+    if not sources:
         raise HTTPException(status_code=404, detail="Entry not found")
 
-    result = await session.execute(
-        select(MealPlanEntry).where(_entry_filter(household_id, to_date))
-    )
-    target = result.scalar_one_or_none()
-
-    affected = _apply_move(source, target, to_date)
-
+    moved = await _move_entries(session, household_id, sources, to_date)
     await session.commit()
-    for entry in affected:
+    for entry in moved:
         await session.refresh(entry)
 
-    scope = get_scope_key("meal-plan", user.id, household_id)
-    await broadcaster.publish(
-        scope, {"type": "meal_plan_changed", "date": date_str, "to": body.to}
-    )
+    await _publish_change(user, household_id, date_str, body.to)
 
-    return [MealPlanEntryOut.model_validate(entry) for entry in affected]
+    return [MealPlanEntryOut.model_validate(entry) for entry in moved]

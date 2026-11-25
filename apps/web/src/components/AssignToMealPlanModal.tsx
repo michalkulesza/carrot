@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight } from 'react-feather'
 import { useTranslation } from 'react-i18next'
 import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
+import { useMealPlanMutations } from '@carrot/shared/hooks/useMealPlanMutations'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import {
   ModalContainer,
@@ -154,7 +155,8 @@ const AssignToMealPlanModal = ({
   const [justAssigned, setJustAssigned] = useState<string | null>(null)
 
   const monthKey = toYYYYMM(visibleMonth)
-  const { entries, setEntry } = useMealPlan(monthKey)
+  const { entries } = useMealPlan(monthKey)
+  const { addEntries } = useMealPlanMutations()
 
   const assignedDates = useMemo(
     () =>
@@ -180,8 +182,8 @@ const AssignToMealPlanModal = ({
       const isoDate = toISODate(date)
       setJustAssigned(isoDate)
 
-      setEntry.mutate(
-        { date: isoDate, recipeId },
+      addEntries.mutate(
+        { date: isoDate, items: [{ recipeId }] },
         {
           onSuccess: () => {
             setTimeout(() => handleOpenChange(false), 500)
@@ -190,7 +192,7 @@ const AssignToMealPlanModal = ({
         }
       )
     },
-    [recipeId, setEntry, handleOpenChange]
+    [recipeId, addEntries, handleOpenChange]
   )
 
   const handlePrevMonth = useCallback(() => {
@@ -267,7 +269,7 @@ const AssignToMealPlanModal = ({
                         isToday={isToday}
                         isJustAssigned={isJustAssigned}
                         isAlreadyAssigned={isAlreadyAssigned}
-                        disabled={setEntry.isPending}
+                        disabled={addEntries.isPending}
                         ariaLabel={ariaLabel}
                         onSelect={handleSelectDate}
                       />

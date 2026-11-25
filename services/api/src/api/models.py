@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date as DateType, datetime
+from datetime import date as DateType, datetime, timezone
 from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint
+from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, func
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -597,9 +597,7 @@ class RecipeHouseholdsRequest(BaseModel):
 
 class MealPlanEntry(Base):
     __tablename__ = "meal_plan_entries"
-    __table_args__ = (
-        UniqueConstraint("household_id", "date", name="uq_meal_plan_household"),
-    )
+    __table_args__ = (Index("ix_meal_plan_household_date", "household_id", "date"),)
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
@@ -613,6 +611,9 @@ class MealPlanEntry(Base):
         PG_UUID(as_uuid=True), ForeignKey("recipes.id", ondelete="CASCADE"), nullable=True
     )
     text: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), server_default=func.now()
+    )
     recipe: Mapped[Recipe | None] = relationship("Recipe", lazy="selectin")
 
 
@@ -637,6 +638,24 @@ class MealPlanSetRequest(BaseModel):
             raise ValueError("Provide exactly one of recipe_id or text")
         self.text = text
         return self
+
+
+class MealPlanItemIn(BaseModel):
+    recipe_id: uuid.UUID | None = None
+    text: str | None = Field(default=None, max_length=200)
+
+    @model_validator(mode="after")
+    def validate_item(self) -> "MealPlanItemIn":
+        text = self.text.strip() if self.text else ""
+        text = text or None
+        if (self.recipe_id is None) == (text is None):
+            raise ValueError("Provide exactly one of recipe_id or text")
+        self.text = text
+        return self
+
+
+class MealPlanAddRequest(BaseModel):
+    items: list[MealPlanItemIn] = Field(min_length=1, max_length=20)
 
 
 class MealPlanMoveRequest(BaseModel):

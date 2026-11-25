@@ -15,6 +15,7 @@ import {
   formatMonthYear,
 } from '@carrot/shared/utils/dateUtils'
 import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
+import { useMealPlanMutations } from '@carrot/shared/hooks/useMealPlanMutations'
 import PageHeader from '../../components/PageHeader'
 import { exportMealPlan, printMealPlan } from './helpers'
 import { useScrollToToday } from './useScrollToToday'
@@ -46,19 +47,15 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
   const monthKey = parsedMonth ?? currentMonthKey
   const [viewYear, viewMonth] = monthKey.split('-').map(Number)
 
-  const {
-    entries,
-    isLoading: loading,
-    setEntry,
-    deleteEntry,
-    moveEntry,
-  } = useMealPlan(monthKey)
+  const { entries, isLoading: loading } = useMealPlan(monthKey)
+  const { addEntries, removeEntry, moveEntry } = useMealPlanMutations()
   const busy =
-    setEntry.isPending || deleteEntry.isPending || moveEntry.isPending
+    addEntries.isPending || removeEntry.isPending || moveEntry.isPending
 
   const [pickerOpen, setPickerOpen] = useState(false)
   const [targetDate, setTargetDate] = useState<string | null>(null)
   const [actionEntry, setActionEntry] = useState<MealPlanEntry | null>(null)
+  const [replaceEntryId, setReplaceEntryId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
 
   const { stickyRef, setDayRef } = useScrollToToday(
@@ -72,10 +69,14 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
     [viewYear, viewMonth]
   )
 
-  const entriesByDate = useMemo(
-    () => new Map(entries.map((e) => [e.date, e])),
-    [entries]
-  )
+  const entriesByDate = useMemo(() => {
+    const byDate = new Map<string, MealPlanEntry[]>()
+    for (const entry of entries) {
+      byDate.set(entry.date, [...(byDate.get(entry.date) ?? []), entry])
+    }
+
+    return byDate
+  }, [entries])
 
   const filteredRecipes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -119,47 +120,48 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
     setActionEntry(null)
   }, [])
 
-  const handleCellClick = useCallback(
-    (dateStr: string, entry?: MealPlanEntry) => {
-      if (entry) setActionEntry(entry)
-      else openPicker(dateStr)
-    },
-    [openPicker]
-  )
-
   const closePicker = useCallback(() => {
     setPickerOpen(false)
     setTargetDate(null)
+    setReplaceEntryId(null)
   }, [])
+
+  const finishAssign = useCallback(() => {
+    if (replaceEntryId) removeEntry.mutate(replaceEntryId)
+    closePicker()
+  }, [replaceEntryId, removeEntry, closePicker])
 
   const handleAssign = useCallback(
     (recipe: RecipeOut) => {
       if (!targetDate) return
 
-      setEntry.mutate(
-        { date: targetDate, recipeId: recipe.id },
-        { onSuccess: closePicker }
+      addEntries.mutate(
+        { date: targetDate, items: [{ recipeId: recipe.id, recipe }] },
+        { onSuccess: finishAssign }
       )
     },
-    [targetDate, setEntry, closePicker]
+    [targetDate, addEntries, finishAssign]
   )
 
   const handleAddText = useCallback(
     (text: string) => {
       if (!targetDate) return
 
-      setEntry.mutate({ date: targetDate, text }, { onSuccess: closePicker })
+      addEntries.mutate(
+        { date: targetDate, items: [{ text }] },
+        { onSuccess: finishAssign }
+      )
     },
-    [targetDate, setEntry, closePicker]
+    [targetDate, addEntries, finishAssign]
   )
 
   const handleRemove = useCallback(() => {
     if (!actionEntry) return
 
-    deleteEntry.mutate(actionEntry.date, {
+    removeEntry.mutate(actionEntry.id, {
       onSuccess: () => setActionEntry(null),
     })
-  }, [actionEntry, deleteEntry])
+  }, [actionEntry, removeEntry])
 
   const closeActionEntry = useCallback(() => setActionEntry(null), [])
   const handleViewRecipe = useCallback(() => {
@@ -167,13 +169,17 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
   }, [actionEntry, openRecipe])
 
   const handleChangeRecipe = useCallback(() => {
-    if (actionEntry) openPicker(actionEntry.date)
+    if (!actionEntry) return
+
+    const { id, date } = actionEntry
+    openPicker(date)
+    setReplaceEntryId(id)
   }, [actionEntry, openPicker])
 
   const handleMoveEntry = useCallback(
-    (from: string, to: string) => {
+    (id: string, to: string) => {
       moveEntry.mutate(
-        { from, to },
+        { id, to },
         {
           onError: () =>
             toast.danger(t('mealPlan.moveFailed'), { timeout: 3000 }),
@@ -186,7 +192,7 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
   const handleMoveActionEntry = useCallback(
     (to: string) => {
       if (!actionEntry) return
-      handleMoveEntry(actionEntry.date, to)
+      handleMoveEntry(actionEntry.id, to)
       setActionEntry(null)
     },
     [actionEntry, handleMoveEntry]
@@ -247,7 +253,8 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
           onPrev={goToPrevMonth}
           onNext={goToNextMonth}
           onToday={goToToday}
-          onCellClick={handleCellClick}
+          onCellClick={openPicker}
+          onEntryClick={setActionEntry}
           onMoveEntry={handleMoveEntry}
         />
       </div>
@@ -294,7 +301,7 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
           ) : (
             Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
               const dateStr = ymdToISODate(viewYear, viewMonth, day)
-              const entry = entriesByDate.get(dateStr)
+              const dayEntries = entriesByDate.get(dateStr) ?? []
               const isToday =
                 day === todayDate.day &&
                 viewMonth === todayDate.month &&
@@ -307,12 +314,12 @@ const MealPlanPage = ({ recipes, preferences }: MealPlanPageProps) => {
                   year={viewYear}
                   month={viewMonth}
                   locale={locale}
-                  entry={entry}
+                  entries={dayEntries}
                   isToday={isToday}
                   isSelected={isToday}
                   setRef={setDayRef(day)}
                   onAdd={() => openPicker(dateStr)}
-                  onTap={() => entry && setActionEntry(entry)}
+                  onTap={setActionEntry}
                 />
               )
             })

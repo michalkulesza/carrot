@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
 import { useMealPlan } from '@carrot/shared/hooks/useMealPlan'
+import { useMealPlanMutations } from '@carrot/shared/hooks/useMealPlanMutations'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { toYYYYMM, toISODate, formatMonthYear, weekdayShortByIndex } from '@carrot/shared/utils/dateUtils'
 import { colors } from '../theme/colors'
@@ -115,7 +116,8 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     const [justAssigned, setJustAssigned] = useState<string | null>(null)
 
     const monthKey = toYYYYMM(visibleMonth)
-    const { entries, setEntry } = useMealPlan(monthKey)
+    const { entries } = useMealPlan(monthKey)
+    const { addEntries } = useMealPlanMutations()
 
     const assignedDates = useMemo(
       () => new Set(entries.filter((e) => e.recipe?.id === recipeId).map((e) => e.date)),
@@ -147,11 +149,13 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
 
     const handleSelectDate = useCallback(
       (date: Date) => {
+        if (addEntries.isPending) return
+
         const isoDate = toISODate(date)
         setJustAssigned(isoDate)
 
-        setEntry.mutate(
-          { date: isoDate, recipeId },
+        addEntries.mutate(
+          { date: isoDate, items: [{ recipeId }] },
           {
             onSuccess: () => {
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -166,7 +170,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
           },
         )
       },
-      [setEntry, recipeId],
+      [addEntries, recipeId],
     )
 
     const cells = useMemo(() => buildMonthGrid(visibleMonth, weekStart), [visibleMonth, weekStart])
@@ -232,7 +236,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
                       isToday={isoDate === todayIso}
                       isJustAssigned={isJustAssigned}
                       isAlreadyAssigned={isAlreadyAssigned}
-                      disabled={setEntry.isPending}
+                      disabled={addEntries.isPending}
                       locale={i18n.language}
                       onPress={handleSelectDate}
                     />

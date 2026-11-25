@@ -68,6 +68,7 @@ export const paletteTones = {
   actionDisabled: ['#E8C4AA', '#5A3A24'],
   actionText: ['#A9521D', '#F0A06A'],
   tint: ['#FCEBDD', '#3A2618'],
+  todayCard: ['#FFF4EA', '#2E2016'],
   anchorLine: ['#F3C9AC', '#6B4326'],
   tintText: ['#7E3C14', '#F5B98C'],
   note: ['#FCEBDD', '#3A2618'],

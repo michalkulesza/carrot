@@ -2,6 +2,7 @@ import calendar as cal
 import io
 import uuid
 from datetime import date as DateType, timedelta
+from xml.sax.saxutils import escape as xml_escape
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -44,7 +45,7 @@ async def _fetch_entries(
     user: User,
     household_id: uuid.UUID,
     session: AsyncSession,
-) -> dict[str, str]:
+) -> dict[str, list[str]]:
     last_day = cal.monthrange(year, month)[1]
     start = DateType(year, month, 1)
     end = DateType(year, month, last_day)
@@ -57,8 +58,16 @@ async def _fetch_entries(
 
     from sqlalchemy import select
 
-    result = await session.execute(select(MealPlanEntry).where(where))
-    return {str(e.date): e.recipe.title if e.recipe is not None else e.text or "" for e in result.scalars().all()}
+    result = await session.execute(
+        select(MealPlanEntry)
+        .where(where)
+        .order_by(MealPlanEntry.date, MealPlanEntry.created_at, MealPlanEntry.id)
+    )
+    by_date: dict[str, list[str]] = {}
+    for e in result.scalars().all():
+        title = e.recipe.title if e.recipe is not None else e.text or ""
+        by_date.setdefault(str(e.date), []).append(title)
+    return by_date
 
 
 def _week_mondays(year: int, month: int) -> list[DateType]:
@@ -73,7 +82,7 @@ def _week_mondays(year: int, month: int) -> list[DateType]:
     return weeks
 
 
-def _build_xlsx(by_date: dict[str, str], year: int, month: int) -> bytes:
+def _build_xlsx(by_date: dict[str, list[str]], year: int, month: int) -> bytes:
     weeks = _week_mondays(year, month)
     total_rows = 1 + _ROW_COUNT
     edge = Side(style="thin", color=_GREEN)
@@ -109,7 +118,7 @@ def _build_xlsx(by_date: dict[str, str], year: int, month: int) -> bytes:
         for i in range(7):
             if monday:
                 ds = (monday + timedelta(days=i)).strftime("%Y-%m-%d")
-                row_data.append(by_date.get(ds))
+                row_data.append("\n".join(by_date[ds]) if ds in by_date else None)
             else:
                 row_data.append(None)
         ws.append(row_data)
@@ -128,7 +137,7 @@ def _build_xlsx(by_date: dict[str, str], year: int, month: int) -> bytes:
     return buf.getvalue()
 
 
-def _build_pdf(by_date: dict[str, str], year: int, month: int) -> bytes:
+def _build_pdf(by_date: dict[str, list[str]], year: int, month: int) -> bytes:
     weeks = _week_mondays(year, month)
 
     header_style = ParagraphStyle(
@@ -155,7 +164,7 @@ def _build_pdf(by_date: dict[str, str], year: int, month: int) -> bytes:
         for i in range(7):
             if monday:
                 ds = (monday + timedelta(days=i)).strftime("%Y-%m-%d")
-                text = by_date.get(ds, "")
+                text = "<br/>".join(xml_escape(title) for title in by_date.get(ds, []))
             else:
                 text = ""
             row.append(Paragraph(text, cell_style))

@@ -639,7 +639,28 @@
     "moveToDay": "Przenieś na inny dzień",
     "moveTo": "Przenieś do…",
     "moveFailed": "Nie udało się przenieść dania. Spróbuj ponownie.",
-    "dragHint": "Naciśnij i przytrzymaj, a następnie przeciągnij, aby przenieść to danie na inny dzień."
+    "dragHint": "Naciśnij i przytrzymaj, a następnie przeciągnij, aby przenieść to danie na inny dzień.",
+    "addToDay": "Dodaj do: {{day}}",
+    "dishSearchPlaceholder": "Szukaj przepisów lub wpisz szybki posiłek",
+    "addQuickMeal": "Dodaj „{{text}}”",
+    "quickMealHint": "Szybki posiłek · bez przepisu",
+    "quickMeal": "Szybki posiłek",
+    "alreadyOnDay": "Już zaplanowane na ten dzień",
+    "thisWeek": "Ten tydzień",
+    "plannedCount": "{{count}} z 7 zaplanowanych",
+    "dayIsFree": "{{day}} jest jeszcze wolny",
+    "pickRecipeOrQuick": "Wybierz przepis lub szybki posiłek",
+    "planIt": "Zaplanuj",
+    "addAnotherDish": "Dodaj kolejny posiłek: {{day}}",
+    "addDishTo": "Dodaj posiłek: {{day}}",
+    "nextWeekEllipsis": "Następny tydzień…",
+    "prevWeek": "Poprzedni tydzień",
+    "nextWeek": "Następny tydzień",
+    "removeFailed": "Nie udało się usunąć posiłku. Spróbuj ponownie.",
+    "addFailed": "Nie udało się dodać posiłków. Spróbuj ponownie.",
+    "removeDishChip": "Usuń {{title}}",
+    "showPreviousWeek": "Pokaż poprzedni tydzień",
+    "showNextWeek": "Pokaż następny tydzień"
   },
   "households": {
     "switchContext": "Przełącz gospodarstwo domowe",
@@ -678,9 +699,7 @@
     "addTagShort": "Tag",
     "searchOrCreateTag": "Szukaj lub utwórz tag",
     "createTagLabel": "Utwórz tag",
-    "noMatchingTags": "Brak pasujących tagów",
-    "selectedCount": "Wybrano: {{count}}",
-    "clearSearch": "Wyczyść wyszukiwanie"
+    "noMatchingTags": "Brak pasujących tagów"
   },
   "addRecipe": {
     "urlPlaceholder": "URL z Instagrama, TikToka lub dowolnej strony z przepisami",
@@ -964,7 +983,6 @@
     "linkRecipe": "Powiąż przepis",
     "searchPlaceholder": "Szukaj w swoich przepisach",
     "noMatches": "Brak pasujących przepisów",
-    "selectedCount": "Wybrano: {{count}}",
     "removeLink": "Odłącz: {{title}}"
   },
   "ads": {
@@ -1070,5 +1088,10 @@
     "clipboardSubtitle": "Stuknij Importuj, aby go dodać",
     "clipboardImport": "Importuj",
     "close": "Zamknij menu"
+  },
+  "selectionDrawer": {
+    "selectedCount": "Wybrano: {{count}}",
+    "clearSearch": "Wyczyść wyszukiwanie",
+    "allRecipes": "Wszystkie przepisy"
   }
 }
