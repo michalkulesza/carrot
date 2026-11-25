@@ -411,5 +411,6 @@ app.include_router(
 
 
 @app.get("/healthz")
+@app.get("/api/healthz")
 async def health() -> dict[str, str]:
     return {"status": "ok"}

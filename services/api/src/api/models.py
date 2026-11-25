@@ -806,6 +806,7 @@ class ImportFailureCode(StrEnum):
     UNREADABLE_CONTENT = "unreadable_content"
     SOURCE_FETCH_FAILED = "source_fetch_failed"
     SOURCE_BLOCKED = "source_blocked"
+    EGRESS_UNAVAILABLE = "egress_unavailable"
     TRANSCRIPTION_FAILED = "transcription_failed"
     MODEL_TIMEOUT = "model_timeout"
     MODEL_RATE_LIMITED = "model_rate_limited"

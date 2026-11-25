@@ -23,7 +23,7 @@ class RecordingTransport(Transport):
 
 
 @pytest.fixture
-def events():
+def events(production_sentry):
     transport = RecordingTransport()
     client = sentry_sdk.Client(
         dsn="https://public@example.com/1",
@@ -181,3 +181,43 @@ async def test_worker_initializes_sentry_before_database_startup(monkeypatch):
     monkeypatch.setattr(worker, "engine", Mock(begin=lambda: connection))
     with pytest.raises(RuntimeError, match="Database unavailable"):
         await worker.main()
+
+
+def test_non_production_logs_dev_line_and_sends_nothing(monkeypatch, caplog, events):
+    monkeypatch.setattr(monitoring.settings, "sentry_environment", "development")
+
+    with caplog.at_level("WARNING", logger=monitoring.log.name):
+        monitoring.report_residential_failure("unavailable", step="raw", outcome="unavailable", host="example.com")
+
+    assert events == []
+    record = caplog.records[0]
+    assert record.levelname == "ERROR"
+    message = record.getMessage()
+    assert message.startswith("[SENTRY:DEV] Residential egress unavailable")
+    assert "['residential-egress', 'unavailable']" in message and "example.com" in message
+
+
+def test_non_production_without_dsn_logs_with_exception_info(monkeypatch, caplog, events):
+    monkeypatch.setattr(monitoring.settings, "sentry_dsn", "")
+
+    with caplog.at_level("WARNING", logger=monitoring.log.name):
+        monitoring.report_recipe_import_failure(input_kind="text", reason="x", error=ValueError("boom"))
+
+    assert events == []
+    assert caplog.records[0].exc_info[0] is ValueError
+
+
+def test_non_production_warning_level_uses_warning(monkeypatch, caplog, events):
+    monkeypatch.setattr(monitoring.settings, "sentry_environment", "development")
+
+    with caplog.at_level("WARNING", logger=monitoring.log.name):
+        monitoring.report_missing_critical_fields(input_kind="text", issue_codes=["MISSING_INGREDIENTS"])
+
+    assert events == [] and caplog.records[0].levelname == "WARNING"
+
+
+def test_production_sends_to_sentry(events):
+    monitoring.report_dependency_down("renderer", status_code=503)
+
+    assert events[0]["message"] == "Dependency down: renderer"
+    assert events[0]["tags"]["dependency"] == "renderer"

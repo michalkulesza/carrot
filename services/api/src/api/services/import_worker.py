@@ -41,6 +41,7 @@ from api.services.image_fetch import ImageFetchError, fetch_image
 from api.services.embeddings import queue_recipe_embedding
 from api.services.allergen_rechecks import recover_running_jobs, settle_allergen_status, worker_loop as allergen_recheck_worker_loop
 from api.services.embeddings import _vector_literal, build_embedding_document, embedding_document_hash, generate_embedding
+from api.services.health_probe import run_health_probe
 from api.services.monitoring import apply_job_identity, job_sentry_scope, report_recipe_import_failure, report_missing_critical_fields, report_service_failure
 from api.services.extraction_v2.contracts import FailedOutcome, FailureReason
 from api.services.extraction_v2.production import (
@@ -95,7 +96,7 @@ def _residential_attempt(outcome: FailedOutcome) -> tuple[str, str] | None:
         status = event.event.removeprefix("html_")
         if status in _RESIDENTIAL_STEP_BY_STATUS:  # residential fetch worked, extraction failed later
             return _RESIDENTIAL_STEP_BY_STATUS[status], "ok"
-        if event.event == "residential_blocked" and event.detail and ":" in event.detail:
+        if event.event in {"residential_blocked", "residential_unavailable"} and event.detail and ":" in event.detail:
             step, _, result = event.detail.partition(":")
             return step, result
     return None
@@ -421,6 +422,7 @@ def _is_transient(error: Exception) -> bool:
     if isinstance(error, ImportPipelineFailure):
         return error.code in {
             FailureReason.SOURCE_FETCH_FAILED.value.lower(),
+            FailureReason.EGRESS_UNAVAILABLE.value.lower(),
             FailureReason.TRANSCRIPTION_FAILED.value.lower(),
             FailureReason.MODEL_TIMEOUT.value.lower(),
             FailureReason.MODEL_RATE_LIMITED.value.lower(),
@@ -871,4 +873,5 @@ async def run() -> None:
         allergen_recheck_worker_loop(_POLL_INTERVAL_SECONDS),
         _push_loop(),
         _awaiting_children_loop(),
+        run_health_probe(),
     )

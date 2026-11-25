@@ -109,16 +109,48 @@ async def test_proxy_only_skips_residential_renderer(monkeypatch, setup) -> None
 @pytest.mark.asyncio
 @pytest.mark.parametrize("raw_error", [
     production.SourceBlocked("still blocked"),
-    httpx.ConnectError("tunnel down"),
-    httpx.ReadTimeout("slow"),
     httpx.HTTPStatusError("403", request=httpx.Request("GET", URL), response=httpx.Response(403)),
 ])
-async def test_still_blocked_or_tunnel_down_is_source_blocked(monkeypatch, setup, raw_error) -> None:
+async def test_still_blocked_is_source_blocked(monkeypatch, setup, raw_error) -> None:
     monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
     monkeypatch.setattr(settings, "residential_renderer_url", RES_RENDERER)
     _patch(monkeypatch, setup, residential_render=RendererFailure("renderer_unavailable", operational=True), residential_raw=raw_error)
     outcome, _m, capture = await _acquire()
     assert outcome.reason == FailureReason.SOURCE_BLOCKED and capture == {}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("raw_error", [httpx.ConnectError("tunnel down"), httpx.ReadTimeout("slow")])
+async def test_tunnel_down_is_egress_unavailable(monkeypatch, setup, raw_error) -> None:
+    monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
+    monkeypatch.setattr(settings, "residential_renderer_url", RES_RENDERER)
+    _patch(monkeypatch, setup, residential_render=RendererFailure("renderer_unavailable", operational=True), residential_raw=raw_error)
+    outcome, _m, capture = await _acquire()
+    assert outcome.reason == FailureReason.EGRESS_UNAVAILABLE and capture == {}
+    assert import_worker._residential_attempt(outcome) == ("raw", "unavailable")
+
+
+@pytest.mark.asyncio
+async def test_renderer_down_then_pi_blocks_is_source_blocked(monkeypatch, setup) -> None:
+    monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
+    monkeypatch.setattr(settings, "residential_renderer_url", RES_RENDERER)
+    _patch(monkeypatch, setup, residential_render=RendererFailure("renderer_unavailable", operational=True),
+           residential_raw=production.SourceBlocked("still blocked"))
+    outcome, _m, _c = await _acquire()
+    assert outcome.reason == FailureReason.SOURCE_BLOCKED
+
+
+@pytest.mark.asyncio
+async def test_renderer_down_without_proxy_is_egress_unavailable(monkeypatch, setup) -> None:
+    monkeypatch.setattr(settings, "residential_renderer_url", RES_RENDERER)
+    _patch(monkeypatch, setup, residential_render=RendererFailure("renderer_unavailable", operational=True))
+    outcome, _m, _c = await _acquire()
+    assert outcome.reason == FailureReason.EGRESS_UNAVAILABLE
+
+
+def test_egress_unavailable_is_retryable() -> None:
+    assert import_worker._is_transient(import_worker.ImportPipelineFailure("egress_unavailable", "input"))
+    assert not import_worker._is_transient(import_worker.ImportPipelineFailure("source_blocked", "input"))
 
 
 @pytest.mark.asyncio
@@ -384,7 +416,7 @@ async def test_unreachable_pi_logs_warning_and_attempt_line(monkeypatch, setup, 
     monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
     _patch(monkeypatch, setup, residential_raw=httpx.ConnectError("tunnel down"))
     with caplog.at_level(logging.INFO, logger=production.log.name):
-        with pytest.raises(production.SourceBlocked) as blocked:
+        with pytest.raises(production.EgressUnavailable) as blocked:
             await production._acquire_residential(URL)
     assert any("step=raw outcome=unavailable" in line for line in _attempt_lines(caplog))
     warnings = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
@@ -399,7 +431,7 @@ async def test_renderer_unavailable_warns_but_site_block_does_not(monkeypatch, s
     monkeypatch.setattr(settings, "residential_renderer_url", RES_RENDERER)
     _patch(monkeypatch, setup, residential_render=RendererFailure("renderer_unavailable", operational=True))
     with caplog.at_level(logging.INFO, logger=production.log.name):
-        with pytest.raises(production.SourceBlocked) as blocked:
+        with pytest.raises(production.EgressUnavailable) as blocked:
             await production._acquire_residential(URL)
     assert blocked.value.residential_outcome == "renderer_unavailable"
     assert sum("event=residential_unavailable" in r.getMessage() for r in caplog.records) == 1
@@ -439,6 +471,8 @@ async def test_blocked_failure_carries_attempt_and_import_report_tags(monkeypatc
     assert outcome.reason == FailureReason.SOURCE_BLOCKED
     assert import_worker._residential_attempt(outcome) == ("raw", "challenge")
 
+    monkeypatch.setattr(settings, "sentry_dsn", "https://k@example.ingest.sentry.io/1")
+    monkeypatch.setattr(settings, "sentry_environment", "production")
     tags = {}
     monkeypatch.setattr(monitoring.sentry_sdk, "new_scope", lambda: _TagScope(tags))
     monkeypatch.setattr(monitoring.sentry_sdk, "capture_message", lambda *_a, **_k: None)
@@ -542,7 +576,7 @@ async def test_stats_script_query_function() -> None:
 # --- Sentry error events (A) and Sentry Logs (B) ---
 
 @pytest.fixture
-def sentry(monkeypatch):
+def sentry(monkeypatch, production_sentry):
     from api.services import monitoring
 
     class Scope(_TagScope):
@@ -570,7 +604,7 @@ def sentry(monkeypatch):
 async def test_unreachable_pi_sends_one_grouped_sentry_error(monkeypatch, setup, sentry) -> None:
     monkeypatch.setattr(settings, "residential_proxy_url", RES_PROXY)
     _patch(monkeypatch, setup, residential_raw=httpx.ConnectError("tunnel down"))
-    with pytest.raises(production.SourceBlocked):
+    with pytest.raises(production.EgressUnavailable):
         await production._acquire_residential(URL + "?secret=1")
     assert len(sentry.errors) == 1
     scope, message, level = sentry.errors[0]
@@ -623,14 +657,19 @@ async def test_normal_path_logs_route_per_attempt(monkeypatch, setup, sentry, pr
     assert sentry.errors == []
 
 
-def test_init_sentry_enables_logs_only_with_dsn(monkeypatch) -> None:
+def test_init_sentry_enables_logs_only_with_dsn_in_production(monkeypatch) -> None:
     from api.services import monitoring
 
     calls = []
     monkeypatch.setattr(monitoring.sentry_sdk, "init", lambda **kw: calls.append(kw))
     monkeypatch.setattr(monitoring.settings, "sentry_dsn", "")
+    monkeypatch.setattr(monitoring.settings, "sentry_environment", "production")
     monitoring.init_sentry()
     assert calls == []
     monkeypatch.setattr(monitoring.settings, "sentry_dsn", "https://k@example.ingest.sentry.io/1")
+    monkeypatch.setattr(monitoring.settings, "sentry_environment", "development")
+    monitoring.init_sentry()
+    assert calls == []
+    monkeypatch.setattr(monitoring.settings, "sentry_environment", "production")
     monitoring.init_sentry()
     assert calls[0]["enable_logs"] is True

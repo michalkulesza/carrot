@@ -34,7 +34,7 @@ def _capture(monkeypatch):
     return captured
 
 
-def test_missing_critical_fields_emits_redacted_final_event(monkeypatch):
+def test_missing_critical_fields_emits_redacted_final_event(monkeypatch, production_sentry):
     captured = _capture(monkeypatch)
 
     monitoring.report_missing_critical_fields(
@@ -69,7 +69,7 @@ def test_missing_critical_fields_emits_redacted_final_event(monkeypatch):
     assert "secret" not in str(captured)
 
 
-def test_complete_and_no_recipe_content_do_not_emit_missing_field_event(monkeypatch):
+def test_complete_and_no_recipe_content_do_not_emit_missing_field_event(monkeypatch, production_sentry):
     captured = _capture(monkeypatch)
 
     monitoring.report_missing_critical_fields(
@@ -82,7 +82,7 @@ def test_complete_and_no_recipe_content_do_not_emit_missing_field_event(monkeypa
     assert captured == {}
 
 
-def test_unrecognized_diagnostic_values_are_dropped(monkeypatch):
+def test_unrecognized_diagnostic_values_are_dropped(monkeypatch, production_sentry):
     captured = _capture(monkeypatch)
 
     monitoring.report_missing_critical_fields(
@@ -100,7 +100,7 @@ def test_unrecognized_diagnostic_values_are_dropped(monkeypatch):
     assert context["fallback_status"] is None
 
 
-def test_unsupported_language_failure_has_stable_redacted_context(monkeypatch):
+def test_unsupported_language_failure_has_stable_redacted_context(monkeypatch, production_sentry):
     captured = _capture(monkeypatch)
 
     monitoring.report_recipe_import_failure(
@@ -156,7 +156,7 @@ def test_trace_names_are_capped():
     assert context["trace"][0] == "stage:event_0"
 
 
-def test_failure_report_tags_job_and_opaque_user(monkeypatch):
+def test_failure_report_tags_job_and_opaque_user(monkeypatch, production_sentry):
     captured = _capture(monkeypatch)
     job_id, user_id = uuid.uuid4(), uuid.uuid4()
 
@@ -180,7 +180,7 @@ class _RecordingTransport(Transport):
                 self.events.append(item.payload.json)
 
 
-def test_job_scopes_do_not_share_breadcrumbs_tags_user_or_trace():
+def test_job_scopes_do_not_share_breadcrumbs_tags_user_or_trace(production_sentry):
     transport = _RecordingTransport()
     client = sentry_sdk.Client(dsn="https://public@example.com/1", transport=transport, default_integrations=False)
     first_job, second_job = uuid.uuid4(), uuid.uuid4()

@@ -43,7 +43,7 @@ async def _extract(url: str, available_tags: list[str], allergens: list[str]) ->
     outcome, metadata, source_capture = await acquire_and_extract_url(url, usage)
     if isinstance(outcome, FailedOutcome):
         retryable = outcome.reason in {
-            FailureReason.SOURCE_FETCH_FAILED, FailureReason.TRANSCRIPTION_FAILED,
+            FailureReason.SOURCE_FETCH_FAILED, FailureReason.EGRESS_UNAVAILABLE, FailureReason.TRANSCRIPTION_FAILED,
             FailureReason.MODEL_TIMEOUT, FailureReason.MODEL_RATE_LIMITED,
             FailureReason.UNKNOWN_ERROR,
         }

@@ -173,6 +173,7 @@ export type ImportFailureCode =
   | "unreadable_content"
   | "source_fetch_failed"
   | "source_blocked"
+  | "egress_unavailable"
   | "transcription_failed"
   | "model_timeout"
   | "model_rate_limited"

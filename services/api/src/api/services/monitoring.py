@@ -9,6 +9,8 @@ from urllib.parse import urlsplit, urlunsplit
 
 from api.config import settings
 
+log = logging.getLogger(__name__)
+
 
 def _sanitize_source_url(source_url: str | None) -> str | None:
     if not source_url:
@@ -85,9 +87,13 @@ def build_import_failure_context(
     return context
 
 
+def sentry_enabled() -> bool:
+    return bool(settings.sentry_dsn) and settings.sentry_environment == "production"
+
+
 def init_sentry() -> None:
-    """Enable Sentry only when a DSN has been configured."""
-    if settings.sentry_dsn:
+    """Enable Sentry only in production with a DSN, so dev and test runs stay out of the project."""
+    if sentry_enabled():
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             environment=settings.sentry_environment,
@@ -96,20 +102,71 @@ def init_sentry() -> None:
         )
 
 
+def _emit(
+    level: str,
+    message: str,
+    *,
+    tags: dict[str, str],
+    contexts: dict[str, dict] | None = None,
+    fingerprint: list[str],
+    job_id: uuid.UUID | None = None,
+    job_kind: str | None = None,
+    user_id: uuid.UUID | None = None,
+    error: Exception | None = None,
+) -> None:
+    """Send to Sentry in production; elsewhere log what would have been sent."""
+    contexts = contexts or {}
+    if not sentry_enabled():
+        identity_tags = {
+            **({"job_id": str(job_id)} if job_id is not None else {}),
+            **({"job_kind": str(job_kind)} if job_kind else {}),
+        }
+        log_at = log.error if level == "error" else log.warning
+        log_at(
+            "[SENTRY:DEV] %s tags=%s fingerprint=%s contexts=%s",
+            message, {**identity_tags, **tags}, fingerprint, contexts,
+            exc_info=error,
+        )
+        return
+
+    with sentry_sdk.new_scope() as scope:
+        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
+        for key, value in tags.items():
+            scope.set_tag(key, value)
+        for key, value in contexts.items():
+            scope.set_context(key, value)
+        scope.fingerprint = fingerprint
+        if error is not None:
+            sentry_sdk.capture_exception(error)
+        else:
+            sentry_sdk.capture_message(message, level=level)
+
+
 def report_service_failure(
     operation: str, *, status_code: int | None = None, error: Exception | None = None,
 ) -> None:
     """Report handled failures without provider bodies, tokens, or user content."""
     error_type = type(error).__name__ if error is not None else None
     reason = str(status_code) if status_code is not None else (error_type or "unknown")
-    with sentry_sdk.new_scope() as scope:
-        scope.set_tag("operation", operation)
-        scope.fingerprint = ["service_failure", operation, reason]
-        scope.set_context("service_failure", {
+    _emit(
+        "error", f"Service failure: {operation}",
+        tags={"operation": operation},
+        contexts={"service_failure": {"status_code": status_code, "error_type": error_type}},
+        fingerprint=["service_failure", operation, reason],
+    )
+
+
+def report_dependency_down(name: str, *, status_code: int | None = None, error: Exception | None = None) -> None:
+    """Report one failed health-probe check without provider bodies or hosts."""
+    _emit(
+        "error", f"Dependency down: {name}",
+        tags={"dependency": name},
+        contexts={"dependency_down": {
+            "error_type": type(error).__name__ if error is not None else None,
             "status_code": status_code,
-            "error_type": error_type,
-        })
-        sentry_sdk.capture_message(f"Service failure: {operation}", level="error")
+        }},
+        fingerprint=["dependency_down", name],
+    )
 
 
 def log_fetch_attempt(
@@ -129,13 +186,11 @@ def log_fetch_attempt(
 
 def report_residential_failure(kind: str, *, step: str, outcome: str, host: str) -> None:
     """Sentry error for a failed residential request; kind is "unavailable" or "blocked". Hostname only."""
-    with sentry_sdk.new_scope() as scope:
-        scope.set_tag("egress", "residential")
-        scope.set_tag("step", step)
-        scope.set_tag("outcome", outcome)
-        scope.set_tag("host", host)
-        scope.fingerprint = ["residential-egress", kind]
-        sentry_sdk.capture_message(f"Residential egress {kind}", level="error")
+    _emit(
+        "error", f"Residential egress {kind}",
+        tags={"egress": "residential", "step": step, "outcome": outcome, "host": host},
+        fingerprint=["residential-egress", kind],
+    )
 
 
 def report_recipe_import_failure(
@@ -156,24 +211,23 @@ def report_recipe_import_failure(
     diagnostic_error: str | None = None,
 ) -> None:
     """Report a terminal import failure without sending pasted recipe contents."""
-    with sentry_sdk.new_scope() as scope:
-        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
-        scope.set_tag("operation", "recipe_import")
-        scope.set_tag("input_kind", input_kind)
-        scope.set_tag("reason", str(reason))
-        if residential_step:
-            scope.set_tag("egress", "residential")
-            scope.set_tag("residential_step", residential_step)
-        scope.set_context("recipe_import", build_import_failure_context(
-            input_kind=input_kind, reason=reason, source_url=source_url, input_size=input_size,
-            failure_stage=failure_stage, source_kind=source_kind, summary=summary,
-            retry_count=retry_count, diagnostic_error=diagnostic_error,
-        ))
-        scope.fingerprint = ["recipe_import_failure", str(reason)]
-        if error is not None:
-            sentry_sdk.capture_exception(error)
-        else:
-            sentry_sdk.capture_message(f"Recipe import failed: {reason}", level="error")
+    tags = {"operation": "recipe_import", "input_kind": input_kind, "reason": str(reason)}
+    if residential_step:
+        tags["egress"] = "residential"
+        tags["residential_step"] = residential_step
+    context = build_import_failure_context(
+        input_kind=input_kind, reason=reason, source_url=source_url, input_size=input_size,
+        failure_stage=failure_stage, source_kind=source_kind, summary=summary,
+        retry_count=retry_count, diagnostic_error=diagnostic_error,
+    )
+
+    _emit(
+        "error", f"Recipe import failed: {reason}",
+        tags=tags,
+        contexts={"recipe_import": context},
+        fingerprint=["recipe_import_failure", str(reason)],
+        job_id=job_id, job_kind=job_kind, user_id=user_id, error=error,
+    )
 
 
 def report_missing_critical_fields(
@@ -189,23 +243,31 @@ def report_missing_critical_fields(
     missing = sorted({code for code in issue_codes if code in {"MISSING_INGREDIENTS", "MISSING_INSTRUCTIONS"}})
     if not missing:
         return
-    with sentry_sdk.new_scope() as scope:
-        apply_job_identity(scope, job_id=job_id, job_kind=job_kind, user_id=user_id)
-        scope.set_tag("event_type", "recipe_import_missing_critical_fields")
-        scope.set_tag("input_kind", input_kind)
-        scope.set_tag("issue_code", ",".join(missing))
-        if source_kind:
-            scope.set_tag("source_kind", source_kind)
-        scope.fingerprint = ["recipe_import_missing_critical_fields", *missing]
-        scope.set_context("recipe_import", {
-            "issue_codes": missing,
-            "input_kind": input_kind,
-            "source_kind": source_kind or input_kind,
-            "source_origin": _sanitize_source_url(source_url),
-            "source_url": _sanitize_source_path_url(source_url),
-            "final_outcome": final_outcome,
-            "failure_stage": failure_stage,
-            "renderer_status": renderer_status if renderer_status in {"rendered", "raw_fallback", "not_applicable", "failed", "partial"} else None,
-            "fallback_status": fallback_status if fallback_status in {"complete", "partial", "failed", "not_applicable"} else None,
-        })
-        sentry_sdk.capture_message("Recipe import missing critical fields", level="warning")
+    tags = {
+        "event_type": "recipe_import_missing_critical_fields",
+        "input_kind": input_kind,
+        "issue_code": ",".join(missing),
+    }
+    if source_kind:
+        tags["source_kind"] = source_kind
+    renderer_known = renderer_status in {"rendered", "raw_fallback", "not_applicable", "failed", "partial"}
+    fallback_known = fallback_status in {"complete", "partial", "failed", "not_applicable"}
+    context = {
+        "issue_codes": missing,
+        "input_kind": input_kind,
+        "source_kind": source_kind or input_kind,
+        "source_origin": _sanitize_source_url(source_url),
+        "source_url": _sanitize_source_path_url(source_url),
+        "final_outcome": final_outcome,
+        "failure_stage": failure_stage,
+        "renderer_status": renderer_status if renderer_known else None,
+        "fallback_status": fallback_status if fallback_known else None,
+    }
+
+    _emit(
+        "warning", "Recipe import missing critical fields",
+        tags=tags,
+        contexts={"recipe_import": context},
+        fingerprint=["recipe_import_missing_critical_fields", *missing],
+        job_id=job_id, job_kind=job_kind, user_id=user_id,
+    )

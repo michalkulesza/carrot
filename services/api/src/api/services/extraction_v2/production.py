@@ -44,6 +44,10 @@ class SourceBlocked(Exception):
     """The site served an anti-bot challenge instead of the document."""
 
 
+class EgressUnavailable(Exception):
+    """The residential egress could not be reached at all."""
+
+
 _MAX_HTML_BYTES = 2 * 1024 * 1024
 _MAX_REDIRECTS = 5
 _CHALLENGE_STATUSES = (202, 403, 429, 503)
@@ -173,7 +177,7 @@ def _render_unreachable(category: str) -> bool:
 
 
 async def _acquire_residential(url: str) -> tuple[str, str, str]:
-    """Fallback after a bot challenge: residential renderer, then residential raw fetch. Raises SourceBlocked."""
+    """Fallback after a bot challenge: residential renderer, then residential raw fetch. Raises SourceBlocked, or EgressUnavailable when the egress was unreachable."""
     last_step, last_record, reported_unavailable = "none", {"outcome": "error"}, False
     async with _residential_gate:
         if settings.residential_renderer_url:
@@ -216,10 +220,13 @@ async def _acquire_residential(url: str) -> tuple[str, str, str]:
             report_residential_failure(
                 "blocked", step=last_step, outcome=last_record["outcome"], host=urlsplit(url).hostname or "",
             )
-        blocked_error = SourceBlocked("residential egress blocked or unavailable")
-        blocked_error.residential_step = last_step
-        blocked_error.residential_outcome = last_record["outcome"]
-        raise blocked_error
+        failure = (
+            EgressUnavailable("residential egress unreachable") if reported_unavailable
+            else SourceBlocked("residential egress blocked")
+        )
+        failure.residential_step = last_step
+        failure.residential_outcome = last_record["outcome"]
+        raise failure
 
 
 def _failure(url: str, reason: FailureReason, stage: ExtractionStage) -> FailedOutcome:
@@ -294,11 +301,14 @@ async def acquire_and_extract_url(url: str, usage: gemini.UsageTracker) -> tuple
             return _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT), ImportMetadata(source_url=url), {}
         try:
             html, final_url, render_status = await _acquire_residential(url)
-        except SourceBlocked as blocked:
-            failure = _failure(url, FailureReason.SOURCE_BLOCKED, ExtractionStage.INPUT)
+        except (SourceBlocked, EgressUnavailable) as residential_failure:
+            unavailable = isinstance(residential_failure, EgressUnavailable)
+            reason = FailureReason.EGRESS_UNAVAILABLE if unavailable else FailureReason.SOURCE_BLOCKED
+            failure = _failure(url, reason, ExtractionStage.INPUT)
             failure.trace.append(TraceEvent(
-                stage=ExtractionStage.INPUT, event="residential_blocked",
-                detail=f"{getattr(blocked, 'residential_step', '')}:{getattr(blocked, 'residential_outcome', '')}",
+                stage=ExtractionStage.INPUT,
+                event="residential_unavailable" if unavailable else "residential_blocked",
+                detail=f"{getattr(residential_failure, 'residential_step', '')}:{getattr(residential_failure, 'residential_outcome', '')}",
             ))
             return failure, ImportMetadata(source_url=url), {}
         except Exception:

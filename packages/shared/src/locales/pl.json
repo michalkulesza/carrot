@@ -833,6 +833,7 @@
       "unreadable_content": "Nie uda?o si? wiarygodnie odczyta? tre?ci ?r?d?a.",
       "source_fetch_failed": "Nie uda?o si? otworzy? ?r?d?a. Spr?buj ponownie.",
       "source_blocked": "Ta strona blokuje automatyczny import. Otwórz ją i wklej zamiast tego tekst przepisu.",
+      "egress_unavailable": "Po naszej stronie wystąpił problem. Spróbuj ponownie za chwilę.",
       "transcription_failed": "Nie uda?o si? transkrybowa? filmu. Spr?buj ponownie.",
       "model_timeout": "Przekroczono limit czasu modelu. Spr?buj ponownie.",
       "model_rate_limited": "Model jest zaj?ty. Spr?buj ponownie za chwil?.",

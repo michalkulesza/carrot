@@ -780,6 +780,7 @@
       "unreadable_content": "Não foi possível ler o conteúdo da fonte com segurança.",
       "source_fetch_failed": "Não foi possível acessar a fonte. Tente novamente.",
       "source_blocked": "Este site bloqueia importações automáticas. Abra-o e cole o texto da receita.",
+      "egress_unavailable": "Ocorreu um problema do nosso lado. Tente novamente daqui a pouco.",
       "transcription_failed": "Não foi possível transcrever o vídeo. Tente novamente.",
       "model_timeout": "A solicitação ao modelo excedeu o tempo limite. Tente novamente.",
       "model_rate_limited": "O modelo está ocupado. Tente novamente em instantes.",
