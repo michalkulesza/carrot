@@ -22,6 +22,7 @@ interface MacroStripProps {
 export const MACRO_STRIP_PADDING_X = space.xs
 
 const MARKER_SIZE = 10
+const MARKER_GAP = 2
 
 interface MacroCellProps {
   item: MacroStripItem
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
   cell: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 2 },
   divider: { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: palette.dividerStrong },
   valueWrap: { position: 'relative' },
-  marker: { position: 'absolute', left: '100%', top: 1, marginLeft: 2 },
+  marker: { position: 'absolute', right: -(MARKER_SIZE + MARKER_GAP), top: 1 },
 })
 
 export default memo(MacroStrip)
