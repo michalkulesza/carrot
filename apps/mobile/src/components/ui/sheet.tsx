@@ -1,4 +1,4 @@
-import { useCallback, useMemo, type Ref } from 'react'
+import { useCallback, useMemo, type ReactNode, type Ref } from 'react'
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -6,7 +6,7 @@ import {
   type BottomSheetBackgroundProps,
   type BottomSheetModalProps,
 } from '@gorhom/bottom-sheet'
-import { StyleSheet } from 'react-native'
+import { StyleSheet, View } from 'react-native'
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import { palette, sheetInset } from '../../theme'
 import { useSheetCornerRadius } from './useSheetCornerRadius'
@@ -27,6 +27,7 @@ const sheetStyles = StyleSheet.create({
   handle: { width: HANDLE_WIDTH, height: HANDLE_HEIGHT, borderRadius: HANDLE_HEIGHT / 2, backgroundColor: palette.dividerStrong },
   backdrop: { backgroundColor: palette.backdrop },
   inset: { marginHorizontal: sheetInset },
+  contentClip: { flexGrow: 1, overflow: 'hidden' },
 })
 
 // Fades the shadow with the sheet's position: a closed sheet rests just below the screen edge, where a static shadow would still show.
@@ -53,11 +54,15 @@ const renderSheetBackdrop = (props: BottomSheetBackdropProps) => (
   />
 )
 
-type AppSheetProps = BottomSheetModalProps & { ref?: Ref<BottomSheetModal> }
+type AppSheetProps = Omit<BottomSheetModalProps, 'children'> & { children: ReactNode; ref?: Ref<BottomSheetModal> }
 
-export const AppSheet = ({ ref, style, ...props }: AppSheetProps) => {
+export const AppSheet = ({ ref, style, children, ...props }: AppSheetProps) => {
   const mergedStyle = useMemo(() => [sheetStyles.inset, style], [style])
   const cornerRadius = useSheetCornerRadius()
+  const contentClipStyle = useMemo(
+    () => [sheetStyles.contentClip, { borderBottomLeftRadius: cornerRadius, borderBottomRightRadius: cornerRadius }],
+    [cornerRadius],
+  )
   const renderBackground = useCallback(
     (backgroundProps: BottomSheetBackgroundProps) => <SheetBackground {...backgroundProps} cornerRadius={cornerRadius} />,
     [cornerRadius],
@@ -74,6 +79,8 @@ export const AppSheet = ({ ref, style, ...props }: AppSheetProps) => {
       backdropComponent={renderSheetBackdrop}
       backgroundComponent={renderBackground}
       handleIndicatorStyle={sheetStyles.handle}
-    />
+    >
+      <View style={contentClipStyle}>{children}</View>
+    </BottomSheetModal>
   )
 }
