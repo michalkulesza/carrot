@@ -251,7 +251,7 @@ export const styles = StyleSheet.create({
     backgroundColor: palette.allergen,
   },
   allergenBoxIcon: { marginTop: 1 },
-  allergenBoxTexts: { flex: 1, gap: 2 },
+  allergenBoxTexts: { flex: 1, gap: 2, paddingTop: 1 },
   allergenBoxTitle: { fontSize: 15, lineHeight: 20, fontWeight: "600", color: palette.allergenText },
   allergenBoxBody: { fontSize: 14, lineHeight: 20, color: palette.allergenText },
   allergenBadgeWrapper: { position: "relative", alignSelf: "flex-start", marginTop: 3 },
