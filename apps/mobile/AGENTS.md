@@ -5,7 +5,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before 
 ## Bottom sheets
 
 - Use `@gorhom/bottom-sheet`'s `BottomSheetModal` for every bottom card/sheet. Do not build a bespoke React Native `Modal` bottom sheet.
-- Every sheet uses `enablePanDownToClose` and the shared look from `src/components/ui/sheet.tsx`: `backdropComponent={renderSheetBackdrop}`, `backgroundStyle={sheetStyles.background}`, `handleIndicatorStyle={sheetStyles.handle}`. Don't define per-sheet background, handle or backdrop styles.
+- Every sheet uses `enablePanDownToClose` and the shared look from `src/components/ui/sheet.tsx`: `backdropComponent={renderSheetBackdrop}`, `backgroundComponent={SheetBackground}` (fades its shadow out as the sheet closes), `handleIndicatorStyle={sheetStyles.handle}`. Don't define per-sheet background, handle or backdrop styles.
 - List/select sheets (tags, related recipes, meal-plan dishes, anything with search + checkbox rows + chips) are built on `SelectionDrawer` from `src/components/SelectionDrawer`; don't hand-roll a new picker sheet. It owns present/dismiss, the header, search, chips and the virtualised sectioned list; pass `sections`, `renderItem` (use `SelectionRow`) and optional `listHeader` (`CreateRow`/`QuickAddRow`).
 - Content-sized sheets (`enableDynamicSizing`) need a minimum height of half the window.
 - Do not add close, done, or cancel buttons solely to dismiss a bottom sheet. A sheet must close by tapping the backdrop or pulling it down. Keep action buttons only when they perform a real domain action.
@@ -26,8 +26,6 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before 
 - Preserve `userInterfaceStyle: 'automatic'` and the `expo-system-ui` dependency so automatic appearance works in native builds.
 
 ## Navigation
-
-- Tab root screens hide the native header (`headerShown: false` in the tab's stack layout) and render `TabHeader` from `src/components/TabHeader` last in the tree: glass background, title (or `titleContent`), glass `IconButton` actions, and optional `children` pinned inside the header (e.g. Meal Plan's This week card, Browse's filter bar). Pad the scroll content with `scrollPaddingTop` from `useTabHeaderHeight()` and keep `contentInsetAdjustmentBehavior="automatic"` so iOS still insets the status bar and tab bar.
 
 - Reuse the app's standard transparent back control: a `Feather` `chevron-left` (24px) with the localized “Back” label, as in `useNewRecipeHeader`. Do not introduce a bespoke floating, glass, or pill-shaped back button unless that pattern has been adopted app-wide.
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { renderSheetBackdrop, sheetStyles } from './ui/sheet'
+import { renderSheetBackdrop, sheetStyles, SheetBackground } from './ui/sheet'
 import { Picker } from '@react-native-picker/picker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
@@ -66,7 +66,7 @@ export const QuantityUnitPickerModal = ({
       enablePanDownToClose
       onDismiss={onClose}
       backdropComponent={renderSheetBackdrop}
-      backgroundStyle={sheetStyles.background}
+      backgroundComponent={SheetBackground}
       handleIndicatorStyle={sheetStyles.handle}
     >
       <View style={sheetStyle}>

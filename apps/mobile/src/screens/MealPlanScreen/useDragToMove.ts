@@ -44,15 +44,13 @@ const findHoveredIso = (layouts: DayLayout[], contentY: number): string => {
 
 export const useDragToMove = ({
   scrollRef,
-  contentInsetTop,
-  contentInsetBottom,
-  topInset,
+  coveredTop,
+  coveredBottom,
   onDrop,
 }: {
   scrollRef: AnimatedRef<Animated.ScrollView>
-  contentInsetTop: number
-  contentInsetBottom: number
-  topInset: number
+  coveredTop: number
+  coveredBottom: number
   onDrop: (entryId: string, toIso: string) => void
 }) => {
   const [dragging, setDragging] = useState<DraggingState | null>(null)
@@ -72,23 +70,13 @@ export const useDragToMove = ({
   const isDragging = useSharedValue(false)
   const hovered = useSharedValue('')
   const layouts = useSharedValue<DayLayout[]>([])
-  const coveredTop = useSharedValue(topInset)
-  const minScroll = useSharedValue(-contentInsetTop)
-  const bottomInset = useSharedValue(contentInsetBottom)
+  const coveredTopValue = useSharedValue(coveredTop)
+  const coveredBottomValue = useSharedValue(coveredBottom)
 
   useEffect(() => {
-    coveredTop.value = topInset
-  }, [coveredTop, topInset])
-
-  // iOS starts an inset-adjusted scroll view at -inset, but no scroll event reports it until the user scrolls.
-  useEffect(() => {
-    if (scrollY.value === 0 || scrollY.value === minScroll.value) scrollY.value = -contentInsetTop
-    minScroll.value = -contentInsetTop
-  }, [contentInsetTop, minScroll, scrollY])
-
-  useEffect(() => {
-    bottomInset.value = contentInsetBottom
-  }, [bottomInset, contentInsetBottom])
+    coveredTopValue.value = coveredTop
+    coveredBottomValue.value = coveredBottom
+  }, [coveredTop, coveredBottom, coveredTopValue, coveredBottomValue])
 
   const publishLayouts = useCallback(() => {
     layouts.value = Array.from(layoutsRef.current.values()).map((layout) => ({
@@ -177,21 +165,22 @@ export const useDragToMove = ({
   const updateHover = useCallback(() => {
     'worklet'
     const viewportY = pointerY.value - containerTop.value
-    const iso = viewportY < coveredTop.value ? '' : findHoveredIso(layouts.value, viewportY + scrollY.value)
+    const covered = viewportY < coveredTopValue.value || viewportY > containerHeight.value - coveredBottomValue.value
+    const iso = covered ? '' : findHoveredIso(layouts.value, viewportY + scrollY.value)
     if (iso === hovered.value) return
 
     hovered.value = iso
     runOnJS(handleHoverChange)(iso)
     if (iso) runOnJS(triggerHover)()
-  }, [pointerY, containerTop, scrollY, layouts, coveredTop, hovered, handleHoverChange])
+  }, [pointerY, containerTop, containerHeight, scrollY, layouts, coveredTopValue, coveredBottomValue, hovered, handleHoverChange])
 
   useFrameCallback(() => {
     'worklet'
     if (!isDragging.value) return
 
     const y = pointerY.value - containerTop.value
-    const distanceToTop = y - coveredTop.value
-    const distanceToBottom = containerHeight.value - bottomInset.value - y
+    const distanceToTop = y - coveredTopValue.value
+    const distanceToBottom = containerHeight.value - coveredBottomValue.value - y
     let delta = 0
     if (distanceToTop < AUTO_SCROLL_EDGE) {
       delta = -AUTO_SCROLL_MAX_SPEED * (1 - Math.max(distanceToTop, 0) / AUTO_SCROLL_EDGE)
@@ -200,8 +189,8 @@ export const useDragToMove = ({
     }
     if (delta === 0) return
 
-    const maxScroll = Math.max(minScroll.value, contentHeight.value - containerHeight.value + bottomInset.value)
-    const next = Math.min(Math.max(scrollY.value + delta, minScroll.value), maxScroll)
+    const maxScroll = Math.max(0, contentHeight.value - containerHeight.value)
+    const next = Math.min(Math.max(scrollY.value + delta, 0), maxScroll)
     scrollY.value = next
     scrollTo(scrollRef, 0, next, false)
     updateHover()
@@ -247,7 +236,6 @@ export const useDragToMove = ({
   }))
 
   return {
-    scrollY,
     dragging,
     hoverIso,
     containerRef,

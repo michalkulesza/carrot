@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Stack } from "expo-router";
 import {
   ActionSheetIOS,
   ActivityIndicator,
@@ -32,8 +33,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useScreenLoading } from "../../hooks/useScreenLoading";
 import { useHousehold } from "../../context/HouseholdContext";
 import { persistLanguage } from "../../i18n";
-import { useTabHeaderHeight } from "../../hooks/useTabHeaderHeight";
-import TabHeader from "../../components/TabHeader";
+import HeaderTitle from "../../components/HeaderTitle";
 import {
   KEEP_AWAKE_SHOPPING_STORAGE_KEY,
   LANGUAGES,
@@ -48,10 +48,21 @@ import InvitationsSection from "./InvitationsSection";
 import { useInvitationActions } from "./useInvitationActions";
 import AllergenSection from "./AllergenSection";
 
+const SettingsHeaderTitle = () => {
+  const { t } = useTranslation();
+
+  return <HeaderTitle title={t("nav.settings")} />;
+};
+
+const renderSettingsHeaderTitle = () => <SettingsHeaderTitle />;
+
+const settingsHeaderOptions = {
+  headerTitle: renderSettingsHeaderTitle,
+};
+
 const SettingsScreen = () => {
   const router = useRouter();
   const { t, i18n } = useTranslation();
-  const { scrollPaddingTop, handleHeaderLayout } = useTabHeaderHeight();
   const { user, logout, deleteAccount, refreshUser } = useAuth();
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [allergenRecheckStatus, setAllergenRecheckStatus] =
@@ -383,220 +394,217 @@ const SettingsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: scrollPaddingTop, paddingBottom: 48 + insets.bottom },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        scrollIndicatorInsets={{ top: scrollPaddingTop }}
-      >
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: 48 + insets.bottom },
+      ]}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <Stack.Screen options={settingsHeaderOptions} />
 
-        <SectionHeader label={t("settings.stats")} />
-        <StatsSection />
+      <SectionHeader label={t("settings.stats")} />
+      <StatsSection />
 
-        <SectionHeader label={t("settings.account")} />
-        <View style={styles.card}>
-          {user && (
-            <View style={styles.row}>
-              <Text style={styles.label}>{t("auth.email")}</Text>
-              <Text style={styles.value} numberOfLines={1}>
-                {user.email}
-              </Text>
-            </View>
-          )}
-          <Pressable
-            style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push("/(tabs)/settings/my-recipes")}
-            accessibilityLabel={t("settings.myRecipes")}
-            accessibilityRole="button"
-          >
-            <Text style={styles.pickerLabel}>{t("settings.myRecipes")}</Text>
-            <View style={styles.pickerRight}>
-              <Text style={styles.pickerChevron}>›</Text>
-            </View>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [
-              styles.logoutRow,
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={handleLogout}
-            accessibilityLabel={t("settings.logOut")}
-            accessibilityRole="button"
-          >
-            <Text style={styles.logoutText}>{t("settings.logOut")}</Text>
-          </Pressable>
-        </View>
-
-        {invitations.length > 0 && (
-          <>
-            <SectionHeader label={t("invitations.sectionTitle")} />
-            <InvitationsSection
-              invitations={invitations}
-              pendingIds={pendingInvitationIds}
-              onPress={handleInvitationPress}
-            />
-          </>
+      <SectionHeader label={t("settings.account")} />
+      <View style={styles.card}>
+        {user && (
+          <View style={styles.row}>
+            <Text style={styles.label}>{t("auth.email")}</Text>
+            <Text style={styles.value} numberOfLines={1}>
+              {user.email}
+            </Text>
+          </View>
         )}
-
-        <SectionHeader label={t("settings.households")} />
-        <HouseholdsSection
-          households={households}
-          activeHouseholdId={activeHouseholdId}
-          onManage={handleManageHousehold}
-          onCreateHousehold={handleCreateHousehold}
-          onJoinByCode={handleJoinByCode}
-        />
-
-        <SectionHeader label={t("settings.preferences")} />
-        <PreferencesSection
-          loading={showSpinner}
-          error={error}
-          preferences={preferences}
-          currentLanguageCode={preferences?.language ?? i18n.language}
-          appearanceMode={appearanceMode}
-          weekStartLabel={weekStartLabel}
-          onLanguagePicker={handleLanguagePicker}
-          onUnitSystemToggle={handleUnitSystemToggle}
-          onAppearanceChange={handleAppearanceChange}
-          onWeekStartPicker={handleWeekStartPicker}
-        />
-
-        <SectionHeader label={t("settings.recipeDetail")} />
-        <View style={styles.card}>
-          <View style={[styles.switchRow, styles.switchRowBorder]}>
-            <View style={styles.switchLabelBlock}>
-              <Text style={styles.switchLabel}>{t("settings.screenAwake")}</Text>
-              <Text style={styles.cardDesc}>{t("settings.screenAwakeDesc")}</Text>
-            </View>
-            <Switch
-              value={keepScreenAwake}
-              onValueChange={handleCookingModeToggle}
-              accessibilityLabel={t("settings.screenAwake")}
-            />
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push("/(tabs)/settings/my-recipes")}
+          accessibilityLabel={t("settings.myRecipes")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.myRecipes")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
           </View>
-        </View>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutRow,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={handleLogout}
+          accessibilityLabel={t("settings.logOut")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.logoutText}>{t("settings.logOut")}</Text>
+        </Pressable>
+      </View>
 
-        <SectionHeader label={t("settings.shoppingList")} />
-        <View style={styles.card}>
-          <View style={styles.switchRow}>
-            <View style={styles.switchLabelBlock}>
-              <Text style={styles.switchLabel}>
-                {t("settings.screenAwake")}
+      {invitations.length > 0 && (
+        <>
+          <SectionHeader label={t("invitations.sectionTitle")} />
+          <InvitationsSection
+            invitations={invitations}
+            pendingIds={pendingInvitationIds}
+            onPress={handleInvitationPress}
+          />
+        </>
+      )}
+
+      <SectionHeader label={t("settings.households")} />
+      <HouseholdsSection
+        households={households}
+        activeHouseholdId={activeHouseholdId}
+        onManage={handleManageHousehold}
+        onCreateHousehold={handleCreateHousehold}
+        onJoinByCode={handleJoinByCode}
+      />
+
+      <SectionHeader label={t("settings.preferences")} />
+      <PreferencesSection
+        loading={showSpinner}
+        error={error}
+        preferences={preferences}
+        currentLanguageCode={preferences?.language ?? i18n.language}
+        appearanceMode={appearanceMode}
+        weekStartLabel={weekStartLabel}
+        onLanguagePicker={handleLanguagePicker}
+        onUnitSystemToggle={handleUnitSystemToggle}
+        onAppearanceChange={handleAppearanceChange}
+        onWeekStartPicker={handleWeekStartPicker}
+      />
+
+      <SectionHeader label={t("settings.recipeDetail")} />
+      <View style={styles.card}>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>{t("settings.screenAwake")}</Text>
+            <Text style={styles.cardDesc}>{t("settings.screenAwakeDesc")}</Text>
+          </View>
+          <Switch
+            value={keepScreenAwake}
+            onValueChange={handleCookingModeToggle}
+            accessibilityLabel={t("settings.screenAwake")}
+          />
+        </View>
+      </View>
+
+      <SectionHeader label={t("settings.shoppingList")} />
+      <View style={styles.card}>
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>
+              {t("settings.screenAwake")}
+            </Text>
+            <Text style={styles.cardDesc}>
+              {t("settings.keepScreenOnWhileShoppingListDesc")}
+            </Text>
+          </View>
+          <Switch
+            value={keepScreenOnShopping}
+            onValueChange={handleKeepScreenShoppingToggle}
+            accessibilityLabel={t("settings.screenAwake")}
+          />
+        </View>
+        <View style={[styles.switchRow, styles.switchRowBorder]}>
+          <View style={styles.switchLabelBlock}>
+            <Text style={styles.switchLabel}>{t("settings.showCompletedShoppingItems")}</Text>
+            <Text style={styles.cardDesc}>{t("settings.showCompletedShoppingItemsDesc")}</Text>
+          </View>
+          <Switch
+            value={preferences?.show_completed_shopping_items ?? false}
+            onValueChange={handleShowCompletedShoppingItemsToggle}
+            accessibilityLabel={t("settings.showCompletedShoppingItems")}
+          />
+        </View>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={() => router.push("/(tabs)/settings/shopping-categories")}
+          accessibilityLabel={t("settings.shoppingCategories")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.shoppingCategories")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+      </View>
+      <SectionHeader label={t("settings.allergiesIntolerances")} />
+      <View style={styles.card}>
+        <View style={styles.allergenPad}>
+          <AllergenSection
+            key={activeHouseholdId ?? "personal"}
+            allergens={currentAllergens}
+            scopeLabel={allergenScopeLabel}
+            onSave={handleSaveAllergens}
+          />
+          {allergenRecheckStatus ? (
+            <View style={styles.allergenRecheckStatus}>
+              {!allergenRecheckStatus.done ? <ActivityIndicator size="small" /> : null}
+              <Text style={styles.allergenRecheckText}>
+                {allergenRecheckStatus.done
+                  ? allergenRecheckStatus.failed > 0
+                    ? t("settings.allergenRecheckFailed", {
+                        failed: allergenRecheckStatus.failed,
+                      })
+                    : t("settings.allergenRecheckComplete")
+                  : t("settings.allergenRecheckProgress", {
+                      completed: allergenRecheckStatus.completed,
+                      total: allergenRecheckStatus.total,
+                    })}
               </Text>
-              <Text style={styles.cardDesc}>
-                {t("settings.keepScreenOnWhileShoppingListDesc")}
-              </Text>
             </View>
-            <Switch
-              value={keepScreenOnShopping}
-              onValueChange={handleKeepScreenShoppingToggle}
-              accessibilityLabel={t("settings.screenAwake")}
-            />
-          </View>
-          <View style={[styles.switchRow, styles.switchRowBorder]}>
-            <View style={styles.switchLabelBlock}>
-              <Text style={styles.switchLabel}>{t("settings.showCompletedShoppingItems")}</Text>
-              <Text style={styles.cardDesc}>{t("settings.showCompletedShoppingItemsDesc")}</Text>
-            </View>
-            <Switch
-              value={preferences?.show_completed_shopping_items ?? false}
-              onValueChange={handleShowCompletedShoppingItemsToggle}
-              accessibilityLabel={t("settings.showCompletedShoppingItems")}
-            />
-          </View>
-          <Pressable
-            style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push("/(tabs)/settings/shopping-categories")}
-            accessibilityLabel={t("settings.shoppingCategories")}
-            accessibilityRole="button"
-          >
-            <Text style={styles.pickerLabel}>{t("settings.shoppingCategories")}</Text>
-            <View style={styles.pickerRight}>
-              <Text style={styles.pickerChevron}>›</Text>
-            </View>
-          </Pressable>
+          ) : null}
         </View>
-        <SectionHeader label={t("settings.allergiesIntolerances")} />
-        <View style={styles.card}>
-          <View style={styles.allergenPad}>
-            <AllergenSection
-              key={activeHouseholdId ?? "personal"}
-              allergens={currentAllergens}
-              scopeLabel={allergenScopeLabel}
-              onSave={handleSaveAllergens}
-            />
-            {allergenRecheckStatus ? (
-              <View style={styles.allergenRecheckStatus}>
-                {!allergenRecheckStatus.done ? <ActivityIndicator size="small" /> : null}
-                <Text style={styles.allergenRecheckText}>
-                  {allergenRecheckStatus.done
-                    ? allergenRecheckStatus.failed > 0
-                      ? t("settings.allergenRecheckFailed", {
-                          failed: allergenRecheckStatus.failed,
-                        })
-                      : t("settings.allergenRecheckComplete")
-                    : t("settings.allergenRecheckProgress", {
-                        completed: allergenRecheckStatus.completed,
-                        total: allergenRecheckStatus.total,
-                      })}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
+      </View>
 
-        <SectionHeader label={t("settings.help")} />
-        <View style={styles.card}>
-          <Pressable
-            style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-            onPress={handleOpenPrivacyPolicy}
-            accessibilityLabel={t("settings.privacyPolicy")}
-            accessibilityRole="link"
-          >
-            <Text style={styles.pickerLabel}>{t("settings.privacyPolicy")}</Text>
-            <View style={styles.pickerRight}>
-              <Text style={styles.pickerChevron}>›</Text>
-            </View>
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-            onPress={handleReportIssue}
-            accessibilityLabel={t("settings.reportIssue")}
-            accessibilityRole="button"
-          >
-            <Text style={styles.pickerLabel}>{t("settings.reportIssue")}</Text>
-            <View style={styles.pickerRight}>
-              <Text style={styles.pickerChevron}>›</Text>
-            </View>
-          </Pressable>
-        </View>
+      <SectionHeader label={t("settings.help")} />
+      <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={handleOpenPrivacyPolicy}
+          accessibilityLabel={t("settings.privacyPolicy")}
+          accessibilityRole="link"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.privacyPolicy")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
+          onPress={handleReportIssue}
+          accessibilityLabel={t("settings.reportIssue")}
+          accessibilityRole="button"
+        >
+          <Text style={styles.pickerLabel}>{t("settings.reportIssue")}</Text>
+          <View style={styles.pickerRight}>
+            <Text style={styles.pickerChevron}>›</Text>
+          </View>
+        </Pressable>
+      </View>
 
-        <SectionHeader label={t("settings.miscellaneous")} />
-        <View style={styles.card}>
-          <Pressable
-            style={({ pressed }) => [
-              styles.logoutRow,
-              pressed && { opacity: 0.7 },
-            ]}
-            onPress={handleDeleteAccount}
-            disabled={isDeletingAccount}
-            accessibilityLabel={t("settings.deleteAccount")}
-            accessibilityRole="button"
-          >
-            {isDeletingAccount ? (
-              <ActivityIndicator />
-            ) : (
-              <Text style={styles.logoutText}>{t("settings.deleteAccount")}</Text>
-            )}
-          </Pressable>
-        </View>
-      </ScrollView>
-      <TabHeader title={t("nav.settings")} onLayout={handleHeaderLayout} />
-    </View>
+      <SectionHeader label={t("settings.miscellaneous")} />
+      <View style={styles.card}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.logoutRow,
+            pressed && { opacity: 0.7 },
+          ]}
+          onPress={handleDeleteAccount}
+          disabled={isDeletingAccount}
+          accessibilityLabel={t("settings.deleteAccount")}
+          accessibilityRole="button"
+        >
+          {isDeletingAccount ? (
+            <ActivityIndicator />
+          ) : (
+            <Text style={styles.logoutText}>{t("settings.deleteAccount")}</Text>
+          )}
+        </Pressable>
+      </View>
+    </ScrollView>
   );
 };
 

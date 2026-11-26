@@ -622,7 +622,6 @@
     "removeFromPlan": "Remove from plan",
     "prevMonth": "Previous month",
     "nextMonth": "Next month",
-    "moveToDay": "Move to another day",
     "moveTo": "Move to…",
     "moveFailed": "Couldn't move the dish. Please try again.",
     "dragHint": "Double tap and hold, then drag to move this dish to another day.",
@@ -633,10 +632,6 @@
     "quickMeal": "Quick meal",
     "alreadyOnDay": "Already on this day",
     "thisWeek": "This week",
-    "plannedCount": "{{count}} of 7 planned",
-    "dayIsFree": "{{day}} is still free",
-    "pickRecipeOrQuick": "Pick a recipe or a quick meal",
-    "planIt": "Plan it",
     "addAnotherDish": "Add another dish to {{day}}",
     "addDishTo": "Add a dish on {{day}}",
     "nextWeekEllipsis": "Next week…",
@@ -1056,7 +1051,6 @@
     "close": "Close menu"
   },
   "selectionDrawer": {
-    "selectedCount": "{{count}} selected",
     "clearSearch": "Clear search",
     "allRecipes": "All recipes"
   }

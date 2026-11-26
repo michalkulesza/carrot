@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { renderSheetBackdrop, sheetStyles } from './ui/sheet'
+import { renderSheetBackdrop, sheetStyles, SheetBackground } from './ui/sheet'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
@@ -188,7 +188,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
         enableDynamicSizing={false}
         enablePanDownToClose
         backdropComponent={renderSheetBackdrop}
-        backgroundStyle={sheetStyles.background}
+        backgroundComponent={SheetBackground}
         handleIndicatorStyle={sheetStyles.handle}
       >
         <View style={styles.container}>

@@ -3,43 +3,16 @@ import { palette, radius, typography } from '../../theme'
 import { PREVIEW_HEIGHT } from './useDragToMove'
 
 export const DISH_THUMB_SIZE = 48
-export const PROGRESS_BAR_HEIGHT = 6
 
 export const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   scroll: { flex: 1 },
-  scrollContent: { paddingBottom: 16 },
-  loadingOverlay: { position: 'absolute', top: 12, alignSelf: 'center' },
+  loadingOverlay: { position: 'absolute', alignSelf: 'center' },
+  headerTitle: { width: '100%', justifyContent: 'center' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  exportBtn: { padding: 4 },
+  exportBtnPressed: { opacity: 0.7 },
   exportOverlay: { flex: 1, backgroundColor: palette.backdrop, justifyContent: 'center', alignItems: 'center' },
-
-  weekCard: {
-    marginTop: 2,
-    marginHorizontal: 20,
-    marginBottom: 10,
-    padding: 16,
-    borderRadius: radius.card,
-    backgroundColor: palette.card,
-    gap: 12,
-  },
-  weekCardInHeader: { backgroundColor: 'transparent', marginTop: 0, marginBottom: 0, paddingTop: 4, paddingBottom: 8 },
-  weekCardHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  weekCardTitle: { ...typography.kicker, letterSpacing: 0.78, color: palette.actionText },
-  weekCardCount: { ...typography.meta, color: palette.textSecondary },
-  progress: { flexDirection: 'row', gap: 4 },
-  progressBar: { flex: 1, height: PROGRESS_BAR_HEIGHT, borderRadius: PROGRESS_BAR_HEIGHT / 2 },
-  progressBarDone: { backgroundColor: palette.action },
-  progressBarOpen: { backgroundColor: palette.track },
-  freeDay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.dividerCard,
-  },
-  freeDayText: { flex: 1, gap: 2 },
-  freeDayTitle: { ...typography.rowTitle, color: palette.ink },
-  freeDaySubtitle: { ...typography.tileMeta, color: palette.textSecondary },
 
   days: { paddingHorizontal: 20, gap: 8 },
   loadWeekButton: { height: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },

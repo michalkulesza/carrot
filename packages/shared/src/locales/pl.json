@@ -636,7 +636,6 @@
     "removeFromPlan": "Usuń z planu",
     "nextMonth": "Następny miesiąc",
     "prevMonth": "Poprzedni miesiąc",
-    "moveToDay": "Przenieś na inny dzień",
     "moveTo": "Przenieś do…",
     "moveFailed": "Nie udało się przenieść dania. Spróbuj ponownie.",
     "dragHint": "Naciśnij i przytrzymaj, a następnie przeciągnij, aby przenieść to danie na inny dzień.",
@@ -647,10 +646,6 @@
     "quickMeal": "Szybki posiłek",
     "alreadyOnDay": "Już zaplanowane na ten dzień",
     "thisWeek": "Ten tydzień",
-    "plannedCount": "{{count}} z 7 zaplanowanych",
-    "dayIsFree": "{{day}} jest jeszcze wolny",
-    "pickRecipeOrQuick": "Wybierz przepis lub szybki posiłek",
-    "planIt": "Zaplanuj",
     "addAnotherDish": "Dodaj kolejny posiłek: {{day}}",
     "addDishTo": "Dodaj posiłek: {{day}}",
     "nextWeekEllipsis": "Następny tydzień…",
@@ -1090,7 +1085,6 @@
     "close": "Zamknij menu"
   },
   "selectionDrawer": {
-    "selectedCount": "Wybrano: {{count}}",
     "clearSearch": "Wyczyść wyszukiwanie",
     "allRecipes": "Wszystkie przepisy"
   }

@@ -42,7 +42,7 @@ const SelectionRow = ({ id, title, meta, thumbnailUrl, leading, selected, disabl
         </Text>
         {meta ? <Text style={styles.meta}>{meta}</Text> : null}
       </View>
-      <CheckboxCircle checked={selected} />
+      <CheckboxCircle checked={selected} itemKey={id} />
     </Pressable>
   )
 }

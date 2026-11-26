@@ -11,18 +11,15 @@ export interface DrawerAction {
 interface HeaderProps {
   title: string
   subtitle?: string
-  countLabel: string
   action?: DrawerAction
 }
 
-const Header = ({ title, subtitle, countLabel, action }: HeaderProps) => {
+const Header = ({ title, subtitle, action }: HeaderProps) => {
   const actionLabelStyle = action?.disabled ? styles.actionLabelDisabled : styles.actionLabel
 
   return (
     <View style={styles.header}>
-      <View style={styles.headerSide}>
-        <Text style={styles.headerCount}>{countLabel}</Text>
-      </View>
+      <View style={styles.headerSide} />
       <View style={styles.headerCenter}>
         <Text style={styles.headerTitle} numberOfLines={1} accessibilityRole="header">
           {title}

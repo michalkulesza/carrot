@@ -3,7 +3,7 @@ import { Pressable, Text, useWindowDimensions, View } from 'react-native'
 import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import { renderSheetBackdrop, sheetStyles } from '../../components/ui/sheet'
+import { renderSheetBackdrop, SheetBackground, sheetStyles } from '../../components/ui/sheet'
 import { lightHaptic } from '../../components/ui/haptics'
 import { styles } from './styles'
 
@@ -56,7 +56,7 @@ const EditSheet = ({ visible, title, removeLabel, canRemove, onRemove, onDismiss
       enablePanDownToClose
       onDismiss={handleDismiss}
       backdropComponent={renderSheetBackdrop}
-      backgroundStyle={sheetStyles.background}
+      backgroundComponent={SheetBackground}
       handleIndicatorStyle={sheetStyles.handle}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"

@@ -5,7 +5,6 @@ const screenOptions = {
   headerTransparent: true,
   headerShadowVisible: false,
   headerTitleAlign: 'left' as const,
-  headerShown: false,
 }
 
 export default function BrowseLayout() {

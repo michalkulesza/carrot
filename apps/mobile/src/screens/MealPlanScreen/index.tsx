@@ -1,39 +1,37 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Modal, Text, View } from 'react-native'
-import { useIsFocused, useLocalSearchParams } from 'expo-router'
+import { useIsFocused, useLocalSearchParams, useNavigation } from 'expo-router'
 import { GestureDetector } from 'react-native-gesture-handler'
 import Animated, { useAnimatedRef } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import { toISODate, toYYYYMM, parseISODateLocal } from '@carrot/shared/utils/dateUtils'
 import { palette } from '../../theme'
-import TabHeader from '../../components/TabHeader'
-import { IconButton } from '../../components/ui'
-import { useTabHeaderHeight } from '../../hooks/useTabHeaderHeight'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
 import DayCard from './DayCard'
 import DishDrawer from './DishDrawer'
 import DragPreview from './DragPreview'
 import LoadWeekButton from './LoadWeekButton'
-import ThisWeekCard from './ThisWeekCard'
 import { styles } from './styles'
 import { useDishActions } from './useDishActions'
 import { useDragToMove } from './useDragToMove'
 import { useExportMealPlanPdf } from './useExportMealPlanPdf'
+import { useMealPlanHeader } from './useMealPlanHeader'
+import { useMealPlanInsets } from './useMealPlanInsets'
 import { useMealPlanWeeks } from './useMealPlanWeeks'
-import { useScrollToCurrentWeek } from './useScrollToCurrentWeek'
+import { useScrollToToday } from './useScrollToToday'
+import { useScrollToTodayOnTabPress } from './useScrollToTodayOnTabPress'
 
 const DEFAULT_WEEK_START_DAY = 1
 const NO_ENTRIES: MealPlanEntry[] = []
-const TAB_BAR_HEIGHT = 49
+const SCROLL_BOTTOM_GAP = 16
 
 const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
+  const navigation = useNavigation()
   const isFocused = useIsFocused()
-  const { top: topSafeArea, bottom: bottomSafeArea } = useSafeAreaInsets()
-  const { headerHeight, scrollPaddingTop, handleHeaderLayout } = useTabHeaderHeight()
+  const insets = useMealPlanInsets()
   const { focusToday, planToday } = useLocalSearchParams<{ focusToday?: string; planToday?: string }>()
   const { preferences } = usePreferences()
 
@@ -44,17 +42,12 @@ const MealPlanScreen = () => {
 
   const { weeks, currentWeekStartIso, entriesByDate, isLoading, loadPreviousWeek, loadNextWeek, resetWeeks } =
     useMealPlanWeeks({ todayIso, weekStartDay, locale })
+  const { showSpinner } = useScreenLoading(isLoading)
 
-  const currentWeekDays = useMemo(() => weeks.find((week) => week.isCurrent)?.days ?? [], [weeks])
   const allDays = useMemo(() => weeks.flatMap((week) => week.days), [weeks])
-  const plannedCount = useMemo(() => currentWeekDays.filter((day) => day.entries.length > 0).length, [currentWeekDays])
-  const nextFreeDay = useMemo(
-    () => currentWeekDays.find((day) => !day.isPast && day.entries.length === 0) ?? null,
-    [currentWeekDays],
-  )
 
   const { exporting, handleExportPdf } = useExportMealPlanPdf(toYYYYMM(parseISODateLocal(currentWeekStartIso)))
-  const { showSpinner } = useScreenLoading(isLoading)
+  useMealPlanHeader({ navigation, exporting, onExportPdf: handleExportPdf })
 
   const [dishDrawerDate, setDishDrawerDate] = useState<string | null>(null)
   const dishDrawerEntries = (dishDrawerDate ? entriesByDate.get(dishDrawerDate) : undefined) ?? NO_ENTRIES
@@ -64,9 +57,8 @@ const MealPlanScreen = () => {
   const scrollRef = useAnimatedRef<Animated.ScrollView>()
   const drag = useDragToMove({
     scrollRef,
-    contentInsetTop: topSafeArea,
-    contentInsetBottom: bottomSafeArea + TAB_BAR_HEIGHT,
-    topInset: headerHeight,
+    coveredTop: insets.top,
+    coveredBottom: insets.bottom,
     onDrop: handleMove,
   })
   const { handleDaysLayout: handleDragDaysLayout, pruneDayLayouts } = drag
@@ -79,13 +71,18 @@ const MealPlanScreen = () => {
 
   const highlightedIso = drag.hoverIso && drag.hoverIso !== drag.dragging?.fromIso ? drag.hoverIso : null
 
-  const { handleDaysLayout, handleCurrentWeekLayout, scrollToCurrentWeek, releasePin } = useScrollToCurrentWeek({
-    scrollRef,
-    ready: !isLoading,
-    minOffset: -topSafeArea,
-    topOffset: headerHeight,
-    onDaysLayout: handleDragDaysLayout,
-  })
+  const { handleDaysLayout, handleDayLayout, handleScrollLayout, handleContentSizeChange, scrollToToday, releasePin } =
+    useScrollToToday({
+      scrollRef,
+      ready: !isLoading,
+      todayIso,
+      coveredTop: insets.top,
+      coveredBottom: insets.bottom,
+      onDaysLayout: handleDragDaysLayout,
+      onDayLayout: drag.registerDayLayout,
+      onContentSizeChange: drag.handleContentSizeChange,
+    })
+  useScrollToTodayOnTabPress(scrollToToday)
 
   useEffect(() => {
     pruneDayLayouts(allDays.map((day) => day.iso))
@@ -105,8 +102,8 @@ const MealPlanScreen = () => {
     if (!focusToday) return
 
     resetWeeks()
-    scrollToCurrentWeek()
-  }, [focusToday, resetWeeks, scrollToCurrentWeek])
+    scrollToToday()
+  }, [focusToday, resetWeeks, scrollToToday])
 
   const handledPlanTodayRef = useRef<string | undefined>(undefined)
 
@@ -114,9 +111,15 @@ const MealPlanScreen = () => {
     if (!planToday || !isFocused || handledPlanTodayRef.current === planToday) return
 
     handledPlanTodayRef.current = planToday
-    scrollToCurrentWeek()
+    scrollToToday()
     setDishDrawerDate(todayIso)
-  }, [planToday, isFocused, todayIso, scrollToCurrentWeek])
+  }, [planToday, isFocused, todayIso, scrollToToday])
+
+  const loadingOverlayStyle = useMemo(() => [styles.loadingOverlay, { top: insets.top + 12 }], [insets.top])
+  const scrollContentStyle = useMemo(
+    () => ({ paddingTop: insets.top, paddingBottom: insets.bottom + SCROLL_BOTTOM_GAP }),
+    [insets.top, insets.bottom],
+  )
 
   return (
     <View ref={drag.containerRef} style={styles.container} collapsable={false} onLayout={drag.handleContainerLayout}>
@@ -124,24 +127,20 @@ const MealPlanScreen = () => {
         <Animated.ScrollView
           ref={scrollRef}
           style={styles.scroll}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: scrollPaddingTop }]}
-          scrollIndicatorInsets={{ top: scrollPaddingTop }}
-          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={scrollContentStyle}
+          contentInsetAdjustmentBehavior="never"
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={16}
           onScroll={drag.scrollHandler}
+          onLayout={handleScrollLayout}
           onScrollBeginDrag={releasePin}
-          onContentSizeChange={drag.handleContentSizeChange}
+          onContentSizeChange={handleContentSizeChange}
         >
           <View style={styles.days} onLayout={handleDaysLayout}>
             <LoadWeekButton label={t('mealPlan.showPreviousWeek')} direction="up" onPress={handleLoadPreviousWeek} />
             {weeks.map((week) => (
               <Fragment key={week.startIso}>
-                <Text
-                  style={styles.weekHeader}
-                  accessibilityRole="header"
-                  onLayout={week.isCurrent ? handleCurrentWeekLayout : undefined}
-                >
+                <Text style={styles.weekHeader} accessibilityRole="header">
                   {week.label}
                 </Text>
                 {week.days.map((day) => (
@@ -153,7 +152,7 @@ const MealPlanScreen = () => {
                     createGesture={drag.createGesture}
                     onAdd={setDishDrawerDate}
                     onDishPress={handleDishPress}
-                    onDayLayout={drag.registerDayLayout}
+                    onDayLayout={handleDayLayout}
                   />
                 ))}
               </Fragment>
@@ -162,31 +161,10 @@ const MealPlanScreen = () => {
           </View>
         </Animated.ScrollView>
       </GestureDetector>
-      <TabHeader
-        title={t('nav.mealPlan')}
-        actions={
-          <IconButton
-            variant="glass"
-            icon="printer"
-            accessibilityLabel={t('shoppingList.exportPdf')}
-            onPress={handleExportPdf}
-            disabled={exporting}
-          />
-        }
-        onLayout={handleHeaderLayout}
-      >
-        <ThisWeekCard
-          days={currentWeekDays}
-          plannedCount={plannedCount}
-          nextFreeDay={nextFreeDay}
-          onPlan={setDishDrawerDate}
-          style={styles.weekCardInHeader}
-        />
-      </TabHeader>
       <DragPreview entry={draggingEntry} animatedStyle={drag.previewStyle} />
 
       {showSpinner && (
-        <View style={styles.loadingOverlay} pointerEvents="none">
+        <View style={loadingOverlayStyle} pointerEvents="none">
           <ActivityIndicator size="small" color={palette.action} />
         </View>
       )}

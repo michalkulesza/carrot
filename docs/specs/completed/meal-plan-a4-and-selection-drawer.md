@@ -8,7 +8,7 @@ Mobile Screens → "Tags drawer", "Related recipes drawer"). Extracted HTML is n
 ## Decisions (from the user)
 
 - **Several dishes per day.** Backend drops the one-entry-per-day rule. Entries are addressed by id.
-- **Previous, current and next week shown by default** as one list of day cards with a small uppercase header per week ("Previous week" / "This week" / "Next week" / date range). "Show previous week" at the top and "Show next week" at the bottom each load one more week. No week-switcher bar (not in the design). On open the list is scrolled to the current week until the user scrolls.
+- **Previous, current and next week shown by default** as one list of day cards with a small uppercase header per week ("Previous week" / "This week" / "Next week" / date range). "Show previous week" at the top and "Show next week" at the bottom each load one more week. No week-switcher bar (not in the design). On open, and whenever the Meal Plan tab icon is tapped, today's card is centred between the header and the tab bar (held until the user scrolls). iOS tab re-select scroll-to-top is disabled for this tab.
 - **Keep drag-to-move** (long-press a dish, drop on another day card of the visible week).
 - **Tap a dish → native action sheet**: View recipe (recipe dishes only) / Move to… / Remove.
 - One reusable **Selection Drawer** powers the dish drawer, the tags drawer and the related-recipes drawer, and must be easy to reuse for future drawers.
@@ -144,19 +144,12 @@ Rewrite `apps/mobile/src/screens/MealPlanScreen/` around the visible week. Remov
 ### Header
 
 - Keep the native header (title "Meal Plan" + the existing print button, which exports the current week's month as a PDF). No extra bar below it.
+- The list fills the whole screen under the transparent header and tab bar, padded by fixed insets from `useMealPlanInsets` (window insets at launch + nav/tab bar heights). The tab is mounted off-screen at launch, when `useHeaderHeight` and the screen safe area are not final yet, so measured values would make the list jump when first shown.
+- The title includes `ScrollEdgeEffectAnchor` (an invisible native symbol): iOS 26 only draws the header's scroll-edge blur when the custom title view contains a native image.
 
-### "This week" card (always the current week)
+### "This week" card
 
-- Margin 2 20 10, padding 16, radius 20, bg `card`, gap 12.
-- Row 1, baseline-aligned:
-  - "THIS WEEK" (13/700, letter-spacing 0.06em, `actionText`)
-  - "N of 7 planned" (14pt `textSecondary`)
-- Progress: 7 equal bars, gap 4, 6pt tall, radius 3, `action` when the day has dishes, else `track`.
-- Next free day (first day ≥ today with no dishes, current week only):
-  - top hairline `dividerCard`, padding-top 12
-  - title "{Weekday} is still free" (16/600), subtitle "Pick a recipe or a quick meal" (13pt `textSecondary`)
-  - "Plan it" button: 38pt, radius 14, bg `action`, white 15/600 with a 16pt plus; it opens the dish drawer for that day
-  - reuse the `Button` ui component if a variant fits
+- Built, then removed after review: the screen starts straight with the days list.
 
 ### Days list (padding 0 20, gap 8)
 
@@ -210,3 +203,8 @@ No visual redesign. Then remove the legacy shared client functions if unused (ke
 - `cd apps/mobile && npx tsc --noEmit -p .`, plus the web typecheck
 - No unused locals in changed files.
 - Translation keys present in all 7 locales.
+
+## Follow-ups done after review
+
+- Selection drawers render with FlashList (rows recycled), search filtering is deferred with `useDeferredValue`, recipe meta is precomputed, and `CheckboxCircle` snaps instead of animating when a recycled row shows another item.
+- Drawers keep their height when the keyboard opens (`keyboardBehavior="extend"`, `topInset` = safe-area top); the "N selected" header label was removed; the dish drawer shows cook time only (no kcal).

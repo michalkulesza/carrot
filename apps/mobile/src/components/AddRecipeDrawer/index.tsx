@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Linking } from 'react-native'
 import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { renderSheetBackdrop, sheetStyles } from '../ui/sheet'
+import { renderSheetBackdrop, sheetStyles, SheetBackground } from '../ui/sheet'
 import * as Clipboard from 'expo-clipboard'
 import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -119,7 +119,7 @@ const AddRecipeDrawer = forwardRef<AddRecipeDrawerHandle>((_props, ref) => {
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
       backdropComponent={renderSheetBackdrop}
-      backgroundStyle={sheetStyles.background}
+      backgroundComponent={SheetBackground}
       handleIndicatorStyle={sheetStyles.handle}
       onDismiss={handleDismiss}
     >

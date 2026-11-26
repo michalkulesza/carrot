@@ -622,7 +622,6 @@
     "removeFromPlan": "Aus dem Plan entfernen",
     "nextMonth": "Nächster Monat",
     "prevMonth": "Vorheriger Monat",
-    "moveToDay": "Auf einen anderen Tag verschieben",
     "moveTo": "Verschieben nach…",
     "moveFailed": "Das Gericht konnte nicht verschoben werden. Bitte versuche es erneut.",
     "dragHint": "Doppeltippen und halten, dann ziehen, um dieses Gericht auf einen anderen Tag zu verschieben.",
@@ -633,10 +632,6 @@
     "quickMeal": "Schnelle Mahlzeit",
     "alreadyOnDay": "Bereits an diesem Tag",
     "thisWeek": "Diese Woche",
-    "plannedCount": "{{count}} von 7 geplant",
-    "dayIsFree": "{{day}} ist noch frei",
-    "pickRecipeOrQuick": "Wähle ein Rezept oder eine schnelle Mahlzeit",
-    "planIt": "Planen",
     "addAnotherDish": "Weiteres Gericht für {{day}} hinzufügen",
     "addDishTo": "Gericht für {{day}} hinzufügen",
     "nextWeekEllipsis": "Nächste Woche…",
@@ -1056,7 +1051,6 @@
     "close": "Menü schließen"
   },
   "selectionDrawer": {
-    "selectedCount": "{{count}} ausgewählt",
     "clearSearch": "Suche löschen",
     "allRecipes": "Alle Rezepte"
   }

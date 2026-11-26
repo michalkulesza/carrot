@@ -79,7 +79,6 @@ const RelatedRecipesPicker = ({ visible, candidates, selected, disabled, onToggl
       visible={visible}
       onDismiss={onDismiss}
       title={t('relatedRecipes.title')}
-      countLabel={t('selectionDrawer.selectedCount', { count: selected.size })}
       search={search}
       chips={chips}
       sections={sections}

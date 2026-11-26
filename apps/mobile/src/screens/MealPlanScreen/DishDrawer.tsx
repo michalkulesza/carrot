@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import type { MealPlanEntry, RecipeOut } from '@carrot/shared/types'
 import {
   QuickAddRow,
@@ -10,7 +11,6 @@ import {
   useRecipeSections,
 } from '../../components/SelectionDrawer'
 import { Thumbnail } from '../../components/ui'
-import { formatRecipeMeta } from '@carrot/shared/utils/recipeMeta'
 import { QuickMealThumb } from './DishThumb'
 import { formatDayMonth, formatWeekdayLong } from './helpers'
 import { getSelectionKey, useDishDrawer, type DishSelection } from './useDishDrawer'
@@ -20,6 +20,9 @@ const QUICK_CHIP_GLYPH_SIZE = 13
 const getRecipeKey = (recipe: RecipeOut) => recipe.id
 
 const shortenTitle = (title: string) => title.split(/\s+/).slice(0, 2).join(' ')
+
+const formatCookTime = (recipe: RecipeOut, t: TFunction) =>
+  recipe.total_time_minutes ? t('browse.minutes', { count: recipe.total_time_minutes }) : undefined
 
 interface DishChipProps {
   item: DishSelection
@@ -88,22 +91,25 @@ const DishDrawer = ({ dateIso, existingEntries, onClose }: DishDrawerProps) => {
   const locale = i18n.language
   const shownDate = dateIso ?? lastDateRef.current
   const sections = useRecipeSections(recipes, query)
+  const metaById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, formatCookTime(recipe, t)])), [recipes, t])
 
   const title = shownDate ? t('mealPlan.addToDay', { day: formatWeekdayLong(shownDate, locale) }) : ''
   const subtitle = shownDate ? formatDayMonth(shownDate, locale) : undefined
+
+  const alreadyOnDayLabel = t('mealPlan.alreadyOnDay')
 
   const renderItem = useCallback(
     (recipe: RecipeOut) => (
       <SelectionRow
         id={recipe.id}
         title={recipe.title}
-        meta={existingRecipeIds.has(recipe.id) ? t('mealPlan.alreadyOnDay') : formatRecipeMeta(recipe, t)}
+        meta={existingRecipeIds.has(recipe.id) ? alreadyOnDayLabel : metaById.get(recipe.id)}
         thumbnailUrl={recipe.thumbnail_url}
         selected={selectedRecipeIds.has(recipe.id)}
         onToggle={toggleRecipe}
       />
     ),
-    [existingRecipeIds, selectedRecipeIds, toggleRecipe, t],
+    [existingRecipeIds, selectedRecipeIds, toggleRecipe, alreadyOnDayLabel, metaById],
   )
 
   const chips = useMemo(
@@ -153,7 +159,6 @@ const DishDrawer = ({ dateIso, existingEntries, onClose }: DishDrawerProps) => {
       onDismiss={handleDismiss}
       title={title}
       subtitle={subtitle}
-      countLabel={t('selectionDrawer.selectedCount', { count: selection.length })}
       action={action}
       search={search}
       chips={chips}

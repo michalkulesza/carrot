@@ -8,6 +8,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { useHeaderHeight } from 'expo-router/react-navigation'
 import { useTranslation } from 'react-i18next'
 import type { AddRecipeSheet } from '../../../components/AddRecipeDrawer'
 import { AppText } from '../../../components/ui'
@@ -19,7 +20,6 @@ import { CARD_GUTTER, CARD_WIDTH, styles } from './styles'
 
 interface AddMenuPopoverProps {
   visible: boolean
-  anchorTop: number
   onClose: () => void
   onOpenSheet: (sheet: AddRecipeSheet) => void
 }
@@ -29,9 +29,10 @@ const EXIT_DURATION = 120
 const START_SCALE = 0.94
 const CARD_TOP_GAP = 4
 
-const AddMenuPopover = ({ visible, anchorTop, onClose, onOpenSheet }: AddMenuPopoverProps) => {
+const AddMenuPopover = ({ visible, onClose, onOpenSheet }: AddMenuPopoverProps) => {
   const { t } = useTranslation()
   const { width: screenWidth } = useWindowDimensions()
+  const headerHeight = useHeaderHeight()
   const reduceMotion = useReducedMotion()
   const {
     hasUrl,
@@ -118,7 +119,7 @@ const AddMenuPopover = ({ visible, anchorTop, onClose, onOpenSheet }: AddMenuPop
   const handleWriteScratch = useCallback(() => runAfterClose(writeFromScratch), [writeFromScratch, runAfterClose])
 
   const cardLayout = {
-    top: anchorTop + CARD_TOP_GAP,
+    top: headerHeight + CARD_TOP_GAP,
     width: Math.min(CARD_WIDTH, screenWidth - CARD_GUTTER * 2),
   }
 

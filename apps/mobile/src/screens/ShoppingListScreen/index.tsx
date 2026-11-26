@@ -29,8 +29,6 @@ import {
 } from '@carrot/shared/utils/ingredientUtils'
 import { colors } from '../../theme/colors'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
-import { useTabHeaderHeight } from '../../hooks/useTabHeaderHeight'
-import TabHeader from '../../components/TabHeader'
 import { useIsAppActive } from '../../hooks/useIsAppActive'
 import { useHousehold } from '../../context/HouseholdContext'
 import { createShoppingListItemInput } from '../../utils/uuid'
@@ -61,7 +59,6 @@ const ROW_REFLOW_CONFIG = {
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
-  const { headerHeight, handleHeaderLayout } = useTabHeaderHeight()
   const insets = useSafeAreaInsets()
   const isFocused = useIsFocused()
   const isAppActive = useIsAppActive()
@@ -450,10 +447,8 @@ const ShoppingListScreen = () => {
           </View>
         }
         contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{ paddingTop: headerHeight, paddingBottom: insets.bottom + 64 }}
-        scrollIndicatorInsets={{ top: headerHeight }}
+        contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: insets.bottom + 64 }}
       />
-      <TabHeader title={t('shoppingList.title')} onLayout={handleHeaderLayout} />
     </View>
   )
 }

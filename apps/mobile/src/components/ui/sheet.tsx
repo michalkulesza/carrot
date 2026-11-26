@@ -1,5 +1,7 @@
-import { BottomSheetBackdrop, type BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { useMemo } from 'react'
+import { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet'
 import { StyleSheet } from 'react-native'
+import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
 import { palette, radius } from '../../theme'
 
 const HANDLE_WIDTH = 40
@@ -18,6 +20,16 @@ export const sheetStyles = StyleSheet.create({
   handle: { width: HANDLE_WIDTH, height: HANDLE_HEIGHT, borderRadius: HANDLE_HEIGHT / 2, backgroundColor: palette.dividerStrong },
   backdrop: { backgroundColor: palette.backdrop },
 })
+
+// Fades the upward shadow with the sheet's position: a closed sheet rests just below the screen edge, where a static shadow would still show.
+export const SheetBackground = ({ style, animatedIndex }: BottomSheetBackgroundProps) => {
+  const shadowStyle = useAnimatedStyle(() => ({
+    shadowOpacity: interpolate(animatedIndex.value, [-1, 0], [0, 1], Extrapolation.CLAMP),
+  }))
+  const backgroundStyle = useMemo(() => [style, sheetStyles.background, shadowStyle], [style, shadowStyle])
+
+  return <Animated.View pointerEvents="none" style={backgroundStyle} />
+}
 
 export const renderSheetBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop

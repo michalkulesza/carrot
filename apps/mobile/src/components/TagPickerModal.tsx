@@ -144,7 +144,6 @@ export const TagPickerModal = ({
       visible={visible}
       onDismiss={onClose}
       title={t('tags.editTags')}
-      countLabel={t('selectionDrawer.selectedCount', { count: selectedIds.size })}
       search={search}
       chips={chips}
       listHeader={listHeader}

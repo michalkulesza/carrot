@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo } from 'react'
+import { memo, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedStyle,
@@ -22,13 +22,19 @@ const TOGGLE_MS = 180
 const RING_WIDTH = 1.5
 const HIT_SLOP = { top: 9, bottom: 9, left: 9, right: 9 }
 
-export const CheckboxCircle = memo(({ checked }: { checked: boolean }) => {
+// `itemKey` identifies the row: when a recycled list cell is reused for another item the state jumps instead of animating.
+export const CheckboxCircle = memo(({ checked, itemKey }: { checked: boolean; itemKey?: string }) => {
   const reduceMotion = useReducedMotion()
   const progress = useSharedValue(checked ? 1 : 0)
+  const itemKeyRef = useRef(itemKey)
 
-  useEffect(() => {
-    progress.value = reduceMotion ? Number(checked) : withTiming(Number(checked), { duration: TOGGLE_MS })
-  }, [checked, progress, reduceMotion])
+  useLayoutEffect(() => {
+    const recycled = itemKeyRef.current !== itemKey
+    itemKeyRef.current = itemKey
+
+    progress.value =
+      reduceMotion || recycled ? Number(checked) : withTiming(Number(checked), { duration: TOGGLE_MS })
+  }, [checked, itemKey, progress, reduceMotion])
 
   const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }))
   const fillStyles = useMemo(() => [styles.fill, fillStyle], [fillStyle])

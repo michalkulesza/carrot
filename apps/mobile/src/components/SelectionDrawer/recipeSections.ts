@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useDeferredValue, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
 import type { DrawerSection } from './types'
@@ -37,15 +37,17 @@ export const useRecipeSections = (
   excludeId?: string,
 ): DrawerSection<RecipeOut>[] => {
   const { t } = useTranslation()
+  // Filtering trails the keystrokes so typing never waits on the list re-render.
+  const deferredQuery = useDeferredValue(query)
 
   const groups = useMemo(() => groupRecipes(recipes, excludeId), [recipes, excludeId])
 
   return useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = deferredQuery.trim().toLowerCase()
     const matches = (recipe: RecipeOut) => !q || recipe.title.toLowerCase().includes(q)
 
     return groups
       .map(([key, data]) => ({ key, title: t(GROUP_TITLE_KEYS[key]), data: q ? data.filter(matches) : data }))
       .filter((section) => section.data.length > 0)
-  }, [groups, query, t])
+  }, [groups, deferredQuery, t])
 }
