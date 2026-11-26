@@ -1,5 +1,5 @@
 import { useMemo, type RefObject } from 'react'
-import { Keyboard, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { EdgeInsets } from 'react-native-safe-area-context'
 import type { RecipeIssueCode, RecipeOut } from '@carrot/shared/types'
@@ -9,6 +9,7 @@ import GroceryModeBar from './GroceryModeBar'
 import { getGroceryBarClearance } from './groceryLayout'
 import HeroImage from './HeroImage'
 import { IngredientSwapActionsContext } from './IngredientSwapContext'
+import { ScrollIntoViewContext } from './ScrollIntoViewContext'
 import IngredientSwapSheet from './IngredientSwapSheet'
 import IngredientsSection from './IngredientsSection'
 import NotesSection from './NotesSection'
@@ -26,6 +27,7 @@ import { buildIngredientGroups } from './helpers'
 import { styles } from './styles'
 import { useGroceryMode } from './useGroceryMode'
 import { useIngredientSwap } from './useIngredientSwap'
+import { KEYBOARD_SCROLL_EVENT_THROTTLE, useKeyboardScroll } from './useKeyboardScroll'
 
 interface ReadViewProps {
   recipe: RecipeOut
@@ -84,6 +86,7 @@ const ReadView = ({
   const entries = useMemo(() => groups.flatMap((group) => group.entries), [groups])
   const groceryMode = useGroceryMode(entries)
   const swap = useIngredientSwap({ recipe, entries, activeAllergens, servingScale, onRecipeRemoved })
+  const keyboardScroll = useKeyboardScroll()
 
   const toastMessage =
     groceryMode.toastCount !== null ? t('recipes.addedItemsToast', { count: groceryMode.toastCount }) : null
@@ -94,11 +97,16 @@ const ReadView = ({
   return (
     <View style={styles.container}>
       <ScrollView
+        ref={keyboardScroll.scrollRef}
         style={styles.scroll}
         contentContainerStyle={scrollContentStyle}
         contentInsetAdjustmentBehavior="never"
-        keyboardShouldPersistTaps="never"
-        onTouchStart={Keyboard.dismiss}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        onScroll={keyboardScroll.handleScroll}
+        onTouchStart={keyboardScroll.handleTouchStart}
+        scrollEventThrottle={KEYBOARD_SCROLL_EVENT_THROTTLE}
       >
         <HeroImage
           title={recipe.title}
@@ -156,7 +164,9 @@ const ReadView = ({
           <StepsSection recipe={recipe} unitSystem={unitSystem} fontSizeIndex={fontSizeIndex} />
         </FadeSection>
         <FadeSection>
-          <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
+          <ScrollIntoViewContext.Provider value={keyboardScroll.actions}>
+            <NotesSection recipe={recipe} />
+          </ScrollIntoViewContext.Provider>
         </FadeSection>
         <FadeSection>
           <RelatedRecipesSection recipeId={recipe.id} />

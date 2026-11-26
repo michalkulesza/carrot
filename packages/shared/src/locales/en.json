@@ -255,6 +255,7 @@
     "addedItemsToast_one": "Added {{count}} item to Shopping list",
     "addedItemsToast_other": "Added {{count}} items to Shopping list",
     "yourNote": "Your note",
+    "addNote": "Add note",
     "allergenSwap": "{{allergen}} · swap {{substitute}}",
     "swapChipLabel": "{{allergen}} · swap",
     "openWebsiteLink": "Open {{host}} (website)",
@@ -286,7 +287,10 @@
     "editIngredient": "Edit ingredient",
     "editStep": "Edit step",
     "qtyPlaceholder": "Qty",
-    "shoppingAisle": "Shopping aisle"
+    "shoppingAisle": "Shopping aisle",
+    "notesEmptyTitle": "No notes yet",
+    "notesEmptyHint": "Only your household sees them",
+    "notePlaceholderOpen": "Tweaks, swaps, what the kids thought…"
   },
   "nav": {
     "recipes": "Recipes",
@@ -977,7 +981,10 @@
     "linkRecipe": "Link recipe",
     "searchPlaceholder": "Search your recipes",
     "noMatches": "No recipes match",
-    "removeLink": "Unlink {{title}}"
+    "removeLink": "Unlink {{title}}",
+    "emptyTitle": "Nothing linked yet",
+    "emptyHint": "Sides, sauces or dessert for this dish",
+    "linkAction": "Link"
   },
   "ads": {
     "advertisement": "Advertisement",

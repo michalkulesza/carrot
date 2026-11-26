@@ -179,7 +179,6 @@ export const getReadingMetrics = (fontSizeIndex: number) => {
     fontSize,
     ingredientLineHeight: Math.round(fontSize * 1.35),
     stepLineHeight: Math.round(fontSize * 1.5),
-    noteLineHeight: Math.round(fontSize * 1.45),
   }
 }
 

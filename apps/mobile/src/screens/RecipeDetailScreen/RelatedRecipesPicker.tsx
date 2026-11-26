@@ -10,7 +10,6 @@ import {
   useRecipeSections,
 } from '../../components/SelectionDrawer'
 import { Thumbnail } from '../../components/ui'
-import { formatRecipeMeta } from '@carrot/shared/utils/recipeMeta'
 
 interface RelatedRecipesPickerProps {
   visible: boolean
@@ -47,17 +46,21 @@ const RelatedRecipesPicker = ({ visible, candidates, selected, disabled, onToggl
   const selectedRecipes = useMemo(() => candidates.filter((recipe) => selected.has(recipe.id)), [candidates, selected])
 
   const renderItem = useCallback(
-    (recipe: RecipeOut) => (
-      <SelectionRow
-        id={recipe.id}
-        title={recipe.title}
-        meta={formatRecipeMeta(recipe, t)}
-        thumbnailUrl={recipe.thumbnail_url}
-        selected={selected.has(recipe.id)}
-        disabled={disabled}
-        onToggle={onToggle}
-      />
-    ),
+    (recipe: RecipeOut) => {
+      const timeLabel = recipe.total_time_minutes ? t('browse.minutes', { count: recipe.total_time_minutes }) : undefined
+
+      return (
+        <SelectionRow
+          id={recipe.id}
+          title={recipe.title}
+          meta={timeLabel}
+          thumbnailUrl={recipe.thumbnail_url}
+          selected={selected.has(recipe.id)}
+          disabled={disabled}
+          onToggle={onToggle}
+        />
+      )
+    },
     [selected, disabled, onToggle, t],
   )
 

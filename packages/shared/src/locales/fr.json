@@ -257,6 +257,7 @@
     "addedItemsToast_one": "{{count}} article ajouté à la liste de courses",
     "addedItemsToast_other": "{{count}} articles ajoutés à la liste de courses",
     "yourNote": "Votre note",
+    "addNote": "Ajouter une note",
     "allergenSwap": "{{allergen}} · remplacer par {{substitute}}",
     "swapChipLabel": "{{allergen}} · remplacer",
     "openWebsiteLink": "Ouvrir {{host}} (site web)",
@@ -288,7 +289,10 @@
     "editIngredient": "Modifier l’ingrédient",
     "editStep": "Modifier l’étape",
     "qtyPlaceholder": "Qté",
-    "shoppingAisle": "Rayon"
+    "shoppingAisle": "Rayon",
+    "notesEmptyTitle": "Aucune note",
+    "notesEmptyHint": "Seul ton foyer les voit",
+    "notePlaceholderOpen": "Ajustements, substitutions, l'avis des enfants…"
   },
   "nav": {
     "recipes": "Recettes",
@@ -981,7 +985,10 @@
     "linkRecipe": "Lier une recette",
     "searchPlaceholder": "Rechercher dans vos recettes",
     "noMatches": "Aucune recette correspondante",
-    "removeLink": "Dissocier {{title}}"
+    "removeLink": "Dissocier {{title}}",
+    "emptyTitle": "Rien de lié",
+    "emptyHint": "Accompagnements, sauces ou dessert pour ce plat",
+    "linkAction": "Lier"
   },
   "ads": {
     "advertisement": "Publicité",

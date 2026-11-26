@@ -19,7 +19,9 @@ import StepEditSheet from './StepEditSheet'
 import TagsSection from './TagsSection'
 import { styles } from './styles'
 import type { useEditDraft } from './useEditDraft'
+import { ScrollIntoViewContext } from './ScrollIntoViewContext'
 import { useItemSheetTarget } from './useItemSheetTarget'
+import { KEYBOARD_SCROLL_EVENT_THROTTLE, useKeyboardScroll } from './useKeyboardScroll'
 
 type EditDraftState = ReturnType<typeof useEditDraft>
 
@@ -28,7 +30,6 @@ type EditViewProps = {
   draft: EditDraft
   saving: boolean
   insets: EdgeInsets
-  fontSizeIndex: number
   onDeleteRecipe: () => void
 } & Pick<
   EditDraftState,
@@ -56,7 +57,6 @@ const EditView = ({
   draft,
   saving,
   insets,
-  fontSizeIndex,
   onDeleteRecipe,
   handlePickThumbnail,
   handleNutritionChange,
@@ -167,16 +167,21 @@ const EditView = ({
     [stepTarget, setStep],
   )
 
+  const keyboardScroll = useKeyboardScroll()
   const scrollContentStyle = { paddingBottom: 40 + insets.bottom }
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={KEYBOARD_BEHAVIOR}>
       <ScrollView
+        ref={keyboardScroll.scrollRef}
         style={styles.scroll}
         contentContainerStyle={scrollContentStyle}
         contentInsetAdjustmentBehavior="never"
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
+        onScroll={keyboardScroll.handleScroll}
+        onTouchStart={keyboardScroll.handleTouchStart}
+        scrollEventThrottle={KEYBOARD_SCROLL_EVENT_THROTTLE}
       >
         <EditHero
           title={draft.title}
@@ -215,7 +220,9 @@ const EditView = ({
           onOpenStep={stepSheet.open}
           onAddStep={stepSheet.addAndOpen}
         />
-        <NotesSection recipe={recipe} fontSizeIndex={fontSizeIndex} />
+        <ScrollIntoViewContext.Provider value={keyboardScroll.actions}>
+          <NotesSection recipe={recipe} />
+        </ScrollIntoViewContext.Provider>
         <RelatedRecipesSection recipeId={recipe.id} editing />
         <View style={styles.editFooter}>
           <DeleteRecipeButton disabled={saving} onPress={onDeleteRecipe} />

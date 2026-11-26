@@ -257,6 +257,7 @@
     "addedItemsToast_one": "{{count}} item adicionado à lista de compras",
     "addedItemsToast_other": "{{count}} itens adicionados à lista de compras",
     "yourNote": "A tua nota",
+    "addNote": "Adicionar nota",
     "allergenSwap": "{{allergen}} · trocar por {{substitute}}",
     "swapChipLabel": "{{allergen}} · trocar",
     "openWebsiteLink": "Abrir {{host}} (site)",
@@ -288,7 +289,10 @@
     "editIngredient": "Editar ingrediente",
     "editStep": "Editar passo",
     "qtyPlaceholder": "Qtd.",
-    "shoppingAisle": "Corredor"
+    "shoppingAisle": "Corredor",
+    "notesEmptyTitle": "Ainda sem notas",
+    "notesEmptyHint": "Só o teu agregado as vê",
+    "notePlaceholderOpen": "Ajustes, trocas, o que os miúdos acharam…"
   },
   "nav": {
     "recipes": "Receitas",
@@ -981,7 +985,10 @@
     "linkRecipe": "Vincular receita",
     "searchPlaceholder": "Pesquisar nas suas receitas",
     "noMatches": "Nenhuma receita corresponde",
-    "removeLink": "Desvincular {{title}}"
+    "removeLink": "Desvincular {{title}}",
+    "emptyTitle": "Nada ligado ainda",
+    "emptyHint": "Acompanhamentos, molhos ou sobremesa para este prato",
+    "linkAction": "Ligar"
   },
   "ads": {
     "advertisement": "Publicidade",

@@ -269,6 +269,7 @@
     "addedItemsToast_many": "Dodano {{count}} pozycji do listy zakupów",
     "addedItemsToast_other": "Dodano {{count}} pozycji do listy zakupów",
     "yourNote": "Twoja notatka",
+    "addNote": "Dodaj notatkę",
     "allergenSwap": "{{allergen}} · zamień na {{substitute}}",
     "swapChipLabel": "{{allergen}} · zamień",
     "openWebsiteLink": "Otwórz {{host}} (strona)",
@@ -302,7 +303,10 @@
     "editIngredient": "Edytuj składnik",
     "editStep": "Edytuj krok",
     "qtyPlaceholder": "Ilość",
-    "shoppingAisle": "Dział w sklepie"
+    "shoppingAisle": "Dział w sklepie",
+    "notesEmptyTitle": "Brak notatek",
+    "notesEmptyHint": "Widzi je tylko Twoje gospodarstwo",
+    "notePlaceholderOpen": "Poprawki, zamienniki, co powiedziały dzieci…"
   },
   "nav": {
     "recipes": "Przepisy",
@@ -1009,7 +1013,10 @@
     "linkRecipe": "Powiąż przepis",
     "searchPlaceholder": "Szukaj w swoich przepisach",
     "noMatches": "Brak pasujących przepisów",
-    "removeLink": "Odłącz: {{title}}"
+    "removeLink": "Odłącz: {{title}}",
+    "emptyTitle": "Nic nie połączono",
+    "emptyHint": "Dodatki, sosy lub deser do tego dania",
+    "linkAction": "Połącz"
   },
   "ads": {
     "advertisement": "Reklama",

@@ -255,6 +255,7 @@
     "addedItemsToast_one": "{{count}} Artikel zur Einkaufsliste hinzugefügt",
     "addedItemsToast_other": "{{count}} Artikel zur Einkaufsliste hinzugefügt",
     "yourNote": "Deine Notiz",
+    "addNote": "Notiz hinzufügen",
     "allergenSwap": "{{allergen}} · Alternative: {{substitute}}",
     "swapChipLabel": "{{allergen}} · tauschen",
     "openWebsiteLink": "{{host}} öffnen (Website)",
@@ -286,7 +287,10 @@
     "editIngredient": "Zutat bearbeiten",
     "editStep": "Schritt bearbeiten",
     "qtyPlaceholder": "Menge",
-    "shoppingAisle": "Supermarktabteilung"
+    "shoppingAisle": "Supermarktabteilung",
+    "notesEmptyTitle": "Noch keine Notizen",
+    "notesEmptyHint": "Nur dein Haushalt sieht sie",
+    "notePlaceholderOpen": "Anpassungen, Austausch, was die Kinder meinten…"
   },
   "nav": {
     "recipes": "Rezepte",
@@ -977,7 +981,10 @@
     "linkRecipe": "Rezept verknüpfen",
     "searchPlaceholder": "Eigene Rezepte durchsuchen",
     "noMatches": "Keine passenden Rezepte",
-    "removeLink": "Verknüpfung zu {{title}} entfernen"
+    "removeLink": "Verknüpfung zu {{title}} entfernen",
+    "emptyTitle": "Noch nichts verknüpft",
+    "emptyHint": "Beilagen, Saucen oder Dessert zu diesem Gericht",
+    "linkAction": "Verknüpfen"
   },
   "ads": {
     "advertisement": "Werbung",

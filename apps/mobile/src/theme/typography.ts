@@ -9,6 +9,7 @@ export const typography = StyleSheet.create({
   groupTitle: { fontSize: 18, lineHeight: 23, fontWeight: '700', letterSpacing: em(18, -0.01) },
   bodyLarge: { fontSize: 17, lineHeight: 23, fontWeight: '400' },
   body: { fontSize: 16, lineHeight: 21, fontWeight: '400' },
+  note: { fontSize: 16, lineHeight: 23, fontWeight: '400' },
   meta: { fontSize: 14, lineHeight: 19, fontWeight: '400' },
   caption: {
     fontSize: 13,

@@ -342,7 +342,6 @@ const RecipeDetailScreen = () => {
         draft={editDraft.draft}
         saving={editDraft.saving}
         insets={insets}
-        fontSizeIndex={displayPrefs.fontSizeIndex}
         handlePickThumbnail={editDraft.handlePickThumbnail}
         handleNutritionChange={editDraft.handleNutritionChange}
         handleServingsChange={editDraft.handleServingsChange}

@@ -14,6 +14,8 @@ import { RecipeTile, SectionHeader } from '../../components/ui'
 import { lightHaptic } from '../../components/ui/haptics'
 import { palette, useMotion } from '../../theme'
 import { formatRecipeMeta } from '@carrot/shared/utils/recipeMeta'
+import HeaderAddButton from './HeaderAddButton'
+import QuietRow from './QuietRow'
 import RelatedRecipesPicker from './RelatedRecipesPicker'
 import { styles } from './styles'
 
@@ -193,7 +195,12 @@ const RelatedRecipesSection = ({ recipeId, editing = false }: RelatedRecipesSect
     }, 500)
   }, [router])
 
+  const { entering, exiting, layout } = useMotion()
+  const showQuietRow = displayedRelatedRecipes.length === 0 && !editing
   const actionLabel = editing ? t('recipes.linkRecipe') : t('common.edit')
+  const headerAction = showQuietRow ? (
+    <HeaderAddButton label={t('relatedRecipes.linkAction')} accessibilityLabel={t('relatedRecipes.linkRecipe')} onPress={openPicker} />
+  ) : undefined
 
   return (
     <View>
@@ -201,21 +208,37 @@ const RelatedRecipesSection = ({ recipeId, editing = false }: RelatedRecipesSect
         title={t('relatedRecipes.title')}
         topGap={SECTION_TOP_GAP}
         count={displayedRelatedRecipes.length > 0 ? String(displayedRelatedRecipes.length) : undefined}
-        actionLabel={actionLabel}
+        actionLabel={showQuietRow ? undefined : actionLabel}
         onAction={openPicker}
+        action={headerAction}
       />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
-        {displayedRelatedRecipes.map((recipe) => (
-          <RelatedTile
-            key={recipe.id}
-            recipe={recipe}
-            editing={editing}
-            onPress={handleRelatedRecipePress}
-            onRemove={handleRemoveRelated}
-          />
-        ))}
-        {editing ? <LinkRecipeTile onPress={openPicker} /> : null}
-      </ScrollView>
+      <Animated.View layout={layout}>
+        {showQuietRow ? (
+          <Animated.View key="quiet" entering={entering} exiting={exiting} style={styles.quietCard}>
+            <QuietRow
+              symbol="link"
+              title={t('relatedRecipes.emptyTitle')}
+              hint={t('relatedRecipes.emptyHint')}
+              onPress={openPicker}
+            />
+          </Animated.View>
+        ) : (
+          <Animated.View key="tiles" entering={entering} exiting={exiting}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.relatedRecipesRow}>
+              {displayedRelatedRecipes.map((recipe) => (
+                <RelatedTile
+                  key={recipe.id}
+                  recipe={recipe}
+                  editing={editing}
+                  onPress={handleRelatedRecipePress}
+                  onRemove={handleRemoveRelated}
+                />
+              ))}
+              {editing ? <LinkRecipeTile onPress={openPicker} /> : null}
+            </ScrollView>
+          </Animated.View>
+        )}
+      </Animated.View>
       <RelatedRecipesPicker
         visible={pickerOpen}
         candidates={candidates}

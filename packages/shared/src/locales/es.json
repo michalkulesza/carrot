@@ -257,6 +257,7 @@
     "addedItemsToast_one": "{{count}} artículo añadido a la lista de la compra",
     "addedItemsToast_other": "{{count}} artículos añadidos a la lista de la compra",
     "yourNote": "Tu nota",
+    "addNote": "Añadir nota",
     "allergenSwap": "{{allergen}} · cambiar por {{substitute}}",
     "swapChipLabel": "{{allergen}} · cambiar",
     "openWebsiteLink": "Abrir {{host}} (sitio web)",
@@ -288,7 +289,10 @@
     "editIngredient": "Editar ingrediente",
     "editStep": "Editar paso",
     "qtyPlaceholder": "Cant.",
-    "shoppingAisle": "Pasillo"
+    "shoppingAisle": "Pasillo",
+    "notesEmptyTitle": "Aún no hay notas",
+    "notesEmptyHint": "Solo tu hogar las ve",
+    "notePlaceholderOpen": "Ajustes, cambios, lo que opinaron los niños…"
   },
   "nav": {
     "recipes": "Recetas",
@@ -981,7 +985,10 @@
     "linkRecipe": "Vincular receta",
     "searchPlaceholder": "Buscar en tus recetas",
     "noMatches": "Ninguna receta coincide",
-    "removeLink": "Desvincular {{title}}"
+    "removeLink": "Desvincular {{title}}",
+    "emptyTitle": "Nada vinculado aún",
+    "emptyHint": "Guarniciones, salsas o postre para este plato",
+    "linkAction": "Vincular"
   },
   "ads": {
     "advertisement": "Publicidad",
