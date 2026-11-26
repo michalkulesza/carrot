@@ -10,7 +10,6 @@ import { styles } from './styles'
 import type { GroceryModeTransition } from './useGroceryRowAnimation'
 
 interface IngredientGroupCardProps {
-  recipeId: string
   group: IngredientGroup
   title: string
   groceryMode: boolean
@@ -25,7 +24,6 @@ interface IngredientGroupCardProps {
 }
 
 const IngredientGroupCard = ({
-  recipeId,
   group,
   title,
   groceryMode,
@@ -82,7 +80,6 @@ const IngredientGroupCard = ({
           {group.entries.map((entry, index) => (
             <IngredientRow
               key={entry.key}
-              recipeId={recipeId}
               entry={entry}
               linkedRecipeTitle={entry.linkedRecipeId ? recipesById.get(entry.linkedRecipeId)?.title : undefined}
               highlighted={swapState.targetKey === entry.key}

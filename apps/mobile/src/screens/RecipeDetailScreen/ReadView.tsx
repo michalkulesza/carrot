@@ -144,7 +144,6 @@ const ReadView = ({
         <FadeSection>
           <IngredientSwapActionsContext.Provider value={swap.actions}>
             <IngredientsSection
-              recipeId={recipe.id}
               groups={groups}
               entries={entries}
               groceryMode={groceryMode.active}

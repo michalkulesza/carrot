@@ -8,7 +8,6 @@ import { styles } from './styles'
 import { useIngredientLink } from './useIngredientLink'
 
 interface IngredientLinkButtonProps {
-  recipeId: string
   entry: IngredientEntry
   linkedRecipeTitle: string | undefined
   hidden: boolean
@@ -17,7 +16,6 @@ interface IngredientLinkButtonProps {
 }
 
 const IngredientLinkButton = ({
-  recipeId,
   entry,
   linkedRecipeTitle,
   hidden,
@@ -26,7 +24,6 @@ const IngredientLinkButton = ({
 }: IngredientLinkButtonProps) => {
   const { t } = useTranslation()
   const link = useIngredientLink({
-    recipeId,
     url: entry.linkedRecipeUrl,
     kind: entry.linkedRecipeKind,
     linkedRecipeId: entry.linkedRecipeId,
@@ -34,23 +31,22 @@ const IngredientLinkButton = ({
 
   const columnStyle = useMemo(() => [styles.linkColumn, columnAnimatedStyle], [columnAnimatedStyle])
 
-  const getAccessibilityLabel = () => {
+  const accessibilityLabel = useMemo(() => {
     if (link.isExternal) {
       const host = getSourceHost(entry.linkedRecipeUrl)
 
-      return host ? t('recipes.openWebsiteLink', { host }) : link.fallbackLabel
+      return host ? t('recipes.openWebsiteLink', { host }) : t('recipes.openLink')
     }
 
-    return linkedRecipeTitle ? t('recipes.openRecipeLink', { title: linkedRecipeTitle }) : link.fallbackLabel
-  }
+    return linkedRecipeTitle ? t('recipes.openRecipeLink', { title: linkedRecipeTitle }) : t('recipes.openLinkedRecipe')
+  }, [link.isExternal, entry.linkedRecipeUrl, linkedRecipeTitle, t])
 
   return (
     <Animated.View style={columnStyle}>
       <LinkSideButton
         isExternal={link.isExternal}
-        disabled={!link.isExternal && link.isBusy}
         hidden={hidden}
-        accessibilityLabel={getAccessibilityLabel()}
+        accessibilityLabel={accessibilityLabel}
         animatedStyle={buttonAnimatedStyle}
         onPress={link.handlePress}
       />

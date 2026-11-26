@@ -11,7 +11,6 @@ import { useGroceryModeTransition } from './useGroceryRowAnimation'
 import { useGroupSelections } from './useGroupSelections'
 
 interface IngredientsSectionProps {
-  recipeId: string
   groups: IngredientGroup[]
   entries: IngredientEntry[]
   groceryMode: boolean
@@ -31,7 +30,6 @@ const ALL_GROUP_KEY = 'group-all'
 const EMPTY_SELECTION = new Set<string>()
 
 const IngredientsSection = ({
-  recipeId,
   groups,
   entries,
   groceryMode,
@@ -93,7 +91,6 @@ const IngredientsSection = ({
       {displayGroups.map((group) => (
         <IngredientGroupCard
           key={group.key}
-          recipeId={recipeId}
           recipesById={recipesById}
           group={group}
           title={getGroupTitle(group)}

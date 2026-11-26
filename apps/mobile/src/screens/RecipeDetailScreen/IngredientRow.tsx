@@ -20,7 +20,6 @@ import type { SwapRewrite } from './useSwapRewriteAnimation'
 const ROW_CHECKBOX_SIZE = 26
 
 interface IngredientRowProps {
-  recipeId: string
   entry: IngredientEntry
   isLast: boolean
   groceryMode: boolean
@@ -37,7 +36,6 @@ interface IngredientRowProps {
 }
 
 const IngredientRow = ({
-  recipeId,
   entry,
   isLast,
   groceryMode,
@@ -194,7 +192,6 @@ const IngredientRow = ({
       </Animated.View>
       {hasLink ? (
         <IngredientLinkButton
-          recipeId={recipeId}
           entry={entry}
           linkedRecipeTitle={linkedRecipeTitle}
           hidden={groceryMode}
