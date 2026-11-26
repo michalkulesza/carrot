@@ -4,8 +4,7 @@ Read the exact versioned docs at https://docs.expo.dev/versions/v56.0.0/ before 
 
 ## Bottom sheets
 
-- Use `@gorhom/bottom-sheet`'s `BottomSheetModal` for every bottom card/sheet. Do not build a bespoke React Native `Modal` bottom sheet.
-- Every sheet uses `enablePanDownToClose` and the shared look from `src/components/ui/sheet.tsx`: `backdropComponent={renderSheetBackdrop}`, `backgroundComponent={SheetBackground}` (fades its shadow out as the sheet closes), `handleIndicatorStyle={sheetStyles.handle}`. Don't define per-sheet background, handle or backdrop styles.
+- Every bottom card/sheet uses `AppSheet` from `src/components/ui/sheet.tsx` (a wrapper around `@gorhom/bottom-sheet`'s `BottomSheetModal`). It gives the floating-card look: detached, 8px inset from the left, right and bottom edges, corners concentric with the screen (iOS 26+ via `modules/screen-corners`, else 36), hairline ring, soft shadow that fades as it closes, shared backdrop, handle and pan-down-to-close. Do not build a bespoke React Native `Modal` bottom sheet, use `BottomSheetModal` directly, or pass per-sheet background, handle or backdrop styles.
 - List/select sheets (tags, related recipes, meal-plan dishes, anything with search + checkbox rows + chips) are built on `SelectionDrawer` from `src/components/SelectionDrawer`; don't hand-roll a new picker sheet. It owns present/dismiss, the header, search, chips and the virtualised sectioned list; pass `sections`, `renderItem` (use `SelectionRow`) and optional `listHeader` (`CreateRow`/`QuickAddRow`).
 - Content-sized sheets (`enableDynamicSizing`) need a minimum height of half the window.
 - Do not add close, done, or cancel buttons solely to dismiss a bottom sheet. A sheet must close by tapping the backdrop or pulling it down. Keep action buttons only when they perform a real domain action.

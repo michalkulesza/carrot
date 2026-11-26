@@ -13,6 +13,7 @@ import { useIsRestoring, useQuery, useQueryClient } from '@tanstack/react-query'
 import DeviceHtmlCaptureHost from '../src/components/DeviceHtmlCapture'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
+import { resolveSheetCornerRadius } from '../src/components/ui/useSheetCornerRadius'
 import { useResolvedColorScheme } from '../src/context/ColorSchemeContext'
 
 const sentryEnvironment = __DEV__ ? 'development' : 'production'
@@ -136,6 +137,10 @@ const AppStartupGate = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const timer = setTimeout(() => setRecipeWaitElapsed(true), RECIPE_WAIT_TIMEOUT_MS)
     return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    void resolveSheetCornerRadius()
   }, [])
 
   const isReady =

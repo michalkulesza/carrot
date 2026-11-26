@@ -92,6 +92,7 @@ export const paletteTones = {
   glassFill: ['rgba(255,255,255,0.82)', 'rgba(38,33,28,0.82)'],
   glassTint: ['rgba(60,45,30,0.07)', 'rgba(0,0,0,0.15)'],
   shadowSoft: ['rgba(40,30,20,0.12)', 'rgba(0,0,0,0.4)'],
+  sheetRing: ['rgba(40,30,20,0.06)', 'rgba(255,255,255,0.08)'],
 } satisfies Record<string, readonly [string, string]>
 
 type ToneKey = keyof typeof paletteTones

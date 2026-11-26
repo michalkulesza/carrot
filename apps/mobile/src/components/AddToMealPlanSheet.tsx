@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { renderSheetBackdrop, sheetStyles, SheetBackground } from './ui/sheet'
+import type { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { AppSheet } from './ui/sheet'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { Feather } from '@expo/vector-icons'
@@ -182,14 +182,10 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     const todayIso = useMemo(() => toISODate(today), [today])
 
     return (
-      <BottomSheetModal
+      <AppSheet
         ref={sheetRef}
         snapPoints={SNAP_POINTS}
         enableDynamicSizing={false}
-        enablePanDownToClose
-        backdropComponent={renderSheetBackdrop}
-        backgroundComponent={SheetBackground}
-        handleIndicatorStyle={sheetStyles.handle}
       >
         <View style={styles.container}>
           <Text style={styles.title}>{t('mealPlan.addToMealPlan')}</Text>
@@ -246,7 +242,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
             ))}
           </View>
         </View>
-      </BottomSheetModal>
+      </AppSheet>
     )
   },
 )

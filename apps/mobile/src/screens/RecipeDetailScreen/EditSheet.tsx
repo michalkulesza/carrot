@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Pressable, Text, useWindowDimensions, View } from 'react-native'
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
+import { type BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import { renderSheetBackdrop, SheetBackground, sheetStyles } from '../../components/ui/sheet'
+import { AppSheet } from '../../components/ui/sheet'
 import { lightHaptic } from '../../components/ui/haptics'
 import { styles } from './styles'
 
@@ -51,13 +51,9 @@ const EditSheet = ({ visible, title, removeLabel, canRemove, onRemove, onDismiss
   }, [onRemove])
 
   return (
-    <BottomSheetModal
+    <AppSheet
       ref={sheetRef}
-      enablePanDownToClose
       onDismiss={handleDismiss}
-      backdropComponent={renderSheetBackdrop}
-      backgroundComponent={SheetBackground}
-      handleIndicatorStyle={sheetStyles.handle}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
       android_keyboardInputMode="adjustResize"
@@ -83,7 +79,7 @@ const EditSheet = ({ visible, title, removeLabel, canRemove, onRemove, onDismiss
         </View>
         {children}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppSheet>
   )
 }
 

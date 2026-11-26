@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { BottomSheetModal } from '@gorhom/bottom-sheet'
-import { renderSheetBackdrop, sheetStyles, SheetBackground } from './ui/sheet'
+import type { BottomSheetModal } from '@gorhom/bottom-sheet'
+import { AppSheet } from './ui/sheet'
 import { Picker } from '@react-native-picker/picker'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
@@ -59,15 +59,11 @@ export const QuantityUnitPickerModal = ({
 
 
   return (
-    <BottomSheetModal
+    <AppSheet
       ref={sheetRef}
       snapPoints={[340]}
       enableDynamicSizing={false}
-      enablePanDownToClose
       onDismiss={onClose}
-      backdropComponent={renderSheetBackdrop}
-      backgroundComponent={SheetBackground}
-      handleIndicatorStyle={sheetStyles.handle}
     >
       <View style={sheetStyle}>
         <View style={styles.wheelRow}>
@@ -108,7 +104,7 @@ export const QuantityUnitPickerModal = ({
           </Picker>
         </View>
       </View>
-    </BottomSheetModal>
+    </AppSheet>
   )
 }
 

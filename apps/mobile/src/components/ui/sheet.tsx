@@ -1,37 +1,48 @@
-import { useMemo } from 'react'
-import { BottomSheetBackdrop, type BottomSheetBackdropProps, type BottomSheetBackgroundProps } from '@gorhom/bottom-sheet'
+import { useCallback, useMemo, type Ref } from 'react'
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  type BottomSheetBackdropProps,
+  type BottomSheetBackgroundProps,
+  type BottomSheetModalProps,
+} from '@gorhom/bottom-sheet'
 import { StyleSheet } from 'react-native'
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated'
-import { palette, radius } from '../../theme'
+import { palette, sheetInset } from '../../theme'
+import { useSheetCornerRadius } from './useSheetCornerRadius'
 
 const HANDLE_WIDTH = 40
 const HANDLE_HEIGHT = 5
 
-export const sheetStyles = StyleSheet.create({
+const sheetStyles = StyleSheet.create({
   background: {
     backgroundColor: palette.background,
-    borderTopLeftRadius: radius.sheet,
-    borderTopRightRadius: radius.sheet,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.sheetRing,
     shadowColor: palette.shadowSoft,
-    shadowOffset: { width: 0, height: -6 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 1,
-    shadowRadius: 30,
+    shadowRadius: 24,
   },
   handle: { width: HANDLE_WIDTH, height: HANDLE_HEIGHT, borderRadius: HANDLE_HEIGHT / 2, backgroundColor: palette.dividerStrong },
   backdrop: { backgroundColor: palette.backdrop },
+  inset: { marginHorizontal: sheetInset },
 })
 
-// Fades the upward shadow with the sheet's position: a closed sheet rests just below the screen edge, where a static shadow would still show.
-export const SheetBackground = ({ style, animatedIndex }: BottomSheetBackgroundProps) => {
+// Fades the shadow with the sheet's position: a closed sheet rests just below the screen edge, where a static shadow would still show.
+const SheetBackground = ({ style, animatedIndex, cornerRadius }: BottomSheetBackgroundProps & { cornerRadius: number }) => {
   const shadowStyle = useAnimatedStyle(() => ({
     shadowOpacity: interpolate(animatedIndex.value, [-1, 0], [0, 1], Extrapolation.CLAMP),
   }))
-  const backgroundStyle = useMemo(() => [style, sheetStyles.background, shadowStyle], [style, shadowStyle])
+  const backgroundStyle = useMemo(
+    () => [style, sheetStyles.background, { borderRadius: cornerRadius }, shadowStyle],
+    [style, cornerRadius, shadowStyle],
+  )
 
   return <Animated.View pointerEvents="none" style={backgroundStyle} />
 }
 
-export const renderSheetBackdrop = (props: BottomSheetBackdropProps) => (
+const renderSheetBackdrop = (props: BottomSheetBackdropProps) => (
   <BottomSheetBackdrop
     {...props}
     appearsOnIndex={0}
@@ -41,3 +52,28 @@ export const renderSheetBackdrop = (props: BottomSheetBackdropProps) => (
     style={[props.style, sheetStyles.backdrop]}
   />
 )
+
+type AppSheetProps = BottomSheetModalProps & { ref?: Ref<BottomSheetModal> }
+
+export const AppSheet = ({ ref, style, ...props }: AppSheetProps) => {
+  const mergedStyle = useMemo(() => [sheetStyles.inset, style], [style])
+  const cornerRadius = useSheetCornerRadius()
+  const renderBackground = useCallback(
+    (backgroundProps: BottomSheetBackgroundProps) => <SheetBackground {...backgroundProps} cornerRadius={cornerRadius} />,
+    [cornerRadius],
+  )
+
+  return (
+    <BottomSheetModal
+      {...props}
+      ref={ref}
+      detached
+      bottomInset={sheetInset}
+      style={mergedStyle}
+      enablePanDownToClose
+      backdropComponent={renderSheetBackdrop}
+      backgroundComponent={renderBackground}
+      handleIndicatorStyle={sheetStyles.handle}
+    />
+  )
+}

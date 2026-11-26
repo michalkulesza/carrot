@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, Switch, Text, View } from 'react-native'
-import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
+import { type BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet'
 import { SymbolView } from 'expo-symbols'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import { renderSheetBackdrop, SheetBackground, sheetStyles } from '../../components/ui/sheet'
+import { AppSheet } from '../../components/ui/sheet'
 import { palette } from '../../theme'
 import { createUnitTranslator, splitIngredient } from './helpers'
 import { styles } from './styles'
@@ -117,13 +117,9 @@ const IngredientSwapSheet = ({ plan, onConfirm, onDismiss }: IngredientSwapSheet
   }, [shown, t])
 
   return (
-    <BottomSheetModal
+    <AppSheet
       ref={sheetRef}
-      enablePanDownToClose
       onDismiss={handleSheetDismiss}
-      backdropComponent={renderSheetBackdrop}
-      backgroundComponent={SheetBackground}
-      handleIndicatorStyle={sheetStyles.handle}
     >
       <BottomSheetView style={bodyStyle}>
         {content ? (
@@ -176,7 +172,7 @@ const IngredientSwapSheet = ({ plan, onConfirm, onDismiss }: IngredientSwapSheet
           </>
         ) : null}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppSheet>
   )
 }
 

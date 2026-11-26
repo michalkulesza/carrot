@@ -4,3 +4,4 @@ export type SpaceKey = keyof typeof space
 
 export const screenGutter = 20
 export const sectionGap = 28
+export const sheetInset = 8

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react'
 import { ScrollView, Text, View } from 'react-native'
-import { BottomSheetModal, useBottomSheetScrollableCreator, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet'
+import { type BottomSheetModal, useBottomSheetScrollableCreator, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet'
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { renderSheetBackdrop, SheetBackground, sheetStyles } from '../ui/sheet'
+import { AppSheet } from '../ui/sheet'
 import Header, { type DrawerAction } from './Header'
 import SearchField from './SearchField'
 import { styles } from './styles'
@@ -117,17 +117,13 @@ export const SelectionDrawer = <T,>({
   )
 
   return (
-    <BottomSheetModal
+    <AppSheet
       ref={sheetRef}
       snapPoints={SNAP_POINTS}
       enableDynamicSizing={false}
-      enablePanDownToClose
       animationConfigs={animationConfigs}
       onAnimate={handleAnimate}
       onDismiss={handleDismiss}
-      backdropComponent={renderSheetBackdrop}
-      backgroundComponent={SheetBackground}
-      handleIndicatorStyle={sheetStyles.handle}
       topInset={topInset}
       keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
@@ -160,6 +156,6 @@ export const SelectionDrawer = <T,>({
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       />
-    </BottomSheetModal>
+    </AppSheet>
   )
 }
