@@ -1,3 +1,4 @@
+import { MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import { useTranslation } from 'react-i18next'
 import { clampToString, type EditableRecipe } from './helpers'
 
@@ -44,7 +45,7 @@ const RecipeMacroPills = ({
             min={1}
             max={67}
             value={recipe.servings}
-            onChange={(e) => setServings(clampToString(e.target.value, 1, 67))}
+            onChange={(e) => setServings(clampToString(e.target.value, MIN_SERVINGS, 67))}
             className={`${numberInputClass} w-[2.2ch] text-primary`}
           />
         </label>

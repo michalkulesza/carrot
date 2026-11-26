@@ -344,6 +344,13 @@ class RecipeComponent(BaseModel):
     name_evidence: list[dict[str, Any]] = []
 
 
+MIN_SERVINGS = 1
+
+
+def clamp_servings(value: int | None) -> int | None:
+    return None if value is None else max(MIN_SERVINGS, value)
+
+
 class RecipeExtraction(BaseModel):
     title: str | None = None
     source_title: str | None = None
@@ -361,6 +368,8 @@ class RecipeExtraction(BaseModel):
     title_evidence: list[dict[str, Any]] = []
     tags: list[str] = []
     components: list[RecipeComponent] = []
+
+    _servings_floor = field_validator("servings")(clamp_servings)
 
 
 class SourceIngredient(BaseModel):
@@ -387,6 +396,8 @@ class RecipeSourceExtraction(BaseModel):
     carbs_per_serving: int | None = None
     composition_unknown: bool = False
     components: list[SourceComponent] = []
+
+    _servings_floor = field_validator("servings")(clamp_servings)
 
 
 class EnrichmentComponent(BaseModel):
@@ -503,6 +514,8 @@ class RecipeSaveRequest(BaseModel):
     components: list[SaveComponent]
     tag_ids: list[uuid.UUID] = []
     expected_edit_version: int | None = None
+
+    _servings_floor = field_validator("servings")(clamp_servings)
 
 
 class RecipeOut(BaseModel):

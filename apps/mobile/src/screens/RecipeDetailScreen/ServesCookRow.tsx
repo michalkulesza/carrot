@@ -1,3 +1,4 @@
+import { MAX_SERVINGS, MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import { memo } from 'react'
 import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
@@ -12,8 +13,6 @@ interface ServesCookRowProps {
   onOpenCookMode?: () => void
 }
 
-export const MIN_SERVINGS = 1
-export const MAX_SERVINGS = 99
 
 const ServesCookRow = ({
   servings,

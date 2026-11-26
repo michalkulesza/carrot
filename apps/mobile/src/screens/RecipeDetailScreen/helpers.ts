@@ -1,3 +1,4 @@
+import { parseServings } from '@carrot/shared/utils/servings'
 import type { TFunction } from 'i18next'
 import type {
   AllergenFlag,
@@ -129,7 +130,7 @@ export const buildEditRecipeSaveRequest = (
   draft: EditDraft,
 ): RecipeSaveRequest => ({
   title: draft.title,
-  servings: draft.servings !== '' ? Number(draft.servings) : null,
+  servings: parseServings(draft.servings),
   total_time_minutes: draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
   kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,
   protein_per_serving: draft.protein !== '' ? Number(draft.protein) : null,

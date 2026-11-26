@@ -1,3 +1,4 @@
+import { MAX_SERVINGS, MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
@@ -327,12 +328,12 @@ const RecipeDetailModal = ({
 
   const handleDecreaseServings = () => {
     if (selectedServings !== null)
-      setServings(Math.max(1, selectedServings - 1))
+      setServings(Math.max(MIN_SERVINGS, selectedServings - 1))
   }
 
   const handleIncreaseServings = () => {
     if (selectedServings !== null)
-      setServings(Math.min(99, selectedServings + 1))
+      setServings(Math.min(MAX_SERVINGS, selectedServings + 1))
   }
 
   const handleToggleIngredient = (key: string) => {

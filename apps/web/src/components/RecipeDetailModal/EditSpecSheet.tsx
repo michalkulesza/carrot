@@ -1,3 +1,4 @@
+import { MAX_SERVINGS, MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { EditState } from './helpers'
@@ -101,7 +102,7 @@ const ServesStepper = ({
       <button
         type="button"
         aria-label={t('recipes.decreaseServings')}
-        onClick={() => onChange(String(Math.max(1, servings - 1)))}
+        onClick={() => onChange(String(Math.max(MIN_SERVINGS, servings - 1)))}
         className={button}
       >
         −
@@ -112,7 +113,7 @@ const ServesStepper = ({
       <button
         type="button"
         aria-label={t('recipes.increaseServings')}
-        onClick={() => onChange(String(Math.min(99, servings + 1)))}
+        onClick={() => onChange(String(Math.min(MAX_SERVINGS, servings + 1)))}
         className={button}
       >
         +

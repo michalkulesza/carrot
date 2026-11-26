@@ -1,3 +1,4 @@
+import { parseServings } from '@carrot/shared/utils/servings'
 import type { AllergenFlag, RecipeSaveRequest, ShoppingCategory, Tag } from '@carrot/shared/types'
 import { serializeIngredient } from '@carrot/shared/utils/ingredientUtils'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
@@ -62,7 +63,7 @@ export const buildRecipeSavePayload = (
   selectedTags: Tag[],
 ): RecipeSaveRequest => ({
   title: editable.title,
-  servings: editable.servings !== '' ? Number(editable.servings) : null,
+  servings: parseServings(editable.servings),
   total_time_minutes: editable.totalTimeMinutes !== '' ? Number(editable.totalTimeMinutes) : null,
   kcal_per_serving: editable.kcal !== '' ? Number(editable.kcal) : null,
   protein_per_serving: editable.protein !== '' ? Number(editable.protein) : null,

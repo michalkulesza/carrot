@@ -1,3 +1,4 @@
+import { parseServings } from '@carrot/shared/utils/servings'
 import type {
   RecipeOut,
   RecipeSaveRequest,
@@ -233,7 +234,7 @@ export const buildRecipeUpdateFromDraft = (
   tagIds: string[]
 ): RecipeSaveRequest => ({
   title: draft.title,
-  servings: draft.servings !== '' ? Number(draft.servings) : null,
+  servings: parseServings(draft.servings),
   total_time_minutes:
     draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
   kcal_per_serving: draft.kcal !== '' ? Number(draft.kcal) : null,

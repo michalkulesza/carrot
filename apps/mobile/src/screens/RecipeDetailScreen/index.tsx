@@ -1,3 +1,4 @@
+import { MAX_SERVINGS, MIN_SERVINGS } from "@carrot/shared/utils/servings";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActionSheetIOS, ActivityIndicator, Alert, Platform, Share, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -239,12 +240,12 @@ const RecipeDetailScreen = () => {
   }, [hasSteps, recipeId, router])
 
   const handleDecreaseServings = useCallback(() => {
-    if (selectedServings !== null) setServings(Math.max(1, selectedServings - 1));
+    if (selectedServings !== null) setServings(Math.max(MIN_SERVINGS, selectedServings - 1));
     void Haptics.selectionAsync();
   }, [selectedServings, setServings]);
 
   const handleIncreaseServings = useCallback(() => {
-    if (selectedServings !== null) setServings(Math.min(99, selectedServings + 1));
+    if (selectedServings !== null) setServings(Math.min(MAX_SERVINGS, selectedServings + 1));
     void Haptics.selectionAsync();
   }, [selectedServings, setServings]);
 

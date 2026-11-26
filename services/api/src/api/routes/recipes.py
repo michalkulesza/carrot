@@ -34,6 +34,7 @@ from api.models import (
     RecipeOut,
     RelatedRecipeRequest,
     RecipeSaveRequest,
+    clamp_servings,
     SaveComponent,
     Tag,
     recipe_households_table,
@@ -351,7 +352,7 @@ async def import_recipes(
         recipe = Recipe(
             author_id=user.id,
             title=row.get("title") or "Untitled",
-            servings=int(row["servings"]) if row.get("servings") else None,
+            servings=clamp_servings(int(row["servings"])) if row.get("servings") else None,
             kcal_per_serving=int(row["kcal_per_serving"]) if row.get("kcal_per_serving") else None,
             thumbnail_url=row.get("thumbnail_url") or None,
             creator_handle=row.get("creator_handle") or None,

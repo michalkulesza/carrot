@@ -1,3 +1,4 @@
+import { MAX_SERVINGS, MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import { useMemo, useState, type ReactNode } from 'react'
 import type {
   PublicRecipeOut,
@@ -110,10 +111,10 @@ const PublicRecipeDetailContent = ({
         onCancelMode={() => {}}
         selectedServings={servings}
         onDecreaseServings={() =>
-          setServings((value) => (value ? Math.max(1, value - 1) : value))
+          setServings((value) => (value ? Math.max(MIN_SERVINGS, value - 1) : value))
         }
         onIncreaseServings={() =>
-          setServings((value) => (value ? Math.min(99, value + 1) : value))
+          setServings((value) => (value ? Math.min(MAX_SERVINGS, value + 1) : value))
         }
         onOpenCookMode={() => {}}
         readOnly
