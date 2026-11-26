@@ -1,8 +1,9 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import { View } from 'react-native'
-import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
+import { useTranslation } from 'react-i18next'
 import { AppText, Card, Expandable } from '../../components/ui'
+import type { IngredientSwapState } from './IngredientSwapContext'
 import IngredientRow from './IngredientRow'
 import type { IngredientGroup, ReadingMetrics } from './helpers'
 import { styles } from './styles'
@@ -12,30 +13,30 @@ interface IngredientGroupCardProps {
   recipeId: string
   group: IngredientGroup
   title: string
-  recipesById: Map<string, RecipeOut>
   groceryMode: boolean
   modeTransition: GroceryModeTransition
-  checkboxesMounted: boolean
   selectedKeys: Set<string>
   onToggleSelected: (key: string) => void
   activeAllergens: string[]
   metrics: ReadingMetrics
   defaultExpanded: boolean
+  recipesById: Map<string, RecipeOut>
+  swapState: IngredientSwapState
 }
 
 const IngredientGroupCard = ({
   recipeId,
   group,
   title,
-  recipesById,
   groceryMode,
   modeTransition,
-  checkboxesMounted,
   selectedKeys,
   onToggleSelected,
   activeAllergens,
   metrics,
   defaultExpanded,
+  recipesById,
+  swapState,
 }: IngredientGroupCardProps) => {
   const { t } = useTranslation()
   const [tooltipOpen, setTooltipOpen] = useState(false)
@@ -83,11 +84,13 @@ const IngredientGroupCard = ({
               key={entry.key}
               recipeId={recipeId}
               entry={entry}
-              linkedRecipe={entry.linkedRecipeId ? recipesById.get(entry.linkedRecipeId) : undefined}
+              linkedRecipeTitle={entry.linkedRecipeId ? recipesById.get(entry.linkedRecipeId)?.title : undefined}
+              highlighted={swapState.targetKey === entry.key}
+              rewrite={swapState.rewrites.get(entry.key)}
+              swapBusy={swapState.busy}
               isLast={index === lastIndex}
               groceryMode={groceryMode}
               modeTransition={modeTransition}
-              checkboxesMounted={checkboxesMounted}
               selected={selectedKeys.has(entry.key)}
               onToggleSelected={onToggleSelected}
               activeAllergens={activeAllergens}

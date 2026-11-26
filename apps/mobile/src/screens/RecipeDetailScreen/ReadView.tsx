@@ -5,10 +5,11 @@ import type { EdgeInsets } from 'react-native-safe-area-context'
 import type { RecipeIssueCode, RecipeOut } from '@carrot/shared/types'
 import AddToMealPlanSheet, { type AddToMealPlanSheetHandle } from '../../components/AddToMealPlanSheet'
 import FadeSection from './FadeSection'
-import GroceryAddedToast from './GroceryAddedToast'
 import GroceryModeBar from './GroceryModeBar'
 import { getGroceryBarClearance } from './groceryLayout'
 import HeroImage from './HeroImage'
+import { IngredientSwapActionsContext } from './IngredientSwapContext'
+import IngredientSwapSheet from './IngredientSwapSheet'
 import IngredientsSection from './IngredientsSection'
 import NotesSection from './NotesSection'
 import AllergenSummaryBox from './AllergenSummaryBox'
@@ -16,6 +17,7 @@ import NutritionStrip from './NutritionStrip'
 import ReadingPrefsCard from './ReadingPrefsCard'
 import RecipeIssueBanner from './RecipeIssueBanner'
 import RelatedRecipesSection from './RelatedRecipesSection'
+import ScreenToast from './ScreenToast'
 import ServesCookRow from './ServesCookRow'
 import StepsSection from './StepsSection'
 import TagsSection from './TagsSection'
@@ -23,6 +25,7 @@ import TitleBlock from './TitleBlock'
 import { buildIngredientGroups } from './helpers'
 import { styles } from './styles'
 import { useGroceryMode } from './useGroceryMode'
+import { useIngredientSwap } from './useIngredientSwap'
 
 interface ReadViewProps {
   recipe: RecipeOut
@@ -43,6 +46,7 @@ interface ReadViewProps {
   onDismissIssue: (issueCode: RecipeIssueCode) => Promise<void>
   onDeleteRecipe: () => void
   mealPlanSheetRef: RefObject<AddToMealPlanSheetHandle | null>
+  onRecipeRemoved: () => void
 }
 
 const ReadView = ({
@@ -64,6 +68,7 @@ const ReadView = ({
   onDismissIssue,
   onDeleteRecipe,
   mealPlanSheetRef,
+  onRecipeRemoved,
 }: ReadViewProps) => {
   const { t } = useTranslation()
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0
@@ -78,6 +83,10 @@ const ReadView = ({
   )
   const entries = useMemo(() => groups.flatMap((group) => group.entries), [groups])
   const groceryMode = useGroceryMode(entries)
+  const swap = useIngredientSwap({ recipe, entries, activeAllergens, servingScale, onRecipeRemoved })
+
+  const toastMessage =
+    groceryMode.toastCount !== null ? t('recipes.addedItemsToast', { count: groceryMode.toastCount }) : null
 
   const scrollBottomPadding = groceryMode.active ? getGroceryBarClearance(insets.bottom) : insets.bottom
   const scrollContentStyle = { paddingBottom: scrollBottomPadding }
@@ -125,19 +134,23 @@ const ReadView = ({
         </View>
 
         <FadeSection>
-          <IngredientsSection
-            recipeId={recipe.id}
-            groups={groups}
-            entries={entries}
-            groceryMode={groceryMode.active}
-            selectedKeys={groceryMode.selectedKeys}
-            allSelected={groceryMode.allSelected}
-            onToggleSelected={groceryMode.handleToggle}
-            onToggleAll={groceryMode.handleToggleAll}
-            onEnterGroceryMode={groceryMode.handleEnter}
-            activeAllergens={activeAllergens}
-            fontSizeIndex={fontSizeIndex}
-          />
+          <IngredientSwapActionsContext.Provider value={swap.actions}>
+            <IngredientsSection
+              recipeId={recipe.id}
+              groups={groups}
+              entries={entries}
+              groceryMode={groceryMode.active}
+              selectedKeys={groceryMode.selectedKeys}
+              allSelected={groceryMode.allSelected}
+              onToggleSelected={groceryMode.handleToggle}
+              onToggleAll={groceryMode.handleToggleAll}
+              onEnterGroceryMode={groceryMode.handleEnter}
+              activeAllergens={activeAllergens}
+              fontSizeIndex={fontSizeIndex}
+              swapState={swap.state}
+              selectedCount={groceryMode.selectedCount}
+            />
+          </IngredientSwapActionsContext.Provider>
         </FadeSection>
         <FadeSection>
           <StepsSection recipe={recipe} unitSystem={unitSystem} fontSizeIndex={fontSizeIndex} />
@@ -156,9 +169,12 @@ const ReadView = ({
         onCancel={groceryMode.handleCancel}
         onConfirm={groceryMode.handleConfirm}
       />
-      {groceryMode.toastCount !== null ? (
-        <GroceryAddedToast count={groceryMode.toastCount} onUndo={groceryMode.handleUndo} />
-      ) : null}
+      <IngredientSwapSheet
+        plan={swap.plan}
+        onConfirm={swap.handleConfirmSwap}
+        onDismiss={swap.handleDismissSheet}
+      />
+      {toastMessage !== null ? <ScreenToast message={toastMessage} onUndo={groceryMode.handleUndo} /> : null}
     </View>
   )
 }

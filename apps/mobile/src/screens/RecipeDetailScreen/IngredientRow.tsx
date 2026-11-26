@@ -1,54 +1,62 @@
 import { memo, useCallback, useMemo, useState } from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { Pressable } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
-import type { RecipeOut } from '@carrot/shared/types'
-import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
-import { AppText, CheckboxCircle, LinkChip } from '../../components/ui'
+import { AppText, CheckboxCircle } from '../../components/ui'
 import AllergenBadge from './AllergenBadge'
-import { createUnitTranslator, getSourceHost, matchesActiveAllergen, splitIngredient, type IngredientEntry, type ReadingMetrics } from './helpers'
+import IngredientAllergenAction from './IngredientAllergenAction'
+import IngredientLinkButton from './IngredientLinkButton'
+import { useIngredientSwapActions } from './IngredientSwapContext'
+import SwapChip from './SwapChip'
+import SwapHighlight from './SwapHighlight'
+import SwapNameBlock from './SwapNameBlock'
+import { createUnitTranslator, matchesActiveAllergen, splitIngredient, type IngredientEntry, type ReadingMetrics } from './helpers'
 import { styles } from './styles'
+import { isAppliedEntry, isSwappableEntry } from './swapHelpers'
 import { useGroceryRowAnimation, type GroceryModeTransition } from './useGroceryRowAnimation'
-import { useIngredientLink } from './useIngredientLink'
+import { useIngredientAllergenLabels, useLinkedAllergenText } from './useIngredientAllergenLabels'
+import type { SwapRewrite } from './useSwapRewriteAnimation'
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-const ROW_CHECKBOX_SIZE = 22
-
-type LinkedRecipePreview = Pick<RecipeOut, 'title' | 'thumbnail_url'>
+const ROW_CHECKBOX_SIZE = 26
 
 interface IngredientRowProps {
   recipeId: string
   entry: IngredientEntry
-  linkedRecipe: LinkedRecipePreview | undefined
   isLast: boolean
   groceryMode: boolean
   modeTransition: GroceryModeTransition
-  checkboxesMounted: boolean
   selected: boolean
   onToggleSelected: (key: string) => void
   activeAllergens: string[]
   metrics: ReadingMetrics
   onTooltipOpenChange: (open: boolean) => void
+  linkedRecipeTitle: string | undefined
+  highlighted: boolean
+  rewrite: SwapRewrite | undefined
+  swapBusy: boolean
 }
 
 const IngredientRow = ({
   recipeId,
   entry,
-  linkedRecipe,
   isLast,
   groceryMode,
   modeTransition,
-  checkboxesMounted,
   selected,
   onToggleSelected,
   activeAllergens,
   metrics,
   onTooltipOpenChange,
+  linkedRecipeTitle,
+  highlighted,
+  rewrite,
+  swapBusy,
 }: IngredientRowProps) => {
   const { t } = useTranslation()
   const [tooltipOpen, setTooltipOpen] = useState(false)
+  const swapActions = useIngredientSwapActions()
 
-  const { key, ingredient, cupHint, allergenFlag, linkedAllergens } = entry
+  const { key, ingredient, cupHint, allergenFlag } = entry
   const { fontSize, ingredientLineHeight } = metrics
 
   const { quantity, name } = useMemo(
@@ -56,55 +64,49 @@ const IngredientRow = ({
     [ingredient, t],
   )
 
-  const link = useIngredientLink({
-    recipeId,
-    url: entry.linkedRecipeUrl,
-    kind: entry.linkedRecipeKind,
-    linkedRecipeId: entry.linkedRecipeId,
-  })
-
+  const applied = isAppliedEntry(entry)
+  const swappable = isSwappableEntry(entry, activeAllergens)
   const hasMatchedAllergen = matchesActiveAllergen(allergenFlag?.allergen ?? null, activeAllergens)
-  const allergenName = allergenFlag?.allergen
-    ? t(`allergens.${normalizeAllergenKey(allergenFlag.allergen)}`, { defaultValue: allergenFlag.allergen })
-    : ''
-  const substitute = allergenFlag?.substitute ?? null
-  const allergenLabel = substitute ? t('recipes.allergenSwap', { allergen: allergenName, substitute }) : allergenName
-  const allergenTooltip = substitute
-    ? `${t('recipes.suggestedSubstitute')} ${substitute}`
-    : t('recipes.noSubstituteAvailable')
-
-  const linkedAllergenLabels = (linkedAllergens ?? [])
-    .filter((allergen) => matchesActiveAllergen(allergen, activeAllergens))
-    .map((allergen) => t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }))
-  const linkedAllergenText = `${t('recipes.fromLinkedRecipe')}: ${linkedAllergenLabels.join(', ')}`
+  const swapRewrite = applied && rewrite?.direction === 'swap' ? rewrite : undefined
+  const restoreRewrite = !applied && rewrite?.direction === 'restore' ? rewrite : undefined
+  const needsAllergenLabels = swappable || applied || hasMatchedAllergen || rewrite !== undefined
+  const labels = useIngredientAllergenLabels(entry, name, needsAllergenLabels)
+  const linkedAllergenText = useLinkedAllergenText(entry, activeAllergens)
+  const hasLink = Boolean(entry.linkedRecipeUrl)
+  const cupHintLabel = cupHint ? `(${cupHint})` : null
+  const showBadge = hasMatchedAllergen && !applied && !restoreRewrite
+  const swapDisabled = groceryMode || swapBusy || rewrite !== undefined
 
   const animation = useGroceryRowAnimation(modeTransition, groceryMode, selected)
 
   const rowStyle = useMemo(
     () => [
-      styles.ingredientRow,
+      styles.readIngredientRow,
       !isLast && styles.ingredientRowDivider,
       tooltipOpen && styles.raised,
-      animation.rowStyle,
     ],
-    [isLast, tooltipOpen, animation.rowStyle],
+    [isLast, tooltipOpen],
   )
   const quantityStyle = useMemo(
     () => [
-      styles.ingredientQuantity,
+      styles.readIngredientQuantity,
       { fontSize, lineHeight: ingredientLineHeight },
       animation.quantityStyle,
     ],
     [fontSize, ingredientLineHeight, animation.quantityStyle],
   )
+  const leadingStyle = useMemo(() => [styles.readIngredientLeading, animation.leadingStyle], [animation.leadingStyle])
+  const bodyStyle = useMemo(() => [styles.readIngredientBody, animation.bodyStyle], [animation.bodyStyle])
   const checkboxStyle = useMemo(
-    () => [styles.ingredientCheckbox, animation.checkboxStyle],
+    () => [styles.readIngredientCheckbox, animation.checkboxStyle],
     [animation.checkboxStyle],
   )
   const nameStyle = useMemo(
-    () => [styles.ingredientName, { fontSize, lineHeight: ingredientLineHeight }],
-    [fontSize, ingredientLineHeight],
+    () => [styles.ingredientName, { fontSize, lineHeight: ingredientLineHeight }, animation.contentStyle],
+    [fontSize, ingredientLineHeight, animation.contentStyle],
   )
+  const chipWrapperStyle = useMemo(() => [styles.swapChipFade, animation.chipStyle], [animation.chipStyle])
+  const accessibilityState = useMemo(() => ({ checked: selected }), [selected])
 
   const handleTooltipOpenChange = useCallback(
     (open: boolean) => {
@@ -115,64 +117,92 @@ const IngredientRow = ({
   )
 
   const handleToggleSelected = useCallback(() => onToggleSelected(key), [onToggleSelected, key])
+  const handleOpenSwap = useCallback(() => swapActions.onOpenSwap(key), [swapActions, key])
+  const handleUndoSwap = useCallback(() => swapActions.onUndoSwap(key), [swapActions, key])
 
-  const accessibilityState = useMemo(() => ({ checked: selected }), [selected])
+  const swapChip = labels ? (
+    <Animated.View style={chipWrapperStyle}>
+      <SwapChip
+        label={labels.swapChipLabel}
+        highlighted={highlighted}
+        accessibilityLabel={labels.swapChipAccessibility}
+        disabled={swapDisabled}
+        onPress={handleOpenSwap}
+      />
+    </Animated.View>
+  ) : null
 
-  const hasLink = Boolean(entry.linkedRecipeUrl)
-  const isWebLink = link.isExternal
-  const linkHost = isWebLink ? getSourceHost(entry.linkedRecipeUrl) : null
-  const linkLabel = isWebLink ? linkHost ?? link.fallbackLabel : linkedRecipe?.title ?? link.fallbackLabel
+  const nameContent = labels ? (
+    <SwapNameBlock
+      name={name}
+      nameStyle={nameStyle}
+      applied={applied}
+      swapRewrite={swapRewrite}
+      restoreRewrite={restoreRewrite}
+      originalName={labels.originalName}
+      substituteName={labels.substituteName}
+      swapChipLabel={labels.swapChipLabel}
+      swapDisabled={swapDisabled}
+      onUndo={handleUndoSwap}
+      restoreChip={swapChip}
+    />
+  ) : (
+    <Animated.Text style={nameStyle}>{name}</Animated.Text>
+  )
+
+  const allergenAction =
+    labels && !restoreRewrite ? (
+      <IngredientAllergenAction
+        swappable={swappable}
+        showBadge={showBadge}
+        swapChip={swapChip}
+        labels={labels}
+        onTooltipOpenChange={handleTooltipOpenChange}
+      />
+    ) : null
 
   return (
-    <AnimatedPressable
+    <Pressable
       style={rowStyle}
       disabled={!groceryMode}
       onPress={handleToggleSelected}
+      accessible={groceryMode}
       accessibilityRole={groceryMode ? 'checkbox' : undefined}
       accessibilityLabel={groceryMode ? ingredient : undefined}
       accessibilityState={groceryMode ? accessibilityState : undefined}
     >
-      <View style={styles.ingredientLeading}>
-        {checkboxesMounted ? (
-          <Animated.View style={checkboxStyle} pointerEvents="none">
-            <CheckboxCircle checked={selected} itemKey={key} size={ROW_CHECKBOX_SIZE} />
-          </Animated.View>
-        ) : null}
+      {highlighted ? <SwapHighlight /> : null}
+      <Animated.View style={leadingStyle}>
+        <Animated.View style={checkboxStyle} pointerEvents="none">
+          <CheckboxCircle checked={selected} itemKey={key} size={ROW_CHECKBOX_SIZE} />
+        </Animated.View>
         <Animated.Text style={quantityStyle} numberOfLines={3}>
           {quantity}
         </Animated.Text>
-      </View>
-      <View style={styles.ingredientBody}>
-        <Text style={nameStyle}>{name}</Text>
-        {cupHint ? (
+      </Animated.View>
+      <Animated.View style={bodyStyle}>
+        {nameContent}
+        {cupHintLabel ? (
           <AppText variant="meta" tone="textTertiary">
-            {`(${cupHint})`}
+            {cupHintLabel}
           </AppText>
         ) : null}
-        {hasLink ? (
-          <LinkChip
-            variant={isWebLink ? 'web' : 'recipe'}
-            label={linkLabel}
-            imageUrl={linkedRecipe?.thumbnail_url ?? null}
-            onPress={link.handlePress}
-            disabled={!isWebLink && link.isBusy}
-            accessibilityLabel={link.fallbackLabel}
-          />
-        ) : null}
-        {linkedAllergenLabels.length > 0 ? (
+        {linkedAllergenText ? (
           <AllergenBadge label={linkedAllergenText} accessibilityLabel={linkedAllergenText} />
         ) : null}
-        {hasMatchedAllergen ? (
-          <AllergenBadge
-            label={allergenLabel}
-            accessibilityLabel={`${t('recipes.contains')}: ${allergenName}`}
-            tooltipHeader={allergenName}
-            tooltipText={allergenTooltip}
-            onTooltipOpenChange={handleTooltipOpenChange}
-          />
-        ) : null}
-      </View>
-    </AnimatedPressable>
+        {allergenAction}
+      </Animated.View>
+      {hasLink ? (
+        <IngredientLinkButton
+          recipeId={recipeId}
+          entry={entry}
+          linkedRecipeTitle={linkedRecipeTitle}
+          hidden={groceryMode}
+          columnAnimatedStyle={animation.linkColumnStyle}
+          buttonAnimatedStyle={animation.linkStyle}
+        />
+      ) : null}
+    </Pressable>
   )
 }
 

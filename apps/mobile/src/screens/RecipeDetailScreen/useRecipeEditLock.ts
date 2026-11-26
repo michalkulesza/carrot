@@ -10,10 +10,25 @@ import { withMinimumDuration } from '@carrot/shared/utils/withMinimumDuration'
 const KEEPALIVE_INTERVAL_MS = 5000
 const EXPECTED_ERROR_STATUSES = new Set([404, 409])
 
-const reportUnexpectedError = (error: unknown, context: string) => {
+export const reportUnexpectedError = (error: unknown, context: string) => {
   const isExpected = !(error instanceof ApiError) || EXPECTED_ERROR_STATUSES.has(error.status)
   if (isExpected) return
   Sentry.captureException(error, { tags: { apiContext: context } })
+}
+
+export const showRecipeLockedAlert = (t: TFunction, { editor, sameUser }: { editor: string; sameUser: boolean }) => {
+  if (sameUser) {
+    Alert.alert(t('recipes.editLockedOwnDeviceTitle'), t('recipes.editLockedOwnDeviceMessage'))
+    return
+  }
+  Alert.alert(t('recipes.editLockedTitle', { name: editor }), t('recipes.editLockedMessage'))
+}
+
+export const showRecipeChangedAlert = (t: TFunction, onReload: () => void) => {
+  Alert.alert(t('recipes.recipeChangedTitle'), t('recipes.recipeChangedMessage'), [
+    { text: t('common.cancel'), style: 'cancel' },
+    { text: t('recipes.reload'), style: 'destructive', onPress: onReload },
+  ])
 }
 
 export const useRecipeEditLock = ({
@@ -32,13 +47,10 @@ export const useRecipeEditLock = ({
   const editingRef = useRef(editing)
   editingRef.current = editing
 
-  const showLockedAlert = useCallback(({ editor, sameUser }: { editor: string; sameUser: boolean }) => {
-    if (sameUser) {
-      Alert.alert(t('recipes.editLockedOwnDeviceTitle'), t('recipes.editLockedOwnDeviceMessage'))
-      return
-    }
-    Alert.alert(t('recipes.editLockedTitle', { name: editor }), t('recipes.editLockedMessage'))
-  }, [t])
+  const showLockedAlert = useCallback(
+    (conflict: { editor: string; sameUser: boolean }) => showRecipeLockedAlert(t, conflict),
+    [t],
+  )
 
   const sendLockAction = useCallback(async (action: 'start' | 'keepalive'): Promise<boolean> => {
     try {

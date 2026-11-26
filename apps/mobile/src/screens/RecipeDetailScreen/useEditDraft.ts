@@ -16,7 +16,7 @@ import {
   type EditDraft,
   type NutritionField,
 } from './helpers'
-import { useRecipeEditLock } from './useRecipeEditLock'
+import { showRecipeChangedAlert, useRecipeEditLock } from './useRecipeEditLock'
 
 export const useEditDraft = ({
   recipe,
@@ -241,10 +241,7 @@ export const useEditDraft = ({
     }
 
     if (conflict?.code === 'recipe_changed') {
-      Alert.alert(t('recipes.recipeChangedTitle'), t('recipes.recipeChangedMessage'), [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('recipes.reload'), style: 'destructive', onPress: handleReloadAfterConflict },
-      ])
+      showRecipeChangedAlert(t, handleReloadAfterConflict)
       return
     }
 

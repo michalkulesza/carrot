@@ -215,6 +215,9 @@ export interface IngredientEntry {
   linkedRecipeKind: IngredientLinkKind | null
   linkedRecipeId: string | null
   linkedAllergens: string[] | null
+  componentIndex: number
+  ingredientIndex: number
+  groupName: string | null
 }
 
 export interface IngredientGroup {
@@ -259,6 +262,9 @@ export const buildIngredientGroups = (
           linkedRecipeKind: component.ingredient_link_kinds?.[ingredientIndex] ?? null,
           linkedRecipeId: component.linked_recipe_ids?.[ingredientIndex] ?? null,
           linkedAllergens: flag?.linked_allergens ?? null,
+          componentIndex,
+          ingredientIndex,
+          groupName: component.name || null,
         }
       })
 

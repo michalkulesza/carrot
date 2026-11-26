@@ -1,0 +1,9 @@
+export const READ_LEADING_WIDTH = 96
+export const GROCERY_QUANTITY_SHIFT = 36
+export const READ_QUANTITY_WIDTH = 84
+export const LINK_COLUMN_WIDTH = 38
+export const LINK_BUTTON_SIZE = 44
+export const LINK_BUTTON_OFFSET = -9
+export const SWAP_MARK_HEIGHT = 9
+export const SWAP_STRIKE_HEIGHT = 2
+export const LINK_LEGEND_ICON_SIZE = 20

@@ -4,6 +4,8 @@ import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { SectionHeader } from '../../components/ui'
 import HeaderPillButton from './HeaderPillButton'
 import IngredientGroupCard from './IngredientGroupCard'
+import type { IngredientSwapState } from './IngredientSwapContext'
+import LinkLegend from './LinkLegend'
 import { capitalizeFirst, getReadingMetrics, type IngredientEntry, type IngredientGroup } from './helpers'
 import { useGroceryModeTransition } from './useGroceryRowAnimation'
 import { useGroupSelections } from './useGroupSelections'
@@ -20,6 +22,8 @@ interface IngredientsSectionProps {
   onEnterGroceryMode: () => void
   activeAllergens: string[]
   fontSizeIndex: number
+  swapState: IngredientSwapState
+  selectedCount: number
 }
 
 const SECTION_TOP_GAP = 32
@@ -38,17 +42,21 @@ const IngredientsSection = ({
   onEnterGroceryMode,
   activeAllergens,
   fontSizeIndex,
+  swapState,
+  selectedCount,
 }: IngredientsSectionProps) => {
   const { t } = useTranslation()
+
   const { recipes } = useRecipes(false)
+  const recipesById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, recipe])), [recipes])
+  const hasLinks = useMemo(() => entries.some((entry) => Boolean(entry.linkedRecipeUrl)), [entries])
 
   const displayGroups = useMemo(
     () => (groups.length > 1 ? [{ key: ALL_GROUP_KEY, name: null, entries }, ...groups] : groups),
     [groups, entries],
   )
   const groupSelections = useGroupSelections(displayGroups, selectedKeys)
-  const { transition, checkboxesMounted } = useGroceryModeTransition(groceryMode)
-  const recipesById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, recipe])), [recipes])
+  const transition = useGroceryModeTransition(groceryMode)
   const metrics = useMemo(() => getReadingMetrics(fontSizeIndex), [fontSizeIndex])
 
   if (groups.length === 0) return null
@@ -75,21 +83,28 @@ const IngredientsSection = ({
         topGap={SECTION_TOP_GAP}
         action={headerAction}
       />
+      <LinkLegend
+        hasLinks={hasLinks}
+        groceryMode={groceryMode}
+        transition={transition}
+        selectedCount={selectedCount}
+        total={entries.length}
+      />
       {displayGroups.map((group) => (
         <IngredientGroupCard
           key={group.key}
           recipeId={recipeId}
+          recipesById={recipesById}
           group={group}
           title={getGroupTitle(group)}
           defaultExpanded={group.key !== ALL_GROUP_KEY}
-          recipesById={recipesById}
           groceryMode={groceryMode}
           modeTransition={transition}
-          checkboxesMounted={checkboxesMounted}
           selectedKeys={groupSelections.get(group.key) ?? EMPTY_SELECTION}
           onToggleSelected={onToggleSelected}
           activeAllergens={activeAllergens}
           metrics={metrics}
+          swapState={swapState}
         />
       ))}
     </>

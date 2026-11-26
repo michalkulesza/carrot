@@ -9,22 +9,21 @@ import { paletteTones, useMotion } from '../../theme'
 import { getGroceryBottomOffset, PILL_HIT_SLOP } from './groceryLayout'
 import { styles } from './styles'
 
-interface GroceryAddedToastProps {
-  count: number
+interface ScreenToastProps {
+  message: string
   onUndo: () => void
 }
 
 const ICON_SIZE = 20
 
-const GroceryAddedToast = ({ count, onUndo }: GroceryAddedToastProps) => {
+const ScreenToast = ({ message, onUndo }: ScreenToastProps) => {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const scheme = useResolvedColorScheme()
   const { entering, exiting } = useMotion()
 
-  const message = t('recipes.addedItemsToast', { count })
   const surface = scheme === 'dark' ? paletteTones.control[1] : paletteTones.ink[0]
-  const containerStyle = [styles.groceryToast, { bottom: getGroceryBottomOffset(insets.bottom), backgroundColor: surface }]
+  const containerStyle = [styles.toast, { bottom: getGroceryBottomOffset(insets.bottom), backgroundColor: surface }]
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(message)
@@ -39,20 +38,20 @@ const GroceryAddedToast = ({ count, onUndo }: GroceryAddedToastProps) => {
       accessibilityLiveRegion="polite"
     >
       <SymbolView name="checkmark.circle.fill" size={ICON_SIZE} tintColor={paletteTones.success[1]} />
-      <Text style={styles.groceryToastText} numberOfLines={1}>
+      <Text style={styles.toastText} numberOfLines={1}>
         {message}
       </Text>
       <Pressable
-        style={styles.groceryToastUndo}
+        style={styles.toastUndo}
         onPress={onUndo}
         hitSlop={PILL_HIT_SLOP}
         accessibilityRole="button"
         accessibilityLabel={t('common.undo')}
       >
-        <Text style={styles.groceryToastUndoText}>{t('common.undo')}</Text>
+        <Text style={styles.toastUndoText}>{t('common.undo')}</Text>
       </Pressable>
     </Animated.View>
   )
 }
 
-export default memo(GroceryAddedToast)
+export default memo(ScreenToast)

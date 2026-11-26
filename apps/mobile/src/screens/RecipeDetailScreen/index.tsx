@@ -385,6 +385,7 @@ const RecipeDetailScreen = () => {
         onDismissIssue={(issueCode) => dismissIssue.mutateAsync({ id: recipe.id, issueCode }).then(() => undefined)}
         onDeleteRecipe={handleDeleteRecipe}
         mealPlanSheetRef={mealPlanSheetRef}
+        onRecipeRemoved={handleRecipeRemoved}
       />
     </>
   );
