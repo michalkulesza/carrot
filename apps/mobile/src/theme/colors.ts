@@ -63,7 +63,9 @@ export const paletteTones = {
   dividerCard: ['#E6DFD6', '#E6DFD6'],
   track: ['#E8E2DB', '#3A332C'],
   dividerStrong: ['#D6CEC5', '#4A4037'],
+  outlineSubtle: ['#E2DDD6', '#3A322B'],
   ring: ['#CFC7BE', '#4A4037'],
+  checkboxRing: ['#3A332E', '#DDD5CA'],
   action: ['#CF6528', '#E8894A'],
   actionDisabled: ['#E8C4AA', '#5A3A24'],
   actionText: ['#A9521D', '#F0A06A'],
@@ -102,3 +104,9 @@ export const palette = {
 }
 
 export type PaletteKey = keyof typeof palette
+
+export const withAlpha = (hex: string, alpha: number) => {
+  const value = parseInt(hex.slice(1), 16)
+
+  return `rgba(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255}, ${alpha})`
+}

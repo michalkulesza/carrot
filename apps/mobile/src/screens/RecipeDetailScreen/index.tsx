@@ -6,16 +6,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useLocalSearchParams, useRouter } from "expo-router";
 import { useApiClient } from "@carrot/shared/api/context";
 import { useRecipes } from "@carrot/shared/hooks/useRecipes";
-import { useShoppingList } from "@carrot/shared/hooks/useShoppingList";
 import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks/usePreferences";
-import type { RecipeOut, ShoppingListItemInput } from "@carrot/shared/types";
+import type { RecipeOut } from "@carrot/shared/types";
 import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
 import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 import { useAuth } from "../../context/AuthContext";
 import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import { useHousehold } from "../../context/HouseholdContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
-import type { AddIngredientToShoppingListSheetHandle } from "../../components/AddIngredientToShoppingListSheet";
 import { styles } from "./styles";
 import { useDisplayPrefs } from "./useDisplayPrefs";
 import { useEditDraft } from "./useEditDraft";
@@ -72,18 +70,12 @@ const RecipeDetailScreen = () => {
     setHouseholds,
     removeFromHousehold,
   } = useRecipes();
-  const { addItems } = useShoppingList();
   const { preferences } = usePreferences();
   const { households, activeHouseholdId, activeHousehold } = useHousehold();
   const { user } = useAuth();
   const [heroImageErrored, setHeroImageErrored] = useState(false);
-  const [addMode, setAddMode] = useState(false);
-  const [sessionAdded, setSessionAdded] = useState<Set<string>>(new Set());
   const insets = useSafeAreaInsets();
   const mealPlanSheetRef = useRef<AddToMealPlanSheetHandle>(null);
-  const addIngredientSheetRef =
-    useRef<AddIngredientToShoppingListSheetHandle>(null);
-  const pendingIngredientKeyRef = useRef<string | null>(null);
   const publicSharePendingRef = useRef(false);
   const deletePendingRef = useRef(false);
   const deletePromptOpenRef = useRef(false);
@@ -160,11 +152,6 @@ const RecipeDetailScreen = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     mealPlanSheetRef.current?.present();
   }, []);
-
-  const handleToggleAddMode = useCallback(
-    () => setAddMode((prev) => !prev),
-    [],
-  );
 
   const handleToggleFavourite = useCallback(() => {
     if (!recipe) return;
@@ -304,37 +291,10 @@ const RecipeDetailScreen = () => {
     [recipe, setHouseholds, t],
   );
 
-  const handleAddIngredient = useCallback((key: string, item: ShoppingListItemInput) => {
-    pendingIngredientKeyRef.current = key;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    addIngredientSheetRef.current?.present(item);
-  }, []);
-
-  const handleConfirmAddIngredient = useCallback(
-    (item: ShoppingListItemInput) => {
-      addItems.mutate([item]);
-      const key = pendingIngredientKeyRef.current;
-      if (key) setSessionAdded((previous) => new Set([...previous, key]));
-      pendingIngredientKeyRef.current = null;
-    },
-    [addItems],
-  );
-
-  const handleAddAll = useCallback(
-    (keys: string[], items: ShoppingListItemInput[]) => {
-      addItems.mutate(items);
-      setSessionAdded((previous) => new Set([...previous, ...keys]));
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    },
-    [addItems],
-  );
-
   useRecipeDetailHeader({
     navigation,
     editing: editDraft.editing,
-    addMode,
     recipe: recipe ?? { household_ids: [] },
-    onToggleAddMode: handleToggleAddMode,
     handleEdit: editDraft.handleEdit,
     editPending: editDraft.editPending,
     handleCancelEdit: editDraft.handleCancelEdit,
@@ -410,9 +370,7 @@ const RecipeDetailScreen = () => {
           unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens)
         }
         selectedServings={selectedServings}
-        addMode={addMode}
         unitSystem={preferences?.unit_system ?? "metric"}
-        sessionAdded={sessionAdded}
         fontSizeIndex={displayPrefs.fontSizeIndex}
         keepScreenOn={displayPrefs.keepScreenOn}
         insets={insets}
@@ -420,9 +378,6 @@ const RecipeDetailScreen = () => {
         setHeroImageErrored={setHeroImageErrored}
         handleToggleKeepScreenOn={displayPrefs.handleToggleKeepScreenOn}
         handleFontSizeChange={displayPrefs.handleFontSizeChange}
-        handleAddIngredient={handleAddIngredient}
-        handleAddAll={handleAddAll}
-        handleConfirmAddIngredient={handleConfirmAddIngredient}
         handleToggleFavourite={handleToggleFavourite}
         handleDecreaseServings={handleDecreaseServings}
         handleIncreaseServings={handleIncreaseServings}
@@ -430,7 +385,6 @@ const RecipeDetailScreen = () => {
         onDismissIssue={(issueCode) => dismissIssue.mutateAsync({ id: recipe.id, issueCode }).then(() => undefined)}
         onDeleteRecipe={handleDeleteRecipe}
         mealPlanSheetRef={mealPlanSheetRef}
-        addIngredientSheetRef={addIngredientSheetRef}
       />
     </>
   );

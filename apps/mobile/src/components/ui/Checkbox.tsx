@@ -17,13 +17,13 @@ interface CheckboxProps {
 }
 
 export const CHECKBOX_SIZE = 26
-const TICK_SIZE = 13
+const TICK_RATIO = 0.5
 const TOGGLE_MS = 180
 const RING_WIDTH = 1.5
 const HIT_SLOP = { top: 9, bottom: 9, left: 9, right: 9 }
 
 // `itemKey` identifies the row: when a recycled list cell is reused for another item the state jumps instead of animating.
-export const CheckboxCircle = memo(({ checked, itemKey }: { checked: boolean; itemKey?: string }) => {
+export const CheckboxCircle = memo(({ checked, itemKey, size = CHECKBOX_SIZE }: { checked: boolean; itemKey?: string; size?: number }) => {
   const reduceMotion = useReducedMotion()
   const progress = useSharedValue(checked ? 1 : 0)
   const itemKeyRef = useRef(itemKey)
@@ -37,12 +37,19 @@ export const CheckboxCircle = memo(({ checked, itemKey }: { checked: boolean; it
   }, [checked, itemKey, progress, reduceMotion])
 
   const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }))
-  const fillStyles = useMemo(() => [styles.fill, fillStyle], [fillStyle])
+  const circleStyle = useMemo(
+    () => [styles.circle, { width: size, height: size, borderRadius: size / 2 }],
+    [size],
+  )
+  const fillStyles = useMemo(
+    () => [styles.fill, { borderRadius: size / 2 }, fillStyle],
+    [size, fillStyle],
+  )
 
   return (
-    <View style={styles.circle}>
+    <View style={circleStyle}>
       <Animated.View style={fillStyles}>
-        <SymbolView name="checkmark" size={TICK_SIZE} weight="bold" tintColor={palette.onImage} />
+        <SymbolView name="checkmark" size={Math.round(size * TICK_RATIO)} weight="bold" tintColor={palette.onImage} />
       </Animated.View>
     </View>
   )
@@ -71,18 +78,15 @@ const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
 
 const styles = StyleSheet.create({
   circle: {
-    width: CHECKBOX_SIZE,
-    height: CHECKBOX_SIZE,
-    borderRadius: CHECKBOX_SIZE / 2,
     borderWidth: RING_WIDTH,
-    borderColor: palette.ring,
+    borderColor: palette.checkboxRing,
+    backgroundColor: palette.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   fill: {
     ...StyleSheet.absoluteFill,
     margin: -RING_WIDTH,
-    borderRadius: CHECKBOX_SIZE / 2,
     backgroundColor: palette.action,
     alignItems: 'center',
     justifyContent: 'center',

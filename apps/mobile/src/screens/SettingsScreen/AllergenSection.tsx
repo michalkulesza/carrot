@@ -3,9 +3,11 @@ import { Pressable, Text, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import * as Haptics from 'expo-haptics'
 import { ALLERGEN_KEYS, INTOLERANCE_KEYS } from '@carrot/shared/utils/allergenKeys'
-import CheckboxIcon from '../../components/CheckboxIcon'
+import { CheckboxCircle } from '../../components/ui'
 import { iKey } from './helpers'
 import { styles } from './styles'
+
+const CHECKBOX_ICON_SIZE = 24
 
 type ExpandedSection = 'allergens' | 'intolerances' | null
 
@@ -64,7 +66,7 @@ const AccordionGroup = ({
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isSelected }}
               >
-                <CheckboxIcon checked={isSelected} />
+                <CheckboxCircle checked={isSelected} size={CHECKBOX_ICON_SIZE} />
                 <View style={styles.checkContent}>
                   <Text style={styles.checkLabel}>{t(`${namespace}.${k}`)}</Text>
                   {desc ? <Text style={styles.checkDesc}>{desc}</Text> : null}

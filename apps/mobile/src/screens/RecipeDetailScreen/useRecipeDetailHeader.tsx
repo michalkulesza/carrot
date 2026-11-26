@@ -5,7 +5,6 @@ import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
 import type { NativeStackHeaderItemButton } from '@react-navigation/native-stack'
 import type { HouseholdOut } from '@carrot/shared/types'
-import { colors } from '../../theme/colors'
 import { palette } from '../../theme'
 import { EditHeaderTitle } from './EditHeader'
 import HeaderIconButton from './HeaderIconButton'
@@ -19,9 +18,7 @@ type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>
 }
 
 const ViewHeaderRight = ({
-  addMode,
   recipe,
-  onToggleAddMode,
   onOpenMealPlanSheet,
   households,
   onPressRecipeAction,
@@ -29,9 +26,7 @@ const ViewHeaderRight = ({
   onEdit,
   editPending,
 }: {
-  addMode: boolean
   recipe: { household_ids: string[] }
-  onToggleAddMode: () => void
   onOpenMealPlanSheet: () => void
   households: HouseholdOut[]
   onPressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
@@ -68,8 +63,6 @@ const ViewHeaderRight = ({
     onPressRecipeAction({ nativeEvent })
   }, [onPressRecipeAction])
 
-  const cartColor = addMode ? colors.blue : colors.secondaryLabel
-
   const handleMenuClose = useCallback(() => {
     if (!publicShareSelectedRef.current) return
     publicShareSelectedRef.current = false
@@ -78,12 +71,6 @@ const ViewHeaderRight = ({
 
   return (
     <View style={styles.headerBtns}>
-      <HeaderIconButton
-        icon="shopping-cart"
-        color={cartColor}
-        onPress={onToggleAddMode}
-        accessibilityLabel={t('shoppingList.addToList')}
-      />
       <HeaderIconButton
         icon="calendar"
         onPress={onOpenMealPlanSheet}
@@ -113,9 +100,7 @@ const ViewHeaderRight = ({
 export const useRecipeDetailHeader = ({
   navigation,
   editing,
-  addMode,
   recipe,
-  onToggleAddMode,
   handleEdit,
   editPending,
   handleCancelEdit,
@@ -129,9 +114,7 @@ export const useRecipeDetailHeader = ({
 }: {
   navigation: RecipeDetailNavigation
   editing: boolean
-  addMode: boolean
   recipe: { household_ids: string[] }
-  onToggleAddMode: () => void
   handleEdit: () => void
   editPending: boolean
   handleCancelEdit: () => void
@@ -195,9 +178,7 @@ export const useRecipeDetailHeader = ({
         unstable_headerRightItems: undefined,
         headerRight: () => (
           <ViewHeaderRight
-            addMode={addMode}
             recipe={recipe}
-            onToggleAddMode={onToggleAddMode}
             onOpenMealPlanSheet={handleOpenMealPlanSheet}
             households={households}
             onPressRecipeAction={handlePressRecipeAction}
@@ -221,8 +202,6 @@ export const useRecipeDetailHeader = ({
     handleOpenMealPlanSheet,
     households,
     handlePressRecipeAction,
-    addMode,
     recipe,
-    onToggleAddMode,
   ])
 }

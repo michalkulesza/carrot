@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { StyleSheet, View } from 'react-native'
 import AppText from './AppText'
 import Button from './Button'
@@ -9,11 +9,12 @@ interface SectionHeaderProps {
   actionLabel?: string
   onAction?: () => void
   actionDisabled?: boolean
+  action?: ReactNode
   count?: string
   topGap?: number
 }
 
-const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, count, topGap = sectionGap }: SectionHeaderProps) => {
+const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, action, count, topGap = sectionGap }: SectionHeaderProps) => {
   const showAction = Boolean(actionLabel && onAction)
   const rowStyle = useMemo(() => [styles.row, { paddingTop: topGap }], [topGap])
 
@@ -28,6 +29,7 @@ const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, count, to
             {count}
           </AppText>
         ) : null}
+        {action ?? null}
         {showAction && actionLabel && onAction ? (
           <Button variant="text" size="sm" label={actionLabel} onPress={onAction} disabled={actionDisabled} />
         ) : null}

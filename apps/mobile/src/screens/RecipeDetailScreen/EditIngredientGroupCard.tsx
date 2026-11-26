@@ -61,6 +61,7 @@ const EditIngredientGroupCard = ({
 }: EditIngredientGroupCardProps) => {
   const { t } = useTranslation()
 
+  const editCardStyle = [styles.groupCard, styles.groupCardEdit]
   const lastIndex = comp.ingredients.length - 1
   const countLabel = t('recipes.ingredientsCount', { count: comp.ingredients.length })
 
@@ -70,7 +71,7 @@ const EditIngredientGroupCard = ({
   }, [onAddIngredient, ci])
 
   return (
-    <Card style={styles.groupCard}>
+    <Card style={editCardStyle}>
       <View style={styles.groupHeader}>
         <GroupTitle ci={ci} name={comp.name} editable={multiComponent} onNameChange={onNameChange} />
         <AppText variant="meta" tone="textTertiary">

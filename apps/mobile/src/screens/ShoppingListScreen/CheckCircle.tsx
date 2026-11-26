@@ -7,8 +7,10 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import CheckboxIcon from '../../components/CheckboxIcon'
+import { CheckboxCircle } from '../../components/ui'
 import { styles } from './styles'
+
+const CHECKBOX_ICON_SIZE = 24
 
 const CheckCircle = ({
   checked,
@@ -40,7 +42,7 @@ const CheckCircle = ({
       accessibilityLabel={accessibilityLabel}
     >
       <Animated.View style={animatedStyle}>
-        <CheckboxIcon checked={checked} />
+        <CheckboxCircle checked={checked} size={CHECKBOX_ICON_SIZE} />
       </Animated.View>
     </Pressable>
   )

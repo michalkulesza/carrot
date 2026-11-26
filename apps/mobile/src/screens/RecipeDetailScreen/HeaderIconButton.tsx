@@ -8,7 +8,6 @@ interface HeaderIconButtonProps {
   icon: ComponentProps<typeof Feather>['name']
   accessibilityLabel: string
   onPress?: () => void
-  color?: string
   size?: number
   pending?: boolean
 }
@@ -19,7 +18,6 @@ const HeaderIconButton = ({
   icon,
   accessibilityLabel,
   onPress,
-  color = colors.secondaryLabel,
   size = 20,
   pending = false,
 }: HeaderIconButtonProps) => {
@@ -36,7 +34,7 @@ const HeaderIconButton = ({
       accessibilityState={accessibilityState}
     >
       <View style={pending && styles.headerBtnContentHidden}>
-        <Feather name={icon} size={size} color={color} />
+        <Feather name={icon} size={size} color={colors.secondaryLabel} />
       </View>
       {pending && (
         <View style={styles.headerBtnSpinner}>

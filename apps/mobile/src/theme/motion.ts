@@ -79,3 +79,5 @@ export const usePressScale = (scale = PRESS_SCALE) => {
 }
 
 export const expandTiming = { duration: 260, easing: Easing.out(Easing.cubic) }
+
+export const settleEasing = Easing.bezierFn(0.2, 0.8, 0.2, 1)
