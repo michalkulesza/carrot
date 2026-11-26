@@ -118,3 +118,46 @@ async def test_allergen_recheck_preserves_auto_applied_original_values(monkeypat
     assert flag.original_values == originals
     assert flag.original_display == "100 g peanut butter"
     assert flag.substitute_applied is True
+
+
+def _save_component(ingredients, flags):
+    from api.models import SaveComponent
+
+    return SaveComponent.model_validate({"name": "", "yield_note": "", "ingredients": ingredients, "steps": [], "ingredient_flags": flags})
+
+
+def test_restoring_a_substitution_keeps_the_allergen_flag():
+    from api.routes.recipes import _merge_ingredient_flags
+
+    stored = {
+        "ingredients": ["60 g tahini", "1 banana"],
+        "ingredient_flags": [
+            {"allergen": "peanuts", "substitute": "60 g tahini", "substitute_applied": True,
+             "original_display": "100 g peanut butter", "original_values": {"metric_ingredients": "100 g peanut butter"}},
+            {"allergen": None, "substitute": None, "substitute_applied": False, "original_display": None},
+        ],
+    }
+    incoming_flags = [{"allergen": "peanuts", "substitute": "60 g tahini", "substitute_applied": False}, {"allergen": None}]
+
+    merged = _merge_ingredient_flags(stored, _save_component(["100 g peanut butter", "1 banana"], incoming_flags))
+
+    assert merged[0]["allergen"] == "peanuts"
+    assert merged[0]["substitute"] == "60 g tahini"
+    assert merged[0]["substitute_applied"] is False
+    assert merged[0]["original_display"] is None
+    assert merged[0]["original_values"] is None
+    assert merged[1] == stored["ingredient_flags"][1]
+
+
+def test_unrelated_ingredient_edit_still_clears_the_flag():
+    from api.routes.recipes import _merge_ingredient_flags
+
+    stored = {
+        "ingredients": ["60 g tahini"],
+        "ingredient_flags": [{"allergen": "peanuts", "substitute": "60 g tahini", "substitute_applied": True,
+                              "original_display": "100 g peanut butter"}],
+    }
+
+    merged = _merge_ingredient_flags(stored, _save_component(["2 tbsp honey"], [{"allergen": "peanuts", "substitute_applied": False}]))
+
+    assert merged == [{"allergen": None, "substitute": None, "substitute_applied": False, "original_display": None}]

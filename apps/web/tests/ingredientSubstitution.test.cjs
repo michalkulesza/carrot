@@ -26,7 +26,7 @@ const load = (filename) => {
   return module.exports
 }
 const { toEditable, serializeIngredient } = load(path.join(webRoot, 'src/components/AddRecipeModal/helpers.ts'))
-const { applyIngredientReplace, applyIngredientRestore } = load(path.join(webRoot, 'src/components/RecipeDetailModal/helpers.ts'))
+const { applyIngredientReplace, applyIngredientRestore } = load(path.join(sharedRoot, 'utils/ingredientSubstitution.ts'))
 
 test('auto-apply parses replacement measurements and keeps the original for restoration', () => {
   const result = {

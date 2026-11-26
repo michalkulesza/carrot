@@ -19,6 +19,8 @@ import AssignToMealPlanModal from '../AssignToMealPlanModal'
 import {
   applyIngredientReplace,
   applyIngredientRestore,
+} from '@carrot/shared/utils/ingredientSubstitution'
+import {
   buildRecipeUpdateFromDraft,
   buildRecipeUpdateFromRecipe,
   toEditState,

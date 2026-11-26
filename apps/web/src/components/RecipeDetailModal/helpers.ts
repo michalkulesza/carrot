@@ -9,7 +9,6 @@ import {
   scaleIngredientQuantity,
 } from '@carrot/shared/utils/ingredientScaling'
 import { UNITS } from '../../api/client'
-import { substituteIngredient } from '@carrot/shared/utils/ingredientSubstitution'
 import { flagAllergens } from '@carrot/shared/utils/allergenKeys'
 import { resolveStepAnchors } from '@carrot/shared/utils/stepAnchors'
 
@@ -226,46 +225,6 @@ export const buildRecipeUpdateFromRecipe = (
   components: overrides.components,
   tag_ids: overrides.tagIds,
 })
-
-export const applyIngredientReplace = (
-  components: SaveComponent[],
-  ci: number,
-  ii: number
-): SaveComponent[] | null => {
-  const flag = components[ci].ingredient_flags?.[ii]
-  if (!flag?.substitute || flag.substitute_applied) return null
-
-  return components.map((component, index) =>
-    index !== ci
-      ? component
-      : {
-          ...substituteIngredient(component, component.ingredients, ii, true),
-          ingredients: component.ingredients.map((value, index) =>
-            index === ii ? flag.substitute! : value
-          ),
-        }
-  )
-}
-
-export const applyIngredientRestore = (
-  components: SaveComponent[],
-  ci: number,
-  ii: number
-): SaveComponent[] | null => {
-  const flag = components[ci].ingredient_flags?.[ii]
-  if (!flag?.original_display) return null
-
-  return components.map((component, index) =>
-    index !== ci
-      ? component
-      : {
-          ...substituteIngredient(component, component.ingredients, ii, false),
-          ingredients: component.ingredients.map((value, index) =>
-            index === ii ? flag.original_display! : value
-          ),
-        }
-  )
-}
 
 export const buildRecipeUpdateFromDraft = (
   draft: EditState,

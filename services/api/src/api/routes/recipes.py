@@ -151,6 +151,29 @@ async def _link_recipe_to_household(session: AsyncSession, recipe_id: uuid.UUID,
     )
 
 
+_EMPTY_INGREDIENT_FLAG = {"allergen": None, "substitute": None, "substitute_applied": False, "original_display": None}
+
+
+def _merge_ingredient_flags(stored: dict, component: SaveComponent) -> list[dict]:
+    stored_ingredients = stored.get("ingredients", [])
+    stored_flags = stored.get("ingredient_flags", [])
+    incoming_flags = component.ingredient_flags or []
+    merged = []
+    for index, ingredient in enumerate(component.ingredients):
+        stored_flag = stored_flags[index] if index < len(stored_flags) else None
+        incoming_flag = incoming_flags[index] if index < len(incoming_flags) else None
+        if stored_flag is not None and index < len(stored_ingredients) and ingredient == stored_ingredients[index]:
+            merged.append(stored_flag)
+        elif incoming_flag is not None and incoming_flag.substitute_applied and incoming_flag.original_display:
+            merged.append(incoming_flag.model_dump())
+        elif stored_flag and stored_flag.get("substitute_applied") and stored_flag.get("original_display") == ingredient:
+            # A restored substitution is still the flagged original, so skip waiting for the allergen recheck.
+            merged.append({**stored_flag, "substitute_applied": False, "original_display": None, "original_values": None})
+        else:
+            merged.append(dict(_EMPTY_INGREDIENT_FLAG))
+    return merged
+
+
 def _step_anchor_targets(component: SaveComponent, own_index: int) -> set[int]:
     return {target for target in component.step_ingredient_component or [] if target is not None and target != own_index}
 
@@ -665,25 +688,7 @@ async def update_recipe(
         if ingredients_unchanged:
             value["ingredient_flags"] = stored.get("ingredient_flags", [])
         else:
-            stored_ingredients = stored.get("ingredients", [])
-            stored_flags = stored.get("ingredient_flags", [])
-            incoming_flags = component.ingredient_flags or []
-            value["ingredient_flags"] = [
-                stored_flags[ingredient_index]
-                if (
-                    ingredient_index < len(stored_ingredients)
-                    and ingredient_index < len(stored_flags)
-                    and ingredient == stored_ingredients[ingredient_index]
-                )
-                else incoming_flags[ingredient_index].model_dump()
-                if (
-                    ingredient_index < len(incoming_flags)
-                    and incoming_flags[ingredient_index].substitute_applied
-                    and incoming_flags[ingredient_index].original_display
-                )
-                else {"allergen": None, "substitute": None, "substitute_applied": False, "original_display": None}
-                for ingredient_index, ingredient in enumerate(component.ingredients)
-            ]
+            value["ingredient_flags"] = _merge_ingredient_flags(stored, component)
         if ingredients_unchanged:
             for field in ("ingredient_links", "ingredient_evidence"):
                 if not value.get(field):

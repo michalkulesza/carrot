@@ -1,4 +1,4 @@
-import type { AllergenFlag } from "../types";
+import type { AllergenFlag, SaveComponent } from "../types";
 
 const fields = [
   "shopping_list_ingredients",
@@ -48,3 +48,79 @@ export function substituteIngredient<T extends SubstitutionComponent>(
   );
   return result;
 }
+
+export interface SubstitutionTarget {
+  ci: number;
+  ii: number;
+}
+
+export const applyIngredientReplace = (
+  components: SaveComponent[],
+  ci: number,
+  ii: number,
+): SaveComponent[] | null => {
+  const flag = components[ci].ingredient_flags?.[ii];
+  if (!flag?.substitute || flag.substitute_applied) return null;
+
+  return components.map((component, index) =>
+    index !== ci
+      ? component
+      : {
+          ...substituteIngredient(component, component.ingredients, ii, true),
+          ingredients: component.ingredients.map((value, valueIndex) =>
+            valueIndex === ii ? flag.substitute! : value,
+          ),
+        },
+  );
+};
+
+export const applyIngredientRestore = (
+  components: SaveComponent[],
+  ci: number,
+  ii: number,
+): SaveComponent[] | null => {
+  const flag = components[ci].ingredient_flags?.[ii];
+  if (!flag?.original_display) return null;
+
+  return components.map((component, index) =>
+    index !== ci
+      ? component
+      : {
+          ...substituteIngredient(component, component.ingredients, ii, false),
+          ingredients: component.ingredients.map((value, valueIndex) =>
+            valueIndex === ii ? flag.original_display! : value,
+          ),
+        },
+  );
+};
+
+const applyMany = (
+  components: SaveComponent[],
+  targets: SubstitutionTarget[],
+  applyOne: (
+    components: SaveComponent[],
+    ci: number,
+    ii: number,
+  ) => SaveComponent[] | null,
+): SaveComponent[] | null => {
+  let result = components;
+  let changed = false;
+  for (const { ci, ii } of targets) {
+    const next = applyOne(result, ci, ii);
+    if (!next) continue;
+    result = next;
+    changed = true;
+  }
+
+  return changed ? result : null;
+};
+
+export const applyIngredientReplaceMany = (
+  components: SaveComponent[],
+  targets: SubstitutionTarget[],
+) => applyMany(components, targets, applyIngredientReplace);
+
+export const applyIngredientRestoreMany = (
+  components: SaveComponent[],
+  targets: SubstitutionTarget[],
+) => applyMany(components, targets, applyIngredientRestore);
