@@ -8,6 +8,7 @@ import type {
   ShoppingListItem,
   ShoppingListItemInput,
 } from '../types'
+import { compareShoppingItems, toggleShoppingItem } from '../utils/shoppingListOrder'
 
 const QUERY_KEY = ['shopping-list'] as const
 const KEEPALIVE_INTERVAL_MS = 8_000
@@ -21,6 +22,7 @@ export const useShoppingList = () => {
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve())
   const pendingWriteCountRef = useRef(0)
   const latestActionIdRef = useRef(0)
+  const latestToggleByIdRef = useRef(new Map<string, number>())
 
   const enqueueWrite = useCallback(
     <T,>(write: () => Promise<T>) => {
@@ -122,6 +124,7 @@ export const useShoppingList = () => {
           category: input.category,
           completed: false,
           position,
+          restore_before_id: null,
           created_at: now,
           updated_at: now,
         }
@@ -145,27 +148,23 @@ export const useShoppingList = () => {
     onMutate: async ({ id, completed }) => {
       pendingWriteCountRef.current += 1
       const actionId = ++latestActionIdRef.current
-      await qc.cancelQueries({ queryKey: QUERY_KEY })
+      latestToggleByIdRef.current.set(id, actionId)
       const previousItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
       const previousItem = previousItems.find((item) => item.id === id)
+
+      // Written before any await so the tap's own render already shows the flip. Cancelling an in-flight
+      // fetch reverts to the latest manual write, so this survives; a fetch that resolved first is re-applied.
+      if (previousItem) {
+        qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, toggleShoppingItem(previousItems, id, !completed))
+      }
+      await qc.cancelQueries({ queryKey: QUERY_KEY })
       if (!previousItem) return { actionId, previousItem: null }
 
-      const nextCompleted = !completed
-      const nextPosition = previousItems
-        .filter(
-          (item) =>
-            item.id !== id &&
-            item.category === previousItem.category &&
-            item.completed === nextCompleted
-        )
-        .reduce((maximum, item) => Math.max(maximum, item.position), -1) + 1
-
-      qc.setQueryData<ShoppingListItem[]>(
-        QUERY_KEY,
-        previousItems.map((item) =>
-          item.id === id ? { ...item, completed: nextCompleted, position: nextPosition } : item
-        )
-      )
+      if (latestToggleByIdRef.current.get(id) === actionId) {
+        const currentItems = qc.getQueryData<ShoppingListItem[]>(QUERY_KEY) ?? []
+        const nextItems = toggleShoppingItem(currentItems, id, !completed)
+        if (nextItems !== currentItems) qc.setQueryData<ShoppingListItem[]>(QUERY_KEY, nextItems)
+      }
       return { actionId, previousItem }
     },
     onError: (_error, _variables, context) => {
@@ -261,8 +260,8 @@ export const useShoppingList = () => {
   })
 
   const items = query.data ?? []
-  const incompleteItems = items.filter((item) => !item.completed).sort((a, b) => a.position - b.position)
-  const completedItems = items.filter((item) => item.completed).sort((a, b) => a.position - b.position)
+  const incompleteItems = items.filter((item) => !item.completed).sort(compareShoppingItems)
+  const completedItems = items.filter((item) => item.completed).sort(compareShoppingItems)
 
   return {
     items,

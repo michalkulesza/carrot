@@ -152,6 +152,7 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE shopping_list_items ADD COLUMN IF NOT EXISTS category "
             "VARCHAR(32) NOT NULL DEFAULT 'other'"
         ))
+        await conn.execute(text("ALTER TABLE shopping_list_items ADD COLUMN IF NOT EXISTS restore_before_id UUID"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS category VARCHAR(20)"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS is_default BOOLEAN NOT NULL DEFAULT FALSE"))
         await conn.execute(text("ALTER TABLE tags ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE"))

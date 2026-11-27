@@ -769,6 +769,7 @@ class ShoppingListItem(Base):
     category: Mapped[ShoppingCategory] = mapped_column(
         String(32), nullable=False, default=ShoppingCategory.OTHER
     )
+    restore_before_id: Mapped[uuid.UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -783,6 +784,7 @@ class ShoppingListItemOut(BaseModel):
     completed: bool
     position: int
     category: ShoppingCategory
+    restore_before_id: uuid.UUID | None = None
     created_at: datetime
     updated_at: datetime
 

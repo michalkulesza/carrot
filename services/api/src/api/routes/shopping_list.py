@@ -7,7 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
@@ -21,6 +21,7 @@ from api.models import (
     ShoppingCategory,
 )
 from api.routes.context import get_active_household_id, get_scope_key
+from api.shopping_list_order import tick_item, untick_item
 from api.users import presence_nickname, User, current_active_user
 
 router = APIRouter(prefix="/shopping-list", tags=["shopping-list"])
@@ -44,6 +45,8 @@ async def shopping_list_snapshot(
             ShoppingListItem.completed.asc(),
             ShoppingListItem.category.asc(),
             ShoppingListItem.position.asc(),
+            ShoppingListItem.created_at.asc(),
+            ShoppingListItem.id.asc(),
         )
     )
     return [
@@ -70,6 +73,8 @@ async def list_items(
             ShoppingListItem.completed.asc(),
             ShoppingListItem.category.asc(),
             ShoppingListItem.position.asc(),
+            ShoppingListItem.created_at.asc(),
+            ShoppingListItem.id.asc(),
         )
     )
     return [ShoppingListItemOut.model_validate(i) for i in result.scalars().all()]
@@ -274,20 +279,27 @@ async def update_item(
     if body.text is not None and broadcaster.is_locked_by_other(scope, item_id, user.id):
         raise HTTPException(status_code=409, detail="Item is being edited by another user")
 
-    if body.text is not None:
-        item.text = body.text.strip()
-
-    if body.completed is not None and body.completed != item.completed:
-        item.completed = body.completed
-        max_pos_result = await session.execute(
-            select(func.max(ShoppingListItem.position))
+    if body.completed is not None:
+        # Lock first, then compare: duplicate concurrent toggles must see each other's committed state.
+        category_result = await session.execute(
+            select(ShoppingListItem)
             .where(_scope_filter(user.id, household_id))
             .where(ShoppingListItem.category == item.category)
-            .where(ShoppingListItem.completed.is_(body.completed))
-            .where(ShoppingListItem.id != item_id)
+            .order_by(ShoppingListItem.id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
         )
-        max_pos = max_pos_result.scalar() or -1
-        item.position = max_pos + 1
+        category_items = list(category_result.scalars().all())
+        if not any(row is item for row in category_items):
+            raise HTTPException(status_code=409, detail="Item changed, please retry")
+        if body.completed != item.completed:
+            if body.completed:
+                tick_item(item, category_items)
+            else:
+                untick_item(item, category_items)
+
+    if body.text is not None:
+        item.text = body.text.strip()
 
     item.updated_at = datetime.utcnow()
     await session.commit()

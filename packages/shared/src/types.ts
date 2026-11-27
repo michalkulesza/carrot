@@ -62,6 +62,22 @@ export const normalizeShoppingCategories = (
   );
 };
 
+export const displayedShoppingCategory = (
+  category: ShoppingCategory,
+  enabledCategories: readonly ShoppingCategory[],
+): ShoppingCategory =>
+  enabledCategories.includes(category) ? category : "other";
+
+// Items shown under 'other' because their category is disabled keep that category; anything moved in from an enabled aisle becomes 'other'.
+export const destinationShoppingCategory = (
+  itemCategory: ShoppingCategory,
+  aisle: ShoppingCategory,
+  enabledCategories: readonly ShoppingCategory[],
+): ShoppingCategory =>
+  aisle === "other" && !enabledCategories.includes(itemCategory)
+    ? itemCategory
+    : aisle;
+
 export interface AllergenFlag {
   allergen: string | null;
   substitute: string | null;
@@ -453,6 +469,7 @@ export interface ShoppingListItem {
   completed: boolean;
   category: ShoppingCategory;
   position: number;
+  restore_before_id: string | null;
   created_at: string;
   updated_at: string;
 }
