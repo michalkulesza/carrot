@@ -201,7 +201,6 @@ export type RecipeIssueCode = "MISSING_INGREDIENTS" | "MISSING_INSTRUCTIONS";
 export type ValueProvenanceStatus = "source" | "ai" | "user" | "unknown";
 export interface ValueProvenance {
   status: ValueProvenanceStatus;
-  references?: unknown[];
 }
 
 export interface ImportJobEnqueue {
@@ -331,7 +330,7 @@ export interface RecipeOut {
   total_time_provenance: ValueProvenance;
   allergen_status: "analyzed" | "uncertain" | "unknown";
   overview: string | null;
-  title_evidence: unknown[];
+  title_evidence?: unknown[];
   components: SaveComponent[];
   created_at: string;
   updated_at: string;

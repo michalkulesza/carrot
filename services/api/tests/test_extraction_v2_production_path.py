@@ -446,7 +446,9 @@ async def test_image_job_persists_v2_recipe_and_private_source_capture(monkeypat
             source = await session.get(models.RecipeSourceEvidence, job.result_recipe_id)
             count = await session.scalar(select(func.count()).select_from(models.Recipe).where(models.Recipe.author_id == user.id))
             assert recipe.title == "Tomato Soup"
-            assert recipe.title_evidence[0]["quote"] == "Tomato Soup"
+            title_evidence = await session.scalar(select(models.Recipe.title_evidence).where(models.Recipe.id == job.result_recipe_id))
+            assert recipe.title_evidence == []
+            assert title_evidence[0]["quote"] == "Tomato Soup"
             assert recipe.components[0]["ingredients"] == ["2 tomatoes"]
             assert recipe.components[0]["steps"] == ["Chop tomatoes and simmer."]
             assert source.evidence[0]["kind"] == "image_transcript"

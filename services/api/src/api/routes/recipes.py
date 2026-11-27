@@ -233,6 +233,46 @@ def _reconcile_component_derivatives(
     return result
 
 
+def _carry_line_evidence(
+    stored_lines: list[str],
+    stored_evidence: list[dict],
+    new_lines: list[str],
+    empty_entry: dict,
+) -> list[dict]:
+    if not stored_evidence:
+        return []
+
+    unclaimed: dict[str, list[int]] = {}
+    for index, line in enumerate(stored_lines[:len(stored_evidence)]):
+        unclaimed.setdefault(line, []).append(index)
+
+    matched = [unclaimed[line].pop(0) if unclaimed.get(line) else None for line in new_lines]
+    claimed = {index for index in matched if index is not None}
+    # An unmatched line still at a stored position is an in-place edit, so it keeps that line's source references.
+    if len(new_lines) == len(stored_lines):
+        matched = [
+            index if index is not None or position in claimed or position >= len(stored_evidence) else position
+            for position, index in enumerate(matched)
+        ]
+
+    return [stored_evidence[index] if index is not None else dict(empty_entry) for index in matched]
+
+
+def _stored_component_evidence(stored: dict, component: SaveComponent) -> dict[str, list]:
+    # Responses omit evidence, so clients cannot send it back; the stored copy is the only source of truth.
+    return {
+        "ingredient_evidence": _carry_line_evidence(
+            stored.get("ingredients", []), stored.get("ingredient_evidence") or [],
+            component.ingredients, {"references": [], "links": []},
+        ),
+        "step_evidence": _carry_line_evidence(
+            stored.get("steps", []), stored.get("step_evidence") or [],
+            component.steps, {"references": []},
+        ),
+        "name_evidence": stored.get("name_evidence") or [],
+    }
+
+
 def _server_link_kinds(stored: dict, links: list[str | None], source_url: str | None) -> list[str | None]:
     confirmed_external = preserved_external_urls(stored, links)
     return with_link_kinds([{"ingredient_links": links}], source_url, confirmed_external)[0]["ingredient_link_kinds"]
@@ -690,10 +730,8 @@ async def update_recipe(
             value["ingredient_flags"] = stored.get("ingredient_flags", [])
         else:
             value["ingredient_flags"] = _merge_ingredient_flags(stored, component)
-        if ingredients_unchanged:
-            for field in ("ingredient_links", "ingredient_evidence"):
-                if not value.get(field):
-                    value[field] = stored.get(field, [])
+        if ingredients_unchanged and not value.get("ingredient_links"):
+            value["ingredient_links"] = stored.get("ingredient_links", [])
         # Resolved ids are server-owned: keep a stored id only while its line still has the same link.
         stored_links = stored.get("ingredient_links") or []
         stored_ids = stored.get("linked_recipe_ids") or []
@@ -703,10 +741,8 @@ async def update_recipe(
         ]
         value = without_self_links([value], recipe.source_url)[0]
         value["ingredient_link_kinds"] = _server_link_kinds(stored, value.get("ingredient_links") or [], recipe.source_url)
-        if steps_unchanged and not value.get("step_evidence"):
-            value["step_evidence"] = stored.get("step_evidence", [])
-        if component.name == stored.get("name") and not value.get("name_evidence"):
-            value["name_evidence"] = stored.get("name_evidence", [])
+        if stored:
+            value.update(_stored_component_evidence(stored, component))
         has_ingredients = has_ingredients or bool(component.ingredients)
         has_steps = has_steps or bool(component.steps)
         serialized_components.append(value)

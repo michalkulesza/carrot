@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from sqlalchemy import text
 from fastapi_users.exceptions import UserAlreadyExists
 from sqlalchemy import select
@@ -333,6 +334,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Starlette's GZipMiddleware never compresses text/event-stream, so SSE stays unbuffered.
+app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=6)
 
 app.include_router(auth_verify_router, prefix="/api/auth", tags=["auth"])
 app.include_router(signup_router, prefix="/api/auth", tags=["auth"])

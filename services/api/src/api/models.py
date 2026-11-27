@@ -5,13 +5,14 @@ from datetime import date as DateType, datetime, timezone
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 from sqlalchemy import JSON, Boolean, CheckConstraint, Column, Date, ForeignKey, Index, Integer, String, DateTime, Table, UniqueConstraint, func
 from sqlalchemy.types import UserDefinedType
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 
 from api.database import Base
+from api.services.recipe_payloads import slim_components, slim_nutrition_provenance, slim_total_time_provenance
 
 
 class Vector(UserDefinedType):
@@ -222,7 +223,7 @@ class Recipe(Base):
     allergen_status: Mapped[str] = mapped_column(String(20), default="unknown", nullable=False)
     edit_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
     overview: Mapped[str | None] = mapped_column(String, nullable=True)
-    title_evidence: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    title_evidence: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False, deferred=True)
     notes: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -541,7 +542,6 @@ class RecipeOut(BaseModel):
     allergen_status: str = "unknown"
     edit_version: int = 1
     overview: str | None = None
-    title_evidence: list[dict[str, Any]] = []
     components: list[Any]
     created_at: datetime
     updated_at: datetime
@@ -550,6 +550,15 @@ class RecipeOut(BaseModel):
     author_id: uuid.UUID | None = None
     added_by: str | None = None
     is_favourite: bool = False
+
+    _slim_components = field_validator("components")(slim_components)
+    _slim_nutrition_provenance = field_validator("nutrition_provenance")(slim_nutrition_provenance)
+    _slim_total_time_provenance = field_validator("total_time_provenance")(slim_total_time_provenance)
+
+    @computed_field
+    @property
+    def title_evidence(self) -> list[dict[str, Any]]:
+        return []
 
 
 class PublicTagOut(BaseModel):
@@ -574,6 +583,10 @@ class PublicRecipeOut(BaseModel):
     source_url: str | None
     components: list[Any]
     tags: list[PublicTagOut] = []
+
+    _slim_components = field_validator("components")(slim_components)
+    _slim_nutrition_provenance = field_validator("nutrition_provenance")(slim_nutrition_provenance)
+    _slim_total_time_provenance = field_validator("total_time_provenance")(slim_total_time_provenance)
 
 
 class PublicRecipeLibraryAddRequest(BaseModel):
