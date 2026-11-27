@@ -1,0 +1,32 @@
+diff --git a/lib/module/compat/useDraxPanGesture.js b/lib/module/compat/useDraxPanGesture.js
+index ec37fe2ee9f04c71eb47d4235b19510c9366b17d..3b7cf12b5b404424e0f0dce497877bba86ff163e 100644
+--- a/lib/module/compat/useDraxPanGesture.js
++++ b/lib/module/compat/useDraxPanGesture.js
+@@ -42,8 +42,8 @@ function useDraxPanGestureV2(config) {
+   const Gesture = rngh.Gesture;
+ 
+   // Mirror SharedValues to React state for v2 gesture config
+-  const [enabled, setEnabled] = useState(config.enabledSV.value);
+-  const [longPressDelay, setLongPressDelay] = useState(config.longPressDelaySV.value);
++  const [enabled, setEnabled] = useState(() => config.enabledSV.value);
++  const [longPressDelay, setLongPressDelay] = useState(() => config.longPressDelaySV.value);
+ 
+   // Watch SharedValue changes and sync to JS state
+   useAnimatedReaction(() => config.enabledSV.value, (current, prev) => {
+diff --git a/src/compat/useDraxPanGesture.ts b/src/compat/useDraxPanGesture.ts
+index 565782b6ef5c8fdcf6d3af230efd9d8cc69346c8..5995ed9c739bfa998308e403b095275e4300c2e7 100644
+--- a/src/compat/useDraxPanGesture.ts
++++ b/src/compat/useDraxPanGesture.ts
+@@ -43,10 +43,8 @@ function useDraxPanGestureV2(config: DraxPanGestureConfig): DraxPanGesture {
+   const Gesture = rngh.Gesture;
+ 
+   // Mirror SharedValues to React state for v2 gesture config
+-  const [enabled, setEnabled] = useState(config.enabledSV.value);
+-  const [longPressDelay, setLongPressDelay] = useState(
+-    config.longPressDelaySV.value
+-  );
++  const [enabled, setEnabled] = useState(() => config.enabledSV.value);
++  const [longPressDelay, setLongPressDelay] = useState(() => config.longPressDelaySV.value);
+ 
+   // Watch SharedValue changes and sync to JS state
+   useAnimatedReaction(
