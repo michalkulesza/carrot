@@ -1,89 +1,88 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as KeepAwake from 'expo-keep-awake'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
-  ActionSheetIOS,
+  AccessibilityInfo,
   ActivityIndicator,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  UIManager,
+  Keyboard,
+  ScrollView,
   View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
-import * as Haptics from 'expo-haptics'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { FadeOut, useReducedMotion } from 'react-native-reanimated'
-import { useIsFocused } from 'expo-router'
-import DraggableFlatList, { ScaleDecorator, type RenderItemParams } from 'react-native-draggable-flatlist'
-import { Swipeable } from 'react-native-gesture-handler'
+import { useReducedMotion, useSharedValue } from 'react-native-reanimated'
+import { DraxProvider, SortableBoardContainer } from 'react-native-drax'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
-import type { PresenceUser, ShoppingCategory, ShoppingListItem } from '@carrot/shared/types'
-import {
-  displayIngredientWithLocalizedUnit,
-  getIngredientQuantityCount,
-} from '@carrot/shared/utils/ingredientUtils'
-import { colors } from '../../theme/colors'
+import type { ShoppingCategory } from '@carrot/shared/types'
+import { lightHaptic, selectionHaptic } from '../../components/ui/haptics'
+import { useTabScreenInsets } from '../../hooks/useTabScreenInsets'
 import { useScreenLoading } from '../../hooks/useScreenLoading'
-import { useIsAppActive } from '../../hooks/useIsAppActive'
-import { useHousehold } from '../../context/HouseholdContext'
+import { useScreenReaderEnabled } from '../../hooks/useScreenReaderEnabled'
 import { createShoppingListItemInput } from '../../utils/uuid'
-import { styles } from './styles'
-import CheckCircle from './CheckCircle'
+import AisleCard, { type AisleCardHandlers } from './AisleCard'
 import PresenceBar from './PresenceBar'
-import AddItemRow from './AddItemRow'
-import ShoppingCategorySection from './ShoppingCategorySection'
-import { sectionStyles } from './sectionStyles'
-import { KEEP_AWAKE_SHOPPING_STORAGE_KEY } from '../SettingsScreen/helpers'
+import ProgressCard from './ProgressCard'
 import {
-  buildShoppingListRows,
-  categoryOrdersFromRows,
-  hasSameShoppingListRowOrder,
-  normalizeShoppingListRows,
-  shoppingListRowKey,
-  type ShoppingListRow,
+  aislePhases,
+  buildShoppingAisles,
+  displayedShoppingCategory,
+  displayItemText,
+  isSamePhases,
+  progressOf,
+  reuseUnchangedAisles,
   visibleShoppingCategories,
+  type RowPhase,
+  type ShoppingAisle,
 } from './helpers'
+import { FRESH_WINDOW_MS } from './motion'
+import { styles } from './styles'
+import { useAisleCollapse } from './useAisleCollapse'
+import { useClearDone } from './useClearDone'
+import { useDragAutoScroll } from './useDragAutoScroll'
+import { useDragGeometry } from './useDragGeometry'
+import { useItemEditing } from './useItemEditing'
+import { useKeepScreenOn } from './useKeepScreenOn'
+import { useShoppingDrag } from './useShoppingDrag'
+import { useShoppingListHeader } from './useShoppingListHeader'
+import { useSaveFailedAlert } from './useSaveFailedAlert'
+import { useTickSequence } from './useTickSequence'
 
-const KEEP_AWAKE_SHOPPING_TAG = 'shopping-list'
-const COMPLETED_GRACE_MS = 10_000
-const ROW_EXITING = FadeOut.duration(160)
-const ROW_REFLOW_CONFIG = {
-  duration: 180,
-  update: { type: LayoutAnimation.Types.easeInEaseOut },
+const SCROLL_BOTTOM_GAP = 16
+const SCROLL_TOP_GAP = 16
+const NO_PHASES: ReadonlyMap<string, RowPhase> = new Map()
+
+const editingIdIn = (aisle: ShoppingAisle, editingId: string | null) => {
+  if (!editingId) return null
+  const contains = (item: { id: string }) => item.id === editingId
+  return aisle.items.some(contains) || aisle.ticked.some(contains) ? editingId : null
 }
 
 const ShoppingListScreen = () => {
   const { t } = useTranslation()
-  const insets = useSafeAreaInsets()
-  const isFocused = useIsFocused()
-  const isAppActive = useIsAppActive()
-  const { activeHouseholdId } = useHousehold()
+  const insets = useTabScreenInsets()
   const { preferences } = usePreferences()
   const reduceMotion = useReducedMotion()
-  const [keepScreenOn, setKeepScreenOn] = useState(false)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [editingText, setEditingText] = useState('')
-  const [collapsedCategories, setCollapsedCategories] = useState<Partial<Record<ShoppingCategory, boolean>>>({})
-  const [recentCompletedIds, setRecentCompletedIds] = useState<Set<string>>(new Set())
-  const [dragRows, setDragRows] = useState<ShoppingListRow[] | null>(null)
-  const completedTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
-  const dragCorrectionFrameRef = useRef<number | null>(null)
+  const screenReaderEnabled = useScreenReaderEnabled()
+  const instant = reduceMotion || screenReaderEnabled
+  const [addingCategory, setAddingCategory] = useState<ShoppingCategory | null>(null)
   const dragActiveRef = useRef(false)
-  const clearPendingRef = useRef(false)
-  const swipeActionActiveRef = useRef(false)
-  const collapseStorageKey = activeHouseholdId
-    ? `shopping-list-collapsed-categories:${activeHouseholdId}`
-    : null
+  const freshIdsRef = useRef(new Map<string, number>())
+  const intendedRef = useRef(new Map<string, boolean>())
+  const deletingRef = useRef(new Set<string>())
+  const liveAislesRef = useRef<ShoppingAisle[]>([])
+  const phasesRef = useRef(new Map<ShoppingCategory, ReadonlyMap<string, RowPhase>>())
+  const scrollRef = useRef<ScrollView>(null)
+  const dragLockedSV = useSharedValue(false)
+  const addingCategoryRef = useRef<ShoppingCategory | null>(null)
+  const toggleActionRef = useRef(new Map<string, number>())
+
+  useShoppingListHeader()
+  useKeepScreenOn()
 
   const {
     items,
     incompleteItems,
-    completedItems,
     isLoading,
     presence,
     setEditing,
@@ -94,364 +93,330 @@ const ShoppingListScreen = () => {
     remove,
     clearCompleted,
   } = useShoppingList()
+  const { mutateAsync: addItemsAsync } = addItems
+  const { mutateAsync: toggleAsync } = toggle
+  const { mutateAsync: removeAsync } = remove
+  const alertSaveFailed = useSaveFailedAlert()
   const { busy, showSpinner } = useScreenLoading(isLoading)
+  const showCompleted = preferences?.show_completed_shopping_items ?? false
   const categories = useMemo(
     () => visibleShoppingCategories(preferences?.shopping_categories),
     [preferences?.shopping_categories]
   )
-  const rows = useMemo(
-    () => buildShoppingListRows({
-      items,
-      categories,
-      collapsedCategories,
-      showCompleted: preferences?.show_completed_shopping_items ?? false,
-      recentCompletedIds,
-    }),
-    [items, categories, collapsedCategories, preferences?.show_completed_shopping_items, recentCompletedIds]
-  )
-  const displayedRows = dragRows ?? rows
-
-  useEffect(() => {
-    setDragRows((current) => current && !hasSameShoppingListRowOrder(current, rows) ? current : null)
-  }, [rows])
-
-  useEffect(() => {
-    if (Platform.OS === 'android') UIManager.setLayoutAnimationEnabledExperimental?.(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isFocused) {
-      setKeepScreenOn(false)
-      return
-    }
-    void AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((value) => {
-      setKeepScreenOn(value === '1')
-    })
-  }, [isFocused])
-
-  useEffect(() => {
-    if (!collapseStorageKey) {
-      setCollapsedCategories({})
-      return
-    }
-    void AsyncStorage.getItem(collapseStorageKey).then((value) => {
-      setCollapsedCategories(value ? JSON.parse(value) : {})
-    })
-  }, [collapseStorageKey])
-
-  useEffect(() => {
-    if (isAppActive && isFocused && keepScreenOn) {
-      void KeepAwake.activateKeepAwakeAsync(KEEP_AWAKE_SHOPPING_TAG)
-    } else {
-      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
-    }
-    return () => {
-      KeepAwake.deactivateKeepAwake(KEEP_AWAKE_SHOPPING_TAG)
-    }
-  }, [isAppActive, isFocused, keepScreenOn])
-
-  useEffect(() => () => {
-    Object.values(completedTimersRef.current).forEach(clearTimeout)
-    if (dragCorrectionFrameRef.current !== null) {
-      cancelAnimationFrame(dragCorrectionFrameRef.current)
-    }
-  }, [])
-
-  const scheduleRowReflow = useCallback(() => {
-    if (!reduceMotion && !dragActiveRef.current) LayoutAnimation.configureNext(ROW_REFLOW_CONFIG)
-  }, [reduceMotion])
-
-  const toggleCategory = useCallback((category: ShoppingCategory) => {
-    scheduleRowReflow()
-    setCollapsedCategories((current) => {
-      const next = { ...current, [category]: !current[category] }
-      if (collapseStorageKey) void AsyncStorage.setItem(collapseStorageKey, JSON.stringify(next))
-      return next
-    })
-  }, [collapseStorageKey, scheduleRowReflow])
-
-  const lockedByOther = useCallback(
-    (itemId: string): PresenceUser | undefined => presence.find((user) => user.item_id === itemId),
+  const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items])
+  const itemsByIdRef = useRef(itemsById)
+  const categoriesRef = useRef(categories)
+  const translateRef = useRef(t)
+  itemsByIdRef.current = itemsById
+  categoriesRef.current = categories
+  translateRef.current = t
+  addingCategoryRef.current = addingCategory
+  const progress = useMemo(() => progressOf(items), [items])
+  const lockByItem = useMemo(
+    () => new Map(presence.flatMap((user) => (user.item_id ? [[user.item_id, user] as const] : []))),
     [presence]
   )
 
-  const handleClearCompleted = useCallback(() => {
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [t('shoppingList.clearCompleted'), t('common.cancel')],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
-      },
-      (index) => {
-        if (index === 0) {
-          if (clearPendingRef.current) return
-          clearPendingRef.current = true
-          scheduleRowReflow()
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-          clearCompleted.mutate(undefined, {
-            onError: scheduleRowReflow,
-            onSettled: () => { clearPendingRef.current = false },
-          })
-        }
-      }
-    )
-  }, [clearCompleted, scheduleRowReflow, t])
+  const { geometry, emit: emitGeometry } = useDragGeometry()
+  const handleAislesSettled = useCallback(() => emitGeometry('measure'), [emitGeometry])
+  const { collapsedCategories, progress: aisleProgress, ready, sliding, toggleCategory } = useAisleCollapse({
+    instant,
+    measurePausedRef: geometry.pausedRef,
+    onSettled: handleAislesSettled,
+  })
+  const { editingId, editingIdRef, handleEditStart, handleEditEnd: endEdit } = useItemEditing({
+    commitEdit: editText.mutate,
+    setEditing,
+  })
+  const tick = useTickSequence({ items, showCompleted, instant, dragActiveRef, editingIdRef })
+  const {
+    startTick,
+    startUntick,
+    markLocalFlip,
+    collapseRow,
+    restoreRow,
+    releaseRow,
+    resetRow,
+    resume,
+    resumeEdited,
+  } = tick
 
-  const handleAdd = useCallback((text: string, category: ShoppingCategory) => {
-    scheduleRowReflow()
-    addItems.mutate([createShoppingListItemInput(text, category)], { onError: scheduleRowReflow })
-  }, [addItems, scheduleRowReflow])
+  const liveAisles = useMemo(() => {
+    const next = buildShoppingAisles({
+      items,
+      categories,
+      collapsedCategories,
+      showCompleted,
+      stay: tick.stay,
+      grace: tick.grace,
+    })
+    return reuseUnchangedAisles(liveAislesRef.current, next)
+  }, [items, categories, collapsedCategories, showCompleted, tick.stay, tick.grace])
+  liveAislesRef.current = liveAisles
 
-  const handleToggle = useCallback((item: ShoppingListItem) => {
-    scheduleRowReflow()
-    toggle.mutate({ id: item.id, completed: item.completed }, { onError: scheduleRowReflow })
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  const autoScroll = useDragAutoScroll({
+    scrollRef,
+    scrollYRef: geometry.scrollYRef,
+    topClearance: insets.top,
+    bottomClearance: insets.bottom,
+  })
 
-    if (item.completed) {
-      clearTimeout(completedTimersRef.current[item.id])
-      delete completedTimersRef.current[item.id]
-      setRecentCompletedIds((current) => {
-        const next = new Set(current)
-        next.delete(item.id)
-        return next
-      })
-      return
+  const {
+    board,
+    boardViewProps,
+    displayedAisles,
+    dropSpace,
+    moveBlocked,
+    scrollLocked,
+    handleDragStart,
+    handleDragEnd,
+    handleSnapEnd,
+    handleReorder,
+    handlePositionChange,
+  } = useShoppingDrag({
+    aisles: liveAisles,
+    categories,
+    incompleteItems,
+    reduceMotion,
+    reorder: reorder.mutate,
+    dragActiveRef,
+    onDragSettled: resume,
+    onDragOver: autoScroll.update,
+    onDragStop: autoScroll.stop,
+  })
+
+  const hasVisibleCompleted = useMemo(
+    () => displayedAisles.some((aisle) => aisle.ticked.length > 0 || aisle.items.some((item) => item.completed)),
+    [displayedAisles]
+  )
+  const { clearing, handleClear } = useClearDone({
+    completedCount: progress.done,
+    hasVisibleCompleted,
+    instant,
+    dragActiveRef,
+    clearCompleted: clearCompleted.mutate,
+  })
+  const dragLocked = clearing || tick.animating || sliding.size > 0
+
+  // Checked when a drag activates instead of flipping every row's `draggable` (which rebuilds each gesture).
+  useLayoutEffect(() => {
+    dragLockedSV.value = dragLocked
+  }, [dragLocked, dragLockedSV])
+
+  const phasesByCategory = useMemo(() => {
+    const next = new Map<ShoppingCategory, ReadonlyMap<string, RowPhase>>()
+    for (const aisle of displayedAisles) {
+      const phases = aislePhases(aisle, tick.phases, clearing)
+      const previous = phasesRef.current.get(aisle.category)
+      next.set(aisle.category, previous && isSamePhases(previous, phases) ? previous : phases)
     }
+    phasesRef.current = next
+    return next
+  }, [displayedAisles, tick.phases, clearing])
 
-    setRecentCompletedIds((current) => new Set(current).add(item.id))
-    completedTimersRef.current[item.id] = setTimeout(() => {
-      scheduleRowReflow()
-      setRecentCompletedIds((current) => {
-        const next = new Set(current)
-        next.delete(item.id)
-        return next
-      })
-      delete completedTimersRef.current[item.id]
-    }, COMPLETED_GRACE_MS)
-  }, [scheduleRowReflow, toggle])
+  useEffect(() => {
+    itemsById.forEach((item, id) => {
+      if (intendedRef.current.get(id) === item.completed) intendedRef.current.delete(id)
+    })
+  }, [itemsById])
 
-  const handleEditStart = useCallback((item: ShoppingListItem) => {
-    if (swipeActionActiveRef.current) return
+  const announce = useCallback((message: string) => {
+    if (screenReaderEnabled) AccessibilityInfo.announceForAccessibility(message)
+  }, [screenReaderEnabled])
 
-    setEditingId(item.id)
-    setEditingText(item.text)
-    setEditing(item.id)
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-  }, [setEditing])
+  const aisleNameOf = useCallback(
+    (category: ShoppingCategory) => t(`shoppingList.categories.${category}`),
+    [t]
+  )
+  const aisleNameOfRef = useRef(aisleNameOf)
+  aisleNameOfRef.current = aisleNameOf
 
-  const handleSwipeActionStart = useCallback(() => {
-    swipeActionActiveRef.current = true
+  const isFresh = useCallback((id: string) => {
+    const addedAt = freshIdsRef.current.get(id)
+    return addedAt !== undefined && Date.now() - addedAt < FRESH_WINDOW_MS
   }, [])
 
-  const handleSwipeActionClose = useCallback(() => {
-    swipeActionActiveRef.current = false
-  }, [])
+  const handleToggle = useCallback((id: string) => {
+    if (dragActiveRef.current) return
 
-  const handleEditSubmit = useCallback((item: ShoppingListItem) => {
-    const text = editingText.trim()
-    if (text && text !== item.text) {
-      editText.mutate({ id: item.id, text })
-      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    }
-    setEditingId(null)
-    setEditingText('')
-    setEditing(null)
-  }, [editingText, editText, setEditing])
+    const item = itemsByIdRef.current.get(id)
+    if (!item) return
 
-  const renderRightDelete = useCallback((itemId: string, locked: boolean) => () =>
-    locked ? null : (
-      <Pressable
-        style={styles.deleteAction}
-        onPress={() => {
-          swipeActionActiveRef.current = false
-          scheduleRowReflow()
-          remove.mutate(itemId, { onError: scheduleRowReflow })
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-        }}
-        accessibilityLabel={t('common.delete')}
-      >
-        <Feather name="trash-2" size={18} color="#fff" />
-      </Pressable>
-  ), [remove, scheduleRowReflow, t])
+    const translate = translateRef.current
+    const completed = intendedRef.current.get(id) ?? item.completed
+    const displayText = displayItemText(item.text, translate)
+    const aisle = aisleNameOfRef.current(displayedShoppingCategory(item, categoriesRef.current))
+    const action = (toggleActionRef.current.get(id) ?? 0) + 1
+    toggleActionRef.current.set(id, action)
+    intendedRef.current.set(id, !completed)
+    markLocalFlip(id)
 
-  const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<ShoppingListRow>) => {
-    if (item.kind === 'section') {
-      return (
-        <ShoppingCategorySection
-          category={item.category}
-          collapsed={item.collapsed}
-          onToggle={() => toggleCategory(item.category)}
-        />
-      )
+    if (completed) {
+      selectionHaptic()
+      startUntick({ ...item, completed })
+      announce(translate('shoppingList.untickedAnnouncement', { item: displayText }))
+    } else {
+      lightHaptic()
+      startTick({ ...item, completed })
+      announce(translate('shoppingList.tickedAnnouncement', { item: displayText, aisle }))
     }
 
-    if (item.kind === 'add') {
-      return (
-        <AddItemRow
-          onAdd={(text) => handleAdd(text, item.category)}
-          onFocusInput={() => {}}
-          onBlurInput={() => {}}
-        />
-      )
-    }
+    const handleError = () => {
+      alertSaveFailed()
+      if (toggleActionRef.current.get(id) !== action) return
 
-    const shoppingItem = item.item
-    const isCompleted = item.kind === 'completed'
-    const isEditing = editingId === shoppingItem.id
-    const editor = lockedByOther(shoppingItem.id)
-    const isLocked = !!editor && !isEditing
-    const displayText = displayIngredientWithLocalizedUnit(shoppingItem.text, (unit, qty) =>
-      t(`units.${unit}`, {
-        count: ['cl', 'piece', 'sprig', 'leaf', 'sheet'].includes(unit) && qty ? getIngredientQuantityCount(qty) : 1,
-        defaultValue: unit,
-      }),
-    )
-    return (
-      <ScaleDecorator>
-          <Swipeable
-            renderRightActions={renderRightDelete(shoppingItem.id, isLocked)}
-            overshootRight={false}
-            onSwipeableOpenStartDrag={handleSwipeActionStart}
-            onSwipeableCloseStartDrag={handleSwipeActionStart}
-            onSwipeableClose={handleSwipeActionClose}
-          >
-            <View style={[styles.item, isActive && !isCompleted && styles.itemActive]}>
-              <CheckCircle
-                checked={isCompleted}
-                onPress={() => handleToggle(shoppingItem)}
-                accessibilityLabel={displayText}
-              />
-              <View style={styles.textArea}>
-                {isEditing ? (
-                  <TextInput
-                    style={styles.editInput}
-                    value={editingText}
-                    onChangeText={setEditingText}
-                    onSubmitEditing={() => handleEditSubmit(shoppingItem)}
-                    onBlur={() => handleEditSubmit(shoppingItem)}
-                    returnKeyType="done"
-                    autoFocus
-                    autoCapitalize="sentences"
-                    autoCorrect
-                  />
-                ) : (
-                  <Pressable
-                    onPress={() => !isLocked && handleEditStart(shoppingItem)}
-                    disabled={isLocked}
-                    accessibilityLabel={isLocked
-                      ? t('shoppingList.presenceEditing', { name: editor!.nickname })
-                      : displayText}
-                  >
-                    <Text style={[styles.itemText, isCompleted && styles.completedText]}>{displayText}</Text>
-                    {isLocked ? (
-                      <View style={styles.lockBadge}>
-                        <View style={[styles.lockDot, { backgroundColor: editor.color }]} />
-                        <Text style={styles.lockText}>{t('shoppingList.presenceEditing', { name: editor.nickname })}</Text>
-                      </View>
-                    ) : null}
-                  </Pressable>
-                )}
-              </View>
-              {!isCompleted && (isLocked ? (
-                <View style={styles.dragHandle}>
-                  <Feather name="lock" size={14} color={colors.gray3} />
-                </View>
-              ) : (
-                <Pressable
-                  onLongPress={() => {
-                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                    drag()
-                  }}
-                  disabled={isActive}
-                  hitSlop={8}
-                  style={styles.dragHandle}
-                  accessibilityLabel={t('recipes.dragToReorder')}
-                >
-                  <Feather name="menu" size={18} color={colors.tertiaryLabel} />
-                </Pressable>
-              ))}
-            </View>
-          </Swipeable>
-      </ScaleDecorator>
-    )
-  }, [
-    editingId,
-    editingText,
-    handleAdd,
-    handleEditStart,
-    handleEditSubmit,
-    handleSwipeActionClose,
-    handleSwipeActionStart,
+      intendedRef.current.delete(id)
+      resetRow(id)
+    }
+    toggleAsync({ id, completed }).catch(handleError)
+  }, [markLocalFlip, startUntick, startTick, announce, resetRow, toggleAsync, alertSaveFailed])
+
+  const handleDelete = useCallback((id: string) => {
+    if (deletingRef.current.has(id)) return
+
+    deletingRef.current.add(id)
+    lightHaptic()
+
+    const handleError = () => {
+      restoreRow(id)
+      alertSaveFailed()
+    }
+    const handleSettled = () => {
+      deletingRef.current.delete(id)
+      releaseRow(id)
+    }
+    collapseRow(id, () => removeAsync(id).catch(handleError).finally(handleSettled))
+  }, [collapseRow, releaseRow, removeAsync, restoreRow, alertSaveFailed])
+
+  const handleAdd = useCallback((category: ShoppingCategory, text: string) => {
+    const input = createShoppingListItemInput(text, category)
+    freshIdsRef.current.set(input.id, Date.now())
+    addItemsAsync([input]).catch(alertSaveFailed)
+    lightHaptic()
+    announce(t('shoppingList.itemAddedAnnouncement', { item: text, aisle: aisleNameOf(category) }))
+  }, [addItemsAsync, alertSaveFailed, announce, t, aisleNameOf])
+
+  const handleEditEnd = useCallback((id: string, initialText: string, nextText: string) => {
+    endEdit(id, initialText, nextText)
+    resumeEdited(id)
+  }, [endEdit, resumeEdited])
+
+  const handleOpenAdd = useCallback((category: ShoppingCategory) => setAddingCategory(category), [])
+
+  const handleCloseAdd = useCallback(
+    (category: ShoppingCategory) => setAddingCategory((current) => (current === category ? null : current)),
+    []
+  )
+
+  const handleToggleAisle = useCallback((category: ShoppingCategory) => {
+    if (dragActiveRef.current) return
+
+    if (addingCategoryRef.current === category) {
+      setAddingCategory(null)
+      Keyboard.dismiss()
+    }
+    selectionHaptic()
+    toggleCategory(category)
+  }, [toggleCategory])
+
+  const handlers = useMemo<AisleCardHandlers>(() => ({
+    isFresh,
+    onToggleAisle: handleToggleAisle,
+    onReorder: handleReorder,
+    onPositionChange: handlePositionChange,
+    onSnapEnd: handleSnapEnd,
+    onToggleItem: handleToggle,
+    onDelete: handleDelete,
+    onEditStart: handleEditStart,
+    onEditEnd: handleEditEnd,
+    onOpenAdd: handleOpenAdd,
+    onCloseAdd: handleCloseAdd,
+    onAdd: handleAdd,
+  }), [
+    isFresh,
+    handleToggleAisle,
+    handleReorder,
+    handlePositionChange,
+    handleSnapEnd,
     handleToggle,
-    lockedByOther,
-    renderRightDelete,
-    t,
-    toggleCategory,
+    handleDelete,
+    handleEditStart,
+    handleEditEnd,
+    handleOpenAdd,
+    handleCloseAdd,
+    handleAdd,
   ])
 
-  const handleDragEnd = useCallback(({ data }: { data: ShoppingListRow[] }) => {
-    const normalizedRows = normalizeShoppingListRows(data)
-    setDragRows(data)
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    geometry.scrollYRef.current = event.nativeEvent.contentOffset.y
+    if (dragActiveRef.current) emitGeometry('scroll')
+  }, [geometry, emitGeometry])
 
-    if (dragCorrectionFrameRef.current !== null) {
-      cancelAnimationFrame(dragCorrectionFrameRef.current)
-    }
-    dragCorrectionFrameRef.current = requestAnimationFrame(() => {
-      dragCorrectionFrameRef.current = null
-      setDragRows(normalizedRows)
+  const handleTouchStart = useCallback(() => emitGeometry('measure'), [emitGeometry])
 
-      const categoryOrders = categoryOrdersFromRows(normalizedRows)
-      for (const item of incompleteItems) {
-        const included = Object.values(categoryOrders).some((ids) => ids?.includes(item.id))
-        if (!included) {
-          const order = categoryOrders[item.category] ?? []
-          order.push(item.id)
-          categoryOrders[item.category] = order
-        }
-      }
-      reorder.mutate(categoryOrders, { onError: () => setDragRows(null) })
-      dragActiveRef.current = false
-    })
-  }, [incompleteItems, reorder])
+  const { handleViewportLayout, handleContentSizeChange } = autoScroll
+  const handleScrollLayout = useCallback(
+    (event: LayoutChangeEvent) => handleViewportLayout(event.nativeEvent.layout.height),
+    [handleViewportLayout]
+  )
 
-  if (busy) {
+  const contentContainerStyle = useMemo(
+    () => ({ paddingTop: insets.top + SCROLL_TOP_GAP, paddingBottom: insets.bottom + SCROLL_BOTTOM_GAP }),
+    [insets.top, insets.bottom]
+  )
+
+  if (busy || !ready) {
     return <View style={styles.center}>{showSpinner ? <ActivityIndicator size="large" /> : null}</View>
   }
 
   return (
     <View style={styles.screen}>
-      <DraggableFlatList
-        data={displayedRows}
-        keyExtractor={shoppingListRowKey}
-        renderItem={renderItem}
-        onDragEnd={handleDragEnd}
-        containerStyle={styles.listContainer}
-        itemExitingAnimation={reduceMotion ? undefined : ROW_EXITING}
-        onDragBegin={() => {
-          dragActiveRef.current = true
-          setDragRows(rows)
-        }}
-        ListHeaderComponent={
-          <View>
+      <DraxProvider onDragStart={handleDragStart} onDragEnd={handleDragEnd} dragLockedSV={dragLockedSV}>
+        <SortableBoardContainer board={board} style={styles.flex} draxViewProps={boardViewProps}>
+          <ScrollView
+            ref={scrollRef}
+            scrollEnabled={!scrollLocked}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+            onTouchStart={handleTouchStart}
+            onLayout={handleScrollLayout}
+            onContentSizeChange={handleContentSizeChange}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets
+            contentInsetAdjustmentBehavior="never"
+            contentContainerStyle={contentContainerStyle}
+          >
             <PresenceBar users={presence} />
-            {completedItems.length > 0 ? (
-              <Pressable
-                style={sectionStyles.clearCompleted}
-                onPress={handleClearCompleted}
-                disabled={clearCompleted.isPending}
-                accessibilityLabel={t('shoppingList.clearCompleted')}
-              >
-                <Text style={styles.clearBtn}>{t('shoppingList.clearCompleted')}</Text>
-              </Pressable>
-            ) : null}
-          </View>
-        }
-        contentInsetAdjustmentBehavior="never"
-        contentContainerStyle={{ paddingTop: insets.top + 56, paddingBottom: insets.bottom + 64 }}
-      />
+            <ProgressCard
+              done={progress.done}
+              total={progress.total}
+              value={progress.value}
+              canClear={progress.done > 0 && !clearing}
+              onClear={handleClear}
+            />
+            {displayedAisles.map((aisle) => (
+              <AisleCard
+                key={aisle.category}
+                aisle={aisle}
+                progress={aisleProgress[aisle.category]}
+                dropSpace={dropSpace[aisle.category]}
+                phases={phasesByCategory.get(aisle.category) ?? NO_PHASES}
+                lockByItem={lockByItem}
+                editingId={editingIdIn(aisle, editingId)}
+                addOpen={addingCategory === aisle.category}
+                sliding={sliding.has(aisle.category)}
+                instant={instant}
+                reduceMotion={reduceMotion}
+                boardMoveBlocked={moveBlocked}
+                geometry={geometry}
+                handlers={handlers}
+              />
+            ))}
+          </ScrollView>
+        </SortableBoardContainer>
+      </DraxProvider>
     </View>
   )
 }
-
 
 export default ShoppingListScreen

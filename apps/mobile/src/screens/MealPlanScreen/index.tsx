@@ -18,7 +18,7 @@ import { useDishActions } from './useDishActions'
 import { useDragToMove } from './useDragToMove'
 import { useExportMealPlanPdf } from './useExportMealPlanPdf'
 import { useMealPlanHeader } from './useMealPlanHeader'
-import { useMealPlanInsets } from './useMealPlanInsets'
+import { useTabScreenInsets } from '../../hooks/useTabScreenInsets'
 import { useMealPlanWeeks } from './useMealPlanWeeks'
 import { useScrollToToday } from './useScrollToToday'
 import { useScrollToTodayOnTabPress } from './useScrollToTodayOnTabPress'
@@ -31,7 +31,7 @@ const MealPlanScreen = () => {
   const { t, i18n } = useTranslation()
   const navigation = useNavigation()
   const isFocused = useIsFocused()
-  const insets = useMealPlanInsets()
+  const insets = useTabScreenInsets()
   const { focusToday, planToday } = useLocalSearchParams<{ focusToday?: string; planToday?: string }>()
   const { preferences } = usePreferences()
 

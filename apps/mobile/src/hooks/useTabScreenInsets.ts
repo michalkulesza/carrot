@@ -8,7 +8,7 @@ import { initialWindowMetrics, useSafeAreaInsets } from 'react-native-safe-area-
 const NAV_BAR_HEIGHT = Number.parseInt(String(Platform.Version), 10) >= 26 ? 54 : 44
 const TAB_BAR_HEIGHT = 49
 
-export const useMealPlanInsets = () => {
+export const useTabScreenInsets = () => {
   const headerHeight = useHeaderHeight()
   const screenInsets = useSafeAreaInsets()
   const windowInsets = initialWindowMetrics?.insets ?? screenInsets

@@ -7,3 +7,15 @@ export const lightHaptic = () => {
 export const selectionHaptic = () => {
   Haptics.selectionAsync().catch(() => {})
 }
+
+export const rigidHaptic = () => {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid).catch(() => {})
+}
+
+export const mediumHaptic = () => {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {})
+}
+
+export const successHaptic = () => {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
+}

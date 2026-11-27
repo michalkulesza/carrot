@@ -39,6 +39,7 @@ export const typography = StyleSheet.create({
   chip: { fontSize: 14, lineHeight: 19, fontWeight: '600' },
   linkChip: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
   badge: { fontSize: 12, lineHeight: 16, fontWeight: '600' },
+  progressLabel: { fontSize: 17, lineHeight: 22, fontWeight: '700' },
   stepNumber: { fontSize: 15, lineHeight: 20, fontWeight: '700' },
   stepperValue: { fontSize: 18, lineHeight: 23, fontWeight: '600' },
   cookTitle: { fontSize: 32, lineHeight: 35, fontWeight: '700', letterSpacing: em(32, -0.02) },

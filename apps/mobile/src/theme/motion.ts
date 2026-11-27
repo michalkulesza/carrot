@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import {
+  cancelAnimation,
   Easing,
   FadeIn,
   FadeInDown,
@@ -75,7 +76,12 @@ export const usePressScale = (scale = PRESS_SCALE) => {
     pressed.value = withSpring(0, PRESS_SPRING)
   }, [pressed])
 
-  return { animatedStyle, onPressIn, onPressOut }
+  const resetPress = useCallback(() => {
+    cancelAnimation(pressed)
+    pressed.value = 0
+  }, [pressed])
+
+  return { animatedStyle, onPressIn, onPressOut, resetPress }
 }
 
 export const expandTiming = { duration: 260, easing: Easing.out(Easing.cubic) }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { LayoutChangeEvent, StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
@@ -12,14 +12,18 @@ import { palette } from '../../theme'
 
 interface ProgressBarProps {
   value?: number
+  size?: 'regular' | 'thick'
 }
 
-const HEIGHT = 4
+const HEIGHTS = { regular: 4, thick: 6 }
 const SEGMENT_RATIO = 0.35
 const LOOP_MS = 1100
 const FILL_MS = 250
 
-const ProgressBar = ({ value }: ProgressBarProps) => {
+const ProgressBar = ({ value, size = 'regular' }: ProgressBarProps) => {
+  const height = HEIGHTS[size]
+  const trackStyle = useMemo(() => [styles.track, { height, borderRadius: height / 2 }], [height])
+  const fillStyle = useMemo(() => [styles.fill, { height, borderRadius: height / 2 }], [height])
   const reduceMotion = useReducedMotion()
   const [width, setWidth] = useState(0)
   const progress = useSharedValue(0)
@@ -54,27 +58,27 @@ const ProgressBar = ({ value }: ProgressBarProps) => {
 
   if (indeterminate && reduceMotion) {
     return (
-      <View style={styles.track} onLayout={handleLayout}>
-        <View style={[styles.fill, { width: `${SEGMENT_RATIO * 100}%` }]} />
+      <View style={trackStyle} onLayout={handleLayout}>
+        <View style={[fillStyle, { width: `${SEGMENT_RATIO * 100}%` }]} />
       </View>
     )
   }
 
   return (
     <View
-      style={styles.track}
+      style={trackStyle}
       onLayout={handleLayout}
       accessibilityRole="progressbar"
       accessibilityValue={indeterminate ? undefined : { min: 0, max: 100, now: Math.round((value ?? 0) * 100) }}
     >
-      {indeterminate ? <Animated.View style={[styles.fill, segmentStyle]} /> : <Animated.View style={[styles.fill, determinateStyle]} />}
+      {indeterminate ? <Animated.View style={[fillStyle, segmentStyle]} /> : <Animated.View style={[fillStyle, determinateStyle]} />}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  track: { height: HEIGHT, borderRadius: HEIGHT / 2, backgroundColor: palette.track, overflow: 'hidden' },
-  fill: { height: HEIGHT, borderRadius: HEIGHT / 2, backgroundColor: palette.action },
+  track: { backgroundColor: palette.track, overflow: 'hidden' },
+  fill: { backgroundColor: palette.action },
 })
 
 export default ProgressBar

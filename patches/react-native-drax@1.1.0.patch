@@ -1,3 +1,144 @@
+diff --git a/lib/module/DraxProvider.js b/lib/module/DraxProvider.js
+index cb61f438e6d3b6a1b9ff684e117a6e572a6b5d7a..91204d10ecc847948e97467080375f2b88fa062e 100644
+--- a/lib/module/DraxProvider.js
++++ b/lib/module/DraxProvider.js
+@@ -9,12 +9,28 @@ import { HoverLayer } from "./HoverLayer.js";
+ import { useCallbackDispatch } from "./hooks/useCallbackDispatch.js";
+ import { useSpatialIndex } from "./hooks/useSpatialIndex.js";
+ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
++// useSpatialIndex and useCallbackDispatch return new functions on every render. Routing them through
++// stable wrappers keeps the context value, and every DraxView/SortableItem reading it, from re-rendering
++// (and rebuilding its gesture) whenever the provider's parent re-renders.
++const useStableCallbacks = callbacks => {
++  const latestRef = useRef(callbacks);
++  latestRef.current = callbacks;
++  const [stable] = useState(() => {
++    const wrappers = {};
++    for (const key of Object.keys(callbacks)) {
++      wrappers[key] = (...args) => latestRef.current[key](...args);
++    }
++    return wrappers;
++  });
++  return stable;
++};
+ export const DraxProvider = ({
+   style = styles.provider,
+   debug = false,
+   onDragStart: onProviderDragStart,
+   onDrag: onProviderDrag,
+   onDragEnd: onProviderDragEnd,
++  dragLockedSV: dragLockedSVProp,
+   children
+ }) => {
+   // ── Split SharedValues (by update frequency) ───────────────────────
+@@ -63,6 +79,10 @@ export const DraxProvider = ({
+     y: 0
+   });
+ 
++  // While true, new drags are ignored at activation (no prop changes on the views).
++  const fallbackDragLockedSV = useSharedValue(false);
++  const dragLockedSV = dragLockedSVProp ?? fallbackDragLockedSV;
++
+   // ── Dropped items tracking ─────────────────────────────────────────
+   const droppedItemsRef = useRef(new Map());
+ 
+@@ -118,6 +138,18 @@ export const DraxProvider = ({
+     droppedItemsRef
+   });
+ 
++  const stableCallbacks = useStableCallbacks({
++    registerView,
++    unregisterView,
++    updateMeasurements,
++    updateScrollOffset,
++    updateViewProps,
++    getViewEntry,
++    handleDragStart,
++    handleReceiverChange,
++    handleDragEnd
++  });
++
+   // ── Root view ref ──────────────────────────────────────────────────
+   const rootViewRef = useRef(null);
+   const setRootViewRef = ref => {
+@@ -154,24 +186,16 @@ export const DraxProvider = ({
+     hoverReadySV,
+     hoverClearDeferredRef,
+     hoverDimsSV,
+-    // Registry methods
+-    registerView,
+-    unregisterView,
+-    updateMeasurements,
+-    updateScrollOffset,
+-    updateViewProps,
+-    getViewEntry,
+-    // Callback dispatch
+-    handleDragStart,
+-    handleReceiverChange,
+-    handleDragEnd,
++    dragLockedSV,
++    // Registry methods + callback dispatch
++    ...stableCallbacks,
+     // Hover content
+     setHoverContent,
+     // Dropped items
+     droppedItemsRef,
+     // Refs
+     rootViewRef
+-  }), [draggedIdSV, receiverIdSV, dragPhaseSV, hoverPositionSV, dragAbsolutePositionSV, rejectedReceiverIdSV, spatialIndexSV, scrollOffsetsSV, grabOffsetSV, startPositionSV, rootOffsetSV, hoverReadySV, hoverClearDeferredRef, hoverDimsSV, registerView, unregisterView, updateMeasurements, updateScrollOffset, updateViewProps, getViewEntry, handleDragStart, handleReceiverChange, handleDragEnd, setHoverContent, droppedItemsRef]);
++  }), [draggedIdSV, receiverIdSV, dragPhaseSV, hoverPositionSV, dragAbsolutePositionSV, rejectedReceiverIdSV, spatialIndexSV, scrollOffsetsSV, grabOffsetSV, startPositionSV, rootOffsetSV, hoverReadySV, hoverClearDeferredRef, hoverDimsSV, dragLockedSV, stableCallbacks, setHoverContent, droppedItemsRef]);
+   return /*#__PURE__*/_jsx(DraxContext, {
+     value: contextValue,
+     children: /*#__PURE__*/_jsxs(View, {
+diff --git a/lib/module/DraxView.js b/lib/module/DraxView.js
+index c4bdb68df0410fb4d112d5e2eb9f4901139b6367..9d27e15c8374ef21a1ffc7119fcad5934dca3521 100644
+--- a/lib/module/DraxView.js
++++ b/lib/module/DraxView.js
+@@ -275,6 +275,10 @@ export const DraxView = /*#__PURE__*/memo(props => {
+   }, [dragBoundsRef, rootViewRef, dragBoundsSV]);
+   const gesture = useDragGesture(id, spatialIndexSV, draggableSV, longPressDelaySV, lockDragXPosition, lockDragYPosition, dragBoundsSV, props.dragActivationFailOffset, scrollHorizontal);
+ 
++  const handleContextValue = useMemo(() => ({
++    gesture
++  }), [gesture]);
++
+   // ── Animated styles ────────────────────────────────────────────────
+   const {
+     animatedDragStyle
+@@ -314,9 +318,7 @@ export const DraxView = /*#__PURE__*/memo(props => {
+   // When dragHandle is true, provide the gesture via context so DraxHandle can attach it
+   if (dragHandle) {
+     renderedContent = /*#__PURE__*/_jsx(DraxHandleContext.Provider, {
+-      value: {
+-        gesture
+-      },
++      value: handleContextValue,
+       children: renderedContent
+     });
+   }
+diff --git a/lib/module/SortableItem.js b/lib/module/SortableItem.js
+index 0fc6c22b7ee2147a407e7ad7afe7a40ad85e0acc..d47eb2556b0462c34d5772260077aa20c4f04c87 100644
+--- a/lib/module/SortableItem.js
++++ b/lib/module/SortableItem.js
+@@ -69,6 +69,8 @@ const SortableItemInner = ({
+   sortable,
+   index,
+   fixed = false,
++  outerLayout,
++  outerStyle,
+   children,
+   ...draxViewProps
+ }) => {
+@@ -155,7 +157,8 @@ const SortableItemInner = ({
+   return /*#__PURE__*/_jsx(SortableItemContext, {
+     value: itemContextValue,
+     children: /*#__PURE__*/_jsx(Reanimated.View, {
+-      style: itemStyle,
++      style: [itemStyle, outerStyle],
++      layout: outerLayout,
+       entering: itemEntering,
+       exiting: itemExiting,
+       children: /*#__PURE__*/_jsx(DraxView, {
 diff --git a/lib/module/compat/useDraxPanGesture.js b/lib/module/compat/useDraxPanGesture.js
 index ec37fe2ee9f04c71eb47d4235b19510c9366b17d..3b7cf12b5b404424e0f0dce497877bba86ff163e 100644
 --- a/lib/module/compat/useDraxPanGesture.js
@@ -13,6 +154,333 @@ index ec37fe2ee9f04c71eb47d4235b19510c9366b17d..3b7cf12b5b404424e0f0dce497877bba
  
    // Watch SharedValue changes and sync to JS state
    useAnimatedReaction(() => config.enabledSV.value, (current, prev) => {
+diff --git a/lib/module/hooks/useDragGesture.js b/lib/module/hooks/useDragGesture.js
+index f5a205005635fdd9c2811c2e80ab4a0f7b537dc8..78d1a3a50d99f928e76f4736467a355ab4ffdc27 100644
+--- a/lib/module/hooks/useDragGesture.js
++++ b/lib/module/hooks/useDragGesture.js
+@@ -1,6 +1,8 @@
+ "use strict";
+ 
++import { useMemo } from 'react';
+ import { Platform } from 'react-native';
++import { useSharedValue } from 'react-native-reanimated';
+ import { runOnJS } from 'react-native-worklets';
+ import { useDraxPanGesture } from "../compat/index.js";
+ import { computeAbsolutePositionWorklet, hitTestWorklet } from "../math.js";
+@@ -30,8 +32,10 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+     rootOffsetSV,
+     handleDragStart,
+     handleReceiverChange,
+-    handleDragEnd
++    handleDragEnd,
++    dragLockedSV
+   } = useDraxContext();
++  const ignoredSV = useSharedValue(false);
+ 
+   // On web, RNGH defaults touch-action to 'none' which blocks native scroll.
+   // Allow the scroll direction so users can scroll before long-press activates.
+@@ -41,7 +45,8 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+   // (hint from SortableItem for horizontal lists without axis lock) > default pan-y.
+   const touchAction = Platform.OS === 'web' ? lockDragYPosition || scrollHorizontal ? 'pan-x' : 'pan-y' : undefined;
+   const failOffset = dragActivationFailOffset !== undefined ? [-dragActivationFailOffset, dragActivationFailOffset] : undefined;
+-  const gesture = useDraxPanGesture({
++  // Memoized: on RNGH v2 a new config object rebuilds the gesture and re-attaches its native handler.
++  const panConfig = useMemo(() => ({
+     enabledSV,
+     longPressDelaySV,
+     maxPointers: 1,
+@@ -52,6 +57,11 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+     onActivate: event => {
+       'worklet';
+ 
++      if (dragLockedSV.value) {
++        ignoredSV.value = true;
++        return;
++      }
++
+       // Convert screen-absolute touch to root-view-relative
+       const rootOffset = rootOffsetSV.value;
+       const rootRelX = event.absoluteX - rootOffset.x;
+@@ -119,6 +129,8 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+     onUpdate: event => {
+       'worklet';
+ 
++      if (ignoredSV.value) return;
++
+       // Convert screen-absolute touch to root-view-relative
+       const rootOffset = rootOffsetSV.value;
+       const rootRelX = event.absoluteX - rootOffset.x;
+@@ -192,6 +204,8 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+     onDeactivate: _event => {
+       'worklet';
+ 
++      if (ignoredSV.value) return;
++
+       const currentDraggedId = draggedIdSV.value;
+       const currentReceiverId = receiverIdSV.value;
+ 
+@@ -217,6 +231,11 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+     onFinalize: (_event, didSucceed) => {
+       'worklet';
+ 
++      if (ignoredSV.value) {
++        ignoredSV.value = false;
++        return;
++      }
++
+       // If gesture was cancelled (not ended normally).
+       // Check draggedIdSV (set in onActivate) instead of dragPhaseSV
+       // because phase is now set later in handleDragStart via runOnUI.
+@@ -234,7 +253,8 @@ export const useDragGesture = (id, viewSpatialIndexSV, enabledSV, longPressDelay
+         runOnJS(handleDragEnd)(currentDraggedId, currentReceiverId, true, finalHitResult.monitorIds);
+       }
+     }
+-  });
+-  return gesture;
++  }), [id, viewSpatialIndexSV, enabledSV, longPressDelaySV, lockDragXPosition, lockDragYPosition, dragBoundsSV, dragActivationFailOffset, touchAction, draggedIdSV, receiverIdSV, rejectedReceiverIdSV, dragPhaseSV, hoverPositionSV, dragAbsolutePositionSV, spatialIndexSV, scrollOffsetsSV, grabOffsetSV, startPositionSV, rootOffsetSV, handleDragStart, handleReceiverChange, handleDragEnd, dragLockedSV, ignoredSV]);
++
++  return useDraxPanGesture(panConfig);
+ };
+ //# sourceMappingURL=useDragGesture.js.map
+\ No newline at end of file
+diff --git a/lib/module/hooks/useSortableList.js b/lib/module/hooks/useSortableList.js
+index 074bc22b0b79c45f0c47b45083fc8af6033320b3..c13e891ee8a828b7fd67e5eb8ecf8b73d6cb6145 100644
+--- a/lib/module/hooks/useSortableList.js
++++ b/lib/module/hooks/useSortableList.js
+@@ -129,6 +129,18 @@ export const useSortableList = options => {
+    *  the transition — the sync write would prematurely zero shifts on other items. */
+   const skipShiftsInvalidationRef = useRef(false);
+ 
++  // With no committed/pending order or board hand-off in play there are no shifts to coordinate with, so
++  // external data is adopted during render (React re-runs the component before rendering children) and the
++  // layout effect's setStableData below becomes a no-op. Otherwise the layout effect handles it as before.
++  const [adoptedRawData, setAdoptedRawData] = useState(rawData);
++  if (adoptedRawData !== rawData) {
++    setAdoptedRawData(rawData);
++    const shiftsInPlay = committedKeyOrderRef.current.length > 0
++      || pendingOrderRef.current.length > 0
++      || skipShiftsInvalidationRef.current;
++    if (!shiftsInPlay) setStableData(rawData);
++  }
++
+   // ── Handle data changes ──────────────────────────────────────────────
+   // With permanent shifts, FlatList data is NOT changed on reorder.
+   // When rawData changes (parent updated state after onReorder, or external
+diff --git a/lib/typescript/src/SortableItem.d.ts b/lib/typescript/src/SortableItem.d.ts
+index 5648ccad4301b05f407b786afaf688a61e08eb08..6595c562d038ce59d620bc9ae009bf37c16b1506 100644
+--- a/lib/typescript/src/SortableItem.d.ts
++++ b/lib/typescript/src/SortableItem.d.ts
+@@ -1,4 +1,6 @@
+-import type { ReactNode } from 'react';
++import type { ComponentProps, ReactNode } from 'react';
++import type { StyleProp, ViewStyle } from 'react-native';
++import type Reanimated from 'react-native-reanimated';
+ import type { DraxViewProps, SortableListHandle } from './types';
+ export interface SortableItemProps extends DraxViewProps {
+     sortable: SortableListHandle<any>;
+@@ -6,9 +8,11 @@ export interface SortableItemProps extends DraxViewProps {
+     /** When true, this item cannot be dragged and stays in its position.
+      *  Other items will skip over it during reorder. */
+     fixed?: boolean;
++    outerLayout?: ComponentProps<typeof Reanimated.View>['layout'];
++    outerStyle?: StyleProp<ViewStyle>;
+     children: ReactNode;
+ }
+-declare const SortableItemInner: ({ sortable, index, fixed, children, ...draxViewProps }: SortableItemProps) => import("react/jsx-runtime").JSX.Element;
++declare const SortableItemInner: ({ sortable, index, fixed, outerLayout, outerStyle, children, ...draxViewProps }: SortableItemProps) => import("react/jsx-runtime").JSX.Element;
+ export declare const SortableItem: typeof SortableItemInner;
+ export {};
+ //# sourceMappingURL=SortableItem.d.ts.map
+\ No newline at end of file
+diff --git a/lib/typescript/src/types.d.ts b/lib/typescript/src/types.d.ts
+index 24f77dbb72aa6fb9ff4ecc5c5222ef9f1f6647c8..e5b30ed1e97a086703579f12da3b129fac69555b 100644
+--- a/lib/typescript/src/types.d.ts
++++ b/lib/typescript/src/types.d.ts
+@@ -384,6 +384,8 @@ export interface DraxContextValue {
+     /** Animated hover content dimensions for cross-container transfer.
+      *  x = width, y = height. {0,0} = no constraint (natural size). */
+     hoverDimsSV: SharedValue<Position>;
++    /** While true, drag gestures that activate are ignored. */
++    dragLockedSV: SharedValue<boolean>;
+     registerView: (payload: RegisterViewPayload) => void;
+     unregisterView: (id: string) => void;
+     updateMeasurements: (id: string, measurements: DraxViewMeasurements) => void;
+@@ -426,6 +428,8 @@ export interface DraxProviderProps {
+     onDragEnd?: (event: DraxProviderDragEvent & {
+         cancelled: boolean;
+     }) => void;
++    /** While true, drag gestures that activate are ignored (no view props change). */
++    dragLockedSV?: SharedValue<boolean>;
+     children?: ReactNode;
+ }
+ /** Props that are passed to a DraxSubprovider */
+diff --git a/src/DraxProvider.tsx b/src/DraxProvider.tsx
+index 75580b2c49cf522a11e7394196eae745d93a843b..c6d5855a79a15be6ce38444ecb3d44865d63648b 100644
+--- a/src/DraxProvider.tsx
++++ b/src/DraxProvider.tsx
+@@ -17,12 +17,29 @@ import type {
+   Position,
+ } from './types';
+ 
++// useSpatialIndex and useCallbackDispatch return new functions on every render. Routing them through
++// stable wrappers keeps the context value, and every DraxView/SortableItem reading it, from re-rendering
++// (and rebuilding its gesture) whenever the provider's parent re-renders.
++const useStableCallbacks = <T extends Record<string, (...args: any[]) => any>>(callbacks: T): T => {
++  const latestRef = useRef(callbacks);
++  latestRef.current = callbacks;
++  const [stable] = useState(() => {
++    const wrappers: Record<string, (...args: any[]) => any> = {};
++    for (const key of Object.keys(callbacks)) {
++      wrappers[key] = (...args: any[]) => latestRef.current[key]!(...args);
++    }
++    return wrappers as T;
++  });
++  return stable;
++};
++
+ export const DraxProvider = ({
+   style = styles.provider,
+   debug = false,
+   onDragStart: onProviderDragStart,
+   onDrag: onProviderDrag,
+   onDragEnd: onProviderDragEnd,
++  dragLockedSV: dragLockedSVProp,
+   children,
+ }: DraxProviderProps): ReactNode => {
+   // ── Split SharedValues (by update frequency) ───────────────────────
+@@ -53,6 +70,10 @@ export const DraxProvider = ({
+   // x = width, y = height. {0,0} = no constraint (natural size).
+   const hoverDimsSV = useSharedValue<Position>({ x: 0, y: 0 });
+ 
++  // While true, new drags are ignored at activation (no prop changes on the views).
++  const fallbackDragLockedSV = useSharedValue(false);
++  const dragLockedSV = dragLockedSVProp ?? fallbackDragLockedSV;
++
+   // ── Dropped items tracking ─────────────────────────────────────────
+   const droppedItemsRef = useRef<Map<string, Set<string>>>(new Map());
+ 
+@@ -105,6 +126,18 @@ export const DraxProvider = ({
+       droppedItemsRef,
+     });
+ 
++  const stableCallbacks = useStableCallbacks({
++    registerView,
++    unregisterView,
++    updateMeasurements,
++    updateScrollOffset,
++    updateViewProps,
++    getViewEntry,
++    handleDragStart,
++    handleReceiverChange,
++    handleDragEnd,
++  });
++
+   // ── Root view ref ──────────────────────────────────────────────────
+   const rootViewRef = useRef<HostInstance>(null);
+   const setRootViewRef = (ref: HostInstance | null) => {
+@@ -140,19 +173,10 @@ export const DraxProvider = ({
+       hoverReadySV,
+       hoverClearDeferredRef,
+       hoverDimsSV,
++      dragLockedSV,
+ 
+-      // Registry methods
+-      registerView,
+-      unregisterView,
+-      updateMeasurements,
+-      updateScrollOffset,
+-      updateViewProps,
+-      getViewEntry,
+-
+-      // Callback dispatch
+-      handleDragStart,
+-      handleReceiverChange,
+-      handleDragEnd,
++      // Registry methods + callback dispatch
++      ...stableCallbacks,
+ 
+       // Hover content
+       setHoverContent,
+@@ -178,15 +202,8 @@ export const DraxProvider = ({
+       hoverReadySV,
+       hoverClearDeferredRef,
+       hoverDimsSV,
+-      registerView,
+-      unregisterView,
+-      updateMeasurements,
+-      updateScrollOffset,
+-      updateViewProps,
+-      getViewEntry,
+-      handleDragStart,
+-      handleReceiverChange,
+-      handleDragEnd,
++      dragLockedSV,
++      stableCallbacks,
+       setHoverContent,
+       droppedItemsRef,
+     ]
+diff --git a/src/DraxView.tsx b/src/DraxView.tsx
+index 31a0c65795743e1accc6a11f91e728c710478b19..6f4412ea4b789138ea471ea1efe54ee255886562 100644
+--- a/src/DraxView.tsx
++++ b/src/DraxView.tsx
+@@ -358,6 +358,8 @@ export const DraxView = memo((props: DraxViewProps): ReactNode => {
+     scrollHorizontal
+   );
+ 
++  const handleContextValue = useMemo(() => ({ gesture }), [gesture]);
++
+   // ── Animated styles ────────────────────────────────────────────────
+   const { animatedDragStyle } = useViewStyles(id, props);
+ 
+@@ -397,7 +399,7 @@ export const DraxView = memo((props: DraxViewProps): ReactNode => {
+   // When dragHandle is true, provide the gesture via context so DraxHandle can attach it
+   if (dragHandle) {
+     renderedContent = (
+-      <DraxHandleContext.Provider value={{ gesture }}>
++      <DraxHandleContext.Provider value={handleContextValue}>
+         {renderedContent}
+       </DraxHandleContext.Provider>
+     );
+diff --git a/src/SortableItem.tsx b/src/SortableItem.tsx
+index c5504c865d9edf3def798fc29a44e1084e26f36a..fcae8cc85c9aceba779c22ced57622554177838f 100644
+--- a/src/SortableItem.tsx
++++ b/src/SortableItem.tsx
+@@ -1,6 +1,6 @@
+-import type { ReactNode } from 'react';
++import type { ComponentProps, ReactNode } from 'react';
+ import { memo, useEffect, useMemo, useRef } from 'react';
+-import type { ViewStyle } from 'react-native';
++import type { StyleProp, ViewStyle } from 'react-native';
+ import { Platform } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
+ import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
+@@ -100,6 +100,8 @@ export interface SortableItemProps extends DraxViewProps {
+   /** When true, this item cannot be dragged and stays in its position.
+    *  Other items will skip over it during reorder. */
+   fixed?: boolean;
++  outerLayout?: ComponentProps<typeof Reanimated.View>['layout'];
++  outerStyle?: StyleProp<ViewStyle>;
+   children: ReactNode;
+ }
+ 
+@@ -107,6 +109,8 @@ const SortableItemInner = ({
+   sortable,
+   index,
+   fixed = false,
++  outerLayout,
++  outerStyle,
+   children,
+   ...draxViewProps
+ }: SortableItemProps) => {
+@@ -196,7 +200,7 @@ const SortableItemInner = ({
+ 
+   return (
+     <SortableItemContext value={itemContextValue}>
+-    <Reanimated.View style={itemStyle} entering={itemEntering} exiting={itemExiting}>
++    <Reanimated.View style={[itemStyle, outerStyle]} layout={outerLayout} entering={itemEntering} exiting={itemExiting}>
+       <DraxView
+         longPressDelay={longPressDelay}
+         lockDragXPosition={lockToMainAxis && !horizontal}
 diff --git a/src/compat/useDraxPanGesture.ts b/src/compat/useDraxPanGesture.ts
 index 565782b6ef5c8fdcf6d3af230efd9d8cc69346c8..5995ed9c739bfa998308e403b095275e4300c2e7 100644
 --- a/src/compat/useDraxPanGesture.ts
@@ -30,3 +498,132 @@ index 565782b6ef5c8fdcf6d3af230efd9d8cc69346c8..5995ed9c739bfa998308e403b095275e
  
    // Watch SharedValue changes and sync to JS state
    useAnimatedReaction(
+diff --git a/src/hooks/useDragGesture.ts b/src/hooks/useDragGesture.ts
+index 4e36d6c9cec510edd772e95fae7cf54d74e62cb9..3dd0b3b6db1a4cc5985252b6efab1a778244ad03 100644
+--- a/src/hooks/useDragGesture.ts
++++ b/src/hooks/useDragGesture.ts
+@@ -1,5 +1,7 @@
++import { useMemo } from 'react';
+ import { Platform } from 'react-native';
+ import type { SharedValue } from 'react-native-reanimated';
++import { useSharedValue } from 'react-native-reanimated';
+ import { runOnJS } from 'react-native-worklets';
+ 
+ import { useDraxPanGesture } from '../compat';
+@@ -42,7 +44,9 @@ export const useDragGesture = (
+     handleDragStart,
+     handleReceiverChange,
+     handleDragEnd,
++    dragLockedSV,
+   } = useDraxContext();
++  const ignoredSV = useSharedValue(false);
+ 
+   // On web, RNGH defaults touch-action to 'none' which blocks native scroll.
+   // Allow the scroll direction so users can scroll before long-press activates.
+@@ -58,7 +62,8 @@ export const useDragGesture = (
+     ? [-dragActivationFailOffset, dragActivationFailOffset] as [number, number]
+     : undefined;
+ 
+-  const gesture = useDraxPanGesture({
++  // Memoized: on RNGH v2 a new config object rebuilds the gesture and re-attaches its native handler.
++  const panConfig = useMemo(() => ({
+     enabledSV,
+     longPressDelaySV,
+     maxPointers: 1,
+@@ -69,6 +74,11 @@ export const useDragGesture = (
+     onActivate: (event) => {
+       'worklet';
+ 
++      if (dragLockedSV.value) {
++        ignoredSV.value = true;
++        return;
++      }
++
+       // Convert screen-absolute touch to root-view-relative
+       const rootOffset = rootOffsetSV.value;
+       const rootRelX = event.absoluteX - rootOffset.x;
+@@ -129,6 +139,8 @@ export const useDragGesture = (
+     onUpdate: (event) => {
+       'worklet';
+ 
++      if (ignoredSV.value) return;
++
+       // Convert screen-absolute touch to root-view-relative
+       const rootOffset = rootOffsetSV.value;
+       const rootRelX = event.absoluteX - rootOffset.x;
+@@ -212,6 +224,8 @@ export const useDragGesture = (
+     onDeactivate: (_event) => {
+       'worklet';
+ 
++      if (ignoredSV.value) return;
++
+       const currentDraggedId = draggedIdSV.value;
+       const currentReceiverId = receiverIdSV.value;
+ 
+@@ -242,6 +256,11 @@ export const useDragGesture = (
+     onFinalize: (_event, didSucceed) => {
+       'worklet';
+ 
++      if (ignoredSV.value) {
++        ignoredSV.value = false;
++        return;
++      }
++
+       // If gesture was cancelled (not ended normally).
+       // Check draggedIdSV (set in onActivate) instead of dragPhaseSV
+       // because phase is now set later in handleDragStart via runOnUI.
+@@ -267,7 +286,7 @@ export const useDragGesture = (
+         runOnJS(handleDragEnd)(currentDraggedId, currentReceiverId, true, finalHitResult.monitorIds);
+       }
+     },
+-  });
++  }), [id, viewSpatialIndexSV, enabledSV, longPressDelaySV, lockDragXPosition, lockDragYPosition, dragBoundsSV, dragActivationFailOffset, touchAction, draggedIdSV, receiverIdSV, rejectedReceiverIdSV, dragPhaseSV, hoverPositionSV, dragAbsolutePositionSV, spatialIndexSV, scrollOffsetsSV, grabOffsetSV, startPositionSV, rootOffsetSV, handleDragStart, handleReceiverChange, handleDragEnd, dragLockedSV, ignoredSV]);
+ 
+-  return gesture;
++  return useDraxPanGesture(panConfig);
+ };
+diff --git a/src/hooks/useSortableList.ts b/src/hooks/useSortableList.ts
+index 1ff54d05e16d6a0b25e81d3e98098b59e172026b..e3add1f271a9be706ce420a945056b569eae489f 100644
+--- a/src/hooks/useSortableList.ts
++++ b/src/hooks/useSortableList.ts
+@@ -147,6 +147,18 @@ export const useSortableList = <T,>(
+    *  the transition — the sync write would prematurely zero shifts on other items. */
+   const skipShiftsInvalidationRef = useRef(false);
+ 
++  // With no committed/pending order or board hand-off in play there are no shifts to coordinate with, so
++  // external data is adopted during render (React re-runs the component before rendering children) and the
++  // layout effect's setStableData below becomes a no-op. Otherwise the layout effect handles it as before.
++  const [adoptedRawData, setAdoptedRawData] = useState(rawData);
++  if (adoptedRawData !== rawData) {
++    setAdoptedRawData(rawData);
++    const shiftsInPlay = committedKeyOrderRef.current.length > 0
++      || pendingOrderRef.current.length > 0
++      || skipShiftsInvalidationRef.current;
++    if (!shiftsInPlay) setStableData(rawData);
++  }
++
+   // ── Handle data changes ──────────────────────────────────────────────
+   // With permanent shifts, FlatList data is NOT changed on reorder.
+   // When rawData changes (parent updated state after onReorder, or external
+diff --git a/src/types.ts b/src/types.ts
+index f393ffc9862d27936edf2dfb749f20c24fdcd2f4..168806e4d00f04eaf556e7fe235af0d36e065b3e 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -481,6 +481,8 @@ export interface DraxContextValue {
+   /** Animated hover content dimensions for cross-container transfer.
+    *  x = width, y = height. {0,0} = no constraint (natural size). */
+   hoverDimsSV: SharedValue<Position>;
++  /** While true, drag gestures that activate are ignored. */
++  dragLockedSV: SharedValue<boolean>;
+ 
+   // ── Registry methods (JS thread) ───────────────────────────────────
+   registerView: (payload: RegisterViewPayload) => void;
+@@ -548,6 +550,8 @@ export interface DraxProviderProps {
+   onDrag?: (event: DraxProviderDragEvent) => void;
+   /** Called when any drag ends (drop or cancel) */
+   onDragEnd?: (event: DraxProviderDragEvent & { cancelled: boolean }) => void;
++  /** While true, drag gestures that activate are ignored (no view props change). */
++  dragLockedSV?: SharedValue<boolean>;
+   children?: ReactNode;
+ }
+ 

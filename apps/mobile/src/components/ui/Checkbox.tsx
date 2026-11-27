@@ -1,96 +1,104 @@
-import { memo, useCallback, useLayoutEffect, useMemo, useRef } from 'react'
-import { Pressable, StyleSheet, View } from 'react-native'
-import Animated, {
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated'
+import { memo, useCallback, useMemo } from 'react'
+import { Pressable, View, type Insets } from 'react-native'
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated'
 import { SymbolView } from 'expo-symbols'
 import { palette } from '../../theme'
-import { selectionHaptic } from './haptics'
+import { useResolvedTone } from '../../hooks/useResolvedTone'
+import { selectionHaptic, lightHaptic } from './haptics'
+import { CHECKBOX_SIZE, checkboxStyles, TICK_RATIO, useCheckProgress } from './checkboxShared'
+
+type CheckboxHaptic = 'selection' | 'light' | 'none'
 
 interface CheckboxProps {
   checked: boolean
   onToggle: () => void
   accessibilityLabel: string
+  celebrate?: boolean
+  haptic?: CheckboxHaptic
+  hitSlop?: Insets
 }
 
-export const CHECKBOX_SIZE = 26
-const TICK_RATIO = 0.5
-const TOGGLE_MS = 180
-const RING_WIDTH = 1.5
+interface CheckboxCircleProps {
+  checked: boolean
+  itemKey?: string
+  size?: number
+  celebrate?: boolean
+}
+
 const HIT_SLOP = { top: 9, bottom: 9, left: 9, right: 9 }
 
-// `itemKey` identifies the row: when a recycled list cell is reused for another item the state jumps instead of animating.
-export const CheckboxCircle = memo(({ checked, itemKey, size = CHECKBOX_SIZE }: { checked: boolean; itemKey?: string; size?: number }) => {
-  const reduceMotion = useReducedMotion()
-  const progress = useSharedValue(checked ? 1 : 0)
-  const itemKeyRef = useRef(itemKey)
+const HAPTICS: Record<CheckboxHaptic, (() => void) | null> = {
+  selection: selectionHaptic,
+  light: lightHaptic,
+  none: null,
+}
 
-  useLayoutEffect(() => {
-    const recycled = itemKeyRef.current !== itemKey
-    itemKeyRef.current = itemKey
+const POP_PEAK = 1.25
+const POP_UP_MS = 180
+const POP_DOWN_MS = 270
+const POP_EASING = Easing.bezierFn(0.2, 0.9, 0.3, 1.4)
 
-    progress.value =
-      reduceMotion || recycled ? Number(checked) : withTiming(Number(checked), { duration: TOGGLE_MS })
-  }, [checked, itemKey, progress, reduceMotion])
+export const CheckboxCircle = memo(({ checked, itemKey, size = CHECKBOX_SIZE, celebrate = false }: CheckboxCircleProps) => {
+  const pop = useSharedValue(1)
+  const ringColor = useResolvedTone('checkboxRing')
 
+  const playPop = useCallback(() => {
+    pop.value = withSequence(
+      withTiming(POP_PEAK, { duration: POP_UP_MS, easing: POP_EASING }),
+      withTiming(1, { duration: POP_DOWN_MS, easing: POP_EASING }),
+    )
+  }, [pop])
+
+  const progress = useCheckProgress(checked, itemKey, celebrate ? playPop : undefined)
+
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }))
   const fillStyle = useAnimatedStyle(() => ({ opacity: progress.value }))
   const circleStyle = useMemo(
-    () => [styles.circle, { width: size, height: size, borderRadius: size / 2 }],
-    [size],
+    () => [checkboxStyles.circle, { width: size, height: size, borderRadius: size / 2, borderColor: ringColor }],
+    [size, ringColor],
   )
   const fillStyles = useMemo(
-    () => [styles.fill, { borderRadius: size / 2 }, fillStyle],
+    () => [checkboxStyles.fill, { borderRadius: size / 2 }, fillStyle],
     [size, fillStyle],
   )
 
   return (
-    <View style={circleStyle}>
-      <Animated.View style={fillStyles}>
-        <SymbolView name="checkmark" size={Math.round(size * TICK_RATIO)} weight="bold" tintColor={palette.onImage} />
-      </Animated.View>
-    </View>
+    <Animated.View style={popStyle}>
+      <View style={circleStyle}>
+        <Animated.View style={fillStyles}>
+          <SymbolView name="checkmark" size={Math.round(size * TICK_RATIO)} weight="bold" tintColor={palette.onImage} />
+        </Animated.View>
+      </View>
+    </Animated.View>
   )
 })
 
-const Checkbox = ({ checked, onToggle, accessibilityLabel }: CheckboxProps) => {
+const Checkbox = ({
+  checked,
+  onToggle,
+  accessibilityLabel,
+  celebrate = false,
+  haptic = 'selection',
+  hitSlop = HIT_SLOP,
+}: CheckboxProps) => {
   const handlePress = useCallback(() => {
-    selectionHaptic()
+    HAPTICS[haptic]?.()
     onToggle()
-  }, [onToggle])
+  }, [haptic, onToggle])
 
   const accessibilityState = useMemo(() => ({ checked }), [checked])
 
   return (
     <Pressable
       onPress={handlePress}
-      hitSlop={HIT_SLOP}
+      hitSlop={hitSlop}
       accessibilityRole="checkbox"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={accessibilityState}
     >
-      <CheckboxCircle checked={checked} />
+      <CheckboxCircle checked={checked} celebrate={celebrate} />
     </Pressable>
   )
 }
-
-const styles = StyleSheet.create({
-  circle: {
-    borderWidth: RING_WIDTH,
-    borderColor: palette.checkboxRing,
-    backgroundColor: palette.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fill: {
-    ...StyleSheet.absoluteFill,
-    margin: -RING_WIDTH,
-    backgroundColor: palette.action,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-})
 
 export default memo(Checkbox)
