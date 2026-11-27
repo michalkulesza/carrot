@@ -20,6 +20,7 @@ import {
   parseDurationMatch,
   scheduleNotif,
   STORAGE_KEY,
+  withNavigationNonce,
   type DurationMatch,
   type ResumeInfo,
   type TimerEntry,
@@ -32,7 +33,7 @@ import {
 } from './liveActivity'
 
 export { formatCountdown, formatDurationLabel, parseDurationMatch, type DurationMatch }
-export { getRemainingSeconds, getTimerDestination, type ResumeInfo, type TimerEntry }
+export { getRemainingSeconds, getTimerDestination, withNavigationNonce, type ResumeInfo, type TimerEntry }
 
 interface TimerContextValue {
   timers: Map<string, TimerEntry>

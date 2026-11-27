@@ -1,9 +1,10 @@
 import type { TFunction } from 'i18next'
-import type { ImportJob, RecipeOut } from '@carrot/shared/types'
+import type { ImportJob, MealPlanEntry, RecipeOut, Tag } from '@carrot/shared/types'
 import { parseISODateLocal, toISODate } from '@carrot/shared/utils/dateUtils'
 import type { BrowsePreset } from '../BrowseScreen/helpers'
 import type { RecentActivity } from '../../storage/recentActivity'
 
+export const TONIGHT_ROW_THUMB = 44
 export const SHELF_TILE_SIZE = 148
 export const SHELF_GAP = 12
 export const SHELF_LIMIT = 10
@@ -53,6 +54,7 @@ export const getTonightKicker = (
   totalTimeMinutes: number | null | undefined,
   locale: string,
   t: TFunction,
+  course?: string,
 ) => {
   const tomorrow = parseISODateLocal(todayIso)
   tomorrow.setDate(tomorrow.getDate() + 1)
@@ -62,7 +64,34 @@ export const getTonightKicker = (
   const label = entryDate === todayIso ? t('home.tonight') : isTomorrow ? t('home.tomorrow') : weekday
   const duration = totalTimeMinutes ? t('home.minutesShort', { count: totalTimeMinutes }) : null
 
-  return [label, duration].filter(Boolean).join(' · ')
+  return [label, course, duration].filter(Boolean).join(' · ')
+}
+
+const DEFAULT_DESSERT_TAG_NAME = 'dessert'
+
+const isDessertTag = (tag: Tag) =>
+  tag.is_default && tag.category === 'meal' && tag.name.toLowerCase() === DEFAULT_DESSERT_TAG_NAME
+
+export type TonightState = 'loading' | 'error' | 'empty' | 'entry'
+
+export const getTonightState = (enabled: boolean, isLoading: boolean, hasError: boolean, entryCount: number): TonightState => {
+  if (!enabled || isLoading) return 'loading'
+  if (hasError) return 'error'
+
+  return entryCount > 0 ? 'entry' : 'empty'
+}
+
+export const getCourseLabel = (entry: MealPlanEntry, index: number, t: TFunction) => {
+  const isDessert = entry.recipe?.tags.some(isDessertTag)
+  if (isDessert) return t('home.courseDessert')
+
+  return index === 0 ? t('home.courseMain') : t('home.courseSide')
+}
+
+export const getDishRowKicker = (course: string, totalTimeMinutes: number | null | undefined, t: TFunction) => {
+  const duration = totalTimeMinutes ? t('home.minutesShort', { count: totalTimeMinutes }) : null
+
+  return [course, duration].filter(Boolean).join(' · ')
 }
 
 export const isDuplicateJob = (job: ImportJob) =>

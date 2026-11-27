@@ -16,6 +16,7 @@ import AddMenuPopover from './AddMenuPopover'
 import ImportsCard from './ImportsCard'
 import JumpBackInCard from './JumpBackInCard'
 import RecipeShelf from './RecipeShelf'
+import TimersCard from './TimersCard'
 import TonightCard from './TonightCard'
 import { getFavourites, getRecentlyAdded } from './helpers'
 import { styles } from './styles'
@@ -152,6 +153,7 @@ const HomeScreen = () => {
       <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
         <TonightCard enabled={dataQueriesEnabled} />
         {importJobs.length > 0 ? <ImportsCard jobs={importJobs} recipes={recipes} actions={importJobActions} /> : null}
+        <TimersCard />
         <JumpBackInCard recipes={recipes} />
         {recentlyAdded.length > 0 ? (
           <RecipeShelf title={t('home.recentlyAdded')} recipes={recentlyAdded} preset="recent" />

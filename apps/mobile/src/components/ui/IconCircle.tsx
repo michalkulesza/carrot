@@ -15,6 +15,7 @@ interface IconCircleProps {
 
 const CIRCLE_SIZE = 36
 const ICON_RATIO = 0.5
+const COUNT_MAX_FONT_SCALE = 1.3
 
 const BACKGROUNDS: Record<IconCircleTone, string> = {
   neutral: palette.background,
@@ -37,7 +38,12 @@ const IconCircle = ({ count, icon, size = CIRCLE_SIZE, tone = 'neutral' }: IconC
       {icon ? (
         <SymbolView name={icon} size={Math.round(size * ICON_RATIO)} weight="bold" tintColor={foreground} />
       ) : (
-        <AppText variant="body" style={[styles.count, { color: foreground }]} tabular>
+        <AppText
+          variant="body"
+          style={[styles.count, { color: foreground }]}
+          tabular
+          maxFontSizeMultiplier={COUNT_MAX_FONT_SCALE}
+        >
           {count ?? 0}
         </AppText>
       )}

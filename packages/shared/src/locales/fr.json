@@ -1052,6 +1052,11 @@
     "emptyTitle": "Votre cuisine est vide",
     "emptyBody": "Ajoutez votre première recette pour la voir ici.",
     "tonight": "Ce soir",
+    "cook": "Cuisiner",
+    "cookTitle": "Cuisiner {{title}}",
+    "courseMain": "Plat",
+    "courseSide": "Accompagnement",
+    "courseDessert": "Dessert",
     "tomorrow": "Demain",
     "nothingPlanned": "Rien de prévu pour l’instant",
     "planTonight": "Planifier ce soir",
@@ -1074,6 +1079,14 @@
       "importing": "Import en cours…",
       "needsAttention": "Action requise",
       "showOptions": "Affiche les options de cette importation"
+    },
+    "timers": {
+      "title": "Minuteurs",
+      "done": "Terminé",
+      "pause": "Mettre {{label}} en pause",
+      "resume": "Reprendre {{label}}",
+      "dismiss": "Ignorer",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {

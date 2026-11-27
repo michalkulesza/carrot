@@ -8,11 +8,12 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated'
-import { palette } from '../../theme'
+import { palette, PaletteKey } from '../../theme'
 
 interface ProgressBarProps {
   value?: number
   size?: 'regular' | 'thick'
+  tone?: PaletteKey
 }
 
 const HEIGHTS = { regular: 4, thick: 6 }
@@ -20,10 +21,13 @@ const SEGMENT_RATIO = 0.35
 const LOOP_MS = 1100
 const FILL_MS = 250
 
-const ProgressBar = ({ value, size = 'regular' }: ProgressBarProps) => {
+const ProgressBar = ({ value, size = 'regular', tone = 'action' }: ProgressBarProps) => {
   const height = HEIGHTS[size]
   const trackStyle = useMemo(() => [styles.track, { height, borderRadius: height / 2 }], [height])
-  const fillStyle = useMemo(() => [styles.fill, { height, borderRadius: height / 2 }], [height])
+  const fillStyle = useMemo(
+    () => [{ height, borderRadius: height / 2, backgroundColor: palette[tone] }],
+    [height, tone],
+  )
   const reduceMotion = useReducedMotion()
   const [width, setWidth] = useState(0)
   const progress = useSharedValue(0)
@@ -78,7 +82,6 @@ const ProgressBar = ({ value, size = 'regular' }: ProgressBarProps) => {
 
 const styles = StyleSheet.create({
   track: { backgroundColor: palette.track, overflow: 'hidden' },
-  fill: { backgroundColor: palette.action },
 })
 
 export default ProgressBar

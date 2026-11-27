@@ -11,11 +11,13 @@ from api.routes import meal_plan as meal_plan_routes
 from api.routes.meal_plan import (
     _dish_key,
     _move_entries,
+    _next_day_statement,
     _next_entry_statement,
     _parse_date,
     add_meal_plan_entries,
     delete_meal_plan_entry,
     delete_meal_plan_entry_by_id,
+    get_next_meal_plan_day,
     get_next_meal_plan_entry,
     move_meal_plan_entry,
     move_meal_plan_entry_by_id,
@@ -85,6 +87,38 @@ async def test_next_entry_returns_null_when_no_upcoming_meal_exists() -> None:
     response = await get_next_meal_plan_entry("2026-07-14", user, session, None)
 
     assert response is None
+    session.execute.assert_awaited_once()
+
+
+def test_next_day_route_exposes_from_query_parameter() -> None:
+    route = next(route for route in router.routes if route.path == "/meal-plan/next-day")
+
+    assert any(param.alias == "from" for param in route.dependant.query_params)
+
+
+def test_next_day_query_selects_every_entry_on_the_earliest_upcoming_date() -> None:
+    statement = _next_day_statement(uuid.uuid4(), date(2026, 12, 31))
+    sql = str(statement.compile(dialect=postgresql.dialect()))
+
+    assert "min(meal_plan_entries.date)" in sql
+    assert "meal_plan_entries.date >=" in sql
+    assert "meal_plan_entries.user_id =" not in sql
+    assert "ORDER BY meal_plan_entries.date, meal_plan_entries.created_at, meal_plan_entries.id" in sql
+    assert "LIMIT" not in sql
+
+
+@pytest.mark.asyncio
+async def test_next_day_returns_empty_list_when_no_upcoming_meal_exists() -> None:
+    scalars = Mock()
+    scalars.all.return_value = []
+    result = Mock()
+    result.scalars.return_value = scalars
+    session = SimpleNamespace(execute=AsyncMock(return_value=result))
+    user = SimpleNamespace(id=uuid.uuid4())
+
+    response = await get_next_meal_plan_day("2026-07-14", user, session, uuid.uuid4())
+
+    assert response == []
     session.execute.assert_awaited_once()
 
 

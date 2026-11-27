@@ -1,58 +1,111 @@
 import { useCallback, useRef } from 'react'
-import { StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient'
 import { SymbolView } from 'expo-symbols'
 import { useRouter } from 'expo-router'
 import { useTranslation } from 'react-i18next'
-import { useNextMealPlanEntry } from '@carrot/shared/hooks/useNextMealPlanEntry'
+import { useNextMealPlanDay } from '@carrot/shared/hooks/useNextMealPlanDay'
 import type { MealPlanEntry } from '@carrot/shared/types'
 import ThumbnailImage from '../../components/ThumbnailImage'
-import { AppText, Button, Card } from '../../components/ui'
+import { AppText, Button, Card, CardRowList } from '../../components/ui'
+import { useTapGuard } from '../../hooks/useTapGuard'
 import { imageScrim, palette, useMotion } from '../../theme'
-import { getTonightKicker } from './helpers'
+import { getCourseLabel, getTonightKicker, getTonightState } from './helpers'
+import TonightDishRow from './TonightDishRow'
 import TonightEmptyCard from './TonightEmptyCard'
 import { styles } from './styles'
+import { useTonightDish } from './useTonightDish'
 
-type TonightState = 'loading' | 'error' | 'empty' | 'entry'
-
-interface TonightEntryCardProps {
-  entry: MealPlanEntry
-  todayIso: string
-  onOpen: () => void
+interface TonightHeroBackdropProps {
+  url: string
 }
 
-const TonightEntryCard = ({ entry, todayIso, onOpen }: TonightEntryCardProps) => {
+const TonightHeroBackdrop = ({ url }: TonightHeroBackdropProps) => (
+  <>
+    <ThumbnailImage url={url} style={StyleSheet.absoluteFill} />
+    <LinearGradient colors={imageScrim} style={StyleSheet.absoluteFill} />
+  </>
+)
+
+interface TonightHeroProps {
+  entry: MealPlanEntry
+  todayIso: string
+  compact: boolean
+  onOpen: (entry: MealPlanEntry) => void
+  onCook: (entry: MealPlanEntry) => void
+}
+
+const TonightHero = ({ entry, todayIso, compact, onOpen, onCook }: TonightHeroProps) => {
   const { t, i18n } = useTranslation()
-  const { recipe } = entry
-  const hasPhoto = Boolean(recipe?.thumbnail_url)
-  const title = recipe?.title ?? entry.text ?? ''
-  const kicker = getTonightKicker(entry.date, todayIso, recipe?.total_time_minutes, i18n.language, t)
+  const { recipe, title, cookLabel, handleOpen, handleCook } = useTonightDish(entry, onOpen, onCook)
+  const thumbnailUrl = recipe?.thumbnail_url
+  const hasPhoto = Boolean(thumbnailUrl)
+  const course = compact ? getCourseLabel(entry, 0, t) : undefined
+  const kicker = getTonightKicker(entry.date, todayIso, recipe?.total_time_minutes, i18n.language, t, course)
   const accessibilityLabel = `${kicker}: ${title}`
   const kickerTone = hasPhoto ? 'onImage' : 'actionText'
   const titleTone = hasPhoto ? 'onImage' : 'ink'
+  const heroStyle = compact ? [styles.tonightHero, styles.tonightHeroCompact] : styles.tonightHero
 
   return (
-    <Card tone="default" onPress={onOpen} accessibilityLabel={accessibilityLabel} style={styles.tonightCard}>
-      {hasPhoto ? (
-        <>
-          <ThumbnailImage url={recipe?.thumbnail_url ?? null} style={StyleSheet.absoluteFill} />
-          <LinearGradient colors={imageScrim} style={StyleSheet.absoluteFill} />
-        </>
-      ) : null}
+    <Pressable accessible={false} onPress={handleOpen} style={heroStyle}>
+      {thumbnailUrl ? <TonightHeroBackdrop url={thumbnailUrl} /> : null}
       <View style={styles.tonightContent}>
-        <View style={styles.tonightText}>
+        <Pressable
+          style={styles.tonightText}
+          onPress={handleOpen}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+        >
           <AppText variant="kicker" tone={kickerTone}>
             {kicker}
           </AppText>
           <AppText variant="heroTitle" tone={titleTone} numberOfLines={2}>
             {title}
           </AppText>
-        </View>
+        </Pressable>
         {recipe ? (
-          <Button label={t('home.open')} variant={hasPhoto ? 'onImage' : 'primary'} onPress={onOpen} />
+          <Button
+            label={t('home.cook')}
+            icon="play.fill"
+            variant={hasPhoto ? 'onImage' : 'primary'}
+            accessibilityLabel={cookLabel}
+            onPress={handleCook}
+          />
         ) : null}
       </View>
+    </Pressable>
+  )
+}
+
+interface TonightDayCardProps {
+  entries: MealPlanEntry[]
+  todayIso: string
+  onOpen: (entry: MealPlanEntry) => void
+  onCook: (entry: MealPlanEntry) => void
+}
+
+const TonightDayCard = ({ entries, todayIso, onOpen, onCook }: TonightDayCardProps) => {
+  const [hero, ...sides] = entries
+  const compact = sides.length > 0
+
+  const keyExtractor = useCallback((entry: MealPlanEntry) => entry.id, [])
+  const renderRow = useCallback(
+    (entry: MealPlanEntry, index: number) => (
+      <TonightDishRow entry={entry} index={index + 1} onOpen={onOpen} onCook={onCook} />
+    ),
+    [onOpen, onCook],
+  )
+
+  return (
+    <Card tone="default" style={styles.tonightSurface}>
+      <TonightHero entry={hero} todayIso={todayIso} compact={compact} onOpen={onOpen} onCook={onCook} />
+      {compact ? (
+        <View style={styles.tonightRows}>
+          <CardRowList items={sides} keyExtractor={keyExtractor} renderItem={renderRow} />
+        </View>
+      ) : null}
     </Card>
   )
 }
@@ -102,18 +155,33 @@ interface TonightCardProps {
 const TonightCard = ({ enabled }: TonightCardProps) => {
   const router = useRouter()
   const { entering, exiting } = useMotion()
-  const { entry, todayIso, isLoading, error, refetch } = useNextMealPlanEntry(enabled)
+  const { entries, todayIso, isLoading, error, refetch } = useNextMealPlanDay(enabled)
   const retrying = useRef(false)
+  const guardNavigation = useTapGuard()
 
-  const handleOpen = useCallback(() => {
-    if (entry?.recipe) {
-      router.push({ pathname: '/recipe/[id]', params: { id: entry.recipe.id, title: entry.recipe.title } })
+  const handleOpen = useCallback(
+    (entry: MealPlanEntry) => {
+      if (!guardNavigation()) return
 
-      return
-    }
+      if (entry.recipe) {
+        router.push({ pathname: '/recipe/[id]', params: { id: entry.recipe.id, title: entry.recipe.title } })
 
-    router.push({ pathname: '/(tabs)/meal-plan', params: { focusToday: String(Date.now()) } })
-  }, [entry, router])
+        return
+      }
+
+      router.push({ pathname: '/(tabs)/meal-plan', params: { focusToday: String(Date.now()) } })
+    },
+    [guardNavigation, router],
+  )
+
+  const handleCook = useCallback(
+    (entry: MealPlanEntry) => {
+      if (!entry.recipe || !guardNavigation()) return
+
+      router.push({ pathname: '/recipe/[id]/cook', params: { id: entry.recipe.id, title: entry.recipe.title } })
+    },
+    [guardNavigation, router],
+  )
 
   const handleOpenMealPlan = useCallback(
     () => router.push({ pathname: '/(tabs)/meal-plan', params: { focusToday: String(Date.now()) } }),
@@ -136,15 +204,15 @@ const TonightCard = ({ enabled }: TonightCardProps) => {
     }
   }, [refetch])
 
-  const state: TonightState = !enabled || isLoading ? 'loading' : error ? 'error' : entry ? 'entry' : 'empty'
+  const state = getTonightState(enabled, isLoading, Boolean(error), entries.length)
 
   return (
     <Animated.View key={state} entering={entering} exiting={exiting} style={styles.tonightSection}>
       {state === 'loading' ? <TonightSkeleton /> : null}
       {state === 'error' ? <TonightErrorCard onRetry={handleRetry} /> : null}
       {state === 'empty' ? <TonightEmptyCard onPlanTonight={handlePlanTonight} onOpenMealPlan={handleOpenMealPlan} /> : null}
-      {state === 'entry' && entry ? (
-        <TonightEntryCard entry={entry} todayIso={todayIso} onOpen={handleOpen} />
+      {state === 'entry' ? (
+        <TonightDayCard entries={entries} todayIso={todayIso} onOpen={handleOpen} onCook={handleCook} />
       ) : null}
     </Animated.View>
   )

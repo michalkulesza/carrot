@@ -15,6 +15,8 @@
     "./hooks/useMealPlanMutations": "./src/hooks/useMealPlanMutations.ts",
     "./hooks/useMealPlanStream": "./src/hooks/useMealPlanStream.ts",
     "./hooks/useNextMealPlanEntry": "./src/hooks/useNextMealPlanEntry.ts",
+    "./hooks/useNextMealPlanDay": "./src/hooks/useNextMealPlanDay.ts",
+    "./hooks/useTodayIso": "./src/hooks/useTodayIso.ts",
     "./hooks/usePreferences": "./src/hooks/usePreferences.ts",
     "./hooks/useHouseholds": "./src/hooks/useHouseholds.ts",
     "./hooks/useInvitations": "./src/hooks/useInvitations.ts",

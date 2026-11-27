@@ -65,7 +65,6 @@ const DayCard = ({ day, isDropTarget, draggingEntryId, createGesture, onAdd, onD
           <Pressable
             style={styles.addMoreButton}
             onPress={handleAdd}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 16 }}
             accessibilityRole="button"
             accessibilityLabel={t('mealPlan.addAnotherDish', { day: day.weekdayLong })}
           >

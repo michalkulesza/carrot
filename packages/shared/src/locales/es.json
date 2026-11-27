@@ -1052,6 +1052,11 @@
     "emptyTitle": "Tu cocina está vacía",
     "emptyBody": "Añade tu primera receta para verla aquí.",
     "tonight": "Esta noche",
+    "cook": "Cocinar",
+    "cookTitle": "Cocinar {{title}}",
+    "courseMain": "Principal",
+    "courseSide": "Guarnición",
+    "courseDessert": "Postre",
     "tomorrow": "Mañana",
     "nothingPlanned": "Nada planeado todavía",
     "planTonight": "Planificar esta noche",
@@ -1074,6 +1079,14 @@
       "importing": "Importando…",
       "needsAttention": "Requiere tu atención",
       "showOptions": "Muestra las opciones de esta importación"
+    },
+    "timers": {
+      "title": "Temporizadores",
+      "done": "Listo",
+      "pause": "Pausar {{label}}",
+      "resume": "Reanudar {{label}}",
+      "dismiss": "Descartar",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {

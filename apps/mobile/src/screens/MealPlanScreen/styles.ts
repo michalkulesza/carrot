@@ -65,8 +65,18 @@ export const styles = StyleSheet.create({
     backgroundColor: palette.background,
   },
   addDishLabel: { ...typography.button, color: palette.actionText },
-  addMoreButton: { height: 30, flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start' },
-  addMoreLabel: { ...typography.chip, color: palette.actionText },
+  addMoreButton: {
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: palette.outlineSubtle,
+    borderRadius: radius.control,
+  },
+  addMoreLabel: { ...typography.button, color: palette.actionText },
 
   dragPreview: {
     position: 'absolute',

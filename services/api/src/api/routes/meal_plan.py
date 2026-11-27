@@ -7,7 +7,7 @@ from datetime import date as DateType, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.broadcaster import broadcaster
@@ -119,6 +119,23 @@ async def _move_entries(
     return resulting
 
 
+def _next_day_statement(household_id: uuid.UUID, from_date: DateType):
+    next_date = (
+        select(func.min(MealPlanEntry.date))
+        .where(
+            MealPlanEntry.household_id == household_id,
+            MealPlanEntry.date >= from_date,
+        )
+        .scalar_subquery()
+    )
+    where = and_(
+        MealPlanEntry.household_id == household_id,
+        MealPlanEntry.date == next_date,
+    )
+
+    return select(MealPlanEntry).where(where).order_by(*_entry_order())
+
+
 async def _publish_change(
     user: User, household_id: uuid.UUID, date_str: str, to: str | None = None
 ) -> None:
@@ -170,6 +187,20 @@ async def get_next_meal_plan_entry(
     entry = result.scalar_one_or_none()
 
     return MealPlanEntryOut.model_validate(entry) if entry is not None else None
+
+
+@router.get("/next-day", response_model=list[MealPlanEntryOut])
+async def get_next_meal_plan_day(
+    from_: str = Query(alias="from"),
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session),
+    household_id: uuid.UUID = Depends(get_active_household_id),
+) -> list[MealPlanEntryOut]:
+    from_date = _parse_date(from_)
+    statement = _next_day_statement(household_id, from_date)
+    result = await session.execute(statement)
+
+    return [MealPlanEntryOut.model_validate(e) for e in result.scalars().all()]
 
 
 # NOTE: /stream must be defined before /{date_str}

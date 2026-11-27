@@ -1052,6 +1052,11 @@
     "emptyTitle": "La tua cucina è vuota",
     "emptyBody": "Aggiungi la tua prima ricetta per vederla qui.",
     "tonight": "Stasera",
+    "cook": "Cucina",
+    "cookTitle": "Cucina {{title}}",
+    "courseMain": "Piatto principale",
+    "courseSide": "Contorno",
+    "courseDessert": "Dolce",
     "tomorrow": "Domani",
     "nothingPlanned": "Ancora niente in programma",
     "planTonight": "Pianifica stasera",
@@ -1074,6 +1079,14 @@
       "importing": "Importazione…",
       "needsAttention": "Richiede attenzione",
       "showOptions": "Mostra le opzioni per questa importazione"
+    },
+    "timers": {
+      "title": "Timer",
+      "done": "Fatto",
+      "pause": "Metti in pausa {{label}}",
+      "resume": "Riprendi {{label}}",
+      "dismiss": "Chiudi",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {

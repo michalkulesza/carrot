@@ -1,10 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { useTranslation } from 'react-i18next'
 import type { ImportJob, RecipeOut } from '@carrot/shared/types'
-import { AppText, Card, CardRowList, Expandable, IconCircle } from '../../components/ui'
+import { AppText, IconCircle } from '../../components/ui'
 import { useMotion } from '../../theme'
+import CollapsibleListCard from './CollapsibleListCard'
 import { getImportCounts, getImportSummary } from './helpers'
 import ImportRow from './ImportRow'
 import { styles } from './styles'
@@ -20,20 +21,11 @@ const keyExtractor = (job: ImportJob) => job.id
 
 const ImportsCard = ({ jobs, recipes, actions }: ImportsCardProps) => {
   const { t } = useTranslation()
-  const { entering, fade, rowExiting, rowLayout } = useMotion()
-  const [expanded, setExpanded] = useState(false)
-  const previousNeedYou = useRef(0)
+  const { fade } = useMotion()
 
   const { inProgress, needYou } = useMemo(() => getImportCounts(jobs), [jobs])
   const summary = getImportSummary(inProgress, needYou, t)
   const recipesById = useMemo(() => new Map(recipes.map((recipe) => [recipe.id, recipe])), [recipes])
-
-  useEffect(() => {
-    if (needYou > previousNeedYou.current) setExpanded(true)
-    previousNeedYou.current = needYou
-  }, [needYou])
-
-  const handleToggle = useCallback(() => setExpanded((value) => !value), [])
 
   const renderRow = useCallback(
     (job: ImportJob) => {
@@ -47,7 +39,7 @@ const ImportsCard = ({ jobs, recipes, actions }: ImportsCardProps) => {
   )
 
   const header = (
-    <View style={styles.importsHeader}>
+    <View style={styles.listHeader}>
       <Animated.View key={jobs.length} entering={fade}>
         <IconCircle count={jobs.length} />
       </Animated.View>
@@ -63,20 +55,14 @@ const ImportsCard = ({ jobs, recipes, actions }: ImportsCardProps) => {
   )
 
   return (
-    <Animated.View entering={entering} exiting={rowExiting} layout={rowLayout} style={styles.importsSection}>
-      <Card style={styles.importsCard}>
-        <Expandable
-          header={header}
-          expanded={expanded}
-          onToggle={handleToggle}
-          accessibilityLabel={`${t('home.imports.title')}. ${summary}`}
-        >
-          <View style={styles.importsBody}>
-            <CardRowList items={jobs} keyExtractor={keyExtractor} renderItem={renderRow} />
-          </View>
-        </Expandable>
-      </Card>
-    </Animated.View>
+    <CollapsibleListCard
+      header={header}
+      items={jobs}
+      keyExtractor={keyExtractor}
+      renderItem={renderRow}
+      accessibilityLabel={`${t('home.imports.title')}. ${summary}`}
+      expandWhenIncreases={needYou}
+    />
   )
 }
 

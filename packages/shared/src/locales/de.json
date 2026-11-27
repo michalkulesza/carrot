@@ -1046,6 +1046,11 @@
     "emptyTitle": "Deine Küche ist leer",
     "emptyBody": "Füge dein erstes Rezept hinzu, um es hier zu sehen.",
     "tonight": "Heute Abend",
+    "cook": "Kochen",
+    "cookTitle": "{{title}} kochen",
+    "courseMain": "Hauptgericht",
+    "courseSide": "Beilage",
+    "courseDessert": "Dessert",
     "tomorrow": "Morgen",
     "nothingPlanned": "Noch nichts geplant",
     "planTonight": "Heute Abend planen",
@@ -1068,6 +1073,14 @@
       "importing": "Wird importiert…",
       "needsAttention": "Braucht deine Aufmerksamkeit",
       "showOptions": "Zeigt Optionen für diesen Import"
+    },
+    "timers": {
+      "title": "Timer",
+      "done": "Fertig",
+      "pause": "{{label}} pausieren",
+      "resume": "{{label}} fortsetzen",
+      "dismiss": "Schließen",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {

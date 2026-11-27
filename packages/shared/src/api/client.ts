@@ -497,6 +497,14 @@ export const createApiClient = (config: ApiClientConfig) => {
     return res.json() as Promise<MealPlanEntry | null>;
   };
 
+  const getNextMealPlanDay = async (from: string): Promise<MealPlanEntry[]> => {
+    const res = await apiFetch(
+      `/api/meal-plan/next-day?from=${encodeURIComponent(from)}`,
+    );
+    if (!res.ok) throw new Error("Failed to load next meal plan day");
+    return res.json() as Promise<MealPlanEntry[]>;
+  };
+
   const addMealPlanEntries = async (
     date: string,
     items: MealPlanItemInput[],
@@ -1198,6 +1206,7 @@ export const createApiClient = (config: ApiClientConfig) => {
     removeTagFromRecipe,
     listMealPlan,
     getNextMealPlanEntry,
+    getNextMealPlanDay,
     addMealPlanEntries,
     deleteMealPlanEntryById,
     moveMealPlanEntryById,

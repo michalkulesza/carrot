@@ -1084,6 +1084,11 @@
     "emptyTitle": "Twoja kuchnia jest pusta",
     "emptyBody": "Dodaj pierwszy przepis, aby zobaczyć go tutaj.",
     "tonight": "Dziś wieczorem",
+    "cook": "Gotuj",
+    "cookTitle": "Gotuj: {{title}}",
+    "courseMain": "Danie główne",
+    "courseSide": "Dodatek",
+    "courseDessert": "Deser",
     "tomorrow": "Jutro",
     "nothingPlanned": "Nic jeszcze nie zaplanowano",
     "planTonight": "Zaplanuj wieczór",
@@ -1110,6 +1115,14 @@
       "importing": "Importowanie…",
       "needsAttention": "Wymaga uwagi",
       "showOptions": "Pokazuje opcje tego importu"
+    },
+    "timers": {
+      "title": "Minutniki",
+      "done": "Gotowe",
+      "pause": "Wstrzymaj {{label}}",
+      "resume": "Wznów {{label}}",
+      "dismiss": "Odrzuć",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {

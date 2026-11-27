@@ -1046,6 +1046,11 @@
     "emptyTitle": "Your kitchen is empty",
     "emptyBody": "Add your first recipe to see it here.",
     "tonight": "Tonight",
+    "cook": "Cook",
+    "cookTitle": "Cook {{title}}",
+    "courseMain": "Main",
+    "courseSide": "Side",
+    "courseDessert": "Dessert",
     "tomorrow": "Tomorrow",
     "nothingPlanned": "Nothing planned yet",
     "planTonight": "Plan tonight",
@@ -1068,6 +1073,14 @@
       "importing": "Importing…",
       "needsAttention": "Needs attention",
       "showOptions": "Shows options for this import"
+    },
+    "timers": {
+      "title": "Timers",
+      "done": "Done",
+      "pause": "Pause {{label}}",
+      "resume": "Resume {{label}}",
+      "dismiss": "Dismiss",
+      "accessibilitySummary": "{{title}}. {{summary}}"
     }
   },
   "browse": {
