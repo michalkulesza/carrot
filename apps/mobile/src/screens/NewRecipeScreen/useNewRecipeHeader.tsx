@@ -1,53 +1,46 @@
-import { useCallback, useLayoutEffect } from 'react'
-import { Alert, PlatformColor, Pressable, Text } from 'react-native'
-import type { NavigationProp, NavigationState } from '@react-navigation/native'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Feather } from '@expo/vector-icons'
-import type { EditableRecipe } from './helpers'
-import { isBlankRecipe } from './helpers'
-import { styles } from './styles'
+import type { NavigationProp, NavigationState } from '@react-navigation/native'
+import { buildEditHeaderOptions } from '../RecipeDetailScreen/buildEditHeaderOptions'
+
+type NewRecipeNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
+  getState(): NavigationState | undefined
+}
 
 export const useNewRecipeHeader = ({
   navigation,
-  editable,
-  t,
-  onDiscard,
+  dirty,
+  saveDisabled,
+  onCancel,
+  onSave,
 }: {
-  navigation: Omit<NavigationProp<ReactNavigation.RootParamList>, 'getState'> & {
-    getState(): NavigationState | undefined
-  }
-  editable: EditableRecipe
-  t: ReturnType<typeof useTranslation>['t']
-  onDiscard: () => void
+  navigation: NewRecipeNavigation
+  dirty: boolean
+  saveDisabled: boolean
+  onCancel: () => void
+  onSave: () => void
 }) => {
-  const handleBackPress = useCallback(() => {
-    if (isBlankRecipe(editable)) {
-      navigation.goBack()
-      return
-    }
-    Alert.alert(t('addRecipe.discard'), t('addRecipe.discardMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      { text: t('addRecipe.discard'), style: 'destructive', onPress: onDiscard },
-    ])
-  }, [editable, navigation, onDiscard, t])
+  const { t } = useTranslation()
+  const cancelRef = useRef(onCancel)
+  const saveRef = useRef(onSave)
+
+  useEffect(() => {
+    cancelRef.current = onCancel
+    saveRef.current = onSave
+  }, [onCancel, onSave])
+
+  const handleCancelPress = useCallback(() => cancelRef.current(), [])
+  const handleSavePress = useCallback(() => saveRef.current(), [])
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      gestureEnabled: false,
-      headerTransparent: true,
-      headerTitle: '',
-      headerShadowVisible: false,
-      headerLeft: () => (
-        <Pressable
-          onPress={handleBackPress}
-          hitSlop={8}
-          style={({ pressed }) => [styles.headerBackBtnWrap, pressed && { opacity: 0.5 }]}
-          accessibilityLabel={t('common.back')}
-        >
-          <Feather name="chevron-left" size={24} color={PlatformColor('label') as unknown as string} style={styles.headerBackChevron} />
-          <Text style={styles.headerBackBtn}>{t('common.back')}</Text>
-        </Pressable>
-      ),
+    const headerOptions = buildEditHeaderOptions({
+      t,
+      dirty,
+      saveDisabled,
+      onCancel: handleCancelPress,
+      onSave: handleSavePress,
     })
-  }, [navigation, t, handleBackPress])
+
+    navigation.setOptions(headerOptions)
+  }, [navigation, t, dirty, saveDisabled, handleCancelPress, handleSavePress])
 }

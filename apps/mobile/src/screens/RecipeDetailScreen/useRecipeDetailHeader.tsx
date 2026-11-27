@@ -3,10 +3,8 @@ import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import { MenuView, type MenuAction } from '@react-native-menu/menu'
 import type { NavigationProp, NavigationState } from '@react-navigation/native'
-import type { NativeStackHeaderItemButton } from '@react-navigation/native-stack'
 import type { HouseholdOut } from '@carrot/shared/types'
-import { palette } from '../../theme'
-import { EditHeaderTitle } from './EditHeader'
+import { buildEditHeaderOptions } from './buildEditHeaderOptions'
 import HeaderIconButton from './HeaderIconButton'
 import { styles } from './styles'
 
@@ -140,31 +138,13 @@ export const useRecipeDetailHeader = ({
 
   useLayoutEffect(() => {
     if (editing) {
-      const cancelItem: NativeStackHeaderItemButton = {
-        type: 'button',
-        label: t('common.cancel'),
-        accessibilityLabel: t('common.cancel'),
-        onPress: handleCancelPress,
-      }
-      const saveItem: NativeStackHeaderItemButton = {
-        type: 'button',
-        label: t('common.save'),
-        variant: 'prominent',
-        tintColor: palette.action,
-        disabled: !editDirty || editSaving,
-        accessibilityLabel: t('common.save'),
-        onPress: handleSavePress,
-      }
-      const editHeaderOptions = {
-        gestureEnabled: false,
-        headerTransparent: true,
-        headerShadowVisible: false,
-        headerLeft: undefined,
-        headerRight: undefined,
-        headerTitle: () => <EditHeaderTitle dirty={editDirty} />,
-        unstable_headerLeftItems: () => [cancelItem],
-        unstable_headerRightItems: () => [saveItem],
-      }
+      const editHeaderOptions = buildEditHeaderOptions({
+        t,
+        dirty: editDirty,
+        saveDisabled: !editDirty || editSaving,
+        onCancel: handleCancelPress,
+        onSave: handleSavePress,
+      })
 
       navigation.setOptions(editHeaderOptions)
     } else {

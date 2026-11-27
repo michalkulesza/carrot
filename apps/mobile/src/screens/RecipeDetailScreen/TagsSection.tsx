@@ -33,6 +33,54 @@ const TagItem = ({ tag, editing, onRemove }: TagItemProps) => {
   )
 }
 
+interface TagsRowProps {
+  tags: Tag[]
+  editing: boolean
+  onAdd: (tag: Tag) => void
+  onRemove: (tagId: string) => void
+}
+
+const TagsRow = ({ tags, editing, onAdd, onRemove }: TagsRowProps) => {
+  const { t } = useTranslation()
+  const { tags: allTags, create: createTagMutation } = useTags()
+  const [showTagPicker, setShowTagPicker] = useState(false)
+
+  const selectedIds = useMemo(() => new Set(tags.map((tag) => tag.id)), [tags])
+
+  const handleTagCreate = useCallback(async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name), [createTagMutation])
+
+  const handleOpenPicker = useCallback(() => setShowTagPicker(true), [])
+  const handleClosePicker = useCallback(() => setShowTagPicker(false), [])
+
+  const addTagLabel = editing ? t('tags.addTagShort') : t('tags.addTag')
+
+  return (
+    <>
+      <View style={styles.tagRow}>
+        {tags.map((tag) => (
+          <TagItem key={tag.id} tag={tag} editing={editing} onRemove={onRemove} />
+        ))}
+        <Pill
+          label={`+ ${addTagLabel}`}
+          tone="neutral"
+          size="md"
+          onPress={handleOpenPicker}
+          accessibilityLabel={t('tags.addTag')}
+        />
+      </View>
+      <TagPickerModal
+        visible={showTagPicker}
+        allTags={allTags}
+        selectedIds={selectedIds}
+        onAdd={onAdd}
+        onRemove={onRemove}
+        onCreate={handleTagCreate}
+        onClose={handleClosePicker}
+      />
+    </>
+  )
+}
+
 interface TagsSectionProps {
   recipe: RecipeOut
   editing?: boolean
@@ -41,10 +89,7 @@ interface TagsSectionProps {
 const TagsSection = ({ recipe, editing = false }: TagsSectionProps) => {
   const { t } = useTranslation()
   const qc = useQueryClient()
-  const { tags: allTags, create: createTagMutation, addToRecipe, removeFromRecipe } = useTags()
-  const [showTagPicker, setShowTagPicker] = useState(false)
-
-  const selectedIds = useMemo(() => new Set(recipe.tags.map((tag) => tag.id)), [recipe.tags])
+  const { addToRecipe, removeFromRecipe } = useTags()
 
   const patchRecipeTags = useCallback(
     (updater: (tags: Tag[]) => Tag[]) => {
@@ -81,38 +126,18 @@ const TagsSection = ({ recipe, editing = false }: TagsSectionProps) => {
     },
     [patchRecipeTags, removeFromRecipe, recipe.id, recipe.tags, t],
   )
-  const handleTagCreate = useCallback(async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name), [createTagMutation])
 
-  const handleOpenPicker = useCallback(() => setShowTagPicker(true), [])
-  const handleClosePicker = useCallback(() => setShowTagPicker(false), [])
-
-  const addTagLabel = editing ? t('tags.addTagShort') : t('tags.addTag')
-
-  return (
-    <>
-      <View style={styles.tagRow}>
-        {recipe.tags.map((tag) => (
-          <TagItem key={tag.id} tag={tag} editing={editing} onRemove={handleTagRemove} />
-        ))}
-        <Pill
-          label={`+ ${addTagLabel}`}
-          tone="neutral"
-          size="md"
-          onPress={handleOpenPicker}
-          accessibilityLabel={t('tags.addTag')}
-        />
-      </View>
-      <TagPickerModal
-        visible={showTagPicker}
-        allTags={allTags}
-        selectedIds={selectedIds}
-        onAdd={handleTagAdd}
-        onRemove={handleTagRemove}
-        onCreate={handleTagCreate}
-        onClose={handleClosePicker}
-      />
-    </>
-  )
+  return <TagsRow tags={recipe.tags} editing={editing} onAdd={handleTagAdd} onRemove={handleTagRemove} />
 }
+
+export const LocalTagsSection = memo(({ tags, onTagsChange }: { tags: Tag[]; onTagsChange: (tags: Tag[]) => void }) => {
+  const handleTagAdd = useCallback((tag: Tag) => onTagsChange([...tags, tag]), [tags, onTagsChange])
+  const handleTagRemove = useCallback(
+    (tagId: string) => onTagsChange(tags.filter((tag) => tag.id !== tagId)),
+    [tags, onTagsChange],
+  )
+
+  return <TagsRow tags={tags} editing onAdd={handleTagAdd} onRemove={handleTagRemove} />
+})
 
 export default memo(TagsSection)

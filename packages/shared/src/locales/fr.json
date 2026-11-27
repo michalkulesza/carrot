@@ -716,7 +716,6 @@
   "addRecipe": {
     "urlPlaceholder": "URL Instagram, TikTok ou toute page de recette",
     "importRecipe": "Importer une recette",
-    "addRecipe": "Ajouter une recette",
     "fromPersonalLibrary": "De ma bibliothèque personnelle",
     "fromMyRecipes": "Ajouter depuis mes recettes",
     "addPersonalRecipe": "Ajouter {{title}} au foyer",
@@ -726,7 +725,6 @@
     "by": "Par : @{{handle}}",
     "adaptedBy": "Adapté par : @{{handle}}",
     "discard": "Abandonner",
-    "discardMessage": "Votre progression sera perdue.",
     "discardChangesTitle": "Abandonner les modifications ?",
     "discardChangesMessage": "Vos modifications seront perdues.",
     "import": "Importer",
@@ -749,7 +747,6 @@
     "cameraPermissionDenied": "Accès à la caméra requis",
     "cameraPermissionDeniedMsg": "Veuillez activer l'accès à la caméra dans les Réglages.",
     "openSettings": "Ouvrir les Réglages",
-    "newRecipe": "Nouvelle recette",
     "fromUrl": "Depuis URL",
     "fromImage": "Depuis image",
     "fromText": "Depuis texte",

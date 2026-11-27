@@ -7,10 +7,10 @@ import EditTextInput from './EditTextInput'
 import { styles } from './styles'
 
 interface EditTitleBlockProps {
-  recipe: RecipeOut
+  recipe?: RecipeOut
   title: string
   onTitleChange: (title: string) => void
-  onDeleteRecipe: () => void
+  onDeleteRecipe?: () => void
 }
 
 const EditTitleBlock = ({ recipe, title, onTitleChange, onDeleteRecipe }: EditTitleBlockProps) => {
@@ -29,9 +29,10 @@ const EditTitleBlock = ({ recipe, title, onTitleChange, onDeleteRecipe }: EditTi
         keyboardType="default"
         returnKeyType="done"
         submitBehavior="blurAndSubmit"
+        placeholder={t('recipes.recipeNamePlaceholder')}
         accessibilityLabel={t('recipes.colTitle')}
       />
-      <Byline recipe={recipe} onDeleteRecipe={onDeleteRecipe} />
+      {recipe && onDeleteRecipe ? <Byline recipe={recipe} onDeleteRecipe={onDeleteRecipe} /> : null}
     </View>
   )
 }

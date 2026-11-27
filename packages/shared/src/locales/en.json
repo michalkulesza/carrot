@@ -714,7 +714,6 @@
   "addRecipe": {
     "urlPlaceholder": "Instagram, TikTok, or any recipe page URL",
     "importRecipe": "Import Recipe",
-    "addRecipe": "Add Recipe",
     "fromPersonalLibrary": "From Personal Library",
     "fromMyRecipes": "Add from my recipes",
     "addPersonalRecipe": "Add {{title}} to household",
@@ -724,7 +723,6 @@
     "by": "By: @{{handle}}",
     "adaptedBy": "Adapted by: @{{handle}}",
     "discard": "Discard",
-    "discardMessage": "Your progress will be lost.",
     "discardChangesTitle": "Discard changes?",
     "discardChangesMessage": "Your changes will be lost.",
     "import": "Import",
@@ -747,7 +745,6 @@
     "cameraPermissionDenied": "Camera Access Required",
     "cameraPermissionDeniedMsg": "Please enable camera access in Settings to take photos of recipes.",
     "openSettings": "Open Settings",
-    "newRecipe": "New Recipe",
     "fromUrl": "From URL",
     "fromImage": "From Image",
     "fromText": "From Text",

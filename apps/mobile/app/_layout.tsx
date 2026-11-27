@@ -69,14 +69,6 @@ const navigationThemeColors: Theme['colors'] = {
   notification: colors.red,
 }
 
-const NewRecipeHeaderTitle = () => {
-  const { t } = useTranslation()
-
-  return <HeaderTitle title={t('addRecipe.addRecipe')} />
-}
-
-const renderNewRecipeHeaderTitle = () => <NewRecipeHeaderTitle />
-
 const WebViewImportHeaderTitle = () => {
   const { t } = useTranslation()
 
@@ -88,7 +80,6 @@ const renderWebViewImportHeaderTitle = () => <WebViewImportHeaderTitle />
 const authScreenOptions = { headerShown: false }
 const tabsScreenOptions = { headerShown: false }
 const shareScreenOptions = { animation: 'none' as const, headerShown: false }
-const newRecipeScreenOptions = { headerTitle: renderNewRecipeHeaderTitle }
 const webViewImportScreenOptions = { headerTitle: renderWebViewImportHeaderTitle }
 const detailScreenOptions = { title: '' }
 
@@ -313,7 +304,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={authScreenOptions} />
         <Stack.Screen name="(tabs)" options={tabsScreenOptions} />
         <Stack.Screen name="share" options={shareScreenOptions} />
-        <Stack.Screen name="new-recipe" options={newRecipeScreenOptions} />
+        <Stack.Screen name="new-recipe" />
         <Stack.Screen name="webview-import" options={webViewImportScreenOptions} />
         <Stack.Screen
           name="recipe/[id]"

@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react'
-import { Pressable, StyleSheet } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import AppText from './AppText'
 import Thumbnail from './Thumbnail'
@@ -11,7 +11,7 @@ interface RecipeTileProps {
   meta?: string
   imageUrl: string | null
   size?: number
-  onPress: () => void
+  onPress?: () => void
   accessibilityLabel?: string
 }
 
@@ -22,9 +22,31 @@ const RecipeTile = ({ title, meta, imageUrl, size = TILE_SIZE, onPress, accessib
 
   const containerStyle = useMemo(() => [{ width: size }, styles.container, animatedStyle], [size, animatedStyle])
 
+  const content = (
+    <Animated.View style={containerStyle}>
+      <Thumbnail url={imageUrl} size={size} radiusKey="card" />
+      <AppText variant="tileTitle" numberOfLines={2}>
+        {title}
+      </AppText>
+      {meta ? (
+        <AppText variant="tileMeta" tone="textTertiary" numberOfLines={1}>
+          {meta}
+        </AppText>
+      ) : null}
+    </Animated.View>
+  )
+
   const handlePress = () => {
     lightHaptic()
-    onPress()
+    onPress?.()
+  }
+
+  if (!onPress) {
+    return (
+      <View accessible accessibilityLabel={accessibilityLabel ?? title}>
+        {content}
+      </View>
+    )
   }
 
   return (
@@ -35,17 +57,7 @@ const RecipeTile = ({ title, meta, imageUrl, size = TILE_SIZE, onPress, accessib
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? title}
     >
-      <Animated.View style={containerStyle}>
-        <Thumbnail url={imageUrl} size={size} radiusKey="card" />
-        <AppText variant="tileTitle" numberOfLines={2}>
-          {title}
-        </AppText>
-        {meta ? (
-          <AppText variant="tileMeta" tone="textTertiary" numberOfLines={1}>
-            {meta}
-          </AppText>
-        ) : null}
-      </Animated.View>
+      {content}
     </Pressable>
   )
 }

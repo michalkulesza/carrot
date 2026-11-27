@@ -355,9 +355,11 @@ const RecipeDetailScreen = () => {
   }
 
   if (editDraft.editing && editDraft.draft) {
+    const editSource = { mode: 'edit' as const, recipe, onDeleteRecipe: handleDeleteRecipe }
+
     return (
       <EditView
-        recipe={recipe}
+        source={editSource}
         draft={editDraft.draft}
         saving={editDraft.saving}
         insets={insets}
@@ -376,7 +378,6 @@ const RecipeDetailScreen = () => {
         setThumbErrored={editDraft.setThumbErrored}
         uploadingThumb={editDraft.uploadingThumb}
         thumbErrored={editDraft.thumbErrored}
-        onDeleteRecipe={handleDeleteRecipe}
       />
     );
   }

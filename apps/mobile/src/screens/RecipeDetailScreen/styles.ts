@@ -440,5 +440,8 @@ export const styles = StyleSheet.create({
   noteBody: { ...typography.note, minHeight: 72, color: palette.ink },
   noteInput: { padding: 0, margin: 0, textAlignVertical: "top" },
   notePlaceholder: { color: palette.textTertiary },
+  headerTextButton: { paddingHorizontal: 8, paddingVertical: 8 },
+  headerTextButtonLabel: { fontSize: 16, lineHeight: 21, fontWeight: "400", color: palette.ink },
+  headerTextButtonDisabled: { opacity: 0.4 },
   relatedRecipesRow: { gap: 12, paddingHorizontal: 20 },
 });

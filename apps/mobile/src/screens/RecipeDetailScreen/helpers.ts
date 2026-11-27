@@ -76,6 +76,29 @@ export interface EditDraft {
   components: EditComponent[]
 }
 
+export const buildEmptyDraft = (): EditDraft => ({
+  title: '',
+  servings: '',
+  totalTimeMinutes: '',
+  kcal: '',
+  protein: '',
+  fat: '',
+  carbs: '',
+  thumbnail_url: null,
+  components: [
+    {
+      name: '',
+      yield_note: '',
+      ingredients: [{ qty: '', unit: '', name: '' }],
+      shopping_list_ingredients: null,
+      shopping_list_categories: ['other'],
+      steps: [''],
+      step_ingredient_line: null,
+      step_ingredient_component: null,
+    },
+  ],
+})
+
 export const buildDraft = (recipe: RecipeOut): EditDraft => ({
   title: recipe.title,
   servings: recipe.servings?.toString() ?? '',
@@ -126,10 +149,7 @@ export const buildRecipeSaveRequest = (
   ...overrides,
 })
 
-export const buildEditRecipeSaveRequest = (
-  recipe: RecipeOut,
-  draft: EditDraft,
-): RecipeSaveRequest => ({
+const buildDraftFields = (draft: EditDraft) => ({
   title: draft.title,
   servings: parseServings(draft.servings),
   total_time_minutes: draft.totalTimeMinutes !== '' ? Number(draft.totalTimeMinutes) : null,
@@ -138,39 +158,67 @@ export const buildEditRecipeSaveRequest = (
   fat_per_serving: draft.fat !== '' ? Number(draft.fat) : null,
   carbs_per_serving: draft.carbs !== '' ? Number(draft.carbs) : null,
   thumbnail_url: draft.thumbnail_url || null,
+})
+
+const buildDraftComponent = (component: EditComponent) => {
+  const shoppingListIngredients = component.shopping_list_ingredients
+  const retainedIngredientIndexes = component.ingredients.flatMap((ingredient, index) =>
+    ingredient.name ? [index] : [],
+  )
+
+  return {
+    name: component.name ?? '',
+    yield_note: component.yield_note ?? '',
+    ingredients: retainedIngredientIndexes.map((index) => serializeIngredient(component.ingredients[index])),
+    shopping_list_ingredients: shoppingListIngredients
+      ? retainedIngredientIndexes.map((index) => shoppingListIngredients[index])
+      : null,
+    shopping_list_categories: retainedIngredientIndexes.map((index) => component.shopping_list_categories[index]),
+    steps: component.steps.filter(Boolean),
+    ingredient_flags: [],
+    step_ingredient_line: component.step_ingredient_line,
+    step_ingredient_component: component.step_ingredient_component,
+  }
+}
+
+export const buildEditRecipeSaveRequest = (
+  recipe: RecipeOut,
+  draft: EditDraft,
+): RecipeSaveRequest => ({
+  ...buildDraftFields(draft),
   source_url: recipe.source_url ?? null,
   notes: recipe.notes ?? null,
   creator_handle: recipe.creator_handle ?? null,
   components: draft.components.map((component, componentIndex) => {
     const stored = recipe.components[componentIndex]
-    const shoppingListIngredients = component.shopping_list_ingredients
-    const retainedIngredientIndexes = component.ingredients.flatMap((ingredient, index) =>
-      ingredient.name ? [index] : [],
-    )
 
     return {
-      name: component.name ?? '',
-      yield_note: component.yield_note ?? '',
-      ingredients: retainedIngredientIndexes.map((index) =>
-        serializeIngredient(component.ingredients[index]),
-      ),
-      shopping_list_ingredients: shoppingListIngredients
-        ? retainedIngredientIndexes.map((index) => shoppingListIngredients[index])
-        : null,
-      shopping_list_categories: retainedIngredientIndexes.map(
-        (index) => component.shopping_list_categories[index],
-      ),
-      steps: component.steps.filter(Boolean),
+      ...buildDraftComponent(component),
       metric_ingredients: stored?.metric_ingredients ?? null,
       imperial_ingredients: stored?.imperial_ingredients ?? null,
       metric_steps: stored?.metric_steps ?? null,
       imperial_steps: stored?.imperial_steps ?? null,
-      ingredient_flags: [],
-      step_ingredient_line: component.step_ingredient_line,
-      step_ingredient_component: component.step_ingredient_component,
     }
   }),
   tag_ids: recipe.tags.map((tag) => tag.id),
+})
+
+export const buildNewRecipeSaveRequest = (
+  draft: EditDraft,
+  { tagIds, notes }: { tagIds: string[]; notes: string | null },
+): RecipeSaveRequest => ({
+  ...buildDraftFields(draft),
+  source_url: null,
+  notes,
+  creator_handle: null,
+  components: draft.components.map((component) => ({
+    ...buildDraftComponent(component),
+    metric_ingredients: null,
+    imperial_ingredients: null,
+    metric_steps: null,
+    imperial_steps: null,
+  })),
+  tag_ids: tagIds,
 })
 
 export const getReadingMetrics = (fontSizeIndex: number) => {

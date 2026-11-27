@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert } from 'react-native'
-import * as Haptics from 'expo-haptics'
-import * as ImagePicker from 'expo-image-picker'
 import type { TFunction } from 'i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ApiClient } from '@carrot/shared/api/client'
 import { getConflictInfo, getErrorStatus } from '@carrot/shared/api/errors'
-import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
-import { serializeIngredient, type StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
-import { uploadThumbnailImage } from '../../api/uploadThumbnail'
-import {
-  buildDraft,
-  buildEditRecipeSaveRequest,
-  type EditComponent,
-  type EditDraft,
-  type NutritionField,
-} from './helpers'
+import type { RecipeOut } from '@carrot/shared/types'
+import { buildDraft, buildEditRecipeSaveRequest, type EditDraft } from './helpers'
+import { useDraftMutators } from './useDraftMutators'
+import { useThumbnailPicker } from './useThumbnailPicker'
 import { showRecipeChangedAlert, useRecipeEditLock } from './useRecipeEditLock'
 
 export const useEditDraft = ({
@@ -41,10 +33,29 @@ export const useEditDraft = ({
   const [editPending, setEditPending] = useState(false)
   const [draft, setDraft] = useState<EditDraft | null>(null)
   const [saving, setSaving] = useState(false)
-  const [uploadingThumb, setUploadingThumb] = useState(false)
-  const [thumbErrored, setThumbErrored] = useState(false)
   const savedSnapshotRef = useRef('')
   const enterPendingRef = useRef(false)
+  const handleThumbnailUploaded = useCallback(
+    (url: string) => setDraft((prev) => prev && { ...prev, thumbnail_url: url }),
+    [],
+  )
+  const { uploadingThumb, thumbErrored, setThumbErrored, handlePickThumbnail } = useThumbnailPicker({
+    recipeId,
+    t,
+    onUploaded: handleThumbnailUploaded,
+  })
+  const {
+    updateComp,
+    setIngredient,
+    setIngredientCategory,
+    addIngredient,
+    removeIngredient,
+    setStep,
+    addStep,
+    removeStep,
+    handleNutritionChange,
+    handleServingsChange,
+  } = useDraftMutators(setDraft)
   const lock = useRecipeEditLock({ api, recipeId, editing, t })
 
   const handleEdit = useCallback(async () => {
@@ -94,138 +105,6 @@ export const useEditDraft = ({
       { text: t('addRecipe.discard'), style: 'destructive', onPress: exitEditing },
     ])
   }, [saving, isDirty, exitEditing, t])
-
-  const updateComp = useCallback((ci: number, patch: Partial<EditComponent>) => {
-    setDraft((prev) => prev && { ...prev, components: prev.components.map((c, i) => (i === ci ? { ...c, ...patch } : c)) })
-  }, [])
-
-  const setIngredient = useCallback((ci: number, ii: number, val: StructuredIngredient) => {
-    setDraft((prev) => prev && {
-      ...prev,
-      components: prev.components.map((c, i) =>
-        i === ci
-          ? {
-              ...c,
-              ingredients: c.ingredients.map((ing, j) => (j === ii ? val : ing)),
-              shopping_list_ingredients: c.shopping_list_ingredients?.map(
-                (value, j) => j === ii ? serializeIngredient(val) : value,
-              ) ?? null,
-            }
-          : c,
-      ),
-    })
-  }, [])
-
-  const setIngredientCategory = useCallback((ci: number, ii: number, category: ShoppingCategory) => {
-    setDraft((previous) => previous && {
-      ...previous,
-      components: previous.components.map((component, componentIndex) =>
-        componentIndex === ci
-          ? {
-              ...component,
-              shopping_list_categories: component.shopping_list_categories.map(
-                (value, ingredientIndex) => ingredientIndex === ii ? category : value
-              ),
-            }
-          : component
-      ),
-    })
-  }, [])
-
-  const addIngredient = useCallback((ci: number) => {
-    setDraft((prev) => prev && {
-      ...prev,
-      components: prev.components.map((c, i) =>
-        i === ci
-          ? {
-              ...c,
-              ingredients: [...c.ingredients, { qty: '', unit: '', name: '' }],
-              shopping_list_ingredients: c.shopping_list_ingredients
-                ? [...c.shopping_list_ingredients, '']
-                : null,
-              shopping_list_categories: [...c.shopping_list_categories, 'other'],
-            }
-          : c,
-      ),
-    })
-  }, [])
-
-  const removeIngredient = useCallback((ci: number, ii: number) => {
-    setDraft((prev) => {
-      if (!prev) return prev
-      if (prev.components[ci].ingredients.length <= 1) return prev
-      return {
-        ...prev,
-        components: prev.components.map((c, i) =>
-          i === ci
-            ? {
-                ...c,
-                ingredients: c.ingredients.filter((_, j) => j !== ii),
-                shopping_list_ingredients: c.shopping_list_ingredients?.filter((_, j) => j !== ii) ?? null,
-                shopping_list_categories: c.shopping_list_categories.filter((_, j) => j !== ii),
-              }
-            : c,
-        ),
-      }
-    })
-  }, [])
-
-  const setStep = useCallback((ci: number, si: number, val: string) => {
-    setDraft((prev) => prev && {
-      ...prev,
-      components: prev.components.map((c, i) =>
-        i === ci ? { ...c, steps: c.steps.map((s, j) => (j === si ? val : s)) } : c,
-      ),
-    })
-  }, [])
-
-  const addStep = useCallback((ci: number) => {
-    setDraft((prev) => prev && {
-      ...prev,
-      components: prev.components.map((c, i) => (i === ci ? { ...c, steps: [...c.steps, ''] } : c)),
-    })
-  }, [])
-
-  const removeStep = useCallback((ci: number, si: number) => {
-    setDraft((prev) => {
-      if (!prev) return prev
-      if (prev.components[ci].steps.length <= 1) return prev
-      return {
-        ...prev,
-        components: prev.components.map((c, i) => (i === ci ? { ...c, steps: c.steps.filter((_, j) => j !== si) } : c)),
-      }
-    })
-  }, [])
-
-  const handleNutritionChange = useCallback((field: NutritionField, value: string) => {
-    setDraft((prev) => prev && { ...prev, [field]: value })
-  }, [])
-
-  const handleServingsChange = useCallback((servings: number) => {
-    setDraft((prev) => prev && { ...prev, servings: String(servings) })
-  }, [])
-
-  const handlePickThumbnail = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.9,
-      allowsEditing: false,
-    })
-    if (result.canceled || !result.assets[0]) return
-
-    const asset = result.assets[0]
-    setUploadingThumb(true)
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-    try {
-      const data = await uploadThumbnailImage(recipeId, asset)
-      setDraft((prev) => prev && { ...prev, thumbnail_url: data.url })
-      setThumbErrored(false)
-    } catch {
-      Alert.alert(t('common.somethingWentWrong'), t('common.uploadFailed'))
-    } finally {
-      setUploadingThumb(false)
-    }
-  }, [recipeId, t])
 
   const handleReloadAfterConflict = useCallback(() => {
     void qc.invalidateQueries({ queryKey: ['recipes'] })

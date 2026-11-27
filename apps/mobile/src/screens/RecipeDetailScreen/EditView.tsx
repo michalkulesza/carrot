@@ -2,7 +2,7 @@ import { MAX_SERVINGS, MIN_SERVINGS } from '@carrot/shared/utils/servings'
 import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native'
 import type { EdgeInsets } from 'react-native-safe-area-context'
-import type { RecipeOut, ShoppingCategory } from '@carrot/shared/types'
+import type { RecipeOut, ShoppingCategory, Tag } from '@carrot/shared/types'
 import type { StructuredIngredient } from '@carrot/shared/utils/ingredientUtils'
 import DeleteRecipeButton from './DeleteRecipeButton'
 import EditHero from './EditHero'
@@ -12,11 +12,13 @@ import EditStepsSection from './EditStepsSection'
 import EditTitleBlock from './EditTitleBlock'
 import { isIngredientEmpty, type EditDraft } from './helpers'
 import IngredientEditSheet from './IngredientEditSheet'
+import LocalRelatedRecipesSection from './LocalRelatedRecipesSection'
+import NotesEditor from './NotesEditor'
 import NotesSection from './NotesSection'
 import RelatedRecipesSection from './RelatedRecipesSection'
 import ServesCookRow from './ServesCookRow'
 import StepEditSheet from './StepEditSheet'
-import TagsSection from './TagsSection'
+import TagsSection, { LocalTagsSection } from './TagsSection'
 import { styles } from './styles'
 import type { useEditDraft } from './useEditDraft'
 import { ScrollIntoViewContext } from './ScrollIntoViewContext'
@@ -25,12 +27,24 @@ import { KEYBOARD_SCROLL_EVENT_THROTTLE, useKeyboardScroll } from './useKeyboard
 
 type EditDraftState = ReturnType<typeof useEditDraft>
 
+export type EditViewSource =
+  | { mode: 'edit'; recipe: RecipeOut; onDeleteRecipe: () => void }
+  | {
+      mode: 'new'
+      tags: Tag[]
+      onTagsChange: (tags: Tag[]) => void
+      notes: string | null
+      onNotesChange: (notes: string) => Promise<void>
+      onNotesInput: (notes: string) => void
+      related: RecipeOut[]
+      onRelatedChange: (related: RecipeOut[]) => void
+    }
+
 type EditViewProps = {
-  recipe: RecipeOut
+  source: EditViewSource
   draft: EditDraft
   saving: boolean
   insets: EdgeInsets
-  onDeleteRecipe: () => void
 } & Pick<
   EditDraftState,
   | 'handlePickThumbnail'
@@ -53,11 +67,10 @@ type EditViewProps = {
 const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : 'height'
 
 const EditView = ({
-  recipe,
+  source,
   draft,
   saving,
   insets,
-  onDeleteRecipe,
   handlePickThumbnail,
   handleNutritionChange,
   handleServingsChange,
@@ -195,12 +208,16 @@ const EditView = ({
 
         <View style={styles.titleBlock}>
           <EditTitleBlock
-            recipe={recipe}
+            recipe={source.mode === 'edit' ? source.recipe : undefined}
             title={draft.title}
             onTitleChange={handleTitleChange}
-            onDeleteRecipe={onDeleteRecipe}
+            onDeleteRecipe={source.mode === 'edit' ? source.onDeleteRecipe : undefined}
           />
-          <TagsSection recipe={recipe} editing />
+          {source.mode === 'edit' ? (
+            <TagsSection recipe={source.recipe} editing />
+          ) : (
+            <LocalTagsSection tags={source.tags} onTagsChange={source.onTagsChange} />
+          )}
           <EditStatsGrid values={nutritionValues} onChange={handleNutritionChange} />
           <ServesCookRow
             servings={servings}
@@ -221,12 +238,22 @@ const EditView = ({
           onAddStep={stepSheet.addAndOpen}
         />
         <ScrollIntoViewContext.Provider value={keyboardScroll.actions}>
-          <NotesSection recipe={recipe} />
+          {source.mode === 'edit' ? (
+            <NotesSection recipe={source.recipe} />
+          ) : (
+            <NotesEditor notes={source.notes} onSave={source.onNotesChange} onValueChange={source.onNotesInput} />
+          )}
         </ScrollIntoViewContext.Provider>
-        <RelatedRecipesSection recipeId={recipe.id} editing />
-        <View style={styles.editFooter}>
-          <DeleteRecipeButton disabled={saving} onPress={onDeleteRecipe} />
-        </View>
+        {source.mode === 'edit' ? (
+          <RelatedRecipesSection recipeId={source.recipe.id} editing />
+        ) : (
+          <LocalRelatedRecipesSection related={source.related} onRelatedChange={source.onRelatedChange} />
+        )}
+        {source.mode === 'edit' ? (
+          <View style={styles.editFooter}>
+            <DeleteRecipeButton disabled={saving} onPress={source.onDeleteRecipe} />
+          </View>
+        ) : null}
       </ScrollView>
 
       <IngredientEditSheet

@@ -1,106 +1,66 @@
-import { useCallback, useMemo, useState } from 'react'
-import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from 'react-native'
+import { useMemo } from 'react'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
-import { useNavigation, useRouter } from 'expo-router'
+import { useNavigation } from 'expo-router'
 import { useApiClient } from '@carrot/shared/api/context'
-import { unionAllergens } from '@carrot/shared/utils/unionAllergens'
-import { useHousehold } from '../../context/HouseholdContext'
-import { useTags } from '@carrot/shared/hooks/useTags'
-import { usePreferences } from '@carrot/shared/hooks/usePreferences'
-import type { Tag } from '@carrot/shared/types'
-import { blankRecipe, buildRecipeSavePayload } from './helpers'
-import ActionBar from './ActionBar'
-import RecipeFormView from './RecipeFormView'
+import EditView, { type EditViewSource } from '../RecipeDetailScreen/EditView'
+import { useNewRecipeDraft } from './useNewRecipeDraft'
 import { useNewRecipeHeader } from './useNewRecipeHeader'
-import { styles } from './styles'
 
 const NewRecipeScreen = () => {
   const navigation = useNavigation()
-  const router = useRouter()
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const api = useApiClient()
-  const qc = useQueryClient()
-  const { tags, create: createTagMutation } = useTags()
-  const { preferences } = usePreferences()
-  const { activeHousehold } = useHousehold()
+  const state = useNewRecipeDraft({ api, t })
 
-  const [editable, setEditable] = useState(() => blankRecipe())
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  useNewRecipeHeader({
+    navigation,
+    dirty: state.isDirty,
+    saveDisabled: !state.canSave,
+    onCancel: state.handleCancel,
+    onSave: state.handleSave,
+  })
 
-  const activeAllergens = useMemo(
-    () => unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens),
-    [activeHousehold, preferences],
+  const { tags, setTags, notes, handleNotesChange, handleNotesInput, related, setRelated } = state
+  const source = useMemo<EditViewSource>(
+    () => ({
+      mode: 'new',
+      tags,
+      onTagsChange: setTags,
+      notes,
+      onNotesChange: handleNotesChange,
+      onNotesInput: handleNotesInput,
+      related,
+      onRelatedChange: setRelated,
+    }),
+    [tags, setTags, notes, handleNotesChange, handleNotesInput, related, setRelated],
   )
-  const selectedTagIds = useMemo(() => new Set(selectedTags.map((tag) => tag.id)), [selectedTags])
 
-  const handleDiscard = useCallback(() => router.back(), [router])
-
-  useNewRecipeHeader({ navigation, editable, t, onDiscard: handleDiscard })
-
-  const handleSave = useCallback(async () => {
-    setSaving(true)
-    setError(null)
-    try {
-      await api.saveRecipe(buildRecipeSavePayload(editable, selectedTags))
-      await qc.invalidateQueries({ queryKey: ['recipes'] })
-      void qc.invalidateQueries({ queryKey: ['allergen-recheck-status'] })
-      router.back()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('addRecipe.failedToSave'))
-    } finally {
-      setSaving(false)
-    }
-  }, [editable, selectedTags, api, qc, t, router])
-
-  const handleTagAdd = useCallback((tag: Tag) => setSelectedTags((prev) => [...prev, tag]), [])
-  const handleTagRemove = useCallback((id: string) => setSelectedTags((prev) => prev.filter((tag) => tag.id !== id)), [])
-  const handleTagCreate = useCallback(async (name: string): Promise<Tag> => createTagMutation.mutateAsync(name), [createTagMutation])
+  if (!state.draft) return null
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.flex, styles.screenBackground]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={88}
-    >
-      <ScrollView
-        style={styles.flex}
-        contentContainerStyle={styles.scrollContent}
-        contentInsetAdjustmentBehavior="never"
-        keyboardShouldPersistTaps="handled"
-      >
-        <RecipeFormView
-          recipe={editable}
-          editing
-          onChange={setEditable}
-          selectedTags={selectedTags}
-          selectedTagIds={selectedTagIds}
-          allTags={tags}
-          onTagAdd={handleTagAdd}
-          onTagRemove={handleTagRemove}
-          onTagCreate={handleTagCreate}
-          activeAllergens={activeAllergens}
-        />
-
-        {error && (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorTitle}>{t('addRecipe.failedToSave')}</Text>
-            <Text style={styles.errorMsg}>{error}</Text>
-          </View>
-        )}
-      </ScrollView>
-
-      <ActionBar
-        saving={saving}
-        bottomInset={insets.bottom}
-        onDiscard={handleDiscard}
-        onSave={handleSave}
-      />
-    </KeyboardAvoidingView>
+    <EditView
+      source={source}
+      draft={state.draft}
+      saving={state.saving}
+      insets={insets}
+      handlePickThumbnail={state.handlePickThumbnail}
+      handleNutritionChange={state.handleNutritionChange}
+      handleServingsChange={state.handleServingsChange}
+      updateComp={state.updateComp}
+      setIngredient={state.setIngredient}
+      setIngredientCategory={state.setIngredientCategory}
+      addIngredient={state.addIngredient}
+      removeIngredient={state.removeIngredient}
+      setStep={state.setStep}
+      addStep={state.addStep}
+      removeStep={state.removeStep}
+      setDraft={state.setDraft}
+      setThumbErrored={state.setThumbErrored}
+      uploadingThumb={state.uploadingThumb}
+      thumbErrored={state.thumbErrored}
+    />
   )
 }
 
