@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { Image, ImageContentFit, ImageProps } from 'expo-image'
 import ImageShimmer from './ImageShimmer'
@@ -14,6 +14,7 @@ const NetworkImage = ({
   recyclingKey,
   accessibilityLabel,
   fallbackToPlaceholder = true,
+  placeholderUri,
   onError,
 }: {
   uri: string
@@ -23,6 +24,7 @@ const NetworkImage = ({
   recyclingKey?: string | null
   accessibilityLabel?: string
   fallbackToPlaceholder?: boolean
+  placeholderUri?: string | null
   onError?: () => void
 }) => {
   const [state, setState] = useState<ImageState>({ uri, loaded: false, usingPlaceholder: false })
@@ -37,14 +39,19 @@ const NetworkImage = ({
     onError?.()
   }, [current.usingPlaceholder, fallbackToPlaceholder, onError, uri])
 
+  const placeholder = useMemo(() => (placeholderUri ? { uri: placeholderUri } : undefined), [placeholderUri])
+  const showShimmer = !current.loaded && !placeholder
+
   return (
     <View style={[style, styles.wrapper]}>
-      {!current.loaded && <ImageShimmer />}
+      {showShimmer && <ImageShimmer />}
       <Image
         source={{ uri: displayUri }}
         style={StyleSheet.absoluteFill}
         contentFit={contentFit}
         cachePolicy={cachePolicy}
+        placeholder={placeholder}
+        placeholderContentFit="cover"
         recyclingKey={recyclingKey}
         accessibilityLabel={accessibilityLabel}
         transition={220}

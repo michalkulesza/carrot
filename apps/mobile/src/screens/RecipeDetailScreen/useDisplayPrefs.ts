@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Haptics from 'expo-haptics'
 import * as KeepAwake from 'expo-keep-awake'
@@ -7,17 +8,21 @@ import { useIsAppActive } from '../../hooks/useIsAppActive'
 import { DEFAULT_FONT_SIZE_INDEX, FONT_SIZE_STORAGE_KEY, KEEP_AWAKE_RECIPE_TAG, parseFontSizeIndex } from './helpers'
 import { useCookingMode } from '../../context/CookingModeContext'
 
+const FONT_SIZE_QUERY_KEY = ['recipe-font-size-index']
+
+const readFontSizeIndex = async () => parseFontSizeIndex(await AsyncStorage.getItem(FONT_SIZE_STORAGE_KEY))
+
 export const useDisplayPrefs = () => {
   const { enabled: keepScreenOn, setEnabled: setKeepScreenOn } = useCookingMode()
   const isFocused = useIsFocused()
   const isAppActive = useIsAppActive()
-  const [fontSizeIndex, setFontSizeIndex] = useState(DEFAULT_FONT_SIZE_INDEX)
+  const queryClient = useQueryClient()
 
-  useEffect(() => {
-    AsyncStorage.getItem(FONT_SIZE_STORAGE_KEY).then((val) => {
-      if (val !== null) setFontSizeIndex(parseFontSizeIndex(val))
-    })
-  }, [])
+  const { data: fontSizeIndex = DEFAULT_FONT_SIZE_INDEX } = useQuery({
+    queryKey: FONT_SIZE_QUERY_KEY,
+    queryFn: readFontSizeIndex,
+    staleTime: Infinity,
+  })
 
   useEffect(() => {
     if (isAppActive && isFocused && keepScreenOn) {
@@ -39,10 +44,10 @@ export const useDisplayPrefs = () => {
   )
 
   const handleFontSizeChange = useCallback((index: number) => {
-    setFontSizeIndex(index)
+    queryClient.setQueryData(FONT_SIZE_QUERY_KEY, index)
     void AsyncStorage.setItem(FONT_SIZE_STORAGE_KEY, String(index))
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-  }, [])
+  }, [queryClient])
 
   return {
     keepScreenOn,

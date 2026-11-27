@@ -2,6 +2,7 @@ import { ReactNode, useCallback, useEffect } from 'react'
 import { type LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native'
 import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated'
 import { SymbolView } from 'expo-symbols'
+import { useLatchedTrue } from '../../hooks/useLatchedTrue'
 import { expandTiming, palette, space } from '../../theme'
 import { lightHaptic } from './haptics'
 
@@ -11,6 +12,7 @@ interface ExpandableProps {
   onToggle: () => void
   accessibilityLabel?: string
   unclipWhenExpanded?: boolean
+  lazy?: boolean
   children?: ReactNode
 }
 
@@ -22,9 +24,12 @@ const Expandable = ({
   onToggle,
   accessibilityLabel,
   unclipWhenExpanded = false,
+  lazy = false,
   children,
 }: ExpandableProps) => {
   const reduceMotion = useReducedMotion()
+  const hasExpanded = useLatchedTrue(expanded)
+  const mountChildren = !lazy || hasExpanded
   const progress = useSharedValue(expanded ? 1 : 0)
   const contentHeight = useSharedValue(0)
 
@@ -79,7 +84,7 @@ const Expandable = ({
         importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}
       >
         <View style={styles.bodyContent} onLayout={handleContentLayout}>
-          {children}
+          {mountChildren ? children : null}
         </View>
       </Animated.View>
     </View>

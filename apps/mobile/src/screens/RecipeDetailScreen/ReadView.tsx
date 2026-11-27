@@ -1,26 +1,24 @@
-import { useMemo, type RefObject } from 'react'
+import { useMemo, useState, type RefObject } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { EdgeInsets } from 'react-native-safe-area-context'
 import type { RecipeIssueCode, RecipeOut } from '@carrot/shared/types'
 import AddToMealPlanSheet, { type AddToMealPlanSheetHandle } from '../../components/AddToMealPlanSheet'
+import { useLatchedTrue } from '../../hooks/useLatchedTrue'
+import DeferredSections from './DeferredSections'
 import FadeSection from './FadeSection'
 import GroceryModeBar from './GroceryModeBar'
 import { getGroceryBarClearance } from './groceryLayout'
 import HeroImage from './HeroImage'
 import { IngredientSwapActionsContext } from './IngredientSwapContext'
-import { ScrollIntoViewContext } from './ScrollIntoViewContext'
 import IngredientSwapSheet from './IngredientSwapSheet'
 import IngredientsSection from './IngredientsSection'
-import NotesSection from './NotesSection'
 import AllergenSummaryBox from './AllergenSummaryBox'
 import NutritionStrip from './NutritionStrip'
 import ReadingPrefsCard from './ReadingPrefsCard'
 import RecipeIssueBanner from './RecipeIssueBanner'
-import RelatedRecipesSection from './RelatedRecipesSection'
 import ScreenToast from './ScreenToast'
 import ServesCookRow from './ServesCookRow'
-import StepsSection from './StepsSection'
 import TagsSection from './TagsSection'
 import TitleBlock from './TitleBlock'
 import { buildIngredientGroups } from './helpers'
@@ -49,6 +47,7 @@ interface ReadViewProps {
   onDeleteRecipe: () => void
   mealPlanSheetRef: RefObject<AddToMealPlanSheetHandle | null>
   onRecipeRemoved: () => void
+  contentReady: boolean
 }
 
 const ReadView = ({
@@ -71,8 +70,10 @@ const ReadView = ({
   onDeleteRecipe,
   mealPlanSheetRef,
   onRecipeRemoved,
+  contentReady,
 }: ReadViewProps) => {
   const { t } = useTranslation()
+  const [stagedMount] = useState(!contentReady)
   const hasScalableServings = recipe.servings !== null && recipe.servings > 0
   const hasSteps = recipe.components.some((component) => component.steps.length > 0)
   const servingScale = recipe.servings && selectedServings ? selectedServings / recipe.servings : 1
@@ -87,6 +88,7 @@ const ReadView = ({
   const groceryMode = useGroceryMode(entries)
   const swap = useIngredientSwap({ recipe, entries, activeAllergens, servingScale, onRecipeRemoved })
   const keyboardScroll = useKeyboardScroll()
+  const swapSheetMounted = useLatchedTrue(swap.plan !== null)
 
   const toastMessage =
     groceryMode.toastCount !== null ? t('recipes.addedItemsToast', { count: groceryMode.toastCount }) : null
@@ -141,7 +143,7 @@ const ReadView = ({
           />
         </View>
 
-        <FadeSection>
+        <FadeSection animate={!stagedMount}>
           <IngredientSwapActionsContext.Provider value={swap.actions}>
             <IngredientsSection
               groups={groups}
@@ -156,33 +158,36 @@ const ReadView = ({
               fontSizeIndex={fontSizeIndex}
               swapState={swap.state}
               selectedCount={groceryMode.selectedCount}
+              contentReady={contentReady}
+              stagedMount={stagedMount}
             />
           </IngredientSwapActionsContext.Provider>
         </FadeSection>
-        <FadeSection>
-          <StepsSection recipe={recipe} unitSystem={unitSystem} fontSizeIndex={fontSizeIndex} />
-        </FadeSection>
-        <FadeSection>
-          <ScrollIntoViewContext.Provider value={keyboardScroll.actions}>
-            <NotesSection recipe={recipe} />
-          </ScrollIntoViewContext.Provider>
-        </FadeSection>
-        <FadeSection>
-          <RelatedRecipesSection recipeId={recipe.id} />
-        </FadeSection>
+        {contentReady ? (
+          <DeferredSections
+            recipe={recipe}
+            unitSystem={unitSystem}
+            fontSizeIndex={fontSizeIndex}
+            scrollIntoViewActions={keyboardScroll.actions}
+          />
+        ) : null}
       </ScrollView>
       <AddToMealPlanSheet ref={mealPlanSheetRef} recipeId={recipe.id} />
-      <GroceryModeBar
-        active={groceryMode.active}
-        count={groceryMode.selectedCount}
-        onCancel={groceryMode.handleCancel}
-        onConfirm={groceryMode.handleConfirm}
-      />
-      <IngredientSwapSheet
-        plan={swap.plan}
-        onConfirm={swap.handleConfirmSwap}
-        onDismiss={swap.handleDismissSheet}
-      />
+      {contentReady ? (
+        <GroceryModeBar
+          active={groceryMode.active}
+          count={groceryMode.selectedCount}
+          onCancel={groceryMode.handleCancel}
+          onConfirm={groceryMode.handleConfirm}
+        />
+      ) : null}
+      {swapSheetMounted ? (
+        <IngredientSwapSheet
+          plan={swap.plan}
+          onConfirm={swap.handleConfirmSwap}
+          onDismiss={swap.handleDismissSheet}
+        />
+      ) : null}
       {toastMessage !== null ? <ScreenToast message={toastMessage} onUndo={groceryMode.handleUndo} /> : null}
     </View>
   )

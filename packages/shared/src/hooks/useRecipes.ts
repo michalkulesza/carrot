@@ -96,7 +96,7 @@ const subscribeToRecipeChanges = (api: RecipeStreamApi, qc: QueryClient) => {
   }
 }
 
-export const useRecipes = (enabled = true) => {
+export const useRecipes = (enabled = true, staleTime?: number) => {
   const api = useApiClient()
   const qc = useQueryClient()
 
@@ -105,7 +105,7 @@ export const useRecipes = (enabled = true) => {
     return subscribeToRecipeChanges(api, qc)
   }, [api, qc, enabled])
 
-  const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled })
+  const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled, staleTime })
 
   const create = useMutation({
     mutationFn: api.saveRecipe,

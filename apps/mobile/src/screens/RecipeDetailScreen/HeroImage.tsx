@@ -2,7 +2,7 @@ import { memo, useCallback } from 'react'
 import { View } from 'react-native'
 import { Link } from 'expo-router'
 import NetworkImage from '../../components/NetworkImage'
-import { proxyThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
+import { proxyThumbnailUrl, smallThumbnailUrl, PLACEHOLDER_URL } from '../../api/thumbnailUrl'
 import { styles } from './styles'
 
 interface HeroImageProps {
@@ -17,6 +17,7 @@ const HEADER_CLEARANCE = 56
 
 const HeroImage = ({ title, thumbnailUrl, topInset, errored, onError }: HeroImageProps) => {
   const heroUrl = proxyThumbnailUrl(thumbnailUrl)
+  const heroPlaceholderUrl = smallThumbnailUrl(thumbnailUrl)
 
   const handleError = useCallback(() => onError(true), [onError])
 
@@ -35,6 +36,7 @@ const HeroImage = ({ title, thumbnailUrl, topInset, errored, onError }: HeroImag
         style={styles.readHero}
         accessibilityLabel={title}
         recyclingKey={heroUrl}
+        placeholderUri={heroPlaceholderUrl}
         onError={handleError}
       />
     </Link.AppleZoomTarget>

@@ -22,6 +22,7 @@ interface StepRowProps {
   done: boolean
   onToggleDone: (key: string) => void
   metrics: ReadingMetrics
+  animateLayout: boolean
 }
 
 const CHECK_SIZE = 17
@@ -38,6 +39,7 @@ const StepRow = ({
   done,
   onToggleDone,
   metrics,
+  animateLayout,
 }: StepRowProps) => {
   const { t } = useTranslation()
   const { fade, exiting, layout } = useMotion()
@@ -64,9 +66,10 @@ const StepRow = ({
     [metrics.fontSize, metrics.stepLineHeight, done],
   )
   const bodyStyle = useMemo(() => [styles.stepBody, !isLast && styles.stepBodySpaced], [isLast])
+  const rowLayout = animateLayout ? layout : undefined
 
   return (
-    <Animated.View layout={layout} style={styles.stepRow}>
+    <Animated.View layout={rowLayout} style={styles.stepRow}>
       <View style={styles.stepTimeline}>
         <Pressable
           onPress={handleToggle}

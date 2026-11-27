@@ -29,12 +29,14 @@ export const useRecipeServingPreference = (
   const api = useApiClient()
   const queryClient = useQueryClient()
   const { preferences } = usePreferences()
-  const [selectedServings, setSelectedServings] = useState<number | null>(originalServings)
-  const pendingServingsRef = useRef<number | null>(null)
-  const isSavingRef = useRef(false)
   const preferredServings = recipeId
     ? preferences?.recipe_serving_overrides?.[recipeId]
     : undefined
+  const [selectedServings, setSelectedServings] = useState<number | null>(
+    preferredServings ?? originalServings,
+  )
+  const pendingServingsRef = useRef<number | null>(null)
+  const isSavingRef = useRef(false)
 
   useEffect(() => {
     if (pendingServingsRef.current !== null) return

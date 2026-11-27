@@ -18,7 +18,7 @@ type RecipeDetailNavigation = Omit<NavigationProp<ReactNavigation.RootParamList>
 }
 
 const ViewHeaderRight = ({
-  recipe,
+  recipeHouseholdIds,
   onOpenMealPlanSheet,
   households,
   onPressRecipeAction,
@@ -26,7 +26,7 @@ const ViewHeaderRight = ({
   onEdit,
   editPending,
 }: {
-  recipe: { household_ids: string[] }
+  recipeHouseholdIds: string[]
   onOpenMealPlanSheet: () => void
   households: HouseholdOut[]
   onPressRecipeAction: ({ nativeEvent }: { nativeEvent: { event: string } }) => void
@@ -48,12 +48,12 @@ const ViewHeaderRight = ({
           subactions: households.map((h) => ({
             id: `${TOGGLE_HOUSEHOLD_PREFIX}${h.id}`,
             title: h.name,
-            state: recipe.household_ids.includes(h.id) ? 'on' : 'off',
+            state: recipeHouseholdIds.includes(h.id) ? 'on' : 'off',
           })),
         },
       ]
     },
-    [households, recipe.household_ids, t],
+    [households, recipeHouseholdIds, t],
   )
   const handleMenuAction = useCallback(({ nativeEvent }: { nativeEvent: { event: string } }) => {
     if (nativeEvent.event === SHARE_PUBLICLY) {
@@ -100,7 +100,7 @@ const ViewHeaderRight = ({
 export const useRecipeDetailHeader = ({
   navigation,
   editing,
-  recipe,
+  recipeHouseholdIds,
   handleEdit,
   editPending,
   handleCancelEdit,
@@ -114,7 +114,7 @@ export const useRecipeDetailHeader = ({
 }: {
   navigation: RecipeDetailNavigation
   editing: boolean
-  recipe: { household_ids: string[] }
+  recipeHouseholdIds: string[]
   handleEdit: () => void
   editPending: boolean
   handleCancelEdit: () => void
@@ -178,7 +178,7 @@ export const useRecipeDetailHeader = ({
         unstable_headerRightItems: undefined,
         headerRight: () => (
           <ViewHeaderRight
-            recipe={recipe}
+            recipeHouseholdIds={recipeHouseholdIds}
             onOpenMealPlanSheet={handleOpenMealPlanSheet}
             households={households}
             onPressRecipeAction={handlePressRecipeAction}
@@ -202,6 +202,6 @@ export const useRecipeDetailHeader = ({
     handleOpenMealPlanSheet,
     households,
     handlePressRecipeAction,
-    recipe,
+    recipeHouseholdIds,
   ])
 }

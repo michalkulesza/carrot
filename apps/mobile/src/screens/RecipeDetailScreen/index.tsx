@@ -8,10 +8,11 @@ import { useNavigation, useLocalSearchParams, useRouter } from "expo-router";
 import { useApiClient } from "@carrot/shared/api/context";
 import { useRecipes } from "@carrot/shared/hooks/useRecipes";
 import { usePreferences, useRecipeServingPreference } from "@carrot/shared/hooks/usePreferences";
-import type { RecipeOut } from "@carrot/shared/types";
+import type { RecipeIssueCode, RecipeOut } from "@carrot/shared/types";
 import { unionAllergens } from "@carrot/shared/utils/unionAllergens";
 import { getFullDeleteLabel } from '@carrot/shared/utils/recipeDeleteLabels'
 import { useAuth } from "../../context/AuthContext";
+import { useAfterTransition } from "../../hooks/useAfterTransition";
 import { useRecentActivityWriters } from "../../hooks/useRecentActivity";
 import { useHousehold } from "../../context/HouseholdContext";
 import type { AddToMealPlanSheetHandle } from "../../components/AddToMealPlanSheet";
@@ -22,6 +23,7 @@ import {
   useRecipeDetailHeader,
   TOGGLE_HOUSEHOLD_PREFIX,
 } from "./useRecipeDetailHeader";
+import { RECIPES_STALE_TIME_MS } from "./helpers";
 import EditView from "./EditView";
 import ReadView from "./ReadView";
 import { createMobilePublicShare } from '../../api/client'
@@ -40,6 +42,8 @@ const showPublicShareSheet = async (title: string, url: string): Promise<void> =
     );
   });
 }
+
+const NO_HOUSEHOLD_IDS: string[] = []
 
 const RecipeDetailScreen = () => {
   const {
@@ -70,7 +74,7 @@ const RecipeDetailScreen = () => {
     remove,
     setHouseholds,
     removeFromHousehold,
-  } = useRecipes();
+  } = useRecipes(true, RECIPES_STALE_TIME_MS);
   const { preferences } = usePreferences();
   const { households, activeHouseholdId, activeHousehold } = useHousehold();
   const { user } = useAuth();
@@ -87,6 +91,7 @@ const RecipeDetailScreen = () => {
   const { setLastViewed } = useRecentActivityWriters();
 
   const displayPrefs = useDisplayPrefs();
+  const contentReady = useAfterTransition();
 
   const recipe: RecipeOut | undefined = useMemo(
     () => recipes.find((r) => r.id === recipeId),
@@ -116,8 +121,10 @@ const RecipeDetailScreen = () => {
 
   const recipeFound = recipe !== undefined
   useEffect(() => {
-    if (recipeFound) void setLastViewed(recipeId)
-  }, [recipeFound, recipeId, setLastViewed])
+    if (!recipeFound || !contentReady) return
+
+    void setLastViewed(recipeId)
+  }, [contentReady, recipeFound, recipeId, setLastViewed])
 
   useEffect(() => {
     if (recipe) {
@@ -292,10 +299,22 @@ const RecipeDetailScreen = () => {
     [recipe, setHouseholds, t],
   );
 
+  const activeAllergens = useMemo(
+    () => unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens),
+    [activeHousehold?.allergens, preferences?.personal_allergens],
+  );
+
+  const { mutateAsync: dismissIssueAsync } = dismissIssue;
+  const handleDismissIssue = useCallback(
+    (issueCode: RecipeIssueCode) =>
+      dismissIssueAsync({ id: recipeId, issueCode }).then(() => undefined),
+    [dismissIssueAsync, recipeId],
+  );
+
   useRecipeDetailHeader({
     navigation,
     editing: editDraft.editing,
-    recipe: recipe ?? { household_ids: [] },
+    recipeHouseholdIds: recipe?.household_ids ?? NO_HOUSEHOLD_IDS,
     handleEdit: editDraft.handleEdit,
     editPending: editDraft.editPending,
     handleCancelEdit: editDraft.handleCancelEdit,
@@ -363,31 +382,28 @@ const RecipeDetailScreen = () => {
   }
 
   return (
-    <>
-      <ReadView
-        recipe={recipe}
-        activeAllergens={
-          unionAllergens(activeHousehold?.allergens, preferences?.personal_allergens)
-        }
-        selectedServings={selectedServings}
-        unitSystem={preferences?.unit_system ?? "metric"}
-        fontSizeIndex={displayPrefs.fontSizeIndex}
-        keepScreenOn={displayPrefs.keepScreenOn}
-        insets={insets}
-        heroImageErrored={heroImageErrored}
-        setHeroImageErrored={setHeroImageErrored}
-        handleToggleKeepScreenOn={displayPrefs.handleToggleKeepScreenOn}
-        handleFontSizeChange={displayPrefs.handleFontSizeChange}
-        handleToggleFavourite={handleToggleFavourite}
-        handleDecreaseServings={handleDecreaseServings}
-        handleIncreaseServings={handleIncreaseServings}
-        onOpenCookMode={handleOpenCookMode}
-        onDismissIssue={(issueCode) => dismissIssue.mutateAsync({ id: recipe.id, issueCode }).then(() => undefined)}
-        onDeleteRecipe={handleDeleteRecipe}
-        mealPlanSheetRef={mealPlanSheetRef}
-        onRecipeRemoved={handleRecipeRemoved}
-      />
-    </>
+    <ReadView
+      recipe={recipe}
+      activeAllergens={activeAllergens}
+      selectedServings={selectedServings}
+      unitSystem={preferences?.unit_system ?? "metric"}
+      fontSizeIndex={displayPrefs.fontSizeIndex}
+      keepScreenOn={displayPrefs.keepScreenOn}
+      insets={insets}
+      heroImageErrored={heroImageErrored}
+      setHeroImageErrored={setHeroImageErrored}
+      handleToggleKeepScreenOn={displayPrefs.handleToggleKeepScreenOn}
+      handleFontSizeChange={displayPrefs.handleFontSizeChange}
+      handleToggleFavourite={handleToggleFavourite}
+      handleDecreaseServings={handleDecreaseServings}
+      handleIncreaseServings={handleIncreaseServings}
+      onOpenCookMode={handleOpenCookMode}
+      onDismissIssue={handleDismissIssue}
+      onDeleteRecipe={handleDeleteRecipe}
+      mealPlanSheetRef={mealPlanSheetRef}
+      onRecipeRemoved={handleRecipeRemoved}
+      contentReady={contentReady}
+    />
   );
 };
 

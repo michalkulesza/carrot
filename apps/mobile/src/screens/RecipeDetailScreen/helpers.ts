@@ -18,6 +18,7 @@ import {
 } from '@carrot/shared/utils/ingredientUtils'
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 
+export const RECIPES_STALE_TIME_MS = 10 * 60 * 1000
 export const KEEP_AWAKE_RECIPE_TAG = 'recipe-detail'
 // v2: the picker went from 5 sizes to 3, so old saved indices no longer map.
 export const FONT_SIZE_STORAGE_KEY = 'recipe-font-size-index-v2'

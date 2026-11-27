@@ -10,7 +10,6 @@ export const useRelatedRecipes = (recipeId: string | null) => {
     queryKey,
     queryFn: () => api.listRelatedRecipes(recipeId!),
     enabled: recipeId !== null,
-    refetchOnMount: 'always',
   })
   const save = useMutation({
     mutationFn: (recipeIds: string[]) => api.setRelatedRecipes(recipeId!, recipeIds),

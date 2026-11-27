@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import type { BottomSheetModal } from '@gorhom/bottom-sheet'
 import { AppSheet } from './ui/sheet'
@@ -101,7 +101,7 @@ const DayCell = ({ date, isToday, isJustAssigned, isAlreadyAssigned, disabled, l
   )
 }
 
-const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanSheetProps>(
+const AddToMealPlanSheetContent = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanSheetProps>(
   ({ recipeId }, ref) => {
     const { t, i18n } = useTranslation()
     const { preferences } = usePreferences()
@@ -114,9 +114,10 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     }, [])
     const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(today))
     const [justAssigned, setJustAssigned] = useState<string | null>(null)
+    const [presented, setPresented] = useState(false)
 
     const monthKey = toYYYYMM(visibleMonth)
-    const { entries } = useMealPlan(monthKey)
+    const { entries } = useMealPlan(monthKey, presented)
     const { addEntries } = useMealPlanMutations()
 
     const assignedDates = useMemo(
@@ -128,11 +129,13 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
       present: () => {
         setVisibleMonth(startOfMonth(today))
         setJustAssigned(null)
+        setPresented(true)
         sheetRef.current?.present()
       },
       dismiss: () => sheetRef.current?.dismiss(),
     }))
 
+    const handleDismiss = useCallback(() => setPresented(false), [])
 
     const getMonthNavButtonStyle = useCallback(
       ({ pressed }: { pressed: boolean }) => [styles.monthNavBtn, pressed && { opacity: 0.6 }],
@@ -186,6 +189,7 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
         ref={sheetRef}
         snapPoints={SNAP_POINTS}
         enableDynamicSizing={false}
+        onDismiss={handleDismiss}
       >
         <View style={styles.container}>
           <Text style={styles.title}>{t('mealPlan.addToMealPlan')}</Text>
@@ -246,6 +250,39 @@ const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanShe
     )
   },
 )
+
+AddToMealPlanSheetContent.displayName = 'AddToMealPlanSheetContent'
+
+// Mounts the calendar on the first present(), so the host screen's first render skips it.
+const AddToMealPlanSheet = forwardRef<AddToMealPlanSheetHandle, AddToMealPlanSheetProps>((props, ref) => {
+  const contentRef = useRef<AddToMealPlanSheetHandle>(null)
+  const presentPendingRef = useRef(false)
+  const [mounted, setMounted] = useState(false)
+
+  useImperativeHandle(ref, () => ({
+    present: () => {
+      if (contentRef.current) {
+        contentRef.current.present()
+        return
+      }
+
+      presentPendingRef.current = true
+      setMounted(true)
+    },
+    dismiss: () => contentRef.current?.dismiss(),
+  }), [])
+
+  useEffect(() => {
+    if (!mounted || !presentPendingRef.current) return
+
+    presentPendingRef.current = false
+    contentRef.current?.present()
+  }, [mounted])
+
+  if (!mounted) return null
+
+  return <AddToMealPlanSheetContent ref={contentRef} {...props} />
+})
 
 AddToMealPlanSheet.displayName = 'AddToMealPlanSheet'
 

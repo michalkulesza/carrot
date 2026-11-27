@@ -19,6 +19,7 @@ interface IngredientGroupCardProps {
   activeAllergens: string[]
   metrics: ReadingMetrics
   defaultExpanded: boolean
+  lazyBody: boolean
   recipesById: Map<string, RecipeOut>
   swapState: IngredientSwapState
 }
@@ -33,6 +34,7 @@ const IngredientGroupCard = ({
   activeAllergens,
   metrics,
   defaultExpanded,
+  lazyBody,
   recipesById,
   swapState,
 }: IngredientGroupCardProps) => {
@@ -75,6 +77,7 @@ const IngredientGroupCard = ({
         onToggle={handleToggle}
         accessibilityLabel={toggleLabel}
         unclipWhenExpanded
+        lazy={lazyBody}
       >
         <View style={styles.groupBody}>
           {group.entries.map((entry, index) => (

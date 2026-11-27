@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRecipes } from '@carrot/shared/hooks/useRecipes'
 import { SectionHeader } from '../../components/ui'
+import FadeSection from './FadeSection'
 import HeaderPillButton from './HeaderPillButton'
 import IngredientGroupCard from './IngredientGroupCard'
 import type { IngredientSwapState } from './IngredientSwapContext'
@@ -23,6 +24,8 @@ interface IngredientsSectionProps {
   fontSizeIndex: number
   swapState: IngredientSwapState
   selectedCount: number
+  contentReady: boolean
+  stagedMount: boolean
 }
 
 const SECTION_TOP_GAP = 32
@@ -42,6 +45,8 @@ const IngredientsSection = ({
   fontSizeIndex,
   swapState,
   selectedCount,
+  contentReady,
+  stagedMount,
 }: IngredientsSectionProps) => {
   const { t } = useTranslation()
 
@@ -57,6 +62,8 @@ const IngredientsSection = ({
   const transition = useGroceryModeTransition(groceryMode)
   const metrics = useMemo(() => getReadingMetrics(fontSizeIndex), [fontSizeIndex])
 
+  const firstFrameGroupCount = groups.length > 1 ? 2 : 1
+
   if (groups.length === 0) return null
 
   const fallbackTitle = t('recipes.sectionIngredients')
@@ -66,6 +73,29 @@ const IngredientsSection = ({
 
     return group.name ? capitalizeFirst(group.name) : fallbackTitle
   }
+
+  const renderGroup = (group: IngredientGroup) => (
+    <IngredientGroupCard
+      key={group.key}
+      recipesById={recipesById}
+      group={group}
+      title={getGroupTitle(group)}
+      defaultExpanded={group.key !== ALL_GROUP_KEY}
+      lazyBody={group.key === ALL_GROUP_KEY}
+      groceryMode={groceryMode}
+      modeTransition={transition}
+      selectedKeys={groupSelections.get(group.key) ?? EMPTY_SELECTION}
+      onToggleSelected={onToggleSelected}
+      activeAllergens={activeAllergens}
+      metrics={metrics}
+      swapState={swapState}
+    />
+  )
+
+  const firstFrameGroupCards = displayGroups.slice(0, firstFrameGroupCount).map(renderGroup)
+  const deferredGroupCards = contentReady ? displayGroups.slice(firstFrameGroupCount).map(renderGroup) : null
+  const deferredGroupsContent =
+    stagedMount && deferredGroupCards ? <FadeSection>{deferredGroupCards}</FadeSection> : deferredGroupCards
 
   const selectAllLabel = allSelected ? t('recipes.selectNone') : t('recipes.selectAll')
   const headerAction = groceryMode ? (
@@ -88,22 +118,8 @@ const IngredientsSection = ({
         selectedCount={selectedCount}
         total={entries.length}
       />
-      {displayGroups.map((group) => (
-        <IngredientGroupCard
-          key={group.key}
-          recipesById={recipesById}
-          group={group}
-          title={getGroupTitle(group)}
-          defaultExpanded={group.key !== ALL_GROUP_KEY}
-          groceryMode={groceryMode}
-          modeTransition={transition}
-          selectedKeys={groupSelections.get(group.key) ?? EMPTY_SELECTION}
-          onToggleSelected={onToggleSelected}
-          activeAllergens={activeAllergens}
-          metrics={metrics}
-          swapState={swapState}
-        />
-      ))}
+      {firstFrameGroupCards}
+      {deferredGroupsContent}
     </>
   )
 }

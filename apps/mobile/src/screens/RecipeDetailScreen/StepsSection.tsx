@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { View } from 'react-native'
 import { useTranslation } from 'react-i18next'
 import type { RecipeOut } from '@carrot/shared/types'
@@ -18,6 +18,13 @@ const SECTION_TOP_GAP = 36
 const StepsSection = ({ recipe, unitSystem, fontSizeIndex }: StepsSectionProps) => {
   const { t } = useTranslation()
   const [doneKeys, setDoneKeys] = useState<Set<string>>(() => new Set())
+  const [animateLayout, setAnimateLayout] = useState(false)
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setAnimateLayout(true))
+
+    return () => cancelAnimationFrame(frame)
+  }, [])
 
   const metrics = useMemo(() => getReadingMetrics(fontSizeIndex), [fontSizeIndex])
   const groups = useMemo(
@@ -74,6 +81,7 @@ const StepsSection = ({ recipe, unitSystem, fontSizeIndex }: StepsSectionProps) 
                   done={doneKeys.has(key)}
                   onToggleDone={handleToggleDone}
                   metrics={metrics}
+                  animateLayout={animateLayout}
                 />
               )
             })}

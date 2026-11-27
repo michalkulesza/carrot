@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useApiClient } from '../api/context'
 import { useMealPlanStream } from './useMealPlanStream'
 
-export const useMealPlan = (month: string) => {
+export const useMealPlan = (month: string, enabled = true) => {
   const api = useApiClient()
 
   useMealPlanStream()
@@ -10,7 +10,7 @@ export const useMealPlan = (month: string) => {
   const query = useQuery({
     queryKey: ['mealPlan', month],
     queryFn: () => api.listMealPlan(month),
-    enabled: !!month,
+    enabled: !!month && enabled,
   })
 
   return {
