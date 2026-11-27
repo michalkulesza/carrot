@@ -14,6 +14,7 @@ interface ProgressCardProps {
   onClear: () => void
 }
 
+const HIDDEN_STYLE = { opacity: 0 }
 const CLEAR_HIT_SLOP = { top: 6, bottom: 6, left: 8, right: 8 }
 
 const ProgressCard = ({ done, total, value, canClear, onClear }: ProgressCardProps) => {
@@ -27,8 +28,14 @@ const ProgressCard = ({ done, total, value, canClear, onClear }: ProgressCardPro
     <View style={styles.progressCard}>
       <View style={styles.progressRow}>
         <AppText variant="progressLabel" tabular style={styles.flex} accessibilityRole="text">{label}</AppText>
-        {canClear ? (
+        <View
+          style={canClear ? undefined : HIDDEN_STYLE}
+          pointerEvents={canClear ? 'auto' : 'none'}
+          accessibilityElementsHidden={!canClear}
+          importantForAccessibility={canClear ? 'auto' : 'no-hide-descendants'}
+        >
           <Pressable
+            disabled={!canClear}
             onPress={onClear}
             onPressIn={onPressIn}
             onPressOut={onPressOut}
@@ -40,7 +47,7 @@ const ProgressCard = ({ done, total, value, canClear, onClear }: ProgressCardPro
               <AppText variant="button" tone="actionText">{t('shoppingList.clearDone')}</AppText>
             </Animated.View>
           </Pressable>
-        ) : null}
+        </View>
       </View>
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <ProgressBar value={value} size="thick" />
