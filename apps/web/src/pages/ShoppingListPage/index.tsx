@@ -19,7 +19,9 @@ import { useTranslation } from 'react-i18next'
 import { useShoppingList } from '@carrot/shared/hooks/useShoppingList'
 import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import {
-  SHOPPING_CATEGORIES,
+  DEFAULT_SHOPPING_CATEGORIES,
+  destinationShoppingCategory,
+  displayedShoppingCategory,
   type ShoppingCategory,
   type ShoppingCategoryOrders,
   type ShoppingListItem,
@@ -57,21 +59,27 @@ const ShoppingListPage = () => {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
-  const categoryOrder = useMemo<ShoppingCategory[]>(
-    () =>
-      [
-        ...(preferences?.shopping_categories ?? []),
-        ...SHOPPING_CATEGORIES,
-      ].filter((category, index, all) => all.indexOf(category) === index),
-    [preferences?.shopping_categories]
-  )
+  const categoryOrder = useMemo<ShoppingCategory[]>(() => {
+    const enabled =
+      preferences?.shopping_categories ?? DEFAULT_SHOPPING_CATEGORIES
+    const ordered = enabled.filter(
+      (category, index) => enabled.indexOf(category) === index
+    )
+
+    return ordered.includes('other') ? ordered : [...ordered, 'other']
+  }, [preferences?.shopping_categories])
+  const displayedCategory = (item: ShoppingListItem) =>
+    displayedShoppingCategory(item.category, categoryOrder)
   const aisles = useMemo(() => {
     const items = [...incompleteItems, ...completedItems]
 
     return categoryOrder
       .map((category) => ({
         category,
-        items: items.filter((item) => item.category === category),
+        items: items.filter(
+          (item) =>
+            displayedShoppingCategory(item.category, categoryOrder) === category
+        ),
       }))
       .filter((aisle) => aisle.items.length > 0)
   }, [categoryOrder, incompleteItems, completedItems])
@@ -104,6 +112,16 @@ const ShoppingListPage = () => {
   )
   const [dragAisles, setDragAisles] = useState<ShoppingCategory[]>([])
   const activeItem = incompleteItems.find((item) => item.id === activeId)
+  const itemsById = new Map(
+    [...incompleteItems, ...completedItems].map((item) => [item.id, item])
+  )
+  const groupIncompleteByAisle = () => {
+    const order: Record<string, string[]> = {}
+    for (const item of incompleteItems)
+      (order[displayedCategory(item)] ??= []).push(item.id)
+
+    return order
+  }
 
   const findContainer = (
     id: UniqueIdentifier,
@@ -145,10 +163,7 @@ const ShoppingListPage = () => {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const order: Record<string, string[]> = {}
-    for (const item of incompleteItems)
-      (order[item.category] ??= []).push(item.id)
-    setDragOrder(order)
+    setDragOrder(groupIncompleteByAisle())
     setDragAisles(shownAisles.map((aisle) => aisle.category))
     setActiveId(event.active.id)
   }
@@ -209,9 +224,7 @@ const ShoppingListPage = () => {
         finalOrder[container] = arrayMove(list, oldIndex, newIndex)
     }
 
-    const original: Record<string, string[]> = {}
-    for (const item of incompleteItems)
-      (original[item.category] ??= []).push(item.id)
+    const original = groupIncompleteByAisle()
     const nonEmpty = (orders: Record<string, string[]>) =>
       Object.entries(orders).filter(([, ids]) => ids.length > 0)
     if (
@@ -221,17 +234,25 @@ const ShoppingListPage = () => {
       return
 
     const categoryOrders: ShoppingCategoryOrders = {}
-    for (const [category, ids] of Object.entries(finalOrder))
-      if (ids.length > 0) categoryOrders[category as ShoppingCategory] = ids
+    for (const [aisle, ids] of Object.entries(finalOrder)) {
+      for (const id of ids) {
+        const item = itemsById.get(id)
+        if (!item) continue
+
+        const category = destinationShoppingCategory(
+          item.category,
+          aisle as ShoppingCategory,
+          categoryOrder
+        )
+        ;(categoryOrders[category] ??= []).push(id)
+      }
+    }
     reorder.mutate(categoryOrders)
   }
 
   // While dragging, aisles keep the cards they had when the drag started, and
   // the remaining aisles are appended so any of them can receive the item
   // without the existing cards moving.
-  const itemsById = new Map(
-    [...incompleteItems, ...completedItems].map((item) => [item.id, item])
-  )
   const visibleAisles = dragOrder
     ? [
         ...dragAisles,
@@ -244,7 +265,9 @@ const ShoppingListPage = () => {
 
             return item ? [{ ...item, category }] : []
           }),
-          ...completedItems.filter((item) => item.category === category),
+          ...completedItems.filter(
+            (item) => displayedCategory(item) === category
+          ),
         ],
       }))
     : shownAisles
@@ -345,7 +368,7 @@ const ShoppingListPage = () => {
                       presence={presence}
                       highlight={
                         !!activeItem &&
-                        activeItem.category !== category &&
+                        displayedCategory(activeItem) !== category &&
                         !!dragOrder?.[category]?.includes(activeItem.id)
                       }
                       currentUserId={user?.id}
