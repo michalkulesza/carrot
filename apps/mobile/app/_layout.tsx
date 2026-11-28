@@ -14,6 +14,7 @@ import DeviceHtmlCaptureHost from '../src/components/DeviceHtmlCapture'
 import HeaderTitle from '../src/components/HeaderTitle'
 import { colors } from '../src/theme/colors'
 import { resolveSheetCornerRadius } from '../src/components/ui/useSheetCornerRadius'
+import { DialogProvider } from '../src/context/DialogContext'
 import { useResolvedColorScheme } from '../src/context/ColorSchemeContext'
 
 const sentryEnvironment = __DEV__ ? 'development' : 'production'
@@ -378,9 +379,11 @@ const RootLayout = () => {
               <I18nextProvider i18n={i18n}>
                 <ApiClientProvider client={mobileClient}>
                   <AuthProvider>
-                    <AppStartupGate>
-                      <AuthenticatedApp />
-                    </AppStartupGate>
+                    <DialogProvider>
+                      <AppStartupGate>
+                        <AuthenticatedApp />
+                      </AppStartupGate>
+                    </DialogProvider>
                   </AuthProvider>
                 </ApiClientProvider>
               </I18nextProvider>

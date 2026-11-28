@@ -199,6 +199,7 @@ async def lifespan(app: FastAPI):
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_household_status ON import_jobs (household_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_user_status ON import_jobs (user_id, status)"))
         await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_next_attempt_at ON import_jobs (next_attempt_at)"))
+        await conn.execute(text("CREATE INDEX IF NOT EXISTS ix_import_jobs_result_recipe_id ON import_jobs (result_recipe_id)"))
         # Allergen preferences are predefined-only now — flatten the old
         # {predefined, custom} shape into a plain array of keys.
         await conn.execute(text(

@@ -18,6 +18,7 @@ export const usePreferences = () => {
     preferences: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
     update,
   }
 }

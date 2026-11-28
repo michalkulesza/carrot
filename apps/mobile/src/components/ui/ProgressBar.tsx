@@ -14,6 +14,7 @@ interface ProgressBarProps {
   value?: number
   size?: 'regular' | 'thick'
   tone?: PaletteKey
+  trackTone?: PaletteKey
 }
 
 const HEIGHTS = { regular: 4, thick: 6 }
@@ -21,9 +22,12 @@ const SEGMENT_RATIO = 0.35
 const LOOP_MS = 1100
 const FILL_MS = 250
 
-const ProgressBar = ({ value, size = 'regular', tone = 'action' }: ProgressBarProps) => {
+const ProgressBar = ({ value, size = 'regular', tone = 'action', trackTone = 'track' }: ProgressBarProps) => {
   const height = HEIGHTS[size]
-  const trackStyle = useMemo(() => [styles.track, { height, borderRadius: height / 2 }], [height])
+  const trackStyle = useMemo(
+    () => [styles.track, { height, borderRadius: height / 2, backgroundColor: palette[trackTone] }],
+    [height, trackTone],
+  )
   const fillStyle = useMemo(
     () => [{ height, borderRadius: height / 2, backgroundColor: palette[tone] }],
     [height, tone],
@@ -81,7 +85,7 @@ const ProgressBar = ({ value, size = 'regular', tone = 'action' }: ProgressBarPr
 }
 
 const styles = StyleSheet.create({
-  track: { backgroundColor: palette.track, overflow: 'hidden' },
+  track: { overflow: 'hidden' },
 })
 
 export default ProgressBar

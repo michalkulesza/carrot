@@ -24,6 +24,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="index" options={childScreenOptions} />
       <Stack.Screen name="my-recipes" options={childScreenOptions} />
       <Stack.Screen name="shopping-categories" options={childScreenOptions} />
+      <Stack.Screen name="allergies" options={childScreenOptions} />
     </Stack>
   )
 }

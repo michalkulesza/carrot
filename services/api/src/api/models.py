@@ -875,6 +875,7 @@ class ImportJob(Base):
         Index("ix_import_jobs_household_status", "household_id", "status"),
         Index("ix_import_jobs_user_status", "user_id", "status"),
         Index("ix_import_jobs_next_attempt_at", "next_attempt_at"),
+        Index("ix_import_jobs_result_recipe_id", "result_recipe_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

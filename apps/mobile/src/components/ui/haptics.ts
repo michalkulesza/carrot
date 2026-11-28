@@ -19,3 +19,7 @@ export const mediumHaptic = () => {
 export const successHaptic = () => {
   Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {})
 }
+
+export const errorHaptic = () => {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {})
+}

@@ -73,11 +73,11 @@ These are almost certainly Expo template boilerplate. Unused purpose strings are
 
 ### 7. Sensitive allergen/dietary data — consider a disclaimer — ✅ Fixed
 
-`SettingsScreen.tsx`'s `AllergenSection` stores predefined allergens, intolerances, and free-text custom tags used (per `docs/allergies.md`/recipe analysis) to flag recipes as unsafe. This is safety-relevant data: if AI-based recipe analysis misses an allergen, a user could rely on it and be harmed. This isn't a specific guideline violation today (no HealthKit, no medical claims), but:
+The Allergies page (`apps/mobile/src/screens/AllergiesScreen/`) stores predefined allergens and intolerances used (per `docs/allergies.md`/recipe analysis) to flag recipes as unsafe. This is safety-relevant data: if AI-based recipe analysis misses an allergen, a user could rely on it and be harmed. This isn't a specific guideline violation today (no HealthKit, no medical claims), but:
 - Guideline 1.4.1 is about apps *measuring* health metrics claiming clinical accuracy — you're not doing that, but any marketing copy claiming the allergen detection is complete/reliable would trigger it.
 - Add a plain in-app disclaimer near the allergen settings (and in the privacy policy) that allergen/dietary flags are AI-assisted estimates, not a substitute for reading full ingredient labels — this is good practice regardless of App Review and reduces liability risk.
 
-**Done:** added a footnote-style disclaimer ("Allergen flags are AI-assisted estimates, not a substitute for reading full ingredient labels.") directly under the household/personal scope label at the top of `AllergenSection` in `SettingsScreen.tsx`, in all 5 locales (`settings.allergenDisclaimer`). The privacy policy's "How we use your information" section was extended with the same caveat in all 5 locales.
+**Done:** added a footnote-style disclaimer ("Allergen flags are AI-assisted estimates, not a substitute for reading full ingredient labels.") at the top of the Allergies page, in the notice above the summary (`settings.allergenNoticeHousehold` / `settings.allergenNoticePersonal`), in all 7 locales. The privacy policy's "How we use your information" section was extended with the same caveat in all 5 locales.
 
 ### 8. Demo account for review notes
 

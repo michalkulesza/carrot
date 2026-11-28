@@ -60,7 +60,12 @@ Android's equivalent is an ongoing notification with a live countdown.
 - [ ] Check Android 14 foreground-service rules: an ongoing notification alone needs no foreground
       service; only add one if the countdown must survive the app process being killed.
 
-## 3. Release checklist
+## 3. iOS-only UI primitives
+
+- [ ] **SF Symbols render nothing on Android.** `expo-symbols` `SymbolView` is used app-wide (row icons, chevrons, pill remove buttons, checkboxes, steppers, thumbnails). Add an icon component that renders `SymbolView` on iOS and a Material Symbols / vector-icon equivalent on Android (the tab bar already maps `sf` → `md` names), then replace direct `SymbolView` usage.
+- [ ] **`ActionSheetIOS` / `Alert.prompt` outside Settings.** Settings and Household use `useActionMenu()` / `usePrompt()` from `src/context/DialogContext.tsx` (iOS: `ActionSheetIOS` / `Alert.prompt`; Android: `AppSheet`-based `ActionMenuSheet` / `PromptSheet` in `src/components/dialogs/`); other screens still call the iOS APIs directly (e.g. `BrowseScreen/useRecipeActions.ts`, `MealPlanScreen/useDishActions.ts`, `GettingStartedScreen`, `ShoppingListScreen/useClearDone.ts`, `HomeScreen/useImportJobActions.ts`, `RecipeDetailScreen`). Move them to the same helpers.
+
+## 4. Release checklist
 
 - [ ] Signing: create the upload keystore via EAS (`eas credentials -p android`).
 - [ ] `eas.json`: add an Android `submit.production` profile (Play service account key, track `internal`).

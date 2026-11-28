@@ -26,20 +26,33 @@ const recipeDetailFilter = (id: string) => ({
   predicate: (query: { queryKey: readonly unknown[] }) => query.queryKey[3] === id,
 })
 
+const sameHouseholds = (a: string[] | undefined, b: string[] | undefined) => {
+  const left = [...(a ?? [])].sort()
+  const right = [...(b ?? [])].sort()
+  return left.length === right.length && left.every((id, i) => id === right[i])
+}
+
 const patchRecipeList = async (api: RecipeStreamApi, qc: QueryClient, ids: string[]) => {
+  let membershipChanged = false
+
   await Promise.all(
     ids.map(async (id) => {
       try {
         const recipe = await api.fetchRecipe(id)
+        const cached = qc.getQueryData<RecipeOut[]>(['recipes'])?.find((item) => item.id === id)
+        if (!cached || !sameHouseholds(cached.household_ids, recipe.household_ids)) membershipChanged = true
         qc.setQueryData<RecipeOut[]>(['recipes'], (old) => upsertRecipe(old, recipe))
         qc.setQueriesData<RecipeOut>(recipeDetailFilter(id), recipe)
       } catch (error) {
         if (getErrorStatus(error) !== 404) throw error
+        membershipChanged = true
         qc.setQueryData<RecipeOut[]>(['recipes'], (old) => removeRecipeById(old, id))
         void qc.invalidateQueries(recipeDetailFilter(id))
       }
     })
   )
+
+  return membershipChanged
 }
 
 const flushRecipeChanges = async (api: RecipeStreamApi, qc: QueryClient) => {
@@ -50,16 +63,19 @@ const flushRecipeChanges = async (api: RecipeStreamApi, qc: QueryClient) => {
   firstPendingAt = 0
   flushTimer = null
 
+  let householdsAffected = true
   const needsFullRefetch = hasIdlessEvent || ids.size > MAX_PATCHED_IDS
   if (needsFullRefetch) {
     void qc.invalidateQueries({ queryKey: ['recipes'] })
   } else {
     try {
-      await patchRecipeList(api, qc, [...ids])
+      householdsAffected = await patchRecipeList(api, qc, [...ids])
     } catch {
       void qc.invalidateQueries({ queryKey: ['recipes'] })
     }
   }
+
+  if (householdsAffected) void qc.invalidateQueries({ queryKey: ['households'] })
 
   const mealPlanAffected = qc
     .getQueriesData({ queryKey: ['mealPlan'] })
@@ -107,9 +123,15 @@ export const useRecipes = (enabled = true, staleTime?: number) => {
 
   const query = useQuery({ queryKey: ['recipes'], queryFn: api.listRecipes, enabled, staleTime })
 
+  const invalidateRecipesAndHouseholds = () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['recipes'] }),
+      qc.invalidateQueries({ queryKey: ['households'] }),
+    ])
+
   const create = useMutation({
     mutationFn: api.saveRecipe,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+    onSuccess: invalidateRecipesAndHouseholds,
   })
 
   const update = useMutation({
@@ -122,7 +144,7 @@ export const useRecipes = (enabled = true, staleTime?: number) => {
     mutationFn: api.deleteRecipe,
     onSuccess: (_, id) => {
       qc.setQueryData<RecipeOut[]>(['recipes'], (old) => old?.filter((r) => r.id !== id) ?? [])
-      return qc.invalidateQueries({ queryKey: ['recipes'] })
+      return invalidateRecipesAndHouseholds()
     },
   })
 
@@ -147,7 +169,7 @@ export const useRecipes = (enabled = true, staleTime?: number) => {
 
   const importCsv = useMutation({
     mutationFn: api.importRecipes,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recipes'] }),
+    onSuccess: invalidateRecipesAndHouseholds,
   })
 
   const setHouseholds = useMutation({
@@ -156,6 +178,7 @@ export const useRecipes = (enabled = true, staleTime?: number) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recipes'] })
       qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
+      qc.invalidateQueries({ queryKey: ['households'] })
     },
   })
 
@@ -165,6 +188,7 @@ export const useRecipes = (enabled = true, staleTime?: number) => {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['recipes'] })
       qc.invalidateQueries({ queryKey: ['recipes', 'mine'] })
+      qc.invalidateQueries({ queryKey: ['households'] })
     },
   })
 

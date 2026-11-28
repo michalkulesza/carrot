@@ -16,25 +16,29 @@ export interface SegmentedControlOption<T extends string> {
   count?: number
 }
 
+type SegmentedControlSize = 'md' | 'sm'
+
 interface SegmentedControlProps<T extends string> {
   options: SegmentedControlOption<T>[]
   value: T
   onChange: (value: T) => void
   progress?: SharedValue<number>
+  size?: SegmentedControlSize
 }
 
 const TRACK_PADDING = 3
-const SEGMENT_HEIGHT = 38
+const SEGMENT_MIN_HEIGHTS: Record<SegmentedControlSize, number> = { md: 38, sm: 32 }
 const SLIDE_MS = 200
 const COUNT_OPACITY = 0.55
 
-const SegmentedControl = <T extends string>({ options, value, onChange, progress }: SegmentedControlProps<T>) => {
+const SegmentedControl = <T extends string>({ options, value, onChange, progress, size = 'md' }: SegmentedControlProps<T>) => {
   const reduceMotion = useReducedMotion()
   const [trackWidth, setTrackWidth] = useState(0)
   const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value))
   const ownProgress = useSharedValue(selectedIndex)
   const activeProgress = progress ?? ownProgress
   const segmentWidth = Math.max(0, (trackWidth - TRACK_PADDING * 2) / options.length)
+  const segmentMinHeight = SEGMENT_MIN_HEIGHTS[size]
 
   useEffect(() => {
     if (progress) return
@@ -57,7 +61,13 @@ const SegmentedControl = <T extends string>({ options, value, onChange, progress
     <View style={styles.track} onLayout={handleLayout} accessibilityRole="tablist">
       <Animated.View style={indicatorStyles} pointerEvents="none" />
       {options.map((option) => (
-        <Segment key={option.value} option={option} selected={option.value === value} onSelect={onChange} />
+        <Segment
+          key={option.value}
+          option={option}
+          selected={option.value === value}
+          minHeight={segmentMinHeight}
+          onSelect={onChange}
+        />
       ))}
     </View>
   )
@@ -66,10 +76,11 @@ const SegmentedControl = <T extends string>({ options, value, onChange, progress
 interface SegmentProps<T extends string> {
   option: SegmentedControlOption<T>
   selected: boolean
+  minHeight: number
   onSelect: (value: T) => void
 }
 
-const Segment = <T extends string>({ option, selected, onSelect }: SegmentProps<T>) => {
+const Segment = <T extends string>({ option, selected, minHeight, onSelect }: SegmentProps<T>) => {
   const handlePress = useCallback(() => {
     if (selected) return
 
@@ -79,15 +90,16 @@ const Segment = <T extends string>({ option, selected, onSelect }: SegmentProps<
 
   const accessibilityState = useMemo(() => ({ selected }), [selected])
   const color = selected ? palette.ink : palette.textSecondary
+  const segmentStyle = useMemo(() => [styles.segment, { minHeight }], [minHeight])
 
   return (
     <Pressable
-      style={styles.segment}
+      style={segmentStyle}
       onPress={handlePress}
       accessibilityRole="tab"
       accessibilityState={accessibilityState}
     >
-      <Text style={[typography.button, { color }]} numberOfLines={1}>
+      <Text style={[typography.button, styles.label, { color }]} numberOfLines={2}>
         {option.label}
       </Text>
       {option.count === undefined ? null : (
@@ -107,8 +119,8 @@ const styles = StyleSheet.create({
   indicator: {
     position: 'absolute',
     top: TRACK_PADDING,
+    bottom: TRACK_PADDING,
     left: TRACK_PADDING,
-    height: SEGMENT_HEIGHT,
     borderRadius: 11,
     backgroundColor: palette.popoverSurface,
     shadowColor: palette.shadowSoft,
@@ -118,13 +130,14 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
-    height: SEGMENT_HEIGHT,
     borderRadius: 11,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    paddingHorizontal: 4,
   },
+  label: { flexShrink: 1, textAlign: 'center' },
   count: { fontWeight: '500', opacity: COUNT_OPACITY },
 })
 

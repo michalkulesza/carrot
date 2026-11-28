@@ -1,40 +1,34 @@
-import { ActivityIndicator, Pressable, Switch, Text, View } from 'react-native'
+import { useCallback, useMemo, type ReactNode } from 'react'
+import { ActivityIndicator, Alert, useWindowDimensions, View } from 'react-native'
 import { useTranslation } from 'react-i18next'
-import { MenuView } from '@react-native-menu/menu'
-import * as Haptics from 'expo-haptics'
+import { usePreferences } from '@carrot/shared/hooks/usePreferences'
 import type { UserPreferences } from '@carrot/shared/types'
-import type { AppearanceMode } from '../../context/ColorSchemeContext'
-import { APPEARANCE_OPTIONS, LANGUAGES } from './helpers'
+import { AppText, Button, SectionHeader, SegmentedControl, SettingsGroup, SettingsRow } from '../../components/ui'
+import { useAppearanceMode } from '../../context/ColorSchemeContext'
+import { useActionMenu } from '../../context/DialogContext'
+import { useScreenLoading } from '../../hooks/useScreenLoading'
+import { persistLanguage } from '../../i18n'
+import { APPEARANCE_OPTIONS, LANGUAGES, UNIT_OPTIONS, WEEK_START_OPTIONS } from './helpers'
 import { styles } from './styles'
 
-const PreferencesSection = ({
-  loading,
-  error,
-  preferences,
-  currentLanguageCode,
-  appearanceMode,
-  weekStartLabel,
-  onLanguagePicker,
-  onUnitSystemToggle,
-  onAppearanceChange,
-  onWeekStartPicker,
-}: {
+type UnitSystem = (typeof UNIT_OPTIONS)[number]['value']
+
+const DEFAULT_WEEK_START = 1
+const STACK_FONT_SCALE = 1.3
+
+interface PreferencesBodyProps {
   loading: boolean
   error: Error | null
-  preferences: UserPreferences | null | undefined
-  currentLanguageCode: string
-  appearanceMode: AppearanceMode
-  weekStartLabel: string
-  onLanguagePicker: () => void
-  onUnitSystemToggle: (isMetric: boolean) => void
-  onAppearanceChange: (event: { nativeEvent: { event: string } }) => void
-  onWeekStartPicker: () => void
-}) => {
+  onRetry: () => void
+  children: ReactNode
+}
+
+const PreferencesBody = ({ loading, error, onRetry, children }: PreferencesBodyProps) => {
   const { t } = useTranslation()
 
   if (loading) {
     return (
-      <View style={styles.loadingRow}>
+      <View style={styles.centered}>
         <ActivityIndicator accessibilityLabel={t('common.loading')} />
       </View>
     )
@@ -42,92 +36,126 @@ const PreferencesSection = ({
 
   if (error) {
     return (
-      <View style={styles.card}>
-        <Text style={styles.errorText}>{error.message}</Text>
+      <View style={styles.errorBlock}>
+        <AppText variant="body" tone="error">
+          {error.message}
+        </AppText>
+        <Button variant="secondary" size="sm" label={t('common.tryAgain')} onPress={onRetry} />
       </View>
     )
   }
 
-  const languageLabel = t(LANGUAGES.find((l) => l.code === currentLanguageCode)?.labelKey ?? 'languages.en')
-  const appearanceLabel = t(
-    APPEARANCE_OPTIONS.find((o) => o.value === appearanceMode)?.labelKey ?? 'settings.appearanceSystem',
+  return <>{children}</>
+}
+
+const PreferencesSection = () => {
+  const { t, i18n } = useTranslation()
+  const { preferences, isLoading, error, refetch, update } = usePreferences()
+  const showActionMenu = useActionMenu()
+  const { fontScale } = useWindowDimensions()
+  const { showSpinner } = useScreenLoading(isLoading)
+  const { mode: appearanceMode, setMode: setAppearanceMode } = useAppearanceMode()
+
+  const unitOptions = useMemo(() => UNIT_OPTIONS.map(({ value, labelKey }) => ({ value, label: t(labelKey) })), [t])
+  const appearanceOptions = useMemo(
+    () => APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({ value, label: t(labelKey) })),
+    [t],
+  )
+
+  const languageCode = preferences?.language ?? i18n.language
+  const languageLabel = t(LANGUAGES.find((language) => language.code === languageCode)?.labelKey ?? 'languages.en')
+  const weekStartDay = preferences?.week_start_day ?? DEFAULT_WEEK_START
+  const weekStartLabel = t(WEEK_START_OPTIONS.find((option) => option.value === weekStartDay)?.labelKey ?? 'settings.monday')
+  const unitSystem: UnitSystem = preferences?.unit_system === 'imperial' ? 'imperial' : 'metric'
+
+  const stacked = fontScale > STACK_FONT_SCALE
+  const segmentStyle = useMemo(() => [styles.segment, stacked && styles.segmentStacked], [stacked])
+
+  const savePreferences = useCallback(
+    (data: Partial<UserPreferences>) => {
+      update.mutate(data, {
+        onError: (e) => Alert.alert(t('common.somethingWentWrong'), e instanceof Error ? e.message : t('settings.failedToSave')),
+      })
+    },
+    [update, t],
+  )
+
+  const handleUnitChange = useCallback(
+    (value: UnitSystem) => savePreferences({ unit_system: value }),
+    [savePreferences],
+  )
+
+  const handleRetry = useCallback(() => void refetch(), [refetch])
+
+  const handleLanguageChange = useCallback(
+    (code: string) => {
+      void i18n.changeLanguage(code)
+      void persistLanguage(code)
+      savePreferences({ language: code })
+    },
+    [i18n, savePreferences],
+  )
+
+  const handleLanguagePicker = useCallback(() => {
+    const options = LANGUAGES.map(({ code, labelKey }) => ({
+      label: t(labelKey),
+      selected: code === languageCode,
+      onPress: () => handleLanguageChange(code),
+    }))
+
+    showActionMenu({ options })
+  }, [t, showActionMenu, languageCode, handleLanguageChange])
+
+  const handleWeekStartPicker = useCallback(() => {
+    const options = WEEK_START_OPTIONS.map(({ value, labelKey }) => ({
+      label: t(labelKey),
+      selected: value === weekStartDay,
+      onPress: () => savePreferences({ week_start_day: value }),
+    }))
+
+    showActionMenu({ options })
+  }, [t, showActionMenu, weekStartDay, savePreferences])
+
+  const unitsControl = useMemo(
+    () => (
+      <View style={segmentStyle}>
+        <SegmentedControl size="sm" options={unitOptions} value={unitSystem} onChange={handleUnitChange} />
+      </View>
+    ),
+    [segmentStyle, unitOptions, unitSystem, handleUnitChange],
+  )
+  const lookControl = useMemo(
+    () => (
+      <View style={segmentStyle}>
+        <SegmentedControl size="sm" options={appearanceOptions} value={appearanceMode} onChange={setAppearanceMode} />
+      </View>
+    ),
+    [segmentStyle, appearanceOptions, appearanceMode, setAppearanceMode],
   )
 
   return (
     <>
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t('settings.useMetricSystem')}</Text>
-            <Text style={styles.cardDesc}>{t('settings.useMetricSystemDesc')}</Text>
-          </View>
-          <Switch
-            value={preferences?.unit_system !== 'imperial'}
-            onValueChange={(isMetric) => {
-              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-              onUnitSystemToggle(isMetric)
-            }}
-            accessibilityLabel={t('settings.useMetricSystem')}
+      <SectionHeader variant="caption" title={t('settings.preferences')} />
+      <PreferencesBody loading={showSpinner} error={error} onRetry={handleRetry}>
+        <SettingsGroup>
+          <SettingsRow icon="scalemass" title={t('settings.units')} accessory={unitsControl} stacked={stacked} />
+          <SettingsRow
+            icon="globe"
+            title={t('settings.language')}
+            value={languageLabel}
+            accessory="chevron"
+            onPress={handleLanguagePicker}
           />
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={() => {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-            onLanguagePicker()
-          }}
-          accessibilityLabel={t('settings.language')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t('settings.language')}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerValue}>{languageLabel}</Text>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-      </View>
-
-      <View style={styles.card}>
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={onWeekStartPicker}
-          accessibilityLabel={t('settings.weekStartsOn')}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t('settings.weekStartsOn')}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerValue}>{weekStartLabel}</Text>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-      </View>
-
-      <View style={styles.card}>
-        <MenuView
-          title={t('settings.appearance')}
-          onOpenMenu={() => void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)}
-          onPressAction={(event) => {
-            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
-            onAppearanceChange(event)
-          }}
-          actions={APPEARANCE_OPTIONS.map(({ value, labelKey }) => ({
-            id: value,
-            title: t(labelKey),
-            state: appearanceMode === value ? 'on' : 'off',
-          }))}
-        >
-          <View style={styles.pickerRow}>
-            <Text style={styles.pickerLabel}>{t('settings.appearance')}</Text>
-            <View style={styles.pickerRight}>
-              <Text style={styles.pickerValue}>{appearanceLabel}</Text>
-              <Text style={styles.pickerChevron}>›</Text>
-            </View>
-          </View>
-        </MenuView>
-      </View>
+          <SettingsRow
+            icon="calendar"
+            title={t('settings.weekStartsOn')}
+            value={weekStartLabel}
+            accessory="chevron"
+            onPress={handleWeekStartPicker}
+          />
+          <SettingsRow icon="circle.lefthalf.filled" title={t('settings.look')} accessory={lookControl} stacked={stacked} />
+        </SettingsGroup>
+      </PreferencesBody>
     </>
   )
 }

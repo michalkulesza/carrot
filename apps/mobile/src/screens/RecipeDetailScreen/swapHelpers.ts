@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
+import { allergenShortLabel, normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
 import { scaleIngredientQuantity } from '@carrot/shared/utils/ingredientScaling'
 import { matchesActiveAllergen, splitIngredient, type IngredientEntry } from './helpers'
 
@@ -22,8 +22,7 @@ const keepUnit = (unit: string) => unit
 
 export const getIngredientName = (ingredient: string) => splitIngredient(ingredient, keepUnit).name
 
-export const getAllergenName = (t: TFunction, allergen: string) =>
-  t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen })
+export const getAllergenName = (t: TFunction, allergen: string) => allergenShortLabel(t, 'allergens', allergen)
 
 export const isSwappableEntry = (entry: IngredientEntry, activeAllergens: string[]) => {
   const flag = entry.allergenFlag

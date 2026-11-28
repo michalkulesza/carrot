@@ -4,6 +4,8 @@ import AppText from './AppText'
 import Button from './Button'
 import { sectionGap, screenGutter, space } from '../../theme'
 
+type SectionHeaderVariant = 'heading' | 'caption'
+
 interface SectionHeaderProps {
   title: string
   actionLabel?: string
@@ -12,15 +14,25 @@ interface SectionHeaderProps {
   action?: ReactNode
   count?: string
   topGap?: number
+  variant?: SectionHeaderVariant
 }
 
-const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, action, count, topGap = sectionGap }: SectionHeaderProps) => {
+const SectionHeader = ({ title, actionLabel, onAction, actionDisabled, action, count, topGap = sectionGap, variant = 'heading' }: SectionHeaderProps) => {
   const showAction = Boolean(actionLabel && onAction)
-  const rowStyle = useMemo(() => [styles.row, { paddingTop: topGap }], [topGap])
+  const caption = variant === 'caption'
+  const rowStyle = useMemo(
+    () => [styles.row, caption && styles.captionRow, { paddingTop: topGap }],
+    [topGap, caption],
+  )
 
   return (
     <View style={rowStyle}>
-      <AppText variant="sectionHeading" accessibilityRole="header" style={styles.title}>
+      <AppText
+        variant={caption ? 'caption' : 'sectionHeading'}
+        tone={caption ? 'textSecondary' : 'ink'}
+        accessibilityRole="header"
+        style={styles.title}
+      >
         {title}
       </AppText>
       <View style={styles.trailing}>
@@ -46,6 +58,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: screenGutter,
     paddingBottom: space.md,
   },
+  captionRow: { paddingHorizontal: screenGutter + space.xs, paddingBottom: space.sm },
   title: { flexShrink: 1 },
   trailing: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
 })

@@ -1,611 +1,66 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Stack } from "expo-router";
-import {
-  ActionSheetIOS,
-  ActivityIndicator,
-  Alert,
-  Linking,
-  Pressable,
-  ScrollView,
-  Switch,
-  Text,
-  View,
-} from "react-native";
-import { useTranslation } from "react-i18next";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  useAppearanceMode,
-  type AppearanceMode,
-} from "../../context/ColorSchemeContext";
-import { useCookingMode } from "../../context/CookingModeContext";
-import { usePreferences } from "@carrot/shared/hooks/usePreferences";
-import { useHouseholds } from "@carrot/shared/hooks/useHouseholds";
-import { useApiClient } from "@carrot/shared/api/context";
-import { useQueryClient } from "@tanstack/react-query";
-import type {
-  AllergenRecheckStatus,
-  HouseholdOut,
-  UserPreferences,
-} from "@carrot/shared/types";
-import { useAuth } from "../../context/AuthContext";
-import { useScreenLoading } from "../../hooks/useScreenLoading";
-import { useHousehold } from "../../context/HouseholdContext";
-import { persistLanguage } from "../../i18n";
-import HeaderTitle from "../../components/HeaderTitle";
-import {
-  KEEP_AWAKE_SHOPPING_STORAGE_KEY,
-  LANGUAGES,
-  WEEK_START_OPTIONS,
-} from "./helpers";
-import { styles } from "./styles";
-import SectionHeader from "./SectionHeader";
-import StatsSection from "./StatsSection";
-import PreferencesSection from "./PreferencesSection";
-import HouseholdsSection from "./HouseholdsSection";
-import InvitationsSection from "./InvitationsSection";
-import { useInvitationActions } from "./useInvitationActions";
-import AllergenSection from "./AllergenSection";
+import { Stack } from 'expo-router'
+import { ScrollView } from 'react-native'
+import { useTranslation } from 'react-i18next'
+import { EnterSection } from '../../components/ui'
+import { useHousehold } from '../../context/HouseholdContext'
+import { useEdgeEffectHeader } from '../../hooks/useEdgeEffectHeader'
+import { useInsetContentStyle } from '../../hooks/useInsetContentStyle'
+import { space } from '../../theme'
+import DangerSection from './DangerSection'
+import HelpSection from './HelpSection'
+import HouseholdsSection from './HouseholdsSection'
+import InvitationsSection from './InvitationsSection'
+import KeepAwakeSection from './KeepAwakeSection'
+import KitchenSection from './KitchenSection'
+import PreferencesSection from './PreferencesSection'
+import ProfileCard from './ProfileCard'
+import { styles } from './styles'
+import { useInvitationActions } from './useInvitationActions'
 
-const SettingsHeaderTitle = () => {
-  const { t } = useTranslation();
-
-  return <HeaderTitle title={t("nav.settings")} />;
-};
-
-const renderSettingsHeaderTitle = () => <SettingsHeaderTitle />;
-
-const settingsHeaderOptions = {
-  headerTitle: renderSettingsHeaderTitle,
-};
+const CONTENT_PADDING_BOTTOM = space.xxl + space.lg
 
 const SettingsScreen = () => {
-  const router = useRouter();
-  const { t, i18n } = useTranslation();
-  const { user, logout, deleteAccount, refreshUser } = useAuth();
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const [allergenRecheckStatus, setAllergenRecheckStatus] =
-    useState<AllergenRecheckStatus | null>(null);
-  const { preferences, isLoading, error, update } = usePreferences();
-  const { showSpinner } = useScreenLoading(isLoading);
-  const { households, activeHouseholdId, activeHousehold, invitations, refetchHouseholds } =
-    useHousehold();
-  const { pendingIds: pendingInvitationIds, handleInvitationPress } = useInvitationActions();
-  const { create: createHousehold, joinByCode } = useHouseholds();
-  const api = useApiClient();
-  const queryClient = useQueryClient();
-  const insets = useSafeAreaInsets();
-  const { enabled: keepScreenAwake, setEnabled: setKeepScreenAwake } = useCookingMode();
-  const [keepScreenOnShopping, setKeepScreenOnShopping] = useState(false);
-  const allergenRecheckPollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isOpeningReportRef = useRef(false);
-  const allergenRecheckRunRef = useRef(0);
-  const allergenRecheckCompletedRef = useRef(0);
+  const { t } = useTranslation()
+  const { invitations } = useHousehold()
+  const { pendingIds, handleInvitationPress } = useInvitationActions()
 
-  useEffect(
-    () => () => {
-      allergenRecheckRunRef.current += 1;
-      if (allergenRecheckPollRef.current) {
-        clearTimeout(allergenRecheckPollRef.current);
-      }
-    },
-    [],
-  );
-
-  const pollAllergenRecheck = useCallback(async () => {
-    const run = ++allergenRecheckRunRef.current;
-    allergenRecheckCompletedRef.current = 0;
-    const poll = async (): Promise<void> => {
-      try {
-        const status = await api.getAllergenRecheckStatus();
-        if (run !== allergenRecheckRunRef.current) return;
-        if (
-          status.completed > allergenRecheckCompletedRef.current ||
-          status.done
-        ) {
-          allergenRecheckCompletedRef.current = status.completed;
-          void queryClient.invalidateQueries({ queryKey: ["recipes"] });
-        }
-        setAllergenRecheckStatus(status);
-        if (!status.done) {
-          allergenRecheckPollRef.current = setTimeout(() => {
-            void poll();
-          }, 1_000);
-        }
-      } catch {
-        if (run === allergenRecheckRunRef.current) {
-          setAllergenRecheckStatus(null);
-        }
-      }
-    };
-
-    if (allergenRecheckPollRef.current) {
-      clearTimeout(allergenRecheckPollRef.current);
-    }
-    await poll();
-  }, [api, queryClient]);
-
-  useEffect(() => {
-    AsyncStorage.getItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY).then((val) => {
-      setKeepScreenOnShopping(val === "1");
-    });
-  }, []);
-
-  const handleCookingModeToggle = useCallback(
-    (val: boolean) => {
-      setKeepScreenAwake(val);
-    },
-    [setKeepScreenAwake],
-  );
-
-  const handleKeepScreenShoppingToggle = useCallback((val: boolean) => {
-    setKeepScreenOnShopping(val);
-    void AsyncStorage.setItem(KEEP_AWAKE_SHOPPING_STORAGE_KEY, val ? "1" : "0");
-  }, []);
-
-  const handleShowCompletedShoppingItemsToggle = useCallback(
-    (value: boolean) => {
-      update.mutate({ show_completed_shopping_items: value });
-    },
-    [update],
-  );
-
-  const handleLanguageChange = useCallback(
-    (code: string) => {
-      void i18n.changeLanguage(code);
-      void persistLanguage(code);
-      update.mutate({ language: code } as Partial<UserPreferences>);
-    },
-    [i18n, update],
-  );
-
-  const handleUnitSystemToggle = useCallback(
-    (isMetric: boolean) => {
-      update.mutate({
-        unit_system: isMetric ? "metric" : "imperial",
-      } as Partial<UserPreferences>);
-    },
-    [update],
-  );
-
-  const handleWeekStartChange = useCallback(
-    (value: number) => {
-      update.mutate({ week_start_day: value } as Partial<UserPreferences>);
-    },
-    [update],
-  );
-
-  const { mode: appearanceMode, setMode: setAppearanceMode } =
-    useAppearanceMode();
-
-  const handleLanguagePicker = useCallback(() => {
-    const labels = LANGUAGES.map(({ labelKey }) => t(labelKey));
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [...labels, t("common.cancel")],
-        cancelButtonIndex: labels.length,
-      },
-      (index) => {
-        if (index < LANGUAGES.length)
-          handleLanguageChange(LANGUAGES[index].code);
-      },
-    );
-  }, [t, handleLanguageChange]);
-
-  const handleWeekStartPicker = useCallback(() => {
-    const labels = WEEK_START_OPTIONS.map(({ labelKey }) => t(labelKey));
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        options: [...labels, t("common.cancel")],
-        cancelButtonIndex: labels.length,
-      },
-      (index) => {
-        if (index < WEEK_START_OPTIONS.length)
-          handleWeekStartChange(WEEK_START_OPTIONS[index].value);
-      },
-    );
-  }, [t, handleWeekStartChange]);
-
-  const handleLogout = useCallback(() => {
-    Alert.alert(t("settings.logOutConfirmTitle"), undefined, [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("settings.logOut"),
-        style: "destructive",
-        onPress: () => void logout(),
-      },
-    ]);
-  }, [t, logout]);
-
-  const handleOpenPrivacyPolicy = useCallback(() => {
-    void Linking.openURL("https://carrot.xcxz.xyz/privacy-policy");
-  }, []);
-
-  const handleReportIssue = useCallback(() => {
-    if (isOpeningReportRef.current) return;
-    isOpeningReportRef.current = true;
-
-    router.push("/bug-report");
-
-    setTimeout(() => {
-      isOpeningReportRef.current = false;
-    }, 500);
-  }, [router]);
-
-  const handleDeleteAccountEmailSubmit = useCallback(
-    (input?: string) => {
-      if (!input || input.trim().toLowerCase() !== user?.email?.toLowerCase()) {
-        Alert.alert(t("common.somethingWentWrong"), t("settings.deleteAccountEmailMismatch"));
-        return;
-      }
-      setIsDeletingAccount(true);
-      deleteAccount()
-        .catch((e) => {
-          Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : "Error");
-        })
-        .finally(() => setIsDeletingAccount(false));
-    },
-    [t, deleteAccount, user],
-  );
-
-  const handleDeleteAccountPromptEmail = useCallback(() => {
-    Alert.prompt(
-      t("settings.deleteAccountTypeEmailTitle"),
-      t("settings.deleteAccountTypeEmailMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("settings.deleteAccount"),
-          style: "destructive",
-          onPress: handleDeleteAccountEmailSubmit,
-        },
-      ],
-      "plain-text",
-      "",
-      "emailAddress",
-    );
-  }, [t, handleDeleteAccountEmailSubmit]);
-
-  const handleDeleteAccount = useCallback(() => {
-    Alert.alert(
-      t("settings.deleteAccountConfirmTitle"),
-      t("settings.deleteAccountConfirmMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("settings.deleteAccount"),
-          style: "destructive",
-          onPress: handleDeleteAccountPromptEmail,
-        },
-      ],
-    );
-  }, [t, handleDeleteAccountPromptEmail]);
-
-  const handleHouseholdNameSubmit = useCallback(
-    async (name?: string) => {
-      const trimmed = name?.trim() ?? "";
-      if (trimmed.length < 3) {
-        Alert.alert(t("common.somethingWentWrong"), t("settings.householdNameTooShort"));
-        return;
-      }
-      try {
-        await createHousehold.mutateAsync({ name: trimmed });
-        // The new household is set active server-side — refresh the cached
-        // user object too, or active_household_id stays stale on-device.
-        await refreshUser();
-        refetchHouseholds();
-      } catch (e) {
-        Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : "Error");
-      }
-    },
-    [createHousehold, refetchHouseholds, refreshUser, t],
-  );
-
-  const handleCreateHousehold = useCallback(() => {
-    Alert.prompt(
-      t("settings.newHouseholdTitle"),
-      t("settings.householdNameOptional"),
-      handleHouseholdNameSubmit,
-      "plain-text",
-      "",
-    );
-  }, [t, handleHouseholdNameSubmit]);
-
-  const handleJoinCodeSubmit = useCallback(
-    async (code?: string) => {
-      if (!code?.trim()) return;
-      try {
-        await joinByCode.mutateAsync(code.trim());
-        // Joining also sets the new household active server-side, so the
-        // cached user object needs refreshing too.
-        await refreshUser();
-        refetchHouseholds();
-      } catch (e) {
-        Alert.alert(t("common.somethingWentWrong"), e instanceof Error ? e.message : t("households.joinFailed"));
-      }
-    },
-    [joinByCode, refetchHouseholds, refreshUser, t],
-  );
-
-  const handleJoinByCode = useCallback(() => {
-    Alert.prompt(
-      t("households.haveACode"),
-      t("households.codePlaceholder"),
-      handleJoinCodeSubmit,
-      "plain-text",
-      "",
-    );
-  }, [t, handleJoinCodeSubmit]);
-
-  const handleManageHousehold = useCallback(
-    (household: HouseholdOut) => {
-      router.push({
-        pathname: "/household/[id]",
-        params: { id: household.id, householdName: household.name },
-      });
-    },
-    [router],
-  );
-
-  const handleSaveAllergens = useCallback(
-    async (data: string[]) => {
-      if (activeHousehold) {
-        await api.updateHouseholdAllergens(activeHousehold.id, data);
-        await refetchHouseholds();
-      } else {
-        await update.mutateAsync({
-          personal_allergens: data,
-        } as Partial<UserPreferences>);
-      }
-      await queryClient.invalidateQueries({
-        queryKey: ["allergen-recheck-status"],
-      });
-      await pollAllergenRecheck();
-    },
-    [
-      activeHousehold,
-      api,
-      pollAllergenRecheck,
-      queryClient,
-      refetchHouseholds,
-      update,
-    ],
-  );
-
-  const handleAppearanceChange = useCallback(
-    ({ nativeEvent }: { nativeEvent: { event: string } }) => {
-      setAppearanceMode(nativeEvent.event as AppearanceMode);
-    },
-    [setAppearanceMode],
-  );
-
-  const allergenScopeLabel = activeHousehold
-    ? t("settings.householdScope", { name: activeHousehold.name })
-    : t("settings.myAllergensLabel");
-
-  const currentAllergens: string[] =
-    activeHousehold?.allergens ?? preferences?.personal_allergens ?? [];
-
-  const weekStartLabel = t(
-    WEEK_START_OPTIONS.find(
-      (o) => o.value === (preferences?.week_start_day ?? 1),
-    )?.labelKey ?? "settings.monday",
-  );
+  const headerOptions = useEdgeEffectHeader(t('nav.settings'))
+  const contentStyle = useInsetContentStyle(CONTENT_PADDING_BOTTOM)
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[
-        styles.content,
-        { paddingBottom: 48 + insets.bottom },
-      ]}
-      contentInsetAdjustmentBehavior="automatic"
-    >
-      <Stack.Screen options={settingsHeaderOptions} />
+    <ScrollView style={styles.container} contentContainerStyle={contentStyle} contentInsetAdjustmentBehavior="automatic">
+      <Stack.Screen options={headerOptions} />
 
-      <SectionHeader label={t("settings.stats")} />
-      <StatsSection />
+      <EnterSection index={0}>
+        <ProfileCard />
+      </EnterSection>
 
-      <SectionHeader label={t("settings.account")} />
-      <View style={styles.card}>
-        {user && (
-          <View style={styles.row}>
-            <Text style={styles.label}>{t("auth.email")}</Text>
-            <Text style={styles.value} numberOfLines={1}>
-              {user.email}
-            </Text>
-          </View>
-        )}
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={() => router.push("/(tabs)/settings/my-recipes")}
-          accessibilityLabel={t("settings.myRecipes")}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t("settings.myRecipes")}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutRow,
-            pressed && { opacity: 0.7 },
-          ]}
-          onPress={handleLogout}
-          accessibilityLabel={t("settings.logOut")}
-          accessibilityRole="button"
-        >
-          <Text style={styles.logoutText}>{t("settings.logOut")}</Text>
-        </Pressable>
-      </View>
+      {invitations.length > 0 ? (
+        <EnterSection index={1}>
+          <InvitationsSection invitations={invitations} pendingIds={pendingIds} onPress={handleInvitationPress} />
+        </EnterSection>
+      ) : null}
 
-      {invitations.length > 0 && (
-        <>
-          <SectionHeader label={t("invitations.sectionTitle")} />
-          <InvitationsSection
-            invitations={invitations}
-            pendingIds={pendingInvitationIds}
-            onPress={handleInvitationPress}
-          />
-        </>
-      )}
-
-      <SectionHeader label={t("settings.households")} />
-      <HouseholdsSection
-        households={households}
-        activeHouseholdId={activeHouseholdId}
-        onManage={handleManageHousehold}
-        onCreateHousehold={handleCreateHousehold}
-        onJoinByCode={handleJoinByCode}
-      />
-
-      <SectionHeader label={t("settings.preferences")} />
-      <PreferencesSection
-        loading={showSpinner}
-        error={error}
-        preferences={preferences}
-        currentLanguageCode={preferences?.language ?? i18n.language}
-        appearanceMode={appearanceMode}
-        weekStartLabel={weekStartLabel}
-        onLanguagePicker={handleLanguagePicker}
-        onUnitSystemToggle={handleUnitSystemToggle}
-        onAppearanceChange={handleAppearanceChange}
-        onWeekStartPicker={handleWeekStartPicker}
-      />
-
-      <SectionHeader label={t("settings.recipeDetail")} />
-      <View style={styles.card}>
-        <View style={[styles.switchRow, styles.switchRowBorder]}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t("settings.screenAwake")}</Text>
-            <Text style={styles.cardDesc}>{t("settings.screenAwakeDesc")}</Text>
-          </View>
-          <Switch
-            value={keepScreenAwake}
-            onValueChange={handleCookingModeToggle}
-            accessibilityLabel={t("settings.screenAwake")}
-          />
-        </View>
-      </View>
-
-      <SectionHeader label={t("settings.shoppingList")} />
-      <View style={styles.card}>
-        <View style={styles.switchRow}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>
-              {t("settings.screenAwake")}
-            </Text>
-            <Text style={styles.cardDesc}>
-              {t("settings.keepScreenOnWhileShoppingListDesc")}
-            </Text>
-          </View>
-          <Switch
-            value={keepScreenOnShopping}
-            onValueChange={handleKeepScreenShoppingToggle}
-            accessibilityLabel={t("settings.screenAwake")}
-          />
-        </View>
-        <View style={[styles.switchRow, styles.switchRowBorder]}>
-          <View style={styles.switchLabelBlock}>
-            <Text style={styles.switchLabel}>{t("settings.showCompletedShoppingItems")}</Text>
-            <Text style={styles.cardDesc}>{t("settings.showCompletedShoppingItemsDesc")}</Text>
-          </View>
-          <Switch
-            value={preferences?.show_completed_shopping_items ?? false}
-            onValueChange={handleShowCompletedShoppingItemsToggle}
-            accessibilityLabel={t("settings.showCompletedShoppingItems")}
-          />
-        </View>
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={() => router.push("/(tabs)/settings/shopping-categories")}
-          accessibilityLabel={t("settings.shoppingCategories")}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t("settings.shoppingCategories")}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-      </View>
-      <SectionHeader label={t("settings.allergiesIntolerances")} />
-      <View style={styles.card}>
-        <View style={styles.allergenPad}>
-          <AllergenSection
-            key={activeHouseholdId ?? "personal"}
-            allergens={currentAllergens}
-            scopeLabel={allergenScopeLabel}
-            onSave={handleSaveAllergens}
-          />
-          {allergenRecheckStatus ? (
-            <View style={styles.allergenRecheckStatus}>
-              {!allergenRecheckStatus.done ? <ActivityIndicator size="small" /> : null}
-              <Text style={styles.allergenRecheckText}>
-                {allergenRecheckStatus.done
-                  ? allergenRecheckStatus.failed > 0
-                    ? t("settings.allergenRecheckFailed", {
-                        failed: allergenRecheckStatus.failed,
-                      })
-                    : t("settings.allergenRecheckComplete")
-                  : t("settings.allergenRecheckProgress", {
-                      completed: allergenRecheckStatus.completed,
-                      total: allergenRecheckStatus.total,
-                    })}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-      </View>
-
-      <SectionHeader label={t("settings.help")} />
-      <View style={styles.card}>
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={handleOpenPrivacyPolicy}
-          accessibilityLabel={t("settings.privacyPolicy")}
-          accessibilityRole="link"
-        >
-          <Text style={styles.pickerLabel}>{t("settings.privacyPolicy")}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [styles.pickerRow, pressed && { opacity: 0.7 }]}
-          onPress={handleReportIssue}
-          accessibilityLabel={t("settings.reportIssue")}
-          accessibilityRole="button"
-        >
-          <Text style={styles.pickerLabel}>{t("settings.reportIssue")}</Text>
-          <View style={styles.pickerRight}>
-            <Text style={styles.pickerChevron}>›</Text>
-          </View>
-        </Pressable>
-      </View>
-
-      <SectionHeader label={t("settings.miscellaneous")} />
-      <View style={styles.card}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.logoutRow,
-            pressed && { opacity: 0.7 },
-          ]}
-          onPress={handleDeleteAccount}
-          disabled={isDeletingAccount}
-          accessibilityLabel={t("settings.deleteAccount")}
-          accessibilityRole="button"
-        >
-          {isDeletingAccount ? (
-            <ActivityIndicator />
-          ) : (
-            <Text style={styles.logoutText}>{t("settings.deleteAccount")}</Text>
-          )}
-        </Pressable>
-      </View>
+      <EnterSection index={2}>
+        <HouseholdsSection />
+      </EnterSection>
+      <EnterSection index={3}>
+        <KitchenSection />
+      </EnterSection>
+      <EnterSection index={4}>
+        <PreferencesSection />
+      </EnterSection>
+      <EnterSection index={5}>
+        <KeepAwakeSection />
+      </EnterSection>
+      <EnterSection index={6}>
+        <HelpSection />
+      </EnterSection>
+      <EnterSection index={7}>
+        <DangerSection />
+      </EnterSection>
     </ScrollView>
-  );
-};
+  )
+}
 
-export default SettingsScreen;
+export default SettingsScreen

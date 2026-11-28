@@ -35,6 +35,17 @@ export const INTOLERANCE_KEYS = [
 
 export const normalizeAllergenKey = (key: string) => key.replace(/[- ]/g, '_')
 
+export type AllergenNamespace = 'allergens' | 'intolerances'
+
+export const allergenShortLabel = (
+  t: (key: string, options?: Record<string, unknown>) => string,
+  namespace: AllergenNamespace,
+  key: string,
+) => {
+  const longKey = `${namespace}.${normalizeAllergenKey(key)}`
+  return t(`${longKey}_short`, { defaultValue: t(longKey, { defaultValue: key }) })
+}
+
 export const matchesActiveAllergen = (
   allergen: string | null | undefined,
   activeAllergens: string[]

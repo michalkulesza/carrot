@@ -429,6 +429,7 @@ export interface HouseholdOut {
   created_at: string;
   allergens: string[] | null;
   invite_code: string;
+  recipe_count: number;
 }
 
 export type HouseholdRole = "admin" | "member";

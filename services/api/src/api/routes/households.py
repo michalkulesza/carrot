@@ -21,7 +21,7 @@ from api.models import (
     recipe_related_recipes_table,
     user_recipe_favourites_table,
 )
-from api.routes.recipes import _link_recipe_to_household
+from api.routes.recipes import _link_recipe_to_household, _not_awaiting_children
 from api.services import push as push_svc
 from api.services.embeddings import queue_recipe_embedding
 from api.services.orphan_cleanup import delete_orphan_recipes
@@ -58,6 +58,7 @@ class HouseholdOut(BaseModel):
     created_at: datetime
     allergens: list[str] | None = None
     invite_code: str
+    recipe_count: int = 0
 
 
 class MemberOut(BaseModel):
@@ -90,6 +91,32 @@ class SwitchHouseholdRequest(BaseModel):
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+async def household_recipe_counts(session: AsyncSession, household_ids: list[uuid.UUID]) -> dict[uuid.UUID, int]:
+    if not household_ids:
+        return {}
+    rows = await session.execute(
+        select(recipe_households_table.c.household_id, func.count())
+        .join(Recipe, Recipe.id == recipe_households_table.c.recipe_id)
+        .where(recipe_households_table.c.household_id.in_(household_ids), _not_awaiting_children())
+        .group_by(recipe_households_table.c.household_id)
+    )
+    return {household_id: count for household_id, count in rows.all()}
+
+
+async def _households_out(session: AsyncSession, households: list[Household]) -> list[HouseholdOut]:
+    counts = await household_recipe_counts(session, [h.id for h in households])
+    out = []
+    for household in households:
+        item = HouseholdOut.model_validate(household)
+        item.recipe_count = counts.get(household.id, 0)
+        out.append(item)
+    return out
+
+
+async def _household_out(session: AsyncSession, household: Household) -> HouseholdOut:
+    return (await _households_out(session, [household]))[0]
+
 
 async def _require_member(
     session: AsyncSession,
@@ -366,7 +393,7 @@ async def create_household(
 
     await session.commit()
     await session.refresh(household)
-    return HouseholdOut.model_validate(household)
+    return await _household_out(session, household)
 
 
 @router.post("/households/join")
@@ -411,7 +438,7 @@ async def rotate_invite_code(
     household.invite_code = await generate_invite_code(session)
     await session.commit()
     await session.refresh(household)
-    return HouseholdOut.model_validate(household)
+    return await _household_out(session, household)
 
 
 @router.get("/households", response_model=list[HouseholdOut])
@@ -425,7 +452,7 @@ async def list_my_households(
         .where(HouseholdMember.user_id == user.id)
         .order_by(Household.created_at)
     )
-    return [HouseholdOut.model_validate(h) for h in result.scalars().all()]
+    return await _households_out(session, list(result.scalars().all()))
 
 
 @router.get("/households/{household_id}", response_model=HouseholdOut)
@@ -438,7 +465,7 @@ async def get_household(
     household = await session.get(Household, household_id)
     if not household:
         raise HTTPException(status_code=404, detail="Household not found")
-    return HouseholdOut.model_validate(household)
+    return await _household_out(session, household)
 
 
 @router.patch("/households/{household_id}", response_model=HouseholdOut)
@@ -468,7 +495,7 @@ async def update_household(
 
     await session.commit()
     await session.refresh(household)
-    return HouseholdOut.model_validate(household)
+    return await _household_out(session, household)
 
 
 @router.get("/households/{household_id}/members", response_model=list[MemberOut])

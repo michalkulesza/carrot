@@ -3,7 +3,7 @@ import { Text, View } from 'react-native'
 import { SymbolView } from 'expo-symbols'
 import { useTranslation } from 'react-i18next'
 import type { SaveComponent } from '@carrot/shared/types'
-import { normalizeAllergenKey } from '@carrot/shared/utils/allergenKeys'
+import { allergenShortLabel } from '@carrot/shared/utils/allergenKeys'
 import { palette } from '../../theme'
 import { collectMatchedAllergens } from './helpers'
 import { styles } from './styles'
@@ -22,7 +22,7 @@ const AllergenSummaryBox = ({ components, activeAllergens, uncertain }: Allergen
   const allergenNames = useMemo(
     () =>
       collectMatchedAllergens(components, activeAllergens).map((allergen) =>
-        t(`allergens.${normalizeAllergenKey(allergen)}`, { defaultValue: allergen }).toLowerCase(),
+        allergenShortLabel(t, 'allergens', allergen).toLowerCase(),
       ),
     [components, activeAllergens, t],
   )
